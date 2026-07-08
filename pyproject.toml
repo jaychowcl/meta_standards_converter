@@ -1,0 +1,60 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meta-standards-converter"
+version = "1.0"
+description = "Converter between standards for different biological metadata repositories."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "jaychowcl", email = "jaychowcl@gmail.com" },
+]
+maintainers = [
+  { name = "jaychowcl", email = "jaychowcl@gmail.com" },
+]
+keywords = [
+  "metadata",
+  "bioinformatics",
+  "GEO",
+  "ArrayExpress",
+  "MAGE-TAB",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+  "python-dateutil>=2.8.2",
+  "requests>=2.31.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/jaychowcl/meta_standards_converter"
+Repository = "https://github.com/jaychowcl/meta_standards_converter"
+Issues = "https://github.com/jaychowcl/meta_standards_converter/issues"
+
+[project.scripts]
+geo2ae = "meta_standards_converter.cli.geo2ae:main"
+geo2json = "meta_standards_converter.cli.geo2json:main"
+json2h5ad = "meta_standards_converter.cli.json2h5ad:main"
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]

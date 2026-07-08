@@ -1,0 +1,1506 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<MINiML
+   xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.ncbi.nlm.nih.gov/geo/info/MINiML http://www.ncbi.nlm.nih.gov/geo/info/MINiML.xsd"
+   version="0.5.0" >
+
+  <Contributor iid="contrib1">
+    <Person><First>Anna-Lena</First><Last>Börsch</Last></Person>
+    <Email>a_boer11@uni-muenster.de</Email>
+    <Organization>University Hospital Münster</Organization>
+    <Address>
+      <Line>Domagkstraße 24</Line>
+      <City>Münster</City>
+      <Zip-Code>48149</Zip-Code>
+      <Country>Germany</Country>
+    </Address>
+  </Contributor>
+
+  <Contributor iid="contrib2">
+    <Organization>GEO</Organization>
+    <Address>
+      <City></City>
+      <Country>USA</Country>
+    </Address>
+  </Contributor>
+
+  <Database iid="GEO">
+    <Name>Gene Expression Omnibus (GEO)</Name>
+    <Public-ID>GEO</Public-ID>
+    <Organization>NCBI NLM NIH</Organization>
+    <Web-Link>http://www.ncbi.nlm.nih.gov/geo</Web-Link>
+    <Email>geo@ncbi.nlm.nih.gov</Email>
+  </Database>
+
+  <Platform iid="GPL30173">
+    <Status database="GEO">
+      <Submission-Date>2021-05-20</Submission-Date>
+      <Release-Date>2021-05-20</Release-Date>
+      <Last-Update-Date>2021-05-20</Last-Update-Date>
+    </Status>
+    <Title>NextSeq 2000 (Homo sapiens)</Title>
+    <Accession database="GEO">GPL30173</Accession>
+    <Technology>high-throughput sequencing</Technology>
+    <Distribution>virtual</Distribution>
+    <Organism taxid="9606">Homo sapiens</Organism>
+    <Manufacturer></Manufacturer>
+    <Manufacture-Protocol>
+    </Manufacture-Protocol>
+    <Contact-Ref ref="contrib2" />
+  </Platform>
+
+  <Sample iid="GSM9651991">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_1</Title>
+    <Accession database="GEO">GSM9651991</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_1
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140712" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831930" />
+  </Sample>
+
+  <Sample iid="GSM9651992">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_3</Title>
+    <Accession database="GEO">GSM9651992</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_3
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651992/suppl/GSM9651992_PMS_Ctrl_3_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140711" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831931" />
+  </Sample>
+
+  <Sample iid="GSM9651993">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_4</Title>
+    <Accession database="GEO">GSM9651993</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_4
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651993/suppl/GSM9651993_PMS_Ctrl_4_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140710" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831932" />
+  </Sample>
+
+  <Sample iid="GSM9651994">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_5</Title>
+    <Accession database="GEO">GSM9651994</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_5
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651994/suppl/GSM9651994_PMS_Ctrl_5_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140709" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831933" />
+  </Sample>
+
+  <Sample iid="GSM9651995">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_6</Title>
+    <Accession database="GEO">GSM9651995</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_6
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651995/suppl/GSM9651995_PMS_Ctrl_6_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140708" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831934" />
+  </Sample>
+
+  <Sample iid="GSM9651996">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_7</Title>
+    <Accession database="GEO">GSM9651996</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_7
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651996/suppl/GSM9651996_PMS_Ctrl_7_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140707" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831935" />
+  </Sample>
+
+  <Sample iid="GSM9651997">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_9</Title>
+    <Accession database="GEO">GSM9651997</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_9
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651997/suppl/GSM9651997_PMS_Ctrl_9_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140706" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831936" />
+  </Sample>
+
+  <Sample iid="GSM9651998">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_Ctrl_10</Title>
+    <Accession database="GEO">GSM9651998</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Ctrl_10
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651998/suppl/GSM9651998_PMS_Ctrl_10_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140705" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831937" />
+  </Sample>
+
+  <Sample iid="GSM9651999">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_PPMS_1</Title>
+    <Accession database="GEO">GSM9651999</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: PPMS_1
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651999/suppl/GSM9651999_PMS_PPMS_1_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140704" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831938" />
+  </Sample>
+
+  <Sample iid="GSM9652000">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_PPMS_2</Title>
+    <Accession database="GEO">GSM9652000</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: PPMS_2
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652000/suppl/GSM9652000_PMS_PPMS_2_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140703" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831939" />
+  </Sample>
+
+  <Sample iid="GSM9652001">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_PPMS_3</Title>
+    <Accession database="GEO">GSM9652001</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: PPMS_3
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652001/suppl/GSM9652001_PMS_PPMS_3_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140702" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831940" />
+  </Sample>
+
+  <Sample iid="GSM9652002">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_PPMS_4</Title>
+    <Accession database="GEO">GSM9652002</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: PPMS_4
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652002/suppl/GSM9652002_PMS_PPMS_4_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140701" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831941" />
+  </Sample>
+
+  <Sample iid="GSM9652003">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_PPMS_5</Title>
+    <Accession database="GEO">GSM9652003</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: PPMS_5
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652003/suppl/GSM9652003_PMS_PPMS_5_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140700" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831942" />
+  </Sample>
+
+  <Sample iid="GSM9652004">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_1</Title>
+    <Accession database="GEO">GSM9652004</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_1
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652004/suppl/GSM9652004_PMS_RMS_1_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140699" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831943" />
+  </Sample>
+
+  <Sample iid="GSM9652005">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_2</Title>
+    <Accession database="GEO">GSM9652005</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_2
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652005/suppl/GSM9652005_PMS_RMS_2_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140698" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831944" />
+  </Sample>
+
+  <Sample iid="GSM9652006">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_3</Title>
+    <Accession database="GEO">GSM9652006</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_3
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652006/suppl/GSM9652006_PMS_RMS_3_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140697" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831945" />
+  </Sample>
+
+  <Sample iid="GSM9652007">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_4</Title>
+    <Accession database="GEO">GSM9652007</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_4
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652007/suppl/GSM9652007_PMS_RMS_4_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140696" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831946" />
+  </Sample>
+
+  <Sample iid="GSM9652008">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_5</Title>
+    <Accession database="GEO">GSM9652008</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_5
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652008/suppl/GSM9652008_PMS_RMS_5_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140695" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831947" />
+  </Sample>
+
+  <Sample iid="GSM9652009">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_6</Title>
+    <Accession database="GEO">GSM9652009</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_6
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652009/suppl/GSM9652009_PMS_RMS_6_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140694" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831948" />
+  </Sample>
+
+  <Sample iid="GSM9652010">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_7</Title>
+    <Accession database="GEO">GSM9652010</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_7
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652010/suppl/GSM9652010_PMS_RMS_7_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140693" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831949" />
+  </Sample>
+
+  <Sample iid="GSM9652011">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_8</Title>
+    <Accession database="GEO">GSM9652011</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_8
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652011/suppl/GSM9652011_PMS_RMS_8_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140692" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831950" />
+  </Sample>
+
+  <Sample iid="GSM9652012">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_RMS_9</Title>
+    <Accession database="GEO">GSM9652012</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: RMS_9
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652012/suppl/GSM9652012_PMS_RMS_9_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140691" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831951" />
+  </Sample>
+
+  <Sample iid="GSM9652013">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_1</Title>
+    <Accession database="GEO">GSM9652013</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_1
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652013/suppl/GSM9652013_PMS_SPMS_1_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140690" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831952" />
+  </Sample>
+
+  <Sample iid="GSM9652014">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_2</Title>
+    <Accession database="GEO">GSM9652014</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_2
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652014/suppl/GSM9652014_PMS_SPMS_2_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140689" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831953" />
+  </Sample>
+
+  <Sample iid="GSM9652015">
+    <Status database="GEO">
+      <Submission-Date>2026-04-07</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_3</Title>
+    <Accession database="GEO">GSM9652015</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.
+Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_3
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9652nnn/GSM9652015/suppl/GSM9652015_PMS_SPMS_3_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57140688" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32831954" />
+  </Sample>
+
+  <Sample iid="GSM9677400">
+    <Status database="GEO">
+      <Submission-Date>2026-04-16</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_PPMS_6</Title>
+    <Accession database="GEO">GSM9677400</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+A minimum of 3 ml fresh CSF was centrifuged, and the supernatant was frozen separately. Fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.The fresh PMS CSF samples were processed individually using the Single Cell 5’ Library Kit with a single index.
+Single Cell 5’ Library Kit (10x Genomics)
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: PPMS_6
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9677nnn/GSM9677400/suppl/GSM9677400_PPMS_6_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57305456" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32978842" />
+  </Sample>
+
+  <Sample iid="GSM9677401">
+    <Status database="GEO">
+      <Submission-Date>2026-04-16</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_4</Title>
+    <Accession database="GEO">GSM9677401</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+A minimum of 3 ml fresh CSF was centrifuged, and the supernatant was frozen separately. Fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.The fresh PMS CSF samples were processed individually using the Single Cell 5’ Library Kit with a single index.
+Single Cell 5’ Library Kit (10x Genomics)
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_4
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9677nnn/GSM9677401/suppl/GSM9677401_SPMS_4_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57305455" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32978843" />
+  </Sample>
+
+  <Sample iid="GSM9677402">
+    <Status database="GEO">
+      <Submission-Date>2026-04-16</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_4_1</Title>
+    <Accession database="GEO">GSM9677402</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+A minimum of 3 ml fresh CSF was centrifuged, and the supernatant was frozen separately. Fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.The fresh PMS CSF samples were processed individually using the Single Cell 5’ Library Kit with a single index.
+Single Cell 5’ Library Kit (10x Genomics)
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_4_1
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9677nnn/GSM9677402/suppl/GSM9677402_SPMS_4_1_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57305454" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32978844" />
+  </Sample>
+
+  <Sample iid="GSM9677403">
+    <Status database="GEO">
+      <Submission-Date>2026-04-16</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_5</Title>
+    <Accession database="GEO">GSM9677403</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+A minimum of 3 ml fresh CSF was centrifuged, and the supernatant was frozen separately. Fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.The fresh PMS CSF samples were processed individually using the Single Cell 5’ Library Kit with a single index.
+Single Cell 5’ Library Kit (10x Genomics)
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_5
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9677nnn/GSM9677403/suppl/GSM9677403_SPMS_5_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57305453" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32978845" />
+  </Sample>
+
+  <Sample iid="GSM9677404">
+    <Status database="GEO">
+      <Submission-Date>2026-04-16</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_6</Title>
+    <Accession database="GEO">GSM9677404</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+A minimum of 3 ml fresh CSF was centrifuged, and the supernatant was frozen separately. Fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.The fresh PMS CSF samples were processed individually using the Single Cell 5’ Library Kit with a single index.
+Single Cell 5’ Library Kit (10x Genomics)
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_6
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9677nnn/GSM9677404/suppl/GSM9677404_SPMS_6_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57305452" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32978846" />
+  </Sample>
+
+  <Sample iid="GSM9677405">
+    <Status database="GEO">
+      <Submission-Date>2026-04-16</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>human_CSF_SPMS_7</Title>
+    <Accession database="GEO">GSM9677405</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>CSF</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+CSF
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+A minimum of 3 ml fresh CSF was centrifuged, and the supernatant was frozen separately. Fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library &amp; Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.The fresh PMS CSF samples were processed individually using the Single Cell 5’ Library Kit with a single index.
+Single Cell 5’ Library Kit (10x Genomics)
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: SPMS_7
+    </Description>
+    <Data-Processing>
+Seurat v5.1.0 in R v4.5.1
+Assembly: GRCh38
+Supplementary files format and content: h5 files for each sample
+    </Data-Processing>
+    <Platform-Ref ref="GPL30173" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>NextSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="H5">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9677nnn/GSM9677405/suppl/GSM9677405_SPMS_7_filtered_feature_bc_matrix.h5
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN57305451" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX32978847" />
+  </Sample>
+
+  <Series iid="GSE328265">
+    <Status database="GEO">
+      <Submission-Date>2026-04-16</Submission-Date>
+      <Release-Date>2026-05-17</Release-Date>
+      <Last-Update-Date>2026-05-18</Last-Update-Date>
+    </Status>
+    <Title>A CSF Disease-Associated Macrophage Signature defines Progressive Multiple Sclerosis</Title>
+    <Accession database="GEO">GSE328265</Accession>
+    <Pubmed-ID>42129775</Pubmed-ID>
+    <Web-Link>https://link.springer.com/article/10.1186/s12974-026-03861-9#</Web-Link>
+    <Summary>
+This SuperSeries is composed of the SubSeries listed below.
+    </Summary>
+    <Overall-Design>
+Refer to individual Series
+    </Overall-Design>
+    <Type>Expression profiling by high throughput sequencing</Type>
+    <Contact-Ref ref="contrib1" />
+    <Sample-Ref ref="GSM9651991" />
+    <Sample-Ref ref="GSM9651992" />
+    <Sample-Ref ref="GSM9651993" />
+    <Sample-Ref ref="GSM9651994" />
+    <Sample-Ref ref="GSM9651995" />
+    <Sample-Ref ref="GSM9651996" />
+    <Sample-Ref ref="GSM9651997" />
+    <Sample-Ref ref="GSM9651998" />
+    <Sample-Ref ref="GSM9651999" />
+    <Sample-Ref ref="GSM9652000" />
+    <Sample-Ref ref="GSM9652001" />
+    <Sample-Ref ref="GSM9652002" />
+    <Sample-Ref ref="GSM9652003" />
+    <Sample-Ref ref="GSM9652004" />
+    <Sample-Ref ref="GSM9652005" />
+    <Sample-Ref ref="GSM9652006" />
+    <Sample-Ref ref="GSM9652007" />
+    <Sample-Ref ref="GSM9652008" />
+    <Sample-Ref ref="GSM9652009" />
+    <Sample-Ref ref="GSM9652010" />
+    <Sample-Ref ref="GSM9652011" />
+    <Sample-Ref ref="GSM9652012" />
+    <Sample-Ref ref="GSM9652013" />
+    <Sample-Ref ref="GSM9652014" />
+    <Sample-Ref ref="GSM9652015" />
+    <Sample-Ref ref="GSM9677400" />
+    <Sample-Ref ref="GSM9677401" />
+    <Sample-Ref ref="GSM9677402" />
+    <Sample-Ref ref="GSM9677403" />
+    <Sample-Ref ref="GSM9677404" />
+    <Sample-Ref ref="GSM9677405" />
+    <Supplementary-Data type="TAR">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE328nnn/GSE328265/suppl/GSE328265_RAW.tar
+    </Supplementary-Data>
+    <Relation type="SuperSeries of" target="GSE327243" />
+    <Relation type="SuperSeries of" target="GSE328264" />
+    <Relation type="BioProject" target="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1454431" />
+  </Series>
+
+</MINiML>
