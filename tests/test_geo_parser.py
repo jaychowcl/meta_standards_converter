@@ -134,6 +134,22 @@ class TestGEOParser(unittest.TestCase):
         self.assertEqual(["GPL30173"], [platform["iid"] for platform in package["platform"]])
         self.assertEqual(["GEO"], [database["iid"] for database in package["database"]])
 
+    def test_parse_logs_structural_counts_without_xml_payload(self):
+        xml = miniml_body(
+            '<Platform iid="GPL1"><Title>secret-title</Title></Platform>'
+            '<Sample iid="GSM1"><Platform-Ref ref="GPL1" /></Sample>'
+            '<Series iid="GSE1"><Sample-Ref ref="GSM1" /></Series>'
+        )
+
+        with self.assertLogs(
+            "meta_standards_converter.geo_handlers.geo_parser", level="INFO"
+        ) as logs:
+            GEOParser().parse(xml)
+
+        output = "\n".join(logs.output)
+        self.assertIn("MINiML parse stats packages=1 series=1 samples=1 platforms=1", output)
+        self.assertNotIn("secret-title", output)
+
     @patch("meta_standards_converter.geo_handlers.geo_parser.GEOWebFetcher")
     def test_related_series_are_fetched_recursively_and_deduplicated(self, fetcher_mock):
         root_xml = miniml_body(

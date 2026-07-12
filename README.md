@@ -140,7 +140,10 @@ CLI behavior:
 - Multiple inputs are processed in order.
 - A failed input is logged, later inputs continue, and the command exits with status `1`.
 - Fully successful runs exit with status `0`.
-- Default logging emits warnings and errors only.
+- Default CLI logging emits warnings and errors only. Library callers can
+  capture structured INFO/DEBUG telemetry for request attempts and durations,
+  GEO fetches, MINiML structural counts, related-series progress, and
+  enrichment totals; payloads and credentials are not logged.
 
 ### Python
 

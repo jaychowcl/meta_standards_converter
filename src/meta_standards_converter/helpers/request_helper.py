@@ -13,11 +13,16 @@ Shared HTTP request helpers for external metadata services.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 import threading
 import time
 from typing import Callable
+from urllib.parse import urlsplit
 
 import requests
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -62,7 +67,25 @@ class RateLimitedRequester:
         response = None
         for attempt in range(self.settings.max_retries + 1):
             self._wait_for_service_slot()
+            started = self._clock()
+            host = urlsplit(url).hostname or ""
+            logger.debug(
+                "HTTP request service=%s host=%s attempt=%s timeout=%s",
+                self.service,
+                host,
+                attempt + 1,
+                kwargs.get("timeout"),
+            )
             response = self._get(url, **kwargs)
+            elapsed = self._clock() - started
+            logger.debug(
+                "HTTP response service=%s host=%s attempt=%s status=%s elapsed_seconds=%.3f",
+                self.service,
+                host,
+                attempt + 1,
+                response.status_code,
+                elapsed,
+            )
 
             if response.status_code not in self.settings.retry_statuses:
                 return response
@@ -71,7 +94,16 @@ class RateLimitedRequester:
                 response.raise_for_status()
                 return response
 
-            self._sleep(self._retry_delay(response=response, attempt=attempt))
+            delay = self._retry_delay(response=response, attempt=attempt)
+            logger.info(
+                "HTTP retry service=%s host=%s status=%s next_attempt=%s delay_seconds=%.3f",
+                self.service,
+                host,
+                response.status_code,
+                attempt + 2,
+                delay,
+            )
+            self._sleep(delay)
 
         return response
 

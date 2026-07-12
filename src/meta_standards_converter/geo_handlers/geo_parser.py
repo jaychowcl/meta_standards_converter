@@ -13,10 +13,15 @@ Parser for GEO MINiML XML data.
 from __future__ import annotations
 
 import re
+import logging
+import time
 import xml.etree.ElementTree as ET
 from collections import deque
 
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
+
+
+logger = logging.getLogger(__name__)
 
 
 class GEOParser:
@@ -91,6 +96,7 @@ class GEOParser:
         remove_empty: bool = False,
         related_series: bool = False,
     ) -> list[dict]:
+        started = time.monotonic()
         parsed = self._parse(miniml=miniml)
 
         if related_series:
@@ -98,6 +104,17 @@ class GEOParser:
 
         if remove_empty:
             parsed = [self.remove_empty_fields(series_package) for series_package in parsed]
+
+        logger.info(
+            "MINiML parse stats packages=%s series=%s samples=%s platforms=%s related_series=%s remove_empty=%s elapsed_seconds=%.3f",
+            len(parsed),
+            sum(1 for package in parsed if isinstance(package.get("series"), dict)),
+            sum(len(package.get("sample", [])) for package in parsed),
+            sum(len(package.get("platform", [])) for package in parsed),
+            related_series,
+            remove_empty,
+            time.monotonic() - started,
+        )
 
         return parsed
 
@@ -140,6 +157,12 @@ class GEOParser:
 
         while pending_gses:
             gse = pending_gses.popleft()
+            logger.info(
+                "Related-series progress accession=%s pending=%s seen=%s",
+                gse,
+                len(pending_gses),
+                len(seen_gses),
+            )
             try:
                 related_miniml = self.geo_fetcher.fetch_gse_miniml(gse=gse)
                 parsed = self._parse(miniml=related_miniml)

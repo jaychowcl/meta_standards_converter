@@ -86,6 +86,12 @@ tests/GSE328265_family.xml
 - The `geo2ae` console script points to `meta_standards_converter.cli.geo2ae:main`; `geo2json` points to `meta_standards_converter.cli.geo2json:main`; placeholder `json2h5ad` points to `meta_standards_converter.cli.json2h5ad:main`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp` and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
+- Library logging propagates safe structured telemetry to caller handlers.
+  DEBUG records service/host, attempt, status, timeout, and duration without URL
+  queries or request parameters. INFO records retries, GEO fetch sizes/duration,
+  MINiML structural counts, related-series progress, and enrichment hit/failure
+  totals. XML, parsed metadata, publication content, tokens, and credentials are
+  never logged.
 - `geo2ae.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
 - `geo2json.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
 - `json2h5ad.convert()` validates a parsed MINiML JSON file path, then raises `NotImplementedError` until matrix fetching/parsing and AnnData writing are implemented.

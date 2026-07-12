@@ -139,6 +139,27 @@ class TestMINiMLEnricher(unittest.TestCase):
         self.assertEqual([{"run": "SRR1", "study": None}], enriched["sample"][0]["sra_run"])
         self.assertNotIn("ena_accession", enriched["sample"][0])
 
+    def test_enrich_logs_counts_and_failures_without_metadata_payload(self):
+        pubmed_fetcher = Mock()
+        pubmed_fetcher.pubmed_summary.side_effect = requests.RequestException("secret")
+        data = {
+            "series": {"pubmed_id": ["123"], "summary": "do-not-log"},
+            "sample": [],
+        }
+
+        with self.assertLogs(
+            "meta_standards_converter.enrichers.miniml_enricher", level="INFO"
+        ) as logs:
+            MINiMLEnricher(
+                pubmed_fetcher=pubmed_fetcher, insdc_fetcher=Mock()
+            ).enrich(data)
+
+        output = "\n".join(logs.output)
+        self.assertIn("MINiML enrichment stats samples=0 pubmed_ids=1", output)
+        self.assertIn("pubmed_failures=1", output)
+        self.assertNotIn("do-not-log", output)
+        self.assertNotIn("secret", output)
+
 
 if __name__ == "__main__":
     unittest.main()

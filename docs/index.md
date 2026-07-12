@@ -30,7 +30,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: runtime-behavior
   title: Runtime Behavior
   anchor: runtime-behavior
-  keywords: dependencies, console scripts, network, outputs
+  keywords: dependencies, console scripts, network, outputs, logging, DEBUG, INFO, request duration, parse stats, enrichment stats, safe telemetry
 
 - id: end-to-end-geo2ae-flow
   title: End-To-End geo2ae Flow

@@ -11,9 +11,14 @@ Fetches data from GEO
 """
 
 import io
+import logging
 import tarfile
+import time
 
 from meta_standards_converter.helpers.request_helper import RateLimitedRequester
+
+
+logger = logging.getLogger(__name__)
 
 
 class GEOWebFetcher:
@@ -49,6 +54,8 @@ class GEOWebFetcher:
         """
         # create url for fetching
         url = self.url_gse_miniml(gse=gse)
+        started = time.monotonic()
+        logger.info("GEO MINiML fetch started accession=%s", gse)
 
         # use url to fetch miniml file
         response = self.requester.get(url)
@@ -59,5 +66,13 @@ class GEOWebFetcher:
         with tarfile.open(fileobj=fileobj, mode="r:gz") as tar:
             miniml_file = tar.extractfile(f"{gse}_family.xml")
             miniml = miniml_file.read().decode("utf-8")
+
+        logger.info(
+            "GEO MINiML fetch completed accession=%s archive_bytes=%s xml_characters=%s elapsed_seconds=%.3f",
+            gse,
+            len(response.content),
+            len(miniml),
+            time.monotonic() - started,
+        )
 
         return miniml

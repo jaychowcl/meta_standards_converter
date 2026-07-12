@@ -166,6 +166,33 @@ class TestRateLimitedRequester(unittest.TestCase):
         self.assertEqual([0.5], fake_time.sleeps)
         self.assertEqual(2, get.call_count)
 
+    def test_get_logs_safe_attempt_status_and_duration_without_parameters(self):
+        fake_time = FakeTime()
+        get = Mock(return_value=response(200))
+        requester = RateLimitedRequester(
+            service="safe_service",
+            settings=RequestSettings(request_delay=0),
+            get=get,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+
+        with self.assertLogs(
+            "meta_standards_converter.helpers.request_helper", level="DEBUG"
+        ) as logs:
+            requester.get(
+                "https://example.org/data?api_key=do-not-log",
+                params={"token": "do-not-log"},
+            )
+
+        output = "\n".join(logs.output)
+        self.assertIn(
+            "HTTP request service=safe_service host=example.org attempt=1", output
+        )
+        self.assertIn("status=200", output)
+        self.assertIn("elapsed_seconds=", output)
+        self.assertNotIn("do-not-log", output)
+
 
 if __name__ == "__main__":
     unittest.main()
