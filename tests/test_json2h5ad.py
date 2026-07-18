@@ -11,6 +11,7 @@ import os
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -20,6 +21,8 @@ if SRC not in sys.path:
 
 from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     Asset,
+    AssetDownloader,
+    AssetManifest,
     ConversionResult,
     RawProcessingResult,
     SourcePlanner,
@@ -99,6 +102,66 @@ class TestSourcePlanner(unittest.TestCase):
         )
 
         self.assertEqual("manifest.h5ad", plan["GSM1"].path)
+
+
+class TestAssetInputs(unittest.TestCase):
+    def test_manifest_loads_processed_and_grouped_raw_assets(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "assets.csv")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write(
+                    "scope_id,path,kind,role,orientation,read,lane\n"
+                    "GSM1,/data/GSM1.h5ad,h5ad,primary,auto,,\n"
+                    "GSM2,https://example/GSM2_R1.fastq.gz,raw,primary,auto,1,L001\n"
+                    "GSM2,https://example/GSM2_R2.fastq.gz,raw,primary,auto,2,L001\n"
+                )
+
+            assets = AssetManifest().load(path)
+
+            self.assertEqual(2, len(assets))
+            self.assertEqual("manifest", assets[0].source)
+            self.assertEqual("h5ad", assets[0].kind)
+            self.assertEqual(2, len(assets[1].members))
+            self.assertEqual("2", assets[1].members[1]["read"])
+
+    def test_cli_asset_spec_infers_kind(self):
+        asset = AssetManifest().parse_spec("GSM1=/data/GSM1.h5ad")
+
+        self.assertEqual(Asset("GSM1", "/data/GSM1.h5ad", "h5ad", source="cli"), asset)
+
+    def test_streaming_downloader_caches_and_verifies_md5(self):
+        class Response:
+            def raise_for_status(self):
+                return None
+
+            def iter_content(self, chunk_size):
+                return iter([b"abc", b"123"])
+
+        class Session:
+            def __init__(self):
+                self.calls = []
+
+            def get(self, url, **kwargs):
+                self.calls.append((url, kwargs))
+                return Response()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            session = Session()
+            downloader = AssetDownloader(cache_dir=tmpdir, session=session)
+
+            first = downloader.localize(
+                "https://example/data.h5ad",
+                md5="e99a18c428cb38d5f260853678922e03",
+            )
+            second = downloader.localize(
+                "https://example/data.h5ad",
+                md5="e99a18c428cb38d5f260853678922e03",
+            )
+
+            self.assertEqual(first, second)
+            self.assertEqual(b"abc123", Path(first).read_bytes())
+            self.assertEqual(1, len(session.calls))
+            self.assertTrue(session.calls[0][1]["stream"])
 
 
 class TestConversionContract(unittest.TestCase):

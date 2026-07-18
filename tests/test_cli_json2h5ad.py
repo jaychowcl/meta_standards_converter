@@ -21,9 +21,66 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.cli.json2h5ad import main  # noqa: E402
+from meta_standards_converter.converters.json2h5ad import ConversionResult  # noqa: E402
 
 
 class TestJSON2H5ADCLI(unittest.TestCase):
+    @patch("meta_standards_converter.cli.json2h5ad.json2h5ad")
+    def test_workflow_and_asset_options_are_forwarded(self, json2h5ad_mock):
+        converter = json2h5ad_mock.return_value
+        converter.convert.return_value = "GSE1.h5ad"
+
+        with redirect_stdout(StringIO()):
+            exit_code = main([
+                "GSE1.json",
+                "--asset-manifest", "assets.csv",
+                "--asset", "GSM1=local.h5ad",
+                "--force-reprocess",
+                "--pipeline", "scrnaseq",
+                "--genome", "GRCh38",
+                "--profile", "apptainer",
+                "--revision", "4.1.0",
+                "--params-file", "params.json",
+                "--nextflow-config", "nextflow.config",
+                "--work-dir", "work",
+                "--resume",
+                "--overwrite",
+                "--matrix-orientation", "genes-by-observations",
+            ])
+
+        self.assertEqual(0, exit_code)
+        converter.convert.assert_called_once_with(
+            json_path="GSE1.json",
+            out=".",
+            asset_manifest="assets.csv",
+            asset_specs=["GSM1=local.h5ad"],
+            force_reprocess=True,
+            pipeline="scrnaseq",
+            genome="GRCh38",
+            profile="apptainer",
+            revision="4.1.0",
+            params_file="params.json",
+            nextflow_config="nextflow.config",
+            work_dir="work",
+            resume=True,
+            overwrite=True,
+            matrix_orientation="genes-by-observations",
+        )
+
+    @patch("meta_standards_converter.cli.json2h5ad.json2h5ad")
+    def test_partial_conversion_returns_one(self, json2h5ad_mock):
+        converter = json2h5ad_mock.return_value
+        converter.convert.return_value = ConversionResult(
+            study_accession="GSE1",
+            sample_h5ads={"GSM1": "GSM1.h5ad"},
+            failures=["combined output incompatible"],
+        )
+
+        with redirect_stdout(StringIO()):
+            exit_code = main(["GSE1.json"])
+
+        self.assertEqual(1, exit_code)
+
     @patch("meta_standards_converter.cli.json2h5ad.json2h5ad")
     def test_one_json_uses_defaults(self, json2h5ad_mock):
         converter = json2h5ad_mock.return_value
