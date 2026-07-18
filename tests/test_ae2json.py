@@ -22,6 +22,7 @@ if SRC not in sys.path:
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
+from meta_standards_converter.ae_handlers.ae_parser import AEParser  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
     MAGETabInput,
@@ -103,6 +104,31 @@ def resolved_input(idf=IDF, sdrfs=None):
 
 
 class TestAE2JSONConverter(unittest.TestCase):
+    def test_recognizes_all_generated_single_cell_comment_headers(self):
+        generated_headers = (
+            "Comment[cdna read]",
+            "Comment[cdna read offset]",
+            "Comment[cdna read size]",
+            "Comment[cell barcode offset]",
+            "Comment[cell barcode read]",
+            "Comment[cell barcode size]",
+            "Comment[end bias]",
+            "Comment[input molecule]",
+            "Comment[library construction]",
+            "Comment[primer]",
+            "Comment[LIBRARY_STRAND]",
+            "Comment[sample barcode offset]",
+            "Comment[sample barcode read]",
+            "Comment[sample barcode size]",
+            "Comment[single cell isolation]",
+            "Comment[spike in]",
+            "Comment[umi barcode offset]",
+            "Comment[umi barcode read]",
+            "Comment[umi barcode size]",
+        )
+
+        self.assertTrue(all(AEParser()._known_sdrf_header(label) for label in generated_headers))
+
     def test_maps_idf_and_sdrf_to_miniml_compatible_package(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()

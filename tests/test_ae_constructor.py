@@ -65,6 +65,24 @@ class TestIDFConstructor(unittest.TestCase):
         self.assertEqual(["Term Source File", "https://example.org/efo-source.owl"], self.row(rows, "Term Source File"))
         self.assertEqual(["Term Source Version", "2026-07-01"], self.row(rows, "Term Source Version"))
 
+    def test_term_sources_retain_all_declared_databases_and_explicit_blank_version(self):
+        rows = IDFConstructor()._idf_term_source(
+            magetab=[["Protocol Type Term Source REF", "EFO"]],
+            data={
+                "database": [
+                    {"iid": "EFO", "url": "https://example.org/efo.owl"},
+                    {"iid": "ArrayExpress", "url": "https://example.org/arrayexpress"},
+                ]
+            },
+        )
+
+        self.assertEqual(["Term Source Name", "ArrayExpress", "EFO"], self.row(rows, "Term Source Name"))
+        self.assertEqual(
+            ["Term Source File", "https://example.org/arrayexpress", "https://example.org/efo.owl"],
+            self.row(rows, "Term Source File"),
+        )
+        self.assertEqual(["Term Source Version", None, None], self.row(rows, "Term Source Version"))
+
     def test_geoprotocols2efo_still_rejects_blank_protocol(self):
         with self.assertRaises(ValueError):
             Harmonizer().geoprotocols2efo(protocol_type="")
@@ -78,6 +96,11 @@ class TestIDFConstructor(unittest.TestCase):
             ["nucleic acid sequencing protocol", "EFO", "EFO_0004170"],
             Harmonizer().geoprotocols2efo(protocol_type="Nucleic-Acid-Sequencing-Protocol"),
         )
+        self.assertEqual(
+            ["nucleic acid library construction protocol", "EFO", "EFO_0004184"],
+            Harmonizer().geoprotocols2efo(protocol_type="Library-Construction-Protocol"),
+        )
+        self.assertEqual("3.90.0", Harmonizer().ontologies["EFO"]["Term Source Version"])
 
     def test_idf_protocols_from_registry_uses_harmonizer_fallback(self):
         registry = ProtocolRegistry(series_accession="GSE1")
@@ -1013,6 +1036,14 @@ class TestIDFConstructor(unittest.TestCase):
         )
         self.assertEqual(["Person Affiliation", None], self.row(rows, "Person Affiliation"))
 
+    def test_person_missing_address_does_not_copy_affiliation(self):
+        rows = IDFConstructor()._idf_persons(
+            {"contributor": [{"person": {"last": "Petel"}, "organization": "Institute"}]}
+        )
+
+        self.assertEqual(["Person Address", None], self.row(rows, "Person Address"))
+        self.assertEqual(["Person Affiliation", "Institute"], self.row(rows, "Person Affiliation"))
+
     def test_idf_experimental_uses_tags_with_multiple_labels_as_factors(self):
         rows = IDFConstructor()._idf_experimental(
             {
@@ -1835,9 +1866,51 @@ class TestAEConstructor(unittest.TestCase):
 
         self.assertTrue(set(refs).issubset(protocol_names))
         self.assertIn(
+            "RNA-Seq | transcriptomic | cDNA | PAIRED | RNA-Seq | TRANSCRIPTOMIC | cDNA",
+            set(descriptions.values()),
+        )
+        self.assertNotIn(
             "extract | RNA-Seq | transcriptomic | cDNA | PAIRED | RNA-Seq | TRANSCRIPTOMIC | cDNA",
             set(descriptions.values()),
         )
+
+    def test_magetab_sequencing_keeps_extraction_library_and_scan_protocols_distinct(self):
+        data = {
+            "series": {
+                "accession": [{"value": "E-MTAB-1"}],
+                "sample_ref": [{"ref": "sample-1"}],
+                "title": "example",
+            },
+            "sample": [
+                {
+                    "iid": "sample-1",
+                    "library_layout": "PAIRED",
+                    "library_strategy": "RNA-Seq",
+                    "library_source": "TRANSCRIPTOMIC",
+                    "library_selection": "cDNA",
+                    "scan_protocol": "SystemBio Pipeline",
+                    "channel": [{"extract_protocol": "Extract RNA"}],
+                }
+            ],
+            "platform": [],
+            "contributor": [],
+        }
+
+        magetab = AEConstructor().miniml2magetab(data=data)
+        types = self.row(magetab, "Protocol Type")[1:]
+        descriptions = self.row(magetab, "Protocol Description")[1:]
+        refs = self.non_empty_sdrf_protocol_refs(self.row(magetab, "SDRF File")[1])
+        names = self.row(magetab, "Protocol Name")[1:]
+        by_description = dict(zip(descriptions, zip(names, types)))
+
+        self.assertEqual("nucleic acid extraction protocol", by_description["Extract RNA"][1])
+        self.assertEqual(
+            "nucleic acid library construction protocol",
+            by_description["PAIRED | RNA-Seq | TRANSCRIPTOMIC | cDNA"][1],
+        )
+        self.assertEqual("array scanning and feature extraction protocol", by_description["SystemBio Pipeline"][1])
+        self.assertEqual(1, types.count("nucleic acid extraction protocol"))
+        self.assertIn(by_description["SystemBio Pipeline"][0], refs)
 
     def test_magetab_sequencing_includes_required_protocol_defs_and_refs(self):
         data = {
