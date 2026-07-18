@@ -73,11 +73,11 @@ class json2ae(JSONHandler):
         for index, package in enumerate(packages, start=1):
             if not isinstance(package, dict):
                 raise ValueError(f"Parsed MINiML package {index} must be a JSON object.")
-            if not self._geo_series_accession(package):
-                raise ValueError(f"Parsed MINiML package {index} has no GEO Series accession.")
+            if not self._usable_study_accession(package):
+                raise ValueError(f"Parsed MINiML package {index} has no usable study accession.")
         return packages
 
-    def _geo_series_accession(self, package: dict) -> str | None:
+    def _usable_study_accession(self, package: dict) -> str | None:
         series_values = package.get("series")
         if not isinstance(series_values, list):
             series_values = [series_values]
@@ -90,6 +90,10 @@ class json2ae(JSONHandler):
             for accession in accessions:
                 value = accession.get("value") if isinstance(accession, dict) else accession
                 normalized = str(value).strip().upper() if value is not None else ""
-                if normalized.startswith("GSE") and normalized[3:].isdigit():
+                if normalized.startswith("GSE"):
+                    if normalized[3:].isdigit():
+                        return normalized
+                    continue
+                if normalized:
                     return normalized
         return None

@@ -39,6 +39,7 @@ DEFAULT_REQUEST_SETTINGS = {
     "ncbi_eutils": RequestSettings(request_delay=0.5),
     "geo_ftp": RequestSettings(request_delay=1.0),
     "ena_portal": RequestSettings(request_delay=1.0),
+    "biostudies": RequestSettings(request_delay=1.0),
 }
 
 

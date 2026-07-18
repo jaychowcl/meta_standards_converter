@@ -59,6 +59,7 @@ Repository = "https://github.com/jaychowcl/meta_standards_converter"
 Issues = "https://github.com/jaychowcl/meta_standards_converter/issues"
 
 [project.scripts]
+ae2json = "meta_standards_converter.cli.ae2json:main"
 geo2ae = "meta_standards_converter.cli.geo2ae:main"
 geo2json = "meta_standards_converter.cli.geo2json:main"
 json2ae = "meta_standards_converter.cli.json2ae:main"

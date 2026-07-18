@@ -122,7 +122,7 @@ class TestJSON2AEConverter(unittest.TestCase):
     def test_convert_rejects_package_without_geo_series_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, {"series": {"title": "Missing accession"}})
-            with self.assertRaisesRegex(ValueError, "package 1 has no GEO Series accession"):
+            with self.assertRaisesRegex(ValueError, "package 1 has no usable study accession"):
                 json2ae().convert(path)
 
     def test_convert_accepts_non_geo_study_accession(self):
