@@ -21,6 +21,7 @@ if SRC not in sys.path:
 from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     Asset,
     ConversionResult,
+    RawProcessingResult,
     SourcePlanner,
     json2h5ad,
 )
@@ -255,6 +256,73 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
             self.assertTrue(result.partial)
             self.assertIn("organisms", result.failures[0])
+
+    def test_rnaseq_counts_select_sample_column_and_add_tpm_layer(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            counts = os.path.join(tmpdir, "salmon.merged.gene_counts.tsv")
+            tpm = os.path.join(tmpdir, "salmon.merged.gene_tpm.tsv")
+            with open(counts, "w", encoding="utf-8") as handle:
+                handle.write("gene\tGSM1\tGSM2\nENSG1\t1\t9\nENSG2\t2\t8\n")
+            with open(tpm, "w", encoding="utf-8") as handle:
+                handle.write("gene\tGSM1\tGSM2\nENSG1\t3\t7\nENSG2\t4\t6\n")
+            json_path = self._write_json(tmpdir, package())
+            asset = Asset(
+                "GSM1",
+                counts,
+                "matrix",
+                role="rnaseq_counts",
+                source="nfcore",
+                features_path=tpm,
+                orientation="genes-by-observations",
+            )
+
+            result = json2h5ad().convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+                explicit_assets=[asset],
+            )
+
+            adata = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            self.assertEqual((1, 2), adata.shape)
+            self.assertEqual([[1, 2]], adata.X.toarray().tolist())
+            self.assertEqual([[3, 4]], adata.layers["tpm"].toarray().tolist())
+
+    def test_raw_assets_are_replaced_by_nfcore_outputs(self):
+        class FakeRunner:
+            def __init__(self, output):
+                self.output = output
+                self.calls = []
+
+            def process(self, assets, **kwargs):
+                self.calls.append((assets, kwargs))
+                return RawProcessingResult(
+                    assets={"GSM1": Asset("GSM1", self.output, "h5ad", source="nfcore")},
+                    retained_h5ads=[self.output],
+                )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pipeline_h5ad = os.path.join(tmpdir, "pipeline.h5ad")
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1]]),
+                obs=self.pandas.DataFrame(index=["cell"]),
+                var=self.pandas.DataFrame(index=["ENSG1"]),
+            ).write_h5ad(pipeline_h5ad)
+            data = package()
+            json_path = self._write_json(tmpdir, data)
+            runner = FakeRunner(pipeline_h5ad)
+
+            result = json2h5ad(pipeline_runner=runner).convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+                force_reprocess=True,
+                pipeline="scrnaseq",
+                genome="GRCh38",
+            )
+
+            self.assertEqual([pipeline_h5ad], result.retained_h5ads)
+            self.assertEqual("raw", runner.calls[0][0]["GSM1"].kind)
+            self.assertEqual("scrnaseq", runner.calls[0][1]["pipeline"])
+            self.assertEqual("GRCh38", runner.calls[0][1]["genome"])
 
 
 if __name__ == "__main__":
