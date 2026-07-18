@@ -463,8 +463,8 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         self.assertIn("r2.fastq.gz", sdrf[1])
         self.assertIn("i1.fastq.gz", sdrf[1])
         self.assertIn("counts1.tsv.gz", sdrf[1])
-        self.assertNotIn("counts2.mtx.gz", sdrf[1])
-        self.assertNotIn("other.h5ad", sdrf[1])
+        self.assertIn("counts2.mtx.gz", sdrf[1])
+        self.assertIn("other.h5ad", sdrf[1])
 
     def test_sdrf_uses_enriched_sra_runs_without_fetching(self):
         fetcher = Mock()
@@ -576,8 +576,8 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         self.assertEqual(["treated", "treated", "treated"], [self.cell(sdrf, index, "Factor Value[condition]") for index in range(1, 4)])
         self.assertNotIn("Comment[derived data file]", sdrf[0])
         for index in range(1, 4):
-            self.assertNotIn("counts1.tsv.gz", sdrf[index])
-            self.assertNotIn("counts2.mtx.gz", sdrf[index])
+            self.assertIn("counts1.tsv.gz", sdrf[index])
+            self.assertIn("counts2.mtx.gz", sdrf[index])
 
     def test_bulk_sequencing_inheritance_tree(self):
         self.assertTrue(issubclass(_BulkSequencingSDRFHandler, _SequencingSDRFHandler))
@@ -910,7 +910,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
 
         sdrf = Parent()._miniml2sdrf(base_data(sample, platform_technology="other"))
 
-        self.assertEqual("GSM1", self.cell(sdrf, 1, "Source Name"))
+        self.assertEqual("GSM'1", self.cell(sdrf, 1, "Source Name"))
         self.assertEqual("John's \"sample\"", self.cell(sdrf, 1, "Comment[Sample_source_name]"))
         self.assertEqual("John's \"sample\"", self.cell(sdrf, 1, "Characteristics[organism part]"))
         self.assertEqual('"treated"', self.cell(sdrf, 1, "Characteristics[condition]"))

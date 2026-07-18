@@ -1649,7 +1649,7 @@ class TestAEConstructor(unittest.TestCase):
 
         self.assertEqual(["Investigation Title", '"Quoted" study'], self.row(magetab, "Investigation Title"))
         self.assertEqual(
-            ["Experiment Description", "John's summary. design"],
+            ["Experiment Description", 'John\'s "summary". "design"'],
             self.row(magetab, "Experiment Description"),
         )
         self.assertEqual(["Person Last Name", '"Smith"'], self.row(magetab, "Person Last Name"))

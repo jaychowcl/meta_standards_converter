@@ -10,6 +10,7 @@
 Constructor class for ae MAGETAB idf and sdrf
 '''
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor
+from meta_standards_converter.ae_handlers.ae_roundtrip import restore_extensions, unchanged_magetab
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
 
@@ -96,6 +97,9 @@ class AEConstructor:
         """
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
+        preserved = unchanged_magetab(data)
+        if preserved is not None:
+            return preserved
         protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
         technology_type = self._detect_ae_technology(data=data)
         sdrf = self.sdrf_constructor._miniml2sdrf(
@@ -112,7 +116,7 @@ class AEConstructor:
         if sdrf_index is None:
             raise ValueError("IDF does not contain an SDRF File row.")
         idf[sdrf_index] = ["SDRF File", sdrf, *idf[sdrf_index][2:]]
-        return self._strip_quotes_from_table(idf)
+        return restore_extensions(data, idf)
 
     def _detect_ae_technology(self, data: dict) -> str:
         handler = JSONHandler()
@@ -270,7 +274,7 @@ class AEConstructor:
             rows.append([item])
             index += 1
 
-        return self._strip_quotes_from_table(rows)
+        return rows
 
     def _strip_quotes_from_table(self, rows: list) -> list:
         return [self._strip_quotes(row) for row in rows]

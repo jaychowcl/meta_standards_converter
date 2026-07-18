@@ -17,6 +17,7 @@ import os
 import re
 from urllib.parse import urlparse
 
+from meta_standards_converter.ae_handlers.ae_roundtrip import build_roundtrip
 from meta_standards_converter.ae_handlers.ae_webfetcher import MAGETabInput
 
 
@@ -94,11 +95,13 @@ class AEParser:
         samples = {}
         platforms = {}
         unmapped_columns = []
+        source_sdrfs = []
 
         for resource in source.sdrfs:
             table = self._table(resource.text, resource.name, rectangular=True)
             if len(table) < 2:
                 raise ValueError(f"MAGE-TAB SDRF {resource.name} has no data rows.")
+            source_sdrfs.append((resource.name, table))
             self._map_sdrf(
                 resource.name,
                 table[0],
@@ -142,6 +145,11 @@ class AEParser:
                 "warnings": self.warnings,
             },
         }
+        package["mage_tab"]["roundtrip"] = build_roundtrip(
+            package=package,
+            idf_rows=idf_rows,
+            sdrfs=source_sdrfs,
+        )
         return package
 
     def _table(self, text: str, name: str, rectangular: bool) -> list[list[str]]:

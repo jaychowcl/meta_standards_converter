@@ -264,6 +264,24 @@ class IDFConstructor():
 
         factors = {}
         factor_order = []
+        declared_designs = []
+        declared_factors = []
+
+        for series in self._as_list(data.get("series")):
+            if not isinstance(series, dict):
+                continue
+            for design in self._as_list(series.get("type")):
+                value = design.get("value") or design.get("name") if isinstance(design, dict) else design
+                value = clean(value)
+                if value and value not in declared_designs:
+                    declared_designs.append(value)
+            for variable in self._as_list(series.get("variable")):
+                if not isinstance(variable, dict):
+                    continue
+                name = clean(variable.get("factor") or variable.get("name") or variable.get("tag"))
+                factor_type = clean(variable.get("type")) or name
+                if name and not any(item[0].lower() == name.lower() for item in declared_factors):
+                    declared_factors.append((name, factor_type))
 
         for sample in self._as_list(data.get("sample")):
             if not isinstance(sample, dict):
@@ -291,19 +309,24 @@ class IDFConstructor():
                         factor_order.append(tag_key)
                     factors[tag_key]["values"].add(value)
 
-        factor_names = [
-            factors[tag_key]["name"]
-            for tag_key in factor_order
-            if len(factors[tag_key]["values"]) > 1
-        ]
+        factor_names = (
+            [item[0] for item in declared_factors]
+            if declared_factors
+            else [
+                factors[tag_key]["name"]
+                for tag_key in factor_order
+                if len(factors[tag_key]["values"]) > 1
+            ]
+        )
+        factor_types = [item[1] for item in declared_factors] if declared_factors else factor_names
         blanks = [None for _ in factor_names]
 
         return [
-            ["Experimental Design"],
-            ["Experimental Design Term Source REF"],
-            ["Experimental Design Term Accession Number"],
+            ["Experimental Design", *declared_designs],
+            ["Experimental Design Term Source REF", *([None] * len(declared_designs))],
+            ["Experimental Design Term Accession Number", *([None] * len(declared_designs))],
             ["Experimental Factor Name", *factor_names],
-            ["Experimental Factor Type", *factor_names],
+            ["Experimental Factor Type", *factor_types],
             ["Experimental Factor Term Source REF", *blanks],
             ["Experimental Factor Term Accession Number", *blanks],
         ]
@@ -326,10 +349,10 @@ class IDFConstructor():
 
         addresses = []
         for contributor in contributors:
-            address_parts = [
-                contributor.get("organization"),
-                *handler._flatten_values(contributor.get("address", {})),
-            ]
+            address = contributor.get("address", {})
+            address_parts = handler._flatten_values(address)
+            if not isinstance(address, str):
+                address_parts = [contributor.get("organization"), *address_parts]
             addresses.append(", ".join(str(x) for x in address_parts if x) or None)
 
         affiliations = [

@@ -288,8 +288,6 @@ class _BaseSDRFHandler():
     def render_value(self, value):
         if value is None:
             return ""
-        if isinstance(value, str):
-            return value.replace('"', "").replace("'", "")
         return value
 
     def ordered_samples(self) -> list:
@@ -706,7 +704,7 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
     def library_attrs(self, sample: dict, run: dict | None) -> list[SDRFAttr]:
         attrs = []
         values = {
-            "Comment[LIBRARY_LAYOUT]": run.get("library_layout") if run else None,
+            "Comment[LIBRARY_LAYOUT]": self.geo_first_value(sample=sample, run=run, field="library_layout"),
             "Comment[LIBRARY_SELECTION]": self.geo_first_value(sample=sample, run=run, field="library_selection"),
             "Comment[LIBRARY_SOURCE]": self.geo_first_value(sample=sample, run=run, field="library_source"),
             "Comment[LIBRARY_STRATEGY]": self.geo_first_value(sample=sample, run=run, field="library_strategy"),
@@ -821,9 +819,8 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
                     if self.arrayexpress_ftp(data_file):
                         attrs.append(SDRFAttr(label="Comment[FASTQ_URI]", value=data_file))
 
-        # Derived data file SDRF comments are intentionally disabled.
-        # for data_file in self.derived_files(sample=sample):
-        #     attrs.append(SDRFAttr(label="Comment[derived data file]", value=data_file))
+        for data_file in self.derived_files(sample=sample):
+            attrs.append(SDRFAttr(label="Derived Array Data File", value=data_file))
         return attrs
 
 
@@ -889,9 +886,8 @@ class _BulkSequencingSDRFHandler(_SequencingSDRFHandler):
             if md5:
                 attrs.append(SDRFAttr(label="Comment[MD5]", value=md5))
 
-        # Derived data file SDRF comments are intentionally disabled.
-        # for data_file in self.derived_files(sample=sample):
-        #     attrs.append(SDRFAttr(label="Comment[derived data file]", value=data_file))
+        for data_file in self.derived_files(sample=sample):
+            attrs.append(SDRFAttr(label="Derived Array Data File", value=data_file))
         return attrs
 
 
@@ -1169,15 +1165,14 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
                 raw_count += 1
                 kind = "Image File" if normalized_extension(data_file) in {".tif", ".tiff"} else "Array Data File"
                 nodes.append(self.file_node(kind=kind, value=data_file))
-            # Derived data file SDRF columns are intentionally disabled.
-            # elif file_class == "matrix_or_derived":
-            #     derived_count += 1
-            #     nodes.append(self.file_node(kind="Derived Array Data Matrix File", value=data_file))
+            elif file_class == "matrix_or_derived":
+                derived_count += 1
+                nodes.append(self.file_node(kind="Derived Array Data Matrix File", value=data_file))
             elif file_class == "sequencing_raw":
                 nodes.append(self.file_node(kind="Array Data File", value=data_file))
-            # else:
-            #     derived_count += 1
-            #     nodes.append(self.file_node(kind="Derived Array Data File", value=data_file))
+            else:
+                derived_count += 1
+                nodes.append(self.file_node(kind="Derived Array Data File", value=data_file))
 
         if raw_count > 1:
             self.audit.warnings.append(f"Sample {self.sample_accession(sample=sample)} has {raw_count} raw files; emitted {raw_count} array raw file columns.")
