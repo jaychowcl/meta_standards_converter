@@ -972,6 +972,7 @@ class JSON2H5ADConverter:
     def _normalize(self, adata, sample: dict, study_accession: str, asset: Asset) -> None:
         sample_id = self.planner.sample_accession(sample)
         metadata = self._sample_metadata(sample)
+        modality = self._sample_modality(sample)
         original_names = [str(value) for value in adata.obs_names]
         adata.obs_names = [
             value if value.endswith(f"-{sample_id}") else f"{value}-{sample_id}"
@@ -990,6 +991,7 @@ class JSON2H5ADConverter:
             "geo_source_name": metadata.get("source"),
             "geo_source_tier": asset.kind,
             "geo_source_uri": asset.path,
+            "geo_modality": modality,
         }
         for key, value in annotations.items():
             adata.obs[key] = "" if value is None else str(value)
@@ -1001,6 +1003,7 @@ class JSON2H5ADConverter:
             "source_origin": asset.source,
             "source_sha256": self._sha256(asset.path, md5=asset.md5),
             "converter_version": self._package_version(),
+            "modality": modality,
         }
         declared_reference = asset.reference or self._declared_reference(adata)
         if declared_reference:
@@ -1028,6 +1031,14 @@ class JSON2H5ADConverter:
         metadata["genotype"] = characteristics.get("genotype")
         return metadata
 
+    def _sample_modality(self, sample: dict) -> str:
+        text = json.dumps(sample).lower()
+        if any(value in text for value in ("single cell", "single-cell", "10x", "chromium", "visium")):
+            return "single_cell"
+        if any(sample.get(key) for key in ("library_source", "library_strategy", "type", "sra_run")):
+            return "bulk"
+        return "unknown"
+
     def _combine(self, adatas: dict[str, object]):
         if not adatas:
             raise ValueError("No sample H5ADs were produced.")
@@ -1049,6 +1060,14 @@ class JSON2H5ADConverter:
             raise ValueError(
                 f"Cannot combine samples with incompatible reference builds: {sorted(references)}"
             )
+        modalities = {
+            str(adata.uns.get("meta_standards_converter", {}).get("modality")).strip()
+            for adata in adatas.values()
+            if isinstance(adata.uns.get("meta_standards_converter"), dict)
+            and adata.uns["meta_standards_converter"].get("modality") not in (None, "", "unknown")
+        }
+        if len(modalities) > 1:
+            raise ValueError(f"Cannot combine incompatible expression modalities: {sorted(modalities)}")
         namespaces = {self._feature_namespace(adata) for adata in adatas.values()}
         namespaces.discard("unknown")
         if len(namespaces) > 1:
