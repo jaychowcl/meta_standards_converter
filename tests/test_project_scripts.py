@@ -23,6 +23,15 @@ if SRC not in sys.path:
 
 
 class TestProjectScripts(unittest.TestCase):
+    def test_json2ae_console_script_is_registered(self):
+        with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
+            pyproject = tomllib.load(handle)
+
+        self.assertEqual(
+            "meta_standards_converter.cli.json2ae:main",
+            pyproject["project"]["scripts"]["json2ae"],
+        )
+
     def test_json2h5ad_console_script_is_registered(self):
         with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
             pyproject = tomllib.load(handle)
