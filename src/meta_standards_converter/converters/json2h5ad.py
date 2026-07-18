@@ -286,6 +286,7 @@ class NFCoreRunner:
     """Prepare, execute, and inspect pinned nf-core RNA-seq workflows."""
 
     REVISIONS = {"scrnaseq": "4.2.0", "rnaseq": "3.26.0"}
+    HTTPS_ARCHIVE_HOSTS = {"ftp.sra.ebi.ac.uk", "ftp.ncbi.nlm.nih.gov"}
 
     def __init__(
         self,
@@ -464,7 +465,11 @@ class NFCoreRunner:
         for sample_id, asset in assets.items():
             pairs = self._fastq_pairs(sample_id, asset, require_paired=pipeline == "scrnaseq")
             for first, second in pairs:
-                row = [sample_id, first, second or ""]
+                row = [
+                    sample_id,
+                    self._workflow_uri(first),
+                    self._workflow_uri(second) if second else "",
+                ]
                 if pipeline == "rnaseq":
                     row.append("auto")
                 rows.append(row)
@@ -472,6 +477,12 @@ class NFCoreRunner:
             writer = csv.writer(handle, lineterminator="\n")
             writer.writerow(header)
             writer.writerows(rows)
+
+    def _workflow_uri(self, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme.lower() == "ftp" and (parsed.hostname or "").lower() in self.HTTPS_ARCHIVE_HOSTS:
+            return parsed._replace(scheme="https").geturl()
+        return value
 
     def _fastq_pairs(self, sample_id: str, asset: Asset, require_paired: bool) -> list[tuple[str, str | None]]:
         by_run = {}

@@ -154,6 +154,10 @@ Options:
 - `--overwrite`: replace normalized outputs; outputs are protected by default.
 - `-v`, `-vv`, `-q`, `--log-file PATH`: shared logging options.
 
+Known ENA and NCBI `ftp://` FASTQ URLs are written to nf-core samplesheets
+using the archives' equivalent `https://` endpoints, which are more reliable
+through rootless container networking.
+
 CLI behavior:
 
 - Multiple inputs are processed in order.
