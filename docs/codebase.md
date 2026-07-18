@@ -154,7 +154,8 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
        explicit H5AD > explicit matrix > JSON H5AD > JSON matrix > raw FASTQ
   -> if force_reprocess: require raw FASTQ for every sample
   -> NFCoreRunner groups raw samples by detected modality
-       -> ReferenceResolver validates explicit reference or confirmed inference
+       -> ReferenceResolver validates catalogue/custom reference and annotation combinations
+       -> AnnotationConverter validates local files and converts GFF3 to shared GTF
        -> write nf-core samplesheet and params.json
        -> subprocess.run(nextflow run nf-core/{scrnaseq|rnaseq}, shell=False)
        -> discover scrnaseq H5AD or rnaseq count/TPM matrices
@@ -176,10 +177,29 @@ When `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER` is truthy and the Docker profile i
 
 Combination preserves successful per-sample outputs when expression modalities, organisms, declared reference builds, or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
 
+<a id="reference-annotation-flow"></a>
+### Reference And Annotation Flow
+
+Raw nf-core processing accepts these reference combinations:
+
+```text
+--genome KEY
+--genome KEY --gtf annotation.gtf[.gz]
+--genome KEY --gff annotation.gff|gff3[.gz]
+--fasta genome.fa[.gz] --gtf annotation.gtf[.gz]
+--fasta genome.fa[.gz] --gff annotation.gff|gff3[.gz]
+```
+
+`ReferenceResolver.resolve()` rejects simultaneous GTF/GFF, annotation without a genome or FASTA, and FASTA without an annotation. Explicit catalogue keys bypass organism inference. Otherwise, confirmed inference supports human/taxid 9606 as `GRCh38` and mouse/taxid 10090 as `GRCm39`.
+
+`AnnotationConverter.prepare()` requires local readable reference files, resolves them to absolute paths, computes the source annotation SHA-256, and passes GTF through unchanged. GFF3 is converted with `gffread SOURCE -T -o OUTPUT` into `nfcore/{study}/reference/{source_sha256}.gtf`. Existing non-empty checksum-addressed output is reused across mixed `scrnaseq`/`rnaseq` runs and resume attempts. Conversion failures remove the temporary output and stop before Nextflow.
+
+Generated nf-core parameters include `genome` plus the explicit/effective `gtf`, or fully custom `fasta` plus `gtf`. Generated `input`, `outdir`, and reference fields override the same keys from a user params file. Annotation source path, input format, SHA-256, and effective GTF path are stored on nf-core assets and pipeline runs, then written to per-sample H5AD `uns["meta_standards_converter"]` and the JSON provenance manifest. The converter validates files and formats but cannot prove FASTA/annotation assembly or chromosome-name compatibility.
+
 <a id="rootless-json2h5ad-runtime"></a>
 ## Rootless json2h5ad Runtime
 
-`Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, and the H5AD extra. It contains no Docker daemon.
+`Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
 
 `scripts/provision-rootless-json2h5ad.sh` is the administrative boundary. It installs rootless prerequisites, creates the locked `nfcore-runner` account, allocates a non-overlapping 65,536-ID subordinate range, enables its user service, and configures ACLs. The build context is read-only to the runner; `.out/json2h5ad` is the only writable project path.
 
@@ -504,7 +524,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Adds `--out`, defaulting to `"."`.
 - Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
-- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, explicit or confirmed-inferred references, pinned nf-core execution controls, `--resume`, and `--overwrite`.
+- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, and `--overwrite`.
 
 `main(argv=None) -> int`
 
@@ -551,7 +571,8 @@ This section lists public and semi-public callables used by tests or by package 
 - `convert(...) -> ConversionResult` selects sources, runs raw workflows when required, normalizes each sample, combines compatible samples, and writes a provenance manifest.
 - `ConversionResult` exposes `combined_h5ad`, `sample_h5ads`, retained pipeline files, pipeline commands, warnings/failures, `primary_h5ad`, and `partial`.
 - `AssetManifest` loads CSV/TSV mappings or `ACCESSION=PATH` CLI specifications. Manifest entries outrank CLI entries, which outrank discovered JSON assets.
-- `ReferenceResolver` accepts `genome` or paired `fasta`/`gtf`; supported organism inference must be explicitly accepted before Nextflow starts.
+- `ReferenceResolver` accepts a catalogue `genome` with an optional GTF/GFF override or `fasta` paired with exactly one GTF/GFF; supported organism inference must be explicitly accepted before Nextflow starts.
+- `AnnotationConverter` validates local FASTA/annotation paths, records annotation SHA-256, passes GTF through, and converts GFF3 to a shared checksum-addressed GTF through `gffread`.
 - Generic delimited matrices require an explicit orientation when it cannot be represented by a study-scoped sample column.
 
 <a id="miniml-enricher"></a>
@@ -1059,8 +1080,8 @@ Important test coverage:
 - `tests/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
-- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, count/TPM matrices, sparse combination, study splitting, partial results, and raw-output reintegration.
-- `tests/test_h5ad_pipeline.py`: reference confirmation, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
+- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, count/TPM matrices, annotation provenance, sparse combination, study splitting, partial results, and raw-output reintegration.
+- `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
 - `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
 - `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.
 - `tests/test_cli_geo2ae.py`: CLI defaults, multiple accession order, aliases, keep-empty behavior, out directory forwarding, logging controls, file logging, and failure continuation.

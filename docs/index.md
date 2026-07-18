@@ -57,6 +57,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   anchor: rootless-json2h5ad-runtime
   keywords: Docker Compose, rootless, nfcore-runner, socket, security, provisioning, containers, ACL, permissions, 0660, NXF_OPTS, nextflow-tmp, noexec
 
+- id: reference-annotation-flow
+  title: Reference And Annotation Flow
+  anchor: reference-annotation-flow
+  keywords: genome, FASTA, GTF, GFF3, gffread, annotation, checksum, provenance, iGenomes, override
+
 - id: public-api-and-callable-reference
   title: Public API And Callable Reference
   anchor: public-api-and-callable-reference
@@ -129,7 +134,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: converter
   title: Converter
   anchor: converter
-  keywords: geo2ae, geo2json, json2h5ad, convert, JSON writing, H5AD, AnnData, nf-core
+  keywords: geo2ae, geo2json, json2h5ad, convert, JSON writing, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
 
 - id: miniml-enricher
   title: MINiML enricher

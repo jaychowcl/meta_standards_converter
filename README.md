@@ -138,6 +138,8 @@ gzip-compressed (`.h5ad.gz`), as commonly published by GEO.
 json2h5ad output/GSE234602.json --out output
 json2h5ad output/GSE234602.json --asset GSM9651991=local.h5ad --out output
 json2h5ad output/GSE234602.json --force-reprocess --genome GRCh38 --profile docker --out output
+json2h5ad output/GSE234602.json --force-reprocess --genome GRCh38 --gtf current.gtf.gz --out output
+json2h5ad output/GSE234602.json --force-reprocess --fasta genome.fa.gz --gff genes.gff3.gz --out output
 ```
 
 Options:
@@ -149,7 +151,8 @@ Options:
 - `--matrix-orientation`: required for ambiguous delimited matrices.
 - `--force-reprocess`: ignore processed sources and rebuild from raw FASTQs.
 - `--pipeline auto|scrnaseq|rnaseq`: automatic per-sample routing or an explicit nf-core pipeline.
-- `--genome` or `--fasta` with `--gtf`: reference selection. Inference requires `--accept-inferred-reference`.
+- `--genome`: select a catalogue reference; combine it with `--gtf` or `--gff` to override the catalogue annotation.
+- `--fasta` with exactly one of `--gtf` or `--gff`: fully user-supplied reference sequence and annotation. Inference requires `--accept-inferred-reference`.
 - `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, and `--resume`: nf-core/Nextflow controls.
 - `--overwrite`: replace normalized outputs; outputs are protected by default.
 - `-v`, `-vv`, `-q`, `--log-file PATH`: shared logging options.
@@ -157,6 +160,12 @@ Options:
 Known ENA and NCBI `ftp://` FASTQ URLs are written to nf-core samplesheets
 using the archives' equivalent `https://` endpoints, which are more reliable
 through rootless container networking.
+
+User annotations must be local `.gtf[.gz]`, `.gff[.gz]`, or `.gff3[.gz]`
+files. GFF3 is converted once with `gffread` to a checksum-addressed GTF shared
+by bulk and single-cell runs. Annotation source, format, SHA-256, and effective
+GTF are recorded in H5AD and JSON provenance. FASTA/annotation build and
+chromosome-name compatibility remain the caller's responsibility.
 
 CLI behavior:
 
@@ -206,6 +215,7 @@ result = json2h5ad().convert(
     "output/GSE234602.json",
     out="output",
     genome="GRCh38",
+    gtf="references/current.gtf.gz",
 )
 print(result.combined_h5ad)
 print(result.sample_h5ads)
@@ -213,8 +223,8 @@ print(result.sample_h5ads)
 
 Install the `h5ad` extra before using processed-matrix conversion. Raw workflows
 run directly on the host additionally require Nextflow, Java, and the selected
-execution profile. The project image already contains Java, Nextflow, and the
-Docker CLI.
+execution profile. GFF3 input additionally requires `gffread`. The project
+image already contains Java, Nextflow, `gffread`, and the Docker CLI.
 
 ### Docker
 
@@ -305,7 +315,9 @@ load parsed package list and explicit asset mappings
 for each sample, select H5AD > matrix > raw FASTQ
 if raw:
   group samples into nf-core/scrnaseq or nf-core/rnaseq
-  confirm the reference, run pinned Nextflow, and discover outputs
+  resolve a catalogue or user FASTA reference and optional user annotation
+  normalize GFF3 to a checksum-addressed GTF with gffread
+  run pinned Nextflow and discover outputs
 normalize each sample into sparse AnnData with GEO metadata and provenance
 combine compatible samples with an outer sparse gene join
 write per-sample H5ADs, optional study H5AD, and a JSON provenance manifest
