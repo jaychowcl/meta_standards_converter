@@ -54,7 +54,7 @@ class IDFConstructor():
             technology_type=technology_type,
         ))
         idf.append(["SDRF File"])
-        idf.extend(self._idf_term_source(magetab=idf))
+        idf.extend(self._idf_term_source(magetab=idf, data=data))
         idf.extend(self._idf_platform_specific(data=data, technology_type=technology_type))
 
         idf = self._move_experiment_description_after_title(rows=idf)
@@ -695,23 +695,40 @@ class IDFConstructor():
             "spatial_sequencing",
         }
 
-    def _idf_term_source(self, magetab: list) -> list:
+    def _idf_term_source(self, magetab: list, data: dict | None = None) -> list:
         '''
-        takes idf and returns term source name, term source file, and term source version from Harmonizer ontologies
+        Return term source rows, preferring metadata supplied by the input package.
         '''
         sources = set()
         for row in magetab:
             if row and "source ref" in str(row[0]).lower():
-                sources.update(x for x in row[1:] if x is not None)
+                sources.update(x for x in row[1:] if x)
 
         sources = sorted(sources)
-        file = [Harmonizer().ontologies[source]["Term Source File"] for source in sources]
-        version = [Harmonizer().ontologies[source]["Term Source Version"] for source in sources]
+        databases = {}
+        raw_databases = (data or {}).get("database", [])
+        if isinstance(raw_databases, dict):
+            raw_databases = [raw_databases]
+        for database in raw_databases:
+            if not isinstance(database, dict):
+                continue
+            for key in (database.get("iid"), database.get("name")):
+                if key:
+                    databases[str(key).casefold()] = database
+
+        harmonized = Harmonizer().ontologies
+        files = []
+        versions = []
+        for source in sources:
+            supplied = databases.get(str(source).casefold(), {})
+            fallback = harmonized.get(source, {})
+            files.append(supplied.get("url") or fallback.get("Term Source File"))
+            versions.append(supplied.get("version") or fallback.get("Term Source Version"))
 
         return [
             ["Term Source Name", *sources],
-            ["Term Source File", *file],
-            ["Term Source Version", *version],
+            ["Term Source File", *files],
+            ["Term Source Version", *versions],
         ]
 
 

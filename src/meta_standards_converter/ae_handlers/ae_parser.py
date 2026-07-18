@@ -462,7 +462,7 @@ class AEParser:
                 sample.setdefault("scan_protocol", protocol["description"])
             elif "processing" in ptype or "normalization" in ptype:
                 sample.setdefault("data_processing", protocol["description"])
-            elif "extract" in ptype or "library" in ptype or "sequenc" in ptype:
+            elif "extract" in ptype:
                 channel.setdefault("extract_protocol", protocol["description"])
 
     def _map_platform(self, header, row, sample, platforms):

@@ -175,7 +175,8 @@ class _BaseSDRFHandler():
         return self.render_paths(columns=columns, paths=paths)
 
     def preregister_protocols(self) -> None:
-        pass
+        for sample in self.ordered_samples():
+            self.preregister_data_processing(sample=sample)
 
     def build_paths(self) -> list[SDRFPath]:
         paths = []
@@ -183,6 +184,9 @@ class _BaseSDRFHandler():
             for channel in self.channels(sample=sample):
                 path = SDRFPath(parts=[self.source_node(sample=sample, channel=channel)])
                 path.parts.append(self.sample_collection_edge())
+                processing_edge = self.data_processing_edge(sample=sample)
+                if processing_edge:
+                    path.parts.append(processing_edge)
                 path.parts.extend(self.factor_nodes(sample=sample, channel=channel))
                 paths.append(path)
         return paths or [SDRFPath(parts=[SDRFNode(kind="Source Name", key="source", value=None)])]
@@ -471,6 +475,19 @@ class _BaseSDRFHandler():
             return None
         return SDRFEdge(protocol_ref=ref)
 
+    def preregister_data_processing(self, sample: dict) -> None:
+        self.protocol_registry.get_ref(
+            kind="data processing",
+            text=sample.get("data_processing"),
+        )
+
+    def data_processing_edge(self, sample: dict) -> SDRFEdge | None:
+        return self.protocol_edge(
+            kind="data processing",
+            text=sample.get("data_processing"),
+            sample=sample,
+        )
+
     def sample_accession(self, sample: dict):
         for accession in self._as_list(sample.get("accession")):
             if isinstance(accession, dict) and accession.get("value"):
@@ -658,6 +675,7 @@ class _BaseSDRFHandler():
 class _SequencingSDRFHandler(_BaseSDRFHandler):
     def preregister_protocols(self) -> None:
         for sample in self.ordered_samples():
+            self.preregister_data_processing(sample=sample)
             runs = self.sra_runs(sample=sample) or [None]
             for channel in self.channels(sample=sample):
                 self.preregister_extraction_protocols(sample=sample, channel=channel)
@@ -688,6 +706,9 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
                     path.parts.append(self.assay_node(sample=sample, run=run))
                     path.parts.append(self.nucleic_acid_sequencing_edge())
                     path.parts.append(self.scan_node(sample=sample, run=run))
+                    processing_edge = self.data_processing_edge(sample=sample)
+                    if processing_edge:
+                        path.parts.append(processing_edge)
                     path.parts.extend(self.factor_nodes(sample=sample, channel=channel))
                     paths.append(path)
         return paths
@@ -848,6 +869,9 @@ class _BulkSequencingSDRFHandler(_SequencingSDRFHandler):
                         path.parts.append(self.assay_node(sample=sample, run=run))
                         path.parts.append(self.nucleic_acid_sequencing_edge())
                         path.parts.append(self.bulk_scan_node(sample=sample, run=run, fastq=fastq))
+                        processing_edge = self.data_processing_edge(sample=sample)
+                        if processing_edge:
+                            path.parts.append(processing_edge)
                         path.parts.extend(self.factor_nodes(sample=sample, channel=channel))
                         paths.append(path)
         return paths
@@ -1087,6 +1111,7 @@ class _SpatialSequencingSDRFHandler(_SingleCellSequencingSDRFHandler):
 class _ArraySDRFHandler(_BaseSDRFHandler):
     def preregister_protocols(self) -> None:
         for sample in self.ordered_samples():
+            self.preregister_data_processing(sample=sample)
             for channel in self.channels(sample=sample):
                 self.preregister_extraction_protocols(sample=sample, channel=channel)
                 self.protocol_registry.get_ref(kind="labeling", text=channel.get("label_protocol"))
@@ -1115,6 +1140,9 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
                     path.parts.append(scan_edge)
                 path.parts.append(SDRFNode(kind="Scan Name", key=f"scan:{self.sample_accession(sample=sample)}", value=self.sample_accession(sample=sample)))
                 path.parts.extend(self.array_file_nodes(sample=sample))
+                processing_edge = self.data_processing_edge(sample=sample)
+                if processing_edge:
+                    path.parts.append(processing_edge)
                 path.parts.extend(self.factor_nodes(sample=sample, channel=channel))
                 paths.append(path)
         return paths
