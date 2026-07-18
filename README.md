@@ -267,7 +267,9 @@ The Compose service mounts the dedicated rootless socket, never the system
 `/var/run/docker.sock`. `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1` makes raw
 Docker-profile conversion fail before Nextflow starts if the daemon is
 unreachable or not rootless. The account still controls its own daemon, so do
-not grant it access to secrets or unrelated host directories.
+not grant it access to secrets or unrelated host directories. Generated H5ADs
+use mode `0660`, allowing the provisioned output ACL to give the invoking
+project user read/write access without making results world-readable.
 
 ### Main Code Flow
 

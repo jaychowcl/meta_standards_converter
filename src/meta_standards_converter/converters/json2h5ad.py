@@ -1169,6 +1169,7 @@ class JSON2H5ADConverter:
         try:
             adata.write_h5ad(temporary, compression="gzip")
             os.replace(temporary, path)
+            path.chmod(0o660)
         finally:
             if temporary.exists():
                 temporary.unlink()

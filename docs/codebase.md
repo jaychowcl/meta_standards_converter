@@ -192,9 +192,10 @@ administrator provisions nfcore-runner once
        -> json2h5ad preflight independently verifies rootless mode
        -> Nextflow asks the same unprivileged daemon for per-process containers
   -> nf-core tasks and converter outputs remain owned by the runner namespace
+  -> H5AD mode 0660 keeps the provisioned project-user ACL effective
 ```
 
-The Compose container drops all capabilities, enables `no-new-privileges`, uses a read-only root filesystem, and receives a tmpfs `/tmp`. Host and container output paths are identical because the sibling nf-core task containers must bind the Nextflow work files by host-visible absolute path. The system rootful socket is never mounted.
+The Compose container drops all capabilities, enables `no-new-privileges`, uses a read-only root filesystem, and receives a tmpfs `/tmp`. Host and container output paths are identical because the sibling nf-core task containers must bind the Nextflow work files by host-visible absolute path. The system rootful socket is never mounted. Final H5AD files use mode `0660`: this preserves the output directory's named project-user ACL while denying access to other users.
 
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape

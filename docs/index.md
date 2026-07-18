@@ -55,7 +55,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: rootless-json2h5ad-runtime
   title: Rootless json2h5ad Runtime
   anchor: rootless-json2h5ad-runtime
-  keywords: Docker Compose, rootless, nfcore-runner, socket, security, provisioning, containers
+  keywords: Docker Compose, rootless, nfcore-runner, socket, security, provisioning, containers, ACL, permissions, 0660
 
 - id: public-api-and-callable-reference
   title: Public API And Callable Reference
