@@ -124,11 +124,13 @@ class IDFConstructor():
         handler = JSONHandler()
 
         titles = handler._from_path(data, "series.title")
-        accession_values = handler._from_path(data, "series.accession.*.value")
-        accession_databases = handler._from_path(data, "series.accession.*.database")
+        series_accession_values = handler._from_path(data, "series.accession.*.value")
+        secondary_accessions = self._secondary_accession_pairs(data=data)
+        accession_values = [accession for accession, _source in secondary_accessions]
+        accession_databases = [source for _accession, source in secondary_accessions]
         related_experiments = self._related_experiments(data=data)
 
-        arrayexpress_accessions = self._to_arrayexpress_accessions(accession_values)
+        arrayexpress_accessions = self._to_arrayexpress_accessions(series_accession_values)
 
         rows = [
             ["Investigation Title", *titles],
@@ -139,6 +141,82 @@ class IDFConstructor():
         if related_experiments:
             rows.append(["Comment[RelatedExperiment]", *related_experiments])
         return rows
+
+    def _secondary_accession_pairs(self, data: dict) -> list[tuple[str, str | None]]:
+        pairs = []
+        seen = set()
+
+        for series in self._as_list(data.get("series")):
+            if not isinstance(series, dict):
+                continue
+            for accession in self._as_list(series.get("accession")):
+                if not isinstance(accession, dict):
+                    self._append_secondary_accession(
+                        pairs=pairs,
+                        seen=seen,
+                        accession=accession,
+                    )
+                    continue
+                self._append_secondary_accession(
+                    pairs=pairs,
+                    seen=seen,
+                    accession=accession.get("value"),
+                    declared_source=accession.get("database"),
+                )
+
+        for sample in self._as_list(data.get("sample")):
+            if not isinstance(sample, dict):
+                continue
+            for accession in self._as_list(sample.get("ena_accession")):
+                self._append_secondary_accession(
+                    pairs=pairs,
+                    seen=seen,
+                    accession=accession,
+                )
+
+        return pairs
+
+    def _append_secondary_accession(
+        self,
+        pairs: list[tuple[str, str | None]],
+        seen: set[str],
+        accession,
+        declared_source=None,
+    ) -> None:
+        accession = self._clean_secondary_accession_value(accession)
+        if not accession:
+            return
+
+        dedupe_key = accession.upper()
+        if dedupe_key in seen:
+            return
+
+        seen.add(dedupe_key)
+        pairs.append((
+            accession,
+            self._secondary_accession_source(
+                accession=accession,
+                declared_source=declared_source,
+            ),
+        ))
+
+    def _secondary_accession_source(self, accession: str, declared_source=None):
+        prefix_sources = {
+            "GSE": "GEO",
+            "ERP": "ENA",
+            "SRP": "SRA",
+            "DRP": "DRA",
+        }
+        upper_accession = accession.upper()
+        for prefix, source in prefix_sources.items():
+            if upper_accession.startswith(prefix):
+                return source
+        return self._clean_secondary_accession_value(declared_source)
+
+    def _clean_secondary_accession_value(self, value):
+        if value is None:
+            return None
+        return " ".join(str(value).replace("\t", " ").replace("\n", " ").split()) or None
 
     def _related_experiments(self, data: dict) -> list:
         related_gses = []
@@ -646,11 +724,6 @@ class _SequencingPlatformIDFHandler(_BasePlatformIDFHandler):
 
     def build(self) -> list:
         rows = [list(row) for row in self.EMPTY_COMMENT_ROWS]
-        secondary_accessions = self.secondary_accessions()
-        if secondary_accessions:
-            rows.append(["Comment[SecondaryAccession]", *secondary_accessions])
-        else:
-            logger.warning("ENA secondary accession row skipped: no sample.ena_accession values found.")
         urls = self.sequence_data_uris()
         if urls:
             rows.append(["Comment[SequenceDataURI]", *urls])

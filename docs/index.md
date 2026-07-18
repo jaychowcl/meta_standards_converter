@@ -139,7 +139,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: ae-idf-handlers
   title: AE IDF handlers
   anchor: ae-idf-handlers
-  keywords: IDFConstructor, platform IDF, publications, dates, protocols
+  keywords: IDFConstructor, platform IDF, secondary accession, GEO, ENA, SRA, DRA, publications, dates, protocols
 
 - id: ae-constructor
   title: AE constructor

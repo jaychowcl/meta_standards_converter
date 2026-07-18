@@ -369,6 +369,32 @@ class TestIDFConstructor(unittest.TestCase):
             self.row(rows, "Comment[SecondaryAccessionTermSourceRef]"),
         )
 
+    def test_miniml2idf_emits_one_merged_secondary_accession_row(self):
+        rows = IDFConstructor().miniml2idf(
+            data={
+                "series": {
+                    "title": "Example",
+                    "accession": [{"value": "GSE1", "database": "GEO"}],
+                },
+                "sample": [
+                    {"ena_accession": ["ERP137216", "SRP999"]},
+                    {"ena_accession": ["DRP123", "ERP137216"]},
+                ],
+                "contributor": [],
+            },
+            technology_type="bulk_sequencing",
+        )
+
+        secondary_rows = [row for row in rows if row[0] == "Comment[SecondaryAccession]"]
+        self.assertEqual(
+            [["Comment[SecondaryAccession]", "GSE1", "ERP137216", "SRP999", "DRP123"]],
+            secondary_rows,
+        )
+        self.assertEqual(
+            ["Comment[SecondaryAccessionTermSourceRef]", "GEO", "ENA", "SRA", "DRA"],
+            self.row(rows, "Comment[SecondaryAccessionTermSourceRef]"),
+        )
+
     def test_generated_idf_comment_labels_use_normalized_bracket_style(self):
         rows = IDFConstructor().miniml2idf(
             data={
@@ -723,7 +749,6 @@ class TestIDFConstructor(unittest.TestCase):
         self.assertTrue(any("SRA run accession missing" in message for message in logs.output))
         self.assertTrue(any("ERRABC" in message for message in logs.output))
         self.assertTrue(any("NOT A RUN" in message for message in logs.output))
-        self.assertTrue(any("no sample.ena_accession values found" in message for message in logs.output))
 
     def test_sequencing_platform_idf_handler_returns_empty_comment_rows_without_valid_runs(self):
         with self.assertLogs("meta_standards_converter.ae_handlers.ae_idf_handlers", level="WARNING") as logs:
@@ -759,7 +784,6 @@ class TestIDFConstructor(unittest.TestCase):
             ],
             rows,
         )
-        self.assertTrue(any("no sample.ena_accession values found" in message for message in logs.output))
         self.assertTrue(any("SequenceDataURI row skipped" in message for message in logs.output))
 
     def test_sequencing_platform_idf_subclasses_emit_sequence_data_uri(self):
