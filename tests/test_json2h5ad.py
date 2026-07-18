@@ -27,6 +27,7 @@ from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     AssetDownloader,
     AssetManifest,
     ConversionResult,
+    PipelineRun,
     RawProcessingResult,
     SourcePlanner,
     json2h5ad,
@@ -279,6 +280,34 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertFalse(any(column.startswith("geo_") for column in normalized.obs))
             self.assertEqual(["cell1", "cell2"], list(original.obs_names))
             self.assertEqual("h5ad", normalized.uns["meta_standards_converter"]["source_tier"])
+            self.assertEqual("artifact_parent", normalized.uns["meta_standards_converter"]["path_base"])
+            self.assertEqual("../source.h5ad", normalized.uns["meta_standards_converter"]["source_uri"])
+            self.assertEqual(["../source.h5ad"] * 2, list(normalized.obs["msc_source_uri"]))
+
+            manifest = json.loads(Path(result.manifest_path).read_text())
+            self.assertEqual("artifact_parent", manifest["path_base"])
+            self.assertEqual("../GSE1.json", manifest["source_json"])
+            self.assertEqual("GSE1.h5ad", manifest["combined_h5ad"])
+            self.assertEqual({"GSM1": "GSM1.h5ad"}, manifest["sample_h5ads"])
+            self.assertEqual("../source.h5ad", manifest["assets"]["GSM1"]["path"])
+            self.assertEqual("external", manifest["assets"]["GSM1"]["path_scope"])
+
+    def test_does_not_duplicate_sample_accession_observation_name(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_path = os.path.join(tmpdir, "source.h5ad")
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1]]),
+                obs=self.pandas.DataFrame(index=["GSM1"]),
+                var=self.pandas.DataFrame(index=["ENSG1"]),
+            ).write_h5ad(source_path)
+            json_path = self._write_json(tmpdir, package(source_path))
+
+            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            sample = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            combined = self.anndata.read_h5ad(result.combined_h5ad)
+            self.assertEqual(["GSM1"], list(sample.obs_names))
+            self.assertEqual(["GSM1"], list(combined.obs_names))
 
     def test_reads_gzip_compressed_h5ad(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -378,20 +407,20 @@ class TestProcessedAssetConversion(unittest.TestCase):
                     {
                         "iid": "P1",
                         "accession": [{"database": "GEO", "value": "GPL1"}],
-                        "contributor_ref": ["C1"],
+                        "contributor_ref": [{"ref": "C1"}],
                     },
                     {
                         "iid": "P2",
                         "accession": [{"database": "GEO", "value": "GPL2"}],
-                        "contributor_ref": ["C2"],
+                        "contributor_ref": [{"ref": "C2"}],
                     },
                 ],
                 "series": {
                     "accession": [{"database": "GEO", "value": "GSE1"}],
                     "title": "Study title",
                     "summary": "GEO experiment summary",
-                    "contributor_ref": ["C1"],
-                    "sample_ref": ["S1", "S2"],
+                    "contributor_ref": [{"ref": "C1"}],
+                    "sample_ref": [{"ref": "S1"}, {"ref": "S2"}],
                     "pubmed_publication": [
                         {
                             "pubmed_id": "123",
@@ -412,10 +441,10 @@ class TestProcessedAssetConversion(unittest.TestCase):
                         "title": "Sample one",
                         "description": "Sample description",
                         "supplementary_data": [{"value": paths["GSM1"]}],
-                        "platform_ref": ["P1"],
-                        "contact_ref": ["C1"],
+                        "platform_ref": {"ref": "P1"},
+                        "contact_ref": [{"ref": "C1"}],
                         "library_strategy": "RNA-Seq",
-                        "library_source": "transcriptomic",
+                        "library_source": ["transcriptomic", "TRANSCRIPTOMIC"],
                         "library_selection": "cDNA",
                         "instrument_model": {"predefined": "Illumina Test"},
                         "ena_accession": "SRS1",
@@ -460,8 +489,8 @@ class TestProcessedAssetConversion(unittest.TestCase):
                         "accession": [{"database": "GEO", "value": "GSM2"}],
                         "title": "Sample two",
                         "supplementary_data": [{"value": paths["GSM2"]}],
-                        "platform_ref": ["P2"],
-                        "contact_ref": ["C2"],
+                        "platform_ref": {"ref": "P2"},
+                        "contact_ref": [{"ref": "C2"}],
                         "channel": [{"characteristics": [{"tag": "dose", "value": "5 uM"}]}],
                     },
                 ],
@@ -479,6 +508,8 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 first.obs["msc_metadata_source_name"].unique().tolist(),
             )
             self.assertEqual(["GPL1"], first.obs["msc_platform_accession"].unique().tolist())
+            self.assertEqual(["GPL2"], second.obs["msc_platform_accession"].unique().tolist())
+            self.assertEqual(["transcriptomic"], first.obs["msc_library_source"].unique().tolist())
             self.assertEqual(["SRR1; SRR2"], first.obs["msc_sra_run_accessions"].unique().tolist())
             self.assertEqual(["SAMN1"], first.obs["msc_biosample_accession"].unique().tolist())
             self.assertEqual(["Illumina Test"], first.obs["msc_instrument_model"].unique().tolist())
@@ -511,8 +542,10 @@ class TestProcessedAssetConversion(unittest.TestCase):
             fields = miniml["fields"]
             sample_entities = set(fields.loc[fields["entity_type"] == "sample", "entity_id"])
             contributor_entities = set(fields.loc[fields["entity_type"] == "contributor", "entity_id"])
+            platform_entities = set(fields.loc[fields["entity_type"] == "platform", "entity_id"])
             self.assertEqual({"GSM1"}, sample_entities)
             self.assertEqual({"C1"}, contributor_entities)
+            self.assertEqual({"GPL1"}, platform_entities)
             paths_in_sample = set(fields["path"])
             self.assertIn("pubmed_publication[0].title", paths_in_sample)
             self.assertIn("channel[0].treatment_protocol", paths_in_sample)
@@ -528,6 +561,10 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(
                 {"C1", "C2"},
                 set(combined_fields.loc[combined_fields["entity_type"] == "contributor", "entity_id"]),
+            )
+            self.assertEqual(
+                {"GPL1", "GPL2"},
+                set(combined_fields.loc[combined_fields["entity_type"] == "platform", "entity_id"]),
             )
 
     def test_incompatible_organisms_keep_samples_and_mark_partial(self):
@@ -669,12 +706,14 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             adata = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             provenance = adata.uns["meta_standards_converter"]
-            self.assertEqual(annotation, provenance["annotation_source"])
+            self.assertEqual("../genes.gtf", provenance["annotation_source"])
+            self.assertEqual("external", provenance["annotation_source_scope"])
             self.assertEqual("gtf", provenance["annotation_format"])
             self.assertEqual(digest, provenance["annotation_sha256"])
             manifest = json.loads(Path(result.manifest_path).read_text())
             manifest_asset = manifest["assets"]["GSM1"]
-            self.assertEqual(annotation, manifest_asset["annotation_source"])
+            self.assertEqual("../genes.gtf", manifest_asset["annotation_source"])
+            self.assertEqual("external", manifest_asset["annotation_source_scope"])
             self.assertEqual(digest, manifest_asset["annotation_sha256"])
 
     def test_raw_assets_are_replaced_by_nfcore_outputs(self):
@@ -688,6 +727,16 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 return RawProcessingResult(
                     assets={"GSM1": Asset("GSM1", self.output, "h5ad", source="nfcore")},
                     retained_h5ads=[self.output],
+                    runs=[
+                        PipelineRun(
+                            pipeline="scrnaseq",
+                            revision="4.2.0",
+                            command=["nextflow", "run", "nf-core/scrnaseq"],
+                            work_dir=os.path.dirname(self.output),
+                            out_dir=os.path.dirname(self.output),
+                            warnings=["Unrecognized config option 'example'"],
+                        )
+                    ],
                 )
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -713,6 +762,13 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual("raw", runner.calls[0][0]["GSM1"].kind)
             self.assertEqual("scrnaseq", runner.calls[0][1]["pipeline"])
             self.assertEqual("GRCh38", runner.calls[0][1]["genome"])
+            self.assertEqual(["scrnaseq: Unrecognized config option 'example'"], result.warnings)
+            manifest = json.loads(Path(result.manifest_path).read_text())
+            self.assertEqual(result.warnings, manifest["warnings"])
+            self.assertEqual(
+                ["Unrecognized config option 'example'"],
+                manifest["pipeline_runs"][0]["warnings"],
+            )
 
     def test_study_h5ad_is_split_by_canonical_and_legacy_sample_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:

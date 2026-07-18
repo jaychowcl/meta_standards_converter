@@ -100,6 +100,13 @@ class DockerArtifactsTest(unittest.TestCase):
             'd:u::rwx,d:g::---,d:o::---"',
             provision,
         )
+        self.assertIn("verify_output_acl", provision)
+        self.assertIn("getfacl", provision)
+
+        runner = scripts[1].read_text(encoding="utf-8")
+        self.assertIn("verify_output_acl", runner)
+        self.assertIn("Mapped output ownership", runner)
+        self.assertNotIn("chown", runner)
 
     def test_dockerignore_excludes_local_and_generated_files(self):
         dockerignore = ROOT / ".dockerignore"

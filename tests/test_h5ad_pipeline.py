@@ -402,7 +402,19 @@ class TestNFCoreRunner(unittest.TestCase):
 
         def command_runner(command, **kwargs):
             calls.append((command, kwargs))
-            return subprocess.CompletedProcess(command, 0, stdout="completed\n", stderr="")
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                stdout=(
+                    "WARN: Unrecognized config option 'validation.example'\n"
+                    "WARN: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+                    "  A multiline pipeline warning.\n"
+                    "  More detail.\n"
+                    "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+                    "completed\n"
+                ),
+                stderr="WARN: Unrecognized config option 'validation.example'\n",
+            )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             result_dir = Path(tmpdir) / "nfcore" / "GSE1" / "scrnaseq" / "results"
@@ -436,6 +448,13 @@ class TestNFCoreRunner(unittest.TestCase):
             self.assertEqual(str(h5ad_path), result.assets["GSM1"].path)
             self.assertEqual("h5ad", result.assets["GSM1"].kind)
             self.assertEqual(0, result.runs[0].returncode)
+            self.assertEqual(
+                [
+                    "Unrecognized config option 'validation.example'",
+                    "A multiline pipeline warning. More detail.",
+                ],
+                result.runs[0].warnings,
+            )
 
     def test_scrnaseq_prefers_qcatch_filtered_quants_over_raw_matrix(self):
         def command_runner(command, **kwargs):
