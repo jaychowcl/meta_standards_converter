@@ -346,7 +346,7 @@ class NFCoreRunner:
         )
         self._preflight(profile)
         revision = revision or self.REVISIONS[pipeline]
-        run_dir = Path(out) / "nfcore" / study_accession / pipeline
+        run_dir = Path(out).resolve() / "nfcore" / study_accession / pipeline
         result_dir = run_dir / "results"
         run_dir.mkdir(parents=True, exist_ok=True)
         samplesheet = run_dir / "samplesheet.csv"
@@ -367,7 +367,7 @@ class NFCoreRunner:
             json.dump(params, handle, indent=2, sort_keys=True)
             handle.write("\n")
 
-        nextflow_work = Path(work_dir) if work_dir else run_dir / "work"
+        nextflow_work = Path(work_dir).resolve() if work_dir else run_dir / "work"
         command = [
             "nextflow",
             "run",
