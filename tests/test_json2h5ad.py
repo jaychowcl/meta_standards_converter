@@ -84,6 +84,29 @@ class TestSourcePlanner(unittest.TestCase):
         self.assertEqual("raw", plan["GSM1"].kind)
         self.assertEqual(2, len(plan["GSM1"].members))
 
+    def test_separate_raw_data_entries_are_grouped_for_one_sample(self):
+        data = package()
+        data["sample"][0]["sra_run"] = []
+        data["sample"][0]["raw_data"] = [
+            {"value": "GSM1_R1.fastq.gz"},
+            {"value": "GSM1_R2.fastq.gz"},
+        ]
+
+        plan = SourcePlanner().plan([data], force_reprocess=True)
+
+        self.assertEqual(2, len(plan["GSM1"].members))
+
+    def test_separate_cli_fastqs_are_grouped_for_one_sample(self):
+        manifest = AssetManifest()
+        assets = [
+            manifest.parse_spec("GSM1=GSM1_R1.fastq.gz"),
+            manifest.parse_spec("GSM1=GSM1_R2.fastq.gz"),
+        ]
+
+        plan = SourcePlanner().plan([package()], explicit_assets=assets, force_reprocess=True)
+
+        self.assertEqual(2, len(plan["GSM1"].members))
+
     def test_force_reprocess_requires_raw_fastqs(self):
         data = package("provided.h5ad")
         data["sample"][0]["sra_run"] = []
@@ -386,6 +409,33 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual("raw", runner.calls[0][0]["GSM1"].kind)
             self.assertEqual("scrnaseq", runner.calls[0][1]["pipeline"])
             self.assertEqual("GRCh38", runner.calls[0][1]["genome"])
+
+    def test_study_h5ad_is_split_by_sample_accession(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_path = os.path.join(tmpdir, "study.h5ad")
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1], [2]]),
+                obs=self.pandas.DataFrame(
+                    {"sample_id": ["GSM1", "GSM2"]},
+                    index=["cell1", "cell2"],
+                ),
+                var=self.pandas.DataFrame(index=["ENSG1"]),
+            ).write_h5ad(source_path)
+            data = package(accession="GSM1")
+            data["sample"].append(package(accession="GSM2")["sample"][0])
+            json_path = self._write_json(tmpdir, data)
+
+            result = json2h5ad().convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+                explicit_assets=[Asset("GSE1", source_path, "h5ad", source="manifest")],
+            )
+
+            first = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            second = self.anndata.read_h5ad(result.sample_h5ads["GSM2"])
+            self.assertEqual((1, 1), first.shape)
+            self.assertEqual([[1]], first.X.toarray().tolist())
+            self.assertEqual([[2]], second.X.toarray().tolist())
 
 
 if __name__ == "__main__":
