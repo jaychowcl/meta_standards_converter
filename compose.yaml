@@ -23,6 +23,7 @@ services:
     environment:
       DOCKER_HOST: unix:///run/rootless-docker/docker.sock
       HOME: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}/home
+      JSON2H5AD_OUT: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}
       META_STANDARDS_REQUIRE_ROOTLESS_DOCKER: "1"
       MPLCONFIGDIR: /tmp/matplotlib-meta-standards
       NXF_ANSI_LOG: "false"
