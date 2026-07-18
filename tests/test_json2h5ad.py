@@ -425,9 +425,17 @@ class TestProcessedAssetConversion(unittest.TestCase):
             counts = os.path.join(tmpdir, "salmon.merged.gene_counts.tsv")
             tpm = os.path.join(tmpdir, "salmon.merged.gene_tpm.tsv")
             with open(counts, "w", encoding="utf-8") as handle:
-                handle.write("gene\tGSM1\tGSM2\nENSG1\t1\t9\nENSG2\t2\t8\n")
+                handle.write(
+                    "gene_id\tgene_name\tGSM1\tGSM2\n"
+                    "ENSG1\tGENE1\t1\t9\n"
+                    "ENSG2\tGENE2\t2\t8\n"
+                )
             with open(tpm, "w", encoding="utf-8") as handle:
-                handle.write("gene\tGSM1\tGSM2\nENSG1\t3\t7\nENSG2\t4\t6\n")
+                handle.write(
+                    "gene_id\tgene_name\tGSM1\tGSM2\n"
+                    "ENSG1\tGENE1\t3\t7\n"
+                    "ENSG2\tGENE2\t4\t6\n"
+                )
             json_path = self._write_json(tmpdir, package())
             asset = Asset(
                 "GSM1",
@@ -449,6 +457,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual((1, 2), adata.shape)
             self.assertEqual([[1, 2]], adata.X.toarray().tolist())
             self.assertEqual([[3, 4]], adata.layers["tpm"].toarray().tolist())
+            self.assertEqual(["GENE1", "GENE2"], adata.var["gene_name"].tolist())
 
     def test_raw_assets_are_replaced_by_nfcore_outputs(self):
         class FakeRunner:
