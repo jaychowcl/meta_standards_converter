@@ -588,7 +588,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 - SDRF construction prefers `sample.sra_run`; relation-based `_lookup_sra()` remains as a compatibility fallback.
 - GEO protocol labels map through `Harmonizer().geoprotocols2efo()`.
 - PubMed status maps through `Harmonizer().pubstatus2efo()`.
-- Term source rows are inferred from non-empty rows whose label contains `source ref`.
+- Term source names are inferred from non-empty rows whose label contains `source ref`. Matching `database` records supply the file URL and version; `Harmonizer` is used only for missing values.
 
 <a id="public-api-and-callable-reference"></a>
 ## Public API And Callable Reference
@@ -852,6 +852,7 @@ Investigation and experimental rows:
 - `Comment[RelatedExperiment]` is emitted when `series.relation` contains superseries/subseries relation text and related `GSE...` accessions. This row records parsed relationships and does not depend on fetching related packages with `--related`.
 - `_idf_experimental()` derives experimental factor names from sample channel characteristics whose normalized tag has more than one distinct normalized value; `Experimental Factor Type` currently mirrors the factor names while factor term source/accession rows remain blank.
 - `_idf_platform_specific(data, technology_type)` dispatches to a private platform IDF handler.
+- `_idf_term_source(magetab, data)` prefers matching `database` URL/version values from the package and falls back to `Harmonizer` ontology metadata. Unknown sources remain valid with blank file/version cells.
 
 Platform IDF handler inheritance mirrors the SDRF platform tree:
 
@@ -973,6 +974,7 @@ Other helpers:
 - Defaults to `INSDCWebfetcher()`.
 
 - `_add_sdrf_to_idf()` appends an in-memory SDRF row to IDF rows; this remains for compatibility but `AEConstructor` now coordinates insertion.
+- Generic, sequencing, bulk-sequencing, and array paths register and reference `sample.data_processing` as a `Data-Processing` protocol. AE parsing maps processing/normalization protocols back to that sample field and maps only extraction protocols to `channel.extract_protocol`; library-construction and sequencing protocols are not collapsed into extraction.
 - `_miniml2sdrf(data, protocol_registry=None, technology_type=None)` uses the supplied AE technology key or detects one for compatibility, selects a handler, builds the table, stores `last_sdrf_audit`, and returns rows.
 - `_detect_sdrf_technology(data)` delegates to `AEConstructor._detect_ae_technology(data)`.
 - `_has_array_files(data)` delegates to `AEConstructor._has_array_files(data)`.

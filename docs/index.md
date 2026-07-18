@@ -164,7 +164,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: ae-parser
   title: AE parser
   anchor: ae-parser
-  keywords: AEParser, MAGE-TAB, IDF, SDRF, MINiML-compatible JSON, mage_tab, warnings, unmapped
+  keywords: AEParser, MAGE-TAB, IDF, SDRF, MINiML-compatible JSON, mage_tab, warnings, unmapped, protocol mapping
 
 - id: ae-roundtrip
   title: AE round-trip sidecar
@@ -179,7 +179,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: ae-idf-handlers
   title: AE IDF handlers
   anchor: ae-idf-handlers
-  keywords: IDFConstructor, platform IDF, secondary accession, GEO, ENA, SRA, DRA, publications, dates, protocols
+  keywords: IDFConstructor, platform IDF, secondary accession, GEO, ENA, SRA, DRA, publications, dates, protocols, term source, database URL, ontology version
 
 - id: ae-constructor
   title: AE constructor
@@ -189,7 +189,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: sdrf-handlers
   title: SDRF handlers
   anchor: sdrf-handlers
-  keywords: SDRF, handlers, graph, file classification
+  keywords: SDRF, handlers, graph, file classification, data processing protocol
 
 - id: harmonizers
   title: Harmonizers
