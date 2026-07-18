@@ -308,7 +308,33 @@ class NFCoreRunner:
         work_dir: str | None = None,
         resume: bool = False,
     ) -> RawProcessingResult:
-        pipeline = self._pipeline(packages) if pipeline == "auto" else pipeline
+        if pipeline == "auto":
+            groups = self._pipeline_groups(assets, packages)
+            if len(groups) > 1:
+                combined = RawProcessingResult(assets={})
+                for selected, selected_assets in groups.items():
+                    result = self.process(
+                        selected_assets,
+                        packages=packages,
+                        out=out,
+                        study_accession=study_accession,
+                        pipeline=selected,
+                        genome=genome,
+                        fasta=fasta,
+                        gtf=gtf,
+                        accept_inferred_reference=accept_inferred_reference,
+                        profile=profile,
+                        revision=revision,
+                        params_file=params_file,
+                        nextflow_config=nextflow_config,
+                        work_dir=work_dir,
+                        resume=resume,
+                    )
+                    combined.assets.update(result.assets)
+                    combined.retained_h5ads.extend(result.retained_h5ads)
+                    combined.runs.extend(result.runs)
+                return combined
+            pipeline = next(iter(groups), "rnaseq")
         if pipeline not in self.REVISIONS:
             raise ValueError(f"Unsupported nf-core pipeline: {pipeline}")
         reference = self.reference_resolver.resolve(
@@ -451,6 +477,26 @@ class NFCoreRunner:
     def _pipeline(self, packages: list[dict]) -> str:
         text = json.dumps(packages).lower()
         return "scrnaseq" if any(value in text for value in ("single cell", "single-cell", "10x", "chromium", "visium")) else "rnaseq"
+
+    def _pipeline_groups(self, assets: dict[str, Asset], packages: list[dict]) -> dict[str, dict[str, Asset]]:
+        planner = SourcePlanner()
+        samples = {}
+        for package in packages:
+            for sample in planner._as_list(package.get("sample")):
+                if isinstance(sample, dict):
+                    sample_id = planner.sample_accession(sample)
+                    if sample_id:
+                        samples[sample_id] = sample
+        groups = {}
+        for sample_id, asset in assets.items():
+            sample_text = json.dumps(samples.get(sample_id, {})).lower()
+            selected = (
+                "scrnaseq"
+                if any(value in sample_text for value in ("single cell", "single-cell", "10x", "chromium", "visium"))
+                else "rnaseq"
+            )
+            groups.setdefault(selected, {})[sample_id] = asset
+        return groups
 
     def _scrnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset]):
         paths = list(result_dir.glob("**/*_matrix.h5ad"))
