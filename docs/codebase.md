@@ -97,7 +97,7 @@ tests/GSE328265_family.xml
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
-- Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing additionally requires host-provided Nextflow, Java, and a supported execution profile/runtime.
+- Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 17, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
 - `MetaStore._validate_investigation_metadata_structure()` is a `pass` placeholder, so `validate_investigation_metadata()` currently asserts for normal input.
 
 <a id="end-to-end-geo2ae-flow"></a>
@@ -170,7 +170,31 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
 
 Raw processing pins `nf-core/scrnaseq` 4.1.0 and `nf-core/rnaseq` 3.26.0 by default. The runner requires Nextflow, Java, and the selected Docker/Podman/Apptainer/Singularity runtime. `scrnaseq` prefers CellBender-filtered, then filtered, then raw H5AD output. `rnaseq` count matrices become sparse `X`, and aligned TPM values become `layers["tpm"]`.
 
+When `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER` is truthy and the Docker profile is selected, `NFCoreRunner._preflight()` queries `docker info` before creating workflow files. An unreachable daemon or security options without `rootless` abort the conversion before Nextflow starts. Other deployments retain the existing runtime-presence checks.
+
 Combination preserves successful per-sample outputs when expression modalities, organisms, declared reference builds, or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
+
+<a id="rootless-json2h5ad-runtime"></a>
+## Rootless json2h5ad Runtime
+
+`Dockerfile` builds the application image with Python 3.12, Java 17, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, and the H5AD extra. It contains no Docker daemon.
+
+`scripts/provision-rootless-json2h5ad.sh` is the administrative boundary. It installs rootless prerequisites, creates the locked `nfcore-runner` account, allocates a non-overlapping 65,536-ID subordinate range, enables its user service, and configures ACLs. The build context is read-only to the runner; `.out/json2h5ad` is the only writable project path.
+
+`scripts/json2h5ad-compose.sh` must run as `nfcore-runner`. It resolves that user's socket, refuses a daemon without the `rootless` security option, prepares output-local home and Nextflow caches, and invokes `compose.yaml` with explicit UID/GID and absolute paths.
+
+```text
+administrator provisions nfcore-runner once
+  -> rootless dockerd listens at /run/user/<uid>/docker.sock
+  -> runner helper validates docker info SecurityOptions
+  -> rootless Compose creates the converter container
+       -> only .out/json2h5ad and the rootless socket are mounted
+       -> json2h5ad preflight independently verifies rootless mode
+       -> Nextflow asks the same unprivileged daemon for per-process containers
+  -> nf-core tasks and converter outputs remain owned by the runner namespace
+```
+
+The Compose container drops all capabilities, enables `no-new-privileges`, uses a read-only root filesystem, and receives a tmpfs `/tmp`. Host and container output paths are identical because the sibling nf-core task containers must bind the Nextflow work files by host-visible absolute path. The system rootful socket is never mounted.
 
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape
@@ -1015,6 +1039,8 @@ SRA XML helper methods:
 - Generated outputs under `.dev/` and `output/` are examples/debug artifacts, not package code.
 - H5AD sources remain immutable; normalization writes new files and records source hashes and provenance.
 - nf-core revisions are pinned in `NFCoreRunner.REVISIONS`; revision changes require command/output-discovery tests and documentation updates.
+- Rootless Compose deliberately mounts only `.out/json2h5ad`. Inputs required by nested nf-core containers must be copied or generated below that path.
+- Socket access still grants full control of the dedicated rootless daemon; keep `nfcore-runner` locked and deny it unrelated files and credentials.
 
 <a id="test-plan"></a>
 ## Test Plan
@@ -1032,6 +1058,8 @@ Important test coverage:
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, count/TPM matrices, sparse combination, study splitting, partial results, and raw-output reintegration.
 - `tests/test_h5ad_pipeline.py`: reference confirmation, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
+- `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
+- `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.
 - `tests/test_cli_geo2ae.py`: CLI defaults, multiple accession order, aliases, keep-empty behavior, out directory forwarding, logging controls, file logging, and failure continuation.
 - `tests/test_cli_geo2json.py`: JSON CLI defaults, enrichment toggle, aliases, logging controls, file logging, and failure continuation.
 - `tests/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.

@@ -52,6 +52,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   anchor: json2h5ad-flow
   keywords: H5AD, AnnData, matrix, FASTQ, nf-core, scrnaseq, rnaseq, assets, Nextflow
 
+- id: rootless-json2h5ad-runtime
+  title: Rootless json2h5ad Runtime
+  anchor: rootless-json2h5ad-runtime
+  keywords: Docker Compose, rootless, nfcore-runner, socket, security, provisioning, containers
+
 - id: public-api-and-callable-reference
   title: Public API And Callable Reference
   anchor: public-api-and-callable-reference

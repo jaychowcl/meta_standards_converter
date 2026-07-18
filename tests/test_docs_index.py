@@ -132,6 +132,7 @@ class DocsIndexTests(unittest.TestCase):
             ".dockerignore",
             ".gitignore",
             "Dockerfile",
+            "compose.yaml",
             "pyproject.toml",
             "requirements.txt",
         }
@@ -144,6 +145,11 @@ class DocsIndexTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             if tracked_file.endswith(".py") or tracked_file in hash_comment_files:
                 self.assertTrue(text.startswith(HASH_AUTHOR_HEADER), tracked_file)
+            elif tracked_file.endswith(".sh"):
+                self.assertTrue(
+                    text.startswith("#!/usr/bin/env bash\n" + HASH_AUTHOR_HEADER),
+                    tracked_file,
+                )
             elif tracked_file.endswith(".md"):
                 self.assertTrue(text.startswith(HTML_AUTHOR_HEADER), tracked_file)
             else:

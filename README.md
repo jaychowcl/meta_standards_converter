@@ -33,7 +33,8 @@ python -m pip install -e .
 python -m pip install -e '.[h5ad]'  # include AnnData conversion support
 ```
 
-Build the Docker image:
+Build the Docker image, which includes Java 17, Nextflow, the Docker CLI, and the
+H5AD Python dependencies:
 
 ```bash
 docker build -t meta-standards-converter .
@@ -44,12 +45,14 @@ docker build -t meta-standards-converter .
 - Python `>=3.10`
 - Runtime packages: `requests>=2.31.0`, `python-dateutil>=2.8.2`
 - H5AD extra: `anndata`, `scanpy`, `numpy`, `pandas`, `scipy`, and `h5py`
-- Raw FASTQ processing: Nextflow, Java, and a supported container runtime such as Docker or Apptainer
+- Raw FASTQ processing outside the project image: Nextflow, Java, and a supported container runtime such as Docker or Apptainer
 - Network access for live workflows:
   - GEO FTP for MINiML tarballs
   - NCBI E-utilities for PubMed and SRA XML
   - ENA Portal API for FASTQ file reports
-- Docker is optional and only needed for containerized CLI usage.
+- Docker is optional for the Python CLI. The rootless Compose workflow requires
+  Docker Engine with rootless extras, subordinate UID/GID support, and user-level
+  systemd.
 
 ## Quickstart
 
@@ -201,7 +204,10 @@ print(result.combined_h5ad)
 print(result.sample_h5ads)
 ```
 
-Install the `h5ad` extra before using processed-matrix conversion. Raw workflows additionally require Nextflow, Java, and the selected execution profile on the host.
+Install the `h5ad` extra before using processed-matrix conversion. Raw workflows
+run directly on the host additionally require Nextflow, Java, and the selected
+execution profile. The project image already contains Java, Nextflow, and the
+Docker CLI.
 
 ### Docker
 
@@ -218,6 +224,47 @@ Run a conversion and mount an output directory:
 mkdir -p output
 docker run --rm -v "$PWD/output:/out" meta-standards-converter geo2ae GSE234602 --out /out
 ```
+
+#### Rootless nf-core execution with Compose
+
+For raw FASTQs, provision the dedicated `nfcore-runner` account and its rootless
+Docker daemon once. This administrative step installs rootless prerequisites,
+allocates subordinate IDs, enables the user service, and grants the runner
+read/write access only to `.out/json2h5ad`:
+
+```bash
+sudo "$PWD/scripts/provision-rootless-json2h5ad.sh" "$PWD" "$PWD/.out/json2h5ad"
+```
+
+Build and verify the converter with the rootless daemon:
+
+```bash
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
+  run --rm converter docker info --format '{{json .SecurityOptions}}'
+```
+
+Generate enriched JSON and process raw data. All inputs, outputs, Nextflow work,
+and caches supplied to the container must remain below `.out/json2h5ad`:
+
+```bash
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
+  run --rm converter geo2json GSE104830 \
+  --out "$PWD/.out/json2h5ad/json" -vv
+
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
+  run --rm converter json2h5ad \
+  "$PWD/.out/json2h5ad/json/GSE104830.json" \
+  --out "$PWD/.out/json2h5ad/bulk" \
+  --force-reprocess --pipeline rnaseq \
+  --accept-inferred-reference --profile docker -vv
+```
+
+The Compose service mounts the dedicated rootless socket, never the system
+`/var/run/docker.sock`. `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1` makes raw
+Docker-profile conversion fail before Nextflow starts if the daemon is
+unreachable or not rootless. The account still controls its own daemon, so do
+not grant it access to secrets or unrelated host directories.
 
 ### Main Code Flow
 
