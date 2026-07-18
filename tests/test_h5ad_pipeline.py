@@ -437,6 +437,44 @@ class TestNFCoreRunner(unittest.TestCase):
             self.assertEqual("h5ad", result.assets["GSM1"].kind)
             self.assertEqual(0, result.runs[0].returncode)
 
+    def test_scrnaseq_prefers_qcatch_filtered_quants_over_raw_matrix(self):
+        def command_runner(command, **kwargs):
+            return subprocess.CompletedProcess(command, 0, stdout="completed\n", stderr="")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result_dir = Path(tmpdir) / "nfcore" / "GSE1" / "scrnaseq" / "results"
+            raw_path = (
+                result_dir
+                / "simpleaf" / "mtx_conversions" / "GSM1" / "GSM1_raw_matrix.h5ad"
+            )
+            filtered_path = (
+                result_dir
+                / "simpleaf" / "GSM1" / "qcatch" / "GSM1_filtered_quants.h5ad"
+            )
+            raw_path.parent.mkdir(parents=True)
+            filtered_path.parent.mkdir(parents=True)
+            raw_path.touch()
+            filtered_path.touch()
+            runner = NFCoreRunner(
+                command_runner=command_runner,
+                which=lambda name: f"/usr/bin/{name}",
+            )
+
+            result = runner.process(
+                {"GSM1": raw_asset()},
+                packages=[package()],
+                out=tmpdir,
+                study_accession="GSE1",
+                pipeline="scrnaseq",
+                genome="GRCh38",
+            )
+
+            self.assertEqual(str(filtered_path), result.assets["GSM1"].path)
+            self.assertEqual(
+                {str(raw_path), str(filtered_path)},
+                set(result.retained_h5ads),
+            )
+
     def test_rnaseq_run_exposes_merged_counts_for_each_sample(self):
         def command_runner(command, **kwargs):
             return subprocess.CompletedProcess(command, 0, stdout="completed\n", stderr="")
