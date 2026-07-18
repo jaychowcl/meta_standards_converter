@@ -83,6 +83,27 @@ runner_home="$(getent passwd "${runner_name}" | cut -d: -f6)"
 runtime_dir="/run/user/${runner_uid}"
 project_owner_uid="$(stat --format '%u' "${project_root}")"
 
+verify_output_acl() {
+    local target="$1"
+    local owner_uid="$2"
+    local owner_name
+    owner_name="$(getent passwd "${owner_uid}" | cut -d: -f1)"
+    getfacl --absolute-names --numeric "${target}" >/dev/null
+    if ! runuser --user "${runner_name}" -- test -r "${target}" \
+        || ! runuser --user "${runner_name}" -- test -w "${target}" \
+        || ! runuser --user "${runner_name}" -- test -x "${target}"; then
+        echo "${runner_name} lacks effective read/write/traverse access to ${target}." >&2
+        return 1
+    fi
+    if [[ -n "${owner_name}" ]] \
+        && { ! runuser --user "${owner_name}" -- test -r "${target}" \
+            || ! runuser --user "${owner_name}" -- test -w "${target}" \
+            || ! runuser --user "${owner_name}" -- test -x "${target}"; }; then
+        echo "Project owner ${owner_name} lacks effective access to ${target}." >&2
+        return 1
+    fi
+}
+
 mkdir -p "${output_root}"
 path="$(dirname "${project_root}")"
 while [[ "${path}" != "/" ]]; do
@@ -109,6 +130,7 @@ setfacl --recursive --modify \
 setfacl --modify \
     "d:u:${project_owner_uid}:rwx,d:u:${runner_name}:rwx,d:u::rwx,d:g::---,d:o::---" \
     "${output_root}"
+verify_output_acl "${output_root}" "${project_owner_uid}"
 
 loginctl enable-linger "${runner_name}"
 systemctl start "user@${runner_uid}.service"

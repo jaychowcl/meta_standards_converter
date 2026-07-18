@@ -195,6 +195,7 @@ class PipelineRun:
     annotation_format: str | None = None
     annotation_sha256: str | None = None
     effective_annotation: str | None = None
+    warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -533,6 +534,7 @@ class NFCoreRunner:
             annotation_format=reference.get("annotation_format"),
             annotation_sha256=reference.get("annotation_sha256"),
             effective_annotation=reference.get("effective_annotation"),
+            warnings=self._extract_warnings(completed.stdout, completed.stderr),
         )
         if completed.returncode:
             raise RuntimeError(f"Nextflow {pipeline} failed; see {log_path}")
@@ -541,6 +543,40 @@ class NFCoreRunner:
         else:
             processed, retained = self._rnaseq_assets(result_dir, assets, reference)
         return RawProcessingResult(assets=processed, retained_h5ads=retained, runs=[run])
+
+    def _extract_warnings(self, *streams: str | None) -> list[str]:
+        text = "\n".join(stream or "" for stream in streams)
+        text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+        lines = text.splitlines()
+        warnings = []
+        index = 0
+        while index < len(lines):
+            line = lines[index].strip()
+            if not line.startswith("WARN:"):
+                index += 1
+                continue
+            message = line.partition(":")[2].strip()
+            if message and not set(message) <= {"~"}:
+                if message not in warnings:
+                    warnings.append(message)
+                index += 1
+                continue
+            block = []
+            index += 1
+            while index < len(lines):
+                continuation = lines[index].strip()
+                if continuation and set(continuation) <= {"~"}:
+                    index += 1
+                    break
+                if continuation.startswith("WARN:"):
+                    break
+                if continuation:
+                    block.append(continuation)
+                index += 1
+            message = " ".join(block)
+            if message and message not in warnings:
+                warnings.append(message)
+        return warnings
 
     def _preflight(self, profile: str) -> None:
         missing = []
@@ -1000,6 +1036,11 @@ class JSON2H5ADConverter:
             planned.update(processed.assets)
             result.retained_h5ads.extend(processed.retained_h5ads)
             result.pipeline_runs.extend(processed.runs)
+            for run in processed.runs:
+                for warning in run.warnings:
+                    rendered = f"{run.pipeline}: {warning}"
+                    if rendered not in result.warnings:
+                        result.warnings.append(rendered)
 
         for sample_id, asset in planned.items():
             if asset.kind == "raw":
@@ -1015,6 +1056,7 @@ class JSON2H5ADConverter:
                 study_accession=study_accession,
                 asset=asset,
                 characteristic_columns=characteristic_columns,
+                artifact_parent=out_path,
             )
             self._attach_miniml(
                 adata,
@@ -1022,6 +1064,7 @@ class JSON2H5ADConverter:
                 source_json=source_json,
                 source_json_sha256=source_json_sha256,
                 sample_id=sample_id,
+                artifact_parent=out_path,
             )
             sample_path = out_path / f"{sample_id}.h5ad"
             self._write_h5ad(adata, sample_path, overwrite=overwrite)
@@ -1038,6 +1081,7 @@ class JSON2H5ADConverter:
                 packages=packages,
                 source_json=source_json,
                 source_json_sha256=source_json_sha256,
+                artifact_parent=out_path,
             )
             combined_path = out_path / f"{study_accession}.h5ad"
             self._write_h5ad(combined, combined_path, overwrite=overwrite)
@@ -1216,16 +1260,21 @@ class JSON2H5ADConverter:
         study_accession: str,
         asset: Asset,
         characteristic_columns: list[str],
+        artifact_parent: Path,
     ) -> None:
         sample_id = self.planner.sample_accession(sample)
         metadata = self._sample_metadata(sample, package)
         modality = self._sample_modality(sample)
         original_names = [str(value) for value in adata.obs_names]
+        sample_suffix = f"-{sample_id}".casefold()
         adata.obs_names = [
-            value if value.endswith(f"-{sample_id}") else f"{value}-{sample_id}"
+            value
+            if value.casefold() == sample_id.casefold() or value.casefold().endswith(sample_suffix)
+            else f"{value}-{sample_id}"
             for value in original_names
         ]
         adata.obs_names_make_unique()
+        source_uri, source_uri_scope = self._portable_location(asset.path, artifact_parent)
         annotations = {
             "msc_accession": sample_id,
             "msc_series_accession": study_accession,
@@ -1258,7 +1307,8 @@ class JSON2H5ADConverter:
             "msc_metadata_source_name": metadata.get("metadata_source_name"),
             "msc_metadata_source_uri": metadata.get("metadata_source_uri"),
             "msc_source_tier": asset.kind,
-            "msc_source_uri": asset.path,
+            "msc_source_uri": source_uri,
+            "msc_source_uri_scope": source_uri_scope,
             "msc_modality": modality,
         }
         for column in characteristic_columns:
@@ -1269,7 +1319,9 @@ class JSON2H5ADConverter:
             "study_accession": study_accession,
             "sample_accession": sample_id,
             "source_tier": asset.kind,
-            "source_uri": asset.path,
+            "source_uri": source_uri,
+            "source_uri_scope": source_uri_scope,
+            "path_base": "artifact_parent",
             "source_origin": asset.source,
             "source_sha256": self._sha256(asset.path, md5=asset.md5),
             "converter_version": self._package_version(),
@@ -1286,7 +1338,12 @@ class JSON2H5ADConverter:
         ):
             value = getattr(asset, key)
             if value:
-                provenance[key] = value
+                if key in {"annotation_source", "effective_annotation"}:
+                    portable, scope = self._portable_location(value, artifact_parent)
+                    provenance[key] = portable
+                    provenance[f"{key}_scope"] = scope
+                else:
+                    provenance[key] = value
         existing = adata.uns.get("meta_standards_converter")
         if isinstance(existing, dict):
             provenance = {**existing, **provenance}
@@ -1406,12 +1463,13 @@ class JSON2H5ADConverter:
 
     def _values(self, values) -> list[str]:
         flattened = []
+        seen = set()
 
         def visit(value):
             if value is None:
                 return
             if isinstance(value, dict):
-                for key in ("value", "name", "predefined", "public_id", "iid"):
+                for key in ("value", "name", "predefined", "public_id", "iid", "ref"):
                     if value.get(key) is not None:
                         visit(value[key])
                         return
@@ -1425,8 +1483,10 @@ class JSON2H5ADConverter:
                     visit(item)
                 return
             cleaned = self._text(value)
-            if cleaned and cleaned not in flattened:
+            normalized = cleaned.casefold()
+            if cleaned and normalized not in seen:
                 flattened.append(cleaned)
+                seen.add(normalized)
 
         visit(values)
         return flattened
@@ -1463,6 +1523,7 @@ class JSON2H5ADConverter:
         source_json: str,
         source_json_sha256: str | None,
         sample_id: str | None = None,
+        artifact_parent: Path | None = None,
     ) -> None:
         _anndata, _numpy, pandas, _scanpy, _sparse = self._scientific_modules()
         rows = []
@@ -1499,9 +1560,14 @@ class JSON2H5ADConverter:
             ),
             {},
         )
+        portable_source, source_scope = self._portable_location(
+            source_json, artifact_parent or Path.cwd()
+        )
         adata.uns["msc_miniml"] = {
             "schema_version": self.MINIML_SCHEMA_VERSION,
-            "source_json": source_json,
+            "source_json": portable_source,
+            "source_json_scope": source_scope,
+            "path_base": "artifact_parent",
             "source_sha256": source_json_sha256 or "",
             "publication_policy": self.PUBLICATION_POLICY,
             "metadata_source": self._join_values(
@@ -1766,6 +1832,7 @@ class JSON2H5ADConverter:
             "join": "outer",
             "fill_value": 0,
             "converter_version": self._package_version(),
+            "path_base": "artifact_parent",
             "sample_provenance": {
                 sample_id: dict(adata.uns.get("meta_standards_converter", {}))
                 for sample_id, adata in adatas.items()
@@ -1824,42 +1891,38 @@ class JSON2H5ADConverter:
         path = Path(result.manifest_path)
         if path.exists() and not overwrite:
             raise FileExistsError(f"Output already exists: {path}")
+        base = path.parent.resolve()
+        source_json, source_json_scope = self._portable_location(json_path, base)
+        combined_h5ad, combined_h5ad_scope = self._portable_location(result.combined_h5ad, base)
+        sample_h5ads = {}
+        sample_h5ad_scopes = {}
+        for sample, value in result.sample_h5ads.items():
+            sample_h5ads[sample], sample_h5ad_scopes[sample] = self._portable_location(value, base)
+        retained_h5ads = []
+        retained_h5ad_scopes = []
+        for value in result.retained_h5ads:
+            portable, scope = self._portable_location(value, base)
+            retained_h5ads.append(portable)
+            retained_h5ad_scopes.append(scope)
         payload = {
+            "path_base": "artifact_parent",
             "study_accession": result.study_accession,
-            "source_json": os.path.abspath(json_path),
-            "combined_h5ad": result.combined_h5ad,
-            "sample_h5ads": result.sample_h5ads,
-            "retained_h5ads": result.retained_h5ads,
+            "source_json": source_json,
+            "source_json_scope": source_json_scope,
+            "combined_h5ad": combined_h5ad,
+            "combined_h5ad_scope": combined_h5ad_scope,
+            "sample_h5ads": sample_h5ads,
+            "sample_h5ad_scopes": sample_h5ad_scopes,
+            "retained_h5ads": retained_h5ads,
+            "retained_h5ad_scopes": retained_h5ad_scopes,
             "pipeline_runs": [
-                {
-                    "pipeline": run.pipeline,
-                    "revision": run.revision,
-                    "command": run.command,
-                    "work_dir": run.work_dir,
-                    "out_dir": run.out_dir,
-                    "returncode": run.returncode,
-                    "log_path": run.log_path,
-                    "annotation_source": run.annotation_source,
-                    "annotation_format": run.annotation_format,
-                    "annotation_sha256": run.annotation_sha256,
-                    "effective_annotation": run.effective_annotation,
-                }
+                self._portable_pipeline_run(run, base)
                 for run in result.pipeline_runs
             ],
             "warnings": result.warnings,
             "failures": result.failures,
             "assets": {
-                sample: {
-                    "path": asset.path,
-                    "kind": asset.kind,
-                    "source": asset.source,
-                    "role": asset.role,
-                    "reference": asset.reference,
-                    "annotation_source": asset.annotation_source,
-                    "annotation_format": asset.annotation_format,
-                    "annotation_sha256": asset.annotation_sha256,
-                    "effective_annotation": asset.effective_annotation,
-                }
+                sample: self._portable_asset(asset, base)
                 for sample, asset in planned.items()
             },
         }
@@ -1868,6 +1931,79 @@ class JSON2H5ADConverter:
             json.dump(payload, handle, indent=2, sort_keys=True)
             handle.write("\n")
         os.replace(temporary, path)
+
+    def _portable_pipeline_run(self, run: PipelineRun, base: Path) -> dict:
+        work_dir, work_dir_scope = self._portable_location(run.work_dir, base)
+        out_dir, out_dir_scope = self._portable_location(run.out_dir, base)
+        log_path, log_path_scope = self._portable_location(run.log_path, base)
+        annotation_source, annotation_source_scope = self._portable_location(
+            run.annotation_source, base
+        )
+        effective_annotation, effective_annotation_scope = self._portable_location(
+            run.effective_annotation, base
+        )
+        return {
+            "pipeline": run.pipeline,
+            "revision": run.revision,
+            "command": [self._portable_command_argument(value, base) for value in run.command],
+            "work_dir": work_dir,
+            "work_dir_scope": work_dir_scope,
+            "out_dir": out_dir,
+            "out_dir_scope": out_dir_scope,
+            "returncode": run.returncode,
+            "log_path": log_path,
+            "log_path_scope": log_path_scope,
+            "annotation_source": annotation_source,
+            "annotation_source_scope": annotation_source_scope,
+            "annotation_format": run.annotation_format,
+            "annotation_sha256": run.annotation_sha256,
+            "effective_annotation": effective_annotation,
+            "effective_annotation_scope": effective_annotation_scope,
+            "warnings": run.warnings,
+        }
+
+    def _portable_asset(self, asset: Asset, base: Path) -> dict:
+        path, path_scope = self._portable_location(asset.path, base)
+        annotation_source, annotation_source_scope = self._portable_location(
+            asset.annotation_source, base
+        )
+        effective_annotation, effective_annotation_scope = self._portable_location(
+            asset.effective_annotation, base
+        )
+        return {
+            "path": path,
+            "path_scope": path_scope,
+            "kind": asset.kind,
+            "source": asset.source,
+            "role": asset.role,
+            "reference": asset.reference,
+            "annotation_source": annotation_source,
+            "annotation_source_scope": annotation_source_scope,
+            "annotation_format": asset.annotation_format,
+            "annotation_sha256": asset.annotation_sha256,
+            "effective_annotation": effective_annotation,
+            "effective_annotation_scope": effective_annotation_scope,
+        }
+
+    def _portable_command_argument(self, value: str, base: Path) -> str:
+        if isinstance(value, str) and os.path.isabs(value):
+            return self._portable_location(value, base)[0]
+        return value
+
+    def _portable_location(self, value: str | None, base: Path) -> tuple[str | None, str | None]:
+        if value in (None, ""):
+            return value, None
+        rendered = str(value)
+        parsed = urlparse(rendered)
+        if parsed.scheme and parsed.scheme.lower() != "file":
+            return rendered, "remote"
+        local = parsed.path if parsed.scheme.lower() == "file" else rendered
+        absolute = Path(local)
+        if not absolute.is_absolute():
+            absolute = Path.cwd() / absolute
+        relative = os.path.relpath(absolute.resolve(strict=False), Path(base).resolve(strict=False))
+        scope = "external" if relative == ".." or relative.startswith(f"..{os.sep}") else "internal"
+        return relative, scope
 
     def _local_path(self, value: str, md5: str | None = None) -> str:
         if self.downloader is None:

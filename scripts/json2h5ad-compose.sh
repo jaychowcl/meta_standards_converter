@@ -23,12 +23,33 @@ runtime_dir="/run/user/${runner_uid}"
 rootless_socket="${runtime_dir}/docker.sock"
 output_root="${JSON2H5AD_OUT:-${project_root}/.out/json2h5ad}"
 
+verify_output_acl() {
+    local target="$1"
+    local failed=false
+    getfacl --absolute-names --numeric "${target}" >/dev/null
+    if [[ ! -r "${target}" || ! -w "${target}" || ! -x "${target}" ]]; then
+        echo "${runner_name} lacks effective read/write/traverse access to ${target}." >&2
+        return 1
+    fi
+    while IFS= read -r -d '' h5ad; do
+        if [[ ! -r "${h5ad}" || ! -w "${h5ad}" ]]; then
+            echo "ACL access check failed for ${h5ad}." >&2
+            failed=true
+        fi
+    done < <(find "${target}" -type f -name '*.h5ad' -print0)
+    if [[ "${failed}" == "true" ]]; then
+        return 1
+    fi
+    echo "Mapped output ownership: $(stat --format '%u:%g' "${target}"); effective ACL access verified."
+}
+
 if [[ ! -S "${rootless_socket}" ]]; then
     echo "Rootless Docker socket is unavailable: ${rootless_socket}" >&2
     exit 1
 fi
 
 mkdir -p "${output_root}/home" "${output_root}/.nextflow"
+verify_output_acl "${output_root}"
 
 export DOCKER_HOST="unix://${rootless_socket}"
 export HOME="${runner_home}"
@@ -42,4 +63,10 @@ if [[ "${security_options,,}" != *rootless* ]]; then
     exit 1
 fi
 
-exec docker compose --file "${project_root}/compose.yaml" "$@"
+if docker compose --file "${project_root}/compose.yaml" "$@"; then
+    status=0
+else
+    status=$?
+fi
+verify_output_acl "${output_root}"
+exit "${status}"

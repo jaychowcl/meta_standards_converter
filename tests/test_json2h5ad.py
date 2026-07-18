@@ -27,6 +27,7 @@ from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     AssetDownloader,
     AssetManifest,
     ConversionResult,
+    JSON2H5ADConverter,
     PipelineRun,
     RawProcessingResult,
     SourcePlanner,
@@ -192,6 +193,16 @@ class TestAssetInputs(unittest.TestCase):
 
 
 class TestConversionContract(unittest.TestCase):
+    def test_portable_locations_preserve_remote_urls(self):
+        converter = JSON2H5ADConverter()
+
+        value, scope = converter._portable_location(
+            "https://example.org/data/source.h5ad", Path("/tmp/output")
+        )
+
+        self.assertEqual("https://example.org/data/source.h5ad", value)
+        self.assertEqual("remote", scope)
+
     def test_result_exposes_primary_combined_output(self):
         result = ConversionResult(
             study_accession="GSE1",
@@ -731,7 +742,14 @@ class TestProcessedAssetConversion(unittest.TestCase):
                         PipelineRun(
                             pipeline="scrnaseq",
                             revision="4.2.0",
-                            command=["nextflow", "run", "nf-core/scrnaseq"],
+                            command=[
+                                "nextflow",
+                                "run",
+                                "nf-core/scrnaseq",
+                                "-work-dir",
+                                os.path.dirname(self.output),
+                                "https://example.org/reference.fa",
+                            ],
                             work_dir=os.path.dirname(self.output),
                             out_dir=os.path.dirname(self.output),
                             warnings=["Unrecognized config option 'example'"],
@@ -769,6 +787,9 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 ["Unrecognized config option 'example'"],
                 manifest["pipeline_runs"][0]["warnings"],
             )
+            recorded_command = manifest["pipeline_runs"][0]["command"]
+            self.assertFalse(os.path.isabs(recorded_command[4]))
+            self.assertEqual("https://example.org/reference.fa", recorded_command[5])
 
     def test_study_h5ad_is_split_by_canonical_and_legacy_sample_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
