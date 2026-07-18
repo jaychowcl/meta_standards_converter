@@ -161,6 +161,10 @@ Known ENA and NCBI `ftp://` FASTQ URLs are written to nf-core samplesheets
 using the archives' equivalent `https://` endpoints, which are more reliable
 through rootless container networking.
 
+For `nf-core/scrnaseq`, H5AD discovery covers the complete results tree and
+selects CellBender-filtered, then filtered (including QCATCH
+`*_filtered_quants.h5ad`), then raw output for each sample.
+
 User annotations must be local `.gtf[.gz]`, `.gff[.gz]`, or `.gff3[.gz]`
 files. GFF3 is converted once with `gffread` to a checksum-addressed GTF shared
 by bulk and single-cell runs. Annotation source, format, SHA-256, and effective

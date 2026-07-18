@@ -655,10 +655,14 @@ class NFCoreRunner:
         return groups
 
     def _scrnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset], reference: dict):
-        paths = list(result_dir.glob("**/*_matrix.h5ad"))
+        paths = sorted(result_dir.glob("**/*.h5ad"), key=lambda path: str(path).lower())
         processed = {}
         for sample_id in inputs:
-            candidates = [path for path in paths if sample_id.lower() in path.name.lower()]
+            candidates = [
+                path
+                for path in paths
+                if sample_id.lower() in str(path.relative_to(result_dir)).lower()
+            ]
             if not candidates:
                 raise RuntimeError(f"nf-core/scrnaseq produced no H5AD for {sample_id}.")
             chosen = max(candidates, key=self._scrnaseq_rank)
@@ -676,10 +680,10 @@ class NFCoreRunner:
         return processed, [str(path) for path in paths]
 
     def _scrnaseq_rank(self, path: Path) -> int:
-        name = path.name.lower()
-        if "cellbender_filter" in name:
+        location = str(path).lower()
+        if "cellbender_filter" in location:
             return 3
-        if "filtered" in name:
+        if "filtered" in location:
             return 2
         return 1
 
