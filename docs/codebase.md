@@ -170,7 +170,7 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
 
 Raw processing pins `nf-core/scrnaseq` 4.1.0 and `nf-core/rnaseq` 3.26.0 by default. The runner requires Nextflow, Java, and the selected Docker/Podman/Apptainer/Singularity runtime. `scrnaseq` prefers CellBender-filtered, then filtered, then raw H5AD output. `rnaseq` count matrices become sparse `X`, and aligned TPM values become `layers["tpm"]`.
 
-Combination preserves successful per-sample outputs when organisms or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
+Combination preserves successful per-sample outputs when expression modalities, organisms, declared reference builds, or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
 
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape
