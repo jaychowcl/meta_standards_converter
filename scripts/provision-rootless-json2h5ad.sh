@@ -104,15 +104,10 @@ setfacl --modify "u:${runner_name}:r--" \
     "${project_root}/pyproject.toml"
 setfacl --recursive --modify "u:${runner_name}:r-X" "${project_root}/src"
 setfacl --recursive --modify \
-    "u:${project_owner_uid}:rwx" \
-    "u:${runner_name}:rwx" \
+    "u:${project_owner_uid}:rwx,u:${runner_name}:rwx" \
     "${output_root}"
 setfacl --modify \
-    "d:u:${project_owner_uid}:rwx" \
-    "d:u:${runner_name}:rwx" \
-    "d:u::rwx" \
-    "d:g::---" \
-    "d:o::---" \
+    "d:u:${project_owner_uid}:rwx,d:u:${runner_name}:rwx,d:u::rwx,d:g::---,d:o::---" \
     "${output_root}"
 
 loginctl enable-linger "${runner_name}"
