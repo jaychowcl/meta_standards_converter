@@ -64,6 +64,9 @@ class DockerArtifactsTest(unittest.TestCase):
         self.assertIn("no-new-privileges:true", content)
         self.assertIn("cap_drop:", content)
         self.assertIn("- ALL", content)
+        self.assertIn("NXF_OPTS: -Djava.io.tmpdir=/nextflow-tmp", content)
+        self.assertIn("/tmp:size=2g,mode=1777", content)
+        self.assertIn("/nextflow-tmp:size=2g,mode=1777,exec", content)
 
     def test_rootless_runner_scripts_are_present_and_parse(self):
         scripts = [
