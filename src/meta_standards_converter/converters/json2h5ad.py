@@ -46,6 +46,7 @@ class Asset:
     orientation: str = "auto"
     md5: str | None = None
     study_scope: str | None = None
+    reference: str | None = None
 
 
 class AssetManifest:
@@ -408,9 +409,9 @@ class NFCoreRunner:
         if completed.returncode:
             raise RuntimeError(f"Nextflow {pipeline} failed; see {log_path}")
         if pipeline == "scrnaseq":
-            processed, retained = self._scrnaseq_assets(result_dir, assets)
+            processed, retained = self._scrnaseq_assets(result_dir, assets, reference)
         else:
-            processed, retained = self._rnaseq_assets(result_dir, assets)
+            processed, retained = self._rnaseq_assets(result_dir, assets, reference)
         return RawProcessingResult(assets=processed, retained_h5ads=retained, runs=[run])
 
     def _preflight(self, profile: str) -> None:
@@ -498,7 +499,7 @@ class NFCoreRunner:
             groups.setdefault(selected, {})[sample_id] = asset
         return groups
 
-    def _scrnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset]):
+    def _scrnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset], reference: dict):
         paths = list(result_dir.glob("**/*_matrix.h5ad"))
         processed = {}
         for sample_id in inputs:
@@ -506,7 +507,13 @@ class NFCoreRunner:
             if not candidates:
                 raise RuntimeError(f"nf-core/scrnaseq produced no H5AD for {sample_id}.")
             chosen = max(candidates, key=self._scrnaseq_rank)
-            processed[sample_id] = Asset(sample_id, str(chosen), "h5ad", source="nfcore")
+            processed[sample_id] = Asset(
+                sample_id,
+                str(chosen),
+                "h5ad",
+                source="nfcore",
+                reference=reference.get("genome") or reference.get("fasta"),
+            )
         return processed, [str(path) for path in paths]
 
     def _scrnaseq_rank(self, path: Path) -> int:
@@ -517,7 +524,7 @@ class NFCoreRunner:
             return 2
         return 1
 
-    def _rnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset]):
+    def _rnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset], reference: dict):
         counts = sorted(result_dir.glob("**/*.merged.gene_counts.tsv"))
         if not counts:
             raise RuntimeError("nf-core/rnaseq produced no merged gene-count matrix.")
@@ -533,6 +540,7 @@ class NFCoreRunner:
                 source="nfcore",
                 features_path=tpm_path,
                 orientation="genes-by-observations",
+                reference=reference.get("genome") or reference.get("fasta"),
             )
             for sample_id in inputs
         }
@@ -994,6 +1002,9 @@ class JSON2H5ADConverter:
             "source_sha256": self._sha256(asset.path, md5=asset.md5),
             "converter_version": self._package_version(),
         }
+        declared_reference = asset.reference or self._declared_reference(adata)
+        if declared_reference:
+            provenance["reference"] = declared_reference
         existing = adata.uns.get("meta_standards_converter")
         if isinstance(existing, dict):
             provenance = {**existing, **provenance}
@@ -1028,6 +1039,16 @@ class JSON2H5ADConverter:
         }
         if len(organisms) > 1:
             raise ValueError(f"Cannot combine samples with incompatible organisms: {sorted(organisms)}")
+        references = {
+            str(adata.uns.get("meta_standards_converter", {}).get("reference")).strip()
+            for adata in adatas.values()
+            if isinstance(adata.uns.get("meta_standards_converter"), dict)
+            and adata.uns["meta_standards_converter"].get("reference")
+        }
+        if len(references) > 1:
+            raise ValueError(
+                f"Cannot combine samples with incompatible reference builds: {sorted(references)}"
+            )
         namespaces = {self._feature_namespace(adata) for adata in adatas.values()}
         namespaces.discard("unknown")
         if len(namespaces) > 1:
@@ -1061,6 +1082,23 @@ class JSON2H5ADConverter:
         if values and sum(value.isalnum() for value in values) >= len(values) / 2:
             return "symbol"
         return "unknown"
+
+    def _declared_reference(self, adata) -> str | None:
+        for key in ("genome", "reference_genome", "genome_build"):
+            value = adata.uns.get(key)
+            if isinstance(value, (str, int, float)) and str(value).strip():
+                return str(value).strip()
+        existing = adata.uns.get("meta_standards_converter")
+        if isinstance(existing, dict):
+            for key in ("reference", "genome", "genome_build"):
+                value = existing.get(key)
+                if value:
+                    return str(value).strip()
+        if "genome" in adata.var:
+            values = {str(value).strip() for value in adata.var["genome"] if str(value).strip()}
+            if len(values) == 1:
+                return next(iter(values))
+        return None
 
     def _write_h5ad(self, adata, path: Path, overwrite: bool) -> None:
         if path.exists() and not overwrite:
@@ -1111,6 +1149,7 @@ class JSON2H5ADConverter:
                     "kind": asset.kind,
                     "source": asset.source,
                     "role": asset.role,
+                    "reference": asset.reference,
                 }
                 for sample, asset in planned.items()
             },
