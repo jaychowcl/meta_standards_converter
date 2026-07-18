@@ -98,6 +98,31 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         ]
         self.assertIn("", protocol_values)
 
+    def test_sequencing_references_sample_data_processing_protocol(self):
+        sample = {
+            "iid": "GSM1",
+            "title": "sample 1",
+            "accession": [{"value": "GSM1"}],
+            "platform_ref": {"ref": "GPL1"},
+            "channel": [{"source": "source 1", "molecule": "total RNA"}],
+            "library_strategy": "RNA-Seq",
+            "library_source": "transcriptomic",
+            "library_selection": "cDNA",
+            "data_processing": "Align reads and quantify genes",
+        }
+        registry = ProtocolRegistry(series_accession="GSE1")
+
+        sdrf = Parent()._miniml2sdrf(base_data(sample), protocol_registry=registry)
+
+        processing = next(record for record in registry.records() if record["kind"] == "data processing")
+        protocol_values = [
+            sdrf[1][index]
+            for index, label in enumerate(sdrf[0])
+            if label == "Protocol REF"
+        ]
+        self.assertEqual("Align reads and quantify genes", processing["text"])
+        self.assertIn(processing["ref"], protocol_values)
+
     def test_source_name_uses_gsm_accession_and_preserves_geo_source(self):
         sample = {
             "iid": "GSM1",

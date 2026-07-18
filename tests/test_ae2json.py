@@ -179,6 +179,32 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual("First", package["sample"][0]["title"])
         self.assertTrue(any("conflicting" in warning for warning in package["mage_tab"]["warnings"]))
 
+    def test_library_protocol_does_not_replace_extraction_protocol(self):
+        idf = IDF.replace(
+            "Protocol Name\tP-collect\tP-extract\n"
+            "Protocol Type\tsample collection protocol\tnucleic acid extraction protocol\n"
+            "Protocol Description\tCollect samples\tExtract material\n",
+            "Protocol Name\tP-collect\tP-library\tP-extract\n"
+            "Protocol Type\tsample collection protocol\tnucleic acid library construction protocol\tnucleic acid extraction protocol\n"
+            "Protocol Description\tCollect samples\tBuild library\tExtract material\n",
+        )
+        header = list(SDRF_HEADER)
+        protocol_index = header.index("Protocol REF")
+        header.insert(protocol_index + 1, "Protocol REF")
+        row = [
+            "GSM1", "Sample one", "Homo sapiens", "EFO", "case", "case",
+            "P-library", "P-extract", "GSM1", "RNA", "A-TEST-1",
+            "sequencing assay", "TRANSCRIPTOMIC", "RNA-SEQ", "ERR1",
+            "https://example/1.fastq.gz", "aaa", "x",
+        ]
+        text = "\n".join("\t".join(values) for values in [header, row]) + "\n"
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(idf=idf, sdrfs=[text])
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+
+        self.assertEqual("Extract material", package["sample"][0]["channel"][0]["extract_protocol"])
+
     def test_rejects_malformed_sdrf_row_width(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=["Source Name\tSample Name\nS1\n"])

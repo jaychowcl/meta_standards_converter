@@ -47,6 +47,24 @@ class TestIDFConstructor(unittest.TestCase):
             Harmonizer().geoprotocols2efo(protocol_type="Custom-Protocol"),
         )
 
+    def test_term_sources_prefer_supplied_database_url_and_version(self):
+        rows = IDFConstructor()._idf_term_source(
+            magetab=[["Experimental Design Term Source REF", "EFO"]],
+            data={
+                "database": [
+                    {
+                        "iid": "EFO",
+                        "name": "Experimental Factor Ontology",
+                        "url": "https://example.org/efo-source.owl",
+                        "version": "2026-07-01",
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(["Term Source File", "https://example.org/efo-source.owl"], self.row(rows, "Term Source File"))
+        self.assertEqual(["Term Source Version", "2026-07-01"], self.row(rows, "Term Source Version"))
+
     def test_geoprotocols2efo_still_rejects_blank_protocol(self):
         with self.assertRaises(ValueError):
             Harmonizer().geoprotocols2efo(protocol_type="")
