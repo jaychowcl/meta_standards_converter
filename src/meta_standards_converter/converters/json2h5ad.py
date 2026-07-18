@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import csv
+import gzip
 import hashlib
 import logging
 import os
@@ -902,7 +903,7 @@ class JSON2H5ADConverter:
         anndata, numpy, pandas, scanpy, sparse = self._scientific_modules()
         path = self._local_path(asset.path, md5=asset.md5)
         if asset.kind == "h5ad":
-            adata = anndata.read_h5ad(path)
+            adata = self._read_h5ad(anndata, path)
             if asset.study_scope:
                 accession_column = next(
                     (
@@ -994,6 +995,20 @@ class JSON2H5ADConverter:
             adata.X = adata.X.tocsr()
         adata.var_names_make_unique()
         return adata
+
+    def _read_h5ad(self, anndata, path: str):
+        if not str(path).lower().endswith(".gz"):
+            return anndata.read_h5ad(path)
+        temporary_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".h5ad", delete=False) as temporary:
+                temporary_path = temporary.name
+                with gzip.open(path, "rb") as compressed:
+                    shutil.copyfileobj(compressed, temporary, length=1024 * 1024)
+            return anndata.read_h5ad(temporary_path)
+        finally:
+            if temporary_path:
+                Path(temporary_path).unlink(missing_ok=True)
 
     def _normalize(self, adata, sample: dict, study_accession: str, asset: Asset) -> None:
         sample_id = self.planner.sample_accession(sample)

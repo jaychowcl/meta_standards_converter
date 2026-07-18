@@ -158,7 +158,7 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
        -> write nf-core samplesheet and params.json
        -> subprocess.run(nextflow run nf-core/{scrnaseq|rnaseq}, shell=False)
        -> discover scrnaseq H5AD or rnaseq count/TPM matrices
-  -> load H5AD, 10x HDF5, 10x MTX, or delimited matrices
+  -> load H5AD (including .h5ad.gz), 10x HDF5, 10x MTX, or delimited matrices
   -> normalize sparse AnnData with geo_* obs fields and provenance in uns
   -> write one normalized H5AD per sample
   -> combine compatible samples using an outer sparse feature join
@@ -166,7 +166,7 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
   -> return ConversionResult
 ```
 
-`AssetDownloader` streams HTTP(S)/FTP processed assets into an output-local cache and verifies an MD5 when supplied. Source files are never modified. Study-level H5ADs require an observation column named `geo_accession`, `sample_id`, `sample`, or `gsm_accession` so they can be split safely.
+`AssetDownloader` streams HTTP(S)/FTP processed assets into an output-local cache and verifies an MD5 when supplied. Source files are never modified. Gzip-compressed H5AD assets are expanded into a temporary `.h5ad` only while AnnData reads them; the cached download remains compressed. Study-level H5ADs require an observation column named `geo_accession`, `sample_id`, `sample`, or `gsm_accession` so they can be split safely.
 
 Raw processing pins `nf-core/scrnaseq` 4.2.0 and `nf-core/rnaseq` 3.26.0 by default. The scrnaseq 4.2.0 floor includes the upstream strict-syntax fixes required by the pinned Nextflow 26 runtime; 4.1.0 contains a reference to a missing `conf/test_multiome.config` and fails during config parsing. The runner requires Nextflow, Java, and the selected Docker/Podman/Apptainer/Singularity runtime. `scrnaseq` prefers CellBender-filtered, then filtered, then raw H5AD output. `rnaseq` count matrices become sparse `X`, and aligned TPM values become `layers["tpm"]`.
 

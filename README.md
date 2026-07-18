@@ -131,6 +131,9 @@ Options are the same as `geo2ae`, plus:
 
 `json2h5ad` selects the best source per sample (`H5AD > matrix > raw`):
 
+Local and remote H5AD assets may be supplied either uncompressed (`.h5ad`) or
+gzip-compressed (`.h5ad.gz`), as commonly published by GEO.
+
 ```bash
 json2h5ad output/GSE234602.json --out output
 json2h5ad output/GSE234602.json --asset GSM9651991=local.h5ad --out output
