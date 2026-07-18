@@ -15,7 +15,7 @@ class GEO2OLS:
         super().__init__()
         if not hasattr(self, "ontologies"):
             self.ontologies = {}
-        self.ontologies["EFO"] = {"Term Source Name": "EFO", "Term Source File": "http://www.ebi.ac.uk/efo/efo.owl", "Term Source Version": "3.89.0"}
+        self.ontologies["EFO"] = {"Term Source Name": "EFO", "Term Source File": "http://www.ebi.ac.uk/efo/efo.owl", "Term Source Version": "3.90.0"}
         self.ontologies["OBI"] = {"Term Source Name": "OBI", "Term Source File": "http://purl.obolibrary.org/obo/obi.owl", "Term Source Version": "2026-03-19"}
         pass
 
@@ -45,6 +45,7 @@ class GEO2OLS:
          "Treatment-Protocol": onto_terms["sample treatment protocol"],
          "Growth-Protocol": onto_terms["growth protocol"],
          "Extract-Protocol": onto_terms["nucleic acid extraction protocol"],
+         "Library-Construction-Protocol": ["nucleic acid library construction protocol", "EFO", "EFO_0004184"],
          "Label-Protocol": onto_terms["labelling protocol"],
          "Hybridization-Protocol": onto_terms["hybridization protocol"],
          "Scan-Protocol": onto_terms["array scanning and feature extraction protocol"],

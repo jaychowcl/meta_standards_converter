@@ -15,7 +15,7 @@ class Pubmed2OLS:
       super().__init__()
       if not hasattr(self, "ontologies"):
          self.ontologies = {}
-      self.ontologies["EFO"] = {"Term Source Name": "EFO", "Term Source File": "http://www.ebi.ac.uk/efo/efo.owl", "Term Source Version": "3.89.0"}
+      self.ontologies["EFO"] = {"Term Source Name": "EFO", "Term Source File": "http://www.ebi.ac.uk/efo/efo.owl", "Term Source Version": "3.90.0"}
       self.ontologies["MeSH"] = {"Term Source Name": "MeSH", "Term Source File": "https://id.nlm.nih.gov/mesh/", "Term Source Version": "2024-08-09"}
     
     def pubstatus2efo(self, pub_status: str) -> list:

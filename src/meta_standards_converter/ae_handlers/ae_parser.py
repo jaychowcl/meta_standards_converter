@@ -80,6 +80,11 @@ class AEParser:
         "instrument_model", "fastq_uri", "derived data file", "technical replicate group",
         "library construction", "index", "read_type", "read_index", "cdna read size",
         "read1 file", "read2 file", "read3 file", "read4 file",
+        "cdna read", "cdna read offset", "cell barcode offset", "cell barcode read",
+        "cell barcode size", "end bias", "input molecule", "library_strand", "primer",
+        "sample barcode offset", "sample barcode read", "sample barcode size",
+        "single cell isolation", "spike in", "umi barcode offset", "umi barcode read",
+        "umi barcode size",
     }
 
     def parse(self, source: MAGETabInput) -> dict:

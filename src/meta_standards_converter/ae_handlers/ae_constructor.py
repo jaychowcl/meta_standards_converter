@@ -27,7 +27,7 @@ class ProtocolRegistry:
         "growth": "Growth-Protocol",
         "extraction": "Extract-Protocol",
         "extract": "Extract-Protocol",
-        "library construction": "Extract-Protocol",
+        "library construction": "Library-Construction-Protocol",
         "labeling": "Label-Protocol",
         "label": "Label-Protocol",
         "hybridization": "Hybridization-Protocol",

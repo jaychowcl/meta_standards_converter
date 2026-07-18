@@ -349,9 +349,9 @@ class IDFConstructor():
 
         addresses = []
         for contributor in contributors:
-            address = contributor.get("address", {})
-            address_parts = handler._flatten_values(address)
-            if not isinstance(address, str):
+            address = contributor.get("address")
+            address_parts = handler._flatten_values(address) if address else []
+            if address and not isinstance(address, str):
                 address_parts = [contributor.get("organization"), *address_parts]
             addresses.append(", ".join(str(x) for x in address_parts if x) or None)
 
@@ -704,7 +704,6 @@ class IDFConstructor():
             if row and "source ref" in str(row[0]).lower():
                 sources.update(x for x in row[1:] if x)
 
-        sources = sorted(sources)
         databases = {}
         raw_databases = (data or {}).get("database", [])
         if isinstance(raw_databases, dict):
@@ -712,18 +711,26 @@ class IDFConstructor():
         for database in raw_databases:
             if not isinstance(database, dict):
                 continue
-            for key in (database.get("iid"), database.get("name")):
+            declared_name = database.get("iid") or database.get("name")
+            if declared_name:
+                sources.add(declared_name)
+            for key in (database.get("iid"), database.get("name"), declared_name):
                 if key:
                     databases[str(key).casefold()] = database
 
+        sources = sorted(sources)
         harmonized = Harmonizer().ontologies
         files = []
         versions = []
         for source in sources:
-            supplied = databases.get(str(source).casefold(), {})
+            supplied = databases.get(str(source).casefold())
+            if supplied is not None:
+                files.append(supplied.get("url") or supplied.get("web_link"))
+                versions.append(supplied.get("version"))
+                continue
             fallback = harmonized.get(source, {})
-            files.append(supplied.get("url") or fallback.get("Term Source File"))
-            versions.append(supplied.get("version") or fallback.get("Term Source Version"))
+            files.append(fallback.get("Term Source File"))
+            versions.append(fallback.get("Term Source Version"))
 
         return [
             ["Term Source Name", *sources],

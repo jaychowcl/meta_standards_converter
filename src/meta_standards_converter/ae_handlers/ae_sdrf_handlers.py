@@ -676,6 +676,7 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
     def preregister_protocols(self) -> None:
         for sample in self.ordered_samples():
             self.preregister_data_processing(sample=sample)
+            self.protocol_registry.get_ref(kind="scan", text=sample.get("scan_protocol"))
             runs = self.sra_runs(sample=sample) or [None]
             for channel in self.channels(sample=sample):
                 self.preregister_extraction_protocols(sample=sample, channel=channel)
@@ -705,6 +706,13 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
                         path.parts.append(assay_edge)
                     path.parts.append(self.assay_node(sample=sample, run=run))
                     path.parts.append(self.nucleic_acid_sequencing_edge())
+                    scan_edge = self.protocol_edge(
+                        kind="scan",
+                        text=sample.get("scan_protocol"),
+                        sample=sample,
+                    )
+                    if scan_edge:
+                        path.parts.append(scan_edge)
                     path.parts.append(self.scan_node(sample=sample, run=run))
                     processing_edge = self.data_processing_edge(sample=sample)
                     if processing_edge:
@@ -752,7 +760,7 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
 
     def library_protocol_text(self, sample: dict, channel: dict, run: dict | None) -> str | None:
         values = [
-            channel.get("extract_protocol"),
+            sample.get("library_layout"),
             sample.get("library_strategy"),
             sample.get("library_source"),
             sample.get("library_selection"),
@@ -868,6 +876,13 @@ class _BulkSequencingSDRFHandler(_SequencingSDRFHandler):
                             path.parts.append(assay_edge)
                         path.parts.append(self.assay_node(sample=sample, run=run))
                         path.parts.append(self.nucleic_acid_sequencing_edge())
+                        scan_edge = self.protocol_edge(
+                            kind="scan",
+                            text=sample.get("scan_protocol"),
+                            sample=sample,
+                        )
+                        if scan_edge:
+                            path.parts.append(scan_edge)
                         path.parts.append(self.bulk_scan_node(sample=sample, run=run, fastq=fastq))
                         processing_edge = self.data_processing_edge(sample=sample)
                         if processing_edge:
