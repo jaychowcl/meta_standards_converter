@@ -24,7 +24,7 @@ class DockerArtifactsTest(unittest.TestCase):
         self.assertIn("WORKDIR /app", content)
         self.assertIn("COPY pyproject.toml README.md LICENSE ./", content)
         self.assertIn("COPY src ./src", content)
-        self.assertIn("RUN pip install --no-cache-dir .", content)
+        self.assertIn("RUN pip install --no-cache-dir '.[h5ad]'", content)
         self.assertIn('CMD ["geo2ae", "--help"]', content)
 
     def test_dockerignore_excludes_local_and_generated_files(self):
