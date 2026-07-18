@@ -75,6 +75,38 @@ class TestReferenceResolver(unittest.TestCase):
 
 
 class TestNFCoreRunner(unittest.TestCase):
+    def test_relative_output_still_writes_absolute_nextflow_parameters(self):
+        captured = []
+
+        def command_runner(command, **kwargs):
+            captured.append(command)
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+        with tempfile.TemporaryDirectory(dir=os.getcwd()) as tmpdir:
+            relative_out = os.path.relpath(tmpdir, os.getcwd())
+            result_path = (
+                Path(tmpdir).resolve()
+                / "nfcore" / "GSE1" / "scrnaseq" / "results"
+                / "simpleaf" / "mtx_conversions" / "GSM1_filtered_matrix.h5ad"
+            )
+            result_path.parent.mkdir(parents=True)
+            result_path.touch()
+            runner = NFCoreRunner(command_runner=command_runner, which=lambda name: f"/usr/bin/{name}")
+
+            runner.process(
+                {"GSM1": raw_asset()},
+                packages=[package()],
+                out=relative_out,
+                study_accession="GSE1",
+                pipeline="scrnaseq",
+                genome="GRCh38",
+            )
+
+            params_index = captured[0].index("-params-file") + 1
+            work_index = captured[0].index("-work-dir") + 1
+            self.assertTrue(os.path.isabs(captured[0][params_index]))
+            self.assertTrue(os.path.isabs(captured[0][work_index]))
+
     def test_auto_pipeline_groups_bulk_and_single_cell_samples(self):
         calls = []
 
