@@ -48,6 +48,10 @@ class Asset:
     md5: str | None = None
     study_scope: str | None = None
     reference: str | None = None
+    annotation_source: str | None = None
+    annotation_format: str | None = None
+    annotation_sha256: str | None = None
+    effective_annotation: str | None = None
 
 
 class AssetManifest:
@@ -185,6 +189,10 @@ class PipelineRun:
     out_dir: str
     returncode: int | None = None
     log_path: str | None = None
+    annotation_source: str | None = None
+    annotation_format: str | None = None
+    annotation_sha256: str | None = None
+    effective_annotation: str | None = None
 
 
 @dataclass
@@ -233,14 +241,28 @@ class ReferenceResolver:
         genome: str | None = None,
         fasta: str | None = None,
         gtf: str | None = None,
+        gff: str | None = None,
         accept_inferred: bool = False,
     ) -> dict:
+        if gtf and gff:
+            raise ValueError("Reference annotation options gtf and gff are mutually exclusive.")
+        annotation = gtf or gff
         if genome:
-            return {"genome": genome}
-        if fasta or gtf:
-            if not (fasta and gtf):
-                raise ValueError("A custom reference requires both fasta and gtf paths.")
-            return {"fasta": fasta, "gtf": gtf}
+            return {
+                "genome": genome,
+                **({"gtf": gtf} if gtf else {}),
+                **({"gff": gff} if gff else {}),
+            }
+        if fasta or annotation:
+            if annotation and not fasta:
+                raise ValueError("A custom annotation requires either genome or fasta.")
+            if fasta and not annotation:
+                raise ValueError("A custom fasta reference requires an annotation in gtf or gff format.")
+            return {
+                "fasta": fasta,
+                **({"gtf": gtf} if gtf else {}),
+                **({"gff": gff} if gff else {}),
+            }
 
         taxids = set()
         names = set()
@@ -282,6 +304,84 @@ class ReferenceResolver:
         return {"genome": inferred, "inferred": True}
 
 
+class AnnotationConverter:
+    """Validate local annotations and normalize GFF3 input to GTF."""
+
+    def __init__(self, command_runner=None, which=None):
+        self.command_runner = command_runner or subprocess.run
+        self.which = which or shutil.which
+
+    def prepare(self, reference: dict, reference_dir: Path) -> dict:
+        prepared = dict(reference)
+        if prepared.get("fasta"):
+            prepared["fasta"] = str(self._local_file(prepared["fasta"], "FASTA"))
+
+        annotation = prepared.get("gtf") or prepared.get("gff")
+        if not annotation:
+            return prepared
+        source = self._local_file(annotation, "annotation")
+        annotation_format = self._annotation_format(source)
+        digest = self._sha256(source)
+        metadata = {
+            "annotation_source": str(source),
+            "annotation_format": annotation_format,
+            "annotation_sha256": digest,
+        }
+
+        if annotation_format == "gtf":
+            prepared["gtf"] = str(source)
+            prepared["effective_annotation"] = str(source)
+            return {**prepared, **metadata}
+
+        reference_dir.mkdir(parents=True, exist_ok=True)
+        destination = reference_dir / f"{digest}.gtf"
+        temporary = Path(str(destination) + ".tmp")
+        if not destination.exists() or destination.stat().st_size == 0:
+            if not self.which("gffread"):
+                raise RuntimeError("GFF3 annotations require gffread on PATH.")
+            command = ["gffread", str(source), "-T", "-o", str(temporary)]
+            completed = self.command_runner(
+                command,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if completed.returncode or not temporary.exists() or temporary.stat().st_size == 0:
+                temporary.unlink(missing_ok=True)
+                detail = (completed.stderr or completed.stdout or "conversion produced no GTF").strip()
+                raise RuntimeError(f"gffread annotation conversion failed: {detail}")
+            os.replace(temporary, destination)
+
+        prepared.pop("gff", None)
+        prepared["gtf"] = str(destination)
+        prepared["effective_annotation"] = str(destination)
+        return {**prepared, **metadata}
+
+    def _local_file(self, value: str, label: str) -> Path:
+        parsed = urlparse(str(value))
+        if parsed.scheme not in ("", "file"):
+            raise ValueError(f"User-supplied {label} must be a local file: {value}")
+        path = Path(parsed.path if parsed.scheme == "file" else value).expanduser().resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"User-supplied {label} file not found: {path}")
+        return path
+
+    def _annotation_format(self, path: Path) -> str:
+        name = path.name.lower()
+        if name.endswith((".gtf", ".gtf.gz")):
+            return "gtf"
+        if name.endswith((".gff", ".gff.gz", ".gff3", ".gff3.gz")):
+            return "gff3"
+        raise ValueError(f"Unsupported annotation format: {path}")
+
+    def _sha256(self, path: Path) -> str:
+        digest = hashlib.sha256()
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+
+
 class NFCoreRunner:
     """Prepare, execute, and inspect pinned nf-core RNA-seq workflows."""
 
@@ -294,11 +394,13 @@ class NFCoreRunner:
         which=None,
         reference_resolver=None,
         runtime_runner=None,
+        annotation_converter=None,
     ):
         self.command_runner = command_runner or subprocess.run
         self.which = which or shutil.which
         self.reference_resolver = reference_resolver or ReferenceResolver()
         self.runtime_runner = runtime_runner or subprocess.run
+        self.annotation_converter = annotation_converter or AnnotationConverter(which=self.which)
 
     def process(
         self,
@@ -310,6 +412,7 @@ class NFCoreRunner:
         genome: str | None = None,
         fasta: str | None = None,
         gtf: str | None = None,
+        gff: str | None = None,
         accept_inferred_reference: bool = False,
         profile: str = "docker",
         revision: str | None = None,
@@ -332,6 +435,7 @@ class NFCoreRunner:
                         genome=genome,
                         fasta=fasta,
                         gtf=gtf,
+                        gff=gff,
                         accept_inferred_reference=accept_inferred_reference,
                         profile=profile,
                         revision=revision,
@@ -352,10 +456,15 @@ class NFCoreRunner:
             genome=genome,
             fasta=fasta,
             gtf=gtf,
+            gff=gff,
             accept_inferred=accept_inferred_reference,
         )
         self._preflight(profile)
         revision = revision or self.REVISIONS[pipeline]
+        reference = self.annotation_converter.prepare(
+            reference,
+            Path(out).resolve() / "nfcore" / study_accession / "reference",
+        )
         run_dir = Path(out).resolve() / "nfcore" / study_accession / pipeline
         result_dir = run_dir / "results"
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -365,7 +474,11 @@ class NFCoreRunner:
         params = {
             "input": str(samplesheet),
             "outdir": str(result_dir),
-            **{key: value for key, value in reference.items() if key != "inferred"},
+            **{
+                key: reference[key]
+                for key in ("genome", "fasta", "gtf")
+                if reference.get(key)
+            },
         }
         if params_file:
             with open(params_file, encoding="utf-8") as handle:
@@ -414,6 +527,10 @@ class NFCoreRunner:
             out_dir=str(result_dir),
             returncode=completed.returncode,
             log_path=str(log_path),
+            annotation_source=reference.get("annotation_source"),
+            annotation_format=reference.get("annotation_format"),
+            annotation_sha256=reference.get("annotation_sha256"),
+            effective_annotation=reference.get("effective_annotation"),
         )
         if completed.returncode:
             raise RuntimeError(f"Nextflow {pipeline} failed; see {log_path}")
@@ -551,6 +668,10 @@ class NFCoreRunner:
                 "h5ad",
                 source="nfcore",
                 reference=reference.get("genome") or reference.get("fasta"),
+                annotation_source=reference.get("annotation_source"),
+                annotation_format=reference.get("annotation_format"),
+                annotation_sha256=reference.get("annotation_sha256"),
+                effective_annotation=reference.get("effective_annotation"),
             )
         return processed, [str(path) for path in paths]
 
@@ -579,6 +700,10 @@ class NFCoreRunner:
                 features_path=tpm_path,
                 orientation="genes-by-observations",
                 reference=reference.get("genome") or reference.get("fasta"),
+                annotation_source=reference.get("annotation_source"),
+                annotation_format=reference.get("annotation_format"),
+                annotation_sha256=reference.get("annotation_sha256"),
+                effective_annotation=reference.get("effective_annotation"),
             )
             for sample_id in inputs
         }
@@ -786,6 +911,7 @@ class JSON2H5ADConverter:
         genome: str | None = None,
         fasta: str | None = None,
         gtf: str | None = None,
+        gff: str | None = None,
         accept_inferred_reference: bool = False,
         profile: str = "docker",
         revision: str | None = None,
@@ -832,6 +958,7 @@ class JSON2H5ADConverter:
                 genome=genome,
                 fasta=fasta,
                 gtf=gtf,
+                gff=gff,
                 accept_inferred_reference=accept_inferred_reference,
                 profile=profile,
                 revision=revision,
@@ -1066,6 +1193,15 @@ class JSON2H5ADConverter:
         declared_reference = asset.reference or self._declared_reference(adata)
         if declared_reference:
             provenance["reference"] = declared_reference
+        for key in (
+            "annotation_source",
+            "annotation_format",
+            "annotation_sha256",
+            "effective_annotation",
+        ):
+            value = getattr(asset, key)
+            if value:
+                provenance[key] = value
         existing = adata.uns.get("meta_standards_converter")
         if isinstance(existing, dict):
             provenance = {**existing, **provenance}
@@ -1216,6 +1352,10 @@ class JSON2H5ADConverter:
                     "out_dir": run.out_dir,
                     "returncode": run.returncode,
                     "log_path": run.log_path,
+                    "annotation_source": run.annotation_source,
+                    "annotation_format": run.annotation_format,
+                    "annotation_sha256": run.annotation_sha256,
+                    "effective_annotation": run.effective_annotation,
                 }
                 for run in result.pipeline_runs
             ],
@@ -1228,6 +1368,10 @@ class JSON2H5ADConverter:
                     "source": asset.source,
                     "role": asset.role,
                     "reference": asset.reference,
+                    "annotation_source": asset.annotation_source,
+                    "annotation_format": asset.annotation_format,
+                    "annotation_sha256": asset.annotation_sha256,
+                    "effective_annotation": asset.effective_annotation,
                 }
                 for sample, asset in planned.items()
             },

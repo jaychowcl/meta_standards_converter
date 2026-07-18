@@ -22,6 +22,7 @@ RUN apt-get update \
         ca-certificates \
         curl \
         git \
+        gffread \
         openjdk-21-jre-headless \
     && curl --fail --location --show-error \
         --output /tmp/nextflow \

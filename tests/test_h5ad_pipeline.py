@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import os
+import gzip
 import hashlib
 import json
 import subprocess
@@ -133,16 +134,19 @@ class TestAnnotationConverter(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            gff = Path(tmpdir) / "genes.gff3"
-            gff.write_text("##gff-version 3\nchr1\ttest\tgene\t1\t2\t.\t+\t.\tID=g1\n")
+            gff = Path(tmpdir) / "genes.gff3.gz"
+            with gzip.open(gff, "wt", encoding="utf-8") as handle:
+                handle.write("##gff-version 3\nchr1\ttest\tgene\t1\t2\t.\t+\t.\tID=g1\n")
+            fasta = Path(tmpdir) / "genome.fa"
+            fasta.write_text(">chr1\nAC\n")
             converter = AnnotationConverter(
                 command_runner=runner,
                 which=lambda name: f"/usr/bin/{name}",
             )
             reference_dir = Path(tmpdir) / "reference"
 
-            first = converter.prepare({"fasta": "genome.fa", "gff": str(gff)}, reference_dir)
-            second = converter.prepare({"fasta": "genome.fa", "gff": str(gff)}, reference_dir)
+            first = converter.prepare({"fasta": str(fasta), "gff": str(gff)}, reference_dir)
+            second = converter.prepare({"fasta": str(fasta), "gff": str(gff)}, reference_dir)
 
             digest = hashlib.sha256(gff.read_bytes()).hexdigest()
             self.assertEqual(str(reference_dir / f"{digest}.gtf"), first["gtf"])
@@ -179,6 +183,19 @@ class TestAnnotationConverter(unittest.TestCase):
                 )
 
             self.assertEqual([], list(reference_dir.glob("*.tmp")))
+
+    def test_empty_gff3_conversion_is_rejected(self):
+        def runner(command, **kwargs):
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gff = Path(tmpdir) / "genes.gff3"
+            gff.write_text("##gff-version 3\n")
+
+            with self.assertRaisesRegex(RuntimeError, "produced no GTF"):
+                AnnotationConverter(command_runner=runner, which=lambda name: name).prepare(
+                    {"genome": "GRCh38", "gff": str(gff)}, Path(tmpdir) / "reference"
+                )
 
 
 class TestNFCoreRunner(unittest.TestCase):
@@ -346,6 +363,8 @@ class TestNFCoreRunner(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0, stdout="completed\n", stderr="")
 
         with tempfile.TemporaryDirectory() as tmpdir:
+            gtf = Path(tmpdir) / "genes.gtf"
+            gtf.write_text("chr1\ttest\texon\t1\t2\t.\t+\t.\tgene_id \"g1\";\n")
             sc_path = (
                 Path(tmpdir)
                 / "nfcore" / "GSE1" / "scrnaseq" / "results"
@@ -367,11 +386,16 @@ class TestNFCoreRunner(unittest.TestCase):
                 study_accession="GSE1",
                 pipeline="auto",
                 genome="GRCh38",
+                gtf=str(gtf),
             )
 
             self.assertEqual({"GSM1", "GSM2"}, set(result.assets))
             self.assertEqual({"scrnaseq", "rnaseq"}, {run.pipeline for run in result.runs})
             self.assertEqual(2, len(calls))
+            self.assertEqual(
+                {str(gtf)},
+                {asset.effective_annotation for asset in result.assets.values()},
+            )
 
     def test_scrnaseq_run_writes_samplesheet_and_discovers_filtered_h5ad(self):
         calls = []

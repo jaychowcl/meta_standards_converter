@@ -57,6 +57,7 @@ def _parser() -> argparse.ArgumentParser:
     reference.add_argument("--genome", help="nf-core genome key, for example GRCh38.")
     reference.add_argument("--fasta", help="Custom reference genome FASTA path.")
     reference.add_argument("--gtf", help="Custom reference annotation GTF path.")
+    reference.add_argument("--gff", help="Custom reference annotation GFF3 path.")
     reference.add_argument(
         "--accept-inferred-reference",
         action="store_true",
@@ -103,6 +104,7 @@ def main(argv=None) -> int:
                 ("genome", args.genome, None),
                 ("fasta", args.fasta, None),
                 ("gtf", args.gtf, None),
+                ("gff", args.gff, None),
                 ("accept_inferred_reference", args.accept_inferred_reference, False),
                 ("profile", args.profile, "docker"),
                 ("revision", args.revision, None),
