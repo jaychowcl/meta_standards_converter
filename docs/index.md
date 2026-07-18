@@ -35,7 +35,12 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: end-to-end-geo2ae-flow
   title: End-To-End geo2ae Flow
   anchor: end-to-end-geo2ae-flow
-  keywords: geo2ae, geo2json, json2h5ad, CLI, fetch, parse, MAGE-TAB, pseudocode, external APIs
+  keywords: geo2ae, geo2json, CLI, fetch, parse, MAGE-TAB, pseudocode, external APIs
+
+- id: end-to-end-json2ae-flow
+  title: End-To-End json2ae Flow
+  anchor: end-to-end-json2ae-flow
+  keywords: json2ae, parsed JSON, package object, package list, validation, enrichment, IDF, SDRF, MAGE-TAB
 
 - id: parsed-miniml-data-shape
   title: Parsed MINiML Data Shape
@@ -129,12 +134,12 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: cli
   title: CLI
   anchor: cli
-  keywords: geo2ae, geo2json, json2h5ad, flags, logging, main
+  keywords: geo2ae, geo2json, json2ae, json2h5ad, flags, logging, main
 
 - id: converter
   title: Converter
   anchor: converter
-  keywords: geo2ae, geo2json, json2h5ad, convert, JSON writing, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
+  keywords: geo2ae, geo2json, json2ae, json2h5ad, convert, JSON writing, MAGE-TAB, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
 
 - id: miniml-enricher
   title: MINiML enricher

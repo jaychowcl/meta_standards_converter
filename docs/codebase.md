@@ -28,10 +28,12 @@ src/meta_standards_converter/
 │   ├── common.py                 # shared CLI logging helpers
 │   ├── geo2ae.py                 # geo2ae command-line entrypoint
 │   ├── geo2json.py               # geo2json command-line entrypoint
+│   ├── json2ae.py                 # parsed JSON-to-MAGE-TAB command-line entrypoint
 │   └── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
 ├── converters/
 │   ├── geo2ae.py                 # top-level GEO to AE orchestration
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
+│   ├── json2ae.py                 # parsed JSON validation and AE orchestration
 │   └── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 ├── geo_handlers/
 │   ├── geo_webfetcher.py         # GEO MINiML URL building and download
@@ -63,9 +65,11 @@ Tests cover parser packaging, converter orchestration, CLI flags, AE constructor
 tests/test_geo_parser.py
 tests/test_geo2ae.py
 tests/test_geo2json.py
+tests/test_json2ae.py
 tests/test_json2h5ad.py
 tests/test_cli_geo2ae.py
 tests/test_cli_geo2json.py
+tests/test_cli_json2ae.py
 tests/test_cli_json2h5ad.py
 tests/test_project_scripts.py
 tests/test_ae_constructor.py
@@ -83,7 +87,7 @@ tests/GSE328265_family.xml
 
 - The package requires Python `>=3.10`.
 - Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
-- The `geo2ae`, `geo2json`, and `json2h5ad` console scripts point to their matching modules under `meta_standards_converter.cli`.
+- The `geo2ae`, `geo2json`, `json2ae`, and `json2h5ad` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp` and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
 - Library logging propagates safe structured telemetry to caller handlers.
@@ -94,6 +98,7 @@ tests/GSE328265_family.xml
   never logged.
 - `geo2ae.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
 - `geo2json.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
+- `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
@@ -126,7 +131,7 @@ geo2ae.convert(gse, related_series, remove_empty, out)
 
 `geo2json.convert(gse, related_series, remove_empty, enrich, out)` follows the same GEO fetch and parse stages, optionally enriches each parsed package through `MINiMLEnricher`, writes `{gse}.json` when `out` is truthy, and returns the list of JSON packages without invoking AE/MAGE-TAB construction.
 
-The H5AD workflow is documented separately under End-To-End json2h5ad Flow.
+The persisted JSON and H5AD workflows are documented separately under End-To-End json2ae Flow and End-To-End json2h5ad Flow.
 
 External calls in the live conversion path are isolated behind fetchers:
 
@@ -142,6 +147,35 @@ CLI behavior:
 - `--keep-empty` preserves empty parsed MINiML fields.
 - `--out DIR` defaults to the current directory.
 - Failed accessions log an error and traceback to stdout through the configured logger, then later accessions still run.
+
+<a id="end-to-end-json2ae-flow"></a>
+## End-To-End json2ae Flow
+
+```text
+main(argv)
+  -> parse one or more JSON paths, --out, --no-enrich, and logging flags
+  -> instantiate json2ae()
+  -> for each JSON path:
+       json2ae.convert(json_path, enrich, out)
+       continue to the next path if conversion fails
+  -> return 1 if any path failed, else 0
+
+json2ae.convert(json_path, out, enrich=True)
+  -> fail if the path does not exist or JSON decoding fails
+  -> normalize one package object to a one-element list
+  -> require a non-empty list of package objects
+  -> validate each package contains a GSE-prefixed numeric Series accession
+  -> for each package in order:
+       MINiMLEnricher.enrich(data) when enrich=True
+       AEConstructor.miniml2magetab(data)
+  -> if out:
+       AEConstructor.magetab2file(magetab, out) for each payload
+  -> return the ordered list of MAGE-TAB payloads
+```
+
+Enrichment is enabled by default to match the live `geo2ae` path and may call PubMed, NCBI SRA, and ENA. `--no-enrich` or `enrich=False` makes conversion operate on the supplied JSON without those enrichment calls. The input is otherwise not rewritten. All packages are validated before enrichment or construction begins, and related Series require no separate traversal flag because their packages are already represented in the input list.
+
+The converter uses one injected or default `MINiMLEnricher` and `AEConstructor` per instance. It delegates file naming, IDF/SDRF validation, TSV rendering, and overwrite behavior to `AEConstructor.magetab2file()`. Logs contain paths, package indexes, counts, and stages rather than metadata payloads.
 
 <a id="json2h5ad-flow"></a>
 ## End-To-End json2h5ad Flow
@@ -519,7 +553,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 This section lists public and semi-public callables used by tests or by package orchestration. Many helper methods are intentionally private but documented here because this project currently relies on direct helper behavior in tests and internal composition.
 
 <a id="cli"></a>
-### `cli/geo2ae.py`, `cli/geo2json.py`, and `cli/json2h5ad.py`
+### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, and `cli/json2h5ad.py`
 
 `_parser() -> argparse.ArgumentParser`
 
@@ -529,6 +563,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Adds `--out`, defaulting to `"."`.
 - Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
+- `json2ae` accepts one or more parsed JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, and `--overwrite`.
 
 `main(argv=None) -> int`
@@ -540,7 +575,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Returns `1` if any accession failed, otherwise `0`.
 
 <a id="converter"></a>
-### `converters/geo2ae.py`, `converters/geo2json.py`, and `converters/json2h5ad.py`
+### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, and `converters/json2h5ad.py`
 
 `class geo2ae(JSONHandler)`
 
@@ -569,6 +604,15 @@ This section lists public and semi-public callables used by tests or by package 
 - Enriches each parsed package by default; `enrich=False` returns parsed-only GEO JSON.
 - Writes one `{gse}.json` file containing the full package list when `out` is truthy.
 - Returns the list of JSON packages.
+
+`class json2ae(JSONHandler)`
+
+- `__init__(enricher=None, ae_constructor=None)` accepts injectable enrichment and MAGE-TAB construction collaborators.
+- `convert(json_path, out=None, enrich=True) -> list[list]` accepts the exact package-list form written by `geo2json` or one package object.
+- Validates the entire top-level shape, package types, and GEO Series accessions before invoking collaborators.
+- Enriches packages by default; `enrich=False` preserves the supplied metadata and avoids enrichment calls.
+- Builds all MAGE-TAB payloads in input order, then writes each through the shared `AEConstructor` when `out` is truthy.
+- Returns the ordered in-memory MAGE-TAB payload list.
 
 `class JSON2H5ADConverter`; compatibility alias `class json2h5ad`
 
@@ -1085,12 +1129,14 @@ Important test coverage:
 - `tests/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
+- `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, and fixture-backed parity with direct AE construction.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, annotation provenance, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
 - `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
 - `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
 - `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.
 - `tests/test_cli_geo2ae.py`: CLI defaults, multiple accession order, aliases, keep-empty behavior, out directory forwarding, logging controls, file logging, and failure continuation.
 - `tests/test_cli_geo2json.py`: JSON CLI defaults, enrichment toggle, aliases, logging controls, file logging, and failure continuation.
+- `tests/test_cli_json2ae.py`: JSON-to-MAGE-TAB CLI defaults, enrichment toggle, multiple input ordering, output forwarding, logging, and failure continuation.
 - `tests/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
 - `tests/test_project_scripts.py`: console script registration.
 - `tests/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.

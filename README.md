@@ -12,6 +12,7 @@ Main features:
 
 - `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF TSV files.
 - `geo2json`: GEO Series accession to parsed MINiML JSON packages, enriched by default.
+- `json2ae`: parsed MINiML JSON package or package list to MAGE-TAB IDF and SDRF TSV files.
 - `json2h5ad`: reuse supplied H5ADs, build AnnData from count matrices, or run pinned nf-core RNA-seq pipelines for raw FASTQs.
 - Injectable fetchers, parsers, enrichers, and constructors for testing or downstream integration.
 - Related GEO super/subseries traversal when requested.
@@ -68,6 +69,12 @@ CLI JSON conversion, see [CLI guide](#cli):
 geo2json GSE234602 --out output
 ```
 
+CLI JSON-to-MAGE-TAB conversion, see [CLI guide](#cli):
+
+```bash
+json2ae output/GSE234602.json --out output
+```
+
 Python API, see [Python guide](#python):
 
 ```python
@@ -88,6 +95,7 @@ docker run --rm meta-standards-converter geo2ae --help
 | --- | --- | --- |
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt` files; Python API returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json` files; Python API returns `list[dict]` parsed packages |
+| `json2ae` | One or more parsed MINiML JSON files containing a package object or non-empty package list | `{accession}.idf.txt` and `{accession}.sdrf.txt` files; Python API returns MAGE-TAB row payloads |
 | `json2h5ad` | Parsed MINiML JSON plus discovered or explicit H5AD, matrix, or FASTQ assets | Normalized per-sample H5ADs, compatible combined study H5AD, provenance manifest, and optional nf-core results |
 | `GEOParser` | MINiML XML string | One self-contained package per Series |
 | `MINiMLEnricher` | Parsed package dict | Same dict with PubMed and SRA/ENA fields added where available |
@@ -97,7 +105,7 @@ docker run --rm meta-standards-converter geo2ae --help
 
 ### CLI
 
-The package installs three console scripts: `geo2ae`, `geo2json`, and `json2h5ad`.
+The package installs four console scripts: `geo2ae`, `geo2json`, `json2ae`, and `json2h5ad`.
 
 `geo2ae` writes MAGE-TAB IDF/SDRF files:
 
@@ -128,6 +136,20 @@ geo2json GSE234602 --no-enrich --keep-empty --out output
 Options are the same as `geo2ae`, plus:
 
 - `--no-enrich`: skip PubMed and SRA/ENA enrichment.
+
+`json2ae` reads parsed MINiML JSON and writes MAGE-TAB IDF/SDRF files:
+
+```bash
+json2ae output/GSE234602.json --out output
+json2ae parsed-primary.json parsed-related.json --no-enrich --out output
+```
+
+Options:
+
+- `JSON...`: one or more parsed MINiML JSON files. Each file may contain one package object or a non-empty package list.
+- `--out DIR`: output directory, default `.`.
+- `--no-enrich`: skip PubMed/SRA enrichment and convert the supplied metadata exactly as provided.
+- `-v`, `-vv`, `-q`, `--log-file PATH`: shared logging options.
 
 `json2h5ad` selects the best source per sample (`H5AD > matrix > raw`):
 
@@ -220,6 +242,18 @@ packages = geo2json().convert(
     gse="GSE234602",
     related_series=False,
     remove_empty=True,
+    enrich=True,
+    out="output",
+)
+```
+
+Convert parsed JSON to MAGE-TAB:
+
+```python
+from meta_standards_converter.converters.json2ae import json2ae
+
+magetabs = json2ae().convert(
+    "output/GSE234602.json",
     enrich=True,
     out="output",
 )
@@ -325,6 +359,18 @@ geo2ae.convert(gse, related_series, remove_empty, out)
 
 `geo2json.convert` shares the fetch and parse stages, optionally calls `MINiMLEnricher.enrich`, writes `{gse}.json` when `out` is set, and returns parsed packages.
 
+`json2ae.convert` resumes the MAGE-TAB path from persisted parsed JSON:
+
+```text
+load one package object or a non-empty package list
+validate every package has a GEO Series accession
+for each package:
+  optionally enrich PubMed and SRA/ENA metadata (default)
+  build MAGE-TAB with AEConstructor.miniml2magetab
+optionally write IDF/SDRF files with AEConstructor.magetab2file
+return MAGE-TAB payloads in input order
+```
+
 `json2h5ad.convert` plans and normalizes expression assets. Merged nf-core/rnaseq
 tables may include the standard text `gene_name` column; it is retained in
 `adata.var`, while per-sample counts and TPM values remain numeric:
@@ -395,6 +441,7 @@ Important classes:
 - `INSDCWebfetcher`: calls NCBI SRA EFetch and ENA Portal file reports, then returns run-level FASTQ metadata.
 - `GEOParser`: parses XML generically, resolves references, traverses related Series, and removes empty values.
 - `MINiMLEnricher`: adds `series.pubmed_publication`, `sample.sra_accession`, `sample.sra_run`, and `sample.ena_accession`.
+- `json2ae`: validates persisted parsed packages, optionally enriches them, and delegates IDF/SDRF construction to `AEConstructor`.
 - `ProtocolRegistry`: assigns stable protocol refs shared by IDF and SDRF.
 - `IDFConstructor`: emits investigation, design, person, date, publication, protocol, term-source, and platform-specific IDF rows.
 - `SDRFConstructor`: selects a technology handler and renders source/sample/extract/file rows.
