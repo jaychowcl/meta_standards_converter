@@ -43,6 +43,16 @@ dependencies = [
   "requests>=2.31.0",
 ]
 
+[project.optional-dependencies]
+h5ad = [
+  "anndata>=0.10.8",
+  "h5py>=3.10.0",
+  "numpy>=1.26.0",
+  "pandas>=2.1.0",
+  "scanpy>=1.10.0",
+  "scipy>=1.11.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/jaychowcl/meta_standards_converter"
 Repository = "https://github.com/jaychowcl/meta_standards_converter"
