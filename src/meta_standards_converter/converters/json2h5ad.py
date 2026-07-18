@@ -11,9 +11,13 @@
 from __future__ import annotations
 
 import json
+import csv
 import hashlib
 import logging
 import os
+import re
+import shutil
+import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from importlib.metadata import PackageNotFoundError, version
@@ -78,10 +82,291 @@ class ConversionResult:
         return self.primary_h5ad or self.manifest_path or self.study_accession
 
 
+@dataclass
+class RawProcessingResult:
+    assets: dict[str, Asset]
+    retained_h5ads: list[str] = field(default_factory=list)
+    runs: list[PipelineRun] = field(default_factory=list)
+
+
+class ReferenceResolver:
+    """Resolve explicit or safely confirmed nf-core reference parameters."""
+
+    GENOME_BY_TAXID = {"9606": "GRCh38", "10090": "GRCm39"}
+    GENOME_BY_NAME = {"homo sapiens": "GRCh38", "mus musculus": "GRCm39"}
+
+    def resolve(
+        self,
+        packages: list[dict],
+        genome: str | None = None,
+        fasta: str | None = None,
+        gtf: str | None = None,
+        accept_inferred: bool = False,
+    ) -> dict:
+        if genome:
+            return {"genome": genome}
+        if fasta or gtf:
+            if not (fasta and gtf):
+                raise ValueError("A custom reference requires both fasta and gtf paths.")
+            return {"fasta": fasta, "gtf": gtf}
+
+        taxids = set()
+        names = set()
+        planner = SourcePlanner()
+        for package in packages:
+            for sample in planner._as_list(package.get("sample")):
+                if not isinstance(sample, dict):
+                    continue
+                for channel in planner._as_list(sample.get("channel")):
+                    if not isinstance(channel, dict):
+                        continue
+                    for organism in planner._as_list(channel.get("organism")):
+                        if isinstance(organism, dict):
+                            if organism.get("taxid"):
+                                taxids.add(str(organism["taxid"]))
+                            if organism.get("value") or organism.get("name"):
+                                names.add(str(organism.get("value") or organism.get("name")).lower())
+                        elif organism:
+                            names.add(str(organism).lower())
+        candidates = {
+            self.GENOME_BY_TAXID[value]
+            for value in taxids
+            if value in self.GENOME_BY_TAXID
+        } | {
+            self.GENOME_BY_NAME[value]
+            for value in names
+            if value in self.GENOME_BY_NAME
+        }
+        if len(candidates) != 1:
+            raise ValueError(
+                "Unable to infer one supported genome reference; provide --genome or --fasta and --gtf."
+            )
+        inferred = next(iter(candidates))
+        if not accept_inferred:
+            raise ValueError(
+                f"Inferred reference {inferred}; rerun with --accept-inferred-reference "
+                "or provide an explicit reference."
+            )
+        return {"genome": inferred, "inferred": True}
+
+
+class NFCoreRunner:
+    """Prepare, execute, and inspect pinned nf-core RNA-seq workflows."""
+
+    REVISIONS = {"scrnaseq": "4.1.0", "rnaseq": "3.26.0"}
+
+    def __init__(self, command_runner=None, which=None, reference_resolver=None):
+        self.command_runner = command_runner or subprocess.run
+        self.which = which or shutil.which
+        self.reference_resolver = reference_resolver or ReferenceResolver()
+
+    def process(
+        self,
+        assets: dict[str, Asset],
+        packages: list[dict],
+        out: str,
+        study_accession: str,
+        pipeline: str = "auto",
+        genome: str | None = None,
+        fasta: str | None = None,
+        gtf: str | None = None,
+        accept_inferred_reference: bool = False,
+        profile: str = "docker",
+        revision: str | None = None,
+        params_file: str | None = None,
+        nextflow_config: str | None = None,
+        work_dir: str | None = None,
+        resume: bool = False,
+    ) -> RawProcessingResult:
+        pipeline = self._pipeline(packages) if pipeline == "auto" else pipeline
+        if pipeline not in self.REVISIONS:
+            raise ValueError(f"Unsupported nf-core pipeline: {pipeline}")
+        reference = self.reference_resolver.resolve(
+            packages,
+            genome=genome,
+            fasta=fasta,
+            gtf=gtf,
+            accept_inferred=accept_inferred_reference,
+        )
+        self._preflight(profile)
+        revision = revision or self.REVISIONS[pipeline]
+        run_dir = Path(out) / "nfcore" / study_accession / pipeline
+        result_dir = run_dir / "results"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        samplesheet = run_dir / "samplesheet.csv"
+        self._write_samplesheet(samplesheet, assets, pipeline)
+        params_path = run_dir / "params.json"
+        params = {
+            "input": str(samplesheet),
+            "outdir": str(result_dir),
+            **{key: value for key, value in reference.items() if key != "inferred"},
+        }
+        if params_file:
+            with open(params_file, encoding="utf-8") as handle:
+                supplied = json.load(handle)
+            if not isinstance(supplied, dict):
+                raise ValueError("nf-core params file must contain a JSON object.")
+            params = {**supplied, **params}
+        with open(params_path, "w", encoding="utf-8") as handle:
+            json.dump(params, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+
+        nextflow_work = Path(work_dir) if work_dir else run_dir / "work"
+        command = [
+            "nextflow",
+            "run",
+            f"nf-core/{pipeline}",
+            "-r",
+            revision,
+            "-profile",
+            profile,
+            "-params-file",
+            str(params_path),
+            "-work-dir",
+            str(nextflow_work),
+        ]
+        if nextflow_config:
+            command.extend(["-c", nextflow_config])
+        if resume:
+            command.append("-resume")
+        log_path = run_dir / "nextflow.log"
+        completed = self.command_runner(
+            command,
+            cwd=run_dir,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        with open(log_path, "w", encoding="utf-8") as handle:
+            handle.write(completed.stdout or "")
+            handle.write(completed.stderr or "")
+        run = PipelineRun(
+            pipeline=pipeline,
+            revision=revision,
+            command=command,
+            work_dir=str(nextflow_work),
+            out_dir=str(result_dir),
+            returncode=completed.returncode,
+            log_path=str(log_path),
+        )
+        if completed.returncode:
+            raise RuntimeError(f"Nextflow {pipeline} failed; see {log_path}")
+        if pipeline == "scrnaseq":
+            processed, retained = self._scrnaseq_assets(result_dir, assets)
+        else:
+            processed, retained = self._rnaseq_assets(result_dir, assets)
+        return RawProcessingResult(assets=processed, retained_h5ads=retained, runs=[run])
+
+    def _preflight(self, profile: str) -> None:
+        missing = []
+        if not self.which("nextflow"):
+            missing.append("nextflow")
+        if not self.which("java"):
+            missing.append("java")
+        runtime = next(
+            (name for name in ("docker", "podman", "apptainer", "singularity") if name in profile.split(",")),
+            None,
+        )
+        if runtime and not self.which(runtime):
+            missing.append(runtime)
+        if missing:
+            raise RuntimeError(f"Missing nf-core runtime requirements: {', '.join(missing)}")
+
+    def _write_samplesheet(self, path: Path, assets: dict[str, Asset], pipeline: str) -> None:
+        header = ["sample", "fastq_1", "fastq_2"]
+        if pipeline == "rnaseq":
+            header.append("strandedness")
+        rows = []
+        for sample_id, asset in assets.items():
+            pairs = self._fastq_pairs(sample_id, asset, require_paired=pipeline == "scrnaseq")
+            for first, second in pairs:
+                row = [sample_id, first, second or ""]
+                if pipeline == "rnaseq":
+                    row.append("auto")
+                rows.append(row)
+        with open(path, "w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle, lineterminator="\n")
+            writer.writerow(header)
+            writer.writerows(rows)
+
+    def _fastq_pairs(self, sample_id: str, asset: Asset, require_paired: bool) -> list[tuple[str, str | None]]:
+        by_run = {}
+        for index, member in enumerate(asset.members):
+            path = member.get("uri") or member.get("filename")
+            if not path:
+                continue
+            run = member.get("run") or "run1"
+            read = member.get("read") or self._read_number(path)
+            by_run.setdefault(run, []).append((read, path, index))
+        pairs = []
+        for run, entries in by_run.items():
+            first = next((path for read, path, _ in entries if read == "1"), None)
+            second = next((path for read, path, _ in entries if read == "2"), None)
+            if not first and len(entries) in (1, 2):
+                ordered = [path for _read, path, _index in sorted(entries, key=lambda item: item[2])]
+                first = ordered[0]
+                second = ordered[1] if len(ordered) == 2 else None
+            if not first or (require_paired and not second):
+                raise ValueError(f"Ambiguous FASTQ pairing for {sample_id} run {run}.")
+            pairs.append((first, second))
+        if not pairs:
+            raise ValueError(f"No FASTQ files available for {sample_id}.")
+        return pairs
+
+    def _read_number(self, path: str) -> str | None:
+        name = os.path.basename(urlparse(path).path)
+        match = re.search(r"(?:^|[_\.])R?([12])(?:[_\.]|$)", name, re.IGNORECASE)
+        return match.group(1) if match else None
+
+    def _pipeline(self, packages: list[dict]) -> str:
+        text = json.dumps(packages).lower()
+        return "scrnaseq" if any(value in text for value in ("single cell", "single-cell", "10x", "chromium", "visium")) else "rnaseq"
+
+    def _scrnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset]):
+        paths = list(result_dir.glob("**/*_matrix.h5ad"))
+        processed = {}
+        for sample_id in inputs:
+            candidates = [path for path in paths if sample_id.lower() in path.name.lower()]
+            if not candidates:
+                raise RuntimeError(f"nf-core/scrnaseq produced no H5AD for {sample_id}.")
+            chosen = max(candidates, key=self._scrnaseq_rank)
+            processed[sample_id] = Asset(sample_id, str(chosen), "h5ad", source="nfcore")
+        return processed, [str(path) for path in paths]
+
+    def _scrnaseq_rank(self, path: Path) -> int:
+        name = path.name.lower()
+        if "cellbender_filter" in name:
+            return 3
+        if "filtered" in name:
+            return 2
+        return 1
+
+    def _rnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset]):
+        counts = sorted(result_dir.glob("**/*.merged.gene_counts.tsv"))
+        if not counts:
+            raise RuntimeError("nf-core/rnaseq produced no merged gene-count matrix.")
+        counts_path = counts[0]
+        tpm_candidate = Path(str(counts_path).replace(".merged.gene_counts.tsv", ".merged.gene_tpm.tsv"))
+        tpm_path = str(tpm_candidate) if tpm_candidate.exists() else None
+        assets = {
+            sample_id: Asset(
+                sample_id,
+                str(counts_path),
+                "matrix",
+                role="rnaseq_counts",
+                source="nfcore",
+                features_path=tpm_path,
+                orientation="genes-by-observations",
+            )
+            for sample_id in inputs
+        }
+        return assets, []
+
+
 class SourcePlanner:
     """Discover assets and select the best available source for every sample."""
 
-    SOURCE_RANK = {"json": 0, "cli": 1, "manifest": 2}
+    SOURCE_RANK = {"json": 0, "cli": 1, "manifest": 2, "nfcore": 3}
     KIND_RANK = {"raw": 0, "matrix": 1, "h5ad": 2}
 
     def plan(
@@ -194,8 +479,13 @@ class SourcePlanner:
 class JSON2H5ADConverter:
     """Top-level JSON-to-H5AD conversion orchestrator."""
 
-    def __init__(self, planner: SourcePlanner | None = None):
+    def __init__(
+        self,
+        planner: SourcePlanner | None = None,
+        pipeline_runner: NFCoreRunner | None = None,
+    ):
         self.planner = planner or SourcePlanner()
+        self.pipeline_runner = pipeline_runner or NFCoreRunner()
 
     def convert(
         self,
@@ -205,6 +495,17 @@ class JSON2H5ADConverter:
         force_reprocess: bool = False,
         matrix_orientation: str = "auto",
         overwrite: bool = False,
+        pipeline: str = "auto",
+        genome: str | None = None,
+        fasta: str | None = None,
+        gtf: str | None = None,
+        accept_inferred_reference: bool = False,
+        profile: str = "docker",
+        revision: str | None = None,
+        params_file: str | None = None,
+        nextflow_config: str | None = None,
+        work_dir: str | None = None,
+        resume: bool = False,
         **options,
     ) -> ConversionResult:
         if not os.path.exists(json_path):
@@ -226,11 +527,32 @@ class JSON2H5ADConverter:
         result = ConversionResult(study_accession=study_accession)
         adatas = {}
 
+        raw_assets = {sample: asset for sample, asset in planned.items() if asset.kind == "raw"}
+        if raw_assets:
+            processed = self.pipeline_runner.process(
+                raw_assets,
+                packages=packages,
+                out=str(out_path),
+                study_accession=study_accession,
+                pipeline=pipeline,
+                genome=genome,
+                fasta=fasta,
+                gtf=gtf,
+                accept_inferred_reference=accept_inferred_reference,
+                profile=profile,
+                revision=revision,
+                params_file=params_file,
+                nextflow_config=nextflow_config,
+                work_dir=work_dir,
+                resume=resume,
+            )
+            planned.update(processed.assets)
+            result.retained_h5ads.extend(processed.retained_h5ads)
+            result.pipeline_runs.extend(processed.runs)
+
         for sample_id, asset in planned.items():
             if asset.kind == "raw":
-                raise NotImplementedError(
-                    f"Raw FASTQ processing for {sample_id} requires nf-core orchestration."
-                )
+                raise RuntimeError(f"nf-core did not replace the raw source for {sample_id}.")
             adata = self._read_processed_asset(
                 asset,
                 orientation=(asset.orientation if asset.orientation != "auto" else matrix_orientation),
@@ -316,6 +638,13 @@ class JSON2H5ADConverter:
                 raise ValueError(f"Matrix {asset.path} is empty.")
             if not numpy.isfinite(raw).all() or (raw < 0).any():
                 raise ValueError(f"Matrix {asset.path} must contain finite nonnegative values.")
+            if asset.role == "rnaseq_counts":
+                if asset.scope_id not in values.columns:
+                    raise ValueError(
+                        f"RNA-seq count matrix {asset.path} has no column for {asset.scope_id}."
+                    )
+                values = values[[asset.scope_id]]
+                raw = values.to_numpy()
             if orientation == "auto":
                 raise ValueError(
                     f"Matrix orientation for {asset.path} is ambiguous; specify "
@@ -335,6 +664,17 @@ class JSON2H5ADConverter:
                 obs=pandas.DataFrame(index=obs_names),
                 var=pandas.DataFrame(index=var_names),
             )
+            if asset.role == "rnaseq_counts" and asset.features_path:
+                tpm = pandas.read_csv(asset.features_path, sep="\t", index_col=0)
+                if asset.scope_id not in tpm.columns:
+                    raise ValueError(
+                        f"RNA-seq TPM matrix {asset.features_path} has no column for {asset.scope_id}."
+                    )
+                tpm_values = tpm[[asset.scope_id]].reindex(values.index)
+                tpm_values = tpm_values.apply(pandas.to_numeric, errors="raise")
+                if tpm_values.isna().any().any():
+                    raise ValueError("RNA-seq TPM features do not align with count features.")
+                adata.layers["tpm"] = sparse.csr_matrix(tpm_values.to_numpy().T)
         if adata.n_obs == 0 or adata.n_vars == 0:
             raise ValueError(f"Processed asset {asset.path} contains an empty matrix.")
         if not sparse.issparse(adata.X):
@@ -474,6 +814,18 @@ class JSON2H5ADConverter:
             "combined_h5ad": result.combined_h5ad,
             "sample_h5ads": result.sample_h5ads,
             "retained_h5ads": result.retained_h5ads,
+            "pipeline_runs": [
+                {
+                    "pipeline": run.pipeline,
+                    "revision": run.revision,
+                    "command": run.command,
+                    "work_dir": run.work_dir,
+                    "out_dir": run.out_dir,
+                    "returncode": run.returncode,
+                    "log_path": run.log_path,
+                }
+                for run in result.pipeline_runs
+            ],
             "warnings": result.warnings,
             "failures": result.failures,
             "assets": {
