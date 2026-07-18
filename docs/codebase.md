@@ -416,6 +416,7 @@ Base handler behavior shared by generic, sequencing, and array handlers:
 - GEO channel source is preserved as `Comment[Sample_source_name]`.
 - Sample title and description render as mapped sample comment columns when present.
 - `Characteristics[organism]`, `Characteristics[organism part]`, `Characteristics[developmental stage]`, `Characteristics[disease]`, and `Characteristics[genotype]` are always planned for source nodes and may be blank.
+- `Characteristics[organism]` reads each channel organism's legacy `name` field first, then falls back to the parsed MINiML `value` field produced from `<Organism taxid="...">text</Organism>`.
 - Explicit `organism part` wins; otherwise `tissue` wins; otherwise channel `source` is used as fallback.
 - Repeated characteristics with the same tag are preserved as repeated columns and recorded as warnings.
 - Provider and material type are mapped from channel biomaterial provider and molecule/source context.

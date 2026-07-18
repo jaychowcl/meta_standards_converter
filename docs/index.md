@@ -102,7 +102,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: base-sdrf-behavior
   title: Base SDRF Behavior
   anchor: base-sdrf-behavior
-  keywords: base handler, factors, protocols, sample ordering, characteristics, required blank columns
+  keywords: base handler, factors, protocols, sample ordering, characteristics, organism, MINiML value, required blank columns
 
 - id: sra-pubmed-and-ontology-enrichment
   title: SRA, PubMed, And Ontology Enrichment
