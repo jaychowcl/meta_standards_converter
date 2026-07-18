@@ -11,7 +11,6 @@ import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
 
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
