@@ -350,10 +350,9 @@ class _BaseSDRFHandler():
 
         organism_values = []
         for organism in self._as_list(channel.get("organism")):
-            if isinstance(organism, dict) and organism.get("name"):
-                organism_value = self.clean(organism.get("name"))
-                if organism_value:
-                    organism_values.append(organism_value)
+            organism_value = self.organism_value(organism=organism)
+            if organism_value:
+                organism_values.append(organism_value)
         if organism_values:
             required_attrs["organism"].value = organism_values[0]
             for organism_value in organism_values[1:]:
@@ -400,6 +399,11 @@ class _BaseSDRFHandler():
     def provider(self, channel: dict):
         providers = [self.clean(x) for x in self._as_list(channel.get("biomaterial_provider")) if self.clean(x)]
         return "; ".join(providers) if providers else None
+
+    def organism_value(self, organism):
+        if not isinstance(organism, dict):
+            return None
+        return self.clean(organism.get("name") or organism.get("value")) or None
 
     def material_type(self, channel: dict):
         molecule = channel.get("molecule")
@@ -587,11 +591,10 @@ class _BaseSDRFHandler():
         values = []
         lower_tag = tag.lower()
         if lower_tag == "organism":
-            values.extend(
-                self.clean(organism.get("name"))
-                for organism in self._as_list(channel.get("organism"))
-                if isinstance(organism, dict) and organism.get("name")
-            )
+            for organism in self._as_list(channel.get("organism")):
+                organism_value = self.organism_value(organism=organism)
+                if organism_value:
+                    values.append(organism_value)
         for characteristic in channel.get("characteristics", []) or []:
             if not isinstance(characteristic, dict):
                 continue
