@@ -33,6 +33,7 @@ class DockerArtifactsTest(unittest.TestCase):
         self.assertIn("ARG NEXTFLOW_VERSION=26.04.2", content)
         self.assertIn("ARG DOCKER_CLI_VERSION=29.6.2", content)
         self.assertIn("openjdk-21-jre-headless", content)
+        self.assertIn("gffread", content)
         self.assertNotIn("openjdk-17-jre-headless", content)
         self.assertIn("NEXTFLOW_VERSION", content)
         self.assertIn("nextflow -version", content)

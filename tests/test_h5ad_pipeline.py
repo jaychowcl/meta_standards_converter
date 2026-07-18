@@ -7,6 +7,8 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import os
+import hashlib
+import json
 import subprocess
 import sys
 import tempfile
@@ -21,6 +23,7 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
+    AnnotationConverter,
     Asset,
     NFCoreRunner,
     ReferenceResolver,
@@ -71,11 +74,143 @@ class TestReferenceResolver(unittest.TestCase):
         self.assertEqual({"genome": "GRCh38", "inferred": True}, reference)
 
     def test_custom_reference_requires_fasta_and_gtf(self):
-        with self.assertRaisesRegex(ValueError, "fasta.*gtf"):
+        with self.assertRaisesRegex(ValueError, "fasta.*annotation"):
             ReferenceResolver().resolve([package()], fasta="genome.fa")
+
+    def test_catalogue_genome_accepts_gtf_override(self):
+        reference = ReferenceResolver().resolve(
+            [package()], genome="GRCh38", gtf="genes.gtf"
+        )
+
+        self.assertEqual({"genome": "GRCh38", "gtf": "genes.gtf"}, reference)
+
+    def test_catalogue_genome_accepts_gff_override(self):
+        reference = ReferenceResolver().resolve(
+            [package()], genome="GRCh38", gff="genes.gff3"
+        )
+
+        self.assertEqual({"genome": "GRCh38", "gff": "genes.gff3"}, reference)
+
+    def test_custom_fasta_accepts_gff_annotation(self):
+        reference = ReferenceResolver().resolve(
+            [package()], fasta="genome.fa", gff="genes.gff3"
+        )
+
+        self.assertEqual({"fasta": "genome.fa", "gff": "genes.gff3"}, reference)
+
+    def test_gtf_and_gff_are_mutually_exclusive(self):
+        with self.assertRaisesRegex(ValueError, "gtf.*gff"):
+            ReferenceResolver().resolve(
+                [package()], genome="GRCh38", gtf="genes.gtf", gff="genes.gff3"
+            )
+
+    def test_annotation_without_genome_or_fasta_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "annotation.*genome.*fasta"):
+            ReferenceResolver().resolve([package()], gtf="genes.gtf")
+
+
+class TestAnnotationConverter(unittest.TestCase):
+    def test_gtf_is_retained_with_path_format_and_checksum(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gtf = Path(tmpdir) / "genes.gtf"
+            gtf.write_text("chr1\ttest\texon\t1\t2\t.\t+\t.\tgene_id \"g1\";\n")
+
+            reference = AnnotationConverter().prepare(
+                {"genome": "GRCh38", "gtf": str(gtf)}, Path(tmpdir) / "reference"
+            )
+
+            self.assertEqual(str(gtf), reference["gtf"])
+            self.assertEqual(str(gtf), reference["annotation_source"])
+            self.assertEqual("gtf", reference["annotation_format"])
+            self.assertEqual(hashlib.sha256(gtf.read_bytes()).hexdigest(), reference["annotation_sha256"])
+
+    def test_gff3_is_converted_to_checksum_addressed_gtf_and_reused(self):
+        calls = []
+
+        def runner(command, **kwargs):
+            calls.append(command)
+            Path(command[-1]).write_text("converted gtf\n")
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gff = Path(tmpdir) / "genes.gff3"
+            gff.write_text("##gff-version 3\nchr1\ttest\tgene\t1\t2\t.\t+\t.\tID=g1\n")
+            converter = AnnotationConverter(
+                command_runner=runner,
+                which=lambda name: f"/usr/bin/{name}",
+            )
+            reference_dir = Path(tmpdir) / "reference"
+
+            first = converter.prepare({"fasta": "genome.fa", "gff": str(gff)}, reference_dir)
+            second = converter.prepare({"fasta": "genome.fa", "gff": str(gff)}, reference_dir)
+
+            digest = hashlib.sha256(gff.read_bytes()).hexdigest()
+            self.assertEqual(str(reference_dir / f"{digest}.gtf"), first["gtf"])
+            self.assertEqual(first, second)
+            self.assertEqual("gff3", first["annotation_format"])
+            self.assertEqual(digest, first["annotation_sha256"])
+            self.assertNotIn("gff", first)
+            self.assertEqual(1, len(calls))
+            self.assertEqual(["gffread", str(gff), "-T", "-o", first["gtf"] + ".tmp"], calls[0])
+
+    def test_gff3_requires_gffread(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gff = Path(tmpdir) / "genes.gff3"
+            gff.write_text("##gff-version 3\n")
+
+            with self.assertRaisesRegex(RuntimeError, "gffread"):
+                AnnotationConverter(which=lambda _name: None).prepare(
+                    {"genome": "GRCh38", "gff": str(gff)}, Path(tmpdir) / "reference"
+                )
+
+    def test_failed_gff3_conversion_removes_temporary_output(self):
+        def runner(command, **kwargs):
+            Path(command[-1]).write_text("partial\n")
+            return subprocess.CompletedProcess(command, 1, stdout="", stderr="bad annotation")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gff = Path(tmpdir) / "genes.gff3"
+            gff.write_text("##gff-version 3\n")
+            reference_dir = Path(tmpdir) / "reference"
+
+            with self.assertRaisesRegex(RuntimeError, "bad annotation"):
+                AnnotationConverter(command_runner=runner, which=lambda name: name).prepare(
+                    {"genome": "GRCh38", "gff": str(gff)}, reference_dir
+                )
+
+            self.assertEqual([], list(reference_dir.glob("*.tmp")))
 
 
 class TestNFCoreRunner(unittest.TestCase):
+    def test_generated_params_keep_catalogue_genome_and_override_gtf(self):
+        captured_params = []
+
+        def command_runner(command, **kwargs):
+            params_path = Path(command[command.index("-params-file") + 1])
+            captured_params.append(json.loads(params_path.read_text()))
+            result_dir = Path(captured_params[-1]["outdir"])
+            output = result_dir / "simpleaf" / "mtx_conversions" / "GSM1_filtered_matrix.h5ad"
+            output.parent.mkdir(parents=True)
+            output.touch()
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gtf = Path(tmpdir) / "genes.gtf"
+            gtf.write_text("chr1\ttest\texon\t1\t2\t.\t+\t.\tgene_id \"g1\";\n")
+            supplied = Path(tmpdir) / "params.json"
+            supplied.write_text(json.dumps({"genome": "wrong", "gtf": "wrong", "protocol": "10XV3"}))
+            runner = NFCoreRunner(command_runner=command_runner, which=lambda name: f"/usr/bin/{name}")
+
+            runner.process(
+                {"GSM1": raw_asset()}, packages=[package()], out=tmpdir,
+                study_accession="GSE1", pipeline="scrnaseq", genome="GRCh38",
+                gtf=str(gtf), params_file=str(supplied),
+            )
+
+            self.assertEqual("GRCh38", captured_params[0]["genome"])
+            self.assertEqual(str(gtf), captured_params[0]["gtf"])
+            self.assertEqual("10XV3", captured_params[0]["protocol"])
+
     def test_samplesheet_upgrades_known_archive_ftp_urls_to_https(self):
         asset = Asset(
             scope_id="GSM1",

@@ -8,6 +8,7 @@
 # =============================================================================
 import json
 import gzip
+import hashlib
 import os
 import shutil
 import sys
@@ -458,6 +459,39 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual([[1, 2]], adata.X.toarray().tolist())
             self.assertEqual([[3, 4]], adata.layers["tpm"].toarray().tolist())
             self.assertEqual(["GENE1", "GENE2"], adata.var["gene_name"].tolist())
+
+    def test_annotation_provenance_is_written_to_h5ad_and_manifest(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = os.path.join(tmpdir, "source.h5ad")
+            annotation = os.path.join(tmpdir, "genes.gtf")
+            with open(annotation, "w", encoding="utf-8") as handle:
+                handle.write("chr1\ttest\texon\t1\t2\t.\t+\t.\tgene_id \"g1\";\n")
+            digest = hashlib.sha256(Path(annotation).read_bytes()).hexdigest()
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1]]),
+                obs=self.pandas.DataFrame(index=["cell"]),
+                var=self.pandas.DataFrame(index=["ENSG1"]),
+            ).write_h5ad(source)
+            json_path = self._write_json(tmpdir, package())
+            asset = Asset(
+                "GSM1", source, "h5ad", source="nfcore", reference="GRCh38",
+                annotation_source=annotation, annotation_format="gtf",
+                annotation_sha256=digest, effective_annotation=annotation,
+            )
+
+            result = json2h5ad().convert(
+                json_path=json_path, out=os.path.join(tmpdir, "out"), explicit_assets=[asset]
+            )
+
+            adata = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            provenance = adata.uns["meta_standards_converter"]
+            self.assertEqual(annotation, provenance["annotation_source"])
+            self.assertEqual("gtf", provenance["annotation_format"])
+            self.assertEqual(digest, provenance["annotation_sha256"])
+            manifest = json.loads(Path(result.manifest_path).read_text())
+            manifest_asset = manifest["assets"]["GSM1"]
+            self.assertEqual(annotation, manifest_asset["annotation_source"])
+            self.assertEqual(digest, manifest_asset["annotation_sha256"])
 
     def test_raw_assets_are_replaced_by_nfcore_outputs(self):
         class FakeRunner:
