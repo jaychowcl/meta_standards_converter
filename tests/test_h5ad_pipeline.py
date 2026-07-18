@@ -75,6 +75,41 @@ class TestReferenceResolver(unittest.TestCase):
 
 
 class TestNFCoreRunner(unittest.TestCase):
+    def test_auto_pipeline_groups_bulk_and_single_cell_samples(self):
+        calls = []
+
+        def command_runner(command, **kwargs):
+            calls.append(command)
+            return subprocess.CompletedProcess(command, 0, stdout="completed\n", stderr="")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sc_path = (
+                Path(tmpdir)
+                / "nfcore" / "GSE1" / "scrnaseq" / "results"
+                / "simpleaf" / "mtx_conversions" / "GSM1_filtered_matrix.h5ad"
+            )
+            sc_path.parent.mkdir(parents=True)
+            sc_path.touch()
+            bulk_dir = Path(tmpdir) / "nfcore" / "GSE1" / "rnaseq" / "results" / "star_salmon"
+            bulk_dir.mkdir(parents=True)
+            (bulk_dir / "salmon.merged.gene_counts.tsv").write_text("gene\tGSM2\nENSG1\t1\n")
+            data = package(("GSM1", "GSM2"))
+            data["sample"][0]["library_source"] = "single cell transcriptomic"
+            runner = NFCoreRunner(command_runner=command_runner, which=lambda name: f"/usr/bin/{name}")
+
+            result = runner.process(
+                {"GSM1": raw_asset("GSM1"), "GSM2": raw_asset("GSM2")},
+                packages=[data],
+                out=tmpdir,
+                study_accession="GSE1",
+                pipeline="auto",
+                genome="GRCh38",
+            )
+
+            self.assertEqual({"GSM1", "GSM2"}, set(result.assets))
+            self.assertEqual({"scrnaseq", "rnaseq"}, {run.pipeline for run in result.runs})
+            self.assertEqual(2, len(calls))
+
     def test_scrnaseq_run_writes_samplesheet_and_discovers_filtered_h5ad(self):
         calls = []
 
