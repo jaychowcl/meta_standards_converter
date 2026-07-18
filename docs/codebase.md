@@ -512,6 +512,7 @@ Protocol REFs for treatment/growth/extraction
 Extract Name
 Protocol REF for library construction
 Assay Name
+optional Protocol REF for `sample.scan_protocol`
 Scan Name
 Factor Value[...] columns
 ```
@@ -522,6 +523,8 @@ Sequencing behavior:
 - SRA records contribute library layout/source/strategy/selection, run/experiment/sample accessions, submitted file names, MD5, instrument model, read lengths, and FASTQ metadata.
 - GEO values take precedence over conflicting SRA values, and warnings are recorded in `SDRFAudit`.
 - `Comment[LIBRARY_SOURCE]` is rendered uppercase in the SDRF only; library source text used for protocol descriptions keeps its original cleaned casing.
+- Library construction is distinct from extraction: its synthesized description uses only available layout/strategy/source/selection metadata and its IDF type maps to `nucleic acid library construction protocol` (`EFO_0004184`).
+- A populated `sample.scan_protocol` is registered and referenced before the sequencing scan node.
 - Shared sequencing paths render FASTQs as `Comment[readN file]`, `Comment[FASTQ_URI]`, and `Comment[MD5]` companion columns.
 - Bulk and plate sequencing paths emit one SDRF row per FASTQ URI, with duplicate sample/source metadata allowed across rows.
 - More than two FASTQs are preserved; shared sequencing uses additional read comments, while bulk and plate sequencing use additional rows.
@@ -588,7 +591,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 - SDRF construction prefers `sample.sra_run`; relation-based `_lookup_sra()` remains as a compatibility fallback.
 - GEO protocol labels map through `Harmonizer().geoprotocols2efo()`.
 - PubMed status maps through `Harmonizer().pubstatus2efo()`.
-- Term source names are inferred from non-empty rows whose label contains `source ref`. Matching `database` records supply the file URL and version; `Harmonizer` is used only for missing values.
+- Term source names combine non-empty `source ref` cells with every declared `database` record. A matching declared record supplies its URL and exact version, including an intentionally missing version; `Harmonizer` is used only when no matching database exists.
 
 <a id="public-api-and-callable-reference"></a>
 ## Public API And Callable Reference
@@ -755,6 +758,7 @@ This section lists public and semi-public callables used by tests or by package 
 - `unchanged_magetab(package)` returns the preserved source payload when the fingerprint still matches and exactly one SDRF is present.
 - `restore_extensions(package, magetab)` runs after normal rendering for edited packages. Generated JSON fields win; unsupported IDF rows and SDRF columns are restored by row count or source/sample/assay identity when safe, otherwise a warning is logged.
 - Packages without the optional sidecar follow the ordinary GEO/JSON rendering path unchanged. Multiple source SDRFs use semantic consolidation rather than the one-SDRF exact fast path.
+- The fixed GEO/MINiML-compatible core has no generic entities for arbitrary protocol graphs, assay/hybridization/scan identities, performers, protocol hardware/software/parameters, QC/replicate declarations, per-value units/ontology annotations, or custom MAGE-TAB fields. Those remain sidecar-only; removing `mage_tab` is intentionally not lossless.
 
 <a id="geo-parser"></a>
 ### `geo_handlers/geo_parser.py`
@@ -852,7 +856,8 @@ Investigation and experimental rows:
 - `Comment[RelatedExperiment]` is emitted when `series.relation` contains superseries/subseries relation text and related `GSE...` accessions. This row records parsed relationships and does not depend on fetching related packages with `--related`.
 - `_idf_experimental()` derives experimental factor names from sample channel characteristics whose normalized tag has more than one distinct normalized value; `Experimental Factor Type` currently mirrors the factor names while factor term source/accession rows remain blank.
 - `_idf_platform_specific(data, technology_type)` dispatches to a private platform IDF handler.
-- `_idf_term_source(magetab, data)` prefers matching `database` URL/version values from the package and falls back to `Harmonizer` ontology metadata. Unknown sources remain valid with blank file/version cells.
+- `_idf_term_source(magetab, data)` emits all declared databases plus referenced term sources. Declared URL/version values, including blanks, are source-authoritative; only undeclared sources fall back to `Harmonizer` metadata.
+- `_idf_persons(data)` prefixes a real structured address with its organization, preserves string addresses verbatim, and leaves a missing address blank rather than copying the affiliation.
 
 Platform IDF handler inheritance mirrors the SDRF platform tree:
 
@@ -974,7 +979,8 @@ Other helpers:
 - Defaults to `INSDCWebfetcher()`.
 
 - `_add_sdrf_to_idf()` appends an in-memory SDRF row to IDF rows; this remains for compatibility but `AEConstructor` now coordinates insertion.
-- Generic, sequencing, bulk-sequencing, and array paths register and reference `sample.data_processing` as a `Data-Processing` protocol. AE parsing maps processing/normalization protocols back to that sample field and maps only extraction protocols to `channel.extract_protocol`; library-construction and sequencing protocols are not collapsed into extraction.
+- Generic, sequencing, bulk-sequencing, and array paths register and reference `sample.data_processing` as a `Data-Processing` protocol. AE parsing maps processing/normalization protocols back to that sample field and maps only extraction protocols to `channel.extract_protocol`; library-construction and sequencing protocols are not collapsed into extraction. Sequencing paths also reference a populated `sample.scan_protocol`.
+- Single-cell read/barcode/isolation comment labels emitted by the SDRF handlers are recognized by `AEParser` and do not create self-generated unmapped-column warnings.
 - `_miniml2sdrf(data, protocol_registry=None, technology_type=None)` uses the supplied AE technology key or detects one for compatibility, selects a handler, builds the table, stores `last_sdrf_audit`, and returns rows.
 - `_detect_sdrf_technology(data)` delegates to `AEConstructor._detect_ae_technology(data)`.
 - `_has_array_files(data)` delegates to `AEConstructor._has_array_files(data)`.
@@ -995,7 +1001,7 @@ Other helpers:
 - Uses enriched `sample.sra_run` when present; otherwise uses the parent constructor's injected `insdc_fetcher` for SRA accession extraction and run lookup.
 - `build()` orchestrates path building, column planning, and rendering.
 - `build_paths()` creates generic source/factor paths.
-- `plan_columns()`, `merge_column_group()`, `render_paths()`, `column_labels()`, `column_values()`, `path_groups()`, `group_with_values()`, `attr_columns()`, `occurrence_key()`, and `render_value()` handle table planning and rendering; `render_value()` quote-strips direct SDRF output.
+- `plan_columns()`, `merge_column_group()`, `render_paths()`, `column_labels()`, `column_values()`, `path_groups()`, `group_with_values()`, `attr_columns()`, `occurrence_key()`, and `render_value()` handle table planning and rendering; `render_value()` preserves quote characters while normalizing missing values to blank cells.
 - `ordered_samples()` respects series sample refs before remaining samples.
 - `channels()` normalizes missing channels to `[{}]` and warns for multi-channel samples.
 - `source_node()`, `sample_comment_attrs()`, `characteristic_attrs()`, `organism_part_value()`, `provider()`, and `material_type()` build mapped source columns.
@@ -1051,6 +1057,7 @@ Other helpers:
 `geoprotocols2efo(protocol_type: str) -> list`
 
 - Maps known MAGE-TAB/GEO protocol labels to ontology term, source ref, and accession.
+- Maps `Library-Construction-Protocol` to `nucleic acid library construction protocol`, EFO, and `EFO_0004184`; registered EFO term-source metadata uses release `3.90.0`.
 - Raises `ValueError` for blank protocol type.
 - Returns `[protocol_type, None, None]` for unknown non-blank protocol labels, allowing custom protocol labels to survive in IDF output.
 

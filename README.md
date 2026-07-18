@@ -177,6 +177,12 @@ Options:
 - `-v`, `-vv`, `-q`, `--log-file PATH`: shared logging options.
 
 Remote IDF/SDRF text is parsed in memory. Accession lookup downloads metadata only; it does not download referenced assay data files. The `mage_tab.roundtrip` sidecar retains source tables and a semantic fingerprint, while unmapped rows and columns remain available with warnings.
+The core JSON keeps the fixed GEO/MINiML fields for samples, channels, runs,
+files, factors, databases, platforms, contributors, and supported protocol
+slots. Arbitrary MAGE-TAB protocol graphs, assay identities, performers,
+protocol hardware/software, QC/replicate declarations, per-value units and
+ontology annotations, and custom rows or columns remain sidecar-only; removing
+`mage_tab` is therefore not a lossless operation.
 
 `json2h5ad` selects the best source per sample (`H5AD > matrix > raw`):
 
