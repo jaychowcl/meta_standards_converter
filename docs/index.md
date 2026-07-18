@@ -47,6 +47,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   anchor: workflow-details
   keywords: workflows, related series, IDF, SDRF, enrichment
 
+- id: json2h5ad-flow
+  title: End-To-End json2h5ad Flow
+  anchor: json2h5ad-flow
+  keywords: H5AD, AnnData, matrix, FASTQ, nf-core, scrnaseq, rnaseq, assets, Nextflow
+
 - id: public-api-and-callable-reference
   title: Public API And Callable Reference
   anchor: public-api-and-callable-reference
@@ -119,7 +124,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: converter
   title: Converter
   anchor: converter
-  keywords: geo2ae, geo2json, json2h5ad, convert, JSON writing, H5AD placeholder
+  keywords: geo2ae, geo2json, json2h5ad, convert, JSON writing, H5AD, AnnData, nf-core
 
 - id: miniml-enricher
   title: MINiML enricher

@@ -2,7 +2,7 @@
 
 # meta_standards_converter
 
-Convert GEO Series MINiML metadata into parsed JSON and ArrayExpress/MAGE-TAB IDF/SDRF files.
+Convert GEO Series MINiML metadata into parsed JSON, AnnData/H5AD, and ArrayExpress/MAGE-TAB files.
 
 ## Description
 
@@ -12,7 +12,7 @@ Main features:
 
 - `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF TSV files.
 - `geo2json`: GEO Series accession to parsed MINiML JSON packages, enriched by default.
-- `json2h5ad`: placeholder interface for future parsed JSON to AnnData/H5AD conversion.
+- `json2h5ad`: reuse supplied H5ADs, build AnnData from count matrices, or run pinned nf-core RNA-seq pipelines for raw FASTQs.
 - Injectable fetchers, parsers, enrichers, and constructors for testing or downstream integration.
 - Related GEO super/subseries traversal when requested.
 
@@ -30,6 +30,7 @@ Install locally for development:
 git clone https://github.com/jaychowcl/meta_standards_converter
 cd meta_standards_converter
 python -m pip install -e .
+python -m pip install -e '.[h5ad]'  # include AnnData conversion support
 ```
 
 Build the Docker image:
@@ -42,6 +43,8 @@ docker build -t meta-standards-converter .
 
 - Python `>=3.10`
 - Runtime packages: `requests>=2.31.0`, `python-dateutil>=2.8.2`
+- H5AD extra: `anndata`, `scanpy`, `numpy`, `pandas`, `scipy`, and `h5py`
+- Raw FASTQ processing: Nextflow, Java, and a supported container runtime such as Docker or Apptainer
 - Network access for live workflows:
   - GEO FTP for MINiML tarballs
   - NCBI E-utilities for PubMed and SRA XML
@@ -82,7 +85,7 @@ docker run --rm meta-standards-converter geo2ae --help
 | --- | --- | --- |
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt` files; Python API returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json` files; Python API returns `list[dict]` parsed packages |
-| `json2h5ad` | One or more parsed MINiML JSON files | Placeholder only; validates paths and raises `NotImplementedError` |
+| `json2h5ad` | Parsed MINiML JSON plus discovered or explicit H5AD, matrix, or FASTQ assets | Normalized per-sample H5ADs, compatible combined study H5AD, provenance manifest, and optional nf-core results |
 | `GEOParser` | MINiML XML string | One self-contained package per Series |
 | `MINiMLEnricher` | Parsed package dict | Same dict with PubMed and SRA/ENA fields added where available |
 | `AEConstructor` | Enriched parsed package dict | In-memory MAGE-TAB rows or IDF/SDRF TSV files |
@@ -123,16 +126,26 @@ Options are the same as `geo2ae`, plus:
 
 - `--no-enrich`: skip PubMed and SRA/ENA enrichment.
 
-`json2h5ad` is registered but not implemented:
+`json2h5ad` selects the best source per sample (`H5AD > matrix > raw`):
 
 ```bash
 json2h5ad output/GSE234602.json --out output
+json2h5ad output/GSE234602.json --asset GSM9651991=local.h5ad --out output
+json2h5ad output/GSE234602.json --force-reprocess --genome GRCh38 --profile docker --out output
 ```
 
 Options:
 
 - `JSON...`: one or more parsed MINiML JSON files.
 - `--out DIR`: output directory, default `.`.
+- `--asset ACCESSION=PATH`: explicit local or remote asset; repeat as needed.
+- `--asset-manifest CSV`: detailed sample/study asset mapping, including matrix bundles and FASTQ read/lane metadata.
+- `--matrix-orientation`: required for ambiguous delimited matrices.
+- `--force-reprocess`: ignore processed sources and rebuild from raw FASTQs.
+- `--pipeline auto|scrnaseq|rnaseq`: automatic per-sample routing or an explicit nf-core pipeline.
+- `--genome` or `--fasta` with `--gtf`: reference selection. Inference requires `--accept-inferred-reference`.
+- `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, and `--resume`: nf-core/Nextflow controls.
+- `--overwrite`: replace normalized outputs; outputs are protected by default.
 - `-v`, `-vv`, `-q`, `--log-file PATH`: shared logging options.
 
 CLI behavior:
@@ -174,15 +187,21 @@ packages = geo2json().convert(
 )
 ```
 
-Validate JSON-to-H5AD placeholder input:
+Convert parsed JSON to H5AD:
 
 ```python
 from meta_standards_converter.converters.json2h5ad import json2h5ad
 
-json2h5ad().convert("output/GSE234602.json", out="output")
+result = json2h5ad().convert(
+    "output/GSE234602.json",
+    out="output",
+    genome="GRCh38",
+)
+print(result.combined_h5ad)
+print(result.sample_h5ads)
 ```
 
-The placeholder raises `NotImplementedError` after confirming the input file exists.
+Install the `h5ad` extra before using processed-matrix conversion. Raw workflows additionally require Nextflow, Java, and the selected execution profile on the host.
 
 ### Docker
 
@@ -217,6 +236,19 @@ geo2ae.convert(gse, related_series, remove_empty, out)
 ```
 
 `geo2json.convert` shares the fetch and parse stages, optionally calls `MINiMLEnricher.enrich`, writes `{gse}.json` when `out` is set, and returns parsed packages.
+
+`json2h5ad.convert` plans and normalizes expression assets:
+
+```text
+load parsed package list and explicit asset mappings
+for each sample, select H5AD > matrix > raw FASTQ
+if raw:
+  group samples into nf-core/scrnaseq or nf-core/rnaseq
+  confirm the reference, run pinned Nextflow, and discover outputs
+normalize each sample into sparse AnnData with GEO metadata and provenance
+combine compatible samples with an outer sparse gene join
+write per-sample H5ADs, optional study H5AD, and a JSON provenance manifest
+```
 
 `GEOParser.parse` converts MINiML XML into per-Series packages:
 
@@ -276,6 +308,9 @@ Important classes:
 - `JSONHandler`: reads dotted JSON paths with list indexes and `*` expansion.
 - `Harmonizer`: maps GEO protocol and PubMed status labels to ontology terms where known.
 - `MetaStore`: placeholder validation class; structural validation is not implemented.
+- `SourcePlanner`, `AssetManifest`, and `AssetDownloader`: select, map, cache, and checksum expression assets.
+- `NFCoreRunner` and `ReferenceResolver`: prepare pinned nf-core runs and guard reference selection.
+- `JSON2H5ADConverter`: normalize processed/pipeline results and combine compatible AnnData objects.
 
 ## Docs
 

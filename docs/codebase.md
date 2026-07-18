@@ -28,11 +28,11 @@ src/meta_standards_converter/
 │   ├── common.py                 # shared CLI logging helpers
 │   ├── geo2ae.py                 # geo2ae command-line entrypoint
 │   ├── geo2json.py               # geo2json command-line entrypoint
-│   └── json2h5ad.py              # placeholder JSON-to-H5AD command-line entrypoint
+│   └── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
 ├── converters/
 │   ├── geo2ae.py                 # top-level GEO to AE orchestration
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
-│   └── json2h5ad.py              # placeholder parsed JSON to H5AD orchestration
+│   └── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 ├── geo_handlers/
 │   ├── geo_webfetcher.py         # GEO MINiML URL building and download
 │   └── geo_parser.py             # MINiML XML to JSON-ready per-Series packages
@@ -82,8 +82,8 @@ tests/GSE328265_family.xml
 ## Runtime Behavior
 
 - The package requires Python `>=3.10`.
-- Runtime dependencies are `requests` and `python-dateutil`.
-- The `geo2ae` console script points to `meta_standards_converter.cli.geo2ae:main`; `geo2json` points to `meta_standards_converter.cli.geo2json:main`; placeholder `json2h5ad` points to `meta_standards_converter.cli.json2h5ad:main`.
+- Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
+- The `geo2ae`, `geo2json`, and `json2h5ad` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp` and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
 - Library logging propagates safe structured telemetry to caller handlers.
@@ -94,9 +94,10 @@ tests/GSE328265_family.xml
   never logged.
 - `geo2ae.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
 - `geo2json.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
-- `json2h5ad.convert()` validates a parsed MINiML JSON file path, then raises `NotImplementedError` until matrix fetching/parsing and AnnData writing are implemented.
+- `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
+- Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing additionally requires host-provided Nextflow, Java, and a supported execution profile/runtime.
 - `MetaStore._validate_investigation_metadata_structure()` is a `pass` placeholder, so `validate_investigation_metadata()` currently asserts for normal input.
 
 <a id="end-to-end-geo2ae-flow"></a>
@@ -125,13 +126,7 @@ geo2ae.convert(gse, related_series, remove_empty, out)
 
 `geo2json.convert(gse, related_series, remove_empty, enrich, out)` follows the same GEO fetch and parse stages, optionally enriches each parsed package through `MINiMLEnricher`, writes `{gse}.json` when `out` is truthy, and returns the list of JSON packages without invoking AE/MAGE-TAB construction.
 
-```text
-json2h5ad.convert(json_path, out)
-  -> if json_path does not exist:
-       raise FileNotFoundError
-  -> log that parsed MINiML JSON input was validated
-  -> raise NotImplementedError because matrix fetching/parsing and AnnData writing are not implemented
-```
+The H5AD workflow is documented separately under End-To-End json2h5ad Flow.
 
 External calls in the live conversion path are isolated behind fetchers:
 
@@ -147,6 +142,35 @@ CLI behavior:
 - `--keep-empty` preserves empty parsed MINiML fields.
 - `--out DIR` defaults to the current directory.
 - Failed accessions log an error and traceback to stdout through the configured logger, then later accessions still run.
+
+<a id="json2h5ad-flow"></a>
+## End-To-End json2h5ad Flow
+
+```text
+json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, ...)
+  -> validate and load the non-empty parsed package list
+  -> AssetManifest loads explicit CSV/TSV and CLI mappings
+  -> SourcePlanner discovers sample/study assets and selects per sample:
+       explicit H5AD > explicit matrix > JSON H5AD > JSON matrix > raw FASTQ
+  -> if force_reprocess: require raw FASTQ for every sample
+  -> NFCoreRunner groups raw samples by detected modality
+       -> ReferenceResolver validates explicit reference or confirmed inference
+       -> write nf-core samplesheet and params.json
+       -> subprocess.run(nextflow run nf-core/{scrnaseq|rnaseq}, shell=False)
+       -> discover scrnaseq H5AD or rnaseq count/TPM matrices
+  -> load H5AD, 10x HDF5, 10x MTX, or delimited matrices
+  -> normalize sparse AnnData with geo_* obs fields and provenance in uns
+  -> write one normalized H5AD per sample
+  -> combine compatible samples using an outer sparse feature join
+  -> write optional combined study H5AD and JSON provenance manifest
+  -> return ConversionResult
+```
+
+`AssetDownloader` streams HTTP(S)/FTP processed assets into an output-local cache and verifies an MD5 when supplied. Source files are never modified. Study-level H5ADs require an observation column named `geo_accession`, `sample_id`, `sample`, or `gsm_accession` so they can be split safely.
+
+Raw processing pins `nf-core/scrnaseq` 4.1.0 and `nf-core/rnaseq` 3.26.0 by default. The runner requires Nextflow, Java, and the selected Docker/Podman/Apptainer/Singularity runtime. `scrnaseq` prefers CellBender-filtered, then filtered, then raw H5AD output. `rnaseq` count matrices become sparse `X`, and aligned TPM values become `layers["tpm"]`.
+
+Combination preserves successful per-sample outputs when organisms or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
 
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape
@@ -453,7 +477,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Adds `--out`, defaulting to `"."`.
 - Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
-- `json2h5ad` accepts one or more parsed MINiML JSON file paths plus `--out`; it does not add GEO fetch, related-series, empty-cleanup, or enrichment flags.
+- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, explicit or confirmed-inferred references, pinned nf-core execution controls, `--resume`, and `--overwrite`.
 
 `main(argv=None) -> int`
 
@@ -494,15 +518,14 @@ This section lists public and semi-public callables used by tests or by package 
 - Writes one `{gse}.json` file containing the full package list when `out` is truthy.
 - Returns the list of JSON packages.
 
-`class json2h5ad`
+`class JSON2H5ADConverter`; compatibility alias `class json2h5ad`
 
-- Placeholder programmatic converter for parsed MINiML JSON to AnnData/H5AD output.
-
-`convert(json_path, out=None)`
-
-- Validates that `json_path` exists.
-- Raises `NotImplementedError` with a clear message that matrix fetching/parsing and AnnData writing are not implemented yet.
-- Does not create output directories or write `.h5ad` files in the placeholder implementation.
+- Accepts injectable `SourcePlanner`, `NFCoreRunner`, and `AssetDownloader` collaborators.
+- `convert(...) -> ConversionResult` selects sources, runs raw workflows when required, normalizes each sample, combines compatible samples, and writes a provenance manifest.
+- `ConversionResult` exposes `combined_h5ad`, `sample_h5ads`, retained pipeline files, pipeline commands, warnings/failures, `primary_h5ad`, and `partial`.
+- `AssetManifest` loads CSV/TSV mappings or `ACCESSION=PATH` CLI specifications. Manifest entries outrank CLI entries, which outrank discovered JSON assets.
+- `ReferenceResolver` accepts `genome` or paired `fasta`/`gtf`; supported organism inference must be explicitly accepted before Nextflow starts.
+- Generic delimited matrices require an explicit orientation when it cannot be represented by a study-scoped sample column.
 
 <a id="miniml-enricher"></a>
 ### `enrichers/miniml_enricher.py`
@@ -990,6 +1013,8 @@ SRA XML helper methods:
 - PubMed and SRA lookups normally happen during parsed MINiML enrichment through injected fetchers, so unit tests should mock or fake `MINiMLEnricher`, `PubmedWebFetcher`, and `INSDCWebfetcher` when exercising conversion behavior.
 - Parser-specific behavior is documented in this handoff under GEO Parse Flow and GEO parser.
 - Generated outputs under `.dev/` and `output/` are examples/debug artifacts, not package code.
+- H5AD sources remain immutable; normalization writes new files and records source hashes and provenance.
+- nf-core revisions are pinned in `NFCoreRunner.REVISIONS`; revision changes require command/output-discovery tests and documentation updates.
 
 <a id="test-plan"></a>
 ## Test Plan
@@ -997,7 +1022,7 @@ SRA XML helper methods:
 Run the full suite:
 
 ```bash
-python -m unittest discover tests
+MPLCONFIGDIR=/tmp/matplotlib-meta-standards python -m unittest discover tests
 ```
 
 Important test coverage:
@@ -1005,10 +1030,11 @@ Important test coverage:
 - `tests/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
-- `tests/test_json2h5ad.py`: placeholder JSON-to-H5AD path validation and not-implemented behavior.
+- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, count/TPM matrices, sparse combination, study splitting, partial results, and raw-output reintegration.
+- `tests/test_h5ad_pipeline.py`: reference confirmation, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
 - `tests/test_cli_geo2ae.py`: CLI defaults, multiple accession order, aliases, keep-empty behavior, out directory forwarding, logging controls, file logging, and failure continuation.
 - `tests/test_cli_geo2json.py`: JSON CLI defaults, enrichment toggle, aliases, logging controls, file logging, and failure continuation.
-- `tests/test_cli_json2h5ad.py`: placeholder H5AD CLI defaults, multiple JSON file order, out directory forwarding, logging controls, file logging, and failure continuation.
+- `tests/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
 - `tests/test_project_scripts.py`: console script registration.
 - `tests/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.
 - `tests/test_ae_sdrf_handlers.py`: SDRF graph rendering, source/comment/characteristic behavior, file classification, sequencing/array/single-cell/spatial handlers, SRA precedence warnings, and disabled greedy fallback comments.

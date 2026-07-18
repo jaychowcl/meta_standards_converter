@@ -13,6 +13,6 @@ WORKDIR /app
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir '.[h5ad]'
 
 CMD ["geo2ae", "--help"]
