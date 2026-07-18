@@ -7,7 +7,9 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import json
+import gzip
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -275,6 +277,29 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["healthy"] * 2, list(normalized.obs["geo_disease"]))
             self.assertEqual(["cell1", "cell2"], list(original.obs_names))
             self.assertEqual("h5ad", normalized.uns["meta_standards_converter"]["source_tier"])
+
+    def test_reads_gzip_compressed_h5ad(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_path = os.path.join(tmpdir, "source.h5ad")
+            compressed_path = f"{source_path}.gz"
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1, 2]]),
+                obs=self.pandas.DataFrame(index=["cell1"]),
+                var=self.pandas.DataFrame(index=["Gene1", "Gene2"]),
+            ).write_h5ad(source_path)
+            with open(source_path, "rb") as source, gzip.open(compressed_path, "wb") as target:
+                shutil.copyfileobj(source, target)
+            os.unlink(source_path)
+            json_path = self._write_json(tmpdir, package(compressed_path))
+
+            result = json2h5ad().convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+            )
+
+            converted = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            self.assertEqual((1, 2), converted.shape)
+            self.assertEqual([[1, 2]], converted.X.toarray().tolist())
 
     def test_reads_delimited_gene_by_observation_matrix_as_sparse_counts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
