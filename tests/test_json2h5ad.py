@@ -368,6 +368,32 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
             self.assertIn("reference builds", result.failures[0])
 
+    def test_incompatible_bulk_and_single_cell_modalities_are_not_combined(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            samples = []
+            for sample_id, library_source in (
+                ("GSM1", "single cell transcriptomic"),
+                ("GSM2", "TRANSCRIPTOMIC"),
+            ):
+                path = os.path.join(tmpdir, f"{sample_id}.h5ad")
+                self.anndata.AnnData(
+                    X=self.sparse.csr_matrix([[1]]),
+                    obs=self.pandas.DataFrame(index=["cell"]),
+                    var=self.pandas.DataFrame({"gene_ids": ["ENSG1"]}, index=["ENSG1"]),
+                ).write_h5ad(path)
+                sample = package(path, accession=sample_id)["sample"][0]
+                sample["library_source"] = library_source
+                sample["channel"] = [{"organism": [{"value": "Homo sapiens"}]}]
+                samples.append(sample)
+            data = package()
+            data["sample"] = samples
+            json_path = self._write_json(tmpdir, data)
+
+            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            self.assertIsNone(result.combined_h5ad)
+            self.assertIn("modalities", result.failures[0])
+
     def test_rnaseq_counts_select_sample_column_and_add_tpm_layer(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             counts = os.path.join(tmpdir, "salmon.merged.gene_counts.tsv")
