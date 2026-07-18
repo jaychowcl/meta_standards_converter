@@ -50,7 +50,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: json2h5ad-flow
   title: End-To-End json2h5ad Flow
   anchor: json2h5ad-flow
-  keywords: H5AD, h5ad.gz, gzip, AnnData, matrix, FASTQ, nf-core, scrnaseq, rnaseq, assets, Nextflow
+  keywords: H5AD, h5ad.gz, gzip, AnnData, matrix, gene_name, TPM, FASTQ, nf-core, scrnaseq, rnaseq, assets, Nextflow
 
 - id: rootless-json2h5ad-runtime
   title: Rootless json2h5ad Runtime

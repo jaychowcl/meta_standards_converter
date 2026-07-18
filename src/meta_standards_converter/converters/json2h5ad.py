@@ -930,6 +930,15 @@ class JSON2H5ADConverter:
         else:
             separator = "," if self._underlying_suffix(path) == ".csv" else "\t"
             frame = pandas.read_csv(path, sep=separator, index_col=0)
+            feature_annotations = None
+            if asset.role == "rnaseq_counts":
+                if asset.scope_id not in frame.columns:
+                    raise ValueError(
+                        f"RNA-seq count matrix {asset.path} has no column for {asset.scope_id}."
+                    )
+                if "gene_name" in frame.columns:
+                    feature_annotations = frame[["gene_name"]].copy()
+                frame = frame[[asset.scope_id]]
             try:
                 values = frame.apply(pandas.to_numeric, errors="raise")
             except (TypeError, ValueError) as exc:
@@ -939,14 +948,7 @@ class JSON2H5ADConverter:
                 raise ValueError(f"Matrix {asset.path} is empty.")
             if not numpy.isfinite(raw).all() or (raw < 0).any():
                 raise ValueError(f"Matrix {asset.path} must contain finite nonnegative values.")
-            if asset.role == "rnaseq_counts":
-                if asset.scope_id not in values.columns:
-                    raise ValueError(
-                        f"RNA-seq count matrix {asset.path} has no column for {asset.scope_id}."
-                    )
-                values = values[[asset.scope_id]]
-                raw = values.to_numpy()
-            elif asset.study_scope:
+            if asset.study_scope and asset.role != "rnaseq_counts":
                 if orientation == "genes-by-observations" and asset.scope_id in values.columns:
                     values = values[[asset.scope_id]]
                     raw = values.to_numpy()
@@ -976,6 +978,10 @@ class JSON2H5ADConverter:
                 obs=pandas.DataFrame(index=obs_names),
                 var=pandas.DataFrame(index=var_names),
             )
+            if feature_annotations is not None:
+                adata.var["gene_name"] = (
+                    feature_annotations.reindex(var_names)["gene_name"].astype(str).to_numpy()
+                )
             if asset.role == "rnaseq_counts" and asset.features_path:
                 tpm = pandas.read_csv(asset.features_path, sep="\t", index_col=0)
                 if asset.scope_id not in tpm.columns:

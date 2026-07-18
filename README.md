@@ -292,7 +292,9 @@ geo2ae.convert(gse, related_series, remove_empty, out)
 
 `geo2json.convert` shares the fetch and parse stages, optionally calls `MINiMLEnricher.enrich`, writes `{gse}.json` when `out` is set, and returns parsed packages.
 
-`json2h5ad.convert` plans and normalizes expression assets:
+`json2h5ad.convert` plans and normalizes expression assets. Merged nf-core/rnaseq
+tables may include the standard text `gene_name` column; it is retained in
+`adata.var`, while per-sample counts and TPM values remain numeric:
 
 ```text
 load parsed package list and explicit asset mappings
