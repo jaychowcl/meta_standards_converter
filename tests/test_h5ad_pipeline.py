@@ -243,7 +243,8 @@ class TestNFCoreRunner(unittest.TestCase):
             command = calls[0][0]
             self.assertEqual("nextflow", command[0])
             self.assertIn("nf-core/scrnaseq", command)
-            self.assertIn("4.1.0", command)
+            self.assertIn("4.2.0", command)
+            self.assertNotIn("4.1.0", command)
             self.assertIn("docker", command)
             self.assertEqual(str(h5ad_path), result.assets["GSM1"].path)
             self.assertEqual("h5ad", result.assets["GSM1"].kind)
