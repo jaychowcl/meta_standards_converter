@@ -272,10 +272,11 @@ class TestProcessedAssetConversion(unittest.TestCase):
             normalized = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             original = self.anndata.read_h5ad(source_path)
             self.assertEqual(["cell1-GSM1", "cell2-GSM1"], list(normalized.obs_names))
-            self.assertEqual(["GSM1", "GSM1"], list(normalized.obs["geo_accession"]))
-            self.assertEqual(["Control sample"] * 2, list(normalized.obs["geo_title"]))
-            self.assertEqual(["Homo sapiens"] * 2, list(normalized.obs["geo_organism"]))
-            self.assertEqual(["healthy"] * 2, list(normalized.obs["geo_disease"]))
+            self.assertEqual(["GSM1", "GSM1"], list(normalized.obs["msc_accession"]))
+            self.assertEqual(["Control sample"] * 2, list(normalized.obs["msc_title"]))
+            self.assertEqual(["Homo sapiens"] * 2, list(normalized.obs["msc_organism"]))
+            self.assertEqual(["healthy"] * 2, list(normalized.obs["msc_disease"]))
+            self.assertFalse(any(column.startswith("geo_") for column in normalized.obs))
             self.assertEqual(["cell1", "cell2"], list(original.obs_names))
             self.assertEqual("h5ad", normalized.uns["meta_standards_converter"]["source_tier"])
 
@@ -343,8 +344,191 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             combined = self.anndata.read_h5ad(result.combined_h5ad)
             self.assertEqual((2, 3), combined.shape)
-            self.assertEqual({"GSM1", "GSM2"}, set(combined.obs["geo_accession"]))
+            self.assertEqual({"GSM1", "GSM2"}, set(combined.obs["msc_accession"]))
+            self.assertIn("msc_batch", combined.obs)
             self.assertTrue(self.sparse.issparse(combined.X))
+
+    def test_enriches_msc_metadata_and_flattens_relevant_miniml(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            paths = {}
+            for sample_id in ("GSM1", "GSM2"):
+                path = os.path.join(tmpdir, f"{sample_id}.h5ad")
+                self.anndata.AnnData(
+                    X=self.sparse.csr_matrix([[1]]),
+                    obs=self.pandas.DataFrame(index=["cell"]),
+                    var=self.pandas.DataFrame(index=["ENSG1"]),
+                ).write_h5ad(path)
+                paths[sample_id] = path
+            data = {
+                "schema_location": "MINiML.xsd",
+                "version": "1.0",
+                "database": [
+                    {
+                        "iid": "GEO",
+                        "public_id": "GEO",
+                        "name": "Gene Expression Omnibus (GEO)",
+                        "web_link": "https://www.ncbi.nlm.nih.gov/geo",
+                    }
+                ],
+                "contributor": [
+                    {"iid": "C1", "person": {"first": "Alice", "last": "Example"}},
+                    {"iid": "C2", "person": {"first": "Unrelated"}},
+                ],
+                "platform": [
+                    {
+                        "iid": "P1",
+                        "accession": [{"database": "GEO", "value": "GPL1"}],
+                        "contributor_ref": ["C1"],
+                    },
+                    {
+                        "iid": "P2",
+                        "accession": [{"database": "GEO", "value": "GPL2"}],
+                        "contributor_ref": ["C2"],
+                    },
+                ],
+                "series": {
+                    "accession": [{"database": "GEO", "value": "GSE1"}],
+                    "title": "Study title",
+                    "summary": "GEO experiment summary",
+                    "contributor_ref": ["C1"],
+                    "sample_ref": ["S1", "S2"],
+                    "pubmed_publication": [
+                        {
+                            "pubmed_id": "123",
+                            "doi": "10.1/example",
+                            "title": "Citation title",
+                            "author_list": "A Example, B Example",
+                            "status": "published",
+                            "abstract": "must not be embedded",
+                            "full_text": "must not be embedded",
+                            "article_body": {"section": "must not be embedded"},
+                        }
+                    ],
+                },
+                "sample": [
+                    {
+                        "iid": "S1",
+                        "accession": [{"database": "GEO", "value": "GSM1"}],
+                        "title": "Sample one",
+                        "description": "Sample description",
+                        "supplementary_data": [{"value": paths["GSM1"]}],
+                        "platform_ref": ["P1"],
+                        "contact_ref": ["C1"],
+                        "library_strategy": "RNA-Seq",
+                        "library_source": "transcriptomic",
+                        "library_selection": "cDNA",
+                        "instrument_model": {"predefined": "Illumina Test"},
+                        "ena_accession": "SRS1",
+                        "sra_accession": "SRX1",
+                        "sra_run": [
+                            {
+                                "run": "SRR1",
+                                "biosample": "SAMN1",
+                                "library_layout": "PAIRED",
+                                "fastq_files": [{"uri": "https://example/R1.fastq.gz"}],
+                            },
+                            {
+                                "run": "SRR2",
+                                "biosample": "SAMN1",
+                                "library_layout": "PAIRED",
+                            },
+                        ],
+                        "channel": [
+                            {
+                                "source": "blood",
+                                "molecule": "total RNA",
+                                "biomaterial_provider": ["Example Biobank"],
+                                "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
+                                "characteristics": [
+                                    {"tag": "cell type", "value": "Treg"},
+                                    {"tag": "developmental stage", "value": "adult"},
+                                    {"tag": "treatment", "value": "CPI-703"},
+                                ],
+                                "treatment_protocol": "Long treatment protocol",
+                            },
+                            {
+                                "source": "blood",
+                                "characteristics": [
+                                    {"tag": "cell-type", "value": "Activated Treg"},
+                                    {"tag": "treatment", "value": "CPI-703"},
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        "iid": "S2",
+                        "accession": [{"database": "GEO", "value": "GSM2"}],
+                        "title": "Sample two",
+                        "supplementary_data": [{"value": paths["GSM2"]}],
+                        "platform_ref": ["P2"],
+                        "contact_ref": ["C2"],
+                        "channel": [{"characteristics": [{"tag": "dose", "value": "5 uM"}]}],
+                    },
+                ],
+            }
+            json_path = self._write_json(tmpdir, data)
+
+            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            first = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            second = self.anndata.read_h5ad(result.sample_h5ads["GSM2"])
+            combined = self.anndata.read_h5ad(result.combined_h5ad)
+            self.assertEqual(["GEO"], first.obs["msc_metadata_source"].unique().tolist())
+            self.assertEqual(
+                ["Gene Expression Omnibus (GEO)"],
+                first.obs["msc_metadata_source_name"].unique().tolist(),
+            )
+            self.assertEqual(["GPL1"], first.obs["msc_platform_accession"].unique().tolist())
+            self.assertEqual(["SRR1; SRR2"], first.obs["msc_sra_run_accessions"].unique().tolist())
+            self.assertEqual(["SAMN1"], first.obs["msc_biosample_accession"].unique().tolist())
+            self.assertEqual(["Illumina Test"], first.obs["msc_instrument_model"].unique().tolist())
+            self.assertEqual(["adult"], first.obs["msc_developmental_stage"].unique().tolist())
+            self.assertEqual(["Example Biobank"], first.obs["msc_biomaterial_provider"].unique().tolist())
+            self.assertEqual(["RNA"], first.obs["msc_material_type"].unique().tolist())
+            self.assertEqual(
+                ["sample treatment protocol"],
+                first.obs["msc_protocol_types"].unique().tolist(),
+            )
+            self.assertEqual(["EFO"], first.obs["msc_protocol_term_source_refs"].unique().tolist())
+            self.assertEqual(
+                ["EFO_0003809"],
+                first.obs["msc_protocol_term_accession_numbers"].unique().tolist(),
+            )
+            self.assertEqual(
+                ["Treg; Activated Treg"],
+                first.obs["msc_characteristic_cell_type"].unique().tolist(),
+            )
+            self.assertEqual(["CPI-703"], first.obs["msc_characteristic_treatment"].unique().tolist())
+            self.assertEqual([""], first.obs["msc_characteristic_dose"].unique().tolist())
+            self.assertEqual([""], second.obs["msc_characteristic_cell_type"].unique().tolist())
+            self.assertFalse(any(column.startswith("geo_") for column in combined.obs))
+            self.assertIn("msc_batch", combined.obs)
+
+            miniml = first.uns["msc_miniml"]
+            self.assertEqual("1.0", miniml["schema_version"])
+            self.assertEqual("citation_metadata_only", miniml["publication_policy"])
+            self.assertEqual(hashlib.sha256(Path(json_path).read_bytes()).hexdigest(), miniml["source_sha256"])
+            fields = miniml["fields"]
+            sample_entities = set(fields.loc[fields["entity_type"] == "sample", "entity_id"])
+            contributor_entities = set(fields.loc[fields["entity_type"] == "contributor", "entity_id"])
+            self.assertEqual({"GSM1"}, sample_entities)
+            self.assertEqual({"C1"}, contributor_entities)
+            paths_in_sample = set(fields["path"])
+            self.assertIn("pubmed_publication[0].title", paths_in_sample)
+            self.assertIn("channel[0].treatment_protocol", paths_in_sample)
+            self.assertNotIn("pubmed_publication[0].abstract", paths_in_sample)
+            self.assertNotIn("pubmed_publication[0].full_text", paths_in_sample)
+            self.assertFalse(any("article_body" in path for path in paths_in_sample))
+
+            combined_fields = combined.uns["msc_miniml"]["fields"]
+            self.assertEqual(
+                {"GSM1", "GSM2"},
+                set(combined_fields.loc[combined_fields["entity_type"] == "sample", "entity_id"]),
+            )
+            self.assertEqual(
+                {"C1", "C2"},
+                set(combined_fields.loc[combined_fields["entity_type"] == "contributor", "entity_id"]),
+            )
 
     def test_incompatible_organisms_keep_samples_and_mark_partial(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -530,32 +714,34 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual("scrnaseq", runner.calls[0][1]["pipeline"])
             self.assertEqual("GRCh38", runner.calls[0][1]["genome"])
 
-    def test_study_h5ad_is_split_by_sample_accession(self):
+    def test_study_h5ad_is_split_by_canonical_and_legacy_sample_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            source_path = os.path.join(tmpdir, "study.h5ad")
-            self.anndata.AnnData(
-                X=self.sparse.csr_matrix([[1], [2]]),
-                obs=self.pandas.DataFrame(
-                    {"sample_id": ["GSM1", "GSM2"]},
-                    index=["cell1", "cell2"],
-                ),
-                var=self.pandas.DataFrame(index=["ENSG1"]),
-            ).write_h5ad(source_path)
-            data = package(accession="GSM1")
-            data["sample"].append(package(accession="GSM2")["sample"][0])
-            json_path = self._write_json(tmpdir, data)
+            for accession_column in ("msc_accession", "geo_accession"):
+                with self.subTest(accession_column=accession_column):
+                    source_path = os.path.join(tmpdir, f"study-{accession_column}.h5ad")
+                    self.anndata.AnnData(
+                        X=self.sparse.csr_matrix([[1], [2]]),
+                        obs=self.pandas.DataFrame(
+                            {accession_column: ["GSM1", "GSM2"]},
+                            index=["cell1", "cell2"],
+                        ),
+                        var=self.pandas.DataFrame(index=["ENSG1"]),
+                    ).write_h5ad(source_path)
+                    data = package(accession="GSM1")
+                    data["sample"].append(package(accession="GSM2")["sample"][0])
+                    json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(
-                json_path=json_path,
-                out=os.path.join(tmpdir, "out"),
-                explicit_assets=[Asset("GSE1", source_path, "h5ad", source="manifest")],
-            )
+                    result = json2h5ad().convert(
+                        json_path=json_path,
+                        out=os.path.join(tmpdir, f"out-{accession_column}"),
+                        explicit_assets=[Asset("GSE1", source_path, "h5ad", source="manifest")],
+                    )
 
-            first = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
-            second = self.anndata.read_h5ad(result.sample_h5ads["GSM2"])
-            self.assertEqual((1, 1), first.shape)
-            self.assertEqual([[1]], first.X.toarray().tolist())
-            self.assertEqual([[2]], second.X.toarray().tolist())
+                    first = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+                    second = self.anndata.read_h5ad(result.sample_h5ads["GSM2"])
+                    self.assertEqual((1, 1), first.shape)
+                    self.assertEqual([[1]], first.X.toarray().tolist())
+                    self.assertEqual([[2]], second.X.toarray().tolist())
 
 
 if __name__ == "__main__":
