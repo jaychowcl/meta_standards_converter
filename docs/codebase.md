@@ -181,7 +181,7 @@ Combination preserves successful per-sample outputs when expression modalities, 
 
 `scripts/provision-rootless-json2h5ad.sh` is the administrative boundary. It installs rootless prerequisites, creates the locked `nfcore-runner` account, allocates a non-overlapping 65,536-ID subordinate range, enables its user service, and configures ACLs. The build context is read-only to the runner; `.out/json2h5ad` is the only writable project path.
 
-`scripts/json2h5ad-compose.sh` must run as `nfcore-runner`. It resolves that user's socket, refuses a daemon without the `rootless` security option, prepares output-local home and Nextflow caches, and invokes `compose.yaml` with explicit UID/GID and absolute paths.
+`scripts/json2h5ad-compose.sh` must run as `nfcore-runner`. It resolves that user's socket, refuses a daemon without the `rootless` security option, prepares output-local home and Nextflow caches, and invokes `compose.yaml` with absolute paths. The application process uses container UID/GID 0:0, which the rootless daemon maps to the unprivileged host `nfcore-runner` identity; using UID 1001 inside the container would instead map to a subordinate host UID without output or socket access.
 
 ```text
 administrator provisions nfcore-runner once

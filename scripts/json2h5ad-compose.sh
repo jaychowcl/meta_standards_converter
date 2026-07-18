@@ -18,7 +18,6 @@ fi
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runner_uid="$(id -u)"
-runner_gid="$(id -g)"
 runner_home="$(getent passwd "${runner_name}" | cut -d: -f6)"
 runtime_dir="/run/user/${runner_uid}"
 rootless_socket="${runtime_dir}/docker.sock"
@@ -35,8 +34,6 @@ export DOCKER_HOST="unix://${rootless_socket}"
 export HOME="${runner_home}"
 export JSON2H5AD_OUT="$(readlink -f "${output_root}")"
 export ROOTLESS_DOCKER_SOCKET="${rootless_socket}"
-export RUNNER_GID="${runner_gid}"
-export RUNNER_UID="${runner_uid}"
 export XDG_RUNTIME_DIR="${runtime_dir}"
 
 security_options="$(docker info --format '{{json .SecurityOptions}}')"

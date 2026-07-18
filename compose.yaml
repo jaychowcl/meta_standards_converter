@@ -18,7 +18,8 @@ services:
         NEXTFLOW_VERSION: "26.04.2"
         DOCKER_CLI_VERSION: "29.6.2"
     working_dir: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}
-    user: "${RUNNER_UID:?set RUNNER_UID}:${RUNNER_GID:?set RUNNER_GID}"
+    # Root in a rootless container maps to the unprivileged nfcore-runner host UID.
+    user: "0:0"
     environment:
       DOCKER_HOST: unix:///run/rootless-docker/docker.sock
       HOME: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}/home
