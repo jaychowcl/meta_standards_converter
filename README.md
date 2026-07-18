@@ -269,7 +269,10 @@ Docker-profile conversion fail before Nextflow starts if the daemon is
 unreachable or not rootless. The account still controls its own daemon, so do
 not grant it access to secrets or unrelated host directories. Generated H5ADs
 use mode `0660`, allowing the provisioned output ACL to give the invoking
-project user read/write access without making results world-readable.
+project user read/write access without making results world-readable. General
+temporary files remain on a `noexec` `/tmp`; only Nextflow's separate 2 GiB
+`/nextflow-tmp` is executable so its AWS/S3 native client can load extracted
+libraries needed for iGenomes references.
 
 ### Main Code Flow
 

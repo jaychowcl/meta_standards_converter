@@ -28,6 +28,7 @@ services:
       MPLCONFIGDIR: /tmp/matplotlib-meta-standards
       NXF_ANSI_LOG: "false"
       NXF_HOME: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}/.nextflow
+      NXF_OPTS: -Djava.io.tmpdir=/nextflow-tmp
     volumes:
       - type: bind
         source: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}
@@ -42,5 +43,6 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=2g,mode=1777
+      - /nextflow-tmp:size=2g,mode=1777,exec
     init: true
     command: ["json2h5ad", "--help"]

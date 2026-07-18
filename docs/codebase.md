@@ -195,7 +195,7 @@ administrator provisions nfcore-runner once
   -> H5AD mode 0660 keeps the provisioned project-user ACL effective
 ```
 
-The Compose container drops all capabilities, enables `no-new-privileges`, uses a read-only root filesystem, and receives a tmpfs `/tmp`. Host and container output paths are identical because the sibling nf-core task containers must bind the Nextflow work files by host-visible absolute path. The system rootful socket is never mounted. Final H5AD files use mode `0660`: this preserves the output directory's named project-user ACL while denying access to other users.
+The Compose container drops all capabilities, enables `no-new-privileges`, uses a read-only root filesystem, and receives a `noexec` tmpfs `/tmp`. Nextflow alone is pointed through `NXF_OPTS` at a separate executable 2 GiB `/nextflow-tmp`; this is required because its AWS/S3 client extracts a native library before staging iGenomes references. Host and container output paths are identical because the sibling nf-core task containers must bind the Nextflow work files by host-visible absolute path. The system rootful socket is never mounted. Final H5AD files use mode `0660`: this preserves the output directory's named project-user ACL while denying access to other users.
 
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape
