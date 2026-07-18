@@ -75,6 +75,73 @@ class TestReferenceResolver(unittest.TestCase):
 
 
 class TestNFCoreRunner(unittest.TestCase):
+    def test_required_rootless_docker_is_accepted(self):
+        probes = []
+
+        def runtime_runner(command, **kwargs):
+            probes.append(command)
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                stdout='["name=seccomp","name=rootless","name=cgroupns"]\n',
+                stderr="",
+            )
+
+        runner = NFCoreRunner(
+            which=lambda name: f"/usr/bin/{name}",
+            runtime_runner=runtime_runner,
+        )
+        with unittest.mock.patch.dict(
+            os.environ,
+            {"META_STANDARDS_REQUIRE_ROOTLESS_DOCKER": "1"},
+        ):
+            runner._preflight("docker")
+
+        self.assertEqual(
+            [["docker", "info", "--format", "{{json .SecurityOptions}}"]],
+            probes,
+        )
+
+    def test_required_rootless_docker_rejects_rootful_daemon(self):
+        def runtime_runner(command, **kwargs):
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                stdout='["name=seccomp","name=cgroupns"]\n',
+                stderr="",
+            )
+
+        runner = NFCoreRunner(
+            which=lambda name: f"/usr/bin/{name}",
+            runtime_runner=runtime_runner,
+        )
+        with unittest.mock.patch.dict(
+            os.environ,
+            {"META_STANDARDS_REQUIRE_ROOTLESS_DOCKER": "true"},
+        ):
+            with self.assertRaisesRegex(RuntimeError, "rootless Docker daemon"):
+                runner._preflight("docker")
+
+    def test_required_rootless_docker_reports_unreachable_daemon(self):
+        def runtime_runner(command, **kwargs):
+            return subprocess.CompletedProcess(
+                command,
+                1,
+                stdout="",
+                stderr="Cannot connect to the Docker daemon",
+            )
+
+        runner = NFCoreRunner(
+            which=lambda name: f"/usr/bin/{name}",
+            runtime_runner=runtime_runner,
+        )
+        with unittest.mock.patch.dict(
+            os.environ,
+            {"META_STANDARDS_REQUIRE_ROOTLESS_DOCKER": "yes"},
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Cannot connect.*Docker daemon"):
+                runner._preflight("docker")
+
     def test_relative_output_still_writes_absolute_nextflow_parameters(self):
         captured = []
 
