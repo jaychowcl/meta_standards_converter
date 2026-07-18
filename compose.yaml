@@ -1,0 +1,36 @@
+name: meta-standards-converter
+
+services:
+  converter:
+    image: meta-standards-converter:rootless
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXTFLOW_VERSION: "26.04.2"
+        DOCKER_CLI_VERSION: "29.6.2"
+    working_dir: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}
+    user: "${RUNNER_UID:?set RUNNER_UID}:${RUNNER_GID:?set RUNNER_GID}"
+    environment:
+      DOCKER_HOST: unix:///run/rootless-docker/docker.sock
+      HOME: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}/home
+      META_STANDARDS_REQUIRE_ROOTLESS_DOCKER: "1"
+      MPLCONFIGDIR: /tmp/matplotlib-meta-standards
+      NXF_ANSI_LOG: "false"
+      NXF_HOME: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}/.nextflow
+    volumes:
+      - type: bind
+        source: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}
+        target: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}
+      - type: bind
+        source: ${ROOTLESS_DOCKER_SOCKET:?set ROOTLESS_DOCKER_SOCKET}
+        target: /run/rootless-docker/docker.sock
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=2g,mode=1777
+    init: true
+    command: ["json2h5ad", "--help"]

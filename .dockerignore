@@ -25,3 +25,6 @@ output/
 .agents/
 .dev/
 *.log
+docs/
+scripts/
+tests/

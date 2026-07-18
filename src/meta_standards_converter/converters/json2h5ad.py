@@ -286,10 +286,17 @@ class NFCoreRunner:
 
     REVISIONS = {"scrnaseq": "4.1.0", "rnaseq": "3.26.0"}
 
-    def __init__(self, command_runner=None, which=None, reference_resolver=None):
+    def __init__(
+        self,
+        command_runner=None,
+        which=None,
+        reference_resolver=None,
+        runtime_runner=None,
+    ):
         self.command_runner = command_runner or subprocess.run
         self.which = which or shutil.which
         self.reference_resolver = reference_resolver or ReferenceResolver()
+        self.runtime_runner = runtime_runner or subprocess.run
 
     def process(
         self,
@@ -428,6 +435,25 @@ class NFCoreRunner:
             missing.append(runtime)
         if missing:
             raise RuntimeError(f"Missing nf-core runtime requirements: {', '.join(missing)}")
+        require_rootless = os.environ.get(
+            "META_STANDARDS_REQUIRE_ROOTLESS_DOCKER", ""
+        ).strip().lower() in {"1", "true", "yes", "on"}
+        if runtime == "docker" and require_rootless:
+            completed = self.runtime_runner(
+                ["docker", "info", "--format", "{{json .SecurityOptions}}"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if completed.returncode:
+                detail = (completed.stderr or completed.stdout or "unknown error").strip()
+                raise RuntimeError(
+                    f"Cannot connect to the required rootless Docker daemon: {detail}"
+                )
+            if "rootless" not in (completed.stdout or "").lower():
+                raise RuntimeError(
+                    "json2h5ad requires a rootless Docker daemon in this deployment."
+                )
 
     def _write_samplesheet(self, path: Path, assets: dict[str, Asset], pipeline: str) -> None:
         header = ["sample", "fastq_1", "fastq_2"]

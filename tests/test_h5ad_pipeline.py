@@ -12,6 +12,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -91,7 +92,7 @@ class TestNFCoreRunner(unittest.TestCase):
             which=lambda name: f"/usr/bin/{name}",
             runtime_runner=runtime_runner,
         )
-        with unittest.mock.patch.dict(
+        with patch.dict(
             os.environ,
             {"META_STANDARDS_REQUIRE_ROOTLESS_DOCKER": "1"},
         ):
@@ -115,7 +116,7 @@ class TestNFCoreRunner(unittest.TestCase):
             which=lambda name: f"/usr/bin/{name}",
             runtime_runner=runtime_runner,
         )
-        with unittest.mock.patch.dict(
+        with patch.dict(
             os.environ,
             {"META_STANDARDS_REQUIRE_ROOTLESS_DOCKER": "true"},
         ):
@@ -135,7 +136,7 @@ class TestNFCoreRunner(unittest.TestCase):
             which=lambda name: f"/usr/bin/{name}",
             runtime_runner=runtime_runner,
         )
-        with unittest.mock.patch.dict(
+        with patch.dict(
             os.environ,
             {"META_STANDARDS_REQUIRE_ROOTLESS_DOCKER": "yes"},
         ):
