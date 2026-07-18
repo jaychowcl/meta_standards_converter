@@ -165,6 +165,21 @@ For `nf-core/scrnaseq`, H5AD discovery covers the complete results tree and
 selects CellBender-filtered, then filtered (including QCATCH
 `*_filtered_quants.h5ad`), then raw output for each sample.
 
+Final H5ADs use the converter-owned `msc_*` observation namespace. Stable
+columns expose sample, organism, library, accession, platform, material,
+instrument, repository, and ontology-mapped protocol metadata; arbitrary
+MINiML characteristics become `msc_characteristic_*`. Single-cell values are
+sample annotations repeated across the sample's cells, and combined studies
+use `msc_batch`.
+
+The permitted remaining MINiML metadata is stored as a typed flattened table
+in `uns["msc_miniml"]["fields"]`. GSM files contain the relevant sample and
+referenced records; GSE files contain all study records. Repository identity
+is taken from the MINiML `database` record rather than hard-coded. Publication
+storage is restricted to citation metadata (PubMed ID, DOI, title, authors,
+status, and ontology identifiers); abstracts and publication full text are
+never embedded.
+
 User annotations must be local `.gtf[.gz]`, `.gff[.gz]`, or `.gff3[.gz]`
 files. GFF3 is converted once with `gffread` to a checksum-addressed GTF shared
 by bulk and single-cell runs. Annotation source, format, SHA-256, and effective
@@ -322,7 +337,8 @@ if raw:
   resolve a catalogue or user FASTA reference and optional user annotation
   normalize GFF3 to a checksum-addressed GTF with gffread
   run pinned Nextflow and discover outputs
-normalize each sample into sparse AnnData with GEO metadata and provenance
+normalize each sample into sparse AnnData with msc_* metadata and provenance
+flatten permitted MINiML fields into uns["msc_miniml"]
 combine compatible samples with an outer sparse gene join
 write per-sample H5ADs, optional study H5AD, and a JSON provenance manifest
 ```

@@ -28,6 +28,8 @@ from urllib.parse import urlparse
 
 import requests
 
+from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+
 
 logger = logging.getLogger(__name__)
 
@@ -889,6 +891,27 @@ class SourcePlanner:
 
 
 class JSON2H5ADConverter:
+    MINIML_SCHEMA_VERSION = "1.0"
+    PUBLICATION_POLICY = "citation_metadata_only"
+    PUBLICATION_FIELDS = (
+        "pubmed_id",
+        "doi",
+        "title",
+        "author_list",
+        "status",
+        "status_term_source_ref",
+        "status_term_accession_number",
+    )
+    PROTOCOL_PATHS = (
+        ("treatment_protocol", "Treatment-Protocol", "channel"),
+        ("growth_protocol", "Growth-Protocol", "channel"),
+        ("extract_protocol", "Extract-Protocol", "channel"),
+        ("label_protocol", "Label-Protocol", "channel"),
+        ("hybridization_protocol", "Hybridization-Protocol", "sample"),
+        ("scan_protocol", "Scan-Protocol", "sample"),
+        ("data_processing", "Data-Processing", "sample"),
+    )
+
     """Top-level JSON-to-H5AD conversion orchestrator."""
 
     def __init__(
@@ -947,7 +970,10 @@ class JSON2H5ADConverter:
             explicit_assets=supplied_assets,
             force_reprocess=force_reprocess,
         )
-        sample_lookup = self._sample_lookup(packages)
+        sample_context = self._sample_context(packages)
+        characteristic_columns = self._characteristic_columns(packages)
+        source_json = os.path.abspath(json_path)
+        source_json_sha256 = self._sha256(json_path)
         result = ConversionResult(study_accession=study_accession)
         adatas = {}
 
@@ -984,9 +1010,18 @@ class JSON2H5ADConverter:
             )
             self._normalize(
                 adata,
-                sample=sample_lookup[sample_id],
+                sample=sample_context[sample_id][0],
+                package=sample_context[sample_id][1],
                 study_accession=study_accession,
                 asset=asset,
+                characteristic_columns=characteristic_columns,
+            )
+            self._attach_miniml(
+                adata,
+                packages=packages,
+                source_json=source_json,
+                source_json_sha256=source_json_sha256,
+                sample_id=sample_id,
             )
             sample_path = out_path / f"{sample_id}.h5ad"
             self._write_h5ad(adata, sample_path, overwrite=overwrite)
@@ -998,6 +1033,12 @@ class JSON2H5ADConverter:
         except ValueError as exc:
             result.failures.append(str(exc))
         else:
+            self._attach_miniml(
+                combined,
+                packages=packages,
+                source_json=source_json,
+                source_json_sha256=source_json_sha256,
+            )
             combined_path = out_path / f"{study_accession}.h5ad"
             self._write_h5ad(combined, combined_path, overwrite=overwrite)
             result.combined_h5ad = str(combined_path)
@@ -1018,13 +1059,16 @@ class JSON2H5ADConverter:
         return None
 
     def _sample_lookup(self, packages: list[dict]) -> dict[str, dict]:
+        return {sample_id: context[0] for sample_id, context in self._sample_context(packages).items()}
+
+    def _sample_context(self, packages: list[dict]) -> dict[str, tuple[dict, dict, int]]:
         lookup = {}
-        for package in packages:
+        for package_index, package in enumerate(packages):
             for sample in self.planner._as_list(package.get("sample")):
                 if isinstance(sample, dict):
                     accession = self.planner.sample_accession(sample)
                     if accession:
-                        lookup[accession] = sample
+                        lookup[accession] = (sample, package, package_index)
         return lookup
 
     def _scientific_modules(self):
@@ -1050,7 +1094,13 @@ class JSON2H5ADConverter:
                 accession_column = next(
                     (
                         column
-                        for column in ("geo_accession", "sample_id", "sample", "gsm_accession")
+                        for column in (
+                            "msc_accession",
+                            "geo_accession",
+                            "sample_id",
+                            "sample",
+                            "gsm_accession",
+                        )
                         if column in adata.obs
                     ),
                     None,
@@ -1058,7 +1108,7 @@ class JSON2H5ADConverter:
                 if not accession_column:
                     raise ValueError(
                         f"Study H5AD {asset.path} cannot be mapped to samples; "
-                        "obs needs geo_accession, sample_id, sample, or gsm_accession."
+                        "obs needs msc_accession, geo_accession, sample_id, sample, or gsm_accession."
                     )
                 mask = adata.obs[accession_column].astype(str).str.upper() == asset.scope_id.upper()
                 if not mask.any():
@@ -1158,9 +1208,17 @@ class JSON2H5ADConverter:
             if temporary_path:
                 Path(temporary_path).unlink(missing_ok=True)
 
-    def _normalize(self, adata, sample: dict, study_accession: str, asset: Asset) -> None:
+    def _normalize(
+        self,
+        adata,
+        sample: dict,
+        package: dict,
+        study_accession: str,
+        asset: Asset,
+        characteristic_columns: list[str],
+    ) -> None:
         sample_id = self.planner.sample_accession(sample)
-        metadata = self._sample_metadata(sample)
+        metadata = self._sample_metadata(sample, package)
         modality = self._sample_modality(sample)
         original_names = [str(value) for value in adata.obs_names]
         adata.obs_names = [
@@ -1169,19 +1227,42 @@ class JSON2H5ADConverter:
         ]
         adata.obs_names_make_unique()
         annotations = {
-            "geo_accession": sample_id,
-            "geo_series_accession": study_accession,
-            "geo_title": metadata.get("title"),
-            "geo_organism": metadata.get("organism"),
-            "geo_organism_taxid": metadata.get("organism_taxid"),
-            "geo_organism_part": metadata.get("organism_part"),
-            "geo_disease": metadata.get("disease"),
-            "geo_genotype": metadata.get("genotype"),
-            "geo_source_name": metadata.get("source"),
-            "geo_source_tier": asset.kind,
-            "geo_source_uri": asset.path,
-            "geo_modality": modality,
+            "msc_accession": sample_id,
+            "msc_series_accession": study_accession,
+            "msc_title": metadata.get("title"),
+            "msc_description": metadata.get("description"),
+            "msc_organism": metadata.get("organism"),
+            "msc_organism_taxid": metadata.get("organism_taxid"),
+            "msc_organism_part": metadata.get("organism_part"),
+            "msc_developmental_stage": metadata.get("developmental_stage"),
+            "msc_disease": metadata.get("disease"),
+            "msc_genotype": metadata.get("genotype"),
+            "msc_source_name": metadata.get("source"),
+            "msc_biomaterial_provider": metadata.get("biomaterial_provider"),
+            "msc_material_type": metadata.get("material_type"),
+            "msc_molecule": metadata.get("molecule"),
+            "msc_platform_accession": metadata.get("platform_accession"),
+            "msc_sra_accession": metadata.get("sra_accession"),
+            "msc_ena_accession": metadata.get("ena_accession"),
+            "msc_biosample_accession": metadata.get("biosample_accession"),
+            "msc_sra_run_accessions": metadata.get("sra_run_accessions"),
+            "msc_library_strategy": metadata.get("library_strategy"),
+            "msc_library_source": metadata.get("library_source"),
+            "msc_library_selection": metadata.get("library_selection"),
+            "msc_library_layout": metadata.get("library_layout"),
+            "msc_instrument_model": metadata.get("instrument_model"),
+            "msc_protocol_types": metadata.get("protocol_types"),
+            "msc_protocol_term_source_refs": metadata.get("protocol_term_source_refs"),
+            "msc_protocol_term_accession_numbers": metadata.get("protocol_term_accession_numbers"),
+            "msc_metadata_source": metadata.get("metadata_source"),
+            "msc_metadata_source_name": metadata.get("metadata_source_name"),
+            "msc_metadata_source_uri": metadata.get("metadata_source_uri"),
+            "msc_source_tier": asset.kind,
+            "msc_source_uri": asset.path,
+            "msc_modality": modality,
         }
+        for column in characteristic_columns:
+            annotations[f"msc_characteristic_{column}"] = metadata["characteristics"].get(column)
         for key, value in annotations.items():
             adata.obs[key] = "" if value is None else str(value)
         provenance = {
@@ -1211,23 +1292,420 @@ class JSON2H5ADConverter:
             provenance = {**existing, **provenance}
         adata.uns["meta_standards_converter"] = provenance
 
-    def _sample_metadata(self, sample: dict) -> dict:
-        metadata = {"title": self._text(sample.get("title"))}
+    def _sample_metadata(self, sample: dict, package: dict) -> dict:
+        metadata = {
+            "title": self._join_values(sample.get("title")),
+            "description": self._join_values(sample.get("description")),
+        }
         channels = [x for x in self.planner._as_list(sample.get("channel")) if isinstance(x, dict)]
-        channel = channels[0] if channels else {}
-        metadata["source"] = self._text(channel.get("source"))
-        organisms = self.planner._as_list(channel.get("organism"))
-        organism = organisms[0] if organisms else None
-        metadata["organism"] = self._text(organism)
-        metadata["organism_taxid"] = organism.get("taxid") if isinstance(organism, dict) else None
-        characteristics = {}
-        for item in self.planner._as_list(channel.get("characteristics")):
-            if isinstance(item, dict) and item.get("tag"):
-                characteristics[str(item["tag"]).strip().lower()] = self._text(item)
-        metadata["organism_part"] = characteristics.get("organism part") or characteristics.get("tissue")
+        metadata["source"] = self._join_values(channel.get("source") for channel in channels)
+        organisms = [
+            organism
+            for channel in channels
+            for organism in self.planner._as_list(channel.get("organism"))
+        ]
+        metadata["organism"] = self._join_values(organisms)
+        metadata["organism_taxid"] = self._join_values(
+            organism.get("taxid") for organism in organisms if isinstance(organism, dict)
+        )
+        characteristic_values = {}
+        for channel in channels:
+            for item in self.planner._as_list(channel.get("characteristics")):
+                if not isinstance(item, dict) or not item.get("tag"):
+                    continue
+                slug = self._metadata_slug(item.get("tag"))
+                value = self._join_values(item.get("value"))
+                if slug and value:
+                    characteristic_values.setdefault(slug, []).append(value)
+        characteristics = {
+            slug: self._join_values(values)
+            for slug, values in characteristic_values.items()
+        }
+        metadata["characteristics"] = characteristics
+        metadata["organism_part"] = (
+            characteristics.get("organism_part")
+            or characteristics.get("tissue")
+            or metadata["source"]
+        )
+        metadata["developmental_stage"] = characteristics.get("developmental_stage")
         metadata["disease"] = characteristics.get("disease")
         metadata["genotype"] = characteristics.get("genotype")
+
+        metadata["biomaterial_provider"] = self._join_values(
+            channel.get("biomaterial_provider") for channel in channels
+        )
+        metadata["molecule"] = self._join_values(channel.get("molecule") for channel in channels)
+        material_types = []
+        for value in self._values(channel.get("molecule") for channel in channels):
+            material_types.append(re.sub(r"^total\s+", "", value, flags=re.IGNORECASE))
+        metadata["material_type"] = self._join_values(material_types) or metadata["organism_part"]
+
+        runs = [item for item in self.planner._as_list(sample.get("sra_run")) if isinstance(item, dict)]
+        metadata["sra_accession"] = self._join_values(sample.get("sra_accession"))
+        metadata["ena_accession"] = self._join_values(sample.get("ena_accession"))
+        metadata["biosample_accession"] = self._join_values(run.get("biosample") for run in runs)
+        metadata["sra_run_accessions"] = self._join_values(run.get("run") for run in runs)
+        metadata["library_strategy"] = self._join_values(
+            [sample.get("library_strategy"), *(run.get("library_strategy") for run in runs)]
+        )
+        metadata["library_source"] = self._join_values(
+            [sample.get("library_source"), *(run.get("library_source") for run in runs)]
+        )
+        metadata["library_selection"] = self._join_values(
+            [sample.get("library_selection"), *(run.get("library_selection") for run in runs)]
+        )
+        metadata["library_layout"] = self._join_values(run.get("library_layout") for run in runs)
+        metadata["instrument_model"] = self._join_values(
+            [sample.get("instrument_model"), *(run.get("instrument_model") for run in runs)]
+        )
+        metadata["platform_accession"] = self._platform_accessions(sample, package)
+
+        protocol_types = []
+        protocol_sources = []
+        protocol_accessions = []
+        for field, label, scope in self.PROTOCOL_PATHS:
+            containers = channels if scope == "channel" else [sample]
+            if not self._join_values(container.get(field) for container in containers):
+                continue
+            protocol_type, source_ref, accession = Harmonizer().geoprotocols2efo(label)
+            protocol_types.append(protocol_type)
+            protocol_sources.append(source_ref)
+            protocol_accessions.append(accession)
+        metadata["protocol_types"] = self._join_values(protocol_types)
+        metadata["protocol_term_source_refs"] = self._join_values(protocol_sources)
+        metadata["protocol_term_accession_numbers"] = self._join_values(protocol_accessions)
+
+        database = self._metadata_database(package)
+        metadata["metadata_source"] = self._join_values(
+            database.get("public_id") or database.get("iid") or database.get("name")
+        )
+        metadata["metadata_source_name"] = self._join_values(database.get("name"))
+        metadata["metadata_source_uri"] = self._join_values(database.get("web_link"))
         return metadata
+
+    def _characteristic_columns(self, packages: list[dict]) -> list[str]:
+        columns = []
+        for package in packages:
+            for sample in self.planner._as_list(package.get("sample")):
+                if not isinstance(sample, dict):
+                    continue
+                for channel in self.planner._as_list(sample.get("channel")):
+                    if not isinstance(channel, dict):
+                        continue
+                    for item in self.planner._as_list(channel.get("characteristics")):
+                        if not isinstance(item, dict):
+                            continue
+                        slug = self._metadata_slug(item.get("tag"))
+                        if slug and slug not in columns:
+                            columns.append(slug)
+        return columns
+
+    def _metadata_slug(self, value) -> str:
+        value = self._join_values(value).lower()
+        return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", value)).strip("_")
+
+    def _values(self, values) -> list[str]:
+        flattened = []
+
+        def visit(value):
+            if value is None:
+                return
+            if isinstance(value, dict):
+                for key in ("value", "name", "predefined", "public_id", "iid"):
+                    if value.get(key) is not None:
+                        visit(value[key])
+                        return
+                return
+            if isinstance(value, (list, tuple, set)):
+                for item in value:
+                    visit(item)
+                return
+            if not isinstance(value, (str, bytes)) and hasattr(value, "__iter__"):
+                for item in value:
+                    visit(item)
+                return
+            cleaned = self._text(value)
+            if cleaned and cleaned not in flattened:
+                flattened.append(cleaned)
+
+        visit(values)
+        return flattened
+
+    def _join_values(self, values) -> str:
+        return "; ".join(self._values(values))
+
+    def _metadata_database(self, package: dict) -> dict:
+        return next(
+            (
+                item
+                for item in self.planner._as_list(package.get("database"))
+                if isinstance(item, dict)
+            ),
+            {},
+        )
+
+    def _platform_accessions(self, sample: dict, package: dict) -> str:
+        references = set(self._values(sample.get("platform_ref")))
+        values = []
+        for platform in self.planner._as_list(package.get("platform")):
+            if not isinstance(platform, dict):
+                continue
+            identifiers = {platform.get("iid"), *self._values(platform.get("accession"))}
+            if references and not references.intersection(identifier for identifier in identifiers if identifier):
+                continue
+            values.extend(self._values(platform.get("accession")))
+        return self._join_values(values or references)
+
+    def _attach_miniml(
+        self,
+        adata,
+        packages: list[dict],
+        source_json: str,
+        source_json_sha256: str | None,
+        sample_id: str | None = None,
+    ) -> None:
+        _anndata, _numpy, pandas, _scanpy, _sparse = self._scientific_modules()
+        rows = []
+        for package_index, package in enumerate(packages):
+            if sample_id is not None and not self._package_has_sample(package, sample_id):
+                continue
+            entities = self._metadata_entities(package, sample_id=sample_id)
+            for entity_type, entity_id, entity in entities:
+                safe_entity = self._publication_safe(entity)
+                self._flatten_metadata(
+                    safe_entity,
+                    rows=rows,
+                    package_index=package_index,
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                )
+        fields = pandas.DataFrame(
+            rows,
+            columns=(
+                "package_index",
+                "entity_type",
+                "entity_id",
+                "path",
+                "value",
+                "value_type",
+            ),
+        )
+        fields.index = [f"field_{index:06d}" for index in range(len(fields))]
+        database = next(
+            (
+                self._metadata_database(package)
+                for package in packages
+                if sample_id is None or self._package_has_sample(package, sample_id)
+            ),
+            {},
+        )
+        adata.uns["msc_miniml"] = {
+            "schema_version": self.MINIML_SCHEMA_VERSION,
+            "source_json": source_json,
+            "source_sha256": source_json_sha256 or "",
+            "publication_policy": self.PUBLICATION_POLICY,
+            "metadata_source": self._join_values(
+                database.get("public_id") or database.get("iid") or database.get("name")
+            ),
+            "metadata_source_name": self._join_values(database.get("name")),
+            "metadata_source_uri": self._join_values(database.get("web_link")),
+            "fields": fields,
+        }
+
+    def _package_has_sample(self, package: dict, sample_id: str) -> bool:
+        return any(
+            self.planner.sample_accession(sample) == sample_id
+            for sample in self.planner._as_list(package.get("sample"))
+            if isinstance(sample, dict)
+        )
+
+    def _metadata_entities(self, package: dict, sample_id: str | None):
+        entity_groups = {
+            "database": [
+                item for item in self.planner._as_list(package.get("database")) if isinstance(item, dict)
+            ],
+            "contributor": [
+                item for item in self.planner._as_list(package.get("contributor")) if isinstance(item, dict)
+            ],
+            "platform": [
+                item for item in self.planner._as_list(package.get("platform")) if isinstance(item, dict)
+            ],
+            "sample": [
+                item for item in self.planner._as_list(package.get("sample")) if isinstance(item, dict)
+            ],
+        }
+        series = package.get("series") if isinstance(package.get("series"), dict) else None
+        package_scalars = {
+            key: value
+            for key, value in package.items()
+            if key not in {"database", "contributor", "platform", "sample", "series"}
+        }
+        entities = [("package", "package", package_scalars)]
+        if series is not None:
+            entities.append(("series", self._entity_id("series", series, 0), series))
+
+        if sample_id is None:
+            for entity_type in ("database", "contributor", "platform", "sample"):
+                for index, entity in enumerate(entity_groups[entity_type]):
+                    entities.append((entity_type, self._entity_id(entity_type, entity, index), entity))
+            return entities
+
+        selected_sample = next(
+            (
+                sample
+                for sample in entity_groups["sample"]
+                if self.planner.sample_accession(sample) == sample_id
+            ),
+            None,
+        )
+        if selected_sample is None:
+            return entities
+        selected = {"sample": [selected_sample], "platform": [], "contributor": [], "database": []}
+        references = self._metadata_references(selected_sample)
+        if series is not None:
+            references.update(self._metadata_references(series))
+        references.discard("")
+        changed = True
+        while changed:
+            changed = False
+            for entity_type in ("platform", "contributor", "database"):
+                for index, entity in enumerate(entity_groups[entity_type]):
+                    if entity in selected[entity_type]:
+                        continue
+                    identifiers = self._entity_identifiers(entity_type, entity, index)
+                    if not references.intersection(identifiers):
+                        continue
+                    selected[entity_type].append(entity)
+                    references.update(self._metadata_references(entity))
+                    changed = True
+        database = self._metadata_database(package)
+        if database and database not in selected["database"]:
+            selected["database"].append(database)
+        for entity_type in ("database", "contributor", "platform", "sample"):
+            for index, entity in enumerate(selected[entity_type]):
+                entities.append((entity_type, self._entity_id(entity_type, entity, index), entity))
+        return entities
+
+    def _metadata_references(self, value) -> set[str]:
+        references = set()
+
+        def visit(current, key=None):
+            if isinstance(current, dict):
+                for child_key, child in current.items():
+                    if child_key == "sample_ref":
+                        continue
+                    if child_key.endswith("_ref") or child_key == "database":
+                        references.update(self._values(child))
+                    else:
+                        visit(child, child_key)
+            elif isinstance(current, list):
+                for child in current:
+                    visit(child, key)
+
+        visit(value)
+        return references
+
+    def _entity_identifiers(self, entity_type: str, entity: dict, index: int) -> set[str]:
+        return {
+            value
+            for value in (
+                self._entity_id(entity_type, entity, index),
+                self._join_values(entity.get("iid")),
+                *self._values(entity.get("accession")),
+                self._join_values(entity.get("public_id")),
+                self._join_values(entity.get("name")),
+            )
+            if value
+        }
+
+    def _entity_id(self, entity_type: str, entity: dict, index: int) -> str:
+        if entity_type == "sample":
+            return self.planner.sample_accession(entity) or self._join_values(entity.get("iid")) or f"sample_{index}"
+        prefixes = {"series": "GSE", "platform": "GPL"}
+        prefix = prefixes.get(entity_type)
+        for value in self._values(entity.get("accession")):
+            if not prefix or value.upper().startswith(prefix):
+                return value
+        return (
+            self._join_values(entity.get("public_id"))
+            or self._join_values(entity.get("iid"))
+            or self._join_values(entity.get("name"))
+            or f"{entity_type}_{index}"
+        )
+
+    def _publication_safe(self, value):
+        if isinstance(value, list):
+            return [self._publication_safe(item) for item in value]
+        if not isinstance(value, dict):
+            return value
+        safe = {}
+        for key, child in value.items():
+            if key == "pubmed_publication":
+                publications = []
+                for publication in self.planner._as_list(child):
+                    if not isinstance(publication, dict):
+                        continue
+                    publications.append(
+                        {
+                            field: self._publication_safe(publication[field])
+                            for field in self.PUBLICATION_FIELDS
+                            if field in publication
+                        }
+                    )
+                safe[key] = publications
+            else:
+                safe[key] = self._publication_safe(child)
+        return safe
+
+    def _flatten_metadata(
+        self,
+        value,
+        rows: list,
+        package_index: int,
+        entity_type: str,
+        entity_id: str,
+        path: str = "",
+    ) -> None:
+        if isinstance(value, dict):
+            if not value:
+                rows.append((package_index, entity_type, entity_id, path, "", "empty_object"))
+                return
+            for key, child in value.items():
+                child_path = f"{path}.{key}" if path else str(key)
+                self._flatten_metadata(
+                    child,
+                    rows,
+                    package_index,
+                    entity_type,
+                    entity_id,
+                    child_path,
+                )
+            return
+        if isinstance(value, list):
+            if not value:
+                rows.append((package_index, entity_type, entity_id, path, "", "empty_list"))
+                return
+            for index, child in enumerate(value):
+                self._flatten_metadata(
+                    child,
+                    rows,
+                    package_index,
+                    entity_type,
+                    entity_id,
+                    f"{path}[{index}]",
+                )
+            return
+        if value is None:
+            value_type, serialized = "null", ""
+        elif isinstance(value, bool):
+            value_type, serialized = "boolean", "true" if value else "false"
+        elif isinstance(value, int):
+            value_type, serialized = "integer", str(value)
+        elif isinstance(value, float):
+            value_type, serialized = "number", repr(value)
+        else:
+            value_type, serialized = "string", str(value)
+        rows.append((package_index, entity_type, entity_id, path, serialized, value_type))
 
     def _sample_modality(self, sample: dict) -> str:
         text = json.dumps(sample).lower()
@@ -1242,9 +1720,9 @@ class JSON2H5ADConverter:
             raise ValueError("No sample H5ADs were produced.")
         anndata, _numpy, _pandas, _scanpy, sparse = self._scientific_modules()
         organisms = {
-            str(adata.obs["geo_organism"].iloc[0]).strip()
+            str(adata.obs["msc_organism"].iloc[0]).strip()
             for adata in adatas.values()
-            if "geo_organism" in adata.obs and str(adata.obs["geo_organism"].iloc[0]).strip()
+            if "msc_organism" in adata.obs and str(adata.obs["msc_organism"].iloc[0]).strip()
         }
         if len(organisms) > 1:
             raise ValueError(f"Cannot combine samples with incompatible organisms: {sorted(organisms)}")
@@ -1275,7 +1753,7 @@ class JSON2H5ADConverter:
             axis="obs",
             join="outer",
             merge="first",
-            label="geo_batch",
+            label="msc_batch",
             index_unique=None,
             fill_value=0,
         )
@@ -1288,6 +1766,11 @@ class JSON2H5ADConverter:
             "join": "outer",
             "fill_value": 0,
             "converter_version": self._package_version(),
+            "sample_provenance": {
+                sample_id: dict(adata.uns.get("meta_standards_converter", {}))
+                for sample_id, adata in adatas.items()
+                if isinstance(adata.uns.get("meta_standards_converter"), dict)
+            },
         }
         return combined
 

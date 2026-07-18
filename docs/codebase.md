@@ -160,14 +160,19 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
        -> subprocess.run(nextflow run nf-core/{scrnaseq|rnaseq}, shell=False)
        -> discover scrnaseq H5AD or rnaseq count/TPM matrices
   -> load H5AD (including .h5ad.gz), 10x HDF5, 10x MTX, or delimited matrices
-  -> normalize sparse AnnData with geo_* obs fields and provenance in uns
+  -> normalize sparse AnnData with msc_* obs fields and provenance in uns
+  -> flatten the permitted MINiML metadata into uns["msc_miniml"]
   -> write one normalized H5AD per sample
   -> combine compatible samples using an outer sparse feature join
   -> write optional combined study H5AD and JSON provenance manifest
   -> return ConversionResult
 ```
 
-`AssetDownloader` streams HTTP(S)/FTP processed assets into an output-local cache and verifies an MD5 when supplied. Source files are never modified. Gzip-compressed H5AD assets are expanded into a temporary `.h5ad` only while AnnData reads them; the cached download remains compressed. Study-level H5ADs require an observation column named `geo_accession`, `sample_id`, `sample`, or `gsm_accession` so they can be split safely.
+`AssetDownloader` streams HTTP(S)/FTP processed assets into an output-local cache and verifies an MD5 when supplied. Source files are never modified. Gzip-compressed H5AD assets are expanded into a temporary `.h5ad` only while AnnData reads them; the cached download remains compressed. Study-level H5ADs prefer `msc_accession` and accept legacy `geo_accession`, `sample_id`, `sample`, or `gsm_accession` so they can be split safely.
+
+The converter-owned observation namespace is `msc_*`; it emits no `geo_*` aliases. Stable columns cover sample/study accessions, title/description, organism and taxid, organism part, developmental stage, disease, genotype, biological source, material/provider/molecule, platform, SRA/ENA/BioSample/run accessions, library fields, instrument, modality, asset provenance, and the MINiML database identity. `msc_metadata_source` is derived from `database.public_id`, then `iid`, then `name`; its name and URI accompany it. Every characteristic becomes `msc_characteristic_<normalized_tag>`. Values from repeated tags or channels are de-duplicated and joined in source order, while the union of study tags is present on every sample. Combined H5ADs use `msc_batch`.
+
+`uns["msc_miniml"]` contains schema/policy metadata, the source JSON path and SHA-256, and a typed long-form `fields` DataFrame (`package_index`, `entity_type`, `entity_id`, `path`, `value`, `value_type`). GSM files contain the sample plus its series and transitively referenced platform, contributor, and database records without following `sample_ref`; GSE files contain all package entities. Protocol descriptions remain in this table, while `msc_protocol_types`, source refs, and accessions reuse `Harmonizer.geoprotocols2efo()` for the established treatment, growth, extraction, labeling, hybridization, scan, and data-processing paths. Publication records are whitelisted to PubMed ID, DOI, title, authors, status, and status ontology fields; abstracts, full text, article bodies, sections, and other publication content are not embedded. GEO series summary and overall design remain experiment metadata.
 
 Before writing nf-core samplesheets, `NFCoreRunner` upgrades raw `ftp://` URLs from the known ENA and NCBI archive hosts to their equivalent `https://` endpoints. This avoids truncated Java FTP transfers through rootless container networking while leaving unknown FTP servers unchanged.
 
@@ -1080,7 +1085,7 @@ Important test coverage:
 - `tests/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
-- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, count/TPM matrices, annotation provenance, sparse combination, study splitting, partial results, and raw-output reintegration.
+- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, annotation provenance, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
 - `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
 - `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
 - `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.
