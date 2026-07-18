@@ -52,6 +52,8 @@ class DockerArtifactsTest(unittest.TestCase):
     def test_compose_hardens_and_limits_the_runtime_mount(self):
         content = (ROOT / "compose.yaml").read_text(encoding="utf-8")
 
+        self.assertIn('user: "0:0"', content)
+        self.assertNotIn('user: "${RUNNER_UID', content)
         self.assertIn("source: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}", content)
         self.assertIn("target: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}", content)
         self.assertIn("read_only: true", content)
