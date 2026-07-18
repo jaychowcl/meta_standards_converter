@@ -117,12 +117,12 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: sequencing-sdrf-flow
   title: Sequencing SDRF Flow
   anchor: sequencing-sdrf-flow
-  keywords: sequencing, SRA, ENA, FASTQ, derived files disabled, LIBRARY_SOURCE
+  keywords: sequencing, SRA, ENA, FASTQ, derived files, LIBRARY_SOURCE
 
 - id: array-sdrf-flow
   title: Array SDRF Flow
   anchor: array-sdrf-flow
-  keywords: array, hybridization, raw files, derived files disabled
+  keywords: array, hybridization, raw files, derived files
 
 - id: base-sdrf-behavior
   title: Base SDRF Behavior
@@ -165,6 +165,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   title: AE parser
   anchor: ae-parser
   keywords: AEParser, MAGE-TAB, IDF, SDRF, MINiML-compatible JSON, mage_tab, warnings, unmapped
+
+- id: ae-roundtrip
+  title: AE round-trip sidecar
+  anchor: ae-roundtrip
+  keywords: mage_tab, roundtrip, fingerprint, SHA-256, source tables, JSON precedence, lossless
 
 - id: geo-parser
   title: GEO parser

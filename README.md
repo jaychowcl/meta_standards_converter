@@ -176,7 +176,7 @@ Options:
 - `--out DIR`: output directory, default `.`.
 - `-v`, `-vv`, `-q`, `--log-file PATH`: shared logging options.
 
-Remote IDF/SDRF text is parsed in memory. Accession lookup downloads metadata only; it does not download referenced assay data files. Unmapped rows and columns are retained under the `mage_tab` extension with warnings.
+Remote IDF/SDRF text is parsed in memory. Accession lookup downloads metadata only; it does not download referenced assay data files. The `mage_tab.roundtrip` sidecar retains source tables and a semantic fingerprint, while unmapped rows and columns remain available with warnings.
 
 `json2h5ad` selects the best source per sample (`H5AD > matrix > raw`):
 
@@ -417,6 +417,7 @@ resolve referenced SDRFs, or use explicit SDRF overrides
 parse known IDF rows and SDRF graph columns into the existing package shape
 merge samples and platforms across SDRFs in first-seen order
 preserve unmapped rows/columns and conversion warnings under mage_tab
+retain source IDF/SDRF rows and a semantic fingerprint under mage_tab.roundtrip
 optionally write a one-package JSON list as {accession}.json
 return the one-package list
 ```
@@ -488,6 +489,7 @@ Important classes:
 - `GEOWebFetcher`: validates `GSE...`, builds the GEO FTP tarball URL, downloads it, and extracts `{GSE}_family.xml`.
 - `AEWebFetcher`: resolves local and HTTP(S) IDFs plus SDRFs, or discovers an accession's metadata through BioStudies; remote metadata stays in memory.
 - `AEParser`: maps general MAGE-TAB IDF/SDRF metadata into the MINiML-compatible package shape and preserves unmapped content under `mage_tab`.
+- `mage_tab.roundtrip`: optional versioned sidecar used to reproduce unchanged AE-origin tables; edited JSON wins and unsupported metadata is restored where it can be matched safely.
 - `RateLimitedRequester`: wraps `requests.get` with service-specific timeout, request delay, retry status handling, and backoff.
 - `PubmedWebFetcher`: calls NCBI PubMed ESummary and returns DOI, authors, title, and harmonized publication status.
 - `INSDCWebfetcher`: calls NCBI SRA EFetch and ENA Portal file reports, then returns run-level FASTQ metadata.

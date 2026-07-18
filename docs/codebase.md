@@ -48,6 +48,7 @@ src/meta_standards_converter/
 │   ├── ae_idf_handlers.py        # IDF row construction
 │   ├── ae_constructor.py         # MAGE-TAB coordination, protocol registry, file writing
 │   ├── ae_parser.py              # IDF/SDRF to MINiML-compatible package mapping
+│   ├── ae_roundtrip.py           # source-table sidecar, fingerprint, and restoration
 │   ├── ae_webfetcher.py          # local, HTTP, and BioStudies MAGE-TAB resolution
 │   └── ae_sdrf_handlers.py       # SDRF graph model and technology handlers
 ├── harmonizers/
@@ -208,12 +209,13 @@ ae2json.convert(source, out=None, sdrf_sources=None)
        platform, factor, characteristic, SRA/FASTQ, and array-file metadata
        merge repeated sample/platform records in first-seen order
        keep the first conflicting scalar and record a warning
-       preserve unmapped IDF rows and SDRF columns under mage_tab
+       preserve unmapped metadata and source tables under mage_tab
+       fingerprint the public package fields for unchanged-table detection
   -> if out, write [{package}] to {study_accession}.json
   -> return [package]
 ```
 
-IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, and warnings. Round-tripping through `json2ae` targets semantic preservation of known fields, not byte-identical table reproduction.
+IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, warnings, and an optional lossless round-trip sidecar. An unchanged one-SDRF AE-origin package reproduces its parsed source rows exactly; edited JSON is rendered normally and takes precedence.
 
 Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTP base, and downloads only those metadata files beneath `Files/`. Remote content is decoded as UTF-8 with optional BOM and remains in memory. FTP sources and referenced assay data downloads are not supported.
 
@@ -522,8 +524,7 @@ Sequencing behavior:
 - Bulk and plate sequencing paths emit one SDRF row per FASTQ URI, with duplicate sample/source metadata allowed across rows.
 - More than two FASTQs are preserved; shared sequencing uses additional read comments, while bulk and plate sequencing use additional rows.
 - When no SRA FASTQs exist, sequencing raw files from GEO supplementary/raw data can become read comments.
-- Derived file SDRF rendering is intentionally disabled by commented code; sequencing handlers do not currently emit `Comment[derived data file]`.
-- Sequencing handlers intentionally do not emit `Array Data File`, `Derived Array Data Matrix File`, or `Derived Array Data File` columns.
+- Sequencing handlers emit supplementary processed assets as `Derived Array Data File` columns while raw reads remain FASTQ comments.
 - Single-cell handlers add library construction, technical replicate, read geometry, isolation, or spatial read-index comments where their subclass supports it.
 
 <a id="array-sdrf-flow"></a>
@@ -552,8 +553,8 @@ Array behavior:
 - `Array Design REF` is taken from the sample platform accession and has nested `Term Source REF = ArrayExpress`.
 - `.tif` and `.tiff` files render as `Image File`.
 - `.cel`, `.gpr`, `.idat`, `.exp`, `.rpt`, `.cab`, and similar raw array files render as `Array Data File`.
-- Derived file SDRF rendering is intentionally disabled by commented code; `.txt`, `.tsv`, `.csv`, `.mtx`, `.h5`, `.h5ad`, and other non-raw supplementary files are not currently emitted as derived array file columns.
-- Repeated raw files are preserved as repeated columns and recorded as warnings; derived file columns are currently disabled.
+- Matrix-like supplementary files render as `Derived Array Data Matrix File`; other processed assets render as `Derived Array Data File`.
+- Repeated raw and derived files are preserved as repeated columns and recorded as warnings.
 
 <a id="base-sdrf-behavior"></a>
 ### Base SDRF Behavior
@@ -744,6 +745,15 @@ This section lists public and semi-public callables used by tests or by package 
 - Conflicting scalar values keep the first value and append a warning. Unknown IDF rows and SDRF columns are preserved verbatim under `package["mage_tab"]` and also generate warnings.
 - Malformed non-rectangular SDRF rows fail with a filename and column-count error.
 
+<a id="ae-roundtrip"></a>
+### `ae_handlers/ae_roundtrip.py`
+
+- `semantic_sha256(package)` hashes every top-level public field except `mage_tab` using stable JSON encoding.
+- `build_roundtrip(...)` stores schema version 1, the fingerprint, complete parsed IDF rows, and named SDRF row tables under `mage_tab.roundtrip`.
+- `unchanged_magetab(package)` returns the preserved source payload when the fingerprint still matches and exactly one SDRF is present.
+- `restore_extensions(package, magetab)` runs after normal rendering for edited packages. Generated JSON fields win; unsupported IDF rows and SDRF columns are restored by row count or source/sample/assay identity when safe, otherwise a warning is logged.
+- Packages without the optional sidecar follow the ordinary GEO/JSON rendering path unchanged. Multiple source SDRFs use semantic consolidation rather than the one-SDRF exact fast path.
+
 <a id="geo-parser"></a>
 ### `geo_handlers/geo_parser.py`
 
@@ -912,14 +922,14 @@ Current caveats:
 - Builds SDRF first so protocol refs are registered.
 - Builds IDF with the same registry and technology key.
 - Replaces the first `SDRF File` row with the in-memory SDRF table.
-- Strips straight quote characters from rendered IDF and nested SDRF values before returning.
+- Preserves valid quote and apostrophe characters in in-memory IDF/SDRF values.
 - Raises `ValueError` if the IDF lacks an SDRF row.
 
 `magetab2file(magetab, out=None) -> str`
 
 - Creates the output directory.
 - Normalizes row shapes with `_normalize_magetab_rows()`.
-- Strips straight quote characters from IDF and SDRF cell values.
+- Uses `csv.writer` TSV escaping so quote characters survive written IDF/SDRF files.
 - Validates and extracts the embedded SDRF table.
 - Chooses IDF and SDRF filenames from the MAGE-TAB accession rows.
 - Replaces the embedded SDRF table with the SDRF filename in the IDF.
@@ -930,7 +940,7 @@ Other helpers:
 - `_detect_ae_technology()` chooses `bulk_sequencing`, `plate_single_cell_sequencing`, `droplet_single_cell_sequencing`, `tenx_v2_droplet_single_cell_sequencing`, `tenx_v3_droplet_single_cell_sequencing`, `spatial_sequencing`, `array`, or `generic`.
 - `_has_array_files()` detects array-like files from platform/sample/series supplementary data and raw data.
 - `_normalize_magetab_rows()` accepts row lists, comma-delimited legacy strings, and legacy `"SDRF file", sdrf` pairs.
-- `_strip_quotes()` recursively removes straight single and double quote characters from rendered cell values.
+- Legacy `_strip_quotes()` remains private but is no longer used by construction or file writing.
 - `_sdrf_row_index()` finds the SDRF row case-insensitively.
 - `_magetab_accession()` searches ArrayExpress, investigation, then secondary accession rows.
 - `_safe_filename_token()` removes path separators from accession-derived filenames.
@@ -1202,7 +1212,7 @@ Important test coverage:
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
 - `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, and fixture-backed parity with direct AE construction.
-- `tests/test_ae2json.py`: IDF/SDRF mapping, case/whitespace normalization, multiple SDRFs, conflicts, unmapped preservation, output writing, and semantic known-field round-tripping through `json2ae`.
+- `tests/test_ae2json.py`: IDF/SDRF mapping, sidecar/fingerprint creation, unchanged lossless reuse, edited-JSON precedence, multiple SDRFs, conflicts, unmapped restoration, and output writing.
 - `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, annotation provenance, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
 - `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
