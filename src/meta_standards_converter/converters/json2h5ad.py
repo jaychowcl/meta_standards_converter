@@ -19,10 +19,13 @@ import re
 import shutil
 import subprocess
 import tempfile
+import urllib.request
 from dataclasses import dataclass, field
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from urllib.parse import urlparse
+
+import requests
 
 
 logger = logging.getLogger(__name__)
@@ -42,6 +45,132 @@ class Asset:
     barcodes_path: str | None = None
     orientation: str = "auto"
     md5: str | None = None
+
+
+class AssetManifest:
+    """Load explicit asset mappings from CSV/TSV or compact CLI specifications."""
+
+    def load(self, path: str) -> list[Asset]:
+        delimiter = "\t" if Path(path).suffix.lower() in {".tsv", ".tab"} else ","
+        with open(path, encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle, delimiter=delimiter))
+        if not rows or not {"scope_id", "path"}.issubset(rows[0]):
+            raise ValueError("Asset manifest requires scope_id and path columns.")
+        processed = []
+        raw_groups = {}
+        planner = SourcePlanner()
+        for row in rows:
+            scope_id = (row.get("scope_id") or "").strip()
+            asset_path = (row.get("path") or "").strip()
+            if not scope_id or not asset_path:
+                raise ValueError("Asset manifest scope_id and path values cannot be blank.")
+            kind = (row.get("kind") or planner.classify(asset_path) or "").strip().lower()
+            if not kind and os.path.isdir(asset_path):
+                kind = "matrix"
+            if kind not in {"h5ad", "matrix", "raw"}:
+                raise ValueError(f"Unsupported asset kind for {asset_path}: {kind or 'unknown'}")
+            role = (row.get("role") or "primary").strip()
+            if kind == "raw":
+                key = (scope_id, role)
+                raw_groups.setdefault(key, []).append({
+                    "uri": asset_path,
+                    "read": (row.get("read") or "").strip() or None,
+                    "lane": (row.get("lane") or "").strip() or None,
+                    "run": (row.get("run") or row.get("lane") or "").strip() or None,
+                    "md5": (row.get("md5") or "").strip() or None,
+                })
+                continue
+            processed.append(Asset(
+                scope_id=scope_id,
+                path=asset_path,
+                kind=kind,
+                role=role,
+                source="manifest",
+                features_path=(row.get("features_path") or "").strip() or None,
+                barcodes_path=(row.get("barcodes_path") or "").strip() or None,
+                orientation=(row.get("orientation") or "auto").strip(),
+                md5=(row.get("md5") or "").strip() or None,
+            ))
+        for (scope_id, role), members in raw_groups.items():
+            processed.append(Asset(
+                scope_id=scope_id,
+                path=members[0]["uri"],
+                kind="raw",
+                role=role,
+                source="manifest",
+                members=tuple(members),
+            ))
+        return processed
+
+    def parse_spec(self, spec: str) -> Asset:
+        if "=" not in spec:
+            raise ValueError("--asset must use ACCESSION=PATH_OR_URL syntax.")
+        scope_id, path = (value.strip() for value in spec.split("=", 1))
+        if not scope_id or not path:
+            raise ValueError("--asset accession and path cannot be blank.")
+        kind = SourcePlanner().classify(path)
+        if not kind and os.path.isdir(path):
+            kind = "matrix"
+        if not kind:
+            raise ValueError(f"Cannot infer asset kind from {path}; use an asset manifest.")
+        if kind == "raw":
+            member = {"uri": path, "read": None, "run": None}
+            return Asset(scope_id, path, kind, source="cli", members=(member,))
+        return Asset(scope_id, path, kind, source="cli")
+
+
+class AssetDownloader:
+    """Stream remote processed assets into a deterministic local cache."""
+
+    def __init__(self, cache_dir: str, session=None, urlopen=None):
+        self.cache_dir = Path(cache_dir)
+        self.session = session or requests.Session()
+        self.urlopen = urlopen or urllib.request.urlopen
+
+    def localize(self, value: str, md5: str | None = None) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme in ("", "file"):
+            return parsed.path if parsed.scheme == "file" else value
+        if parsed.scheme not in {"http", "https", "ftp"}:
+            raise ValueError(f"Unsupported asset URL scheme: {parsed.scheme}")
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        basename = os.path.basename(parsed.path) or "asset"
+        prefix = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+        destination = self.cache_dir / f"{prefix}-{basename}"
+        if destination.exists():
+            self._verify_md5(destination, md5)
+            return str(destination)
+        with tempfile.NamedTemporaryFile(dir=self.cache_dir, delete=False) as handle:
+            temporary = Path(handle.name)
+            try:
+                if parsed.scheme in {"http", "https"}:
+                    response = self.session.get(value, stream=True, timeout=30)
+                    response.raise_for_status()
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            handle.write(chunk)
+                else:
+                    with self.urlopen(value, timeout=30) as response:
+                        shutil.copyfileobj(response, handle, length=1024 * 1024)
+            except Exception:
+                temporary.unlink(missing_ok=True)
+                raise
+        try:
+            self._verify_md5(temporary, md5)
+            os.replace(temporary, destination)
+        finally:
+            temporary.unlink(missing_ok=True)
+        return str(destination)
+
+    def _verify_md5(self, path: Path, expected: str | None) -> None:
+        if not expected:
+            return
+        digest = hashlib.md5(usedforsecurity=False)
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        if digest.hexdigest().lower() != expected.lower():
+            raise ValueError(f"MD5 checksum mismatch for {path}")
 
 
 @dataclass
@@ -411,7 +540,12 @@ class SourcePlanner:
                         path = self._value(entry)
                         kind = self.classify(path)
                         if path and kind:
-                            assets.append(Asset(sample_id, path, kind))
+                            assets.append(Asset(
+                                sample_id,
+                                path,
+                                kind,
+                                md5=entry.get("md5") if isinstance(entry, dict) else None,
+                            ))
 
                 fastqs = []
                 for run in self._as_list(sample.get("sra_run")):
@@ -483,15 +617,19 @@ class JSON2H5ADConverter:
         self,
         planner: SourcePlanner | None = None,
         pipeline_runner: NFCoreRunner | None = None,
+        downloader: AssetDownloader | None = None,
     ):
         self.planner = planner or SourcePlanner()
         self.pipeline_runner = pipeline_runner or NFCoreRunner()
+        self.downloader = downloader
 
     def convert(
         self,
         json_path: str,
         out: str | None = None,
         explicit_assets: list[Asset] | None = None,
+        asset_manifest: str | None = None,
+        asset_specs: list[str] | None = None,
         force_reprocess: bool = False,
         matrix_orientation: str = "auto",
         overwrite: bool = False,
@@ -518,9 +656,16 @@ class JSON2H5ADConverter:
         study_accession = self._study_accession(packages) or Path(json_path).stem
         out_path = Path(out or ".")
         out_path.mkdir(parents=True, exist_ok=True)
+        manifest_handler = AssetManifest()
+        supplied_assets = list(explicit_assets or [])
+        supplied_assets.extend(manifest_handler.parse_spec(spec) for spec in (asset_specs or []))
+        if asset_manifest:
+            supplied_assets.extend(manifest_handler.load(asset_manifest))
+        if self.downloader is None:
+            self.downloader = AssetDownloader(str(out_path / ".cache"))
         planned = self.planner.plan(
             packages,
-            explicit_assets=explicit_assets,
+            explicit_assets=supplied_assets,
             force_reprocess=force_reprocess,
         )
         sample_lookup = self._sample_lookup(packages)
@@ -618,7 +763,7 @@ class JSON2H5ADConverter:
 
     def _read_processed_asset(self, asset: Asset, orientation: str = "auto"):
         anndata, numpy, pandas, scanpy, sparse = self._scientific_modules()
-        path = self._local_path(asset.path)
+        path = self._local_path(asset.path, md5=asset.md5)
         if asset.kind == "h5ad":
             adata = anndata.read_h5ad(path)
         elif self._underlying_suffix(path) == ".h5":
@@ -714,7 +859,7 @@ class JSON2H5ADConverter:
             "source_tier": asset.kind,
             "source_uri": asset.path,
             "source_origin": asset.source,
-            "source_sha256": self._sha256(asset.path),
+            "source_sha256": self._sha256(asset.path, md5=asset.md5),
             "converter_version": self._package_version(),
         }
         existing = adata.uns.get("meta_standards_converter")
@@ -844,11 +989,13 @@ class JSON2H5ADConverter:
             handle.write("\n")
         os.replace(temporary, path)
 
-    def _local_path(self, value: str) -> str:
-        parsed = urlparse(value)
-        if parsed.scheme in ("", "file"):
-            return parsed.path if parsed.scheme == "file" else value
-        raise NotImplementedError(f"Remote processed asset download is not implemented for {value}")
+    def _local_path(self, value: str, md5: str | None = None) -> str:
+        if self.downloader is None:
+            parsed = urlparse(value)
+            if parsed.scheme in ("", "file"):
+                return parsed.path if parsed.scheme == "file" else value
+            raise RuntimeError("Remote asset downloader has not been configured.")
+        return self.downloader.localize(value, md5=md5)
 
     def _underlying_suffix(self, path: str) -> str:
         name = Path(path).name.lower()
@@ -865,8 +1012,8 @@ class JSON2H5ADConverter:
             return None
         return " ".join(str(value).split()) or None
 
-    def _sha256(self, path: str) -> str | None:
-        local = self._local_path(path)
+    def _sha256(self, path: str, md5: str | None = None) -> str | None:
+        local = self._local_path(path, md5=md5)
         if not os.path.isfile(local):
             return None
         digest = hashlib.sha256()
