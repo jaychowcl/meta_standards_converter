@@ -29,6 +29,7 @@ from meta_standards_converter.ae_handlers.ae_sdrf_handlers import (  # noqa: E40
     _TenXV3DropletSingleCellSequencingSDRFHandler,
     classify_file,
 )
+from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
 from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher  # noqa: E402
 
 
@@ -169,6 +170,31 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         self.assertEqual("adult", self.cell(sdrf, 1, "Characteristics[developmental stage]"))
         self.assertEqual("normal", self.cell(sdrf, 1, "Characteristics[disease]"))
         self.assertEqual("wild type", self.cell(sdrf, 1, "Characteristics[genotype]"))
+
+    def test_organism_uses_value_from_parsed_miniml(self):
+        miniml = """
+        <MINiML version="1.0">
+          <Platform iid="GPL1">
+            <Technology>other</Technology>
+          </Platform>
+          <Sample iid="GSM1">
+            <Accession database="GEO">GSM1</Accession>
+            <Platform-Ref ref="GPL1" />
+            <Channel>
+              <Organism taxid="9606">Homo sapiens</Organism>
+            </Channel>
+          </Sample>
+          <Series iid="GSE1">
+            <Accession database="GEO">GSE1</Accession>
+            <Sample-Ref ref="GSM1" />
+          </Series>
+        </MINiML>
+        """
+        data = GEOParser().parse(miniml=miniml, remove_empty=True)[0]
+
+        sdrf = Parent()._miniml2sdrf(data, technology_type="generic")
+
+        self.assertEqual("Homo sapiens", self.cell(sdrf, 1, "Characteristics[organism]"))
 
     def test_organism_part_uses_explicit_value_before_fallback(self):
         sample = {
