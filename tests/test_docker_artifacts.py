@@ -80,6 +80,15 @@ class DockerArtifactsTest(unittest.TestCase):
         self.assertIn("dockerd-rootless-setuptool.sh install", provision)
         self.assertIn("loginctl enable-linger", provision)
         self.assertIn("SecurityOptions", provision)
+        self.assertIn(
+            '"u:${project_owner_uid}:rwx,u:${runner_name}:rwx"',
+            provision,
+        )
+        self.assertIn(
+            '"d:u:${project_owner_uid}:rwx,d:u:${runner_name}:rwx,'
+            'd:u::rwx,d:g::---,d:o::---"',
+            provision,
+        )
 
     def test_dockerignore_excludes_local_and_generated_files(self):
         dockerignore = ROOT / ".dockerignore"
