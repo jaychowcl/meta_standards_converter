@@ -11,6 +11,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -133,6 +134,128 @@ class TestConversionContract(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "non-empty list"):
                 json2h5ad().convert(json_path=json_path, out=tmpdir)
+
+
+class TestProcessedAssetConversion(unittest.TestCase):
+    def setUp(self):
+        import anndata
+        import numpy
+        import pandas
+        from scipy import sparse
+
+        self.anndata = anndata
+        self.numpy = numpy
+        self.pandas = pandas
+        self.sparse = sparse
+
+    def _write_json(self, tmpdir, data):
+        path = os.path.join(tmpdir, "GSE1.json")
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump([data], handle)
+        return path
+
+    def test_normalizes_supplied_h5ad_without_mutating_source(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_path = os.path.join(tmpdir, "source.h5ad")
+            source = self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1, 2], [3, 4]]),
+                obs=self.pandas.DataFrame(index=["cell1", "cell2"]),
+                var=self.pandas.DataFrame(
+                    {"gene_ids": ["ENSG1", "ENSG2"]},
+                    index=["Gene1", "Gene2"],
+                ),
+            )
+            source.write_h5ad(source_path)
+            data = package(source_path)
+            data["sample"][0]["title"] = "Control sample"
+            data["sample"][0]["channel"] = [
+                {
+                    "source": "blood",
+                    "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
+                    "characteristics": [{"tag": "disease", "value": "healthy"}],
+                }
+            ]
+            json_path = self._write_json(tmpdir, data)
+            out = os.path.join(tmpdir, "out")
+
+            result = json2h5ad().convert(json_path=json_path, out=out)
+
+            normalized = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            original = self.anndata.read_h5ad(source_path)
+            self.assertEqual(["cell1-GSM1", "cell2-GSM1"], list(normalized.obs_names))
+            self.assertEqual(["GSM1", "GSM1"], list(normalized.obs["geo_accession"]))
+            self.assertEqual(["Control sample"] * 2, list(normalized.obs["geo_title"]))
+            self.assertEqual(["Homo sapiens"] * 2, list(normalized.obs["geo_organism"]))
+            self.assertEqual(["healthy"] * 2, list(normalized.obs["geo_disease"]))
+            self.assertEqual(["cell1", "cell2"], list(original.obs_names))
+            self.assertEqual("h5ad", normalized.uns["meta_standards_converter"]["source_tier"])
+
+    def test_reads_delimited_gene_by_observation_matrix_as_sparse_counts(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            matrix_path = os.path.join(tmpdir, "counts.tsv")
+            with open(matrix_path, "w", encoding="utf-8") as handle:
+                handle.write("gene\tcell1\tcell2\nGene1\t1\t0\nGene2\t2\t3\n")
+            json_path = self._write_json(tmpdir, package(matrix_path))
+
+            result = json2h5ad().convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+                matrix_orientation="genes-by-observations",
+            )
+
+            adata = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            self.assertTrue(self.sparse.issparse(adata.X))
+            self.assertEqual((2, 2), adata.shape)
+            self.assertEqual(["Gene1", "Gene2"], list(adata.var_names))
+            self.assertEqual([[1, 2], [0, 3]], adata.X.toarray().tolist())
+
+    def test_combines_compatible_samples_with_outer_sparse_join(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            paths = []
+            for sample_id, genes in (("GSM1", ["ENSG1", "ENSG2"]), ("GSM2", ["ENSG2", "ENSG3"])):
+                path = os.path.join(tmpdir, f"{sample_id}.h5ad")
+                adata = self.anndata.AnnData(
+                    X=self.sparse.csr_matrix([[1, 2]]),
+                    obs=self.pandas.DataFrame(index=["cell"]),
+                    var=self.pandas.DataFrame({"gene_ids": genes}, index=genes),
+                )
+                adata.write_h5ad(path)
+                paths.append(path)
+            first = package(paths[0], accession="GSM1")
+            second = package(paths[1], accession="GSM2")["sample"][0]
+            first["sample"].append(second)
+            json_path = self._write_json(tmpdir, first)
+
+            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            combined = self.anndata.read_h5ad(result.combined_h5ad)
+            self.assertEqual((2, 3), combined.shape)
+            self.assertEqual({"GSM1", "GSM2"}, set(combined.obs["geo_accession"]))
+            self.assertTrue(self.sparse.issparse(combined.X))
+
+    def test_incompatible_organisms_keep_samples_and_mark_partial(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            samples = []
+            for sample_id, organism in (("GSM1", "Homo sapiens"), ("GSM2", "Mus musculus")):
+                path = os.path.join(tmpdir, f"{sample_id}.h5ad")
+                self.anndata.AnnData(
+                    X=self.sparse.csr_matrix([[1]]),
+                    obs=self.pandas.DataFrame(index=["cell"]),
+                    var=self.pandas.DataFrame({"gene_ids": ["GENE1"]}, index=["GENE1"]),
+                ).write_h5ad(path)
+                sample = package(path, accession=sample_id)["sample"][0]
+                sample["channel"] = [{"organism": [{"value": organism}]}]
+                samples.append(sample)
+            data = package()
+            data["sample"] = samples
+            json_path = self._write_json(tmpdir, data)
+
+            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            self.assertIsNone(result.combined_h5ad)
+            self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
+            self.assertTrue(result.partial)
+            self.assertIn("organisms", result.failures[0])
 
 
 if __name__ == "__main__":
