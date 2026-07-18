@@ -21,6 +21,7 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
+from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.converters.json2ae import json2ae  # noqa: E402
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
@@ -151,15 +152,19 @@ class TestJSON2AEConverter(unittest.TestCase):
             packages = GEOParser().parse(handle.read())
         insdc_fetcher = MagicMock()
         insdc_fetcher.fetch_sra_runs.return_value = []
+        pubmed_fetcher = MagicMock()
+        pubmed_fetcher.pubmed_summary.return_value = (None, None, None, None, None, None)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, packages)
             converter_constructor = AEConstructor(
+                idf_constructor=IDFConstructor(pubmed_fetcher=pubmed_fetcher),
                 sdrf_constructor=SDRFConstructor(insdc_fetcher=insdc_fetcher)
             )
             actual = json2ae(ae_constructor=converter_constructor).convert(path, enrich=False)
 
         direct_constructor = AEConstructor(
+            idf_constructor=IDFConstructor(pubmed_fetcher=pubmed_fetcher),
             sdrf_constructor=SDRFConstructor(insdc_fetcher=insdc_fetcher)
         )
         expected = [

@@ -61,6 +61,7 @@ Issues = "https://github.com/jaychowcl/meta_standards_converter/issues"
 [project.scripts]
 geo2ae = "meta_standards_converter.cli.geo2ae:main"
 geo2json = "meta_standards_converter.cli.geo2json:main"
+json2ae = "meta_standards_converter.cli.json2ae:main"
 json2h5ad = "meta_standards_converter.cli.json2h5ad:main"
 
 [tool.setuptools.package-dir]
