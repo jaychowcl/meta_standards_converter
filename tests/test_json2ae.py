@@ -125,6 +125,23 @@ class TestJSON2AEConverter(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "package 1 has no GEO Series accession"):
                 json2ae().convert(path)
 
+    def test_convert_accepts_non_geo_study_accession(self):
+        constructor = MagicMock()
+        constructor.miniml2magetab.return_value = "magetab"
+        payload = package("E-MTAB-1")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_json(tmpdir, payload)
+            result = json2ae(ae_constructor=constructor).convert(path, enrich=False)
+
+        self.assertEqual(["magetab"], result)
+
+    def test_convert_still_rejects_malformed_geo_accession(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_json(tmpdir, package("GSE-not-numeric"))
+            with self.assertRaisesRegex(ValueError, "no usable study accession"):
+                json2ae().convert(path)
+
     def test_convert_logs_stages_without_metadata_payload(self):
         constructor = MagicMock()
         constructor.miniml2magetab.return_value = "magetab"
