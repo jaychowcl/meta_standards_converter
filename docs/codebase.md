@@ -29,11 +29,13 @@ src/meta_standards_converter/
 │   ├── geo2ae.py                 # geo2ae command-line entrypoint
 │   ├── geo2json.py               # geo2json command-line entrypoint
 │   ├── json2ae.py                 # parsed JSON-to-MAGE-TAB command-line entrypoint
+│   ├── ae2json.py                 # MAGE-TAB-to-JSON command-line entrypoint
 │   └── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
 ├── converters/
 │   ├── geo2ae.py                 # top-level GEO to AE orchestration
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
 │   ├── json2ae.py                 # parsed JSON validation and AE orchestration
+│   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
 │   └── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 ├── geo_handlers/
 │   ├── geo_webfetcher.py         # GEO MINiML URL building and download
@@ -45,6 +47,8 @@ src/meta_standards_converter/
 ├── ae_handlers/
 │   ├── ae_idf_handlers.py        # IDF row construction
 │   ├── ae_constructor.py         # MAGE-TAB coordination, protocol registry, file writing
+│   ├── ae_parser.py              # IDF/SDRF to MINiML-compatible package mapping
+│   ├── ae_webfetcher.py          # local, HTTP, and BioStudies MAGE-TAB resolution
 │   └── ae_sdrf_handlers.py       # SDRF graph model and technology handlers
 ├── harmonizers/
 │   ├── geo2ols.py                # GEO protocol type ontology mapping
@@ -66,10 +70,13 @@ tests/test_geo_parser.py
 tests/test_geo2ae.py
 tests/test_geo2json.py
 tests/test_json2ae.py
+tests/test_ae2json.py
+tests/test_ae_webfetcher.py
 tests/test_json2h5ad.py
 tests/test_cli_geo2ae.py
 tests/test_cli_geo2json.py
 tests/test_cli_json2ae.py
+tests/test_cli_ae2json.py
 tests/test_cli_json2h5ad.py
 tests/test_project_scripts.py
 tests/test_ae_constructor.py
@@ -87,9 +94,9 @@ tests/GSE328265_family.xml
 
 - The package requires Python `>=3.10`.
 - Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
-- The `geo2ae`, `geo2json`, `json2ae`, and `json2h5ad` console scripts point to their matching modules under `meta_standards_converter.cli`.
-- Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
-- Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp` and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
+- The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, and `json2h5ad` console scripts point to their matching modules under `meta_standards_converter.cli`.
+- Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
+- Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp`, `biostudies`, and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
 - Library logging propagates safe structured telemetry to caller handlers.
   DEBUG records service/host, attempt, status, timeout, and duration without URL
   queries or request parameters. INFO records retries, GEO fetch sizes/duration,
@@ -99,6 +106,7 @@ tests/GSE328265_family.xml
 - `geo2ae.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
 - `geo2json.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
 - `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
+- `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
@@ -164,7 +172,7 @@ json2ae.convert(json_path, out, enrich=True)
   -> fail if the path does not exist or JSON decoding fails
   -> normalize one package object to a one-element list
   -> require a non-empty list of package objects
-  -> validate each package contains a GSE-prefixed numeric Series accession
+  -> validate each package contains a usable study accession; GSE accessions must be numeric
   -> for each package in order:
        MINiMLEnricher.enrich(data) when enrich=True
        AEConstructor.miniml2magetab(data)
@@ -176,6 +184,38 @@ json2ae.convert(json_path, out, enrich=True)
 Enrichment is enabled by default to match the live `geo2ae` path and may call PubMed, NCBI SRA, and ENA. `--no-enrich` or `enrich=False` makes conversion operate on the supplied JSON without those enrichment calls. The input is otherwise not rewritten. All packages are validated before enrichment or construction begins, and related Series require no separate traversal flag because their packages are already represented in the input list.
 
 The converter uses one injected or default `MINiMLEnricher` and `AEConstructor` per instance. It delegates file naming, IDF/SDRF validation, TSV rendering, and overwrite behavior to `AEConstructor.magetab2file()`. Logs contain paths, package indexes, counts, and stages rather than metadata payloads.
+
+<a id="end-to-end-ae2json-flow"></a>
+## End-To-End ae2json Flow
+
+```text
+main(argv)
+  -> parse one or more sources, optional repeated --sdrf, --out, and logging flags
+  -> require exactly one source when --sdrf is present
+  -> for each source:
+       ae2json.convert(source, out, sdrf_sources)
+       continue to the next source if conversion fails
+  -> return 1 if any source failed, else 0
+
+ae2json.convert(source, out=None, sdrf_sources=None)
+  -> AEWebFetcher.resolve(source, sdrf_sources)
+       existing path: read the IDF and relative/local/HTTP SDRF references
+       HTTP(S) URL: fetch IDF text and resolve relative/HTTP SDRF references
+       accession: query BioStudies files and study info, then fetch IDF/SDRF text
+  -> AEParser.parse(resolved_input)
+       parse the IDF and rectangular SDRF tables
+       map known investigation, publication, contributor, protocol, sample,
+       platform, factor, characteristic, SRA/FASTQ, and array-file metadata
+       merge repeated sample/platform records in first-seen order
+       keep the first conflicting scalar and record a warning
+       preserve unmapped IDF rows and SDRF columns under mage_tab
+  -> if out, write [{package}] to {study_accession}.json
+  -> return [package]
+```
+
+IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, and warnings. Round-tripping through `json2ae` targets semantic preservation of known fields, not byte-identical table reproduction.
+
+Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTP base, and downloads only those metadata files beneath `Files/`. Remote content is decoded as UTF-8 with optional BOM and remains in memory. FTP sources and referenced assay data downloads are not supported.
 
 <a id="json2h5ad-flow"></a>
 ## End-To-End json2h5ad Flow
@@ -553,7 +593,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 This section lists public and semi-public callables used by tests or by package orchestration. Many helper methods are intentionally private but documented here because this project currently relies on direct helper behavior in tests and internal composition.
 
 <a id="cli"></a>
-### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, and `cli/json2h5ad.py`
+### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, `cli/ae2json.py`, and `cli/json2h5ad.py`
 
 `_parser() -> argparse.ArgumentParser`
 
@@ -564,6 +604,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
 - `json2ae` accepts one or more parsed JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
+- `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, and `--overwrite`.
 
 `main(argv=None) -> int`
@@ -575,7 +616,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Returns `1` if any accession failed, otherwise `0`.
 
 <a id="converter"></a>
-### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, and `converters/json2h5ad.py`
+### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, `converters/ae2json.py`, and `converters/json2h5ad.py`
 
 `class geo2ae(JSONHandler)`
 
@@ -609,10 +650,16 @@ This section lists public and semi-public callables used by tests or by package 
 
 - `__init__(enricher=None, ae_constructor=None)` accepts injectable enrichment and MAGE-TAB construction collaborators.
 - `convert(json_path, out=None, enrich=True) -> list[list]` accepts the exact package-list form written by `geo2json` or one package object.
-- Validates the entire top-level shape, package types, and GEO Series accessions before invoking collaborators.
+- Validates the entire top-level shape, package types, and study accessions before invoking collaborators. Non-GEO accessions are accepted; `GSE...` values retain numeric validation.
 - Enriches packages by default; `enrich=False` preserves the supplied metadata and avoids enrichment calls.
 - Builds all MAGE-TAB payloads in input order, then writes each through the shared `AEConstructor` when `out` is truthy.
 - Returns the ordered in-memory MAGE-TAB payload list.
+
+`class ae2json`
+
+- `__init__(fetcher=None, parser=None)` accepts injectable `AEWebFetcher` and `AEParser` collaborators.
+- `convert(source, out=None, sdrf_sources=None) -> list[dict]` resolves and parses one MAGE-TAB study and returns a one-package list.
+- When `out` is supplied, writes the package list to `{ArrayExpress-or-first-accession}.json`, with path separators made filename-safe.
 
 `class JSON2H5ADConverter`; compatibility alias `class json2h5ad`
 
@@ -672,6 +719,30 @@ This section lists public and semi-public callables used by tests or by package 
 - Builds the URL with `url_gse_miniml()`.
 - Downloads the `.tgz` archive through the `geo_ftp` requester and calls `raise_for_status()`.
 - Extracts `{gse}_family.xml` from the tarball and returns it as UTF-8 text.
+
+<a id="ae-web-fetcher"></a>
+### `ae_handlers/ae_webfetcher.py`
+
+`TextResource(name, text, origin)` and `MAGETabInput(idf, sdrfs, source, source_kind)` are immutable transport records used between resolution and parsing.
+
+`class AEWebFetcher`
+
+- `__init__(requester=None, request_settings=None)` defaults to `RateLimitedRequester(service="biostudies")`.
+- `resolve(source, sdrf_sources=None) -> MAGETabInput` dispatches existing paths, HTTP(S) URLs, and accession tokens. Missing path-like inputs raise `FileNotFoundError` instead of becoming accession lookups.
+- Local and HTTP IDFs use explicit SDRF overrides when supplied; otherwise every `SDRF File` value is resolved relative to the IDF.
+- Accession lookup requires exactly one discovered IDF and at least one SDRF. Explicit overrides are rejected for accession sources.
+- Remote metadata is fetched as text and never persisted by the fetcher.
+
+<a id="ae-parser"></a>
+### `ae_handlers/ae_parser.py`
+
+`class AEParser`
+
+- `parse(source: MAGETabInput) -> dict` parses one IDF plus all SDRFs into the existing MINiML-compatible package shape.
+- IDF rows are normalized by case and whitespace. Repeated row values remain ordered and feed investigation, accessions, design/factor, status, publication, contributor, database, and protocol records.
+- SDRF headers map source/sample identities, characteristics, factors, protocol refs, platforms, technology, SRA/ENA runs, FASTQ metadata, and array raw/derived files. Repeated sample rows merge without duplicating list values.
+- Conflicting scalar values keep the first value and append a warning. Unknown IDF rows and SDRF columns are preserved verbatim under `package["mage_tab"]` and also generate warnings.
+- Malformed non-rectangular SDRF rows fail with a filename and column-count error.
 
 <a id="geo-parser"></a>
 ### `geo_handlers/geo_parser.py`
@@ -1019,6 +1090,7 @@ Other helpers:
 
 - `ncbi_eutils`: timeout 30 seconds, request delay 0.5 seconds, and 3 retries.
 - `geo_ftp`: timeout 30 seconds, request delay 1.0 seconds, and 3 retries.
+- `biostudies`: timeout 30 seconds, request delay 1.0 seconds, and 3 retries.
 - `ena_portal`: timeout 30 seconds, request delay 1.0 seconds, and 3 retries.
 
 `class RateLimitedRequester`
@@ -1130,6 +1202,8 @@ Important test coverage:
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
 - `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, and fixture-backed parity with direct AE construction.
+- `tests/test_ae2json.py`: IDF/SDRF mapping, case/whitespace normalization, multiple SDRFs, conflicts, unmapped preservation, output writing, and semantic known-field round-tripping through `json2ae`.
+- `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, annotation provenance, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
 - `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, output discovery, and workflow failure logs.
 - `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
@@ -1137,6 +1211,7 @@ Important test coverage:
 - `tests/test_cli_geo2ae.py`: CLI defaults, multiple accession order, aliases, keep-empty behavior, out directory forwarding, logging controls, file logging, and failure continuation.
 - `tests/test_cli_geo2json.py`: JSON CLI defaults, enrichment toggle, aliases, logging controls, file logging, and failure continuation.
 - `tests/test_cli_json2ae.py`: JSON-to-MAGE-TAB CLI defaults, enrichment toggle, multiple input ordering, output forwarding, logging, and failure continuation.
+- `tests/test_cli_ae2json.py`: MAGE-TAB-to-JSON CLI defaults, repeated SDRF overrides, source validation, multiple input ordering, logging, and failure continuation.
 - `tests/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
 - `tests/test_project_scripts.py`: console script registration.
 - `tests/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.

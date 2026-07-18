@@ -42,6 +42,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   anchor: end-to-end-json2ae-flow
   keywords: json2ae, parsed JSON, package object, package list, validation, enrichment, IDF, SDRF, MAGE-TAB
 
+- id: end-to-end-ae2json-flow
+  title: End-To-End ae2json Flow
+  anchor: end-to-end-ae2json-flow
+  keywords: ae2json, MAGE-TAB, IDF, SDRF, BioStudies, ArrayExpress, HTTP, local files, parsed JSON, unmapped extension
+
 - id: parsed-miniml-data-shape
   title: Parsed MINiML Data Shape
   anchor: parsed-miniml-data-shape
@@ -150,6 +155,16 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   title: GEO web fetcher
   anchor: geo-web-fetcher
   keywords: GEOWebFetcher, MINiML, GEO FTP, tarball
+
+- id: ae-web-fetcher
+  title: AE web fetcher
+  anchor: ae-web-fetcher
+  keywords: AEWebFetcher, BioStudies API, ArrayExpress, IDF, SDRF, local, HTTP, in-memory
+
+- id: ae-parser
+  title: AE parser
+  anchor: ae-parser
+  keywords: AEParser, MAGE-TAB, IDF, SDRF, MINiML-compatible JSON, mage_tab, warnings, unmapped
 
 - id: geo-parser
   title: GEO parser
