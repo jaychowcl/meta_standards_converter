@@ -284,7 +284,7 @@ class ReferenceResolver:
 class NFCoreRunner:
     """Prepare, execute, and inspect pinned nf-core RNA-seq workflows."""
 
-    REVISIONS = {"scrnaseq": "4.1.0", "rnaseq": "3.26.0"}
+    REVISIONS = {"scrnaseq": "4.2.0", "rnaseq": "3.26.0"}
 
     def __init__(
         self,

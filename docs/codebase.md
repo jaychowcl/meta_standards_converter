@@ -168,7 +168,7 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
 
 `AssetDownloader` streams HTTP(S)/FTP processed assets into an output-local cache and verifies an MD5 when supplied. Source files are never modified. Study-level H5ADs require an observation column named `geo_accession`, `sample_id`, `sample`, or `gsm_accession` so they can be split safely.
 
-Raw processing pins `nf-core/scrnaseq` 4.1.0 and `nf-core/rnaseq` 3.26.0 by default. The runner requires Nextflow, Java, and the selected Docker/Podman/Apptainer/Singularity runtime. `scrnaseq` prefers CellBender-filtered, then filtered, then raw H5AD output. `rnaseq` count matrices become sparse `X`, and aligned TPM values become `layers["tpm"]`.
+Raw processing pins `nf-core/scrnaseq` 4.2.0 and `nf-core/rnaseq` 3.26.0 by default. The scrnaseq 4.2.0 floor includes the upstream strict-syntax fixes required by the pinned Nextflow 26 runtime; 4.1.0 contains a reference to a missing `conf/test_multiome.config` and fails during config parsing. The runner requires Nextflow, Java, and the selected Docker/Podman/Apptainer/Singularity runtime. `scrnaseq` prefers CellBender-filtered, then filtered, then raw H5AD output. `rnaseq` count matrices become sparse `X`, and aligned TPM values become `layers["tpm"]`.
 
 When `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER` is truthy and the Docker profile is selected, `NFCoreRunner._preflight()` queries `docker info` before creating workflow files. An unreachable daemon or security options without `rootless` abort the conversion before Nextflow starts. Other deployments retain the existing runtime-presence checks.
 
