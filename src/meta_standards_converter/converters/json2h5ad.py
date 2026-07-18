@@ -20,7 +20,7 @@ import shutil
 import subprocess
 import tempfile
 import urllib.request
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from urllib.parse import urlparse
@@ -45,6 +45,7 @@ class Asset:
     barcodes_path: str | None = None
     orientation: str = "auto"
     md5: str | None = None
+    study_scope: str | None = None
 
 
 class AssetManifest:
@@ -506,11 +507,19 @@ class SourcePlanner:
     ) -> dict[str, Asset]:
         assets = self.discover(packages)
         assets.extend(explicit_assets or [])
+        assets = self._coalesce_raw_assets(assets)
         samples = self.samples(packages)
+        study_by_sample = self._study_by_sample(packages)
         planned = {}
 
         for sample_id in samples:
-            candidates = [asset for asset in assets if asset.scope_id == sample_id]
+            study_id = study_by_sample.get(sample_id)
+            candidates = []
+            for asset in assets:
+                if asset.scope_id == sample_id:
+                    candidates.append(asset)
+                elif study_id and asset.scope_id == study_id:
+                    candidates.append(replace(asset, scope_id=sample_id, study_scope=study_id))
             if force_reprocess:
                 candidates = [asset for asset in candidates if asset.kind == "raw"]
                 if not candidates:
@@ -525,6 +534,54 @@ class SourcePlanner:
                 ),
             )
         return planned
+
+    def _coalesce_raw_assets(self, assets: list[Asset]) -> list[Asset]:
+        retained = [asset for asset in assets if asset.kind != "raw"]
+        groups = {}
+        for asset in assets:
+            if asset.kind != "raw":
+                continue
+            key = (asset.scope_id, asset.source, asset.role)
+            members = list(asset.members) or [{"uri": asset.path, "md5": asset.md5}]
+            groups.setdefault(key, []).extend(members)
+        for (scope_id, source, role), members in groups.items():
+            deduped = []
+            seen = set()
+            for member in members:
+                path = member.get("uri") or member.get("filename")
+                if not path or path in seen:
+                    continue
+                seen.add(path)
+                deduped.append(member)
+            retained.append(Asset(
+                scope_id=scope_id,
+                path=deduped[0].get("uri") or deduped[0].get("filename"),
+                kind="raw",
+                role=role,
+                source=source,
+                members=tuple(deduped),
+            ))
+        return retained
+
+    def _study_by_sample(self, packages: list[dict]) -> dict[str, str]:
+        result = {}
+        for package in packages:
+            series = package.get("series") if isinstance(package, dict) else None
+            study_id = None
+            if isinstance(series, dict):
+                for accession in self._as_list(series.get("accession")):
+                    value = self._value(accession)
+                    if isinstance(value, str) and value.upper().startswith("GSE"):
+                        study_id = value.upper()
+                        break
+            if not study_id:
+                continue
+            for sample in self._as_list(package.get("sample")):
+                if isinstance(sample, dict):
+                    sample_id = self.sample_accession(sample)
+                    if sample_id:
+                        result[sample_id] = study_id
+        return result
 
     def discover(self, packages: list[dict]) -> list[Asset]:
         assets = []
@@ -766,6 +823,24 @@ class JSON2H5ADConverter:
         path = self._local_path(asset.path, md5=asset.md5)
         if asset.kind == "h5ad":
             adata = anndata.read_h5ad(path)
+            if asset.study_scope:
+                accession_column = next(
+                    (
+                        column
+                        for column in ("geo_accession", "sample_id", "sample", "gsm_accession")
+                        if column in adata.obs
+                    ),
+                    None,
+                )
+                if not accession_column:
+                    raise ValueError(
+                        f"Study H5AD {asset.path} cannot be mapped to samples; "
+                        "obs needs geo_accession, sample_id, sample, or gsm_accession."
+                    )
+                mask = adata.obs[accession_column].astype(str).str.upper() == asset.scope_id.upper()
+                if not mask.any():
+                    raise ValueError(f"Study H5AD {asset.path} contains no observations for {asset.scope_id}.")
+                adata = adata[mask].copy()
         elif self._underlying_suffix(path) == ".h5":
             adata = scanpy.read_10x_h5(path, gex_only=True)
         elif self._underlying_suffix(path) == ".mtx" or Path(path).is_dir():
@@ -790,6 +865,17 @@ class JSON2H5ADConverter:
                     )
                 values = values[[asset.scope_id]]
                 raw = values.to_numpy()
+            elif asset.study_scope:
+                if orientation == "genes-by-observations" and asset.scope_id in values.columns:
+                    values = values[[asset.scope_id]]
+                    raw = values.to_numpy()
+                elif orientation == "observations-by-genes" and asset.scope_id in values.index:
+                    values = values.loc[[asset.scope_id]]
+                    raw = values.to_numpy()
+                else:
+                    raise ValueError(
+                        f"Study matrix {asset.path} cannot be mapped to {asset.scope_id}."
+                    )
             if orientation == "auto":
                 raise ValueError(
                     f"Matrix orientation for {asset.path} is ambiguous; specify "
