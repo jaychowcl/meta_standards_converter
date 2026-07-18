@@ -300,6 +300,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             converted = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             self.assertEqual((1, 2), converted.shape)
             self.assertEqual([[1, 2]], converted.X.toarray().tolist())
+            self.assertEqual(0o660, Path(result.sample_h5ads["GSM1"]).stat().st_mode & 0o777)
 
     def test_reads_delimited_gene_by_observation_matrix_as_sparse_counts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
