@@ -223,11 +223,19 @@ use `msc_batch`.
 
 The permitted remaining MINiML metadata is stored as a typed flattened table
 in `uns["msc_miniml"]["fields"]`. GSM files contain the relevant sample and
-referenced records; GSE files contain all study records. Repository identity
+transitively referenced platform, contributor, and database records; GSE files
+contain all study records. Dictionary-shaped MINiML references such as
+`{"ref": "GPL..."}` are resolved directly. Repository identity
 is taken from the MINiML `database` record rather than hard-coded. Publication
 storage is restricted to citation metadata (PubMed ID, DOI, title, authors,
 status, and ontology identifiers); abstracts and publication full text are
 never embedded.
+
+Persisted H5AD and manifest provenance uses paths relative to the containing
+artifact and marks each path as internal, external, or remote. Python
+`ConversionResult` paths remain absolute for immediate programmatic use.
+Nextflow warnings are retained in both pipeline-run and top-level manifest
+diagnostics without turning a successful pipeline run into a failure.
 
 User annotations must be local `.gtf[.gz]`, `.gff[.gz]`, or `.gff3[.gz]`
 files. GFF3 is converted once with `gffread` to a checksum-addressed GTF shared
@@ -374,7 +382,11 @@ Docker-profile conversion fail before Nextflow starts if the daemon is
 unreachable or not rootless. The account still controls its own daemon, so do
 not grant it access to secrets or unrelated host directories. Generated H5ADs
 use mode `0660`, allowing the provisioned output ACL to give the invoking
-project user read/write access without making results world-readable. General
+project user read/write access without making results world-readable. The
+provisioning and Compose helpers verify effective ACL access before and after
+runs. Filesystems that map rootless writers to `nobody:nogroup` remain
+supported when the project owner and runner retain effective access; no
+privileged ownership repair is performed. General
 temporary files remain on a `noexec` `/tmp`; only Nextflow's separate 2 GiB
 `/nextflow-tmp` is executable so its AWS/S3 native client can load extracted
 libraries needed for iGenomes references.
