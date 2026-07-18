@@ -316,6 +316,59 @@ class TestIDFConstructor(unittest.TestCase):
             rows,
         )
 
+    def test_idf_investigations_merges_secondary_accessions_with_aligned_sources(self):
+        rows = IDFConstructor()._idf_investigations(
+            data={
+                "series": {
+                    "title": "Example",
+                    "accession": [{"value": "GSE1", "database": "GEO"}],
+                },
+                "sample": [
+                    {"ena_accession": ["ERP137216", "SRP999"]},
+                    {"ena_accession": ["DRP123"]},
+                ],
+            }
+        )
+
+        self.assertEqual(
+            ["Comment[SecondaryAccession]", "GSE1", "ERP137216", "SRP999", "DRP123"],
+            self.row(rows, "Comment[SecondaryAccession]"),
+        )
+        self.assertEqual(
+            ["Comment[SecondaryAccessionTermSourceRef]", "GEO", "ENA", "SRA", "DRA"],
+            self.row(rows, "Comment[SecondaryAccessionTermSourceRef]"),
+        )
+        self.assertEqual(
+            1,
+            sum(row[0] == "Comment[SecondaryAccession]" for row in rows),
+        )
+
+    def test_idf_investigations_dedupes_secondary_accessions_and_preserves_source_alignment(self):
+        rows = IDFConstructor()._idf_investigations(
+            data={
+                "series": {
+                    "title": "Example",
+                    "accession": [
+                        {"value": "GSE1", "database": "GEO"},
+                        {"value": "custom1", "database": "CustomDB"},
+                    ],
+                },
+                "sample": [
+                    {"ena_accession": ["erp1", "ERP1", "XYZ1"]},
+                    {"ena_accession": ["SRP2", "erp1"]},
+                ],
+            }
+        )
+
+        self.assertEqual(
+            ["Comment[SecondaryAccession]", "GSE1", "custom1", "erp1", "XYZ1", "SRP2"],
+            self.row(rows, "Comment[SecondaryAccession]"),
+        )
+        self.assertEqual(
+            ["Comment[SecondaryAccessionTermSourceRef]", "GEO", "CustomDB", "ENA", None, "SRA"],
+            self.row(rows, "Comment[SecondaryAccessionTermSourceRef]"),
+        )
+
     def test_generated_idf_comment_labels_use_normalized_bracket_style(self):
         rows = IDFConstructor().miniml2idf(
             data={
@@ -543,13 +596,12 @@ class TestIDFConstructor(unittest.TestCase):
                 ["Comment[AEExperiment]"],
                 ["Comment[AEExperimentType]"],
                 ["Comment[AECurator]"],
-                ["Comment[SecondaryAccession]", "ERP137216"],
                 ["Comment[SequenceDataURI]", "http://www.ebi.ac.uk/ena/data/view/ERR5385036"],
             ],
             rows,
         )
 
-    def test_sequencing_platform_idf_handler_deduplicates_secondary_accessions(self):
+    def test_sequencing_platform_idf_handler_does_not_emit_secondary_accessions(self):
         rows = IDFConstructor()._idf_platform_specific(
             data={
                 "sample": [
@@ -565,7 +617,6 @@ class TestIDFConstructor(unittest.TestCase):
                 ["Comment[AEExperiment]"],
                 ["Comment[AEExperimentType]"],
                 ["Comment[AECurator]"],
-                ["Comment[SecondaryAccession]", "ERP137216", "SRP999"],
             ],
             rows,
         )
