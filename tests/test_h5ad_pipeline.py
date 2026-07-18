@@ -76,6 +76,34 @@ class TestReferenceResolver(unittest.TestCase):
 
 
 class TestNFCoreRunner(unittest.TestCase):
+    def test_samplesheet_upgrades_known_archive_ftp_urls_to_https(self):
+        asset = Asset(
+            scope_id="GSM1",
+            path="ftp://ftp.sra.ebi.ac.uk/vol1/fastq/GSM1_1.fastq.gz",
+            kind="raw",
+            members=(
+                {
+                    "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/GSM1_1.fastq.gz",
+                    "run": "SRR1",
+                },
+                {
+                    "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/GSM1_2.fastq.gz",
+                    "run": "SRR1",
+                },
+            ),
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            samplesheet = Path(tmpdir) / "samplesheet.csv"
+            NFCoreRunner()._write_samplesheet(samplesheet, {"GSM1": asset}, "scrnaseq")
+
+            self.assertEqual(
+                "sample,fastq_1,fastq_2\n"
+                "GSM1,https://ftp.sra.ebi.ac.uk/vol1/fastq/GSM1_1.fastq.gz,"
+                "https://ftp.sra.ebi.ac.uk/vol1/fastq/GSM1_2.fastq.gz\n",
+                samplesheet.read_text(),
+            )
+
     def test_required_rootless_docker_is_accepted(self):
         probes = []
 
