@@ -332,7 +332,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         label_index = sdrf[0].index("Label")
         self.assertEqual(["Cy3", "Cy5"], [sdrf[1][label_index], sdrf[2][label_index]])
 
-    def test_array_handler_omits_derived_files_but_keeps_raw_array_files(self):
+    def test_array_handler_emits_derived_files_and_keeps_raw_array_files(self):
         sample = {
             "iid": "GSM1",
             "title": "sample 1",
@@ -351,10 +351,10 @@ class TestSDRFGraphHandlers(unittest.TestCase):
 
         self.assertIn("Array Data File", sdrf[0])
         self.assertEqual("raw.CEL", self.cell(sdrf, 1, "Array Data File"))
-        self.assertNotIn("Derived Array Data Matrix File", sdrf[0])
-        self.assertNotIn("Derived Array Data File", sdrf[0])
-        self.assertNotIn("counts.tsv.gz", sdrf[1])
-        self.assertNotIn("archive.zip", sdrf[1])
+        self.assertIn("Derived Array Data Matrix File", sdrf[0])
+        self.assertIn("Derived Array Data File", sdrf[0])
+        self.assertIn("counts.tsv.gz", sdrf[1])
+        self.assertIn("archive.zip", sdrf[1])
 
     def test_protocol_registry_reuses_identical_text(self):
         registry = ProtocolRegistry(series_accession="GSE1")
@@ -454,7 +454,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
 
         self.assertNotIn("Array Data File", sdrf[0])
         self.assertNotIn("Derived Array Data Matrix File", sdrf[0])
-        self.assertNotIn("Derived Array Data File", sdrf[0])
+        self.assertIn("Derived Array Data File", sdrf[0])
         self.assertIn("Comment[read1 file]", sdrf[0])
         self.assertIn("Comment[read2 file]", sdrf[0])
         self.assertIn("Comment[read3 file]", sdrf[0])
@@ -462,7 +462,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         self.assertIn("r1.fastq.gz", sdrf[1])
         self.assertIn("r2.fastq.gz", sdrf[1])
         self.assertIn("i1.fastq.gz", sdrf[1])
-        self.assertNotIn("counts1.tsv.gz", sdrf[1])
+        self.assertIn("counts1.tsv.gz", sdrf[1])
         self.assertNotIn("counts2.mtx.gz", sdrf[1])
         self.assertNotIn("other.h5ad", sdrf[1])
 
@@ -719,18 +719,18 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         ):
             sdrf = FixedTechParent(tech_type)._miniml2sdrf(base_data(sample))
             self.assertNotIn("Array Data File", sdrf[0])
-            self.assertNotIn("Derived Array Data Matrix File", sdrf[0])
+            self.assertIn("Derived Array Data File", sdrf[0])
             self.assertEqual("ftp://example/read1.fastq.gz", self.cell(sdrf, 1, "Comment[read1 file]"))
             self.assertNotIn("Comment[derived data file]", sdrf[0])
-            self.assertNotIn("counts.tsv.gz", sdrf[1])
+            self.assertIn("counts.tsv.gz", sdrf[1])
 
         plate_sdrf = FixedTechParent("plate_single_cell_sequencing")._miniml2sdrf(base_data(sample))
         self.assertNotIn("Array Data File", plate_sdrf[0])
-        self.assertNotIn("Derived Array Data Matrix File", plate_sdrf[0])
+        self.assertIn("Derived Array Data File", plate_sdrf[0])
         self.assertNotIn("Comment[read1 file]", plate_sdrf[0])
         self.assertEqual("ftp://example/read1.fastq.gz", self.cell(plate_sdrf, 1, "Comment[FASTQ_URI]"))
         self.assertNotIn("Comment[derived data file]", plate_sdrf[0])
-        self.assertNotIn("counts.tsv.gz", plate_sdrf[1])
+        self.assertIn("counts.tsv.gz", plate_sdrf[1])
 
     def test_greedy_sra_fallback_comments_are_not_emitted(self):
         sample = {
@@ -777,6 +777,33 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         self.assertFalse(any(header.startswith("Comment[SRA_library_") for header in sdrf[0]))
         self.assertFalse(any(header.startswith("Comment[SRA_run_") for header in sdrf[0]))
         self.assertFalse(any(header.startswith("Comment[SRA_fastq_") for header in sdrf[0]))
+
+    def test_sample_library_layout_is_used_when_run_has_no_layout(self):
+        sample = {
+            "iid": "GSM1",
+            "channel": [{"source": "source", "extract_protocol": "extract"}],
+            "library_layout": "PAIRED",
+            "library_strategy": "RNA-Seq",
+            "sra_run": [{"run": "SRR1", "fastq_files": []}],
+        }
+
+        sdrf = Parent()._miniml2sdrf(base_data(sample))
+
+        self.assertEqual("PAIRED", self.cell(sdrf, 1, "Comment[LIBRARY_LAYOUT]"))
+
+    def test_sequencing_handler_emits_derived_files(self):
+        sample = {
+            "iid": "GSM1",
+            "channel": [{"source": "source", "extract_protocol": "extract"}],
+            "library_strategy": "RNA-Seq",
+            "supplementary_data": [{"value": "counts.h5ad"}, {"value": "matrix.tsv"}],
+        }
+
+        sdrf = Parent()._miniml2sdrf(base_data(sample))
+
+        self.assertIn("Derived Array Data File", sdrf[0])
+        self.assertIn("counts.h5ad", sdrf[1])
+        self.assertIn("matrix.tsv", sdrf[1])
 
     def test_geo_values_win_over_conflicting_sra_values(self):
         sample = {
@@ -867,7 +894,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
                 self.assertIsNone(re.match(r"^Comment\s+\[", label))
                 self.assertRegex(label, r"^Comment\[[^]]+\]$")
 
-    def test_direct_sdrf_rendering_strips_quotes_from_values(self):
+    def test_direct_sdrf_rendering_preserves_quotes_in_values(self):
         sample = {
             "iid": "GSM'1",
             "title": "\"sample\" 1",
@@ -884,9 +911,9 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         sdrf = Parent()._miniml2sdrf(base_data(sample, platform_technology="other"))
 
         self.assertEqual("GSM1", self.cell(sdrf, 1, "Source Name"))
-        self.assertEqual("Johns sample", self.cell(sdrf, 1, "Comment[Sample_source_name]"))
-        self.assertEqual("Johns sample", self.cell(sdrf, 1, "Characteristics[organism part]"))
-        self.assertEqual("treated", self.cell(sdrf, 1, "Characteristics[condition]"))
+        self.assertEqual("John's \"sample\"", self.cell(sdrf, 1, "Comment[Sample_source_name]"))
+        self.assertEqual("John's \"sample\"", self.cell(sdrf, 1, "Characteristics[organism part]"))
+        self.assertEqual('"treated"', self.cell(sdrf, 1, "Characteristics[condition]"))
 
     def test_expanded_file_classification(self):
         self.assertEqual("sequencing_raw", classify_file("reads.cram"))

@@ -1034,6 +1034,24 @@ class TestIDFConstructor(unittest.TestCase):
             self.row(rows, "Experimental Factor Term Accession Number"),
         )
 
+    def test_idf_experimental_prefers_declared_designs_and_single_value_factors(self):
+        rows = IDFConstructor()._idf_experimental(
+            {
+                "series": {
+                    "type": ["case control design", "disease state design"],
+                    "variable": [{"factor": "cell type", "type": "cell type"}],
+                },
+                "sample": [{"channel": [{"characteristics": [{"tag": "cell type", "value": "HSC"}]}]}],
+            }
+        )
+
+        self.assertEqual(
+            ["Experimental Design", "case control design", "disease state design"],
+            self.row(rows, "Experimental Design"),
+        )
+        self.assertEqual(["Experimental Factor Name", "cell type"], self.row(rows, "Experimental Factor Name"))
+        self.assertEqual(["Experimental Factor Type", "cell type"], self.row(rows, "Experimental Factor Type"))
+
     def test_idf_experimental_ignores_untagged_and_blank_characteristics(self):
         rows = IDFConstructor()._idf_experimental(
             {
@@ -1577,7 +1595,7 @@ class TestAEConstructor(unittest.TestCase):
         sdrf = self.row(magetab, "SDRF File")[1]
         self.assertEqual("GSM1", sdrf[1][sdrf[0].index("Source Name")])
 
-    def test_miniml2magetab_strips_quotes_from_idf_and_nested_sdrf_values(self):
+    def test_miniml2magetab_preserves_quotes_in_idf_and_nested_sdrf_values(self):
         data = {
             "series": {
                 "accession": [{"value": "GSE1", "database": "GEO"}],
@@ -1629,19 +1647,19 @@ class TestAEConstructor(unittest.TestCase):
         magetab = AEConstructor().miniml2magetab(data=data)
         sdrf = self.row(magetab, "SDRF File")[1]
 
-        self.assertEqual(["Investigation Title", "Quoted study"], self.row(magetab, "Investigation Title"))
+        self.assertEqual(["Investigation Title", '"Quoted" study'], self.row(magetab, "Investigation Title"))
         self.assertEqual(
-            ["Experiment Description", "Johns summary. design"],
+            ["Experiment Description", "John's summary. design"],
             self.row(magetab, "Experiment Description"),
         )
-        self.assertEqual(["Person Last Name", "Smith"], self.row(magetab, "Person Last Name"))
-        self.assertEqual(["Person First Name", "Anne"], self.row(magetab, "Person First Name"))
-        self.assertEqual(["Person Email", "ab@example.org"], self.row(magetab, "Person Email"))
-        self.assertEqual(["Publication DOI", "10.quoted"], self.row(magetab, "Publication DOI"))
-        self.assertEqual("Johns sample", sdrf[1][sdrf[0].index("Comment[Sample_source_name]")])
-        self.assertEqual("treated", sdrf[1][sdrf[0].index("Characteristics[condition]")])
+        self.assertEqual(["Person Last Name", '"Smith"'], self.row(magetab, "Person Last Name"))
+        self.assertEqual(["Person First Name", "Ann'e"], self.row(magetab, "Person First Name"))
+        self.assertEqual(["Person Email", 'a"b@example.org'], self.row(magetab, "Person Email"))
+        self.assertEqual(["Publication DOI", '10."quoted"'], self.row(magetab, "Publication DOI"))
+        self.assertEqual("John's \"sample\"", sdrf[1][sdrf[0].index("Comment[Sample_source_name]")])
+        self.assertEqual('"treated"', sdrf[1][sdrf[0].index("Characteristics[condition]")])
 
-    def test_magetab2file_strips_quotes_from_written_idf_and_sdrf_values(self):
+    def test_magetab2file_uses_tsv_escaping_without_deleting_quotes(self):
         magetab = [
             ["MAGE-TAB Version", "1.1"],
             ["Investigation Title", "\"Quoted\" study"],
@@ -1658,10 +1676,16 @@ class TestAEConstructor(unittest.TestCase):
             with open(sdrf_path, encoding="utf-8") as handle:
                 sdrf_text = handle.read()
 
-        self.assertIn("Investigation Title\tQuoted study\n", idf_text)
-        self.assertIn("GSM1\tsample title\n", sdrf_text)
-        self.assertNotIn('"', idf_text + sdrf_text)
-        self.assertNotIn("'", idf_text + sdrf_text)
+        self.assertIn('Investigation Title\t"""Quoted"" study"\n', idf_text)
+        self.assertIn("GSM'1\t\"\"\"sample\"\" title\"\n", sdrf_text)
+
+    def test_person_string_address_is_not_prefixed_with_affiliation(self):
+        rows = IDFConstructor()._idf_persons(
+            {"contributor": [{"organization": "Institute", "address": "1 Example Street"}]}
+        )
+
+        self.assertEqual(["Person Address", "1 Example Street"], self.row(rows, "Person Address"))
+        self.assertEqual(["Person Affiliation", "Institute"], self.row(rows, "Person Affiliation"))
 
     def test_magetab_protocol_refs_match_idf_protocol_names_for_array(self):
         data = {

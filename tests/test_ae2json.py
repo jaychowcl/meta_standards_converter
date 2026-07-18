@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import json
+import copy
 import os
 import sys
 import tempfile
@@ -216,6 +217,46 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual("GSM1", rendered_sdrf[1][rendered_sdrf[0].index("Source Name")])
         self.assertIn("Characteristics[disease]", rendered_sdrf[0])
         self.assertIn("https://example/1.fastq.gz", str(rendered_sdrf))
+
+    def test_records_versioned_lossless_roundtrip_sidecar(self):
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input()
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        roundtrip = package["mage_tab"]["roundtrip"]
+
+        self.assertEqual(1, roundtrip["schema_version"])
+        self.assertEqual(64, len(roundtrip["semantic_sha256"]))
+        self.assertEqual("Mystery Row", roundtrip["idf_rows"][-1][0])
+        self.assertEqual("study1.sdrf.txt", roundtrip["sdrfs"][0]["name"])
+        self.assertEqual("Mystery Column", roundtrip["sdrfs"][0]["rows"][0][-1])
+
+    def test_unchanged_package_reuses_original_source_tables(self):
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input()
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+
+        magetab = AEConstructor().miniml2magetab(package)
+        rows = {row[0]: row for row in magetab}
+
+        self.assertEqual(["Investigation Title", "Example study"], rows["Investigation Title"])
+        self.assertEqual(["Mystery Row", "keep me"], rows["Mystery Row"])
+        self.assertEqual("Mystery Column", rows["SDRF File"][1][0][-1])
+        self.assertEqual("x", rows["SDRF File"][1][1][-1])
+
+    def test_edited_json_wins_while_unmapped_metadata_is_restored(self):
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input()
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        edited = copy.deepcopy(package)
+        edited["series"]["title"] = "Edited title"
+
+        magetab = AEConstructor().miniml2magetab(edited)
+        rows = {row[0]: row for row in magetab}
+
+        self.assertEqual(["Investigation Title", "Edited title"], rows["Investigation Title"])
+        self.assertEqual(["Mystery Row", "keep me"], rows["Mystery Row"])
+        self.assertIn("Mystery Column", rows["SDRF File"][1][0])
 
 
 if __name__ == "__main__":
