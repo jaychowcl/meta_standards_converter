@@ -54,6 +54,10 @@ class DockerArtifactsTest(unittest.TestCase):
 
         self.assertIn('user: "0:0"', content)
         self.assertNotIn('user: "${RUNNER_UID', content)
+        self.assertIn(
+            "JSON2H5AD_OUT: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}",
+            content,
+        )
         self.assertIn("source: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}", content)
         self.assertIn("target: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}", content)
         self.assertIn("read_only: true", content)
