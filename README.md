@@ -33,7 +33,7 @@ python -m pip install -e .
 python -m pip install -e '.[h5ad]'  # include AnnData conversion support
 ```
 
-Build the Docker image, which includes Java 17, Nextflow, the Docker CLI, and the
+Build the Docker image, which includes Java 21, Nextflow, the Docker CLI, and the
 H5AD Python dependencies:
 
 ```bash

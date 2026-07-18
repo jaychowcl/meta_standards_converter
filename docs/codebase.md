@@ -97,7 +97,7 @@ tests/GSE328265_family.xml
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
-- Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 17, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
+- Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
 - `MetaStore._validate_investigation_metadata_structure()` is a `pass` placeholder, so `validate_investigation_metadata()` currently asserts for normal input.
 
 <a id="end-to-end-geo2ae-flow"></a>
@@ -177,7 +177,7 @@ Combination preserves successful per-sample outputs when expression modalities, 
 <a id="rootless-json2h5ad-runtime"></a>
 ## Rootless json2h5ad Runtime
 
-`Dockerfile` builds the application image with Python 3.12, Java 17, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, and the H5AD extra. It contains no Docker daemon.
+`Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, and the H5AD extra. It contains no Docker daemon.
 
 `scripts/provision-rootless-json2h5ad.sh` is the administrative boundary. It installs rootless prerequisites, creates the locked `nfcore-runner` account, allocates a non-overlapping 65,536-ID subordinate range, enables its user service, and configures ACLs. The build context is read-only to the runner; `.out/json2h5ad` is the only writable project path.
 

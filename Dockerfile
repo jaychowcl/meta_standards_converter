@@ -22,7 +22,7 @@ RUN apt-get update \
         ca-certificates \
         curl \
         git \
-        openjdk-17-jre-headless \
+        openjdk-21-jre-headless \
     && curl --fail --location --show-error \
         --output /tmp/nextflow \
         "https://github.com/nextflow-io/nextflow/releases/download/v${NEXTFLOW_VERSION}/nextflow-${NEXTFLOW_VERSION}-dist" \
