@@ -104,11 +104,11 @@ class DocsIndexTests(unittest.TestCase):
             "## Authors",
         ]
 
+        lines = readme_text.splitlines()
         positions = []
         for heading in expected_headings:
-            position = readme_text.find(heading)
-            self.assertNotEqual(-1, position, heading)
-            positions.append(position)
+            self.assertIn(heading, lines)
+            positions.append(lines.index(heading))
 
         self.assertEqual(sorted(positions), positions)
 
