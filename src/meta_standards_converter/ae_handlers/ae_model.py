@@ -1,8 +1,10 @@
 # =============================================================================
 # Authors
 #
-# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on July 2026
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
 # https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Typed, editable MAGE-TAB extension for MINiML-compatible JSON packages."""
 
