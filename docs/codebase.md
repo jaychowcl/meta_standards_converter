@@ -209,13 +209,15 @@ ae2json.convert(source, out=None, sdrf_sources=None)
        platform, factor, characteristic, SRA/FASTQ, and array-file metadata
        merge repeated sample/platform records in first-seen order
        keep the first conflicting scalar and record a warning
+       identify the root as magetabv1.1 with the BioStudies specification URL
+       set series.iid from the primary ArrayExpress/investigation accession
        preserve unmapped metadata, typed MAGE-TAB entities, and source tables under mage_tab
        fingerprint the public package fields for unchanged-table detection
   -> if out, write [{package}] to {study_accession}.json
   -> return [package]
 ```
 
-IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, warnings, an editable typed model, and an optional lossless round-trip sidecar. An unchanged one-SDRF AE-origin package reproduces its parsed source rows exactly. Typed-model edits regenerate MAGE-TAB without merging unsupported values into MINiML fields; exact core edits overlay the corresponding modeled output.
+IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, warnings, an editable typed model, and an optional lossless round-trip sidecar. AE-origin packages use root `version = "magetabv1.1"`, root `schema_location = "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf"`, and an ArrayExpress/investigation accession as `series.iid`; `mage_tab.version` separately retains the original IDF value such as `1.1`. An unchanged one-SDRF package reproduces its parsed source rows exactly. Typed-model edits regenerate MAGE-TAB without merging unsupported values into MINiML fields; exact core edits overlay the corresponding modeled output.
 
 Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTP base, and downloads only those metadata files beneath `Files/`. Remote content is decoded as UTF-8 with optional BOM and remains in memory. FTP sources and referenced assay data downloads are not supported.
 
@@ -320,6 +322,8 @@ The Compose container drops all capabilities, enables `no-new-privileges`, uses 
     }
 ]
 ```
+
+`AEParser.parse()` uses the same core package vocabulary but identifies its source dialect with `version = "magetabv1.1"` and the BioStudies MAGE-TAB specification URL in `schema_location`. Its `series.iid` is the explicit ArrayExpress accession, then an ArrayExpress-form investigation accession, then another ArrayExpress-classified accession, with the investigation accession as fallback. GEO secondary accessions remain in `series.accession` and do not displace an available ArrayExpress IID.
 
 Top-level package keys are singular. Parser keys inside each parsed XML element are original XML names converted to snake_case. Repeated XML elements also keep the singular snake_case key and point to a list.
 
@@ -745,6 +749,7 @@ This section lists public and semi-public callables used by tests or by package 
 `class AEParser`
 
 - `parse(source: MAGETabInput) -> dict` parses one IDF plus all SDRFs into the existing MINiML-compatible package shape.
+- Root metadata uses the normalized MAGE-TAB format/version and specification URL. `series.iid` prefers `Comment[ArrayExpressAccession]`, then an ArrayExpress-form investigation/classified accession, then the investigation accession; `mage_tab.version` retains the exact IDF version.
 - IDF rows are normalized by case and whitespace. Repeated row values remain ordered and feed investigation, accessions, design/factor, status, publication, contributor, database, and protocol records.
 - SDRF headers map source/sample identities, characteristics, factors, protocol refs, platforms, technology, SRA/ENA runs, FASTQ metadata, and array raw/derived files. Repeated sample rows merge without duplicating list values.
 - Conflicting scalar values keep the first value and append a warning. Unknown IDF rows and SDRF columns are preserved verbatim under `package["mage_tab"]` and also generate warnings.

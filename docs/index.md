@@ -164,7 +164,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: ae-parser
   title: AE parser
   anchor: ae-parser
-  keywords: AEParser, MAGE-TAB, IDF, SDRF, MINiML-compatible JSON, mage_tab, warnings, unmapped, protocol mapping
+  keywords: AEParser, MAGE-TAB, magetabv1.1, schema_location, series.iid, ArrayExpress accession, IDF, SDRF, MINiML-compatible JSON, mage_tab, warnings, unmapped, protocol mapping
 
 - id: ae-roundtrip
   title: AE round-trip sidecar
