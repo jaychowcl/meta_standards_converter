@@ -17,6 +17,7 @@ import os
 import re
 from urllib.parse import urlparse
 
+from meta_standards_converter.ae_handlers.ae_model import build_model
 from meta_standards_converter.ae_handlers.ae_roundtrip import build_roundtrip
 from meta_standards_converter.ae_handlers.ae_webfetcher import MAGETabInput
 
@@ -53,7 +54,13 @@ class AEParser:
             "Experiment Description", "Protocol Name", "Protocol Type",
             "Protocol Type Term Source REF", "Protocol Type Term Accession Number",
             "Protocol Description", "Protocol Hardware", "Protocol Software", "Protocol Parameters",
-            "Protocol Contact", "SDRF File", "Term Source Name", "Term Source File",
+            "Protocol Contact", "Protocol Performer",
+            "Quality Control Type", "Quality Control Term Source REF",
+            "Quality Control Term Accession Number", "Replicate Type",
+            "Replicate Term Source REF", "Replicate Term Accession Number",
+            "Normalization Type", "Normalization Term Source REF",
+            "Normalization Term Accession Number",
+            "SDRF File", "Term Source Name", "Term Source File",
             "Term Source Version", "Comment[AEExperiment]", "Comment[AEExperimentType]",
             "Comment[AECurator]", "Comment[SequenceDataURI]", "Comment[AEExpectedClusters]",
             "Comment[AEAdditionalAttributes]", "Comment[AEBatchEffect]",
@@ -150,6 +157,10 @@ class AEParser:
                 "warnings": self.warnings,
             },
         }
+        package["mage_tab"]["model"] = build_model(
+            idf_rows=idf_rows,
+            sdrfs=source_sdrfs,
+        )
         package["mage_tab"]["roundtrip"] = build_roundtrip(
             package=package,
             idf_rows=idf_rows,

@@ -27,8 +27,19 @@ def semantic_sha256(package: dict) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def model_sha256(package: dict) -> str | None:
+    mage_tab = package.get("mage_tab") if isinstance(package, dict) else None
+    model = mage_tab.get("model") if isinstance(mage_tab, dict) else None
+    if not isinstance(model, dict):
+        return None
+    payload = json.dumps(
+        model, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def build_roundtrip(package: dict, idf_rows: list, sdrfs: list[tuple[str, list]]) -> dict:
-    return {
+    result = {
         "schema_version": 1,
         "semantic_sha256": semantic_sha256(package),
         "idf_rows": copy.deepcopy(idf_rows),
@@ -36,11 +47,18 @@ def build_roundtrip(package: dict, idf_rows: list, sdrfs: list[tuple[str, list]]
             {"name": name, "rows": copy.deepcopy(rows)} for name, rows in sdrfs
         ],
     }
+    fingerprint = model_sha256(package)
+    if fingerprint:
+        result["model_sha256"] = fingerprint
+    return result
 
 
 def unchanged_magetab(package: dict) -> list | None:
     roundtrip = _roundtrip(package)
     if not roundtrip or roundtrip.get("semantic_sha256") != semantic_sha256(package):
+        return None
+    expected_model = roundtrip.get("model_sha256")
+    if expected_model is not None and expected_model != model_sha256(package):
         return None
     idf_rows = roundtrip.get("idf_rows")
     sdrfs = roundtrip.get("sdrfs")

@@ -10,7 +10,8 @@
 Constructor class for ae MAGETAB idf and sdrf
 '''
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor
-from meta_standards_converter.ae_handlers.ae_roundtrip import restore_extensions, unchanged_magetab
+from meta_standards_converter.ae_handlers.ae_model import overlay_core, render_model
+from meta_standards_converter.ae_handlers.ae_roundtrip import restore_extensions, semantic_sha256, unchanged_magetab
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
 
@@ -100,6 +101,16 @@ class AEConstructor:
         preserved = unchanged_magetab(data)
         if preserved is not None:
             return preserved
+        mage_tab = data.get("mage_tab") if isinstance(data, dict) else None
+        model = mage_tab.get("model") if isinstance(mage_tab, dict) else None
+        modeled = render_model(model) if isinstance(model, dict) else None
+        roundtrip = mage_tab.get("roundtrip") if isinstance(mage_tab, dict) else None
+        core_changed = (
+            isinstance(roundtrip, dict)
+            and roundtrip.get("semantic_sha256") != semantic_sha256(data)
+        )
+        if modeled is not None and not core_changed:
+            return modeled
         protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
         technology_type = self._detect_ae_technology(data=data)
         sdrf = self.sdrf_constructor._miniml2sdrf(
@@ -116,6 +127,8 @@ class AEConstructor:
         if sdrf_index is None:
             raise ValueError("IDF does not contain an SDRF File row.")
         idf[sdrf_index] = ["SDRF File", sdrf, *idf[sdrf_index][2:]]
+        if modeled is not None:
+            return overlay_core(modeled, idf)
         return restore_extensions(data, idf)
 
     def _detect_ae_technology(self, data: dict) -> str:
