@@ -221,6 +221,62 @@ IDF labels are matched case- and whitespace-insensitively. The parser accepts ge
 
 Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTP base, and downloads only those metadata files beneath `Files/`. Remote content is decoded as UTF-8 with optional BOM and remains in memory. FTP sources and referenced assay data downloads are not supported.
 
+<a id="geo2json-vs-ae2json"></a>
+## geo2json Versus ae2json
+
+Both converters return a list of package dictionaries using the same MINiML-compatible core vocabulary, but they do not promise identical keys or values. `geo2json` is a generic projection of actual GEO MINiML XML; `ae2json` is an explicit MAGE-TAB projection with a separate typed extension for information the core cannot represent.
+
+| Behavior | `geo2json` | `ae2json` |
+|---|---|---|
+| Input | One GEO `GSE...` accession | IDF path/URL or BioStudies/ArrayExpress accession plus one or more SDRFs |
+| Parsing | Generic XML element/attribute mapping to snake_case | Explicit IDF-row and SDRF-column mappings |
+| Packages | One package per selected GEO Series, including related Series when requested | One consolidated package per resolved IDF and its SDRFs |
+| Root `version` | MINiML document version such as `0.5.0` | Normalized `magetabv1.1` |
+| Root `schema_location` | MINiML XSD location from the XML root | BioStudies MAGE-TAB v1.1 specification URL |
+| `series.iid` | GEO Series IID, normally the `GSE...` accession | Primary ArrayExpress accession, with investigation-accession fallback |
+| Series/sample fields | Every field present in the selected MINiML elements | Only fields with an explicit exact core mapping |
+| Factors | Native MINiML `Variable` records when supplied | IDF experimental factors plus SDRF factor values |
+| Protocols | Native GEO protocol elements | Recognized descriptions in the core; complete independent records in `mage_tab.model.protocols` |
+| Platform/contributors | Referenced GEO records with their available MINiML fields | IDF/SDRF projection, usually a smaller record |
+| PubMed/SRA enrichment | Enabled by default and optional with `enrich=False`/`--no-enrich` | No remote enrichment stage; publication, ENA, run, and file metadata come from IDF/SDRF fields |
+| Empty fields | Removed by default or retained with `remove_empty=False`/`--keep-empty` | Omitted unless a mapped source value exists; required extension structure remains present |
+| Assay-row multiplicity | MINiML samples plus optionally enriched `sra_run` lists | Core samples/runs may consolidate rows; every original SDRF row remains an independent `mage_tab.model.assay_paths` record |
+| Unsupported metadata | Remains available when it exists as an XML element/attribute | Stored independently in the typed model, unmapped lists, and raw round-trip tables |
+| Lossless MAGE-TAB round trip | Not applicable; no `mage_tab` extension | `mage_tab.model` is editable and `mage_tab.roundtrip` retains exact source IDF/SDRF tables and fingerprints |
+
+Representative GEO output:
+
+```json
+{
+  "version": "0.5.0",
+  "schema_location": "http://www.ncbi.nlm.nih.gov/geo/info/MINiML http://www.ncbi.nlm.nih.gov/geo/info/MINiML.xsd",
+  "series": {"iid": "GSE123", "accession": [{"value": "GSE123", "database": "GEO"}]},
+  "sample": [],
+  "platform": [],
+  "contributor": []
+}
+```
+
+Representative AE output:
+
+```json
+{
+  "version": "magetabv1.1",
+  "schema_location": "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
+  "series": {"iid": "E-MTAB-1", "accession": [{"value": "E-MTAB-1", "database": "ArrayExpress"}]},
+  "sample": [],
+  "platform": [],
+  "contributor": [],
+  "mage_tab": {
+    "version": "1.1",
+    "model": {"schema_version": 1, "protocols": [], "declarations": {}, "assay_paths": []},
+    "roundtrip": {"schema_version": 1, "semantic_sha256": "...", "model_sha256": "..."}
+  }
+}
+```
+
+The shared core makes downstream processing reusable; it does not imply field-for-field parity between repositories. Consumers that need complete MAGE-TAB semantics must retain `mage_tab`, while consumers using only common study/sample metadata can read the core fields from either converter.
+
 <a id="json2h5ad-flow"></a>
 ## End-To-End json2h5ad Flow
 

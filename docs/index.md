@@ -47,6 +47,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   anchor: end-to-end-ae2json-flow
   keywords: ae2json, MAGE-TAB, IDF, SDRF, BioStudies, ArrayExpress, HTTP, local files, parsed JSON, unmapped extension
 
+- id: geo2json-vs-ae2json
+  title: geo2json Versus ae2json
+  anchor: geo2json-vs-ae2json
+  keywords: comparison, differences, geo2json, ae2json, MINiML-compatible core, MAGE-TAB extension, version, schema_location, series.iid, enrichment, assay multiplicity, round trip
+
 - id: parsed-miniml-data-shape
   title: Parsed MINiML Data Shape
   anchor: parsed-miniml-data-shape
