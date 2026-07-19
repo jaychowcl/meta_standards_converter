@@ -371,6 +371,87 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["GSM1"], list(sample.obs_names))
             self.assertEqual(["GSM1"], list(combined.obs_names))
 
+    def test_derives_organism_from_harmonized_and_raw_channels(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_path = os.path.join(tmpdir, "source.h5ad")
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1]]),
+                obs=self.pandas.DataFrame(index=["cell"]),
+                var=self.pandas.DataFrame(index=["ENSG1"]),
+            ).write_h5ad(source_path)
+            data = package(source_path)
+            data["sample"][0]["channel"] = [
+                {
+                    "organism": [{"taxid": "9606", "value": "human"}],
+                    "hz_organism": [
+                        {
+                            "value": "Homo sapiens",
+                            "id": "NCBITaxon_9606",
+                            "onto": "ncbitaxon",
+                        }
+                    ],
+                },
+                {
+                    "organism": [{"taxid": "10090", "value": "Mus musculus"}],
+                    "hz_organism": [],
+                },
+                {"organism": [{"taxid": "10090", "value": "mus musculus"}]},
+            ]
+            json_path = self._write_json(tmpdir, data)
+
+            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            converted = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            self.assertEqual(["Homo sapiens; Mus musculus"], converted.obs["msc_organism"].unique().tolist())
+            self.assertEqual(
+                converted.obs["msc_organism"].tolist(),
+                converted.obs["msc.sample.channel.organism.value"].tolist(),
+            )
+            self.assertEqual(
+                ["9606; 10090"],
+                converted.obs["msc_organism_taxid"].unique().tolist(),
+            )
+            fields = converted.uns["msc_miniml"]["fields"]
+            self.assertIn("channel[0].hz_organism[0].value", set(fields["path"]))
+
+    def test_derives_organism_from_scalar_harmonization_and_preserves_missing_as_empty(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for case, channel, expected in (
+                (
+                    "scalar",
+                    {
+                        "organism": [{"value": "human"}],
+                        "hz_organism": "Homo sapiens",
+                        "hz_organism_id": "NCBITaxon_9606",
+                        "hz_organism_onto": "ncbitaxon",
+                    },
+                    "Homo sapiens",
+                ),
+                ("missing", {}, ""),
+            ):
+                with self.subTest(case=case):
+                    source_path = os.path.join(tmpdir, f"{case}.h5ad")
+                    self.anndata.AnnData(
+                        X=self.sparse.csr_matrix([[1]]),
+                        obs=self.pandas.DataFrame(index=["cell"]),
+                        var=self.pandas.DataFrame(index=["ENSG1"]),
+                    ).write_h5ad(source_path)
+                    data = package(source_path)
+                    data["sample"][0]["channel"] = [channel]
+                    json_path = self._write_json(tmpdir, data)
+
+                    result = json2h5ad().convert(
+                        json_path=json_path,
+                        out=os.path.join(tmpdir, f"out-{case}"),
+                    )
+
+                    converted = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+                    self.assertEqual([expected], converted.obs["msc_organism"].unique().tolist())
+                    self.assertEqual(
+                        [expected],
+                        converted.obs["msc.sample.channel.organism.value"].unique().tolist(),
+                    )
+
     def test_reads_gzip_compressed_h5ad(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = os.path.join(tmpdir, "source.h5ad")
@@ -672,6 +753,41 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
             self.assertTrue(result.partial)
             self.assertIn("organisms", result.failures[0])
+
+    def test_matching_harmonized_organisms_allow_combination(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            samples = []
+            for sample_id, raw_organism in (("GSM1", "human"), ("GSM2", "Homo sapiens")):
+                path = os.path.join(tmpdir, f"{sample_id}.h5ad")
+                self.anndata.AnnData(
+                    X=self.sparse.csr_matrix([[1]]),
+                    obs=self.pandas.DataFrame(index=["cell"]),
+                    var=self.pandas.DataFrame({"gene_ids": ["ENSG1"]}, index=["ENSG1"]),
+                ).write_h5ad(path)
+                sample = package(path, accession=sample_id)["sample"][0]
+                sample["channel"] = [
+                    {
+                        "organism": [{"value": raw_organism}],
+                        "hz_organism": [
+                            {
+                                "value": "Homo sapiens",
+                                "id": "NCBITaxon_9606",
+                                "onto": "ncbitaxon",
+                            }
+                        ],
+                    }
+                ]
+                samples.append(sample)
+            data = package()
+            data["sample"] = samples
+            json_path = self._write_json(tmpdir, data)
+
+            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            self.assertIsNotNone(result.combined_h5ad)
+            self.assertEqual([], result.failures)
+            combined = self.anndata.read_h5ad(result.combined_h5ad)
+            self.assertEqual(["Homo sapiens"], combined.obs["msc_organism"].unique().tolist())
 
     def test_incompatible_declared_references_keep_samples_and_mark_partial(self):
         with tempfile.TemporaryDirectory() as tmpdir:
