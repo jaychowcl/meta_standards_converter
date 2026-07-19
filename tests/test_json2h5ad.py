@@ -260,7 +260,10 @@ class TestProcessedAssetConversion(unittest.TestCase):
             source_path = os.path.join(tmpdir, "source.h5ad")
             source = self.anndata.AnnData(
                 X=self.sparse.csr_matrix([[1, 2], [3, 4]]),
-                obs=self.pandas.DataFrame(index=["cell1", "cell2"]),
+                obs=self.pandas.DataFrame(
+                    {"pipeline_qc_pass": [True, False]},
+                    index=["cell1", "cell2"],
+                ),
                 var=self.pandas.DataFrame(
                     {"gene_ids": ["ENSG1", "ENSG2"]},
                     index=["Gene1", "Gene2"],
@@ -288,6 +291,54 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["Control sample"] * 2, list(normalized.obs["msc_title"]))
             self.assertEqual(["Homo sapiens"] * 2, list(normalized.obs["msc_organism"]))
             self.assertEqual(["healthy"] * 2, list(normalized.obs["msc_disease"]))
+            sectioned_columns = {
+                "msc_accession": "msc.sample.accession",
+                "msc_series_accession": "msc.series.accession",
+                "msc_title": "msc.sample.title",
+                "msc_description": "msc.sample.description",
+                "msc_organism": "msc.sample.channel.organism.value",
+                "msc_organism_taxid": "msc.sample.channel.organism.taxid",
+                "msc_organism_part": "msc.sample.channel.organism_part",
+                "msc_developmental_stage": "msc.sample.channel.developmental_stage",
+                "msc_disease": "msc.sample.channel.disease",
+                "msc_genotype": "msc.sample.channel.genotype",
+                "msc_source_name": "msc.sample.channel.source",
+                "msc_biomaterial_provider": "msc.sample.channel.biomaterial_provider",
+                "msc_material_type": "msc.sample.channel.material_type",
+                "msc_molecule": "msc.sample.channel.molecule",
+                "msc_platform_accession": "msc.platform.accession",
+                "msc_sra_accession": "msc.archive.sra_accession",
+                "msc_ena_accession": "msc.archive.ena_accession",
+                "msc_biosample_accession": "msc.archive.biosample_accession",
+                "msc_sra_run_accessions": "msc.archive.sra_run_accessions",
+                "msc_library_strategy": "msc.library.strategy",
+                "msc_library_source": "msc.library.source",
+                "msc_library_selection": "msc.library.selection",
+                "msc_library_layout": "msc.library.layout",
+                "msc_instrument_model": "msc.instrument.model",
+                "msc_protocol_types": "msc.protocol.types",
+                "msc_protocol_term_source_refs": "msc.protocol.term_source_refs",
+                "msc_protocol_term_accession_numbers": "msc.protocol.term_accession_numbers",
+                "msc_metadata_source": "msc.database.identifier",
+                "msc_metadata_source_name": "msc.database.name",
+                "msc_metadata_source_uri": "msc.database.uri",
+                "msc_source_tier": "msc.asset.tier",
+                "msc_source_uri": "msc.asset.uri",
+                "msc_source_uri_scope": "msc.asset.uri_scope",
+                "msc_modality": "msc.expression.modality",
+            }
+            for legacy, sectioned in sectioned_columns.items():
+                with self.subTest(legacy=legacy, sectioned=sectioned):
+                    self.assertIn(sectioned, normalized.obs)
+                    self.assertEqual(
+                        normalized.obs[legacy].tolist(),
+                        normalized.obs[sectioned].tolist(),
+                    )
+            self.assertEqual([True, False], normalized.obs["pipeline_qc_pass"].tolist())
+            self.assertEqual(
+                ["healthy"] * 2,
+                normalized.obs["msc.characteristics.disease"].tolist(),
+            )
             self.assertFalse(any(column.startswith("geo_") for column in normalized.obs))
             self.assertEqual(["cell1", "cell2"], list(original.obs_names))
             self.assertEqual("h5ad", normalized.uns["meta_standards_converter"]["source_tier"])
@@ -386,6 +437,10 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual((2, 3), combined.shape)
             self.assertEqual({"GSM1", "GSM2"}, set(combined.obs["msc_accession"]))
             self.assertIn("msc_batch", combined.obs)
+            self.assertEqual(
+                combined.obs["msc_batch"].tolist(),
+                combined.obs["msc.combination.batch"].tolist(),
+            )
             self.assertTrue(self.sparse.issparse(combined.X))
 
     def test_enriches_msc_metadata_and_flattens_relevant_miniml(self):
@@ -483,6 +538,9 @@ class TestProcessedAssetConversion(unittest.TestCase):
                                     {"tag": "cell type", "value": "Treg"},
                                     {"tag": "developmental stage", "value": "adult"},
                                     {"tag": "treatment", "value": "CPI-703"},
+                                    {"tag": "hz_cell_type", "value": "regulatory T cell"},
+                                    {"tag": "hz_cell_type_id", "value": "CL:0000815"},
+                                    {"tag": "hz_cell_type_onto", "value": "cl"},
                                 ],
                                 "treatment_protocol": "Long treatment protocol",
                             },
@@ -541,8 +599,21 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 first.obs["msc_characteristic_cell_type"].unique().tolist(),
             )
             self.assertEqual(["CPI-703"], first.obs["msc_characteristic_treatment"].unique().tolist())
+            self.assertEqual(
+                ["regulatory T cell"],
+                first.obs["msc.characteristics.hz_cell_type"].unique().tolist(),
+            )
+            self.assertEqual(
+                ["CL:0000815"],
+                first.obs["msc.characteristics.hz_cell_type_id"].unique().tolist(),
+            )
+            self.assertEqual(
+                ["cl"],
+                first.obs["msc.characteristics.hz_cell_type_onto"].unique().tolist(),
+            )
             self.assertEqual([""], first.obs["msc_characteristic_dose"].unique().tolist())
             self.assertEqual([""], second.obs["msc_characteristic_cell_type"].unique().tolist())
+            self.assertEqual([""], second.obs["msc.characteristics.hz_cell_type"].unique().tolist())
             self.assertFalse(any(column.startswith("geo_") for column in combined.obs))
             self.assertIn("msc_batch", combined.obs)
 
@@ -793,7 +864,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
     def test_study_h5ad_is_split_by_canonical_and_legacy_sample_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            for accession_column in ("msc_accession", "geo_accession"):
+            for accession_column in ("msc.sample.accession", "msc_accession", "geo_accession"):
                 with self.subTest(accession_column=accession_column):
                     source_path = os.path.join(tmpdir, f"study-{accession_column}.h5ad")
                     self.anndata.AnnData(
