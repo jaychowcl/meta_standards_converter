@@ -235,7 +235,13 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual(1, len(packages))
         package = packages[0]
-        self.assertIsNone(package["version"])
+        self.assertEqual("magetabv1.1", package["version"])
+        self.assertEqual(
+            "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
+            package["schema_location"],
+        )
+        self.assertEqual("E-MTAB-1", package["series"]["iid"])
+        self.assertEqual("1.1", package["mage_tab"]["version"])
         self.assertEqual("Example study", package["series"]["title"])
         self.assertEqual(
             ["GSE123", "E-MTAB-1"],
@@ -262,6 +268,32 @@ class TestAE2JSONConverter(unittest.TestCase):
             [item["uri"] for item in sample["sra_run"][0]["fastq_files"]],
         )
         self.assertEqual([{"ref": "GSM1"}], package["series"]["sample_ref"])
+
+    def test_series_iid_prefers_explicit_arrayexpress_accession(self):
+        idf = IDF.replace(
+            "Investigation Accession\tE-MTAB-1\n",
+            "Investigation Accession\tE-MTAB-1\n"
+            "Comment[ArrayExpressAccession]\tE-MTAB-999\n",
+        )
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(idf=idf)
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+
+        self.assertEqual("E-MTAB-999", package["series"]["iid"])
+
+    def test_series_iid_uses_investigation_fallback_not_geo_secondary(self):
+        idf = IDF.replace(
+            "Investigation Accession\tE-MTAB-1\n",
+            "Investigation Accession\tLOCAL-STUDY-1\n",
+        )
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(idf=idf)
+
+        package = ae2json(fetcher=fetcher).convert("LOCAL-STUDY-1")[0]
+
+        self.assertEqual("LOCAL-STUDY-1", package["series"]["iid"])
+        self.assertNotEqual("GSE123", package["series"]["iid"])
 
     def test_preserves_unmapped_rows_and_columns_and_logs_warnings(self):
         fetcher = MagicMock()
