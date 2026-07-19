@@ -24,6 +24,11 @@ from meta_standards_converter.ae_handlers.ae_webfetcher import MAGETabInput
 
 logger = logging.getLogger(__name__)
 
+MAGETAB_VERSION = "magetabv1.1"
+MAGETAB_SCHEMA_LOCATION = (
+    "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf"
+)
+
 
 def normalized_label(value: str) -> str:
     return "".join(str(value).split()).casefold()
@@ -137,7 +142,8 @@ class AEParser:
             self._warn(f"Unmapped IDF row {row['label']} preserved in mage_tab metadata.")
 
         package = {
-            "version": None,
+            "version": MAGETAB_VERSION,
+            "schema_location": MAGETAB_SCHEMA_LOCATION,
             "database": databases,
             "organization": [],
             "contributor": contributors,
@@ -225,7 +231,14 @@ class AEParser:
         if not accessions:
             raise ValueError("MAGE-TAB IDF contains no usable investigation or secondary accession.")
 
-        series = {"accession": accessions}
+        series = {
+            "iid": self._series_iid(
+                investigation=investigation,
+                arrayexpress=arrayexpress,
+                accessions=accessions,
+            ),
+            "accession": accessions,
+        }
         title = self._first(idf, "Investigation Title")
         if title:
             series["title"] = title
@@ -595,6 +608,19 @@ class AEParser:
         if upper.startswith("DRP"):
             return "DRA"
         return None
+
+    def _series_iid(self, investigation, arrayexpress, accessions):
+        if arrayexpress:
+            return arrayexpress[0]
+        for accession in investigation:
+            if self._accession_database(accession) == "ArrayExpress":
+                return accession
+        for accession in accessions:
+            if accession.get("database") == "ArrayExpress" and accession.get("value"):
+                return accession["value"]
+        if investigation:
+            return investigation[0]
+        return accessions[0]["value"]
 
     def _warn(self, message):
         if message not in self.warnings:
