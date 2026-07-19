@@ -90,7 +90,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: test-plan
   title: Test Plan
   anchor: test-plan
-  keywords: tests, unittest, acceptance, coverage, README, quickstart, CLI option contract, documentation links
+  keywords: tests, unittest, acceptance, coverage, README, configuration, quickstart, CLI option contract, documentation links
 
 ## Workflow Sections
 

@@ -1308,7 +1308,7 @@ Important test coverage:
 - `tests/test_cli_ae2json.py`: MAGE-TAB-to-JSON CLI defaults, repeated SDRF overrides, source validation, multiple input ordering, logging, and failure continuation.
 - `tests/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
 - `tests/test_project_scripts.py`: console script registration.
-- `tests/test_docs_index.py`: stable documentation anchors, required README section order, interface-specific quickstart links, live-parser coverage for every documented CLI argument and alias, console-script mentions, docs links, and author-header policy.
+- `tests/test_docs_index.py`: stable documentation anchors, required README section order including configuration, interface-specific quickstart links, live-parser coverage for every documented CLI argument and alias, console-script mentions, docs links, and author-header policy.
 - `tests/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.
 - `tests/test_ae_sdrf_handlers.py`: SDRF graph rendering, source/comment/characteristic behavior, file classification, sequencing/array/single-cell/spatial handlers, SRA precedence warnings, and disabled greedy fallback comments.
 - `tests/test_miniml_enricher.py`: additive PubMed/SRA enrichment fields, deduplication, and fetch error tolerance.
