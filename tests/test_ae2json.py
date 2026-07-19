@@ -22,6 +22,7 @@ if SRC not in sys.path:
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
+from meta_standards_converter.ae_handlers.ae_model import render_model  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_parser import AEParser  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
@@ -104,6 +105,22 @@ def resolved_input(idf=IDF, sdrfs=None):
 
 
 class TestAE2JSONConverter(unittest.TestCase):
+    def test_typed_model_preserves_ragged_and_label_only_idf_rows(self):
+        idf = IDF.replace(
+            "Protocol Description\tCollect samples\tExtract material\n",
+            "Protocol Description\tCollect samples\tExtract material\n"
+            "Protocol Parameters\ttemperature\n"
+            "Quality Control Type\n",
+        )
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(idf=idf)
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        rendered = render_model(package["mage_tab"]["model"])
+
+        self.assertIn(["Protocol Parameters", "temperature"], rendered)
+        self.assertIn(["Quality Control Type"], rendered)
+
     def test_builds_editable_typed_magetab_model(self):
         idf = IDF.replace(
             "Protocol Description\tCollect samples\tExtract material\n",
@@ -360,6 +377,7 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual(1, roundtrip["schema_version"])
         self.assertEqual(64, len(roundtrip["semantic_sha256"]))
+        self.assertEqual(64, len(roundtrip["model_sha256"]))
         self.assertEqual("Mystery Row", roundtrip["idf_rows"][-1][0])
         self.assertEqual("study1.sdrf.txt", roundtrip["sdrfs"][0]["name"])
         self.assertEqual("Mystery Column", roundtrip["sdrfs"][0]["rows"][0][-1])

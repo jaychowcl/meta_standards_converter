@@ -27,6 +27,17 @@ PROTOCOL_FIELDS = {
     "Protocol Performer": "performer",
 }
 
+PROTOCOL_FIELD_ALIASES = {
+    "type_term_source_ref": (
+        "Protocol Type Term Source REF",
+        "Protocol Term Source REF",
+    ),
+    "type_term_accession_number": (
+        "Protocol Type Term Accession Number",
+        "Protocol Term Accession Number",
+    ),
+}
+
 DECLARATION_FIELDS = {
     "quality_control": (
         "Quality Control Type",
@@ -60,15 +71,27 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
     """Build a typed model without projecting unsupported values into MINiML fields."""
     values = {_normalized(row[0]): list(row[1:]) for row in idf_rows if row}
     names = values.get(_normalized("Protocol Name"), [])
-    protocol_count = max(
-        [len(names), *[len(values.get(_normalized(label), [])) for label in PROTOCOL_FIELDS]],
+    inferred_protocol_count = max(
+        [
+            len(names),
+            *[
+                len(_protocol_values(values, label, key)[0])
+                for label, key in PROTOCOL_FIELDS.items()
+            ],
+        ],
         default=0,
     )
+    protocol_count = len(names) if names else inferred_protocol_count
+    protocol_labels = {}
+    protocol_widths = {}
     protocols = []
     for position in range(protocol_count):
         record = {"id": f"protocol:{position + 1}", "position": position}
         for label, key in PROTOCOL_FIELDS.items():
-            row_values = values.get(_normalized(label), [])
+            row_values, source_label = _protocol_values(values, label, key)
+            if source_label:
+                protocol_labels[key] = source_label
+                protocol_widths[key] = len(row_values)
             record[key] = row_values[position] if position < len(row_values) else ""
         if not record.get("name"):
             record["name"] = record["id"]
@@ -78,8 +101,23 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
         kind: _declarations(values, labels)
         for kind, labels in DECLARATION_FIELDS.items()
     }
+    declaration_widths = {
+        kind: {
+            field: len(values.get(_normalized(label), []))
+            for label, field in zip(
+                labels,
+                ("value", "term_source_ref", "term_accession_number"),
+            )
+        }
+        for kind, labels in DECLARATION_FIELDS.items()
+    }
     typed_labels = {
         *(_normalized(label) for label in PROTOCOL_FIELDS),
+        *(
+            _normalized(label)
+            for labels in PROTOCOL_FIELD_ALIASES.values()
+            for label in labels
+        ),
         *(
             _normalized(label)
             for labels in DECLARATION_FIELDS.values()
@@ -115,7 +153,10 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
             if row
         ],
         "protocols": protocols,
+        "protocol_field_labels": protocol_labels,
+        "protocol_field_widths": protocol_widths,
         "declarations": declarations,
+        "declaration_field_widths": declaration_widths,
         "assay_paths": assay_paths,
         "sdrfs": model_sdrfs,
         "investigation_fields": investigation_fields,
@@ -202,7 +243,8 @@ def _declarations(values: dict, labels: tuple[str, str, str]) -> list[dict]:
     terms = values.get(_normalized(labels[0]), [])
     sources = values.get(_normalized(labels[1]), [])
     accessions = values.get(_normalized(labels[2]), [])
-    count = max(len(terms), len(sources), len(accessions), 0)
+    present = any(_normalized(label) in values for label in labels)
+    count = max(len(terms), len(sources), len(accessions), 1 if present else 0)
     return [
         {
             "position": index,
@@ -295,21 +337,36 @@ def _assay_path(sdrf_name: str, row_index: int, header: list[str], row: list[str
 
 def _typed_idf_rows(model: dict) -> dict[str, list]:
     protocols = sorted(model.get("protocols", []), key=lambda item: item.get("position", 0))
+    layout_labels = {
+        _normalized(item.get("label"))
+        for item in model.get("idf_layout", [])
+        if isinstance(item, dict)
+    }
     rows = {}
     if protocols:
-        rows.update({
-            _normalized(label): [label, *(item.get(key, "") for item in protocols)]
-            for label, key in PROTOCOL_FIELDS.items()
-        })
+        protocol_labels = model.get("protocol_field_labels") or {}
+        protocol_widths = model.get("protocol_field_widths") or {}
+        for canonical_label, key in PROTOCOL_FIELDS.items():
+            label = protocol_labels.get(key) or canonical_label
+            values = [item.get(key, "") for item in protocols]
+            if _normalized(label) in layout_labels or any(value not in (None, "") for value in values):
+                width = _edited_width(values, protocol_widths.get(key, 0))
+                rows[_normalized(label)] = [label, *values[:width]]
     for kind, labels in DECLARATION_FIELDS.items():
         records = sorted(
             model.get("declarations", {}).get(kind, []),
             key=lambda item: item.get("position", 0),
         )
         fields = ("value", "term_source_ref", "term_accession_number")
+        declaration_widths = model.get("declaration_field_widths", {}).get(kind, {})
         for label, field in zip(labels, fields):
-            if records:
-                rows[_normalized(label)] = [label, *(item.get(field, "") for item in records)]
+            values = [item.get(field, "") for item in records]
+            if records and (
+                _normalized(label) in layout_labels
+                or any(value not in (None, "") for value in values)
+            ):
+                width = _edited_width(values, declaration_widths.get(field, 0))
+                rows[_normalized(label)] = [label, *values[:width]]
     return rows
 
 
@@ -369,10 +426,10 @@ def _consolidate_sdrfs(tables: list[list[list]]) -> list[list]:
 
 def _overlay_protocol_rows(model_rows: list, core_rows: list) -> None:
     labels = {
-        label: (_row(model_rows, label), _row(core_rows, label))
-        for label in PROTOCOL_FIELDS
+        key: (_protocol_row(model_rows, label, key), _protocol_row(core_rows, label, key))
+        for label, key in PROTOCOL_FIELDS.items()
     }
-    model_types, core_types = labels["Protocol Type"]
+    model_types, core_types = labels["type"]
     if not model_types or not core_types:
         return
     used = set()
@@ -395,11 +452,10 @@ def _overlay_protocol_rows(model_rows: list, core_rows: list) -> None:
         if model_position is None:
             continue
         used.add(model_position)
-        for label in (
-            "Protocol Type", "Protocol Type Term Source REF",
-            "Protocol Type Term Accession Number", "Protocol Description",
+        for key in (
+            "type", "type_term_source_ref", "type_term_accession_number", "description",
         ):
-            model_row, core_row = labels[label]
+            model_row, core_row = labels[key]
             if model_row and core_row and core_position < len(core_row):
                 while len(model_row) <= model_position:
                     model_row.append("")
@@ -450,6 +506,30 @@ def _row(rows: list, label: str) -> list | None:
         (row for row in rows if row and _normalized(row[0]) == _normalized(label)),
         None,
     )
+
+
+def _protocol_row(rows: list, canonical_label: str, key: str) -> list | None:
+    for label in PROTOCOL_FIELD_ALIASES.get(key, (canonical_label,)):
+        value = _row(rows, label)
+        if value is not None:
+            return value
+    return None
+
+
+def _protocol_values(values: dict, canonical_label: str, key: str) -> tuple[list, str | None]:
+    for label in PROTOCOL_FIELD_ALIASES.get(key, (canonical_label,)):
+        normalized = _normalized(label)
+        if normalized in values:
+            return values[normalized], label
+    return [], None
+
+
+def _edited_width(values: list, original_width: int) -> int:
+    last_nonblank = max(
+        (index + 1 for index, value in enumerate(values) if value not in (None, "")),
+        default=0,
+    )
+    return max(original_width, last_nonblank)
 
 
 def _table(value) -> bool:
