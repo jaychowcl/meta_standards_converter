@@ -6,6 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+import importlib
 import re
 import subprocess
 import unittest
@@ -88,8 +89,17 @@ class DocsIndexTests(unittest.TestCase):
             "## Installation",
             "### Requirements",
             "## Quickstart",
+            "### CLI quickstart",
+            "### Python API quickstart",
+            "### Docker quickstart",
+            "### Rootless Docker Compose quickstart",
             "### Inputs & Outputs",
             "## Guide",
+            "### CLI",
+            "### Python API",
+            "### Docker",
+            "### Rootless Docker Compose",
+            "### Code flow",
             "## Docs",
             "## Authors",
         ]
@@ -101,6 +111,39 @@ class DocsIndexTests(unittest.TestCase):
             positions.append(position)
 
         self.assertEqual(sorted(positions), positions)
+
+    def test_readme_quickstarts_link_to_each_interface_guide(self):
+        readme_text = README.read_text(encoding="utf-8")
+
+        for label, anchor in (
+            ("CLI guide", "cli"),
+            ("Python API guide", "python-api"),
+            ("Docker guide", "docker"),
+            ("Rootless Docker Compose guide", "rootless-docker-compose"),
+        ):
+            self.assertIn(f"[{label}](#{anchor})", readme_text)
+
+    def test_readme_cli_guide_documents_every_parser_argument(self):
+        readme_text = README.read_text(encoding="utf-8")
+        modules = {
+            command: importlib.import_module(f"meta_standards_converter.cli.{command}")
+            for command in ("geo2ae", "geo2json", "json2ae", "ae2json", "json2h5ad")
+        }
+
+        for command, module in modules.items():
+            match = re.search(
+                rf"^#### `{command}`\s*$\n(?P<section>.*?)(?=^#### |^### |\Z)",
+                readme_text,
+                re.MULTILINE | re.DOTALL,
+            )
+            self.assertIsNotNone(match, command)
+            section = match.group("section")
+            for action in module._parser()._actions:
+                if action.option_strings:
+                    for option in action.option_strings:
+                        self.assertIn(f"`{option}`", section, f"{command}: {option}")
+                else:
+                    self.assertIn(f"`{action.dest}`", section, f"{command}: {action.dest}")
 
     def test_readme_links_to_docs(self):
         readme_text = README.read_text(encoding="utf-8")
