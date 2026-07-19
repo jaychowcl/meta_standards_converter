@@ -220,12 +220,16 @@ For `nf-core/scrnaseq`, H5AD discovery covers the complete results tree and
 selects CellBender-filtered, then filtered (including QCATCH
 `*_filtered_quants.h5ad`), then raw output for each sample.
 
-Final H5ADs use the converter-owned `msc_*` observation namespace. Stable
-columns expose sample, organism, library, accession, platform, material,
-instrument, repository, and ontology-mapped protocol metadata; arbitrary
-MINiML characteristics become `msc_characteristic_*`. Single-cell values are
-sample annotations repeated across the sample's cells, and combined studies
-use `msc_batch`.
+Final H5ADs expose converter-owned observation metadata through both the
+established `msc_*` names and additive dotted aliases grouped by section, such
+as `msc.sample.accession`, `msc.sample.channel.organism.value`,
+`msc.library.strategy`, and `msc.database.identifier`. Arbitrary MINiML
+characteristics appear as both `msc_characteristic_*` and
+`msc.characteristics.*`; this includes harmonized tags such as
+`msc.characteristics.hz_cell_type`, its ID, and its ontology. Existing source
+H5AD observation columns remain intact. Single-cell values are sample
+annotations repeated across the sample's cells, and combined studies expose
+both `msc_batch` and `msc.combination.batch`.
 
 The permitted remaining MINiML metadata is stored as a typed flattened table
 in `uns["msc_miniml"]["fields"]`. GSM files contain the relevant sample and
