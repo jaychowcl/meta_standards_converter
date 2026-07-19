@@ -231,6 +231,11 @@ H5AD observation columns remain intact. Single-cell values are sample
 annotations repeated across the sample's cells, and combined studies expose
 both `msc_batch` and `msc.combination.batch`.
 
+Canonical organism labels prefer each channel's harmonized `hz_organism`
+value, including the harmonizer's container-list and scalar forms, and fall
+back to the channel's original `organism` value. Channels without either value
+remain empty; the converter does not infer an organism from unrelated fields.
+
 The permitted remaining MINiML metadata is stored as a typed flattened table
 in `uns["msc_miniml"]["fields"]`. GSM files contain the relevant sample and
 transitively referenced platform, contributor, and database records; GSE files
