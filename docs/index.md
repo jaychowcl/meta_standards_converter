@@ -171,6 +171,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   anchor: ae-roundtrip
   keywords: mage_tab, roundtrip, fingerprint, SHA-256, source tables, JSON precedence, lossless, sidecar-only metadata, fixed JSON shape
 
+- id: typed-mage-tab-model
+  title: Typed editable MAGE-TAB model
+  anchor: typed-mage-tab-model
+  keywords: mage_tab.model, protocols, declarations, assay paths, units, ontology, multiplicity, model fingerprint, editable extension
+
 - id: geo-parser
   title: GEO parser
   anchor: geo-parser

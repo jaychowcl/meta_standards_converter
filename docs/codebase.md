@@ -209,13 +209,13 @@ ae2json.convert(source, out=None, sdrf_sources=None)
        platform, factor, characteristic, SRA/FASTQ, and array-file metadata
        merge repeated sample/platform records in first-seen order
        keep the first conflicting scalar and record a warning
-       preserve unmapped metadata and source tables under mage_tab
+       preserve unmapped metadata, typed MAGE-TAB entities, and source tables under mage_tab
        fingerprint the public package fields for unchanged-table detection
   -> if out, write [{package}] to {study_accession}.json
   -> return [package]
 ```
 
-IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, warnings, and an optional lossless round-trip sidecar. An unchanged one-SDRF AE-origin package reproduces its parsed source rows exactly; edited JSON is rendered normally and takes precedence.
+IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, warnings, an editable typed model, and an optional lossless round-trip sidecar. An unchanged one-SDRF AE-origin package reproduces its parsed source rows exactly. Typed-model edits regenerate MAGE-TAB without merging unsupported values into MINiML fields; exact core edits overlay the corresponding modeled output.
 
 Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTP base, and downloads only those metadata files beneath `Files/`. Remote content is decoded as UTF-8 with optional BOM and remains in memory. FTP sources and referenced assay data downloads are not supported.
 
@@ -748,17 +748,29 @@ This section lists public and semi-public callables used by tests or by package 
 - IDF rows are normalized by case and whitespace. Repeated row values remain ordered and feed investigation, accessions, design/factor, status, publication, contributor, database, and protocol records.
 - SDRF headers map source/sample identities, characteristics, factors, protocol refs, platforms, technology, SRA/ENA runs, FASTQ metadata, and array raw/derived files. Repeated sample rows merge without duplicating list values.
 - Conflicting scalar values keep the first value and append a warning. Unknown IDF rows and SDRF columns are preserved verbatim under `package["mage_tab"]` and also generate warnings.
+- `build_model(...)` records complete protocol columns, QC/replicate/normalization declarations, every SDRF assay path, ordered nodes and protocol references, comments/files, and per-value unit/ontology companions under `package["mage_tab"]["model"]`.
 - Malformed non-rectangular SDRF rows fail with a filename and column-count error.
 
 <a id="ae-roundtrip"></a>
 ### `ae_handlers/ae_roundtrip.py`
 
 - `semantic_sha256(package)` hashes every top-level public field except `mage_tab` using stable JSON encoding.
-- `build_roundtrip(...)` stores schema version 1, the fingerprint, complete parsed IDF rows, and named SDRF row tables under `mage_tab.roundtrip`.
+- `build_roundtrip(...)` stores schema version 1, core and typed-model fingerprints, complete parsed IDF rows, and named SDRF row tables under `mage_tab.roundtrip`.
 - `unchanged_magetab(package)` returns the preserved source payload when the fingerprint still matches and exactly one SDRF is present.
 - `restore_extensions(package, magetab)` runs after normal rendering for edited packages. Generated JSON fields win; unsupported IDF rows and SDRF columns are restored by row count or source/sample/assay identity when safe, otherwise a warning is logged.
 - Packages without the optional sidecar follow the ordinary GEO/JSON rendering path unchanged. Multiple source SDRFs use semantic consolidation rather than the one-SDRF exact fast path.
-- The fixed GEO/MINiML-compatible core has no generic entities for arbitrary protocol graphs, assay/hybridization/scan identities, performers, protocol hardware/software/parameters, QC/replicate declarations, per-value units/ontology annotations, or custom MAGE-TAB fields. Those remain sidecar-only; removing `mage_tab` is intentionally not lossless.
+- The fixed GEO/MINiML-compatible core still has no generic entities for arbitrary protocol graphs, assay/hybridization/scan identities, performers, protocol hardware/software/parameters, QC/replicate declarations, per-value units/ontology annotations, or custom MAGE-TAB fields. These are editable through `mage_tab.model` and backed by the raw sidecar; removing `mage_tab` is intentionally not lossless.
+
+<a id="typed-mage-tab-model"></a>
+### `ae_handlers/ae_model.py`
+
+- `build_model(idf_rows, sdrfs)` creates the version-1 `mage_tab.model` extension without modifying the fixed MINiML projection.
+- `protocols` contains one position-stable record per IDF protocol, including name, arbitrary type, ontology, description, hardware, software, parameters, contact, and performer.
+- `declarations` independently stores aligned quality-control, replicate, and normalization terms with source/accession annotations.
+- `assay_paths` contains one record per original SDRF data row. Ordered steps distinguish material/assay nodes, protocol references, annotated characteristics/factors/parameters, comments, files, and generic fields. This preserves array assay multiplicity and many-to-one sample relationships.
+- Attribute steps keep `Unit`, `Term Source REF`, and `Term Accession Number` as independent fields; barcode/read geometry remains independent comment steps rather than being folded into protocol prose.
+- `render_model(model)` regenerates one SDRF directly or consolidates multiple SDRFs by header plus occurrence. `overlay_core(model_rows, core_rows)` applies exact core fields while retaining model-only protocols, identities, annotations, and rows.
+- Editing `mage_tab.model` invalidates raw-table reuse through `model_sha256`. Old packages without a typed model or model hash continue through the existing sidecar or ordinary renderer.
 
 <a id="geo-parser"></a>
 ### `geo_handlers/geo_parser.py`
@@ -1223,7 +1235,7 @@ Important test coverage:
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
 - `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, and fixture-backed parity with direct AE construction.
-- `tests/test_ae2json.py`: IDF/SDRF mapping, sidecar/fingerprint creation, unchanged lossless reuse, edited-JSON precedence, multiple SDRFs, conflicts, unmapped restoration, and output writing.
+- `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, multiple SDRFs, conflicts, unmapped restoration, and output writing.
 - `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, real dictionary reference scoping, case-insensitive metadata de-duplication, artifact-relative provenance, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
 - `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, warning extraction, output discovery, and workflow failure logs.
