@@ -104,6 +104,87 @@ def resolved_input(idf=IDF, sdrfs=None):
 
 
 class TestAE2JSONConverter(unittest.TestCase):
+    def test_builds_editable_typed_magetab_model(self):
+        idf = IDF.replace(
+            "Protocol Description\tCollect samples\tExtract material\n",
+            "Protocol Description\tCollect samples\tExtract material\n"
+            "Protocol Hardware\tfreezer\tcentrifuge\n"
+            "Protocol Software\tLIMS 2\tExtractSoft\n"
+            "Protocol Parameters\ttemperature\tspeed\n"
+            "Protocol Contact\tJane Doe\tJohn Doe\n"
+            "Quality Control Type\tbiological replicate\n"
+            "Quality Control Term Source REF\tEFO\n"
+            "Quality Control Term Accession Number\tEFO:0000001\n"
+            "Replicate Type\ttechnical replicate\n"
+            "Normalization Type\tquantile normalization\n",
+        )
+        header = [
+            "Source Name", "Sample Name", "Protocol REF", "Extract Name",
+            "Assay Name", "Hybridization Name", "Scan Name",
+            "Characteristics[age]", "Unit", "Term Source REF",
+            "Term Accession Number", "Comment[cell barcode size]",
+        ]
+        rows = [
+            ["source-1", "sample-1", "P-extract", "extract-1", "assay-1", "hyb-1", "scan-1", "5", "year", "UO", "UO:0000036", "16"],
+            ["source-1", "sample-1", "P-extract", "extract-1", "assay-2", "hyb-2", "scan-2", "5", "year", "UO", "UO:0000036", "16"],
+        ]
+        text = "\n".join("\t".join(values) for values in [header, *rows]) + "\n"
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(idf=idf, sdrfs=[text])
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        model = package["mage_tab"]["model"]
+
+        self.assertEqual(1, model["schema_version"])
+        self.assertEqual("centrifuge", model["protocols"][1]["hardware"])
+        self.assertEqual("ExtractSoft", model["protocols"][1]["software"])
+        self.assertEqual("speed", model["protocols"][1]["parameters"])
+        self.assertEqual("John Doe", model["protocols"][1]["contact"])
+        self.assertEqual("biological replicate", model["declarations"]["quality_control"][0]["value"])
+        self.assertEqual("EFO:0000001", model["declarations"]["quality_control"][0]["term_accession_number"])
+        self.assertEqual(2, len(model["assay_paths"]))
+        self.assertEqual(["assay-1", "assay-2"], [path["binding"]["assay_name"] for path in model["assay_paths"]])
+        age = next(step for step in model["assay_paths"][0]["steps"] if step["kind"] == "attribute")
+        self.assertEqual("year", age["unit"])
+        self.assertEqual("UO:0000036", age["term_accession_number"])
+        barcode = next(step for step in model["assay_paths"][0]["steps"] if step.get("name") == "cell barcode size")
+        self.assertEqual("16", barcode["value"])
+
+    def test_model_edits_render_without_merging_into_miniml_fields(self):
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input()
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        model = package["mage_tab"]["model"]
+        model["protocols"][1]["hardware"] = "edited centrifuge"
+
+        magetab = AEConstructor().miniml2magetab(package)
+        rows = {row[0]: row for row in magetab}
+
+        self.assertEqual("edited centrifuge", rows["Protocol Hardware"][2])
+        self.assertNotIn("edited centrifuge", str(package["sample"]))
+
+    def test_core_edits_win_while_typed_model_preserves_path_multiplicity(self):
+        header = ["Source Name", "Sample Name", "Assay Name", "Hybridization Name", "Scan Name"]
+        rows = [
+            ["source-1", "sample-1", "assay-1", "hyb-1", "scan-1"],
+            ["source-1", "sample-1", "assay-2", "hyb-2", "scan-2"],
+        ]
+        text = "\n".join("\t".join(values) for values in [header, *rows]) + "\n"
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(sdrfs=[text])
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package["series"]["title"] = "Edited core title"
+        package["mage_tab"]["model"]["assay_paths"][1]["steps"][-1]["value"] = "edited-scan-2"
+
+        magetab = AEConstructor().miniml2magetab(package)
+        rows_by_label = {row[0]: row for row in magetab}
+        rendered_sdrf = rows_by_label["SDRF File"][1]
+
+        self.assertEqual("Edited core title", rows_by_label["Investigation Title"][1])
+        self.assertEqual(2, len(rendered_sdrf) - 1)
+        self.assertEqual(["assay-1", "assay-2"], [row[2] for row in rendered_sdrf[1:]])
+        self.assertEqual("edited-scan-2", rendered_sdrf[2][4])
+
     def test_recognizes_all_generated_single_cell_comment_headers(self):
         generated_headers = (
             "Comment[cdna read]",
