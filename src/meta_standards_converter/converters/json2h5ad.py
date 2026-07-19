@@ -1404,7 +1404,11 @@ class JSON2H5ADConverter:
             for channel in channels
             for organism in self.planner._as_list(channel.get("organism"))
         ]
-        metadata["organism"] = self._join_values(organisms)
+        organism_values = []
+        for channel in channels:
+            harmonized = self._values(channel.get("hz_organism"))
+            organism_values.extend(harmonized or self._values(channel.get("organism")))
+        metadata["organism"] = self._join_values(organism_values)
         metadata["organism_taxid"] = self._join_values(
             organism.get("taxid") for organism in organisms if isinstance(organism, dict)
         )
