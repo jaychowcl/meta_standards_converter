@@ -929,6 +929,43 @@ class SourcePlanner:
 class JSON2H5ADConverter:
     MINIML_SCHEMA_VERSION = "1.0"
     PUBLICATION_POLICY = "citation_metadata_only"
+    SECTIONED_OBS_COLUMNS = {
+        "msc_accession": "msc.sample.accession",
+        "msc_series_accession": "msc.series.accession",
+        "msc_title": "msc.sample.title",
+        "msc_description": "msc.sample.description",
+        "msc_organism": "msc.sample.channel.organism.value",
+        "msc_organism_taxid": "msc.sample.channel.organism.taxid",
+        "msc_organism_part": "msc.sample.channel.organism_part",
+        "msc_developmental_stage": "msc.sample.channel.developmental_stage",
+        "msc_disease": "msc.sample.channel.disease",
+        "msc_genotype": "msc.sample.channel.genotype",
+        "msc_source_name": "msc.sample.channel.source",
+        "msc_biomaterial_provider": "msc.sample.channel.biomaterial_provider",
+        "msc_material_type": "msc.sample.channel.material_type",
+        "msc_molecule": "msc.sample.channel.molecule",
+        "msc_platform_accession": "msc.platform.accession",
+        "msc_sra_accession": "msc.archive.sra_accession",
+        "msc_ena_accession": "msc.archive.ena_accession",
+        "msc_biosample_accession": "msc.archive.biosample_accession",
+        "msc_sra_run_accessions": "msc.archive.sra_run_accessions",
+        "msc_library_strategy": "msc.library.strategy",
+        "msc_library_source": "msc.library.source",
+        "msc_library_selection": "msc.library.selection",
+        "msc_library_layout": "msc.library.layout",
+        "msc_instrument_model": "msc.instrument.model",
+        "msc_protocol_types": "msc.protocol.types",
+        "msc_protocol_term_source_refs": "msc.protocol.term_source_refs",
+        "msc_protocol_term_accession_numbers": "msc.protocol.term_accession_numbers",
+        "msc_metadata_source": "msc.database.identifier",
+        "msc_metadata_source_name": "msc.database.name",
+        "msc_metadata_source_uri": "msc.database.uri",
+        "msc_source_tier": "msc.asset.tier",
+        "msc_source_uri": "msc.asset.uri",
+        "msc_source_uri_scope": "msc.asset.uri_scope",
+        "msc_modality": "msc.expression.modality",
+        "msc_batch": "msc.combination.batch",
+    }
     PUBLICATION_FIELDS = (
         "pubmed_id",
         "doi",
@@ -1139,6 +1176,7 @@ class JSON2H5ADConverter:
                     (
                         column
                         for column in (
+                            "msc.sample.accession",
                             "msc_accession",
                             "geo_accession",
                             "sample_id",
@@ -1152,7 +1190,8 @@ class JSON2H5ADConverter:
                 if not accession_column:
                     raise ValueError(
                         f"Study H5AD {asset.path} cannot be mapped to samples; "
-                        "obs needs msc_accession, geo_accession, sample_id, sample, or gsm_accession."
+                        "obs needs msc.sample.accession, msc_accession, geo_accession, "
+                        "sample_id, sample, or gsm_accession."
                     )
                 mask = adata.obs[accession_column].astype(str).str.upper() == asset.scope_id.upper()
                 if not mask.any():
@@ -1314,7 +1353,11 @@ class JSON2H5ADConverter:
         for column in characteristic_columns:
             annotations[f"msc_characteristic_{column}"] = metadata["characteristics"].get(column)
         for key, value in annotations.items():
-            adata.obs[key] = "" if value is None else str(value)
+            serialized = "" if value is None else str(value)
+            adata.obs[key] = serialized
+            sectioned = self._sectioned_obs_column(key)
+            if sectioned:
+                adata.obs[sectioned] = serialized
         provenance = {
             "study_accession": study_accession,
             "sample_accession": sample_id,
@@ -1439,6 +1482,15 @@ class JSON2H5ADConverter:
         metadata["metadata_source_name"] = self._join_values(database.get("name"))
         metadata["metadata_source_uri"] = self._join_values(database.get("web_link"))
         return metadata
+
+    def _sectioned_obs_column(self, column: str) -> str | None:
+        sectioned = self.SECTIONED_OBS_COLUMNS.get(column)
+        if sectioned:
+            return sectioned
+        characteristic_prefix = "msc_characteristic_"
+        if column.startswith(characteristic_prefix):
+            return f"msc.characteristics.{column.removeprefix(characteristic_prefix)}"
+        return None
 
     def _characteristic_columns(self, packages: list[dict]) -> list[str]:
         columns = []
@@ -1786,9 +1838,25 @@ class JSON2H5ADConverter:
             raise ValueError("No sample H5ADs were produced.")
         anndata, _numpy, _pandas, _scanpy, sparse = self._scientific_modules()
         organisms = {
-            str(adata.obs["msc_organism"].iloc[0]).strip()
+            str(
+                adata.obs[
+                    "msc.sample.channel.organism.value"
+                    if "msc.sample.channel.organism.value" in adata.obs
+                    else "msc_organism"
+                ].iloc[0]
+            ).strip()
             for adata in adatas.values()
-            if "msc_organism" in adata.obs and str(adata.obs["msc_organism"].iloc[0]).strip()
+            if (
+                "msc.sample.channel.organism.value" in adata.obs
+                or "msc_organism" in adata.obs
+            )
+            and str(
+                adata.obs[
+                    "msc.sample.channel.organism.value"
+                    if "msc.sample.channel.organism.value" in adata.obs
+                    else "msc_organism"
+                ].iloc[0]
+            ).strip()
         }
         if len(organisms) > 1:
             raise ValueError(f"Cannot combine samples with incompatible organisms: {sorted(organisms)}")
@@ -1827,6 +1895,7 @@ class JSON2H5ADConverter:
             combined.X = sparse.csr_matrix(combined.X)
         else:
             combined.X = combined.X.tocsr()
+        combined.obs[self.SECTIONED_OBS_COLUMNS["msc_batch"]] = combined.obs["msc_batch"]
         combined.uns["meta_standards_converter"] = {
             "combined_samples": list(adatas),
             "join": "outer",
