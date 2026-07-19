@@ -88,6 +88,7 @@ class DocsIndexTests(unittest.TestCase):
             "## Description",
             "## Installation",
             "### Requirements",
+            "## Configuration",
             "## Quickstart",
             "### CLI quickstart",
             "### Python API quickstart",
