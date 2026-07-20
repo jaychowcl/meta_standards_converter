@@ -23,7 +23,66 @@ if SRC not in sys.path:
 from meta_standards_converter.cli.geo2ae import main  # noqa: E402
 
 
+PLATFORM_HANDLERS = (
+    "plate_single_cell_sequencing",
+    "droplet_single_cell_sequencing",
+    "tenx_v2_droplet_single_cell_sequencing",
+    "tenx_v3_droplet_single_cell_sequencing",
+    "single_cell_sequencing",
+    "spatial_sequencing",
+    "bulk_sequencing",
+    "sequencing",
+    "array",
+    "generic",
+)
+
+
 class TestGeo2AECLI(unittest.TestCase):
+    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    def test_list_platform_handlers_requires_no_accession_or_converter(self, geo2ae_mock):
+        stdout = StringIO()
+
+        with redirect_stdout(stdout):
+            exit_code = main(["--list-platform-handlers"])
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual("".join(f"{name}\n" for name in PLATFORM_HANDLERS), stdout.getvalue())
+        geo2ae_mock.assert_not_called()
+
+    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    def test_platform_handler_is_forwarded_to_every_accession(self, geo2ae_mock):
+        geo2ae_mock.return_value.convert.return_value = ["magetab"]
+
+        with redirect_stdout(StringIO()):
+            exit_code = main(["GSE1", "GSE2", "--platform-handler", "array"])
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual(
+            [
+                call(
+                    gse="GSE1",
+                    related_series=False,
+                    remove_empty=True,
+                    out=".",
+                    platform_handler="array",
+                ),
+                call(
+                    gse="GSE2",
+                    related_series=False,
+                    remove_empty=True,
+                    out=".",
+                    platform_handler="array",
+                ),
+            ],
+            geo2ae_mock.return_value.convert.call_args_list,
+        )
+
+    def test_invalid_platform_handler_is_rejected(self):
+        with redirect_stderr(StringIO()), self.assertRaises(SystemExit) as raised:
+            main(["GSE1", "--platform-handler", "invalid"])
+
+        self.assertEqual(2, raised.exception.code)
+
     @patch("meta_standards_converter.cli.geo2ae.geo2ae")
     def test_one_accession_uses_defaults(self, geo2ae_mock):
         converter = geo2ae_mock.return_value

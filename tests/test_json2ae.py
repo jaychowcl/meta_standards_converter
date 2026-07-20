@@ -84,6 +84,25 @@ class TestJSON2AEConverter(unittest.TestCase):
         enricher.enrich.assert_not_called()
         constructor.miniml2magetab.assert_called_once_with(data=payload)
 
+    def test_convert_forwards_forced_platform_handler(self):
+        constructor = MagicMock()
+        constructor.miniml2magetab.return_value = "magetab"
+        payload = package()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_json(tmpdir, payload)
+            result = json2ae(ae_constructor=constructor).convert(
+                path,
+                enrich=False,
+                platform_handler="bulk_sequencing",
+            )
+
+        self.assertEqual(["magetab"], result)
+        constructor.miniml2magetab.assert_called_once_with(
+            data=payload,
+            platform_handler="bulk_sequencing",
+        )
+
     def test_convert_writes_each_magetab_when_out_is_supplied(self):
         constructor = MagicMock()
         constructor.miniml2magetab.side_effect = ["first", "second"]

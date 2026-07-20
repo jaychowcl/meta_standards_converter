@@ -109,6 +109,31 @@ class TestGeo2AEConverter(unittest.TestCase):
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
     @patch("meta_standards_converter.converters.geo2ae.GEOParser")
     @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
+    def test_convert_forwards_forced_platform_handler(
+        self,
+        fetcher_mock,
+        parser_mock,
+        enricher_mock,
+        constructor_mock,
+    ):
+        fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
+        package = {"series": {"accession": "GSE1"}}
+        parser_mock.return_value.parse.return_value = [package]
+        enricher_mock.return_value.enrich.return_value = package
+        constructor_mock.return_value.miniml2magetab.return_value = "magetab"
+
+        result = geo2ae().convert(gse="GSE1", platform_handler="array")
+
+        self.assertEqual(["magetab"], result)
+        constructor_mock.return_value.miniml2magetab.assert_called_once_with(
+            data=package,
+            platform_handler="array",
+        )
+
+    @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
+    @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
+    @patch("meta_standards_converter.converters.geo2ae.GEOParser")
+    @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
     def test_convert_emits_stage_logs_without_payload_dump(
         self,
         fetcher_mock,

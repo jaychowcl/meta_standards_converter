@@ -23,7 +23,66 @@ if SRC not in sys.path:
 from meta_standards_converter.cli.json2ae import main  # noqa: E402
 
 
+PLATFORM_HANDLERS = (
+    "plate_single_cell_sequencing",
+    "droplet_single_cell_sequencing",
+    "tenx_v2_droplet_single_cell_sequencing",
+    "tenx_v3_droplet_single_cell_sequencing",
+    "single_cell_sequencing",
+    "spatial_sequencing",
+    "bulk_sequencing",
+    "sequencing",
+    "array",
+    "generic",
+)
+
+
 class TestJSON2AECLI(unittest.TestCase):
+    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    def test_list_platform_handlers_requires_no_json_or_converter(self, json2ae_mock):
+        stdout = StringIO()
+
+        with redirect_stdout(stdout):
+            exit_code = main(["--list-platform-handlers"])
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual("".join(f"{name}\n" for name in PLATFORM_HANDLERS), stdout.getvalue())
+        json2ae_mock.assert_not_called()
+
+    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    def test_platform_handler_is_forwarded_to_every_json(self, json2ae_mock):
+        json2ae_mock.return_value.convert.return_value = ["magetab"]
+
+        with redirect_stdout(StringIO()):
+            exit_code = main(
+                ["GSE1.json", "GSE2.json", "--platform-handler", "bulk_sequencing"]
+            )
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual(
+            [
+                call(
+                    json_path="GSE1.json",
+                    enrich=True,
+                    out=".",
+                    platform_handler="bulk_sequencing",
+                ),
+                call(
+                    json_path="GSE2.json",
+                    enrich=True,
+                    out=".",
+                    platform_handler="bulk_sequencing",
+                ),
+            ],
+            json2ae_mock.return_value.convert.call_args_list,
+        )
+
+    def test_invalid_platform_handler_is_rejected(self):
+        with redirect_stderr(StringIO()), self.assertRaises(SystemExit) as raised:
+            main(["GSE1.json", "--platform-handler", "invalid"])
+
+        self.assertEqual(2, raised.exception.code)
+
     @patch("meta_standards_converter.cli.json2ae.json2ae")
     def test_one_json_uses_defaults(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]

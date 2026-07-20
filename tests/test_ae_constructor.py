@@ -1463,6 +1463,57 @@ class TestAEConstructor(unittest.TestCase):
             technology_type="bulk_sequencing",
         )
 
+    def test_miniml2magetab_passes_forced_platform_handler_to_both_constructors(self):
+        data = self.detection_data(platform_technology="expression array")
+        idf_constructor = Mock()
+        idf_constructor.miniml2idf.return_value = [["SDRF File"]]
+        sdrf_constructor = Mock()
+        sdrf_constructor._miniml2sdrf.return_value = [["Source Name"], ["GSM1"]]
+
+        AEConstructor(
+            idf_constructor=idf_constructor,
+            sdrf_constructor=sdrf_constructor,
+        ).miniml2magetab(data=data, platform_handler="bulk_sequencing")
+
+        sdrf_constructor._miniml2sdrf.assert_called_once_with(
+            data=data,
+            protocol_registry=ANY,
+            technology_type="bulk_sequencing",
+        )
+        protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
+        idf_constructor.miniml2idf.assert_called_once_with(
+            data=data,
+            protocol_registry=protocol_registry,
+            technology_type="bulk_sequencing",
+        )
+
+    def test_miniml2magetab_rejects_unknown_platform_handler(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported platform handler: invalid"):
+            AEConstructor().miniml2magetab(
+                data={"series": []},
+                platform_handler="invalid",
+            )
+
+    @patch(
+        "meta_standards_converter.ae_handlers.ae_constructor.unchanged_magetab",
+        return_value=[["SDRF File", [["Source Name"], ["preserved"]]]],
+    )
+    def test_forced_platform_handler_bypasses_unchanged_roundtrip_tables(self, unchanged_mock):
+        data = {"series": []}
+        idf_constructor = Mock()
+        idf_constructor.miniml2idf.return_value = [["SDRF File"]]
+        sdrf_constructor = Mock()
+        generated = [["Source Name"], ["generated"]]
+        sdrf_constructor._miniml2sdrf.return_value = generated
+
+        result = AEConstructor(
+            idf_constructor=idf_constructor,
+            sdrf_constructor=sdrf_constructor,
+        ).miniml2magetab(data=data, platform_handler="generic")
+
+        unchanged_mock.assert_not_called()
+        self.assertEqual(["SDRF File", generated], self.row(result, "SDRF File"))
+
     def test_detect_ae_technology_returns_bulk_sequencing_for_regular_sra(self):
         sample = {
             "iid": "GSM1",
