@@ -33,6 +33,7 @@ class geo2ae(JSONHandler):
       related_series: bool = False,
       remove_empty: bool = True,
       out: str = None,
+      platform_handler: str | None = None,
    ):
       """
       fetches MINIML from GEO using gse accession, parses into meta_json, then writes via AEConstructor.
@@ -58,7 +59,14 @@ class geo2ae(JSONHandler):
          logger.info("%s: enriching parsed package %d", gse, index)
          enriched_json = self.enricher.enrich(data=meta_json)
          logger.info("%s: building MAGE-TAB package %d", gse, index)
-         magetab_dfs.append(constructor.miniml2magetab(data=enriched_json))
+         if platform_handler is None:
+            magetab = constructor.miniml2magetab(data=enriched_json)
+         else:
+            magetab = constructor.miniml2magetab(
+               data=enriched_json,
+               platform_handler=platform_handler,
+            )
+         magetab_dfs.append(magetab)
 
       #write to outfile if given 
       if out:

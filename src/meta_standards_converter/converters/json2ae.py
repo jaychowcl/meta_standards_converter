@@ -32,6 +32,7 @@ class json2ae(JSONHandler):
         json_path: str,
         out: str = None,
         enrich: bool = True,
+        platform_handler: str | None = None,
     ) -> list[list]:
         """Load parsed MINiML JSON and optionally write IDF/SDRF files."""
         packages = self._load_packages(json_path=json_path)
@@ -46,7 +47,14 @@ class json2ae(JSONHandler):
             else:
                 logger.info("%s: skipping enrichment for parsed package %d", json_path, index)
             logger.info("%s: building MAGE-TAB package %d", json_path, index)
-            magetabs.append(self.ae_constructor.miniml2magetab(data=converted_package))
+            if platform_handler is None:
+                magetab = self.ae_constructor.miniml2magetab(data=converted_package)
+            else:
+                magetab = self.ae_constructor.miniml2magetab(
+                    data=converted_package,
+                    platform_handler=platform_handler,
+                )
+            magetabs.append(magetab)
 
         if out:
             for index, magetab in enumerate(magetabs, start=1):

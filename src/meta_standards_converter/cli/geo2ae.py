@@ -13,7 +13,12 @@ Command line interface for GEO to ArrayExpress MAGE-TAB conversion.
 import argparse
 import logging
 
-from meta_standards_converter.cli.common import add_logging_arguments, configure_logging
+from meta_standards_converter.cli.common import (
+    add_logging_arguments,
+    add_platform_handler_arguments,
+    configure_logging,
+    print_platform_handlers,
+)
 from meta_standards_converter.converters.geo2ae import geo2ae
 
 logger = logging.getLogger(__name__)
@@ -25,7 +30,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "gse",
-        nargs="+",
+        nargs="*",
         help="GEO Series accession(s), for example GSE234602.",
     )
     parser.add_argument(
@@ -55,12 +60,19 @@ def _parser() -> argparse.ArgumentParser:
         default=".",
         help="Directory for generated IDF and SDRF files. Defaults to the current directory.",
     )
+    add_platform_handler_arguments(parser)
     add_logging_arguments(parser)
     return parser
 
 
 def main(argv=None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
+    if args.list_platform_handlers:
+        print_platform_handlers()
+        return 0
+    if not args.gse:
+        parser.error("the following arguments are required: gse")
     configure_logging(args)
     converter = geo2ae()
     failed = False
@@ -75,12 +87,15 @@ def main(argv=None) -> int:
     for gse in args.gse:
         logger.info("%s: conversion started", gse)
         try:
-            magetabs = converter.convert(
+            convert_options = dict(
                 gse=gse,
                 related_series=args.related_series,
                 remove_empty=args.remove_empty,
                 out=args.out,
             )
+            if args.platform_handler:
+                convert_options["platform_handler"] = args.platform_handler
+            magetabs = converter.convert(**convert_options)
         except Exception:
             failed = True
             logger.exception("%s: conversion failed", gse)

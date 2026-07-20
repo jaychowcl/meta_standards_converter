@@ -21,6 +21,29 @@ import os
 import re
 
 
+PLATFORM_HANDLER_KEYS = (
+    "plate_single_cell_sequencing",
+    "droplet_single_cell_sequencing",
+    "tenx_v2_droplet_single_cell_sequencing",
+    "tenx_v3_droplet_single_cell_sequencing",
+    "single_cell_sequencing",
+    "spatial_sequencing",
+    "bulk_sequencing",
+    "sequencing",
+    "array",
+    "generic",
+)
+
+
+def validate_platform_handler(value: str) -> str:
+    if value not in PLATFORM_HANDLER_KEYS:
+        raise ValueError(
+            f"Unsupported platform handler: {value}. "
+            f"Choose one of: {', '.join(PLATFORM_HANDLER_KEYS)}"
+        )
+    return value
+
+
 class ProtocolRegistry:
     LABEL_BY_KIND = {
         "manufacture": "Manufacture-Protocol",
@@ -94,25 +117,30 @@ class AEConstructor:
         self.idf_constructor = idf_constructor or IDFConstructor()
         self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
 
-    def miniml2magetab(self, data: dict)-> list:
+    def miniml2magetab(self, data: dict, platform_handler: str | None = None) -> list:
         """
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
-        preserved = unchanged_magetab(data)
-        if preserved is not None:
-            return preserved
-        mage_tab = data.get("mage_tab") if isinstance(data, dict) else None
-        model = mage_tab.get("model") if isinstance(mage_tab, dict) else None
-        modeled = render_model(model) if isinstance(model, dict) else None
-        roundtrip = mage_tab.get("roundtrip") if isinstance(mage_tab, dict) else None
-        core_changed = (
-            isinstance(roundtrip, dict)
-            and roundtrip.get("semantic_sha256") != semantic_sha256(data)
-        )
-        if modeled is not None and not core_changed:
-            return modeled
+        forced = platform_handler is not None
+        if forced:
+            technology_type = validate_platform_handler(platform_handler)
+            modeled = None
+        else:
+            preserved = unchanged_magetab(data)
+            if preserved is not None:
+                return preserved
+            mage_tab = data.get("mage_tab") if isinstance(data, dict) else None
+            model = mage_tab.get("model") if isinstance(mage_tab, dict) else None
+            modeled = render_model(model) if isinstance(model, dict) else None
+            roundtrip = mage_tab.get("roundtrip") if isinstance(mage_tab, dict) else None
+            core_changed = (
+                isinstance(roundtrip, dict)
+                and roundtrip.get("semantic_sha256") != semantic_sha256(data)
+            )
+            if modeled is not None and not core_changed:
+                return modeled
+            technology_type = self._detect_ae_technology(data=data)
         protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
-        technology_type = self._detect_ae_technology(data=data)
         sdrf = self.sdrf_constructor._miniml2sdrf(
             data=data,
             protocol_registry=protocol_registry,

@@ -14,6 +14,27 @@ import argparse
 import logging
 import sys
 
+from meta_standards_converter.ae_handlers.ae_constructor import PLATFORM_HANDLER_KEYS
+
+
+def add_platform_handler_arguments(parser: argparse.ArgumentParser) -> None:
+    handler_group = parser.add_mutually_exclusive_group()
+    handler_group.add_argument(
+        "--platform-handler",
+        choices=PLATFORM_HANDLER_KEYS,
+        help="Force IDF and SDRF generation through the selected platform handler.",
+    )
+    handler_group.add_argument(
+        "--list-platform-handlers",
+        action="store_true",
+        help="List available platform handler keys and exit.",
+    )
+
+
+def print_platform_handlers() -> None:
+    for name in PLATFORM_HANDLER_KEYS:
+        print(name)
+
 
 def add_logging_arguments(parser: argparse.ArgumentParser) -> None:
     verbosity_group = parser.add_mutually_exclusive_group()
