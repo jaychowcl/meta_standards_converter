@@ -117,7 +117,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: technology-handler-selection
   title: Technology Handler Selection
   anchor: technology-handler-selection
-  keywords: technology, handlers, sequencing, array, generic, 10x, v2, v3
+  keywords: technology, handlers, platform handler, force, list, CLI, sequencing, array, generic, 10x, v2, v3
 
 - id: sequencing-sdrf-flow
   title: Sequencing SDRF Flow
@@ -144,12 +144,12 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: cli
   title: CLI
   anchor: cli
-  keywords: geo2ae, geo2json, json2ae, json2h5ad, flags, logging, main
+  keywords: geo2ae, geo2json, json2ae, json2h5ad, flags, platform handler, list, logging, main
 
 - id: converter
   title: Converter
   anchor: converter
-  keywords: geo2ae, geo2json, json2ae, json2h5ad, convert, JSON writing, MAGE-TAB, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
+  keywords: geo2ae, geo2json, json2ae, json2h5ad, convert, platform_handler, JSON writing, MAGE-TAB, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
 
 - id: miniml-enricher
   title: MINiML enricher

@@ -65,6 +65,7 @@ The package has no mandatory application config file. Configure conversions with
 | Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
 | Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
 | Remote enrichment | `--no-enrich` / `enrich=False` | PubMed and SRA/ENA enrichment enabled |
+| MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
 | Output location | `--out` / `out` | Current directory |
 | Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING and above to stdout |
 | H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
@@ -155,6 +156,8 @@ Fetch one or more GEO Series and write MAGE-TAB IDF/SDRF files.
 ```bash
 geo2ae GSE234602 --out output
 geo2ae GSE234602 GSE34779 --related --keep-empty --out output
+geo2ae GSE234602 --platform-handler array --out output
+geo2ae --list-platform-handlers
 ```
 
 | Argument | Behavior |
@@ -165,6 +168,8 @@ geo2ae GSE234602 GSE34779 --related --keep-empty --out output
 | `--remove-empty` | Remove empty parsed fields; this is the default. |
 | `--keep-empty` | Preserve empty parsed fields; mutually exclusive with `--remove-empty`. |
 | `--out` `OUT` | Output directory; default `.`. |
+| `--platform-handler` `KEY` | Force both IDF and SDRF generation through a listed platform handler. |
+| `--list-platform-handlers` | Print valid handler keys, one per line, and exit without converting. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
@@ -198,6 +203,8 @@ Read parsed JSON and write MAGE-TAB IDF/SDRF files.
 ```bash
 json2ae output/GSE234602.json --out output
 json2ae primary.json related.json --no-enrich --out output
+json2ae study.json --platform-handler bulk_sequencing --out output
+json2ae --list-platform-handlers
 ```
 
 | Argument | Behavior |
@@ -206,6 +213,8 @@ json2ae primary.json related.json --no-enrich --out output
 | `-h`, `--help` | Display generated help and exit. |
 | `--no-enrich` | Convert supplied metadata without PubMed/SRA enrichment; enrichment is enabled by default. |
 | `--out` `OUT` | Output directory; default `.`. |
+| `--platform-handler` `KEY` | Force both IDF and SDRF generation through a listed platform handler. |
+| `--list-platform-handlers` | Print valid handler keys, one per line, and exit without converting. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
@@ -292,10 +301,11 @@ magetabs = geo2ae().convert(
     related_series=False,
     remove_empty=True,
     out="output",
+    platform_handler=None,
 )
 ```
 
-`geo2ae.convert(gse, related_series=False, remove_empty=True, out=None)` returns a list of in-memory MAGE-TAB payloads. `out=None` suppresses file writes.
+`geo2ae.convert(gse, related_series=False, remove_empty=True, out=None, platform_handler=None)` returns a list of in-memory MAGE-TAB payloads. `out=None` suppresses file writes; `platform_handler=None` keeps automatic detection.
 
 Convert GEO to JSON:
 
@@ -322,10 +332,11 @@ magetabs = json2ae().convert(
     json_path="output/GSE234602.json",
     out="output",
     enrich=True,
+    platform_handler=None,
 )
 ```
 
-`json2ae.convert(json_path, out=None, enrich=True)` accepts a package object or package list and returns ordered MAGE-TAB payloads.
+`json2ae.convert(json_path, out=None, enrich=True, platform_handler=None)` accepts a package object or package list and returns ordered MAGE-TAB payloads. Forcing a handler regenerates IDF/SDRF content instead of reusing unchanged round-trip tables or a typed-model-only rendering.
 
 Convert MAGE-TAB to parsed JSON:
 

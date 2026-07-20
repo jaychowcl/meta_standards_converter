@@ -122,17 +122,17 @@ main(argv)
   -> parse CLI args
   -> instantiate geo2ae()
   -> for each GSE accession:
-       geo2ae.convert(gse, related_series, remove_empty, out)
+       geo2ae.convert(gse, related_series, remove_empty, out, platform_handler)
        continue to the next accession if a conversion fails
   -> return 1 if any accession failed, else 0
 
-geo2ae.convert(gse, related_series, remove_empty, out)
+geo2ae.convert(gse, related_series, remove_empty, out, platform_handler=None)
   -> GEOWebFetcher.fetch_gse_miniml(gse)
   -> GEOParser.parse(miniml, remove_empty=remove_empty, related_series=related_series)
   -> MINiMLEnricher.enrich(data) for each parsed package
   -> instantiate one shared AEConstructor()
   -> for each enriched metadata package:
-       AEConstructor.miniml2magetab(data)
+       AEConstructor.miniml2magetab(data, platform_handler=platform_handler)
   -> if out:
        AEConstructor.magetab2file(magetab, out) for each MAGE-TAB payload
   -> return list of MAGE-TAB payloads
@@ -155,6 +155,8 @@ CLI behavior:
 - `--remove-empty` is the default and removes empty parsed MINiML fields before conversion.
 - `--keep-empty` preserves empty parsed MINiML fields.
 - `--out DIR` defaults to the current directory.
+- `--platform-handler KEY` forces the same validated technology key through IDF and SDRF generation.
+- `--list-platform-handlers` requires no GSE input, prints the stable keys one per line, and exits without conversion.
 - Failed accessions log an error and traceback to stdout through the configured logger, then later accessions still run.
 
 <a id="end-to-end-json2ae-flow"></a>
@@ -162,21 +164,21 @@ CLI behavior:
 
 ```text
 main(argv)
-  -> parse one or more JSON paths, --out, --no-enrich, and logging flags
+  -> parse JSON paths, --out, --no-enrich, platform-handler, and logging flags
   -> instantiate json2ae()
   -> for each JSON path:
-       json2ae.convert(json_path, enrich, out)
+       json2ae.convert(json_path, enrich, out, platform_handler)
        continue to the next path if conversion fails
   -> return 1 if any path failed, else 0
 
-json2ae.convert(json_path, out, enrich=True)
+json2ae.convert(json_path, out, enrich=True, platform_handler=None)
   -> fail if the path does not exist or JSON decoding fails
   -> normalize one package object to a one-element list
   -> require a non-empty list of package objects
   -> validate each package contains a usable study accession; GSE accessions must be numeric
   -> for each package in order:
        MINiMLEnricher.enrich(data) when enrich=True
-       AEConstructor.miniml2magetab(data)
+       AEConstructor.miniml2magetab(data, platform_handler=platform_handler)
   -> if out:
        AEConstructor.magetab2file(magetab, out) for each payload
   -> return the ordered list of MAGE-TAB payloads
@@ -185,6 +187,8 @@ json2ae.convert(json_path, out, enrich=True)
 Enrichment is enabled by default to match the live `geo2ae` path and may call PubMed, NCBI SRA, and ENA. `--no-enrich` or `enrich=False` makes conversion operate on the supplied JSON without those enrichment calls. The input is otherwise not rewritten. All packages are validated before enrichment or construction begins, and related Series require no separate traversal flag because their packages are already represented in the input list.
 
 The converter uses one injected or default `MINiMLEnricher` and `AEConstructor` per instance. It delegates file naming, IDF/SDRF validation, TSV rendering, and overwrite behavior to `AEConstructor.magetab2file()`. Logs contain paths, package indexes, counts, and stages rather than metadata payloads.
+
+Both MAGE-TAB-producing CLIs expose `--platform-handler KEY` and standalone `--list-platform-handlers`. A forced handler bypasses unchanged source-table reuse and typed-model-only rendering so the chosen IDF/SDRF handlers always run; unsupported MAGE-TAB extension fields are restored afterward where possible. Omitting the option preserves automatic detection and existing round-trip behavior.
 
 <a id="end-to-end-ae2json-flow"></a>
 ## End-To-End ae2json Flow
@@ -534,7 +538,7 @@ Column planning scans every path before rendering rows. Repeated visible labels 
 
 `AEConstructor._detect_ae_technology()` reads platform technology/title, library source/strategy/selection, sample type, series text, sample text, channel text, file extensions, and SRA relations. `SDRFConstructor._detect_sdrf_technology()` remains available for direct SDRF callers, but delegates to the AE constructor detector.
 
-Detected handler keys:
+Selectable handler keys are defined once by `PLATFORM_HANDLER_KEYS`:
 
 ```text
 plate_single_cell_sequencing
@@ -544,9 +548,12 @@ tenx_v3_droplet_single_cell_sequencing
 single_cell_sequencing
 spatial_sequencing
 bulk_sequencing
+sequencing
 array
 generic
 ```
+
+`single_cell_sequencing` and `sequencing` are supported manual dispatch keys even though the current detector normally returns a more specific single-cell variant or `bulk_sequencing`. Unknown keys are rejected by the CLIs and direct `AEConstructor.miniml2magetab()` calls. `--list-platform-handlers` prints this catalog in the displayed order.
 
 Detection rules in broad order:
 
@@ -668,6 +675,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Adds mutually exclusive `--remove-empty` and `--keep-empty` options.
 - Adds `--out`, defaulting to `"."`.
 - Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
+- `geo2ae` and `json2ae` add mutually exclusive `--platform-handler` and `--list-platform-handlers`; list mode runs without positional inputs or converter construction.
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
 - `json2ae` accepts one or more parsed JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
@@ -690,13 +698,14 @@ This section lists public and semi-public callables used by tests or by package 
 - The class inherits `JSONHandler`, though the converter path does not currently rely on inherited helper methods.
 - `__init__(enricher=None, geo_fetcher=None, parser=None)` accepts enrichment, GEO fetcher, and parser dependencies. Defaults are `MINiMLEnricher()`, `GEOWebFetcher()`, and `GEOParser(geo_fetcher=self.geo_fetcher)`.
 
-`convert(gse, related_series=False, remove_empty=True, out=None)`
+`convert(gse, related_series=False, remove_empty=True, out=None, platform_handler=None)`
 
 - Fetches MINiML with `self.geo_fetcher.fetch_gse_miniml(gse=gse)`.
 - Parses with `self.parser.parse(miniml, remove_empty=remove_empty, related_series=related_series)`.
 - Enriches each parsed package with `self.enricher.enrich(data=meta_json)`.
 - Instantiates one `AEConstructor`.
 - Converts each enriched package to a MAGE-TAB payload.
+- Passes a non-`None` `platform_handler` through to `AEConstructor.miniml2magetab()`.
 - Writes each payload when `out` is truthy.
 - Returns the list of MAGE-TAB payloads.
 
@@ -715,9 +724,10 @@ This section lists public and semi-public callables used by tests or by package 
 `class json2ae(JSONHandler)`
 
 - `__init__(enricher=None, ae_constructor=None)` accepts injectable enrichment and MAGE-TAB construction collaborators.
-- `convert(json_path, out=None, enrich=True) -> list[list]` accepts the exact package-list form written by `geo2json` or one package object.
+- `convert(json_path, out=None, enrich=True, platform_handler=None) -> list[list]` accepts the exact package-list form written by `geo2json` or one package object.
 - Validates the entire top-level shape, package types, and study accessions before invoking collaborators. Non-GEO accessions are accepted; `GSE...` values retain numeric validation.
 - Enriches packages by default; `enrich=False` preserves the supplied metadata and avoids enrichment calls.
+- Passes a non-`None` `platform_handler` through to `AEConstructor.miniml2magetab()`.
 - Builds all MAGE-TAB payloads in input order, then writes each through the shared `AEConstructor` when `out` is truthy.
 - Returns the ordered in-memory MAGE-TAB payload list.
 
@@ -996,10 +1006,11 @@ Current caveats:
 - Accepts dependency injection for tests or custom constructors.
 - Defaults to `IDFConstructor()` and `SDRFConstructor()`.
 
-`miniml2magetab(data) -> list`
+`miniml2magetab(data, platform_handler=None) -> list`
 
 - Creates a `ProtocolRegistry` from `_series_accession(data)`.
-- Detects the shared MAGE-TAB technology key with `_detect_ae_technology(data)`.
+- Validates a supplied platform-handler key against `PLATFORM_HANDLER_KEYS`, or detects the shared MAGE-TAB technology key with `_detect_ae_technology(data)` when omitted.
+- Forced mode skips unchanged round-trip and typed-model-only shortcuts so both selected handlers execute.
 - Builds SDRF first so protocol refs are registered.
 - Builds IDF with the same registry and technology key.
 - Replaces the first `SDRF File` row with the in-memory SDRF table.
