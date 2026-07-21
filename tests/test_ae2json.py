@@ -301,7 +301,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertNotIn("Extract Name", rendered[0])
         self.assertEqual("edited", rendered[1][1])
         self.assertEqual("edited", rendered[2][1])
-        self.assertEqual("", rendered[3][1])
+        self.assertEqual("old", rendered[3][1])
         self.assertEqual("regulatory T cell", rendered[1][2])
         self.assertEqual("regulatory T cell", rendered[2][2])
         self.assertEqual("", rendered[3][2])
@@ -356,6 +356,26 @@ class TestAE2JSONConverter(unittest.TestCase):
             ["sample-1", "10", "year", "20", "month", "adult", "EFO", "EFO:0001272", "P-1"],
             rendered[1],
         )
+
+    def test_overlay_leaves_ambiguous_inserted_values_blank(self):
+        model = [
+            ["Source Name", "Protocol REF"],
+            ["sample-1", "P-1"],
+        ]
+        core = [
+            ["Source Name", "Characteristics[hz_disease]", "Protocol REF"],
+            ["sample-1", "disease-a", "P-generated"],
+            ["sample-1", "disease-b", "P-generated"],
+        ]
+
+        result = overlay_core([["SDRF File", model]], [["SDRF File", core]])
+        rendered = result[0][1]
+
+        self.assertEqual(
+            ["Source Name", "Characteristics[hz_disease]", "Protocol REF"],
+            rendered[0],
+        )
+        self.assertEqual(["sample-1", "", "P-1"], rendered[1])
 
     def test_recognizes_all_generated_single_cell_comment_headers(self):
         generated_headers = (
