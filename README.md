@@ -239,7 +239,7 @@ json2ae --list-platform-handlers
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-`json2ae` validates all packages before converting any of them. If the input came from `ae2json`, an unchanged single-SDRF package can reproduce its original tables exactly; edits to the typed `mage_tab.model` or mapped core fields regenerate the relevant MAGE-TAB content.
+`json2ae` validates all packages before converting any of them. If the input came from `ae2json`, an unchanged single-SDRF package can reproduce its original tables exactly; edits to the typed `mage_tab.model` or mapped core fields regenerate the relevant MAGE-TAB content. During regeneration, mapped core content is overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF columns are inserted while model-only rows, assay paths, node columns, and `Protocol REF` columns remain authoritative. This lets curator-added fields such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`, and `Characteristics[hz_cell_type_onto]` survive as separate columns. Duplicate SDRF headers are matched by normalized label and occurrence, and values are copied only when source/sample/run identity gives one unambiguous value; otherwise existing model content is retained and newly inserted cells stay blank.
 
 #### `ae2json`
 
@@ -356,7 +356,7 @@ magetabs = json2ae().convert(
 )
 ```
 
-`json2ae.convert(json_path, out=None, enrich=True, platform_handler=None)` accepts a package object or package list and returns ordered MAGE-TAB payloads. Forcing a handler regenerates IDF/SDRF content instead of reusing unchanged round-trip tables or a typed-model-only rendering.
+`json2ae.convert(json_path, out=None, enrich=True, platform_handler=None)` accepts a package object or package list and returns ordered MAGE-TAB payloads. Forcing a handler regenerates IDF/SDRF content instead of reusing unchanged round-trip tables or a typed-model-only rendering. Regeneration unions eligible mapped core IDF rows and non-structural SDRF columns into the typed model, including separate harmonized `hz_*`, `hz_*_id`, and `hz_*_onto` characteristic columns when present.
 
 Convert MAGE-TAB to parsed JSON:
 

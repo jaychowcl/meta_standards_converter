@@ -40,7 +40,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: end-to-end-json2ae-flow
   title: End-To-End json2ae Flow
   anchor: end-to-end-json2ae-flow
-  keywords: json2ae, parsed JSON, package object, package list, validation, enrichment, IDF, SDRF, MAGE-TAB
+  keywords: json2ae, parsed JSON, package object, package list, validation, enrichment, IDF, SDRF, MAGE-TAB, overlay, keyed union, harmonized fields
 
 - id: end-to-end-ae2json-flow
   title: End-To-End ae2json Flow
@@ -174,12 +174,12 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: ae-roundtrip
   title: AE round-trip sidecar
   anchor: ae-roundtrip
-  keywords: mage_tab, roundtrip, fingerprint, SHA-256, source tables, JSON precedence, lossless, sidecar-only metadata, fixed JSON shape
+  keywords: mage_tab, roundtrip, fingerprint, SHA-256, source tables, JSON precedence, lossless, sidecar-only metadata, fixed JSON shape, overlay, keyed union
 
 - id: typed-mage-tab-model
   title: Typed editable MAGE-TAB model
   anchor: typed-mage-tab-model
-  keywords: mage_tab.model, protocols, declarations, assay paths, units, ontology, multiplicity, model fingerprint, editable extension
+  keywords: mage_tab.model, protocols, declarations, assay paths, units, ontology, multiplicity, model fingerprint, editable extension, overlay, keyed union, duplicate occurrence, harmonized hz fields, ambiguous alignment
 
 - id: geo-parser
   title: GEO parser
