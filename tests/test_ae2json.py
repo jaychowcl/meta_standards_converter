@@ -22,7 +22,7 @@ if SRC not in sys.path:
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_model import render_model  # noqa: E402
+from meta_standards_converter.ae_handlers.ae_model import overlay_core, render_model  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_parser import AEParser  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
@@ -201,6 +201,161 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual(2, len(rendered_sdrf) - 1)
         self.assertEqual(["assay-1", "assay-2"], [row[2] for row in rendered_sdrf[1:]])
         self.assertEqual("edited-scan-2", rendered_sdrf[2][4])
+
+    def test_core_harmonization_columns_are_unioned_while_model_preserves_multiplicity(self):
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input()
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package["sample"][0]["channel"][0]["characteristics"].extend(
+            [
+                {"tag": "hz_cell_type", "value": "regulatory T cell"},
+                {"tag": "hz_cell_type_id", "value": "CL:0000815"},
+                {"tag": "hz_cell_type_onto", "value": "cl"},
+            ]
+        )
+
+        magetab = AEConstructor().miniml2magetab(package)
+        rendered_sdrf = next(row[1] for row in magetab if row[0] == "SDRF File")
+
+        for label, value in (
+            ("Characteristics[hz_cell_type]", "regulatory T cell"),
+            ("Characteristics[hz_cell_type_id]", "CL:0000815"),
+            ("Characteristics[hz_cell_type_onto]", "cl"),
+        ):
+            with self.subTest(label=label):
+                index = rendered_sdrf[0].index(label)
+                self.assertEqual([value, value], [row[index] for row in rendered_sdrf[1:]])
+        self.assertEqual(2, len(rendered_sdrf) - 1)
+        self.assertIn("Mystery Column", rendered_sdrf[0])
+
+    def test_overlay_unions_allowlisted_idf_rows_and_nonstructural_sdrf_columns(self):
+        model_sdrf = [
+            ["Source Name", "Characteristics[disease]", "Protocol REF", "Assay Name", "Mystery Column"],
+            ["sample-1", "old", "P-1", "assay-1", "keep-1"],
+            ["sample-1", "old", "P-1", "assay-2", "keep-2"],
+            ["sample-2", "old", "P-1", "assay-3", "keep-3"],
+        ]
+        core_sdrf = [
+            [
+                "Source Name",
+                "Characteristics[disease]",
+                "Characteristics[hz_cell_type]",
+                "Characteristics[hz_cell_type_id]",
+                "Characteristics[hz_cell_type_onto]",
+                "Extract Name",
+                "Protocol REF",
+                "Assay Name",
+            ],
+            [
+                "sample-1",
+                "edited",
+                "regulatory T cell",
+                "CL:0000815",
+                "cl",
+                "extract-1",
+                "P-generated",
+                "generated-assay",
+            ],
+        ]
+        model = [
+            ["MAGE-TAB Version", "1.1"],
+            ["Investigation Accession", "E-MTAB-1"],
+            ["Mystery Row", "keep me"],
+            ["SDRF File", model_sdrf],
+        ]
+        core = [
+            ["Investigation Accession", "E-MTAB-1"],
+            ["Experiment Description", "Edited description"],
+            ["Generated Custom Row", "drop me"],
+            ["SDRF File", core_sdrf],
+        ]
+
+        result = overlay_core(model, core)
+        labels = [row[0] for row in result]
+        rendered = next(row[1] for row in result if row[0] == "SDRF File")
+
+        self.assertEqual(
+            [
+                "MAGE-TAB Version",
+                "Investigation Accession",
+                "Mystery Row",
+                "Experiment Description",
+                "SDRF File",
+            ],
+            labels,
+        )
+        self.assertNotIn("Generated Custom Row", labels)
+        self.assertEqual(
+            [
+                "Source Name",
+                "Characteristics[disease]",
+                "Characteristics[hz_cell_type]",
+                "Characteristics[hz_cell_type_id]",
+                "Characteristics[hz_cell_type_onto]",
+                "Protocol REF",
+                "Assay Name",
+                "Mystery Column",
+            ],
+            rendered[0],
+        )
+        self.assertNotIn("Extract Name", rendered[0])
+        self.assertEqual("edited", rendered[1][1])
+        self.assertEqual("edited", rendered[2][1])
+        self.assertEqual("", rendered[3][1])
+        self.assertEqual("regulatory T cell", rendered[1][2])
+        self.assertEqual("regulatory T cell", rendered[2][2])
+        self.assertEqual("", rendered[3][2])
+        self.assertEqual(["assay-1", "assay-2", "assay-3"], [row[6] for row in rendered[1:]])
+        self.assertEqual(["keep-1", "keep-2", "keep-3"], [row[7] for row in rendered[1:]])
+
+    def test_overlay_matches_repeated_headers_by_occurrence_and_inserts_companion_group(self):
+        model = [
+            [
+                "Source Name",
+                "Characteristics[age]",
+                "Unit",
+                "Characteristics[age]",
+                "Unit",
+                "Protocol REF",
+            ],
+            ["sample-1", "old-1", "old-unit-1", "old-2", "old-unit-2", "P-1"],
+        ]
+        core = [
+            [
+                "Source Name",
+                "Characteristics[age]",
+                "Unit",
+                "Characteristics[age]",
+                "Unit",
+                "Characteristics[hz_age]",
+                "Term Source REF",
+                "Term Accession Number",
+                "Protocol REF",
+            ],
+            ["sample-1", "10", "year", "20", "month", "adult", "EFO", "EFO:0001272", "P-2"],
+        ]
+
+        result = overlay_core([["SDRF File", model]], [["SDRF File", core]])
+        rendered = result[0][1]
+
+        self.assertEqual(
+            [
+                "Source Name",
+                "Characteristics[age]",
+                "Unit",
+                "Characteristics[age]",
+                "Unit",
+                "Characteristics[hz_age]",
+                "Term Source REF",
+                "Term Accession Number",
+                "Protocol REF",
+            ],
+            rendered[0],
+        )
+        self.assertEqual(
+            ["sample-1", "10", "year", "20", "month", "adult", "EFO", "EFO:0001272", "P-1"],
+            rendered[1],
+        )
 
     def test_recognizes_all_generated_single_cell_comment_headers(self):
         generated_headers = (
