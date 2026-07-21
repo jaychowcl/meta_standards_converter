@@ -56,38 +56,6 @@ docker build -t meta-standards-converter .
 
 The Python metadata converters do not require Docker. The project image supplies the scientific and workflow dependencies needed by `json2h5ad`, but raw Docker-profile processing also requires access to a Docker daemon.
 
-## Configuration
-
-The package has no mandatory application config file. Configure conversions with CLI flags or the equivalent Python `convert()` keyword arguments; use files only for detailed asset mappings, nf-core parameters, or Nextflow infrastructure settings.
-
-| Area | CLI / Python configuration | Default |
-| --- | --- | --- |
-| Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
-| Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
-| Remote enrichment | `--no-enrich` / `enrich=False` | PubMed and SRA/ENA enrichment enabled |
-| MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
-| Output location | `--out` / `out` | Current directory |
-| Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING and above to stdout |
-| H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
-| Matrix orientation | `--matrix-orientation` / `matrix_orientation` | `auto`; ambiguous delimited matrices fail |
-| Raw pipeline | `--pipeline` / `pipeline` | `auto` modality detection |
-| Reference | `--genome`, or `--fasta` with `--gtf`/`--gff` | Explicitly accepted human/mouse inference when available |
-| Nextflow | `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, `--resume` | Docker profile and pinned pipeline revision |
-| Existing H5AD outputs | `--overwrite` / `overwrite=True` | Protect existing outputs |
-
-For detailed H5AD source configuration, `--asset-manifest` accepts CSV or TSV. `scope_id` and `path` are required; supported optional columns are `kind`, `role`, `read`, `lane`, `run`, `md5`, `features_path`, `barcodes_path`, and `orientation`.
-
-```csv
-scope_id,path,kind,role,read,lane,md5,orientation
-GSM9651991,/data/GSM9651991.h5ad,h5ad,primary,,,,
-GSM9651992,https://example.org/GSM9651992_R1.fastq.gz,raw,primary,1,L001,,
-GSM9651992,https://example.org/GSM9651992_R2.fastq.gz,raw,primary,2,L001,,
-```
-
-Reference combinations accepted for raw processing are `--genome GENOME`, `--genome GENOME` with one annotation override, or `--fasta FASTA` with exactly one of `--gtf GTF` and `--gff GFF`. GFF/GFF3 is converted to a checksum-addressed GTF. A JSON object supplied through `--params-file` is merged into nf-core parameters, but converter-owned input, output, and reference values take precedence; `--nextflow-config` is reserved for resource and infrastructure configuration.
-
-The rootless Compose helper derives `DOCKER_HOST`, `ROOTLESS_DOCKER_SOCKET`, and its runtime paths. Set `JSON2H5AD_OUT` only when overriding the default `.out/json2h5ad` tree. Compose sets `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1`, causing Docker-profile raw processing to fail before Nextflow starts unless the connected daemon reports rootless security mode.
-
 ## Quickstart
 
 ### CLI quickstart
@@ -142,6 +110,58 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds `mage_tab.model`, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, normalized `msc_*` observation metadata, flattened MINiML metadata in `uns["msc_miniml"]`, and conversion provenance.
 
 ## Guide
+
+### Configuration
+
+The package has no mandatory application config file. Configure conversions with CLI flags or the equivalent Python `convert()` keyword arguments; use files only for detailed asset mappings, nf-core parameters, or Nextflow infrastructure settings.
+
+| Area | CLI / Python configuration | Default |
+| --- | --- | --- |
+| Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
+| Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
+| Remote enrichment | `--no-enrich` / `enrich=False` | PubMed and SRA/ENA enrichment enabled |
+| MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
+| Output location | `--out` / `out` | Current directory |
+| Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING and above to stdout |
+| H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
+| Matrix orientation | `--matrix-orientation` / `matrix_orientation` | `auto`; ambiguous delimited matrices fail |
+| Raw pipeline | `--pipeline` / `pipeline` | `auto` modality detection |
+| Reference | `--genome`, or `--fasta` with `--gtf`/`--gff` | Explicitly accepted human/mouse inference when available |
+| Nextflow | `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, `--resume` | Docker profile and pinned pipeline revision |
+| Existing H5AD outputs | `--overwrite` / `overwrite=True` | Protect existing outputs |
+
+#### Platform handlers
+
+`geo2ae` and `json2ae` detect the MAGE-TAB platform handler from study metadata by default. Use `--platform-handler KEY` (or the Python `platform_handler` argument) to force a handler, and run either command with `--list-platform-handlers` to print the authoritative runtime catalog.
+
+The following graph shows the conceptual specialization of the selectable handlers. It is not the literal inheritance tree of the private IDF and SDRF implementation classes.
+
+```mermaid
+flowchart TD
+    platform[platform handler] --> generic[generic]
+    platform --> array[array]
+    platform --> sequencing[sequencing]
+    sequencing --> bulk[bulk_sequencing]
+    sequencing --> single_cell[single_cell_sequencing]
+    single_cell --> plate[plate_single_cell_sequencing]
+    single_cell --> droplet[droplet_single_cell_sequencing]
+    single_cell --> spatial[spatial_sequencing]
+    droplet --> tenx_v2[tenx_v2_droplet_single_cell_sequencing]
+    droplet --> tenx_v3[tenx_v3_droplet_single_cell_sequencing]
+```
+
+For detailed H5AD source configuration, `--asset-manifest` accepts CSV or TSV. `scope_id` and `path` are required; supported optional columns are `kind`, `role`, `read`, `lane`, `run`, `md5`, `features_path`, `barcodes_path`, and `orientation`.
+
+```csv
+scope_id,path,kind,role,read,lane,md5,orientation
+GSM9651991,/data/GSM9651991.h5ad,h5ad,primary,,,,
+GSM9651992,https://example.org/GSM9651992_R1.fastq.gz,raw,primary,1,L001,,
+GSM9651992,https://example.org/GSM9651992_R2.fastq.gz,raw,primary,2,L001,,
+```
+
+Reference combinations accepted for raw processing are `--genome GENOME`, `--genome GENOME` with one annotation override, or `--fasta FASTA` with exactly one of `--gtf GTF` and `--gff GFF`. GFF/GFF3 is converted to a checksum-addressed GTF. A JSON object supplied through `--params-file` is merged into nf-core parameters, but converter-owned input, output, and reference values take precedence; `--nextflow-config` is reserved for resource and infrastructure configuration.
+
+The rootless Compose helper derives `DOCKER_HOST`, `ROOTLESS_DOCKER_SOCKET`, and its runtime paths. Set `JSON2H5AD_OUT` only when overriding the default `.out/json2h5ad` tree. Compose sets `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1`, causing Docker-profile raw processing to fail before Nextflow starts unless the connected daemon reports rootless security mode.
 
 ### CLI
 

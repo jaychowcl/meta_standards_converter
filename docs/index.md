@@ -90,7 +90,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: test-plan
   title: Test Plan
   anchor: test-plan
-  keywords: tests, unittest, acceptance, coverage, README, configuration, quickstart, CLI option contract, documentation links
+  keywords: tests, unittest, acceptance, coverage, README, Guide, configuration, platform handler hierarchy, Mermaid, quickstart, CLI option contract, documentation links
 
 ## Workflow Sections
 
@@ -117,7 +117,7 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: technology-handler-selection
   title: Technology Handler Selection
   anchor: technology-handler-selection
-  keywords: technology, handlers, platform handler, force, list, CLI, sequencing, array, generic, 10x, v2, v3
+  keywords: technology, handlers, platform handler, force, list, CLI, README, Guide, Mermaid, hierarchy, sequencing, array, generic, 10x, v2, v3
 
 - id: sequencing-sdrf-flow
   title: Sequencing SDRF Flow
