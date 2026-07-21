@@ -12,6 +12,8 @@ import subprocess
 import unittest
 from pathlib import Path
 
+from meta_standards_converter.ae_handlers.ae_constructor import PLATFORM_HANDLER_KEYS
+
 try:
     import tomllib
 except ModuleNotFoundError:
@@ -88,7 +90,6 @@ class DocsIndexTests(unittest.TestCase):
             "## Description",
             "## Installation",
             "### Requirements",
-            "## Configuration",
             "## Quickstart",
             "### CLI quickstart",
             "### Python API quickstart",
@@ -96,6 +97,7 @@ class DocsIndexTests(unittest.TestCase):
             "### Rootless Docker Compose quickstart",
             "### Inputs & Outputs",
             "## Guide",
+            "### Configuration",
             "### CLI",
             "### Python API",
             "### Docker",
@@ -112,6 +114,22 @@ class DocsIndexTests(unittest.TestCase):
             positions.append(lines.index(heading))
 
         self.assertEqual(sorted(positions), positions)
+        self.assertNotIn("## Configuration", lines)
+
+    def test_readme_configuration_documents_platform_handler_hierarchy(self):
+        readme_text = README.read_text(encoding="utf-8")
+        match = re.search(
+            r"^#### Platform handlers\s*$\n(?P<section>.*?)(?=^#### |^### |\Z)",
+            readme_text,
+            re.MULTILINE | re.DOTALL,
+        )
+
+        self.assertIsNotNone(match)
+        section = match.group("section")
+        self.assertIn("```mermaid", section)
+        self.assertIn("--list-platform-handlers", section)
+        for handler_key in PLATFORM_HANDLER_KEYS:
+            self.assertIn(handler_key, section)
 
     def test_readme_quickstarts_link_to_each_interface_guide(self):
         readme_text = README.read_text(encoding="utf-8")
