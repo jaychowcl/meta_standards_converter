@@ -202,7 +202,7 @@ def render_model(model: dict) -> list | None:
 
 
 def overlay_core(model_rows: list, core_rows: list) -> list:
-    """Apply exact MINiML projections while retaining model-only graph information."""
+    """Union MINiML projections into model tables while preserving model structure."""
     result = copy.deepcopy(model_rows)
     replace_labels = {
         _normalized(label)
@@ -228,6 +228,7 @@ def overlay_core(model_rows: list, core_rows: list) -> list:
         label = _normalized(row[0]) if row else ""
         if label in replace_labels and label in core_by_label:
             result[index] = copy.deepcopy(core_by_label[label])
+    _insert_missing_idf_rows(result, core_rows, replace_labels)
 
     model_sdrf_index = _sdrf_index(result)
     core_sdrf_index = _sdrf_index(core_rows)
@@ -463,26 +464,108 @@ def _overlay_protocol_rows(model_rows: list, core_rows: list) -> None:
 
 
 def _overlay_sdrf(model: list[list], core: list[list]) -> None:
+    _insert_missing_sdrf_columns(model, core)
     model_header, core_header = model[0], core[0]
-    core_indexes = {_normalized(label): index for index, label in enumerate(core_header)}
+    model_keys = _header_keys(model_header)
+    core_indexes = {key: index for index, key in enumerate(_header_keys(core_header))}
     protected = {_normalized(label) for label in NODE_HEADERS | {"Protocol REF"}}
-    core_rows_by_identity = {}
-    for row in core[1:]:
-        for identity in _identities(core_header, row):
-            core_rows_by_identity.setdefault(identity, row)
+    core_rows_by_identity = _rows_by_identity(core_header, core[1:])
     for row in model[1:]:
-        core_row = next(
-            (core_rows_by_identity[value] for value in _identities(model_header, row) if value in core_rows_by_identity),
-            None,
+        core_rows = _matching_core_rows(
+            model_header,
+            row,
+            core[1:],
+            core_rows_by_identity,
         )
-        if core_row is None:
+        if not core_rows:
             continue
-        for model_index, label in enumerate(model_header):
-            key = _normalized(label)
+        for model_index, key in enumerate(model_keys):
             core_index = core_indexes.get(key)
-            if key in protected or core_index is None or core_index >= len(core_row):
+            if key[0] in protected or core_index is None:
                 continue
-            row[model_index] = core_row[core_index]
+            values = {
+                core_row[core_index]
+                for core_row in core_rows
+                if core_index < len(core_row)
+            }
+            if len(values) == 1:
+                row[model_index] = values.pop()
+
+
+def _insert_missing_idf_rows(
+    model_rows: list[list],
+    core_rows: list[list],
+    allowed_labels: set[str],
+) -> None:
+    core_keys = [_normalized(row[0]) if row else "" for row in core_rows]
+    model_keys = [_normalized(row[0]) if row else "" for row in model_rows]
+    for core_index, row in enumerate(core_rows):
+        key = core_keys[core_index]
+        if not row or key not in allowed_labels or key in model_keys:
+            continue
+        insert_at = _anchored_insert_index(model_keys, core_keys, core_index)
+        model_rows.insert(insert_at, copy.deepcopy(row))
+        model_keys.insert(insert_at, key)
+
+
+def _insert_missing_sdrf_columns(model: list[list], core: list[list]) -> None:
+    model_header, core_header = model[0], core[0]
+    model_keys = _header_keys(model_header)
+    core_keys = _header_keys(core_header)
+    protected = {_normalized(label) for label in NODE_HEADERS | {"Protocol REF"}}
+    for core_index, key in enumerate(core_keys):
+        if not key[0] or key[0] in protected or key in model_keys:
+            continue
+        insert_at = _anchored_insert_index(model_keys, core_keys, core_index)
+        model_header.insert(insert_at, core_header[core_index])
+        for row in model[1:]:
+            row.insert(insert_at, "")
+        model_keys.insert(insert_at, key)
+
+
+def _anchored_insert_index(current_keys: list, source_keys: list, source_index: int) -> int:
+    for key in source_keys[source_index + 1:]:
+        if key in current_keys:
+            return current_keys.index(key)
+    for key in reversed(source_keys[:source_index]):
+        if key in current_keys:
+            return len(current_keys) - current_keys[::-1].index(key)
+    return len(current_keys)
+
+
+def _header_keys(header: list) -> list[tuple[str, int]]:
+    occurrences = {}
+    keys = []
+    for label in header:
+        normalized = _normalized(label)
+        occurrences[normalized] = occurrences.get(normalized, 0) + 1
+        keys.append((normalized, occurrences[normalized]))
+    return keys
+
+
+def _rows_by_identity(header: list, rows: list[list]) -> dict[str, set[int]]:
+    result = {}
+    for index, row in enumerate(rows):
+        for identity in set(_identities(header, row)):
+            result.setdefault(identity, set()).add(index)
+    return result
+
+
+def _matching_core_rows(
+    model_header: list,
+    model_row: list,
+    core_rows: list[list],
+    rows_by_identity: dict[str, set[int]],
+) -> list[list]:
+    candidates = None
+    for identity in dict.fromkeys(_identities(model_header, model_row)):
+        indexes = rows_by_identity.get(identity)
+        if not indexes:
+            continue
+        candidates = set(indexes) if candidates is None else candidates & indexes
+    if not candidates:
+        return []
+    return [core_rows[index] for index in sorted(candidates)]
 
 
 def _identities(header: list, row: list) -> list[str]:

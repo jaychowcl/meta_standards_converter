@@ -199,8 +199,10 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual("Edited core title", rows_by_label["Investigation Title"][1])
         self.assertEqual(2, len(rendered_sdrf) - 1)
-        self.assertEqual(["assay-1", "assay-2"], [row[2] for row in rendered_sdrf[1:]])
-        self.assertEqual("edited-scan-2", rendered_sdrf[2][4])
+        assay_index = rendered_sdrf[0].index("Assay Name")
+        scan_index = rendered_sdrf[0].index("Scan Name")
+        self.assertEqual(["assay-1", "assay-2"], [row[assay_index] for row in rendered_sdrf[1:]])
+        self.assertEqual("edited-scan-2", rendered_sdrf[2][scan_index])
 
     def test_core_harmonization_columns_are_unioned_while_model_preserves_multiplicity(self):
         fetcher = MagicMock()
