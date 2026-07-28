@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meta-standards-converter"
-version = "1.0"
+version = "1.1.0"
 description = "Converter between standards for different biological metadata repositories."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -64,6 +64,8 @@ geo2ae = "meta_standards_converter.cli.geo2ae:main"
 geo2json = "meta_standards_converter.cli.geo2json:main"
 json2ae = "meta_standards_converter.cli.json2ae:main"
 json2h5ad = "meta_standards_converter.cli.json2h5ad:main"
+json2tsv = "meta_standards_converter.cli.json2tsv:main"
+json2csv = "meta_standards_converter.cli.json2csv:main"
 
 [tool.setuptools.package-dir]
 "" = "src"

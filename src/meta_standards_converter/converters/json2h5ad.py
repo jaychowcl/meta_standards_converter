@@ -30,9 +30,16 @@ from urllib.parse import urlparse
 import requests
 
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+from .json_source import JSONPackageSource
 
 
 logger = logging.getLogger(__name__)
+
+_TENX_MEMBER = re.compile(
+    r"^(?P<prefix>.+?)[._](?P<role>"
+    r"matrix\.mtx|barcodes\.tsv|genes\.tsv|features\.tsv)$",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -266,6 +273,21 @@ class ConversionResult:
 
     def __str__(self) -> str:
         return self.primary_h5ad or self.manifest_path or self.study_accession
+
+
+@dataclass
+class BatchConversionResult:
+    """Per-study conversions and diagnostics for one JSON source."""
+
+    conversions: dict[str, ConversionResult] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    failures: list[str] = field(default_factory=list)
+
+    @property
+    def partial(self) -> bool:
+        return bool(self.failures) or any(
+            result.partial for result in self.conversions.values()
+        )
 
 
 @dataclass
@@ -809,6 +831,7 @@ class SourcePlanner:
     ) -> dict[str, Asset]:
         assets = self.discover(packages)
         assets.extend(explicit_assets or [])
+        assets = self._group_10x_assets(assets)
         assets = self._coalesce_raw_assets(assets)
         samples = self.samples(packages)
         study_by_sample = self._study_by_sample(packages)
@@ -836,6 +859,50 @@ class SourcePlanner:
                 ),
             )
         return planned
+
+    def _group_10x_assets(self, assets: list[Asset]) -> list[Asset]:
+        groups: dict[
+            tuple[str, str, str], dict[str, tuple[int, Asset]]
+        ] = {}
+        for index, asset in enumerate(assets):
+            member = _tenx_member(asset.path)
+            if member is None:
+                continue
+            prefix, role = member
+            groups.setdefault(
+                (asset.scope_id, prefix, asset.source), {}
+            )[role] = (index, asset)
+        complete = {
+            key: members
+            for key, members in groups.items()
+            if {"matrix", "barcodes", "features"} <= set(members)
+        }
+        member_groups = {
+            index: key
+            for key, members in complete.items()
+            for index, _asset in members.values()
+        }
+        emitted: set[tuple[str, str, str]] = set()
+        result: list[Asset] = []
+        for index, asset in enumerate(assets):
+            key = member_groups.get(index)
+            if key is None:
+                result.append(asset)
+                continue
+            if key in emitted:
+                continue
+            emitted.add(key)
+            members = complete[key]
+            matrix = members["matrix"][1]
+            result.append(
+                replace(
+                    matrix,
+                    role="10x_mtx",
+                    barcodes_path=members["barcodes"][1].path,
+                    features_path=members["features"][1].path,
+                )
+            )
+        return result
 
     def _coalesce_raw_assets(self, assets: list[Asset]) -> list[Asset]:
         retained = [asset for asset in assets if asset.kind != "raw"]
@@ -1036,11 +1103,13 @@ class JSON2H5ADConverter:
         pipeline_runner: NFCoreRunner | None = None,
         downloader: AssetDownloader | None = None,
         metadata_projectors: Sequence[AnnDataMetadataProjector] | None = None,
+        package_source: JSONPackageSource | None = None,
     ):
         self.planner = planner or SourcePlanner()
         self.pipeline_runner = pipeline_runner or NFCoreRunner()
         self.downloader = downloader
         self.metadata_projectors = tuple(metadata_projectors or ())
+        self.package_source = package_source or JSONPackageSource()
 
     def convert(
         self,
@@ -1065,15 +1134,123 @@ class JSON2H5ADConverter:
         work_dir: str | None = None,
         resume: bool = False,
         **options,
-    ) -> ConversionResult:
+    ) -> ConversionResult | BatchConversionResult:
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"MINiML JSON file not found: {json_path}")
-        with open(json_path, encoding="utf-8") as handle:
-            packages = json.load(handle)
-        if not isinstance(packages, list) or not packages:
-            raise ValueError("Parsed MINiML JSON must contain a non-empty list of packages.")
+        loaded = self.package_source.load(json_path)
+        if not loaded.groups:
+            raise ValueError("JSON source contains no convertible package groups.")
+        conversion_options = dict(
+            explicit_assets=explicit_assets,
+            asset_manifest=asset_manifest,
+            asset_specs=asset_specs,
+            force_reprocess=force_reprocess,
+            matrix_orientation=matrix_orientation,
+            overwrite=overwrite,
+            pipeline=pipeline,
+            genome=genome,
+            fasta=fasta,
+            gtf=gtf,
+            gff=gff,
+            accept_inferred_reference=accept_inferred_reference,
+            profile=profile,
+            revision=revision,
+            params_file=params_file,
+            nextflow_config=nextflow_config,
+            work_dir=work_dir,
+            resume=resume,
+            **options,
+        )
+        if len(loaded.groups) > 1:
+            return self._convert_groups(
+                loaded,
+                source_json=json_path,
+                out=out,
+                **conversion_options,
+            )
+        result = self._convert_packages(
+            list(loaded.groups[0].packages),
+            source_json=json_path,
+            out=out,
+            **conversion_options,
+        )
+        for warning in loaded.warnings:
+            if warning not in result.warnings:
+                result.warnings.append(warning)
+        return result
 
-        study_accession = self._study_accession(packages) or Path(json_path).stem
+    def convert_source(
+        self,
+        json_path: str,
+        out: str | None = None,
+        **options,
+    ) -> BatchConversionResult:
+        if not os.path.exists(json_path):
+            raise FileNotFoundError(f"JSON file not found: {json_path}")
+        loaded = self.package_source.load(json_path)
+        if not loaded.groups:
+            raise ValueError("JSON source contains no convertible package groups.")
+        return self._convert_groups(
+            loaded,
+            source_json=json_path,
+            out=out,
+            **options,
+        )
+
+    def _convert_groups(
+        self,
+        loaded,
+        *,
+        source_json: str,
+        out: str | None,
+        **options,
+    ) -> BatchConversionResult:
+        result = BatchConversionResult(warnings=list(loaded.warnings))
+        root = Path(out or ".")
+        multiple = len(loaded.groups) > 1
+        for group in loaded.groups:
+            group_out = root / group.dataset_id if multiple else root
+            try:
+                converted = self._convert_packages(
+                    list(group.packages),
+                    source_json=source_json,
+                    out=str(group_out),
+                    **options,
+                )
+            except Exception as error:
+                result.failures.append(f"{group.dataset_id}: {error}")
+                continue
+            result.conversions[group.dataset_id] = converted
+        return result
+
+    def _convert_packages(
+        self,
+        packages: list[dict],
+        *,
+        source_json: str,
+        out: str | None = None,
+        explicit_assets: list[Asset] | None = None,
+        asset_manifest: str | None = None,
+        asset_specs: list[str] | None = None,
+        force_reprocess: bool = False,
+        matrix_orientation: str = "auto",
+        overwrite: bool = False,
+        pipeline: str = "auto",
+        genome: str | None = None,
+        fasta: str | None = None,
+        gtf: str | None = None,
+        gff: str | None = None,
+        accept_inferred_reference: bool = False,
+        profile: str = "docker",
+        revision: str | None = None,
+        params_file: str | None = None,
+        nextflow_config: str | None = None,
+        work_dir: str | None = None,
+        resume: bool = False,
+        **options,
+    ) -> ConversionResult:
+
+        study_accession = self._study_accession(packages) or Path(source_json).stem
         out_path = Path(out or ".")
         out_path.mkdir(parents=True, exist_ok=True)
         manifest_handler = AssetManifest()
@@ -1090,8 +1267,8 @@ class JSON2H5ADConverter:
         )
         sample_context = self._sample_context(packages)
         characteristic_columns = self._characteristic_columns(packages)
-        source_json = os.path.abspath(json_path)
-        source_json_sha256 = self._sha256(json_path)
+        source_json = os.path.abspath(source_json)
+        source_json_sha256 = self._sha256(source_json)
         result = ConversionResult(study_accession=study_accession)
         adatas = {}
         projection_contexts: list[MetadataProjectionContext] = []
@@ -1190,7 +1367,9 @@ class JSON2H5ADConverter:
             result.combined_h5ad = str(combined_path)
 
         result.manifest_path = str(out_path / f"{study_accession}.json2h5ad.json")
-        self._write_manifest(result, planned, json_path=json_path, overwrite=overwrite)
+        self._write_manifest(
+            result, planned, json_path=source_json, overwrite=overwrite
+        )
         return result
 
     def _study_accession(self, packages: list[dict]) -> str | None:
@@ -1232,6 +1411,37 @@ class JSON2H5ADConverter:
         return anndata, numpy, pandas, scanpy, sparse
 
     def _read_processed_asset(self, asset: Asset, orientation: str = "auto"):
+        if (
+            self._underlying_suffix(asset.path) == ".mtx"
+            and asset.features_path
+            and asset.barcodes_path
+        ):
+            with tempfile.TemporaryDirectory(prefix="msc-10x-") as directory:
+                prepared = Path(directory)
+                paths = {
+                    "matrix": self._local_path(asset.path, md5=asset.md5),
+                    "barcodes": self._local_path(asset.barcodes_path),
+                    "features": self._local_path(asset.features_path),
+                }
+                legacy = ".genes.tsv" in os.path.basename(
+                    urlparse(str(asset.features_path)).path
+                ).casefold()
+                for role, source in paths.items():
+                    destination = prepared / _tenx_local_name(
+                        role,
+                        asset.features_path if role == "features" else source,
+                        legacy=legacy,
+                    )
+                    _copy_10x_member(source, destination, decompress=legacy)
+                return self._read_processed_asset(
+                    replace(
+                        asset,
+                        path=str(prepared),
+                        features_path=None,
+                        barcodes_path=None,
+                    ),
+                    orientation=orientation,
+                )
         anndata, numpy, pandas, scanpy, sparse = self._scientific_modules()
         path = self._local_path(asset.path, md5=asset.md5)
         if asset.kind == "h5ad":
@@ -2272,3 +2482,49 @@ class JSON2H5ADConverter:
 
 class json2h5ad(JSON2H5ADConverter):
     """Backward-compatible converter name used by the existing console script."""
+
+
+def _tenx_member(value: str) -> tuple[str, str] | None:
+    filename = os.path.basename(urlparse(str(value)).path)
+    for suffix in (".gz", ".bz2", ".xz", ".zip"):
+        if filename.casefold().endswith(suffix):
+            filename = filename[: -len(suffix)]
+            break
+    match = _TENX_MEMBER.fullmatch(filename)
+    if match is None:
+        return None
+    raw_role = match.group("role").casefold()
+    role = (
+        "matrix"
+        if raw_role == "matrix.mtx"
+        else "barcodes"
+        if raw_role == "barcodes.tsv"
+        else "features"
+    )
+    return match.group("prefix").casefold(), role
+
+
+def _tenx_local_name(role: str, source: str, *, legacy: bool) -> str:
+    if legacy:
+        return {
+            "matrix": "matrix.mtx",
+            "barcodes": "barcodes.tsv",
+            "features": "genes.tsv",
+        }[role]
+    filename = os.path.basename(urlparse(str(source)).path).casefold()
+    compressed = ".gz" if filename.endswith(".gz") else ""
+    if role == "matrix":
+        return f"matrix.mtx{compressed}"
+    if role == "barcodes":
+        return f"barcodes.tsv{compressed}"
+    stem = "features" if ".features.tsv" in filename else "genes"
+    return f"{stem}.tsv{compressed}"
+
+
+def _copy_10x_member(source: str, destination: Path, *, decompress: bool) -> None:
+    if decompress and str(source).casefold().endswith(".gz"):
+        with gzip.open(source, "rb") as input_stream:
+            with destination.open("wb") as output_stream:
+                shutil.copyfileobj(input_stream, output_stream)
+        return
+    shutil.copyfile(source, destination)

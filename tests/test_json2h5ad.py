@@ -190,15 +190,15 @@ def test_convert_source_runs_each_atlas_study_independently(tmp_path):
 
     result = converter.convert_source(str(source), out=str(tmp_path / "out"))
 
-    self.assertEqual(["GSE1", "GSE2"], list(result.conversions))
-    self.assertEqual(
+    assert ["GSE1", "GSE2"] == list(result.conversions)
+    assert (
         [
             ("GSE1", "GSE1", "atlas.json"),
             ("GSE2", "GSE2", "atlas.json"),
-        ],
-        calls,
+        ]
+        == calls
     )
-    self.assertFalse(result.partial)
+    assert not result.partial
 
 
 class TestAssetInputs(unittest.TestCase):
