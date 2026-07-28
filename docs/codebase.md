@@ -299,9 +299,11 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
        -> discover scrnaseq H5AD or rnaseq count/TPM matrices
   -> load H5AD (including .h5ad.gz), 10x HDF5, 10x MTX, or delimited matrices
   -> normalize sparse AnnData with msc_* obs fields and provenance in uns
+  -> invoke ordered metadata projectors for additive sample obs/var/uns metadata
   -> flatten the permitted MINiML metadata into uns["msc_miniml"]
   -> write one normalized H5AD per sample
   -> combine compatible samples using an outer sparse feature join
+  -> invoke ordered combined-study metadata projector callbacks
   -> write optional combined study H5AD and JSON provenance manifest
   -> return ConversionResult
 ```
@@ -741,13 +743,24 @@ This section lists public and semi-public callables used by tests or by package 
 
 `class JSON2H5ADConverter`; compatibility alias `class json2h5ad`
 
-- Accepts injectable `SourcePlanner`, `NFCoreRunner`, and `AssetDownloader` collaborators.
+- Accepts injectable `SourcePlanner`, `NFCoreRunner`, `AssetDownloader`, and
+  ordered `AnnDataMetadataProjector` collaborators.
 - `convert(...) -> ConversionResult` selects sources, runs raw workflows when required, normalizes each sample, combines compatible samples, and writes a provenance manifest.
 - `ConversionResult` exposes `combined_h5ad`, `sample_h5ads`, retained pipeline files, pipeline commands, warnings/failures, `primary_h5ad`, and `partial`.
 - `AssetManifest` loads CSV/TSV mappings or `ACCESSION=PATH` CLI specifications. Manifest entries outrank CLI entries, which outrank discovered JSON assets.
 - `ReferenceResolver` accepts a catalogue `genome` with an optional GTF/GFF override or `fasta` paired with exactly one GTF/GFF; supported organism inference must be explicitly accepted before Nextflow starts.
 - `AnnotationConverter` validates local FASTA/annotation paths, records annotation SHA-256, passes GTF through, and converts GFF3 to a shared checksum-addressed GTF through `gffread`.
 - Generic delimited matrices require an explicit orientation when it cannot be represented by a study-scoped sample column.
+
+`MetadataProjectionContext`, `AnnDataMetadataProjection`, and the
+`AnnDataMetadataProjector` protocol form the additive metadata extension
+contract. Sample projectors run after standard `_normalize()` processing and
+before MINiML attachment/writing; combined projectors run after
+`anndata.concat()` and before combined MINiML attachment/writing. Scalar
+`obs`/`var` values broadcast, vector values must match their axis, and existing
+axis or top-level `uns` keys cannot be overwritten. Projector warnings are
+deduplicated into `ConversionResult.warnings` and the manifest. With no
+projectors, output is unchanged.
 
 <a id="miniml-enricher"></a>
 ### `enrichers/miniml_enricher.py`
@@ -1315,6 +1328,9 @@ Important test coverage:
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, and output writing.
 - `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, real dictionary reference scoping, case-insensitive metadata de-duplication, artifact-relative provenance, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
+- `tests/test_metadata_projector.py`: generic sample/combined projector
+  lifecycle, scalar broadcasting, axis-length validation, collision rejection,
+  and warning propagation.
 - `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, warning extraction, output discovery, and workflow failure logs.
 - `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
 - `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.

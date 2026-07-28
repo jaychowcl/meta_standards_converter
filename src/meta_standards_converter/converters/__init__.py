@@ -6,3 +6,15 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+
+from .json2h5ad import (
+    AnnDataMetadataProjection,
+    AnnDataMetadataProjector,
+    MetadataProjectionContext,
+)
+
+__all__ = [
+    "AnnDataMetadataProjection",
+    "AnnDataMetadataProjector",
+    "MetadataProjectionContext",
+]

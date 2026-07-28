@@ -24,6 +24,7 @@ import urllib.request
 from dataclasses import dataclass, field, replace
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from typing import Any, Mapping, Protocol, Sequence
 from urllib.parse import urlparse
 
 import requests
@@ -54,6 +55,48 @@ class Asset:
     annotation_format: str | None = None
     annotation_sha256: str | None = None
     effective_annotation: str | None = None
+
+
+@dataclass(frozen=True)
+class MetadataProjectionContext:
+    """Read-only conversion context supplied to metadata projectors."""
+
+    sample: Mapping[str, Any]
+    package: Mapping[str, Any]
+    study_accession: str
+    sample_accession: str
+    asset: Asset
+    base_metadata: Mapping[str, Any]
+
+
+@dataclass(frozen=True)
+class AnnDataMetadataProjection:
+    """Metadata additions returned by an :class:`AnnDataMetadataProjector`."""
+
+    obs: Mapping[str, Any] = field(default_factory=dict)
+    var: Mapping[str, Any] = field(default_factory=dict)
+    uns: Mapping[str, Any] = field(default_factory=dict)
+    warnings: tuple[str, ...] = ()
+
+
+class AnnDataMetadataProjector(Protocol):
+    """Optional extension that adds organization-neutral metadata to AnnData."""
+
+    def project_sample(
+        self,
+        *,
+        adata: Any,
+        context: MetadataProjectionContext,
+    ) -> AnnDataMetadataProjection:
+        """Return metadata additions for one sample AnnData object."""
+
+    def project_combined(
+        self,
+        *,
+        adata: Any,
+        contexts: Sequence[MetadataProjectionContext],
+    ) -> AnnDataMetadataProjection:
+        """Return metadata additions for the combined study AnnData object."""
 
 
 class AssetManifest:
@@ -992,10 +1035,12 @@ class JSON2H5ADConverter:
         planner: SourcePlanner | None = None,
         pipeline_runner: NFCoreRunner | None = None,
         downloader: AssetDownloader | None = None,
+        metadata_projectors: Sequence[AnnDataMetadataProjector] | None = None,
     ):
         self.planner = planner or SourcePlanner()
         self.pipeline_runner = pipeline_runner or NFCoreRunner()
         self.downloader = downloader
+        self.metadata_projectors = tuple(metadata_projectors or ())
 
     def convert(
         self,
@@ -1049,6 +1094,7 @@ class JSON2H5ADConverter:
         source_json_sha256 = self._sha256(json_path)
         result = ConversionResult(study_accession=study_accession)
         adatas = {}
+        projection_contexts: list[MetadataProjectionContext] = []
 
         raw_assets = {sample: asset for sample, asset in planned.items() if asset.kind == "raw"}
         if raw_assets:
@@ -1086,7 +1132,7 @@ class JSON2H5ADConverter:
                 asset,
                 orientation=(asset.orientation if asset.orientation != "auto" else matrix_orientation),
             )
-            self._normalize(
+            base_metadata = self._normalize(
                 adata,
                 sample=sample_context[sample_id][0],
                 package=sample_context[sample_id][1],
@@ -1095,6 +1141,20 @@ class JSON2H5ADConverter:
                 characteristic_columns=characteristic_columns,
                 artifact_parent=out_path,
             )
+            projection_context = MetadataProjectionContext(
+                sample=sample_context[sample_id][0],
+                package=sample_context[sample_id][1],
+                study_accession=study_accession,
+                sample_accession=sample_id,
+                asset=asset,
+                base_metadata=base_metadata,
+            )
+            self._project_sample_metadata(
+                adata,
+                projection_context,
+                warnings=result.warnings,
+            )
+            projection_contexts.append(projection_context)
             self._attach_miniml(
                 adata,
                 packages=packages,
@@ -1113,6 +1173,11 @@ class JSON2H5ADConverter:
         except ValueError as exc:
             result.failures.append(str(exc))
         else:
+            self._project_combined_metadata(
+                combined,
+                projection_contexts,
+                warnings=result.warnings,
+            )
             self._attach_miniml(
                 combined,
                 packages=packages,
@@ -1300,7 +1365,7 @@ class JSON2H5ADConverter:
         asset: Asset,
         characteristic_columns: list[str],
         artifact_parent: Path,
-    ) -> None:
+    ) -> dict:
         sample_id = self.planner.sample_accession(sample)
         metadata = self._sample_metadata(sample, package)
         modality = self._sample_modality(sample)
@@ -1391,6 +1456,93 @@ class JSON2H5ADConverter:
         if isinstance(existing, dict):
             provenance = {**existing, **provenance}
         adata.uns["meta_standards_converter"] = provenance
+        return metadata
+
+    def _project_sample_metadata(
+        self,
+        adata,
+        context: MetadataProjectionContext,
+        *,
+        warnings: list[str],
+    ) -> None:
+        for projector in self.metadata_projectors:
+            callback = getattr(projector, "project_sample", None)
+            if callback is None:
+                continue
+            projection = callback(adata=adata, context=context)
+            self._apply_metadata_projection(adata, projection)
+            self._extend_warnings(warnings, projection.warnings)
+
+    def _project_combined_metadata(
+        self,
+        adata,
+        contexts: Sequence[MetadataProjectionContext],
+        *,
+        warnings: list[str],
+    ) -> None:
+        for projector in self.metadata_projectors:
+            callback = getattr(projector, "project_combined", None)
+            if callback is None:
+                continue
+            projection = callback(adata=adata, contexts=tuple(contexts))
+            self._apply_metadata_projection(adata, projection)
+            self._extend_warnings(warnings, projection.warnings)
+
+    def _apply_metadata_projection(
+        self,
+        adata,
+        projection: AnnDataMetadataProjection,
+    ) -> None:
+        if not isinstance(projection, AnnDataMetadataProjection):
+            raise TypeError(
+                "metadata projector must return AnnDataMetadataProjection"
+            )
+        self._apply_axis_projection(
+            adata.obs,
+            projection.obs,
+            axis_name="obs",
+            axis_length=adata.n_obs,
+        )
+        self._apply_axis_projection(
+            adata.var,
+            projection.var,
+            axis_name="var",
+            axis_length=adata.n_vars,
+        )
+        for key, value in projection.uns.items():
+            if key in adata.uns:
+                raise ValueError(f"uns metadata key {key!r} already exists")
+            adata.uns[key] = value
+
+    @staticmethod
+    def _apply_axis_projection(
+        frame,
+        values: Mapping[str, Any],
+        *,
+        axis_name: str,
+        axis_length: int,
+    ) -> None:
+        for key, value in values.items():
+            if key in frame:
+                raise ValueError(f"{axis_name} metadata key {key!r} already exists")
+            if isinstance(value, Sequence) and not isinstance(
+                value, (str, bytes, bytearray)
+            ):
+                if len(value) != axis_length:
+                    raise ValueError(
+                        f"{axis_name} metadata key {key!r} must contain "
+                        f"{axis_length} values"
+                    )
+                frame[key] = list(value)
+            else:
+                frame[key] = "" if value is None else value
+
+    @staticmethod
+    def _extend_warnings(target: list[str], values: Sequence[str]) -> None:
+        for value in values:
+            rendered = str(value)
+            if rendered and rendered not in target:
+                target.append(rendered)
 
     def _sample_metadata(self, sample: dict, package: dict) -> dict:
         metadata = {

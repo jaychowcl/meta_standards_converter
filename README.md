@@ -403,6 +403,39 @@ result = json2h5ad().convert(
 
 `JSON2H5ADConverter.convert()` returns `ConversionResult`, whose principal fields are `study_accession`, `sample_h5ads`, `combined_h5ad`, `retained_h5ads`, `pipeline_runs`, `manifest_path`, `warnings`, `failures`, `primary_h5ad`, and `partial`. Paths returned in memory are absolute; persisted provenance paths are relative to their artifact parent where possible.
 
+Applications can add organization-neutral metadata without subclassing the
+converter by passing metadata projectors:
+
+```python
+from meta_standards_converter.converters import AnnDataMetadataProjection
+from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
+
+
+class Projector:
+    def project_sample(self, *, adata, context):
+        return AnnDataMetadataProjection(
+            obs={"example.sample_accession": context.sample_accession},
+            uns={"example": {"schema_version": "1"}},
+        )
+
+    def project_combined(self, *, adata, contexts):
+        return AnnDataMetadataProjection(
+            uns={"example": {"sample_count": len(contexts)}}
+        )
+
+
+result = JSON2H5ADConverter(metadata_projectors=[Projector()]).convert(
+    "output/GSE234602.json",
+    out="output",
+)
+```
+
+Projectors run after standard `msc_*` normalization and before H5AD writing.
+Scalars are broadcast over the selected axis, vectors must match the axis
+length, and existing `obs`, `var`, or top-level `uns` keys cannot be replaced.
+Warnings returned by a projector are added to the conversion result and
+manifest. Omitting projectors preserves the standard output.
+
 ### Docker
 
 Build the image:
