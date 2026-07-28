@@ -67,6 +67,11 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
   anchor: json2h5ad-flow
   keywords: H5AD, h5ad.gz, gzip, AnnData, metadata projector, projection hook, msc_miniml, msc metadata, dotted sectioned obs, characteristics, hz fields, hz organism precedence, empty metadata, ref, ontology, protocol, publication filtering, relative provenance, warnings, matrix, gene_name, TPM, FASTQ, ENA, FTP, HTTPS, nf-core, scrnaseq, QCATCH, filtered, rnaseq, assets, Nextflow
 
+- id: json2tabular-flow
+  title: End-To-End json2tsv And json2csv Flow
+  anchor: json2tabular-flow
+  keywords: TSV, CSV, Atlas JSON, MINiML, dataset groups, projector, TabularMetadataProjection, JSON2TSVConverter, JSON2CSVConverter, validation
+
 - id: rootless-json2h5ad-runtime
   title: Rootless json2h5ad Runtime
   anchor: rootless-json2h5ad-runtime
@@ -144,12 +149,12 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 - id: cli
   title: CLI
   anchor: cli
-  keywords: geo2ae, geo2json, json2ae, json2h5ad, flags, platform handler, list, logging, main
+  keywords: geo2ae, geo2json, json2ae, json2h5ad, json2tsv, json2csv, flags, platform handler, list, logging, main
 
 - id: converter
   title: Converter
   anchor: converter
-  keywords: geo2ae, geo2json, json2ae, json2h5ad, convert, platform_handler, metadata_projectors, MetadataProjectionContext, AnnDataMetadataProjection, JSON writing, MAGE-TAB, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
+  keywords: geo2ae, geo2json, json2ae, json2h5ad, json2tsv, json2csv, Atlas JSON, JSONPackageSource, TabularMetadataProjector, convert, platform_handler, metadata_projectors, MetadataProjectionContext, AnnDataMetadataProjection, JSON writing, MAGE-TAB, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
 
 - id: miniml-enricher
   title: MINiML enricher

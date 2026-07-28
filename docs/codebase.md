@@ -30,13 +30,17 @@ src/meta_standards_converter/
 │   ├── geo2json.py               # geo2json command-line entrypoint
 │   ├── json2ae.py                 # parsed JSON-to-MAGE-TAB command-line entrypoint
 │   ├── ae2json.py                 # MAGE-TAB-to-JSON command-line entrypoint
-│   └── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
+│   ├── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
+│   ├── json2tsv.py               # JSON/Atlas-to-TSV command-line entrypoint
+│   └── json2csv.py               # JSON/Atlas-to-CSV command-line entrypoint
 ├── converters/
 │   ├── geo2ae.py                 # top-level GEO to AE orchestration
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
 │   ├── json2ae.py                 # parsed JSON validation and AE orchestration
 │   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
-│   └── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
+│   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
+│   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
+│   └── json_source.py            # MINiML and ThematicAtlases JSON grouping
 ├── geo_handlers/
 │   ├── geo_webfetcher.py         # GEO MINiML URL building and download
 │   └── geo_parser.py             # MINiML XML to JSON-ready per-Series packages
@@ -95,7 +99,7 @@ tests/GSE328265_family.xml
 
 - The package requires Python `>=3.10`.
 - Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
-- The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, and `json2h5ad` console scripts point to their matching modules under `meta_standards_converter.cli`.
+- The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp`, `biostudies`, and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
 - Library logging propagates safe structured telemetry to caller handlers.
@@ -109,6 +113,7 @@ tests/GSE328265_family.xml
 - `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
+- `json2tsv` and `json2csv` accept MINiML or ThematicAtlases JSON, emit the neutral MSC sample projection by default, and accept replacement tabular projectors through the Python API.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
@@ -323,6 +328,43 @@ Raw processing pins `nf-core/scrnaseq` 4.2.0 and `nf-core/rnaseq` 3.26.0 by defa
 When `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER` is truthy and the Docker profile is selected, `NFCoreRunner._preflight()` queries `docker info` before creating workflow files. An unreachable daemon or security options without `rootless` abort the conversion before Nextflow starts. Other deployments retain the existing runtime-presence checks.
 
 Combination preserves successful per-sample outputs when expression modalities, organisms, declared reference builds, or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
+
+`JSONPackageSource` also recognizes a ThematicAtlases envelope. It retains only
+accessions whose ontology harmonization status is `completed`, groups packages
+by study accession, deduplicates identical samples, and rejects conflicting
+duplicates. `JSON2H5ADConverter.convert_source()` runs every group separately;
+multi-study output uses one child directory per study and returns
+`BatchConversionResult`. The existing `convert()` contract remains a
+`ConversionResult` for one study and returns the batch result only for a
+multi-study source. Source warnings and per-study failures remain auditable
+without discarding successful studies.
+
+GEO 10x `.matrix.mtx`, `.barcodes.tsv`, and `.genes.tsv`/`.features.tsv`
+companions are grouped by the standard `SourcePlanner`. The reader localizes
+all members into a temporary Scanpy-compatible directory, including legacy
+gzip-compressed genes trios.
+
+<a id="json2tabular-flow"></a>
+## End-To-End json2tsv And json2csv Flow
+
+```text
+JSON2TSVConverter/JSON2CSVConverter.convert_source(source, destination)
+  -> JSONPackageSource loads MINiML or completed Atlas accession metadata
+  -> group packages by study and visit every sample in source order
+  -> build TabularMetadataContext with normalized MINiML sample metadata
+  -> invoke ordered TabularMetadataProjector objects
+  -> reject projector column collisions
+  -> fail closed on projection errors unless allow_invalid=True
+  -> write preferred columns first and remaining columns sorted
+  -> return TabularConversionResult with rows, datasets, warnings, and errors
+```
+
+With no explicit projectors, `MSCMetadataProjector` emits stable dotted
+`msc.sample`, `msc.series`, `msc.platform`, `msc.archive`, `msc.library`,
+`msc.instrument`, `msc.protocol`, `msc.database`, and `msc.expression`
+columns followed by sorted `msc.characteristics.*` columns. Supplying an
+explicit projector list replaces that default contract, allowing private
+schemas to own the complete table without leaking into this repository.
 
 <a id="reference-annotation-flow"></a>
 ### Reference And Annotation Flow
@@ -670,7 +712,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 This section lists public and semi-public callables used by tests or by package orchestration. Many helper methods are intentionally private but documented here because this project currently relies on direct helper behavior in tests and internal composition.
 
 <a id="cli"></a>
-### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, `cli/ae2json.py`, and `cli/json2h5ad.py`
+### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, `cli/ae2json.py`, `cli/json2h5ad.py`, `cli/json2tsv.py`, and `cli/json2csv.py`
 
 `_parser() -> argparse.ArgumentParser`
 
@@ -684,6 +726,7 @@ This section lists public and semi-public callables used by tests or by package 
 - `json2ae` accepts one or more parsed JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, and `--overwrite`.
+- `json2tsv` and `json2csv` accept parsed MINiML or Atlas JSON, write one table per input under `--out`, and expose `--allow-invalid` and `--overwrite`.
 
 `main(argv=None) -> int`
 
@@ -694,7 +737,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Returns `1` if any accession failed, otherwise `0`.
 
 <a id="converter"></a>
-### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, `converters/ae2json.py`, and `converters/json2h5ad.py`
+### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, `converters/ae2json.py`, `converters/json2h5ad.py`, and `converters/json2tabular.py`
 
 `class geo2ae(JSONHandler)`
 
@@ -761,6 +804,15 @@ before MINiML attachment/writing; combined projectors run after
 axis or top-level `uns` keys cannot be overwritten. Projector warnings are
 deduplicated into `ConversionResult.warnings` and the manifest. With no
 projectors, output is unchanged.
+
+`JSON2TSVConverter` and `JSON2CSVConverter`
+
+- Accept injectable ordered `TabularMetadataProjector` collaborators.
+- Use `MSCMetadataProjector` only when no explicit projector list is supplied.
+- Accept both MINiML package JSON and full ThematicAtlases JSON through
+  `JSONPackageSource`.
+- Return `TabularConversionResult`; projection errors fail closed unless
+  `allow_invalid=True`.
 
 <a id="miniml-enricher"></a>
 ### `enrichers/miniml_enricher.py`
@@ -1328,6 +1380,8 @@ Important test coverage:
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, and output writing.
 - `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, real dictionary reference scoping, case-insensitive metadata de-duplication, artifact-relative provenance, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
+- `tests/test_json_source.py`: MINiML and Atlas envelope grouping, completed-status filtering, source diagnostics, and duplicate conflict handling.
+- `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, replacement projectors, collisions, and validation behavior.
 - `tests/test_metadata_projector.py`: generic sample/combined projector
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,
   and warning propagation.
@@ -1339,6 +1393,7 @@ Important test coverage:
 - `tests/test_cli_json2ae.py`: JSON-to-MAGE-TAB CLI defaults, enrichment toggle, multiple input ordering, output forwarding, logging, and failure continuation.
 - `tests/test_cli_ae2json.py`: MAGE-TAB-to-JSON CLI defaults, repeated SDRF overrides, source validation, multiple input ordering, logging, and failure continuation.
 - `tests/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
+- `tests/test_cli_json2tabular.py`: TSV/CSV input order and partial exit status.
 - `tests/test_project_scripts.py`: console script registration.
 - `tests/test_docs_index.py`: stable documentation anchors, required README Guide structure including configuration, complete Mermaid platform-handler hierarchy coverage, interface-specific quickstart links, live-parser coverage for every documented CLI argument and alias, console-script mentions, docs links, and author-header policy.
 - `tests/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.

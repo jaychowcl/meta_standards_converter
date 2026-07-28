@@ -8,13 +8,15 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-The five primary workflows are:
+The seven primary workflows are:
 
 - `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF.
 - `geo2json`: GEO Series accession to parsed MINiML-compatible JSON.
 - `json2ae`: parsed JSON to MAGE-TAB IDF and SDRF.
 - `ae2json`: local, HTTP(S), or BioStudies MAGE-TAB to parsed JSON.
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
+- `json2tsv`: parsed MINiML or ThematicAtlases JSON to a sample metadata TSV.
+- `json2csv`: parsed MINiML or ThematicAtlases JSON to a sample metadata CSV.
 
 ## Installation
 
@@ -60,7 +62,7 @@ The Python metadata converters do not require Docker. The project image supplies
 
 ### CLI quickstart
 
-Install the package, then run any of its five commands. This example creates parsed JSON and then normalized H5AD. See the [CLI guide](#cli).
+Install the package, then run any of its seven commands. This example creates parsed JSON and then normalized H5AD. See the [CLI guide](#cli).
 
 ```bash
 geo2json GSE234602 --out output
@@ -106,6 +108,8 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `json2ae` | JSON containing one package object or a non-empty package list | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
 | `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns a one-package list with a `mage_tab` extension |
 | `json2h5ad` | Non-empty parsed package-list JSON plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-sample H5ADs, optional compatible combined H5AD, provenance JSON, and optional nf-core results |
+| `json2tsv` | Parsed MINiML package JSON or a ThematicAtlases JSON envelope | One normalized sample metadata TSV per input |
+| `json2csv` | Parsed MINiML package JSON or a ThematicAtlases JSON envelope | One normalized sample metadata CSV per input |
 
 GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds `mage_tab.model`, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, normalized `msc_*` observation metadata, flattened MINiML metadata in `uns["msc_miniml"]`, and conversion provenance.
 
@@ -165,7 +169,7 @@ The rootless Compose helper derives `DOCKER_HOST`, `ROOTLESS_DOCKER_SOCKET`, and
 
 ### CLI
 
-The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, and `json2h5ad`. Run `<command> --help` for generated usage text.
+The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv`. Run `<command> --help` for generated usage text.
 
 All commands process multiple positional inputs in order. A failed input is logged, later inputs continue, and the final exit status is `1`; a fully successful invocation returns `0`. Logging defaults to `WARNING`. `-v` selects `INFO`, `-vv` selects `DEBUG`, and `-q` selects `ERROR`.
 
@@ -307,6 +311,21 @@ Processed assets may be local or HTTP(S)/FTP and may include `.h5ad`, `.h5ad.gz`
 
 Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
 
+#### `json2tsv` and `json2csv`
+
+Write one row per sample using the neutral dotted `msc.*` metadata contract.
+Both commands accept ordinary MINiML package JSON or a complete ThematicAtlases
+JSON envelope and retain only completed harmonized accession metadata.
+
+```bash
+json2tsv atlas.json --out output
+json2csv atlas.json --out output
+```
+
+Both commands accept `--allow-invalid`, `--overwrite`, the shared logging
+flags, and multiple input paths. Programmatic callers can replace the default
+MSC columns by passing explicit `TabularMetadataProjector` objects.
+
 ### Python API
 
 The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use.
@@ -435,6 +454,30 @@ Scalars are broadcast over the selected axis, vectors must match the axis
 length, and existing `obs`, `var`, or top-level `uns` keys cannot be replaced.
 Warnings returned by a projector are added to the conversion result and
 manifest. Omitting projectors preserves the standard output.
+
+Create a private or organization-specific table without modifying MSC:
+
+```python
+from meta_standards_converter.converters import TabularMetadataProjection
+from meta_standards_converter.converters.json2tabular import JSON2TSVConverter
+
+
+class Projector:
+    def project_sample(self, *, context):
+        return TabularMetadataProjection(
+            values={"example.sample": context.sample_accession},
+            columns=("example.sample",),
+        )
+
+
+result = JSON2TSVConverter(
+    metadata_projectors=[Projector()]
+).convert_source("atlas.json", "output/metadata.tsv")
+```
+
+Explicit projector lists replace the default MSC table contract. Preferred
+columns are written first, remaining columns are sorted, collisions fail, and
+projector errors fail closed unless `allow_invalid=True`.
 
 ### Docker
 
