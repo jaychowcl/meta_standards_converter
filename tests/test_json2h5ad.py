@@ -59,6 +59,23 @@ def package(*files, accession="GSM1"):
 
 
 class TestSourcePlanner(unittest.TestCase):
+    def test_groups_10x_matrix_barcode_and_gene_companions(self):
+        data = package(
+            "GSM1_brain.barcodes.tsv.gz",
+            "GSM1_brain.genes.tsv.gz",
+            "GSM1_brain.matrix.mtx.gz",
+        )
+        data["sample"][0]["sra_run"] = []
+
+        plan = SourcePlanner().plan([data])
+
+        self.assertEqual("10x_mtx", plan["GSM1"].role)
+        self.assertEqual("GSM1_brain.matrix.mtx.gz", plan["GSM1"].path)
+        self.assertEqual(
+            "GSM1_brain.barcodes.tsv.gz", plan["GSM1"].barcodes_path
+        )
+        self.assertEqual("GSM1_brain.genes.tsv.gz", plan["GSM1"].features_path)
+
     def test_discovers_and_prefers_h5ad_over_matrix_and_raw(self):
         planner = SourcePlanner()
 
@@ -130,6 +147,58 @@ class TestSourcePlanner(unittest.TestCase):
         )
 
         self.assertEqual("manifest.h5ad", plan["GSM1"].path)
+
+
+def test_convert_source_runs_each_atlas_study_independently(tmp_path):
+    source = tmp_path / "atlas.json"
+    source.write_text(
+        json.dumps(
+            {
+                "accessions": [
+                    {
+                        "datalink_id": "GSE1",
+                        "ontology_harmonization_run_status": "completed",
+                        "accession_metadata": [package("one.h5ad", accession="GSM1")],
+                    },
+                    {
+                        "datalink_id": "GSE2",
+                        "ontology_harmonization_run_status": "completed",
+                        "accession_metadata": [
+                            {
+                                **package("two.h5ad", accession="GSM2"),
+                                "series": {"accession": [{"value": "GSE2"}]},
+                            }
+                        ],
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    converter = JSON2H5ADConverter()
+    calls = []
+
+    def convert_packages(packages, *, source_json, out, **options):
+        study = packages[0]["series"]["accession"][0]["value"]
+        calls.append((study, Path(out).name, Path(source_json).name))
+        return ConversionResult(
+            study_accession=study,
+            sample_h5ads={f"GSM-{study}": f"{out}/sample.h5ad"},
+        )
+
+    converter._convert_packages = convert_packages
+
+    result = converter.convert_source(str(source), out=str(tmp_path / "out"))
+
+    self.assertEqual(["GSE1", "GSE2"], list(result.conversions))
+    self.assertEqual(
+        [
+            ("GSE1", "GSE1", "atlas.json"),
+            ("GSE2", "GSE2", "atlas.json"),
+        ],
+        calls,
+    )
+    self.assertFalse(result.partial)
 
 
 class TestAssetInputs(unittest.TestCase):
