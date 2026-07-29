@@ -8,14 +8,375 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 -->
 # meta_standards_converter Codebase Handoff
 
+This is the canonical handoff for the live package under
+`src/meta_standards_converter`. It covers all seven conversion paths, their
+runtime boundaries, extension contracts, and the evidence needed to change them
+safely.
 
-This document describes the live `meta_standards_converter` package under `src/meta_standards_converter`. It is a development handoff for maintainers working on GEO MINiML parsing and ArrayExpress/MAGE-TAB IDF/SDRF generation.
+<a id="architecture"></a>
+## Architecture
 
-The implemented conversion path is:
+`meta_standards_converter` is a Python library and seven-command toolkit for
+moving study metadata and expression assets among GEO MINiML, the package's
+parsed JSON model, ArrayExpress MAGE-TAB, delimited sample tables, and AnnData
+H5AD. CLI modules are thin batch adapters. Converter classes own use-case
+orchestration; fetchers and parsers own repository-specific I/O; MAGE-TAB
+constructors and H5AD/tabular projectors own output models.
 
 ```text
-GEO Series accession -> GEO MINiML XML -> parsed per-Series metadata packages -> MAGE-TAB IDF + SDRF -> optional .idf.txt/.sdrf.txt files
+Users: CLI / Python / Docker / rootless Compose
+                         |
+                  seven converters
+       +-----------------+--------------------+
+       |                 |                    |
+ GEO/BioStudies      local JSON/files    explicit/discovered assets
+       |                 |                    |
+ fetch + parse       validate/group       plan/download/run nf-core
+       |                 |                    |
+ enrich (optional)  project/construct     normalize/project AnnData
+       +-----------------+--------------------+
+                         |
+      JSON | IDF/SDRF | TSV/CSV | H5AD + provenance
 ```
+
+The package owns conversion policy and emitted artifacts. GEO, NCBI, ENA,
+BioStudies, OLS, nf-core, Nextflow, Docker, and ThematicAtlases envelope
+semantics are delegated boundaries. See
+[Project purpose and layout](#project-purpose-and-layout) for the module tree
+and [Runtime behavior](#runtime-behavior) for concrete dependencies.
+
+<a id="system-context-and-boundaries"></a>
+## System context and boundaries
+
+| Boundary | Data crossing it | Repository responsibility | Failure owner |
+| --- | --- | --- | --- |
+| CLI/Python callers | Accessions, paths, options, injected projectors | Validate supported combinations and return/write deterministic results | CLI records a per-input failure; library callers receive exceptions |
+| GEO FTP | GSE accession, MINiML tar/XML | Fetch safely, scope packages, and avoid leaking query data to logs | `GEOWebFetcher` and `RateLimitedRequester` |
+| NCBI/ENA/PubMed/OLS | Accessions and public metadata | Rate-limit, retry, parse, and attach enrichment without owning upstream availability | Service fetcher or harmonizer; enrichment records partial failures where supported |
+| BioStudies/HTTP/local MAGE-TAB | IDF/SDRF references and text | Resolve exactly one IDF plus SDRFs, parse and retain round-trip evidence | `AEWebFetcher`/`AEParser` |
+| Filesystem | JSON, MAGE-TAB, matrices, H5AD, manifests, references | Validate paths, protect existing output unless overwrite is explicit, and write provenance | Converter owning the artifact |
+| Nextflow/nf-core/runtime | FASTQ samplesheet, references, workflow parameters | Pin default revisions, reserve converter-owned parameters, execute and collect outputs | `NFCoreRunner`; subprocess failures become conversion failures |
+| Docker/rootless Compose | Image, socket, output tree, caches | Provide a hardened supported process boundary, not a daemon | Provisioning/helper scripts and connected daemon operator |
+| ThematicAtlases JSON | Atlas envelope and completed dataset metadata | Read the delegated envelope and emit organization-neutral sample rows | `JSONPackageSource`; MSC does not own atlas creation |
+
+The base Python path has no persistent database. Files are the durable boundary;
+in-memory dictionaries, typed MAGE-TAB models, and AnnData objects are
+conversion-scoped state. Remote metadata is public study metadata, but logs
+must not include URL queries, request parameters, XML, metadata payloads,
+credentials, or tokens.
+
+<a id="architectural-decisions"></a>
+## Architectural decisions
+
+### AD-001: Keep CLI adapters thin and converters reusable
+
+- **Status:** Observed
+- **Decision:** Each console script parses a batch and delegates one input at a time to a converter class; converters expose the programmatic workflow.
+- **Rationale:** Not documented.
+- **Consequences:** CLI failures can be isolated per input, while Python callers retain exceptions and injectable collaborators.
+- **Affected components:** `cli/*`, `converters/*`, logging configuration, and output status handling.
+- **Evidence:** [`pyproject.toml`](../pyproject.toml), [`cli/geo2ae.py`](../src/meta_standards_converter/cli/geo2ae.py), and [`converters/geo2ae.py`](../src/meta_standards_converter/converters/geo2ae.py).
+
+### AD-002: Preserve MAGE-TAB round trips beside the mapped core
+
+- **Status:** Observed
+- **Decision:** `ae2json` stores a typed `mage_tab.model` plus fingerprints and source tables; `json2ae` restores unchanged tables or overlays eligible mapped edits.
+- **Rationale:** Not documented.
+- **Consequences:** Lossless unchanged round trips coexist with editable mapped fields, but fingerprint and keyed-union rules are compatibility-sensitive.
+- **Affected components:** `AEParser`, `ae_roundtrip`, `ae_model`, and `AEConstructor`.
+- **Evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py), [`ae_roundtrip.py`](../src/meta_standards_converter/ae_handlers/ae_roundtrip.py), and [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py).
+
+### AD-003: Select expression assets before normalizing AnnData
+
+- **Status:** Observed
+- **Decision:** `json2h5ad` resolves explicit and discovered sources into a plan, then dispatches processed assets or raw nf-core execution before a common normalization/projection stage.
+- **Rationale:** Not documented.
+- **Consequences:** Source precedence is centralized; incompatible samples remain as per-sample H5ADs and make the aggregate result partial.
+- **Affected components:** `AssetManifest`, `SourcePlanner`, `NFCoreRunner`, and `JSON2H5ADConverter`.
+- **Evidence:** [`json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py) and [`test_h5ad_pipeline.py`](../tests/test_h5ad_pipeline.py).
+
+### AD-004: Extend emitted metadata through fail-closed projector protocols
+
+- **Status:** Observed
+- **Decision:** AnnData and delimited outputs accept injected projector protocols; explicit tabular projectors replace the default MSC projection.
+- **Rationale:** Not documented.
+- **Consequences:** Downstream adapters can add organization-specific fields without coupling them into MSC, while collisions, invalid vector lengths, and projector errors stop unsafe output unless tabular invalid-output mode is explicit.
+- **Affected components:** `AnnDataMetadataProjector`, `TabularMetadataProjector`, H5AD normalization, and delimited converters.
+- **Evidence:** [`json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py), [`json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py), and their projector tests.
+
+### AD-005: Isolate raw processing behind a restricted rootless runner
+
+- **Status:** Documented
+- **Decision:** The supported Compose workflow connects a locked runner to its rootless Docker socket, mounts one output tree, drops capabilities, and uses a read-only container filesystem.
+- **Rationale:** Limit host access while still allowing Nextflow's Docker profile to launch containers and produce project-owner-readable artifacts.
+- **Consequences:** Provisioning requires Linux root access once; raw inputs, caches, work, and outputs must live below the dedicated output root.
+- **Affected components:** `Dockerfile`, `compose.yaml`, `provision-rootless-json2h5ad.sh`, and `json2h5ad-compose.sh`.
+- **Evidence:** [`compose.yaml`](../compose.yaml), [`provision-rootless-json2h5ad.sh`](../scripts/provision-rootless-json2h5ad.sh), and [`test_docker_artifacts.py`](../tests/test_docker_artifacts.py).
+
+<a id="design-invariants-and-expectations"></a>
+## Design invariants and expectations
+
+- A parsed source is a non-empty package list (or one object where the
+  converter explicitly accepts it); packages remain scoped to their Series.
+- CLI batch commands continue after an input failure and return `1` if any
+  input fails. Programmatic converters do not hide exceptions.
+- `geo2ae`/`json2ae` use the same selected platform handler for IDF and SDRF.
+- Unchanged MAGE-TAB round trips remain lossless. Regeneration preserves
+  typed-model structure and only overlays mapped fields when identity is
+  unambiguous.
+- H5AD source priority remains manifest, explicit specification, then JSON
+  discovery; processed H5AD/matrix sources outrank raw FASTQ within a tier.
+- Existing H5AD, tabular, and provenance outputs are protected unless the
+  relevant overwrite option is explicit.
+- Metadata projectors cannot silently replace existing AnnData keys or emit
+  axis vectors of the wrong length. Tabular collisions and invalid projections
+  fail closed unless `allow_invalid=True`.
+- External calls use service-specific requester settings. Safe telemetry never
+  logs credentials, URL queries, raw XML, or study payloads.
+- Converter-owned nf-core input/output/reference parameters override additional
+  params JSON; Nextflow config is for infrastructure and resources.
+- Rootless Compose refuses a daemon without rootless security mode and confines
+  writable state to the configured output tree.
+
+<a id="component-relationships-and-data-flow"></a>
+## Component relationships and data flow
+
+| Source | Destination | Interface and direction | Data/lifecycle | Failure behavior |
+| --- | --- | --- | --- | --- |
+| CLI module | converter | `convert(...)` control call | One converter instance per command; inputs processed in order | Logs per-input exception and records non-zero status |
+| GEO converters | `GEOWebFetcher` → `GEOParser` | internal calls around HTTP/XML | GSE becomes Series-scoped package dictionaries | Fetch/parse errors propagate |
+| GEO/JSON converters | `MINiMLEnricher` | optional internal mutation | Adds PubMed and SRA/ENA evidence to a package | Enricher records service-specific misses where implemented |
+| GEO/JSON converters | `AEConstructor` | `miniml2magetab` then optional `magetab2file` | Package becomes IDF/SDRF row collections and files | Validation/handler/write errors propagate |
+| `ae2json` | `AEWebFetcher` → `AEParser` | resolve and parse | IDF/SDRF text becomes package + typed sidecar | Invalid source cardinality or MAGE-TAB fails |
+| tabular converters | `JSONPackageSource` → projectors | load/group then `project_sample` | Dataset groups become ordered row maps | Collisions/invalid output fail closed by default |
+| `JSON2H5ADConverter` | planner/downloader/runner | plan, localize, or process | Per-conversion state becomes sample AnnData | Per-sample failures retained; aggregate can be partial |
+| H5AD converter | metadata projectors | `project_sample`/`project_combined` | Projection applied before each write | Collision/shape/projector error fails conversion |
+| `NFCoreRunner` | Nextflow/nf-core | subprocess/system call | Samplesheet + reference + params produce pipeline results | Exit/output failure becomes a recorded pipeline failure |
+
+The orchestrating converter owns transient conversion state and output
+decisions. Fetchers own network protocol details; parsers own input shape;
+constructors/projectors own output shape; callers own retrying a failed
+top-level conversion.
+
+<a id="entrypoints-and-interfaces"></a>
+## Entrypoints and interfaces
+
+The supported public entrypoints are:
+
+- seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
+  `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv`;
+- direct Python converter classes and the ten formal exports from
+  `meta_standards_converter.converters`;
+- a Docker image that accepts any installed console command;
+- rootless Compose and its two operational scripts for raw `json2h5ad`.
+
+Every CLI parser contract, option, default, and batch status rule is listed
+under [CLI](#cli). Docker and rootless process contracts are described under
+[Rootless json2h5ad runtime](#rootless-json2h5ad-runtime). No HTTP server,
+database service, or plugin discovery mechanism is exposed.
+
+<a id="orchestrators-and-core-types"></a>
+## Orchestrators and core types
+
+- `geo2ae`, `geo2json`, `json2ae`, and `ae2json` coordinate metadata-only
+  conversions. `AEConstructor` owns MAGE-TAB handler selection and writing;
+  `AEParser` owns reverse mapping and round-trip extensions.
+- `JSON2H5ADConverter` owns the full expression conversion lifecycle.
+  `SourcePlanner`, `AssetManifest`, and `AssetDownloader` resolve inputs;
+  `ReferenceResolver`, `AnnotationConverter`, and `NFCoreRunner` own raw-data
+  execution; result dataclasses expose complete and partial outcomes.
+- `JSON2DelimitedConverter` owns JSON grouping, sample iteration, projection,
+  column ordering, validation policy, and file output. `JSON2TSVConverter` and
+  `JSON2CSVConverter` bind delimiters.
+- `RateLimitedRequester` is the shared external-call boundary.
+  `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
+  apply repository-specific URL and response semantics.
+- `ProtocolRegistry`, `IDFConstructor`, `SDRFConstructor`, typed MAGE-TAB
+  records, and technology handlers form the MAGE-TAB construction subsystem.
+
+Definitions, signatures, state, internal calls, external operations, and
+failure behavior are detailed in
+[Public API and callable reference](#public-api-and-callable-reference).
+
+<a id="public-api-reference"></a>
+## Public API reference
+
+The formal `meta_standards_converter.converters.__all__` contract is:
+
+| Export | Verified shape and contract |
+| --- | --- |
+| `AnnDataMetadataProjection` | Frozen dataclass `(obs={}, var={}, uns={}, warnings=())`; projector result merged before H5AD writes, with collision and vector-length validation. |
+| `AnnDataMetadataProjector` | Runtime-checkable protocol with `project_sample(*, adata, context)` and `project_combined(*, adata, contexts)`. |
+| `MetadataProjectionContext` | Frozen dataclass carrying study/sample/package/source/modality/reference/provenance context. |
+| `JSON2CSVConverter` | `JSON2DelimitedConverter` specialization with comma delimiter. |
+| `JSON2TSVConverter` | `JSON2DelimitedConverter` specialization with tab delimiter. |
+| `MSCMetadataProjector` | Default neutral sample-row projection; `project_sample(*, context) -> TabularMetadataProjection`. |
+| `TabularConversionResult` | Frozen result `(source_path, output_path, row_count, columns, warnings, failures)` with `partial`. |
+| `TabularMetadataContext` | Frozen per-sample dataset/package context passed to tabular projectors. |
+| `TabularMetadataProjection` | Frozen projector result `(values, columns=(), warnings=())`. |
+| `TabularMetadataProjector` | Protocol with `project_sample(*, context) -> TabularMetadataProjection`. |
+
+Supported production symbols are inventoried below by qualified name. Their
+signatures, inputs, outputs, exceptions, side effects, and decisive internal or
+external calls are documented in the linked legacy callable sections that
+follow this canonical overview.
+
+- MAGE-TAB:
+  `meta_standards_converter.ae_handlers.ae_constructor.validate_platform_handler`,
+  `meta_standards_converter.ae_handlers.ae_constructor.ProtocolRegistry`,
+  `meta_standards_converter.ae_handlers.ae_constructor.AEConstructor`,
+  `meta_standards_converter.ae_handlers.ae_idf_handlers.IDFConstructor`,
+  `meta_standards_converter.ae_handlers.ae_model.build_model`,
+  `meta_standards_converter.ae_handlers.ae_model.render_model`,
+  `meta_standards_converter.ae_handlers.ae_model.overlay_core`,
+  `meta_standards_converter.ae_handlers.ae_parser.normalized_label`,
+  `meta_standards_converter.ae_handlers.ae_parser.AEParser`,
+  `meta_standards_converter.ae_handlers.ae_roundtrip.semantic_sha256`,
+  `meta_standards_converter.ae_handlers.ae_roundtrip.model_sha256`,
+  `meta_standards_converter.ae_handlers.ae_roundtrip.build_roundtrip`,
+  `meta_standards_converter.ae_handlers.ae_roundtrip.unchanged_magetab`,
+  `meta_standards_converter.ae_handlers.ae_roundtrip.restore_extensions`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFAttr`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFNode`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFEdge`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFPath`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.ColumnGroup`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFAudit`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFConstructor`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.normalized_extension`,
+  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.classify_file`,
+  `meta_standards_converter.ae_handlers.ae_webfetcher.TextResource`,
+  `meta_standards_converter.ae_handlers.ae_webfetcher.MAGETabInput`, and
+  `meta_standards_converter.ae_handlers.ae_webfetcher.AEWebFetcher`.
+- CLI:
+  `meta_standards_converter.cli.ae2json.main`,
+  `meta_standards_converter.cli.geo2ae.main`,
+  `meta_standards_converter.cli.geo2json.main`,
+  `meta_standards_converter.cli.json2ae.main`,
+  `meta_standards_converter.cli.json2h5ad.main`,
+  `meta_standards_converter.cli.json2tsv.main`,
+  `meta_standards_converter.cli.json2csv.main`,
+  `meta_standards_converter.cli.common.add_platform_handler_arguments`,
+  `meta_standards_converter.cli.common.print_platform_handlers`,
+  `meta_standards_converter.cli.common.add_logging_arguments`,
+  `meta_standards_converter.cli.common.log_level`, and
+  `meta_standards_converter.cli.common.configure_logging`.
+- Conversion:
+  `meta_standards_converter.converters.ae2json.ae2json`,
+  `meta_standards_converter.converters.geo2ae.geo2ae`,
+  `meta_standards_converter.converters.geo2json.geo2json`,
+  `meta_standards_converter.converters.json2ae.json2ae`,
+  `meta_standards_converter.converters.json2h5ad.Asset`,
+  `meta_standards_converter.converters.json2h5ad.MetadataProjectionContext`,
+  `meta_standards_converter.converters.json2h5ad.AnnDataMetadataProjection`,
+  `meta_standards_converter.converters.json2h5ad.AnnDataMetadataProjector`,
+  `meta_standards_converter.converters.json2h5ad.AssetManifest`,
+  `meta_standards_converter.converters.json2h5ad.AssetDownloader`,
+  `meta_standards_converter.converters.json2h5ad.PipelineRun`,
+  `meta_standards_converter.converters.json2h5ad.ConversionResult`,
+  `meta_standards_converter.converters.json2h5ad.BatchConversionResult`,
+  `meta_standards_converter.converters.json2h5ad.RawProcessingResult`,
+  `meta_standards_converter.converters.json2h5ad.ReferenceResolver`,
+  `meta_standards_converter.converters.json2h5ad.AnnotationConverter`,
+  `meta_standards_converter.converters.json2h5ad.NFCoreRunner`,
+  `meta_standards_converter.converters.json2h5ad.SourcePlanner`,
+  `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter`, and
+  `meta_standards_converter.converters.json2h5ad.json2h5ad`.
+- Tabular and JSON source:
+  `meta_standards_converter.converters.json2tabular.TabularMetadataContext`,
+  `meta_standards_converter.converters.json2tabular.TabularMetadataProjection`,
+  `meta_standards_converter.converters.json2tabular.TabularMetadataProjector`,
+  `meta_standards_converter.converters.json2tabular.TabularConversionResult`,
+  `meta_standards_converter.converters.json2tabular.TabularProjectionError`,
+  `meta_standards_converter.converters.json2tabular.MSCMetadataProjector`,
+  `meta_standards_converter.converters.json2tabular.JSON2DelimitedConverter`,
+  `meta_standards_converter.converters.json2tabular.JSON2TSVConverter`,
+  `meta_standards_converter.converters.json2tabular.JSON2CSVConverter`,
+  `meta_standards_converter.converters.json2tabular.json2tsv`,
+  `meta_standards_converter.converters.json2tabular.json2csv`,
+  `meta_standards_converter.converters.json_source.DatasetPackageGroup`,
+  `meta_standards_converter.converters.json_source.SourceLoadResult`, and
+  `meta_standards_converter.converters.json_source.JSONPackageSource`.
+- Fetch, parse, enrich, harmonize, and helpers:
+  `meta_standards_converter.enrichers.miniml_enricher.MINiMLEnricher`,
+  `meta_standards_converter.geo_handlers.geo_parser.GEOParser`,
+  `meta_standards_converter.geo_handlers.geo_webfetcher.GEOWebFetcher`,
+  `meta_standards_converter.harmonizers.geo2ols.GEO2OLS`,
+  `meta_standards_converter.harmonizers.harmonizers.Harmonizer`,
+  `meta_standards_converter.harmonizers.pubmed2ols.Pubmed2OLS`,
+  `meta_standards_converter.helpers.json_helper.JSONHandler`,
+  `meta_standards_converter.helpers.request_helper.RequestSettings`,
+  `meta_standards_converter.helpers.request_helper.RateLimitedRequester`,
+  `meta_standards_converter.insdc_handlers.insdc_webfetcher.INSDCWebfetcher`,
+  `meta_standards_converter.meta_store.meta_store.MetaStore`, and
+  `meta_standards_converter.pubmed_handlers.pubmed_webfetcher.PubmedWebFetcher`.
+
+<a id="principal-workflows"></a>
+## Principal workflows
+
+Seven public workflows are supported:
+
+1. `geo2ae`: fetch MINiML, parse Series packages, enrich them, construct
+   handler-selected MAGE-TAB, optionally write IDF/SDRF.
+2. `geo2json`: fetch and parse MINiML, optionally enrich, return packages, and
+   optionally write JSON.
+3. `json2ae`: validate all supplied packages, optionally enrich, restore or
+   regenerate MAGE-TAB, then optionally write IDF/SDRF.
+4. `ae2json`: resolve local/HTTP/BioStudies IDF and SDRFs, parse them, retain a
+   typed round-trip extension, and optionally write JSON.
+5. `json2h5ad`: load packages, plan expression sources, optionally execute
+   nf-core, normalize/project AnnData, then write sample/combined H5AD and
+   provenance with partial failures retained.
+6. `json2tsv`: group MINiML or Atlas JSON, project one row per sample, validate
+   columns, and write TSV.
+7. `json2csv`: run the same tabular pipeline with CSV quoting and delimiter.
+
+```text
+public interface(input)
+  -> validate/load input
+  -> choose workflow
+       GEO ---------> fetch -> parse -> [enrich] -> JSON or MAGE-TAB
+       MAGE-TAB ----> resolve -> parse -> JSON + round-trip model
+       JSON --------> [enrich] -> MAGE-TAB
+          |---------> group -> project rows -> TSV or CSV
+          `---------> plan assets
+                         + processed -> normalize
+                         ` raw ------> reference -> nf-core -> normalize
+                                      -> project -> sample H5ADs
+                                      -> [compatible?] combined H5AD
+  -> return result / write artifacts
+  -> error, or partial result where the workflow explicitly supports it
+```
+
+Each branch-complete workflow diagram, numbered stages, pseudocode, call sites,
+external operations, and terminal outcomes is retained under the legacy flow
+anchors beginning with [geo2ae](#end-to-end-geo2ae-flow),
+[json2ae](#end-to-end-json2ae-flow), [ae2json](#end-to-end-ae2json-flow),
+[json2h5ad](#json2h5ad-flow), and [tabular conversion](#json2tabular-flow).
+`geo2json` shares GEO fetch/parse with `geo2ae`; `json2tsv` and `json2csv`
+share `JSON2DelimitedConverter` and differ only by delimiter and suffix.
+
+<a id="extension-and-change-guidance"></a>
+## Extension and change guidance
+
+- Add a converter workflow behind a reusable converter first, then register a
+  thin CLI and update `pyproject.toml`, parser-contract tests, README interface
+  tables, this handoff, and the index.
+- Add organization-specific H5AD or table metadata through the public projector
+  protocols. Preserve collision, length, ordering, warning, and fail-closed
+  contracts; do not import downstream organization packages here.
+- Add a MAGE-TAB technology through the shared platform registry and matched
+  IDF/SDRF handler selection. Update handler-list tests and document the new
+  metadata-based detection rule.
+- Add an expression source by extending `Asset` classification, precedence,
+  localization, and normalization together; test explicit, manifest, and
+  discovery paths plus partial failure and overwrite behavior.
+- Add an external service behind `RateLimitedRequester` with explicit timeout,
+  delay, retry, safe-logging, and response validation tests.
+- Any round-trip model change requires unchanged restoration, edited overlay,
+  duplicate-header alignment, and fingerprint compatibility tests.
+- Any raw-runner change requires Docker artifact tests, rootless-daemon
+  rejection, mount/ACL review, and corresponding README/codebase updates.
 
 <a id="project-purpose-and-layout"></a>
 ## Project Purpose And Layout

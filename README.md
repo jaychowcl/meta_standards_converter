@@ -1,5 +1,3 @@
-<img width="250" height="250" alt="image" src="https://github.com/user-attachments/assets/51b52963-19de-4f67-8977-072b409dae19" />
-
 # meta_standards_converter
 
 Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MAGE-TAB, and AnnData/H5AD.
@@ -311,20 +309,50 @@ Processed assets may be local or HTTP(S)/FTP and may include `.h5ad`, `.h5ad.gz`
 
 Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
 
-#### `json2tsv` and `json2csv`
+#### `json2tsv`
 
-Write one row per sample using the neutral dotted `msc.*` metadata contract.
-Both commands accept ordinary MINiML package JSON or a complete ThematicAtlases
-JSON envelope and retain only completed harmonized accession metadata.
+Write one tab-separated row per sample using the neutral dotted `msc.*`
+metadata contract. The command accepts ordinary MINiML package JSON or a
+complete ThematicAtlases JSON envelope and retains only completed harmonized
+accession metadata.
 
 ```bash
 json2tsv atlas.json --out output
+```
+
+| Argument | Behavior |
+| --- | --- |
+| `json_path` | One or more parsed MINiML or ThematicAtlases JSON paths. |
+| `-h`, `--help` | Display generated help and exit. |
+| `--out` `OUT` | Output directory; default `.`. |
+| `--allow-invalid` | Write valid projected rows and return a partial result when other rows fail; default behavior fails closed. |
+| `--overwrite` | Replace an existing destination; existing files are protected by default. |
+| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
+| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
+| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
+
+#### `json2csv`
+
+Write the same normalized sample projection as comma-separated output with CSV
+quoting.
+
+```bash
 json2csv atlas.json --out output
 ```
 
-Both commands accept `--allow-invalid`, `--overwrite`, the shared logging
-flags, and multiple input paths. Programmatic callers can replace the default
-MSC columns by passing explicit `TabularMetadataProjector` objects.
+| Argument | Behavior |
+| --- | --- |
+| `json_path` | One or more parsed MINiML or ThematicAtlases JSON paths. |
+| `-h`, `--help` | Display generated help and exit. |
+| `--out` `OUT` | Output directory; default `.`. |
+| `--allow-invalid` | Write valid projected rows and return a partial result when other rows fail; default behavior fails closed. |
+| `--overwrite` | Replace an existing destination; existing files are protected by default. |
+| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
+| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
+| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
+
+Programmatic callers can replace the default MSC columns by passing explicit
+`TabularMetadataProjector` objects.
 
 ### Python API
 
@@ -559,6 +587,7 @@ CLI or Python API
   |
   +-- parsed JSON
   |     +-> json2ae: validate -> [enrich] -> AEConstructor -> IDF + SDRF
+  |     +-> json2tsv/json2csv: group datasets -> project sample rows -> table
   |     `-> json2h5ad: plan assets -> [nf-core for FASTQ]
   |                         -> normalize AnnData -> sample/combined H5AD + manifest
   |
@@ -566,7 +595,15 @@ CLI or Python API
         -> AEWebFetcher -> AEParser -> JSON package + mage_tab sidecar
 ```
 
-Network requests pass through service-specific rate limiting, timeouts, and retries. CLI entrypoints catch failures per top-level input, while programmatic converter calls raise errors to their caller. For class-level call graphs, branches, external API operations, and data shapes, use the canonical codebase documentation below.
+Network requests pass through the
+[`RateLimitedRequester`](docs/codebase.md#request-helper) boundary.
+[`GEOWebFetcher`](docs/codebase.md#geo-web-fetcher),
+[`GEOParser`](docs/codebase.md#geo-parser),
+[`AEConstructor`](docs/codebase.md#ae-constructor), and the
+[H5AD](docs/codebase.md#json2h5ad-flow) and
+[tabular](docs/codebase.md#json2tabular-flow) workflows are traced in the
+canonical handoff. CLI entrypoints catch failures per top-level input, while
+programmatic converter calls raise errors to their caller.
 
 ## Docs
 
@@ -575,4 +612,4 @@ Network requests pass through service-specific rate limiting, timeouts, and retr
 
 ## Authors
 
-Created by [jaychowcl](https://github.com/jaychowcl) @ [Saez-Rodriguez Group](https://saezlab.org) & [EMBL-EBI Functional Genomics Team](https://www.ebi.ac.uk/about/teams/functional-genomics/) on May 2026
+Created by [jaychowcl](https://github.com/jaychowcl) on May 2026

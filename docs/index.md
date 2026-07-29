@@ -22,6 +22,76 @@ rg -n "^#{1,6} " docs/codebase.md docs/index.md
 
 ## Main Sections
 
+- id: architecture
+  title: Architecture
+  anchor: architecture
+  purpose: Explains the repository role, runtime topology, major subsystems, ownership, and whole-codebase navigation.
+  keywords: architecture, topology, subsystem, ownership, GEO, MAGE-TAB, JSON, H5AD, TSV, CSV
+  link: [Open section](codebase.md#architecture)
+
+- id: system-context-and-boundaries
+  title: System Context And Boundaries
+  anchor: system-context-and-boundaries
+  purpose: Maps external actors, delegated services, trust boundaries, persistence, processes, and failure ownership.
+  keywords: boundary, GEO FTP, NCBI, ENA, PubMed, OLS, BioStudies, filesystem, Nextflow, Docker, ThematicAtlases
+  link: [Open section](codebase.md#system-context-and-boundaries)
+
+- id: architectural-decisions
+  title: Architectural Decisions
+  anchor: architectural-decisions
+  purpose: Records evidence-backed documented decisions and observed design choices with consequences.
+  keywords: decision, rationale, evidence, CLI, converters, MAGE-TAB, projectors, rootless
+  link: [Open section](codebase.md#architectural-decisions)
+
+- id: design-invariants-and-expectations
+  title: Design Invariants And Expectations
+  anchor: design-invariants-and-expectations
+  purpose: Lists compatibility, validation, lifecycle, security, logging, overwrite, and failure rules future changes must preserve.
+  keywords: invariant, validation, compatibility, precedence, overwrite, logging, fail closed, rootless
+  link: [Open section](codebase.md#design-invariants-and-expectations)
+
+- id: component-relationships-and-data-flow
+  title: Component Relationships And Data Flow
+  anchor: component-relationships-and-data-flow
+  purpose: Shows how entrypoints, converters, fetchers, parsers, projectors, runners, and outputs exchange control and data.
+  keywords: relationship, data flow, control flow, lifecycle, converter, fetcher, parser, projector, NFCoreRunner
+  link: [Open section](codebase.md#component-relationships-and-data-flow)
+
+- id: entrypoints-and-interfaces
+  title: Entrypoints And Interfaces
+  anchor: entrypoints-and-interfaces
+  purpose: Inventories the supported CLI, Python, Docker, Compose, and operational-script interfaces.
+  keywords: interface, entrypoint, CLI, Python API, Docker, Compose, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2csv
+  link: [Open section](codebase.md#entrypoints-and-interfaces)
+
+- id: orchestrators-and-core-types
+  title: Orchestrators And Core Types
+  anchor: orchestrators-and-core-types
+  purpose: Summarizes state ownership and responsibilities of converters, constructors, planners, runners, projectors, and fetchers.
+  keywords: orchestrator, core type, AEConstructor, AEParser, JSON2H5ADConverter, JSON2DelimitedConverter, RateLimitedRequester
+  link: [Open section](codebase.md#orchestrators-and-core-types)
+
+- id: public-api-reference
+  title: Public API Reference
+  anchor: public-api-reference
+  purpose: Inventories formal exports and supported production symbols and routes to their exhaustive callable contracts.
+  keywords: public API, __all__, signature, export, protocol, class, function, method, CLI
+  link: [Open section](codebase.md#public-api-reference)
+
+- id: principal-workflows
+  title: Principal Workflows
+  anchor: principal-workflows
+  purpose: Routes the seven production conversion workflows from public input to artifacts, partial results, or errors.
+  keywords: workflow, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2csv, pseudocode
+  link: [Open section](codebase.md#principal-workflows)
+
+- id: extension-and-change-guidance
+  title: Extension And Change Guidance
+  anchor: extension-and-change-guidance
+  purpose: Defines supported extension patterns, impact areas, required tests, and unsafe coupling to avoid.
+  keywords: extension, change, projector, platform handler, asset, service, round trip, tests, documentation
+  link: [Open section](codebase.md#extension-and-change-guidance)
+
 - id: project-purpose-and-layout
   title: Project Purpose And Layout
   anchor: project-purpose-and-layout
