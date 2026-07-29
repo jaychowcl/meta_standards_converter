@@ -38,6 +38,16 @@ PLATFORM_HANDLERS = (
 
 
 class TestJSON2AECLI(unittest.TestCase):
+    def test_help_advertises_completed_atlas_json(self):
+        stdout = StringIO()
+
+        with self.assertRaises(SystemExit) as raised:
+            with redirect_stdout(stdout):
+                main(["--help"])
+
+        self.assertEqual(0, raised.exception.code)
+        self.assertIn("completed ThematicAtlases JSON", stdout.getvalue())
+
     @patch("meta_standards_converter.cli.json2ae.json2ae")
     def test_list_platform_handlers_requires_no_json_or_converter(self, json2ae_mock):
         stdout = StringIO()
