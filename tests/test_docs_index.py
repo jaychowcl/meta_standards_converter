@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import importlib
+import ast
 import re
 import subprocess
 import unittest
@@ -54,14 +55,128 @@ HTML_AUTHOR_HEADER = "\n".join(
     ]
 )
 README_AUTHORS_LINE = (
-    "Created by [jaychowcl](https://github.com/jaychowcl) @ "
-    "[Saez-Rodriguez Group](https://saezlab.org) & "
-    "[EMBL-EBI Functional Genomics Team](https://www.ebi.ac.uk/about/teams/functional-genomics/) "
-    "on May 2026"
+    "Created by [jaychowcl](https://github.com/jaychowcl) on May 2026"
+)
+CANONICAL_CODEBASE_ANCHORS = (
+    "architecture",
+    "system-context-and-boundaries",
+    "architectural-decisions",
+    "design-invariants-and-expectations",
+    "component-relationships-and-data-flow",
+    "entrypoints-and-interfaces",
+    "orchestrators-and-core-types",
+    "public-api-reference",
+    "principal-workflows",
+    "extension-and-change-guidance",
+)
+LEGACY_CODEBASE_ANCHORS = (
+    "project-purpose-and-layout",
+    "runtime-behavior",
+    "end-to-end-geo2ae-flow",
+    "end-to-end-json2ae-flow",
+    "end-to-end-ae2json-flow",
+    "json2h5ad-flow",
+    "json2tabular-flow",
+    "rootless-json2h5ad-runtime",
+    "public-api-and-callable-reference",
+    "maintenance-notes",
+    "test-plan",
+)
+CLI_COMMANDS = (
+    "geo2ae",
+    "geo2json",
+    "json2ae",
+    "ae2json",
+    "json2h5ad",
+    "json2tsv",
+    "json2csv",
 )
 
 
 class DocsIndexTests(unittest.TestCase):
+    def test_codebase_has_substantive_canonical_sections(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+
+        for index, anchor in enumerate(CANONICAL_CODEBASE_ANCHORS):
+            start = codebase_text.index(f'<a id="{anchor}"></a>')
+            if index + 1 < len(CANONICAL_CODEBASE_ANCHORS):
+                end = codebase_text.index(
+                    f'<a id="{CANONICAL_CODEBASE_ANCHORS[index + 1]}"></a>',
+                    start,
+                )
+            else:
+                end = len(codebase_text)
+            section = codebase_text[start:end]
+            self.assertRegex(section, rf'<a id="{anchor}"></a>\n## ')
+            prose = re.sub(r"<[^>]+>|[#`*|:_-]", " ", section)
+            self.assertGreater(len(prose.split()), 20, anchor)
+
+    def test_index_routes_canonical_sections_with_purpose_and_keywords(self):
+        index_text = INDEX.read_text(encoding="utf-8")
+
+        for anchor in CANONICAL_CODEBASE_ANCHORS:
+            route = re.search(
+                rf"- id: {re.escape(anchor)}\n"
+                rf"  title: .+\n"
+                rf"  anchor: {re.escape(anchor)}\n"
+                rf"  purpose: .+\n"
+                rf"  keywords: .+",
+                index_text,
+            )
+            self.assertIsNotNone(route, anchor)
+
+    def test_legacy_codebase_anchors_are_preserved(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+
+        for anchor in LEGACY_CODEBASE_ANCHORS:
+            self.assertIn(f'<a id="{anchor}"></a>', codebase_text, anchor)
+
+    def test_architectural_decisions_are_evidence_safe(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+        start = codebase_text.index('<a id="architectural-decisions"></a>')
+        end = codebase_text.index('<a id="design-invariants-and-expectations"></a>')
+        section = codebase_text[start:end]
+        records = re.findall(
+            r"^### AD-\d{3}: .+?(?=^### AD-|\Z)",
+            section,
+            re.MULTILINE | re.DOTALL,
+        )
+
+        self.assertTrue(records)
+        for record in records:
+            status = re.search(r"\*\*Status:\*\* (Documented|Observed)", record)
+            self.assertIsNotNone(status, record)
+            self.assertRegex(record, r"\*\*Decision:\*\* .+")
+            self.assertRegex(record, r"\*\*Rationale:\*\* .+")
+            self.assertRegex(record, r"\*\*Consequences:\*\* .+")
+            self.assertRegex(record, r"\*\*Affected components:\*\* .+")
+            self.assertRegex(record, r"\*\*Evidence:\*\* .+")
+            if status.group(1) == "Observed":
+                self.assertIn("**Rationale:** Not documented.", record)
+
+    def test_public_api_reference_covers_formal_exports_and_public_symbols(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+        exports = importlib.import_module("meta_standards_converter.converters").__all__
+
+        for symbol in exports:
+            self.assertRegex(codebase_text, rf"`(?:[^`]*\.)?{re.escape(symbol)}`")
+
+        source_root = ROOT / "src" / "meta_standards_converter"
+        public_symbols = set()
+        for source_path in source_root.rglob("*.py"):
+            if "__pycache__" in source_path.parts:
+                continue
+            module = ".".join(source_path.relative_to(ROOT / "src").with_suffix("").parts)
+            tree = ast.parse(source_path.read_text(encoding="utf-8"))
+            for node in tree.body:
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if not node.name.startswith("_"):
+                        public_symbols.add(f"{module}.{node.name}")
+
+        self.assertTrue(public_symbols)
+        for qualified_name in sorted(public_symbols):
+            self.assertIn(f"`{qualified_name}`", codebase_text, qualified_name)
+
     def test_index_uses_header_references_not_line_ranges(self):
         index_text = INDEX.read_text()
 
@@ -108,6 +223,7 @@ class DocsIndexTests(unittest.TestCase):
         ]
 
         lines = readme_text.splitlines()
+        self.assertEqual(lines[0], "# meta_standards_converter")
         positions = []
         for heading in expected_headings:
             self.assertIn(heading, lines)
@@ -146,7 +262,7 @@ class DocsIndexTests(unittest.TestCase):
         readme_text = README.read_text(encoding="utf-8")
         modules = {
             command: importlib.import_module(f"meta_standards_converter.cli.{command}")
-            for command in ("geo2ae", "geo2json", "json2ae", "ae2json", "json2h5ad")
+            for command in CLI_COMMANDS
         }
 
         for command, module in modules.items():
@@ -169,6 +285,12 @@ class DocsIndexTests(unittest.TestCase):
 
         self.assertIn("[Codebase docs](docs/codebase.md)", readme_text)
         self.assertIn("[Docs index](docs/index.md)", readme_text)
+
+    def test_readme_documents_all_seven_conversion_workflows(self):
+        readme_text = README.read_text(encoding="utf-8")
+
+        for command in CLI_COMMANDS:
+            self.assertIn(f"`{command}`", readme_text)
 
     def test_readme_documents_all_console_scripts(self):
         readme_text = README.read_text(encoding="utf-8")
