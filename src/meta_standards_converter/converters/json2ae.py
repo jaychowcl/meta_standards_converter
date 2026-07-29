@@ -8,11 +8,10 @@
 # =============================================================================
 """Converter for parsed MINiML JSON to ArrayExpress MAGE-TAB format."""
 
-import json
 import logging
-import os
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
+from meta_standards_converter.converters.json_source import JSONPackageSource
 from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 
@@ -23,9 +22,10 @@ logger = logging.getLogger(__name__)
 class json2ae(JSONHandler):
     """Convert parsed MINiML JSON packages into MAGE-TAB payloads."""
 
-    def __init__(self, enricher=None, ae_constructor=None):
+    def __init__(self, enricher=None, ae_constructor=None, package_source=None):
         self.enricher = enricher or MINiMLEnricher()
         self.ae_constructor = ae_constructor or AEConstructor()
+        self.package_source = package_source or JSONPackageSource()
 
     def convert(
         self,
@@ -65,18 +65,22 @@ class json2ae(JSONHandler):
         return magetabs
 
     def _load_packages(self, json_path: str) -> list[dict]:
-        if not os.path.exists(json_path):
-            raise FileNotFoundError(f"MINiML JSON file not found: {json_path}")
+        try:
+            loaded = self.package_source.load(json_path)
+        except FileNotFoundError as error:
+            raise FileNotFoundError(
+                f"MINiML JSON file not found: {json_path}"
+            ) from error
 
-        with open(json_path, encoding="utf-8") as handle:
-            payload = json.load(handle)
-
-        if isinstance(payload, dict):
-            packages = [payload]
-        elif isinstance(payload, list) and payload:
-            packages = payload
-        else:
-            raise ValueError("Parsed MINiML JSON must contain a non-empty package object or list.")
+        for warning in loaded.warnings:
+            logger.warning("%s", warning)
+        if not loaded.groups:
+            raise ValueError("JSON source contains no convertible package groups.")
+        packages = [
+            package
+            for group in loaded.groups
+            for package in group.packages
+        ]
 
         for index, package in enumerate(packages, start=1):
             if not isinstance(package, dict):

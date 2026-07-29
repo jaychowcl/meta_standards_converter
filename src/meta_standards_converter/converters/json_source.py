@@ -45,11 +45,17 @@ class JSONPackageSource:
         ):
             return self._atlas(payload)
         packages = payload if isinstance(payload, list) else [payload]
-        if not packages or not all(isinstance(item, Mapping) for item in packages):
+        if not packages:
             raise ValueError(
-                "Parsed MINiML JSON must contain a non-empty list of packages "
-                "or an Atlas object"
+                "Parsed MINiML JSON must contain a non-empty package object "
+                "or list; expected a non-empty list of packages or an Atlas "
+                "object"
             )
+        for index, package in enumerate(packages, start=1):
+            if not isinstance(package, Mapping):
+                raise ValueError(
+                    f"Parsed MINiML package {index} must be a JSON object."
+                )
         return SourceLoadResult(self._group_packages(packages, source.stem))
 
     def _atlas(self, payload: Mapping[str, Any]) -> SourceLoadResult:
