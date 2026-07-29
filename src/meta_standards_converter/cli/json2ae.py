@@ -25,12 +25,18 @@ logger = logging.getLogger(__name__)
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Convert one or more parsed MINiML JSON files to ArrayExpress MAGE-TAB files."
+        description=(
+            "Convert completed ThematicAtlases JSON or parsed MINiML JSON "
+            "to ArrayExpress MAGE-TAB files."
+        )
     )
     parser.add_argument(
         "json_path",
         nargs="*",
-        help="Parsed MINiML JSON file(s), for example GSE234602.json.",
+        help=(
+            "Parsed MINiML or completed ThematicAtlases JSON file(s), "
+            "for example GSE234602.json."
+        ),
     )
     parser.add_argument(
         "--no-enrich",
