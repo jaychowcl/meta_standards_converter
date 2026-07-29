@@ -99,6 +99,27 @@ CLI_COMMANDS = (
     "json2tsv",
     "json2csv",
 )
+PRINCIPAL_WORKFLOW_ANCHORS = (
+    "workflow-geo2ae",
+    "workflow-geo2json",
+    "workflow-json2ae",
+    "workflow-ae2json",
+    "workflow-json2h5ad",
+    "workflow-json2tsv",
+    "workflow-json2csv",
+)
+FORMAL_EXPORT_ANCHORS = (
+    "api-anndata-metadata-projection",
+    "api-anndata-metadata-projector",
+    "api-metadata-projection-context",
+    "api-json2csv-converter",
+    "api-json2tsv-converter",
+    "api-msc-metadata-projector",
+    "api-tabular-conversion-result",
+    "api-tabular-metadata-context",
+    "api-tabular-metadata-projection",
+    "api-tabular-metadata-projector",
+)
 
 
 class DocsIndexTests(unittest.TestCase):
@@ -184,6 +205,91 @@ class DocsIndexTests(unittest.TestCase):
         self.assertTrue(public_symbols)
         for qualified_name in sorted(public_symbols):
             self.assertIn(f"`{qualified_name}`", codebase_text, qualified_name)
+
+    def test_formal_exports_have_stable_source_linked_contracts(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+
+        for anchor in FORMAL_EXPORT_ANCHORS:
+            self.assertIn(f'<a id="{anchor}"></a>', codebase_text, anchor)
+        for contract_field in (
+            "**Signature:**",
+            "**Inputs:**",
+            "**Outputs:**",
+            "**Failures:**",
+            "**Side effects:**",
+            "**Support:**",
+            "**Source:**",
+        ):
+            self.assertGreaterEqual(
+                codebase_text.count(contract_field),
+                len(FORMAL_EXPORT_ANCHORS),
+                contract_field,
+            )
+
+    def test_corrects_protocol_and_tabular_result_contracts(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+
+        self.assertNotIn("Runtime-checkable protocol", codebase_text)
+        self.assertIn(
+            "`TabularMetadataProjection(values, columns=(), warnings=(), errors=())`",
+            codebase_text,
+        )
+        self.assertIn(
+            "`TabularConversionResult(row_count, columns, dataset_ids, "
+            "warnings=(), errors=(), output_path=None)`",
+            codebase_text,
+        )
+        self.assertIn(
+            "`partial` is `True` exactly when `errors` is non-empty",
+            codebase_text,
+        )
+
+    def test_h5ad_contract_distinguishes_single_and_batch_results(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+        h5ad = codebase_text[
+            codebase_text.index('<a id="workflow-json2h5ad"></a>') :
+            codebase_text.index('<a id="workflow-json2tsv"></a>')
+        ]
+
+        self.assertIn("ordinary parsed MINiML JSON", h5ad)
+        self.assertIn("completed ThematicAtlases envelope", h5ad)
+        self.assertIn("one group", h5ad)
+        self.assertIn("`ConversionResult`", h5ad)
+        self.assertIn("multiple groups", h5ad)
+        self.assertIn("`BatchConversionResult`", h5ad)
+        self.assertIn("child directory", h5ad)
+        self.assertIn("per-group exceptions", h5ad)
+
+    def test_principal_workflows_are_stably_routed_and_contract_complete(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+        index_text = INDEX.read_text(encoding="utf-8")
+
+        for index, anchor in enumerate(PRINCIPAL_WORKFLOW_ANCHORS):
+            start = codebase_text.index(f'<a id="{anchor}"></a>')
+            end = (
+                codebase_text.index(
+                    f'<a id="{PRINCIPAL_WORKFLOW_ANCHORS[index + 1]}"></a>',
+                    start,
+                )
+                if index + 1 < len(PRINCIPAL_WORKFLOW_ANCHORS)
+                else codebase_text.index(
+                    '<a id="extension-and-change-guidance"></a>', start
+                )
+            )
+            section = codebase_text[start:end]
+            self.assertIn("```text", section, anchor)
+            self.assertIn("1.", section, anchor)
+            self.assertIn("Pseudocode:", section, anchor)
+            self.assertIn("**Evidence:**", section, anchor)
+            self.assertRegex(
+                index_text,
+                rf"- id: {anchor}\n"
+                rf"  title: .+\n"
+                rf"  anchor: {anchor}\n"
+                rf"  purpose: .+\n"
+                rf"  keywords: .+\n"
+                rf"  link: \[Open section\]\(codebase\.md#{anchor}\)",
+            )
 
     def test_index_uses_header_references_not_line_ranges(self):
         index_text = INDEX.read_text()
