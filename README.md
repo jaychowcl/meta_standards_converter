@@ -1,3 +1,5 @@
+<img width="250" height="250" alt="image" src="https://github.com/user-attachments/assets/51b52963-19de-4f67-8977-072b409dae19" />
+
 # meta_standards_converter
 
 Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MAGE-TAB, and AnnData/H5AD.
@@ -612,4 +614,4 @@ programmatic converter calls raise errors to their caller.
 
 ## Authors
 
-Created by [jaychowcl](https://github.com/jaychowcl) on May 2026
+Created by [jaychowcl](https://github.com/jaychowcl) @ [Saez-Rodriguez Group](https://saezlab.org) & [EMBL-EBI Functional Genomics Team](https://www.ebi.ac.uk/about/teams/functional-genomics/) on May 2026
