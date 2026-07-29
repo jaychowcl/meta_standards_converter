@@ -475,21 +475,28 @@ Pseudocode: `packages = parse(fetch(gse)); [enrich packages]; [write]; return`.
 **Evidence:** [`converters/geo2json.py`](../src/meta_standards_converter/converters/geo2json.py) and [`cli/geo2json.py`](../src/meta_standards_converter/cli/geo2json.py).
 
 <a id="workflow-json2ae"></a>
-### `json2ae`: parsed JSON to MAGE-TAB
+### `json2ae`: MINiML/Atlas JSON to MAGE-TAB
 
 ```text
-path -> missing/empty/non-object/no accession -> exception
+path -> JSONPackageSource -> no groups/non-object/no accession -> exception
+                         \-> incomplete/error record -> warning + skip
      -> [enrich?] -> construct each package --failure--> exception
      -> [out?] IDF/SDRF files / else in-memory MAGE-TAB list
 ```
 
-1. `_load_packages` accepts one package object or a non-empty package list.
-2. Every package must be an object with a usable study accession.
-3. Optional enrichment precedes `AEConstructor.miniml2magetab`.
-4. Round-trip evidence may restore source tables; mapped edits use overlay rules.
-5. `out` controls writing; construction errors propagate.
+1. `JSONPackageSource` accepts one parsed MINiML object, a non-empty package
+   list, or a completed ThematicAtlases envelope.
+2. Atlas loading retains completed records with object-valued
+   `accession_metadata`; incomplete and failed records emit warnings and are
+   skipped. No remaining groups raises `ValueError`.
+3. Every retained package must be an object with a usable study accession,
+   and all packages are validated before collaborator calls.
+4. Optional enrichment precedes `AEConstructor.miniml2magetab`.
+5. Round-trip evidence may restore source tables; mapped edits use overlay rules.
+6. `out` controls writing; construction errors propagate.
 
-Pseudocode: `validate(load(path)); for package: [enrich] -> construct -> [write]; return`.
+Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
+[enrich] -> construct -> [write]; return`.
 
 **Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constructor.py), and [`ae_roundtrip.py`](../src/meta_standards_converter/ae_handlers/ae_roundtrip.py).
 
@@ -1321,7 +1328,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
 - `geo2ae` and `json2ae` add mutually exclusive `--platform-handler` and `--list-platform-handlers`; list mode runs without positional inputs or converter construction.
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
-- `json2ae` accepts one or more parsed JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
+- `json2ae` accepts one or more parsed MINiML or completed ThematicAtlases JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, and `--overwrite`.
 - `json2tsv` and `json2csv` accept parsed MINiML or Atlas JSON, write one table per input under `--out`, and expose `--allow-invalid` and `--overwrite`.
@@ -1368,8 +1375,9 @@ This section lists public and semi-public callables used by tests or by package 
 
 `class json2ae(JSONHandler)`
 
-- `__init__(enricher=None, ae_constructor=None)` accepts injectable enrichment and MAGE-TAB construction collaborators.
-- `convert(json_path, out=None, enrich=True, platform_handler=None) -> list[list]` accepts the exact package-list form written by `geo2json` or one package object.
+- `__init__(enricher=None, ae_constructor=None, package_source=None)` accepts injectable enrichment, MAGE-TAB construction, and JSON package-source collaborators.
+- `convert(json_path, out=None, enrich=True, platform_handler=None) -> list[list]` accepts the package form written by `geo2json`, one package object, or a completed ThematicAtlases envelope.
+- Atlas loading retains completed object-valued metadata, logs shared-loader warnings for skipped records, and raises `ValueError` when no convertible groups remain.
 - Validates the entire top-level shape, package types, and study accessions before invoking collaborators. Non-GEO accessions are accepted; `GSE...` values retain numeric validation.
 - Enriches packages by default; `enrich=False` preserves the supplied metadata and avoids enrichment calls.
 - Passes a non-`None` `platform_handler` through to `AEConstructor.miniml2magetab()`.

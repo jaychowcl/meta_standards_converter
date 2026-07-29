@@ -12,7 +12,7 @@ The seven primary workflows are:
 
 - `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF.
 - `geo2json`: GEO Series accession to parsed MINiML-compatible JSON.
-- `json2ae`: parsed JSON to MAGE-TAB IDF and SDRF.
+- `json2ae`: parsed MINiML or completed ThematicAtlases JSON to MAGE-TAB IDF and SDRF.
 - `ae2json`: local, HTTP(S), or BioStudies MAGE-TAB to parsed JSON.
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
 - `json2tsv`: parsed MINiML or ThematicAtlases JSON to a sample metadata TSV.
@@ -105,7 +105,7 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | --- | --- | --- |
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt`; Python returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
-| `json2ae` | JSON containing one package object or a non-empty package list | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
+| `json2ae` | Parsed MINiML object/list or completed ThematicAtlases envelope | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
 | `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns a one-package list with a `mage_tab` extension |
 | `json2h5ad` | Parsed MINiML object/list or completed ThematicAtlases envelope plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
 | `json2tsv` | Parsed MINiML package JSON or a ThematicAtlases JSON envelope | One normalized sample metadata TSV per input |
@@ -222,10 +222,12 @@ geo2json GSE234602 --no-enrich --keep-empty --out output
 
 #### `json2ae`
 
-Read parsed JSON and write MAGE-TAB IDF/SDRF files.
+Read parsed MINiML or completed ThematicAtlases JSON and write MAGE-TAB
+IDF/SDRF files.
 
 ```bash
 json2ae output/GSE234602.json --out output
+json2ae atlas.json --out output
 json2ae primary.json related.json --no-enrich --out output
 json2ae study.json --platform-handler bulk_sequencing --out output
 json2ae --list-platform-handlers
@@ -233,7 +235,7 @@ json2ae --list-platform-handlers
 
 | Argument | Behavior |
 | --- | --- |
-| `json_path` | One or more JSON paths; each must contain one package object or a non-empty package list. |
+| `json_path` | One or more paths containing a parsed MINiML object/list or completed ThematicAtlases envelope. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--no-enrich` | Convert supplied metadata without PubMed/SRA enrichment; enrichment is enabled by default. |
 | `--out` `OUT` | Output directory; default `.`. |
@@ -243,7 +245,22 @@ json2ae --list-platform-handlers
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-`json2ae` validates all packages before converting any of them. If the input came from `ae2json`, an unchanged single-SDRF package can reproduce its original tables exactly; edits to the typed `mage_tab.model` or mapped core fields regenerate the relevant MAGE-TAB content. During regeneration, mapped core content is overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF columns are inserted while model-only rows, assay paths, node columns, and `Protocol REF` columns remain authoritative. This lets curator-added fields such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`, and `Characteristics[hz_cell_type_onto]` survive as separate columns. Duplicate SDRF headers are matched by normalized label and occurrence, and values are copied only when source/sample/run identity gives one unambiguous value; otherwise existing model content is retained and newly inserted cells stay blank.
+`json2ae` validates all retained packages before converting any of them. For
+an Atlas envelope it converts completed records with object-valued
+`accession_metadata`, warns about skipped incomplete or failed records, and
+fails when no convertible package groups remain. If the input came from
+`ae2json`, an unchanged single-SDRF package can reproduce its original tables
+exactly; edits to the typed `mage_tab.model` or mapped core fields regenerate
+the relevant MAGE-TAB content. During regeneration, mapped core content is
+overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF
+columns are inserted while model-only rows, assay paths, node columns, and
+`Protocol REF` columns remain authoritative. This lets curator-added fields
+such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`,
+and `Characteristics[hz_cell_type_onto]` survive as separate columns.
+Duplicate SDRF headers are matched by normalized label and occurrence, and
+values are copied only when source/sample/run identity gives one unambiguous
+value; otherwise existing model content is retained and newly inserted cells
+stay blank.
 
 #### `ae2json`
 
@@ -401,7 +418,15 @@ magetabs = json2ae().convert(
 )
 ```
 
-`json2ae.convert(json_path, out=None, enrich=True, platform_handler=None)` accepts a package object or package list and returns ordered MAGE-TAB payloads. Forcing a handler regenerates IDF/SDRF content instead of reusing unchanged round-trip tables or a typed-model-only rendering. Regeneration unions eligible mapped core IDF rows and non-structural SDRF columns into the typed model, including separate harmonized `hz_*`, `hz_*_id`, and `hz_*_onto` characteristic columns when present.
+`json2ae.convert(json_path, out=None, enrich=True, platform_handler=None)`
+accepts a parsed MINiML object/list or completed ThematicAtlases envelope and
+returns ordered MAGE-TAB payloads. `json2ae(..., package_source=...)` permits
+injection of a compatible source loader. Forcing a handler regenerates
+IDF/SDRF content instead of reusing unchanged round-trip tables or a
+typed-model-only rendering. Regeneration unions eligible mapped core IDF rows
+and non-structural SDRF columns into the typed model, including separate
+harmonized `hz_*`, `hz_*_id`, and `hz_*_onto` characteristic columns when
+present.
 
 Convert MAGE-TAB to parsed JSON:
 

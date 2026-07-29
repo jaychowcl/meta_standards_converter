@@ -108,8 +108,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: workflow-json2ae
   title: Parsed JSON to MAGE-TAB
   anchor: workflow-json2ae
-  purpose: Traces source validation, enrichment, round-trip restoration, construction, and writing.
-  keywords: json2ae, JSON, MAGE-TAB, round trip, overlay, IDF, SDRF
+  purpose: Traces MINiML or completed Atlas loading, filtering, validation, enrichment, round-trip restoration, construction, and writing.
+  keywords: json2ae, JSON, ThematicAtlases, completed, warning, MAGE-TAB, round trip, overlay, IDF, SDRF
   link: [Open section](codebase.md#workflow-json2ae)
 
 - id: workflow-ae2json
