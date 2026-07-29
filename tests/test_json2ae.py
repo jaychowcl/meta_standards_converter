@@ -24,6 +24,10 @@ from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  #
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.converters.json2ae import json2ae  # noqa: E402
+from meta_standards_converter.converters.json_source import (  # noqa: E402
+    DatasetPackageGroup,
+    SourceLoadResult,
+)
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
 
 
@@ -154,6 +158,97 @@ class TestJSON2AEConverter(unittest.TestCase):
             result = json2ae(ae_constructor=constructor).convert(path, enrich=False)
 
         self.assertEqual(["magetab"], result)
+
+    def test_convert_accepts_completed_atlas_records_and_warns_for_skipped_records(self):
+        constructor = MagicMock()
+        constructor.miniml2magetab.side_effect = ["first", "second"]
+        first = package("GSE1")
+        second = package("E-MTAB-2")
+        skipped = package("GSE3")
+        payload = {
+            "accessions": [
+                {
+                    "datalink_id": "GSE1",
+                    "ontology_harmonization_run_status": "completed",
+                    "accession_metadata": [first],
+                },
+                {
+                    "datalink_id": "E-MTAB-2",
+                    "ontology_harmonization_run_status": "completed",
+                    "accession_metadata": second,
+                },
+                {
+                    "datalink_id": "GSE3",
+                    "ontology_harmonization_run_status": "error",
+                    "ontology_harmonization_error": "lookup failed",
+                    "accession_metadata": [skipped],
+                },
+            ]
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_json(tmpdir, payload)
+            with self.assertLogs(
+                "meta_standards_converter.converters.json2ae",
+                level="WARNING",
+            ) as logs:
+                result = json2ae(ae_constructor=constructor).convert(
+                    path,
+                    enrich=False,
+                )
+
+        self.assertEqual(["first", "second"], result)
+        self.assertEqual(
+            [call(data=first), call(data=second)],
+            constructor.miniml2magetab.call_args_list,
+        )
+        self.assertIn(
+            "GSE3: harmonization error: lookup failed",
+            "\n".join(logs.output),
+        )
+
+    def test_convert_rejects_atlas_without_completed_metadata(self):
+        payload = {
+            "accessions": [
+                {
+                    "datalink_id": "GSE1",
+                    "ontology_harmonization_run_status": "not_run",
+                    "accession_metadata": None,
+                }
+            ]
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_json(tmpdir, payload)
+            with self.assertRaisesRegex(
+                ValueError,
+                "no convertible package groups",
+            ):
+                json2ae().convert(path)
+
+    def test_convert_uses_injected_package_source(self):
+        constructor = MagicMock()
+        constructor.miniml2magetab.return_value = "magetab"
+        source = MagicMock()
+        payload = package("GSE1")
+        source.load.return_value = SourceLoadResult(
+            groups=(
+                DatasetPackageGroup(
+                    dataset_id="GSE1",
+                    packages=(payload,),
+                    source_accession="GSE1",
+                ),
+            ),
+        )
+
+        result = json2ae(
+            ae_constructor=constructor,
+            package_source=source,
+        ).convert("virtual-atlas.json", enrich=False)
+
+        self.assertEqual(["magetab"], result)
+        source.load.assert_called_once_with("virtual-atlas.json")
+        constructor.miniml2magetab.assert_called_once_with(data=payload)
 
     def test_convert_still_rejects_malformed_geo_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
