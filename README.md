@@ -107,7 +107,7 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
 | `json2ae` | JSON containing one package object or a non-empty package list | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
 | `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns a one-package list with a `mage_tab` extension |
-| `json2h5ad` | Non-empty parsed package-list JSON plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-sample H5ADs, optional compatible combined H5AD, provenance JSON, and optional nf-core results |
+| `json2h5ad` | Parsed MINiML object/list or completed ThematicAtlases envelope plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
 | `json2tsv` | Parsed MINiML package JSON or a ThematicAtlases JSON envelope | One normalized sample metadata TSV per input |
 | `json2csv` | Parsed MINiML package JSON or a ThematicAtlases JSON envelope | One normalized sample metadata CSV per input |
 
@@ -327,7 +327,7 @@ json2tsv atlas.json --out output
 | `json_path` | One or more parsed MINiML or ThematicAtlases JSON paths. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--out` `OUT` | Output directory; default `.`. |
-| `--allow-invalid` | Write valid projected rows and return a partial result when other rows fail; default behavior fails closed. |
+| `--allow-invalid` | Write projected rows despite projector-reported errors and return a partial result; default behavior raises before writing. |
 | `--overwrite` | Replace an existing destination; existing files are protected by default. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
@@ -336,22 +336,18 @@ json2tsv atlas.json --out output
 #### `json2csv`
 
 Write the same normalized sample projection as comma-separated output with CSV
-quoting.
+quoting. Its inputs, defaults, validation, partial-result behavior, logging, and
+overwrite policy are identical to [`json2tsv`](#json2tsv); only the delimiter
+and `.csv` output suffix differ.
 
 ```bash
 json2csv atlas.json --out output
 ```
 
-| Argument | Behavior |
-| --- | --- |
-| `json_path` | One or more parsed MINiML or ThematicAtlases JSON paths. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--out` `OUT` | Output directory; default `.`. |
-| `--allow-invalid` | Write valid projected rows and return a partial result when other rows fail; default behavior fails closed. |
-| `--overwrite` | Replace an existing destination; existing files are protected by default. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
+The shared interface is `json_path`, `-h`/`--help`, `--out`,
+`--allow-invalid`, `--overwrite`, `-v`/`--verbose`, `-q`/`--quiet`, and
+`--log-file`; accepted values and semantics are defined once in the
+[`json2tsv` option table](#json2tsv).
 
 Programmatic callers can replace the default MSC columns by passing explicit
 `TabularMetadataProjector` objects.
@@ -450,7 +446,20 @@ result = json2h5ad().convert(
 )
 ```
 
-`JSON2H5ADConverter.convert()` returns `ConversionResult`, whose principal fields are `study_accession`, `sample_h5ads`, `combined_h5ad`, `retained_h5ads`, `pipeline_runs`, `manifest_path`, `warnings`, `failures`, `primary_h5ad`, and `partial`. Paths returned in memory are absolute; persisted provenance paths are relative to their artifact parent where possible.
+`JSON2H5ADConverter.convert()` accepts ordinary parsed MINiML JSON or a
+completed ThematicAtlases envelope. It returns `ConversionResult` for exactly
+one dataset group and `BatchConversionResult` for multiple groups.
+`convert_source(json_path, out=None, **options)` always returns
+`BatchConversionResult`. For multiple groups, each dataset is converted below
+an output child directory named for its dataset ID; per-group exceptions are
+recorded in `BatchConversionResult.failures` while later groups continue.
+Invalid paths, invalid source shapes, and sources with no convertible groups
+raise before aggregation. `ConversionResult` exposes `study_accession`,
+`sample_h5ads`, `combined_h5ad`, `retained_h5ads`, `pipeline_runs`,
+`manifest_path`, `warnings`, `failures`, `primary_h5ad`, and `partial`.
+In-memory paths are absolute; persisted provenance paths are relative to their
+artifact parent where possible. See the
+[H5AD workflow contract](docs/codebase.md#workflow-json2h5ad).
 
 Applications can add organization-neutral metadata without subclassing the
 converter by passing metadata projectors:

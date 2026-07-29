@@ -8,364 +8,171 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 -->
 # codebase.md Index
 
-Read this file first, then retrieve only the relevant anchored sections from `docs/codebase.md`.
-Use the `anchor` values below as stable header references. The codebase guide includes method/class responsibilities, pseudocode, internal calls, and external service calls.
-
-## Agent Retrieval Template
+Read this routing index first. Retrieve the relevant stable section from
+`docs/codebase.md`; the canonical handoff contains implementation evidence,
+call chains, branch-complete workflows, and the exhaustive symbol inventory.
 
 ```bash
 anchor='<anchor-id>'
-rg -n "<a id=\"${anchor}\"></a>|^#{2,6} " docs/codebase.md
-
-rg -n "^#{1,6} " docs/codebase.md docs/index.md
+python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); a=f"<a id=\"{sys.argv[1]}\"></a>"; s=p.index(a); n=p.find("\\n<a id=",s+len(a)); print(p[s:n if n >= 0 else None])' "$anchor"
 ```
 
-## Main Sections
+## Canonical routes
 
 - id: architecture
   title: Architecture
   anchor: architecture
-  purpose: Explains the repository role, runtime topology, major subsystems, ownership, and whole-codebase navigation.
-  keywords: architecture, topology, subsystem, ownership, GEO, MAGE-TAB, JSON, H5AD, TSV, CSV
+  purpose: Explains repository purpose, topology, ownership, and whole-system navigation.
+  keywords: architecture, topology, GEO, MAGE-TAB, JSON, H5AD, TSV, CSV
   link: [Open section](codebase.md#architecture)
 
 - id: system-context-and-boundaries
-  title: System Context And Boundaries
+  title: System context and boundaries
   anchor: system-context-and-boundaries
-  purpose: Maps external actors, delegated services, trust boundaries, persistence, processes, and failure ownership.
+  purpose: Maps actors, external services, trust/process boundaries, and failure ownership.
   keywords: boundary, GEO FTP, NCBI, ENA, PubMed, OLS, BioStudies, filesystem, Nextflow, Docker, ThematicAtlases
   link: [Open section](codebase.md#system-context-and-boundaries)
 
 - id: architectural-decisions
-  title: Architectural Decisions
+  title: Architectural decisions
   anchor: architectural-decisions
-  purpose: Records evidence-backed documented decisions and observed design choices with consequences.
-  keywords: decision, rationale, evidence, CLI, converters, MAGE-TAB, projectors, rootless
+  purpose: Records evidence-backed decisions and observed design choices with consequences.
+  keywords: decision, rationale, evidence, CLI, MAGE-TAB, projectors, rootless
   link: [Open section](codebase.md#architectural-decisions)
 
 - id: design-invariants-and-expectations
-  title: Design Invariants And Expectations
+  title: Design invariants and expectations
   anchor: design-invariants-and-expectations
-  purpose: Lists compatibility, validation, lifecycle, security, logging, overwrite, and failure rules future changes must preserve.
-  keywords: invariant, validation, compatibility, precedence, overwrite, logging, fail closed, rootless
+  purpose: Defines compatibility, validation, lifecycle, security, overwrite, and failure rules.
+  keywords: invariant, validation, compatibility, precedence, overwrite, logging, partial, rootless
   link: [Open section](codebase.md#design-invariants-and-expectations)
 
 - id: component-relationships-and-data-flow
-  title: Component Relationships And Data Flow
+  title: Component relationships and data flow
   anchor: component-relationships-and-data-flow
-  purpose: Shows how entrypoints, converters, fetchers, parsers, projectors, runners, and outputs exchange control and data.
-  keywords: relationship, data flow, control flow, lifecycle, converter, fetcher, parser, projector, NFCoreRunner
+  purpose: Shows control/data exchange, ownership, lifecycle, and failure propagation.
+  keywords: relationship, data flow, converter, fetcher, parser, projector, NFCoreRunner, Atlas
   link: [Open section](codebase.md#component-relationships-and-data-flow)
 
 - id: entrypoints-and-interfaces
-  title: Entrypoints And Interfaces
+  title: Entrypoints and interfaces
   anchor: entrypoints-and-interfaces
-  purpose: Inventories the supported CLI, Python, Docker, Compose, and operational-script interfaces.
-  keywords: interface, entrypoint, CLI, Python API, Docker, Compose, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2csv
+  purpose: Inventories supported CLI, Python, Docker, Compose, and operational interfaces.
+  keywords: entrypoint, CLI, Python, Docker, Compose, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2csv
   link: [Open section](codebase.md#entrypoints-and-interfaces)
 
 - id: orchestrators-and-core-types
-  title: Orchestrators And Core Types
+  title: Orchestrators and core types
   anchor: orchestrators-and-core-types
-  purpose: Summarizes state ownership and responsibilities of converters, constructors, planners, runners, projectors, and fetchers.
-  keywords: orchestrator, core type, AEConstructor, AEParser, JSON2H5ADConverter, JSON2DelimitedConverter, RateLimitedRequester
+  purpose: Explains state ownership and responsibilities of converters, constructors, planners, runners, and fetchers.
+  keywords: orchestrator, AEConstructor, AEParser, JSON2H5ADConverter, JSON2DelimitedConverter, RateLimitedRequester
   link: [Open section](codebase.md#orchestrators-and-core-types)
 
 - id: public-api-reference
-  title: Public API Reference
+  title: Public API reference
   anchor: public-api-reference
-  purpose: Inventories formal exports and supported production symbols and routes to their exhaustive callable contracts.
-  keywords: public API, __all__, signature, export, protocol, class, function, method, CLI
+  purpose: Defines formal exports and classifies all importable production symbols by support evidence.
+  keywords: public API, __all__, signature, constructor, property, method, protocol, failure, side effect
   link: [Open section](codebase.md#public-api-reference)
 
 - id: principal-workflows
-  title: Principal Workflows
+  title: Principal workflows
   anchor: principal-workflows
-  purpose: Routes the seven production conversion workflows from public input to artifacts, partial results, or errors.
-  keywords: workflow, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2csv, pseudocode
+  purpose: Introduces the seven conversion flows and their important terminal outcomes.
+  keywords: workflow, branch, stages, pseudocode, terminal, partial result
   link: [Open section](codebase.md#principal-workflows)
 
 - id: extension-and-change-guidance
-  title: Extension And Change Guidance
+  title: Extension and change guidance
   anchor: extension-and-change-guidance
-  purpose: Defines supported extension patterns, impact areas, required tests, and unsafe coupling to avoid.
-  keywords: extension, change, projector, platform handler, asset, service, round trip, tests, documentation
+  purpose: Defines supported extension patterns, compatibility concerns, and required tests.
+  keywords: extension, projector, platform handler, asset, service, round trip, tests
   link: [Open section](codebase.md#extension-and-change-guidance)
 
-- id: project-purpose-and-layout
-  title: Project Purpose And Layout
-  anchor: project-purpose-and-layout
-  keywords: purpose, layout, package tree, tests
+## Workflow routes
 
-- id: runtime-behavior
-  title: Runtime Behavior
-  anchor: runtime-behavior
-  keywords: dependencies, console scripts, network, outputs, logging, DEBUG, INFO, request duration, parse stats, enrichment stats, safe telemetry
+- id: workflow-geo2ae
+  title: GEO to MAGE-TAB
+  anchor: workflow-geo2ae
+  purpose: Traces GEO retrieval, parsing, enrichment, construction, writing, and errors.
+  keywords: geo2ae, GSE, GEO FTP, MINiML, AEConstructor, IDF, SDRF
+  link: [Open section](codebase.md#workflow-geo2ae)
 
-- id: end-to-end-geo2ae-flow
-  title: End-To-End geo2ae Flow
-  anchor: end-to-end-geo2ae-flow
-  keywords: geo2ae, geo2json, CLI, fetch, parse, MAGE-TAB, pseudocode, external APIs
+- id: workflow-geo2json
+  title: GEO to parsed JSON
+  anchor: workflow-geo2json
+  purpose: Traces the distinct GEO-to-JSON path, optional enrichment, writing, and errors.
+  keywords: geo2json, GSE, GEOParser, enrichment, JSON
+  link: [Open section](codebase.md#workflow-geo2json)
 
-- id: end-to-end-json2ae-flow
-  title: End-To-End json2ae Flow
-  anchor: end-to-end-json2ae-flow
-  keywords: json2ae, parsed JSON, package object, package list, validation, enrichment, IDF, SDRF, MAGE-TAB, overlay, keyed union, harmonized fields
+- id: workflow-json2ae
+  title: Parsed JSON to MAGE-TAB
+  anchor: workflow-json2ae
+  purpose: Traces source validation, enrichment, round-trip restoration, construction, and writing.
+  keywords: json2ae, JSON, MAGE-TAB, round trip, overlay, IDF, SDRF
+  link: [Open section](codebase.md#workflow-json2ae)
 
-- id: end-to-end-ae2json-flow
-  title: End-To-End ae2json Flow
-  anchor: end-to-end-ae2json-flow
-  keywords: ae2json, MAGE-TAB, IDF, SDRF, BioStudies, ArrayExpress, HTTP, local files, parsed JSON, unmapped extension
+- id: workflow-ae2json
+  title: MAGE-TAB to parsed JSON
+  anchor: workflow-ae2json
+  purpose: Traces local, HTTP, and BioStudies resolution through typed JSON output.
+  keywords: ae2json, BioStudies, IDF, SDRF, AEParser, typed model
+  link: [Open section](codebase.md#workflow-ae2json)
 
-- id: geo2json-vs-ae2json
-  title: geo2json Versus ae2json
-  anchor: geo2json-vs-ae2json
-  keywords: comparison, differences, geo2json, ae2json, MINiML-compatible core, MAGE-TAB extension, version, schema_location, series.iid, enrichment, assay multiplicity, round trip
+- id: workflow-json2h5ad
+  title: MINiML or Atlas JSON to H5AD
+  anchor: workflow-json2h5ad
+  purpose: Traces grouping, asset planning, raw/processed paths, projection, aggregation, and partial failures.
+  keywords: json2h5ad, Atlas, MINiML, ConversionResult, BatchConversionResult, nf-core, AnnData
+  link: [Open section](codebase.md#workflow-json2h5ad)
 
-- id: parsed-miniml-data-shape
-  title: Parsed MINiML Data Shape
-  anchor: parsed-miniml-data-shape
-  keywords: MINiML, parser, JSON shape, enrichment fields
+- id: workflow-json2tsv
+  title: MINiML or Atlas JSON to TSV
+  anchor: workflow-json2tsv
+  purpose: Traces grouping, projection, fail-closed validation, ordering, and TSV output.
+  keywords: json2tsv, Atlas, projector, TabularConversionResult, allow_invalid
+  link: [Open section](codebase.md#workflow-json2tsv)
 
-- id: workflow-details
-  title: Workflow Details
-  anchor: workflow-details
-  keywords: workflows, related series, IDF, SDRF, enrichment
+- id: workflow-json2csv
+  title: MINiML or Atlas JSON to CSV
+  anchor: workflow-json2csv
+  purpose: Traces the CSV specialization and its shared validation and partial-result terminals.
+  keywords: json2csv, CSV, quoting, projector, partial
+  link: [Open section](codebase.md#workflow-json2csv)
 
-- id: json2h5ad-flow
-  title: End-To-End json2h5ad Flow
-  anchor: json2h5ad-flow
-  keywords: H5AD, h5ad.gz, gzip, AnnData, metadata projector, projection hook, msc_miniml, msc metadata, dotted sectioned obs, characteristics, hz fields, hz organism precedence, empty metadata, ref, ontology, protocol, publication filtering, relative provenance, warnings, matrix, gene_name, TPM, FASTQ, ENA, FTP, HTTPS, nf-core, scrnaseq, QCATCH, filtered, rnaseq, assets, Nextflow
-
-- id: json2tabular-flow
-  title: End-To-End json2tsv And json2csv Flow
-  anchor: json2tabular-flow
-  keywords: TSV, CSV, Atlas JSON, MINiML, dataset groups, projector, TabularMetadataProjection, JSON2TSVConverter, JSON2CSVConverter, validation
-
-- id: rootless-json2h5ad-runtime
-  title: Rootless json2h5ad Runtime
-  anchor: rootless-json2h5ad-runtime
-  keywords: Docker Compose, rootless, nfcore-runner, socket, security, provisioning, containers, ACL, nobody, permissions, 0660, NXF_OPTS, nextflow-tmp, noexec
-
-- id: reference-annotation-flow
-  title: Reference And Annotation Flow
-  anchor: reference-annotation-flow
-  keywords: genome, FASTA, GTF, GFF3, gffread, annotation, checksum, provenance, iGenomes, override
+## Detailed evidence routes
 
 - id: public-api-and-callable-reference
-  title: Public API And Callable Reference
+  title: Complete callable inventory
   anchor: public-api-and-callable-reference
-  keywords: API, classes, methods, constructors, helpers, internal calls
+  purpose: Inventories public-named production callables beyond the formal export boundary.
+  keywords: callable, class, method, helper, evidence gap, source
+  link: [Open section](codebase.md#public-api-and-callable-reference)
 
-- id: maintenance-notes
-  title: Maintenance Notes
-  anchor: maintenance-notes
-  keywords: caveats, maintainers, generated output
+- id: parsed-miniml-data-shape
+  title: Parsed MINiML data shape
+  anchor: parsed-miniml-data-shape
+  purpose: Defines the internal JSON package shape shared by converter workflows.
+  keywords: MINiML, JSON, package, series, sample, platform, enrichment
+  link: [Open section](codebase.md#parsed-miniml-data-shape)
+
+- id: rootless-json2h5ad-runtime
+  title: Rootless json2h5ad runtime
+  anchor: rootless-json2h5ad-runtime
+  purpose: Documents the hardened Docker/Nextflow process boundary and filesystem contract.
+  keywords: rootless, Docker, Compose, socket, ACL, Nextflow, noexec
+  link: [Open section](codebase.md#rootless-json2h5ad-runtime)
+
+- id: reference-annotation-flow
+  title: Reference and annotation flow
+  anchor: reference-annotation-flow
+  purpose: Explains FASTA/GTF/GFF validation, conversion, precedence, and provenance.
+  keywords: genome, FASTA, GTF, GFF3, gffread, annotation, checksum
+  link: [Open section](codebase.md#reference-annotation-flow)
 
 - id: test-plan
-  title: Test Plan
+  title: Test plan
   anchor: test-plan
-  keywords: tests, unittest, acceptance, coverage, README, Guide, configuration, platform handler hierarchy, Mermaid, quickstart, CLI option contract, documentation links
-
-## Workflow Sections
-
-- id: geo-parse-flow
-  title: GEO Parse Flow
-  anchor: geo-parse-flow
-  keywords: GEOParser, XML, package scoping, references
-
-- id: related-series-flow
-  title: Related-Series Flow
-  anchor: related-series-flow
-  keywords: related, superseries, subseries, queue, dedupe
-
-- id: idf-and-mage-tab-construction-flow
-  title: IDF And MAGE-TAB Construction Flow
-  anchor: idf-and-mage-tab-construction-flow
-  keywords: IDF, AEConstructor, ProtocolRegistry, composition
-
-- id: sdrf-graph-and-rendering-flow
-  title: SDRF Graph And Rendering Flow
-  anchor: sdrf-graph-and-rendering-flow
-  keywords: SDRF, graph, paths, columns, render
-
-- id: technology-handler-selection
-  title: Technology Handler Selection
-  anchor: technology-handler-selection
-  keywords: technology, handlers, platform handler, force, list, CLI, README, Guide, Mermaid, hierarchy, sequencing, array, generic, 10x, v2, v3
-
-- id: sequencing-sdrf-flow
-  title: Sequencing SDRF Flow
-  anchor: sequencing-sdrf-flow
-  keywords: sequencing, SRA, ENA, FASTQ, derived files, LIBRARY_SOURCE
-
-- id: array-sdrf-flow
-  title: Array SDRF Flow
-  anchor: array-sdrf-flow
-  keywords: array, hybridization, raw files, derived files
-
-- id: base-sdrf-behavior
-  title: Base SDRF Behavior
-  anchor: base-sdrf-behavior
-  keywords: base handler, factors, protocols, sample ordering, characteristics, organism, MINiML value, required blank columns
-
-- id: sra-pubmed-and-ontology-enrichment
-  title: SRA, PubMed, And Ontology Enrichment
-  anchor: sra-pubmed-and-ontology-enrichment
-  keywords: SRA, PubMed, ontology, harmonizer
-
-## API Sections
-
-- id: cli
-  title: CLI
-  anchor: cli
-  keywords: geo2ae, geo2json, json2ae, json2h5ad, json2tsv, json2csv, flags, platform handler, list, logging, main
-
-- id: converter
-  title: Converter
-  anchor: converter
-  keywords: geo2ae, geo2json, json2ae, json2h5ad, json2tsv, json2csv, Atlas JSON, JSONPackageSource, TabularMetadataProjector, convert, platform_handler, metadata_projectors, MetadataProjectionContext, AnnDataMetadataProjection, JSON writing, MAGE-TAB, H5AD, AnnData, nf-core, AnnotationConverter, ReferenceResolver
-
-- id: miniml-enricher
-  title: MINiML enricher
-  anchor: miniml-enricher
-  keywords: enrichment, PubMed, SRA, sample metadata
-
-- id: geo-web-fetcher
-  title: GEO web fetcher
-  anchor: geo-web-fetcher
-  keywords: GEOWebFetcher, MINiML, GEO FTP, tarball
-
-- id: ae-web-fetcher
-  title: AE web fetcher
-  anchor: ae-web-fetcher
-  keywords: AEWebFetcher, BioStudies API, ArrayExpress, IDF, SDRF, local, HTTP, in-memory
-
-- id: ae-parser
-  title: AE parser
-  anchor: ae-parser
-  keywords: AEParser, MAGE-TAB, magetabv1.1, schema_location, series.iid, ArrayExpress accession, IDF, SDRF, MINiML-compatible JSON, mage_tab, warnings, unmapped, protocol mapping
-
-- id: ae-roundtrip
-  title: AE round-trip sidecar
-  anchor: ae-roundtrip
-  keywords: mage_tab, roundtrip, fingerprint, SHA-256, source tables, JSON precedence, lossless, sidecar-only metadata, fixed JSON shape, overlay, keyed union
-
-- id: typed-mage-tab-model
-  title: Typed editable MAGE-TAB model
-  anchor: typed-mage-tab-model
-  keywords: mage_tab.model, protocols, declarations, assay paths, units, ontology, multiplicity, model fingerprint, editable extension, overlay, keyed union, duplicate occurrence, harmonized hz fields, ambiguous alignment
-
-- id: geo-parser
-  title: GEO parser
-  anchor: geo-parser
-  keywords: GEOParser, parse helpers, related series
-
-- id: ae-idf-handlers
-  title: AE IDF handlers
-  anchor: ae-idf-handlers
-  keywords: IDFConstructor, platform IDF, secondary accession, GEO, ENA, SRA, DRA, publications, dates, protocols, term source, declared database, address, ontology version
-
-- id: ae-constructor
-  title: AE constructor
-  anchor: ae-constructor
-  keywords: AEConstructor, ProtocolRegistry, technology detection, file writing
-
-- id: sdrf-handlers
-  title: SDRF handlers
-  anchor: sdrf-handlers
-  keywords: SDRF, handlers, graph, file classification, data processing protocol, scan protocol, library construction, single-cell comments
-
-- id: harmonizers
-  title: Harmonizers
-  anchor: harmonizers
-  keywords: Harmonizer, GEO2OLS, Pubmed2OLS, ontology
-
-- id: json-helper
-  title: JSON helper
-  anchor: json-helper
-  keywords: JSONHandler, dotted paths, flattening
-
-- id: request-helper
-  title: Request helper
-  anchor: request-helper
-  keywords: RateLimitedRequester, timeout, retries, backoff, requests.get, external APIs
-
-- id: pubmed-fetcher
-  title: PubMed fetcher
-  anchor: pubmed-fetcher
-  keywords: PubMed, ESummary, DOI, publication status
-
-- id: insdc-fetcher
-  title: INSDC fetcher
-  anchor: insdc-fetcher
-  keywords: SRA, INSDC, ENA, FASTQ, runs
-
-- id: metastore
-  title: MetaStore
-  anchor: metastore
-  keywords: MetaStore, validation, placeholder
-
-## Parser Callables
-
-- id: geoparser-class-and-parse-methods
-  title: GEOParser class and parse methods
-  anchor: geoparser-class-and-parse-methods
-  keywords: repeated_children, parse, cleanup
-
-- id: parser-reference-resolution
-  title: Reference resolution
-  anchor: parser-reference-resolution
-  keywords: package, samples, platforms, contributors, databases
-
-- id: parser-generic-xml-mapping
-  title: Generic XML mapping
-  anchor: parser-generic-xml-mapping
-  keywords: _parse_element, snake_case, XML text
-
-- id: parser-related-series-helpers
-  title: Related-series helpers
-  anchor: parser-related-series-helpers
-  keywords: GSE extraction, relation matching
-
-- id: parser-cleanup-and-helpers
-  title: Cleanup and helpers
-  anchor: parser-cleanup-and-helpers
-  keywords: remove_empty, namespace, list normalization
-
-## SDRF Callables
-
-- id: sdrf-dataclasses
-  title: SDRF dataclasses
-  anchor: sdrf-dataclasses
-  keywords: SDRFAttr, SDRFNode, SDRFEdge, SDRFPath, SDRFAudit
-
-- id: sdrfconstructor
-  title: SDRFConstructor
-  anchor: sdrfconstructor
-  keywords: SDRFConstructor, technology, SRA lookup
-
-- id: sdrf-file-helpers
-  title: File helpers
-  anchor: sdrf-file-helpers
-  keywords: classify_file, normalized_extension
-
-- id: base-sdrf-handler
-  title: Base SDRF handler
-  anchor: base-sdrf-handler
-  keywords: paths, columns, source, factors
-
-- id: sequencing-handlers
-  title: Sequencing handlers
-  anchor: sequencing-handlers
-  keywords: sequencing, bulk, single-cell, droplet, 10x, v2, v3, spatial
-
-- id: array-and-generic-handlers
-  title: Array and generic handlers
-  anchor: array-and-generic-handlers
-  keywords: array, generic, files, hybridization
-
-- id: legacy-fallback-notes
-  title: Legacy fallback notes
-  anchor: legacy-fallback-notes
-  keywords: fallback, disabled, comments
+  purpose: Routes maintainers to behavioral and documentation verification coverage.
+  keywords: tests, unittest, CLI, documentation, acceptance, regression
+  link: [Open section](codebase.md#test-plan)
