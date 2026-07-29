@@ -55,7 +55,15 @@ HTML_AUTHOR_HEADER = "\n".join(
     ]
 )
 README_AUTHORS_LINE = (
-    "Created by [jaychowcl](https://github.com/jaychowcl) on May 2026"
+    "Created by [jaychowcl](https://github.com/jaychowcl) @ "
+    "[Saez-Rodriguez Group](https://saezlab.org) & "
+    "[EMBL-EBI Functional Genomics Team]"
+    "(https://www.ebi.ac.uk/about/teams/functional-genomics/) on May 2026"
+)
+README_LOGO = (
+    '<img width="250" height="250" alt="image" '
+    'src="https://github.com/user-attachments/assets/'
+    '51b52963-19de-4f67-8977-072b409dae19" />'
 )
 CANONICAL_CODEBASE_ANCHORS = (
     "architecture",
@@ -223,7 +231,10 @@ class DocsIndexTests(unittest.TestCase):
         ]
 
         lines = readme_text.splitlines()
-        self.assertEqual(lines[0], "# meta_standards_converter")
+        self.assertTrue(
+            readme_text.startswith(f"{README_LOGO}\n\n# meta_standards_converter\n"),
+            "README must preserve the historical logo before the H1",
+        )
         positions = []
         for heading in expected_headings:
             self.assertIn(heading, lines)
