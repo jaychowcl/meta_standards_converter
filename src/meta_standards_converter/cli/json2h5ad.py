@@ -13,6 +13,7 @@ Command line interface for parsed MINiML or canonical Atlas v2 JSON to H5AD.
 import argparse
 import json
 import logging
+import sys
 
 from meta_standards_converter.cli.common import add_logging_arguments, configure_logging
 from meta_standards_converter.converters import JSONDataOutputOrchestrator
@@ -96,7 +97,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     args = _parser().parse_args(argv)
-    configure_logging(args)
+    configure_logging(args, stream=sys.stderr)
     orchestrator = JSONDataOutputOrchestrator()
     failed = False
     summaries = []

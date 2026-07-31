@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sys
 
 from meta_standards_converter.cli.common import (
     add_logging_arguments,
@@ -38,7 +39,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     args = _parser().parse_args(argv)
-    configure_logging(args)
+    configure_logging(args, stream=sys.stderr)
     orchestrator = JSONDataOutputOrchestrator()
     failed = False
     summaries = []

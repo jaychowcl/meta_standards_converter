@@ -67,7 +67,7 @@ def log_level(args) -> int:
     return logging.WARNING
 
 
-def configure_logging(args) -> None:
+def configure_logging(args, *, stream=None) -> None:
     level = log_level(args)
     package_logger = logging.getLogger("meta_standards_converter")
     for handler in package_logger.handlers[:]:
@@ -76,10 +76,10 @@ def configure_logging(args) -> None:
     package_logger.setLevel(logging.DEBUG)
     package_logger.propagate = False
 
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setLevel(level)
-    stderr_handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
-    package_logger.addHandler(stderr_handler)
+    handler = logging.StreamHandler(sys.stdout if stream is None else stream)
+    handler.setLevel(level)
+    handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+    package_logger.addHandler(handler)
 
     if args.log_file:
         file_handler = logging.FileHandler(args.log_file, mode="w")

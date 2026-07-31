@@ -66,13 +66,12 @@ def test_orchestrator_exports_combined_obs_and_optional_metadata_sidecars(tmp_pa
     assert obs["author_cluster"].tolist() == ["alpha", "beta"]
     assert obs["msc.sample.accession"].tolist() == ["GSM1", "GSM1"]
     assert var["feature_id"].tolist() == ["ENSG1", "ENSG2"]
-    assert uns["values"]["source_note"] == "kept"
     assert uns["values"]["msc_metadata"]["sample_values"]["type"] == "dataframe"
     assert manifest["operation"] == "anndata_metadata"
     assert manifest["status"] == "complete"
     assert result.obs.shape[0] == 2
     assert result.var.shape[0] == 2
-    assert result.uns["source_note"] == "kept"
+    assert result.uns["msc_metadata"]["schema_version"] == "3.0"
 
 
 def test_orchestrator_obs_export_omits_unrequested_sidecars(tmp_path):

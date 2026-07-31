@@ -2439,7 +2439,6 @@ class JSON2H5ADConverter:
             axis="obs",
             join="outer",
             merge="first",
-            uns_merge="same",
             label="msc.combination.batch",
             index_unique=None,
             fill_value=0,
