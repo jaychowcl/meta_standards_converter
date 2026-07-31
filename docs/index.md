@@ -177,6 +177,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: H5AD, schema 3.0, obs, msc_metadata, sample_values, canonical columns, multivalue, observation ID, migration
   link: [Open section](codebase.md#h5ad-metadata-schema-v3)
 
+- id: harmonization-overrides
+  title: Harmonization overrides
+  anchor: harmonization-overrides
+  purpose: Defines Agentic Curator envelope recognition, opt-in destination replacement, hz retention, fallback, and provenance.
+  keywords: harmonization overrides, Agentic Curator, hz, profile, destination, provenance
+  link: [Open section](codebase.md#harmonization-overrides)
+
 - id: rootless-json2h5ad-runtime
   title: Rootless json2h5ad runtime
   anchor: rootless-json2h5ad-runtime

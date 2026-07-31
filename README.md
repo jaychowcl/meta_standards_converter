@@ -257,6 +257,7 @@ json2ae --list-platform-handlers
 | `json_path` | One or more paths containing a parsed MINiML object/list or canonical Atlas v2 document. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--no-enrich` | Convert supplied metadata without PubMed/SRA enrichment; enrichment is enabled by default. |
+| `--use-harmonization-overrides` | Apply the validated profile from an Agentic Curator result envelope while retaining every `hz_*` characteristic. |
 | `--out` `OUT` | Output directory; default `.`. |
 | `--platform-handler` `KEY` | Force both IDF and SDRF generation through a listed platform handler. |
 | `--list-platform-handlers` | Print valid handler keys, one per line, and exit without converting. |
@@ -341,6 +342,7 @@ json2h5ad output/GSE234602.json \
 | `--overwrite` | Replace normalized H5AD and manifest outputs; existing outputs are protected by default. |
 | `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
+| `--use-harmonization-overrides` | Replace canonical metadata destinations from the envelope profile and publish `msc_harmonization` provenance. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
@@ -402,6 +404,7 @@ json2tsv atlas.json --outdir output --format csv
 | `--format` `{tsv,csv}` | Manifest serialization; default `tsv`. |
 | `--allow-invalid` | Write projected rows despite projector-reported errors and return a partial result; default behavior raises before writing. |
 | `--overwrite` | Replace an existing destination; existing files are protected by default. |
+| `--use-harmonization-overrides` | Apply the envelope profile to canonical columns and retain all `msc.characteristics.hz_*` columns. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
@@ -445,6 +448,7 @@ json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
 | `--overwrite` | Replace the complete component bundle. |
 | `--allow-invalid` | Publish projector-reported validation errors as a partial result. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Generic delimited-matrix orientation. |
+| `--use-harmonization-overrides` | Use the same harmonization-aware AnnData assembly as `json2h5ad`. |
 | `-v`, `--verbose` | Increase verbosity; repeat for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only. |
 | `--log-file` `LOG_FILE` | Write detailed logs to a file. |

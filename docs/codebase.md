@@ -2167,6 +2167,36 @@ SRA XML helper methods:
 - Rootless Compose deliberately mounts only `.out/json2h5ad`. Inputs required by nested nf-core containers must be copied or generated below that path.
 - Socket access still grants full control of the dedicated rootless daemon; keep `nfcore-runner` locked and deny it unrelated files and credentials.
 
+<a id="harmonization-overrides"></a>
+## Harmonization overrides
+
+`JSONPackageSource` recognizes an Agentic Curator result envelope containing
+`miniml_json` and an optional sibling `harmonization_overrides` profile. The
+profile remains attached to each dataset group and is inactive unless a JSON
+consumer receives `use_harmonization_overrides=True` or the corresponding CLI
+flag. Native MINiML and Atlas v2 behavior is unchanged.
+
+The shared resolver validates schema version `1.0`, fixed MSC destinations or
+`characteristics.<normalized_tag>`, and ordered canonical source fields. The
+first populated `hz_<source>` wins. Scalar, numbered, container, and
+characteristic representations carry value, ID, ontology, and hierarchy depth.
+Invalid profiles warn and fall back to the complete raw view. Resolution uses a
+deep copy: destination fields change only in the conversion view and every
+`hz_*` field remains.
+
+H5AD/obs publish canonical schema-3 columns, harmonization provenance columns,
+and `uns["msc_harmonization"]`; `uns["msc_miniml"]` retains the untouched source.
+TSV/CSV publish the same canonical and provenance view. MAGE-TAB replaces its
+semantic destination, emits standard ontology companions where available, and
+retains separate `Characteristics[hz_*]` columns.
+
+Importable implementation symbols are
+`meta_standards_converter.converters.harmonization_overrides.HarmonizationSelection`,
+`meta_standards_converter.converters.harmonization_overrides.HarmonizationResolution`,
+`meta_standards_converter.converters.harmonization_overrides.resolve_harmonization_overrides`,
+and
+`meta_standards_converter.converters.harmonization_overrides.validate_harmonization_overrides`.
+
 <a id="test-plan"></a>
 ## Test Plan
 
