@@ -8,6 +8,8 @@
 # =============================================================================
 import json
 
+import pytest
+
 from meta_standards_converter.converters.json_source import JSONPackageSource
 
 
@@ -102,3 +104,55 @@ def test_conflicting_duplicate_samples_are_rejected(tmp_path):
         assert "conflicting" in str(error)
     else:
         raise AssertionError("expected conflicting duplicate sample failure")
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {"accessions": []},
+        {
+            "accessions": [
+                {
+                    "datalink_id": "GSE1",
+                    "ontology_harmonization_run_status": "not_run",
+                    "accession_metadata": None,
+                }
+            ]
+        },
+    ],
+)
+def test_sources_without_convertible_groups_fail_closed(tmp_path, payload):
+    source = tmp_path / "empty.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        ValueError, match=r"^JSON source contains no convertible package groups\.$"
+    ):
+        JSONPackageSource().load(source)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        package("GSE1", "GSM1") | {"sample": []},
+        {
+            "accessions": [
+                {
+                    "datalink_id": "GSE1",
+                    "ontology_harmonization_run_status": "completed",
+                    "accession_metadata": package("GSE1", "GSM1")
+                    | {"sample": []},
+                }
+            ]
+        },
+    ],
+)
+def test_sources_without_convertible_samples_fail_closed(tmp_path, payload):
+    source = tmp_path / "samples.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        ValueError, match=r"^JSON source contains no convertible samples\.$"
+    ):
+        JSONPackageSource().load(source)

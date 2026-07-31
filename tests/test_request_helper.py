@@ -166,6 +166,49 @@ class TestRateLimitedRequester(unittest.TestCase):
         self.assertEqual([0.5], fake_time.sleeps)
         self.assertEqual(2, get.call_count)
 
+    def test_get_retries_transient_request_exceptions_with_deterministic_backoff(self):
+        for exception_type in (
+            requests.ConnectionError,
+            requests.Timeout,
+            requests.ChunkedEncodingError,
+        ):
+            with self.subTest(exception_type=exception_type.__name__):
+                RateLimitedRequester.reset_service_state()
+                fake_time = FakeTime()
+                get = Mock(
+                    side_effect=[exception_type("transient"), exception_type("transient"), response(200)]
+                )
+                requester = RateLimitedRequester(
+                    service=f"exception_{exception_type.__name__}",
+                    settings=RequestSettings(request_delay=0, max_retries=2),
+                    get=get,
+                    sleep=fake_time.sleep,
+                    clock=fake_time.clock,
+                )
+
+                result = requester.get("https://example.org/data")
+
+                self.assertEqual(200, result.status_code)
+                self.assertEqual(3, get.call_count)
+                self.assertEqual([0.5, 1.0], fake_time.sleeps)
+
+    def test_get_reraises_request_exception_after_exact_attempt_count(self):
+        fake_time = FakeTime()
+        get = Mock(side_effect=requests.Timeout("still unavailable"))
+        requester = RateLimitedRequester(
+            service="exception_exhausted",
+            settings=RequestSettings(request_delay=0, max_retries=2),
+            get=get,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+
+        with self.assertRaisesRegex(requests.Timeout, "still unavailable"):
+            requester.get("https://example.org/data")
+
+        self.assertEqual(3, get.call_count)
+        self.assertEqual([0.5, 1.0], fake_time.sleeps)
+
     def test_get_logs_safe_attempt_status_and_duration_without_parameters(self):
         fake_time = FakeTime()
         get = Mock(return_value=response(200))

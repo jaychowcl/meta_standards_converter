@@ -21,6 +21,7 @@ if SRC not in sys.path:
 
 from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     AnnDataMetadataProjection,
+    AnnDataProjectionError,
     JSON2H5ADConverter,
 )
 
@@ -133,6 +134,65 @@ class TestMetadataProjectorHook(unittest.TestCase):
                 JSON2H5ADConverter(
                     metadata_projectors=[InvalidVectorProjector()]
                 ).convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+    def test_projection_errors_fail_closed_without_final_artifacts(self):
+        class InvalidProjector:
+            def project_sample(self, *, adata, context):
+                return AnnDataMetadataProjection(errors=("private validation failed",))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+            out = Path(tmpdir) / "out"
+
+            with self.assertRaisesRegex(
+                AnnDataProjectionError, "private validation failed"
+            ):
+                JSON2H5ADConverter(
+                    metadata_projectors=[InvalidProjector()]
+                ).convert(json_path=json_path, out=str(out))
+
+            self.assertEqual([], list(out.glob("*.h5ad")))
+            self.assertEqual([], list(out.glob("*.json2h5ad.json")))
+
+    def test_allow_invalid_writes_artifacts_and_manifest_diagnostics(self):
+        class InvalidProjector:
+            def project_sample(self, *, adata, context):
+                return AnnDataMetadataProjection(errors=("private validation failed",))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+            result = JSON2H5ADConverter(
+                metadata_projectors=[InvalidProjector()]
+            ).convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+                allow_invalid=True,
+            )
+
+            self.assertEqual(["private validation failed"], result.errors)
+            self.assertTrue(result.partial)
+            self.assertTrue(Path(result.sample_h5ads["GSM1"]).is_file())
+            self.assertTrue(Path(result.combined_h5ad).is_file())
+            manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
+            self.assertEqual(["private validation failed"], manifest["errors"])
+            self.assertTrue(manifest["partial"])
+
+    def test_structural_projection_errors_remain_unconditional_when_allowing_invalid(self):
+        class WrongTypeProjector:
+            def project_sample(self, *, adata, context):
+                return {"errors": ["ignored"]}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+
+            with self.assertRaisesRegex(TypeError, "AnnDataMetadataProjection"):
+                JSON2H5ADConverter(
+                    metadata_projectors=[WrongTypeProjector()]
+                ).convert(
+                    json_path=json_path,
+                    out=os.path.join(tmpdir, "out"),
+                    allow_invalid=True,
+                )
 
 
 if __name__ == "__main__":

@@ -46,6 +46,7 @@ class TestJSON2H5ADCLI(unittest.TestCase):
                 "--work-dir", "work",
                 "--resume",
                 "--overwrite",
+                "--allow-invalid",
                 "--matrix-orientation", "genes-by-observations",
             ])
 
@@ -66,6 +67,7 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             work_dir="work",
             resume=True,
             overwrite=True,
+            allow_invalid=True,
             matrix_orientation="genes-by-observations",
         )
 

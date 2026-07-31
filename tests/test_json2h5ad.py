@@ -16,6 +16,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
+
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
@@ -32,6 +34,10 @@ from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     RawProcessingResult,
     SourcePlanner,
     json2h5ad,
+)
+from meta_standards_converter.converters.json_source import (
+    DatasetPackageGroup,
+    SourceLoadResult,
 )
 
 
@@ -199,6 +205,25 @@ def test_convert_source_runs_each_atlas_study_independently(tmp_path):
         == calls
     )
     assert not result.partial
+
+
+def test_convert_source_rejects_unsafe_dataset_id_without_escaping_output(tmp_path):
+    class UnsafeSource:
+        def load(self, _path):
+            return SourceLoadResult(
+                groups=(DatasetPackageGroup("../escape", (package("one.h5ad"),)),)
+            )
+
+    source = tmp_path / "input.json"
+    source.write_text("{}", encoding="utf-8")
+    converter = JSON2H5ADConverter(package_source=UnsafeSource())
+
+    with pytest.raises(
+        ValueError, match=r"^Unsafe dataset_id path component: '\.\./escape'$"
+    ):
+        converter.convert_source(str(source), out=str(tmp_path / "out"))
+
+    assert not (tmp_path / "escape").exists()
 
 
 class TestAssetInputs(unittest.TestCase):

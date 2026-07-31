@@ -23,31 +23,41 @@ if SRC not in sys.path:
 
 
 class TestProjectScripts(unittest.TestCase):
-    def test_ae2json_console_script_is_registered(self):
+    def test_all_console_scripts_are_registered(self):
+        with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
+            pyproject = tomllib.load(handle)
+
+        for name in (
+            "ae2json",
+            "geo2ae",
+            "geo2json",
+            "json2ae",
+            "json2h5ad",
+            "json2tsv",
+            "json2csv",
+        ):
+            with self.subTest(name=name):
+                self.assertEqual(
+                    f"meta_standards_converter.cli.{name}:main",
+                    pyproject["project"]["scripts"][name],
+                )
+
+    def test_test_extra_contains_the_canonical_pytest_stack(self):
         with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
             pyproject = tomllib.load(handle)
 
         self.assertEqual(
-            "meta_standards_converter.cli.ae2json:main",
-            pyproject["project"]["scripts"]["ae2json"],
-        )
-
-    def test_json2ae_console_script_is_registered(self):
-        with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
-            pyproject = tomllib.load(handle)
-
-        self.assertEqual(
-            "meta_standards_converter.cli.json2ae:main",
-            pyproject["project"]["scripts"]["json2ae"],
-        )
-
-    def test_json2h5ad_console_script_is_registered(self):
-        with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
-            pyproject = tomllib.load(handle)
-
-        self.assertEqual(
-            "meta_standards_converter.cli.json2h5ad:main",
-            pyproject["project"]["scripts"]["json2h5ad"],
+            [
+                "pytest>=8.2,<9",
+                "pytest-subtests>=0.14,<1",
+                "anndata>=0.10.8",
+                "h5py>=3.10.0",
+                "numpy>=1.26.0",
+                "pandas>=2.1.0",
+                "scanpy>=1.10.0",
+                "scipy>=1.11.0",
+            ],
+            pyproject["project"]["optional-dependencies"]["test"],
         )
 
     def test_project_license_classifier_matches_gplv3_license_file(self):
