@@ -113,12 +113,16 @@ class TestMetadataProjectorHook(unittest.TestCase):
     def test_projector_cannot_overwrite_existing_metadata(self):
         class CollisionProjector:
             def project_sample(self, *, adata, context):
-                return AnnDataMetadataProjection(obs={"msc_accession": "replacement"})
+                return AnnDataMetadataProjection(
+                    obs={"msc.sample.accession": "replacement"}
+                )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             _source, json_path = self._fixture(tmpdir)
 
-            with self.assertRaisesRegex(ValueError, "msc_accession.*already exists"):
+            with self.assertRaisesRegex(
+                ValueError, r"msc\.sample\.accession.*already exists"
+            ):
                 JSON2H5ADConverter(
                     metadata_projectors=[CollisionProjector()]
                 ).convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
