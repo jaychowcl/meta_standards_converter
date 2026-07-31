@@ -124,6 +124,7 @@ def test_resolved_view_drives_canonical_metadata_and_preserves_hz_characteristic
     assert metadata["disease"] == ("fallback disease",)
     assert metadata["organism_part"] == ("lung",)
     assert metadata["characteristics"]["hz_tissue_name"] == ("lung",)
+    assert metadata["characteristics"]["hz_species_name"] == ("Homo sapiens",)
 
 
 def test_tabular_opt_in_uses_resolved_destinations_and_retains_hz_columns(tmp_path):
