@@ -77,7 +77,27 @@ class RateLimitedRequester:
                 attempt + 1,
                 kwargs.get("timeout"),
             )
-            response = self._get(url, **kwargs)
+            try:
+                response = self._get(url, **kwargs)
+            except (
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+                requests.exceptions.ChunkedEncodingError,
+            ) as error:
+                if attempt >= self.settings.max_retries:
+                    raise
+                delay = self._retry_delay(response=None, attempt=attempt)
+                logger.info(
+                    "HTTP retry service=%s host=%s exception=%s "
+                    "next_attempt=%s delay_seconds=%.3f",
+                    self.service,
+                    host,
+                    type(error).__name__,
+                    attempt + 2,
+                    delay,
+                )
+                self._sleep(delay)
+                continue
             elapsed = self._clock() - started
             logger.debug(
                 "HTTP response service=%s host=%s attempt=%s status=%s elapsed_seconds=%.3f",
@@ -121,7 +141,7 @@ class RateLimitedRequester:
             state["last_request_at"] = now
 
     def _retry_delay(self, response, attempt: int) -> float:
-        retry_after = response.headers.get("Retry-After")
+        retry_after = response.headers.get("Retry-After") if response is not None else None
         if retry_after:
             try:
                 return max(float(retry_after), 0)

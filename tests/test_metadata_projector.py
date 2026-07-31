@@ -12,6 +12,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -193,6 +194,64 @@ class TestMetadataProjectorHook(unittest.TestCase):
                     out=os.path.join(tmpdir, "out"),
                     allow_invalid=True,
                 )
+
+    def test_combined_projection_error_leaves_no_final_bundle(self):
+        class InvalidCombinedProjector:
+            def project_sample(self, *, adata, context):
+                return AnnDataMetadataProjection()
+
+            def project_combined(self, *, adata, contexts):
+                return AnnDataMetadataProjection(errors=("combined invalid",))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+            out = Path(tmpdir) / "out"
+
+            with self.assertRaisesRegex(AnnDataProjectionError, "combined invalid"):
+                JSON2H5ADConverter(
+                    metadata_projectors=[InvalidCombinedProjector()]
+                ).convert(json_path=json_path, out=str(out))
+
+            self.assertEqual([], list(out.glob("*.h5ad")))
+            self.assertEqual([], list(out.glob("*.json2h5ad.json")))
+
+    def test_bundle_commit_failure_restores_previous_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+            out = Path(tmpdir) / "out"
+            converter = JSON2H5ADConverter()
+            first = converter.convert(json_path=json_path, out=str(out))
+            paths = [
+                Path(first.sample_h5ads["GSM1"]),
+                Path(first.combined_h5ad),
+                Path(first.manifest_path),
+            ]
+            originals = {path: path.read_bytes() for path in paths}
+            real_replace = os.replace
+            injected = False
+
+            def fail_combined_once(source, destination):
+                nonlocal injected
+                destination = Path(destination)
+                if destination == Path(first.combined_h5ad) and not injected:
+                    injected = True
+                    raise OSError("injected bundle commit failure")
+                return real_replace(source, destination)
+
+            with patch(
+                "meta_standards_converter.converters.json2h5ad.os.replace",
+                side_effect=fail_combined_once,
+            ):
+                with self.assertRaisesRegex(OSError, "injected bundle commit failure"):
+                    converter.convert(
+                        json_path=json_path,
+                        out=str(out),
+                        overwrite=True,
+                    )
+
+            self.assertTrue(injected)
+            self.assertEqual(originals, {path: path.read_bytes() for path in paths})
+            self.assertEqual([], list(out.glob(".json2h5ad-staging-*")))
 
 
 if __name__ == "__main__":

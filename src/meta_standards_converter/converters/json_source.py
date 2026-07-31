@@ -43,20 +43,36 @@ class JSONPackageSource:
         if isinstance(payload, Mapping) and isinstance(
             payload.get("accessions"), list
         ):
-            return self._atlas(payload)
+            return self._validate_result(self._atlas(payload))
         packages = payload if isinstance(payload, list) else [payload]
         if not packages:
-            raise ValueError(
-                "Parsed MINiML JSON must contain a non-empty package object "
-                "or list; expected a non-empty list of packages or an Atlas "
-                "object"
-            )
+            raise ValueError("JSON source contains no convertible package groups.")
         for index, package in enumerate(packages, start=1):
             if not isinstance(package, Mapping):
                 raise ValueError(
                     f"Parsed MINiML package {index} must be a JSON object."
                 )
-        return SourceLoadResult(self._group_packages(packages, source.stem))
+        return self._validate_result(
+            SourceLoadResult(self._group_packages(packages, source.stem))
+        )
+
+    def _validate_result(self, result: SourceLoadResult) -> SourceLoadResult:
+        if not result.groups:
+            raise ValueError("JSON source contains no convertible package groups.")
+        if not any(
+            isinstance(sample, Mapping)
+            for group in result.groups
+            for package in group.packages
+            for sample in self._as_list(package.get("sample"))
+        ):
+            raise ValueError("JSON source contains no convertible samples.")
+        return result
+
+    @staticmethod
+    def _as_list(value: Any) -> list[Any]:
+        if value is None:
+            return []
+        return value if isinstance(value, list) else [value]
 
     def _atlas(self, payload: Mapping[str, Any]) -> SourceLoadResult:
         packages_by_source: list[tuple[Mapping[str, Any], str]] = []

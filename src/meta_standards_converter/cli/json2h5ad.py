@@ -72,6 +72,11 @@ def _parser() -> argparse.ArgumentParser:
     workflow.add_argument("--resume", action="store_true", help="Resume from the Nextflow cache.")
     parser.add_argument("--overwrite", action="store_true", help="Replace existing normalized outputs.")
     parser.add_argument(
+        "--allow-invalid",
+        action="store_true",
+        help="Write outputs carrying projector-reported validation errors.",
+    )
+    parser.add_argument(
         "--matrix-orientation",
         choices=("auto", "genes-by-observations", "observations-by-genes"),
         default="auto",
@@ -113,6 +118,7 @@ def main(argv=None) -> int:
                 ("work_dir", args.work_dir, None),
                 ("resume", args.resume, False),
                 ("overwrite", args.overwrite, False),
+                ("allow_invalid", args.allow_invalid, False),
                 ("matrix_orientation", args.matrix_orientation, "auto"),
             ):
                 if value != default:

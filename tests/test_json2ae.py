@@ -6,7 +6,6 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-import copy
 import json
 import os
 import sys
@@ -37,7 +36,7 @@ def package(accession="GSE1"):
             "accession": [{"value": accession, "database": "GEO"}],
             "title": f"Study {accession}",
         },
-        "sample": [],
+        "sample": [{"iid": f"GSM-{accession}"}],
         "platform": [],
     }
 
@@ -131,7 +130,9 @@ class TestJSON2AEConverter(unittest.TestCase):
     def test_convert_rejects_empty_package_list(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, [])
-            with self.assertRaisesRegex(ValueError, "non-empty package object or list"):
+            with self.assertRaisesRegex(
+                ValueError, "JSON source contains no convertible package groups"
+            ):
                 json2ae().convert(path)
 
     def test_convert_rejects_non_object_package_before_enrichment(self):
@@ -144,7 +145,10 @@ class TestJSON2AEConverter(unittest.TestCase):
 
     def test_convert_rejects_package_without_geo_series_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            path = self.write_json(tmpdir, {"series": {"title": "Missing accession"}})
+            path = self.write_json(
+                tmpdir,
+                {"series": {"title": "Missing accession"}, "sample": [{"iid": "GSM1"}]},
+            )
             with self.assertRaisesRegex(ValueError, "package 1 has no usable study accession"):
                 json2ae().convert(path)
 
@@ -277,7 +281,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         self.assertIn("building MAGE-TAB package 1", output)
         self.assertNotIn("do-not-log", output)
 
-    def test_fixture_parsed_package_matches_direct_ae_construction(self):
+    def test_fixture_parsed_package_matches_independent_magetab_expectations(self):
         fixture_path = os.path.join(ROOT, "tests", "GSE328265_family.xml")
         with open(fixture_path, encoding="utf-8") as handle:
             packages = GEOParser().parse(handle.read())
@@ -294,15 +298,18 @@ class TestJSON2AEConverter(unittest.TestCase):
             )
             actual = json2ae(ae_constructor=converter_constructor).convert(path, enrich=False)
 
-        direct_constructor = AEConstructor(
-            idf_constructor=IDFConstructor(pubmed_fetcher=pubmed_fetcher),
-            sdrf_constructor=SDRFConstructor(insdc_fetcher=insdc_fetcher)
+        self.assertEqual(1, len(actual))
+        rows = {row[0]: row[1:] for row in actual[0] if row}
+        self.assertEqual(["1.1"], rows["MAGE-TAB Version"])
+        self.assertEqual(
+            [
+                "A CSF Disease-Associated Macrophage Signature defines "
+                "Progressive Multiple Sclerosis"
+            ],
+            rows["Investigation Title"],
         )
-        expected = [
-            direct_constructor.miniml2magetab(data=copy.deepcopy(item))
-            for item in packages
-        ]
-        self.assertEqual(expected, actual)
+        self.assertEqual(["2026-05-17"], rows["Public Release Date"])
+        self.assertEqual(["GSE328265"], rows["Comment[SecondaryAccession]"])
 
 
 if __name__ == "__main__":

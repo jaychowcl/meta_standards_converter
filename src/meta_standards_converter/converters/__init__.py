@@ -10,6 +10,7 @@
 from .json2h5ad import (
     AnnDataMetadataProjection,
     AnnDataMetadataProjector,
+    AnnDataProjectionError,
     MetadataProjectionContext,
 )
 from .json2tabular import (
@@ -25,6 +26,7 @@ from .json2tabular import (
 __all__ = [
     "AnnDataMetadataProjection",
     "AnnDataMetadataProjector",
+    "AnnDataProjectionError",
     "MetadataProjectionContext",
     "JSON2CSVConverter",
     "JSON2TSVConverter",

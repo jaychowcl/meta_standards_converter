@@ -22,10 +22,11 @@ from meta_standards_converter.helpers.json_helper import JSONHandler
 logger = logging.getLogger(__name__)
 
 class geo2ae(JSONHandler):
-   def __init__(self, enricher=None, geo_fetcher=None, parser=None):
+   def __init__(self, enricher=None, geo_fetcher=None, parser=None, ae_constructor=None):
       self.enricher = enricher or MINiMLEnricher()
       self.geo_fetcher = geo_fetcher or GEOWebFetcher()
       self.parser = parser or GEOParser(geo_fetcher=self.geo_fetcher)
+      self.ae_constructor = ae_constructor or AEConstructor()
 
    def convert(
       self,
@@ -53,7 +54,7 @@ class geo2ae(JSONHandler):
       logger.debug("%s: parsed %d MINiML package(s)", gse, len(meta_jsons))
 
       # convert to MAGETAB
-      constructor = AEConstructor()
+      constructor = self.ae_constructor
       magetab_dfs = []
       for index, meta_json in enumerate(meta_jsons, start=1):
          logger.info("%s: enriching parsed package %d", gse, index)

@@ -20,7 +20,7 @@ project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 runner_uid="$(id -u)"
 runner_home="$(getent passwd "${runner_name}" | cut -d: -f6)"
 runtime_dir="/run/user/${runner_uid}"
-rootless_socket="${runtime_dir}/docker.sock"
+rootless_socket="${ROOTLESS_DOCKER_SOCKET:-${runtime_dir}/docker.sock}"
 output_root="${JSON2H5AD_OUT:-${project_root}/.out/json2h5ad}"
 
 verify_output_acl() {

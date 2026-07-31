@@ -327,7 +327,9 @@ class TestConversionContract(unittest.TestCase):
             with open(json_path, "w", encoding="utf-8") as handle:
                 json.dump([], handle)
 
-            with self.assertRaisesRegex(ValueError, "non-empty list"):
+            with self.assertRaisesRegex(
+                ValueError, "JSON source contains no convertible package groups"
+            ):
                 json2h5ad().convert(json_path=json_path, out=tmpdir)
 
 

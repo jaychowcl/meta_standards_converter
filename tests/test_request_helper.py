@@ -170,7 +170,7 @@ class TestRateLimitedRequester(unittest.TestCase):
         for exception_type in (
             requests.ConnectionError,
             requests.Timeout,
-            requests.ChunkedEncodingError,
+            requests.exceptions.ChunkedEncodingError,
         ):
             with self.subTest(exception_type=exception_type.__name__):
                 RateLimitedRequester.reset_service_state()

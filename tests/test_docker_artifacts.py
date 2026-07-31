@@ -7,7 +7,11 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import unittest
+import os
+import subprocess
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -69,6 +73,7 @@ class DockerArtifactsTest(unittest.TestCase):
         self.assertIn("/tmp:size=2g,mode=1777", content)
         self.assertIn("/nextflow-tmp:size=2g,mode=1777,exec", content)
 
+    @pytest.mark.fake_process
     def test_rootless_runner_scripts_are_present_and_parse(self):
         scripts = [
             ROOT / "scripts" / "provision-rootless-json2h5ad.sh",
@@ -140,6 +145,58 @@ class DockerArtifactsTest(unittest.TestCase):
             "*.log",
         }
         self.assertTrue(expected_patterns.issubset(patterns))
+
+
+@pytest.mark.fake_process
+def test_compose_runner_uses_only_reviewed_fake_path_and_socket_seam(
+    tmp_path, monkeypatch
+):
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+
+    def executable(name, content):
+        path = fake_bin / name
+        path.write_text(f"#!/usr/bin/bash\n{content}\n", encoding="utf-8")
+        path.chmod(0o755)
+
+    for name in ("bash", "cut", "dirname", "mkdir", "readlink"):
+        os.symlink(f"/usr/bin/{name}", fake_bin / name)
+    executable(
+        "id",
+        'case "${1:-}" in -un) echo nfcore-runner;; -u) echo 12345;; *) exit 2;; esac',
+    )
+    executable(
+        "getent",
+        'echo "nfcore-runner:x:12345:12345::/tmp/fake-runner:/bin/false"',
+    )
+    executable("getfacl", "exit 0")
+    executable("find", "exit 0")
+    executable("stat", 'echo "12345:12345"')
+    executable(
+        "docker",
+        'echo "$*" >>"${FAKE_DOCKER_LOG}"\n'
+        'if [[ "${1:-}" == "info" ]]; then echo \'["name=rootless"]\'; fi',
+    )
+
+    socket_path = Path("/run/uuidd/request")
+    output = tmp_path / "output"
+    docker_log = tmp_path / "docker.log"
+    monkeypatch.setenv("PATH", os.fspath(fake_bin))
+    monkeypatch.setenv("ROOTLESS_DOCKER_SOCKET", os.fspath(socket_path))
+    monkeypatch.setenv("JSON2H5AD_OUT", os.fspath(output))
+    monkeypatch.setenv("FAKE_DOCKER_LOG", os.fspath(docker_log))
+
+    completed = subprocess.run(
+        [os.fspath(ROOT / "scripts" / "json2h5ad-compose.sh"), "run", "--rm"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    calls = docker_log.read_text(encoding="utf-8").splitlines()
+    assert calls[0] == "info --format {{json .SecurityOptions}}"
+    assert calls[1].endswith("compose.yaml run --rm")
 
 
 if __name__ == "__main__":

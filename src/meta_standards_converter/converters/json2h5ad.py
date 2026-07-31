@@ -84,6 +84,15 @@ class AnnDataMetadataProjection:
     var: Mapping[str, Any] = field(default_factory=dict)
     uns: Mapping[str, Any] = field(default_factory=dict)
     warnings: tuple[str, ...] = ()
+    errors: tuple[str, ...] = ()
+
+
+class AnnDataProjectionError(ValueError):
+    """Raised when an AnnData projector reports invalid projected metadata."""
+
+    def __init__(self, errors: Sequence[str]):
+        self.errors = tuple(str(error) for error in errors)
+        super().__init__("; ".join(self.errors))
 
 
 class AnnDataMetadataProjector(Protocol):
@@ -260,6 +269,7 @@ class ConversionResult:
     manifest_path: str | None = None
     warnings: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
     @property
     def primary_h5ad(self) -> str | None:
@@ -269,7 +279,7 @@ class ConversionResult:
 
     @property
     def partial(self) -> bool:
-        return bool(self.failures)
+        return bool(self.failures or self.errors)
 
     def __str__(self) -> str:
         return self.primary_h5ad or self.manifest_path or self.study_accession
@@ -1133,6 +1143,7 @@ class JSON2H5ADConverter:
         nextflow_config: str | None = None,
         work_dir: str | None = None,
         resume: bool = False,
+        allow_invalid: bool = False,
         **options,
     ) -> ConversionResult | BatchConversionResult:
         if not os.path.exists(json_path):
@@ -1159,6 +1170,7 @@ class JSON2H5ADConverter:
             nextflow_config=nextflow_config,
             work_dir=work_dir,
             resume=resume,
+            allow_invalid=allow_invalid,
             **options,
         )
         if len(loaded.groups) > 1:
@@ -1183,6 +1195,7 @@ class JSON2H5ADConverter:
         self,
         json_path: str,
         out: str | None = None,
+        allow_invalid: bool = False,
         **options,
     ) -> BatchConversionResult:
         if not os.path.exists(json_path):
@@ -1194,6 +1207,7 @@ class JSON2H5ADConverter:
             loaded,
             source_json=json_path,
             out=out,
+            allow_invalid=allow_invalid,
             **options,
         )
 
@@ -1209,6 +1223,7 @@ class JSON2H5ADConverter:
         root = Path(out or ".")
         multiple = len(loaded.groups) > 1
         for group in loaded.groups:
+            self._validate_dataset_id(group.dataset_id)
             group_out = root / group.dataset_id if multiple else root
             try:
                 converted = self._convert_packages(
@@ -1247,6 +1262,7 @@ class JSON2H5ADConverter:
         nextflow_config: str | None = None,
         work_dir: str | None = None,
         resume: bool = False,
+        allow_invalid: bool = False,
         **options,
     ) -> ConversionResult:
 
@@ -1271,6 +1287,7 @@ class JSON2H5ADConverter:
         source_json_sha256 = self._sha256(source_json)
         result = ConversionResult(study_accession=study_accession)
         adatas = {}
+        combined_adata = None
         projection_contexts: list[MetadataProjectionContext] = []
 
         raw_assets = {sample: asset for sample, asset in planned.items() if asset.kind == "raw"}
@@ -1330,6 +1347,8 @@ class JSON2H5ADConverter:
                 adata,
                 projection_context,
                 warnings=result.warnings,
+                errors=result.errors,
+                allow_invalid=allow_invalid,
             )
             projection_contexts.append(projection_context)
             self._attach_miniml(
@@ -1341,7 +1360,6 @@ class JSON2H5ADConverter:
                 artifact_parent=out_path,
             )
             sample_path = out_path / f"{sample_id}.h5ad"
-            self._write_h5ad(adata, sample_path, overwrite=overwrite)
             result.sample_h5ads[sample_id] = str(sample_path)
             adatas[sample_id] = adata
 
@@ -1350,10 +1368,13 @@ class JSON2H5ADConverter:
         except ValueError as exc:
             result.failures.append(str(exc))
         else:
+            combined_adata = combined
             self._project_combined_metadata(
                 combined,
                 projection_contexts,
                 warnings=result.warnings,
+                errors=result.errors,
+                allow_invalid=allow_invalid,
             )
             self._attach_miniml(
                 combined,
@@ -1363,14 +1384,30 @@ class JSON2H5ADConverter:
                 artifact_parent=out_path,
             )
             combined_path = out_path / f"{study_accession}.h5ad"
-            self._write_h5ad(combined, combined_path, overwrite=overwrite)
             result.combined_h5ad = str(combined_path)
 
         result.manifest_path = str(out_path / f"{study_accession}.json2h5ad.json")
-        self._write_manifest(
-            result, planned, json_path=source_json, overwrite=overwrite
+        self._write_dataset_bundle(
+            adatas=adatas,
+            combined=combined_adata,
+            result=result,
+            planned=planned,
+            json_path=source_json,
+            overwrite=overwrite,
         )
         return result
+
+    @staticmethod
+    def _validate_dataset_id(dataset_id: str) -> None:
+        rendered = str(dataset_id)
+        if (
+            not rendered
+            or rendered in {".", ".."}
+            or Path(rendered).name != rendered
+            or "/" in rendered
+            or "\\" in rendered
+        ):
+            raise ValueError(f"Unsafe dataset_id path component: {rendered!r}")
 
     def _study_accession(self, packages: list[dict]) -> str | None:
         for package in packages:
@@ -1674,6 +1711,8 @@ class JSON2H5ADConverter:
         context: MetadataProjectionContext,
         *,
         warnings: list[str],
+        errors: list[str],
+        allow_invalid: bool,
     ) -> None:
         for projector in self.metadata_projectors:
             callback = getattr(projector, "project_sample", None)
@@ -1682,6 +1721,9 @@ class JSON2H5ADConverter:
             projection = callback(adata=adata, context=context)
             self._apply_metadata_projection(adata, projection)
             self._extend_warnings(warnings, projection.warnings)
+            self._extend_warnings(errors, projection.errors)
+            if projection.errors and not allow_invalid:
+                raise AnnDataProjectionError(projection.errors)
 
     def _project_combined_metadata(
         self,
@@ -1689,6 +1731,8 @@ class JSON2H5ADConverter:
         contexts: Sequence[MetadataProjectionContext],
         *,
         warnings: list[str],
+        errors: list[str],
+        allow_invalid: bool,
     ) -> None:
         for projector in self.metadata_projectors:
             callback = getattr(projector, "project_combined", None)
@@ -1697,6 +1741,9 @@ class JSON2H5ADConverter:
             projection = callback(adata=adata, contexts=tuple(contexts))
             self._apply_metadata_projection(adata, projection)
             self._extend_warnings(warnings, projection.warnings)
+            self._extend_warnings(errors, projection.errors)
+            if projection.errors and not allow_invalid:
+                raise AnnDataProjectionError(projection.errors)
 
     def _apply_metadata_projection(
         self,
@@ -2316,17 +2363,96 @@ class JSON2H5ADConverter:
             if temporary.exists():
                 temporary.unlink()
 
+    def _write_dataset_bundle(
+        self,
+        *,
+        adatas: Mapping[str, Any],
+        combined: Any,
+        result: ConversionResult,
+        planned: dict[str, Asset],
+        json_path: str,
+        overwrite: bool,
+    ) -> None:
+        destinations = [Path(path) for path in result.sample_h5ads.values()]
+        if result.combined_h5ad:
+            destinations.append(Path(result.combined_h5ad))
+        destinations.append(Path(result.manifest_path))
+        for destination in destinations:
+            if destination.exists() and not overwrite:
+                raise FileExistsError(f"Output already exists: {destination}")
+
+        output_dir = Path(result.manifest_path).parent
+        output_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix=".json2h5ad-staging-", dir=output_dir
+        ) as temporary_dir:
+            staging = Path(temporary_dir)
+            staged: list[tuple[Path, Path]] = []
+            for sample_id, adata in adatas.items():
+                destination = Path(result.sample_h5ads[sample_id])
+                source = staging / destination.name
+                self._write_h5ad(adata, source, overwrite=True)
+                staged.append((source, destination))
+            if combined is not None and result.combined_h5ad:
+                destination = Path(result.combined_h5ad)
+                source = staging / destination.name
+                self._write_h5ad(combined, source, overwrite=True)
+                staged.append((source, destination))
+            manifest_destination = Path(result.manifest_path)
+            manifest_source = staging / manifest_destination.name
+            self._write_manifest(
+                result,
+                planned,
+                json_path=json_path,
+                overwrite=True,
+                output_path=manifest_source,
+            )
+            staged.append((manifest_source, manifest_destination))
+            self._commit_dataset_bundle(staged, overwrite=overwrite, staging=staging)
+
+    def _commit_dataset_bundle(
+        self,
+        staged: Sequence[tuple[Path, Path]],
+        *,
+        overwrite: bool,
+        staging: Path,
+    ) -> None:
+        backup_dir = staging / "backups"
+        backups: list[tuple[Path, Path]] = []
+        installed: list[Path] = []
+        try:
+            if overwrite:
+                backup_dir.mkdir()
+                for index, (_source, destination) in enumerate(staged):
+                    if destination.exists():
+                        backup = backup_dir / f"{index}-{destination.name}"
+                        os.replace(destination, backup)
+                        backups.append((backup, destination))
+            for source, destination in staged:
+                os.replace(source, destination)
+                installed.append(destination)
+                if destination.suffix == ".h5ad":
+                    destination.chmod(0o660)
+        except Exception:
+            for destination in reversed(installed):
+                destination.unlink(missing_ok=True)
+            for backup, destination in reversed(backups):
+                os.replace(backup, destination)
+            raise
+
     def _write_manifest(
         self,
         result: ConversionResult,
         planned: dict[str, Asset],
         json_path: str,
         overwrite: bool,
+        output_path: Path | None = None,
     ) -> None:
-        path = Path(result.manifest_path)
-        if path.exists() and not overwrite:
-            raise FileExistsError(f"Output already exists: {path}")
-        base = path.parent.resolve()
+        logical_path = Path(result.manifest_path)
+        path = output_path or logical_path
+        if logical_path.exists() and not overwrite:
+            raise FileExistsError(f"Output already exists: {logical_path}")
+        base = logical_path.parent.resolve()
         source_json, source_json_scope = self._portable_location(json_path, base)
         combined_h5ad, combined_h5ad_scope = self._portable_location(result.combined_h5ad, base)
         sample_h5ads = {}
@@ -2356,6 +2482,8 @@ class JSON2H5ADConverter:
             ],
             "warnings": result.warnings,
             "failures": result.failures,
+            "errors": result.errors,
+            "partial": result.partial,
             "assets": {
                 sample: self._portable_asset(asset, base)
                 for sample, asset in planned.items()

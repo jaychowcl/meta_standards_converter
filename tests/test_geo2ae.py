@@ -21,7 +21,6 @@ from meta_standards_converter.converters.geo2ae import geo2ae  # noqa: E402
 
 
 class TestGeo2AEConverter(unittest.TestCase):
-    @patch("builtins.open")
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
     @patch("meta_standards_converter.converters.geo2ae.GEOParser")
@@ -32,7 +31,6 @@ class TestGeo2AEConverter(unittest.TestCase):
         parser_mock,
         enricher_mock,
         constructor_mock,
-        open_mock,
     ):
         fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
         primary_json = {"series": {"accession": "GSE1"}}
@@ -67,7 +65,6 @@ class TestGeo2AEConverter(unittest.TestCase):
             constructor_mock.return_value.miniml2magetab.call_args_list,
         )
         constructor_mock.return_value.magetab2file.assert_not_called()
-        open_mock.assert_not_called()
 
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")

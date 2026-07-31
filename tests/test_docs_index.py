@@ -13,6 +13,8 @@ import subprocess
 import unittest
 from pathlib import Path
 
+import pytest
+
 from meta_standards_converter.ae_handlers.ae_constructor import PLATFORM_HANDLER_KEYS
 
 try:
@@ -417,6 +419,7 @@ class DocsIndexTests(unittest.TestCase):
         for script_name in pyproject["project"]["scripts"]:
             self.assertIn(f"`{script_name}`", readme_text)
 
+    @pytest.mark.fake_process
     def test_tracked_commentable_files_have_canonical_author_headers(self):
         tracked_files = subprocess.check_output(
             ["git", "ls-files"],
