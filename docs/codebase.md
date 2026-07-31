@@ -560,8 +560,9 @@ package conversion -> processed normalize / raw reference + nf-core
 3. With multiple groups, `_convert_groups` places each group in an output-root
    child directory named for `dataset_id`; one group uses the root directly.
 4. Planning applies manifest, explicit, then discovered asset precedence.
-5. Processed assets normalize directly; raw assets call reference resolution
-   and Nextflow/nf-core through `NFCoreRunner`.
+5. Processed assets normalize directly; ordinary H5AD and delimited paths do
+   not import Scanpy, while 10x HDF5/MTX branches import it lazily. Raw assets
+   call reference resolution and Nextflow/nf-core through `NFCoreRunner`.
 6. Per-sample failures, incompatibility, and allowed projector errors can make `ConversionResult.partial`;
    per-group exceptions are caught in `BatchConversionResult.failures`.
 7. Invalid path/source/no-group/no-sample and unsafe dataset-ID conditions raise before aggregation; successful
@@ -1440,6 +1441,9 @@ This section lists public and semi-public callables used by tests or by package 
 - `ReferenceResolver` accepts a catalogue `genome` with an optional GTF/GFF override or `fasta` paired with exactly one GTF/GFF; supported organism inference must be explicitly accepted before Nextflow starts.
 - `AnnotationConverter` validates local FASTA/annotation paths, records annotation SHA-256, passes GTF through, and converts GFF3 to a shared checksum-addressed GTF through `gffread`.
 - Generic delimited matrices require an explicit orientation when it cannot be represented by a study-scoped sample column.
+- `_scientific_modules()` loads AnnData, NumPy, pandas, and SciPy only;
+  `_scanpy_module()` is called exclusively by 10x HDF5/MTX readers, keeping
+  ordinary processed-H5AD conversion independent of Scanpy import side effects.
 
 `MetadataProjectionContext`, `AnnDataMetadataProjection`, and the
 `AnnDataMetadataProjector` protocol form the additive metadata extension

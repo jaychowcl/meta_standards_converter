@@ -339,6 +339,11 @@ json2h5ad output/GSE234602.json \
 
 Processed assets may be local or HTTP(S)/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote processed assets are cached under the output directory and an available MD5 is verified. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
 
+Ordinary H5AD and delimited-matrix paths use AnnData, pandas, NumPy, and SciPy
+directly. Scanpy is imported lazily only when reading 10x HDF5 or MTX inputs,
+so processed H5AD conversion does not trigger unrelated plotting/font-system
+process discovery.
+
 Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
 
 #### `json2tsv`
