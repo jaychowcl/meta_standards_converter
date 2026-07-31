@@ -8,7 +8,8 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 2.0.0 is the clean-break Atlas v2 consumer release. MSC remains
+Version 3.0.0 introduces the canonical H5AD metadata schema while continuing to
+consume Atlas wire schema 2.0 and MINiML ledger schema 1.0. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
 import or depend on ThematicAtlases.
 Organization-specific H5AD adapters compose through the public `Asset`,
@@ -128,7 +129,7 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v2 document | One normalized sample metadata TSV per input |
 | `json2csv` | Parsed MINiML package JSON or a canonical Atlas v2 document | One normalized sample metadata CSV per input |
 
-GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds `mage_tab.model`, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, normalized `msc_*` observation metadata, flattened MINiML metadata in `uns["msc_miniml"]`, and conversion provenance.
+GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds `mage_tab.model`, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, normalized sample values in `uns["msc_metadata"]`, flattened MINiML metadata in `uns["msc_miniml"]`, and conversion provenance.
 
 ## Guide
 
@@ -352,6 +353,33 @@ so processed H5AD conversion does not trigger unrelated plotting/font-system
 process discovery.
 
 Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
+
+##### H5AD metadata schema 3.0
+
+Converter-owned observation columns use only canonical dotted names such as
+`msc.sample.accession`, `msc.archive.sra_run_accessions`,
+`msc.characteristics.cell_type`, and `msc.combination.batch`. Version 3 does
+not generate the former underscore aliases. If a source H5AD already contains
+an underscore-style column, it is retained as opaque source data but is not
+used as MSC metadata. Study-level input splitting recognizes
+`msc.sample.accession` and the external generic columns `geo_accession`,
+`sample_id`, `sample`, and `gsm_accession`.
+
+Analysis-facing `obs` values remain scalar strings; repeated values are
+de-duplicated in source order and displayed with `; ` separators. The
+authoritative reversible projection is
+`uns["msc_metadata"]["sample_values"]`, with columns `sample_accession`,
+`field`, `ordinal`, `value`, and `value_type`. The complete source hierarchy
+continues to live in `uns["msc_miniml"]["fields"]`. H5AD provenance and the
+JSON manifest declare `3.0` as the H5AD metadata schema independently of the
+Atlas and MINiML schema versions.
+
+Original observation identifiers are stored in
+`obs["msc.observation.original_id"]`. Identifiers that already contain their
+sample accession as a delimiter-bounded token are preserved; unqualified IDs
+receive `-{sample_accession}`. Duplicate candidates receive deterministic
+numeric suffixes before sample and combined files are written, so both files
+use the same globally unique identifiers.
 
 #### `json2tsv`
 

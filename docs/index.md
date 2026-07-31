@@ -99,8 +99,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: runtime-behavior
   title: Runtime behavior and packaging
   anchor: runtime-behavior
-  purpose: Defines the standalone 2.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
-  keywords: version 2.0.0, standalone, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
+  purpose: Defines the standalone 3.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
+  keywords: version 3.0.0, standalone, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
   link: [Open section](codebase.md#runtime-behavior)
 
 ## Workflow routes
@@ -169,6 +169,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   purpose: Defines the internal JSON package shape shared by converter workflows.
   keywords: MINiML, JSON, package, series, sample, platform, enrichment
   link: [Open section](codebase.md#parsed-miniml-data-shape)
+
+- id: h5ad-metadata-schema-v3
+  title: H5AD metadata schema 3.0
+  anchor: h5ad-metadata-schema-v3
+  purpose: Defines canonical dotted observation columns, normalized sample values, schema markers, source-column treatment, and globally unique observation identifiers.
+  keywords: H5AD, schema 3.0, obs, msc_metadata, sample_values, canonical columns, multivalue, observation ID, migration
+  link: [Open section](codebase.md#h5ad-metadata-schema-v3)
 
 - id: rootless-json2h5ad-runtime
   title: Rootless json2h5ad runtime
