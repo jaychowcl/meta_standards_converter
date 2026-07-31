@@ -50,12 +50,12 @@ class TestProjectScripts(unittest.TestCase):
             [
                 "pytest>=8.2,<9",
                 "pytest-subtests>=0.14,<1",
-                "anndata>=0.10.8",
-                "h5py>=3.10.0",
-                "numpy>=1.26.0",
-                "pandas>=2.1.0",
-                "scanpy>=1.10.0",
-                "scipy>=1.11.0",
+                "anndata",
+                "h5py",
+                "numpy",
+                "pandas",
+                "scanpy",
+                "scipy",
             ],
             pyproject["project"]["optional-dependencies"]["test"],
         )
