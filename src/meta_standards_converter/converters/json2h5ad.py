@@ -284,6 +284,22 @@ class ConversionResult:
     def __str__(self) -> str:
         return self.primary_h5ad or self.manifest_path or self.study_accession
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "operation": "h5ad",
+            "status": "partial" if self.partial else "complete",
+            "study_accession": self.study_accession,
+            "artifacts": {
+                "combined_h5ad": self.combined_h5ad,
+                "sample_h5ads": dict(self.sample_h5ads),
+                "retained_h5ads": list(self.retained_h5ads),
+                "manifest": self.manifest_path,
+            },
+            "warnings": list(self.warnings),
+            "errors": list(self.errors),
+            "failures": list(self.failures),
+        }
+
 
 @dataclass
 class BatchConversionResult:
@@ -298,6 +314,17 @@ class BatchConversionResult:
         return bool(self.failures) or any(
             result.partial for result in self.conversions.values()
         )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "operation": "h5ad",
+            "status": "partial" if self.partial else "complete",
+            "datasets": {
+                key: value.to_dict() for key, value in self.conversions.items()
+            },
+            "warnings": list(self.warnings),
+            "failures": list(self.failures),
+        }
 
 
 @dataclass
@@ -2412,6 +2439,7 @@ class JSON2H5ADConverter:
             axis="obs",
             join="outer",
             merge="first",
+            uns_merge="same",
             label="msc.combination.batch",
             index_unique=None,
             fill_value=0,

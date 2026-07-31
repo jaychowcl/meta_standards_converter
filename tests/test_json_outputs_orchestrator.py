@@ -87,3 +87,19 @@ def test_orchestrator_obs_export_omits_unrequested_sidecars(tmp_path):
     assert Path(result.obs_path).is_file()
     assert result.var is None and result.var_path is None
     assert result.uns is None and result.uns_path is None
+
+
+def test_orchestrator_manifest_writes_selected_format_and_json_summary(tmp_path):
+    source, _h5ad = _source(tmp_path)
+
+    result = JSONDataOutputOrchestrator().export_manifest(
+        source,
+        outdir=tmp_path / "manifest",
+        output_format="csv",
+    )
+
+    assert Path(result.output_path).suffix == ".csv"
+    assert Path(result.manifest_path).is_file()
+    assert json.loads(Path(result.manifest_path).read_text())["artifacts"][
+        "table"
+    ] == result.output_path

@@ -17,13 +17,17 @@ from .json2h5ad import (
     SourcePlanner,
 )
 from .json2tabular import (
-    JSON2CSVConverter,
     JSON2TSVConverter,
     MSCMetadataProjector,
     TabularConversionResult,
     TabularMetadataContext,
     TabularMetadataProjection,
     TabularMetadataProjector,
+)
+from .json_outputs import (
+    AnnDataMetadataBatchResult,
+    AnnDataMetadataExportResult,
+    JSONDataOutputOrchestrator,
 )
 
 __all__ = [
@@ -34,11 +38,13 @@ __all__ = [
     "JSON2H5ADConverter",
     "MetadataProjectionContext",
     "SourcePlanner",
-    "JSON2CSVConverter",
     "JSON2TSVConverter",
     "MSCMetadataProjector",
     "TabularConversionResult",
     "TabularMetadataContext",
     "TabularMetadataProjection",
     "TabularMetadataProjector",
+    "AnnDataMetadataBatchResult",
+    "AnnDataMetadataExportResult",
+    "JSONDataOutputOrchestrator",
 ]

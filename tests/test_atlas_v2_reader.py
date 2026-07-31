@@ -92,7 +92,7 @@ def test_reader_fails_closed_on_invalid_v2_contracts(mutate, message):
 
 def test_runtime_and_build_metadata_do_not_depend_on_thematicatlases():
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert pyproject["project"]["version"] == "3.0.0"
+    assert pyproject["project"]["version"] == "4.0.0"
     dependencies = pyproject["project"]["dependencies"]
     assert not any("thematicatlases" in item.lower() for item in dependencies)
 

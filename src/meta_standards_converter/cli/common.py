@@ -76,10 +76,10 @@ def configure_logging(args) -> None:
     package_logger.setLevel(logging.DEBUG)
     package_logger.propagate = False
 
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(level)
-    stdout_handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
-    package_logger.addHandler(stdout_handler)
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(level)
+    stderr_handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+    package_logger.addHandler(stderr_handler)
 
     if args.log_file:
         file_handler = logging.FileHandler(args.log_file, mode="w")

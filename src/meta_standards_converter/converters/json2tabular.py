@@ -56,10 +56,26 @@ class TabularConversionResult:
     warnings: tuple[str, ...] = ()
     errors: tuple[str, ...] = ()
     output_path: str | None = None
+    manifest_path: str | None = None
 
     @property
     def partial(self) -> bool:
         return bool(self.errors)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "operation": "manifest",
+            "status": "partial" if self.partial else "complete",
+            "row_count": self.row_count,
+            "columns": list(self.columns),
+            "dataset_ids": list(self.dataset_ids),
+            "warnings": list(self.warnings),
+            "errors": list(self.errors),
+            "artifacts": {
+                "table": self.output_path,
+                "manifest": self.manifest_path,
+            },
+        }
 
 
 class TabularProjectionError(ValueError):
@@ -280,16 +296,22 @@ class JSON2DelimitedConverter:
 
 
 class JSON2TSVConverter(JSON2DelimitedConverter):
-    delimiter = "\t"
-
-
-class JSON2CSVConverter(JSON2DelimitedConverter):
-    delimiter = ","
+    def __init__(
+        self,
+        metadata_projectors: Sequence[TabularMetadataProjector] | None = None,
+        package_source: JSONPackageSource | None = None,
+        *,
+        output_format: str = "tsv",
+    ) -> None:
+        if output_format not in {"tsv", "csv"}:
+            raise ValueError("output_format must be 'tsv' or 'csv'")
+        self.output_format = output_format
+        self.delimiter = "\t" if output_format == "tsv" else ","
+        super().__init__(
+            metadata_projectors=metadata_projectors,
+            package_source=package_source,
+        )
 
 
 class json2tsv(JSON2TSVConverter):
-    pass
-
-
-class json2csv(JSON2CSVConverter):
     pass
