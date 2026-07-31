@@ -1151,6 +1151,8 @@ class JSON2H5ADConverter:
         loaded = self.package_source.load(json_path)
         if not loaded.groups:
             raise ValueError("JSON source contains no convertible package groups.")
+        for group in loaded.groups:
+            self._validate_dataset_id(group.dataset_id)
         conversion_options = dict(
             explicit_assets=explicit_assets,
             asset_manifest=asset_manifest,
@@ -1203,6 +1205,8 @@ class JSON2H5ADConverter:
         loaded = self.package_source.load(json_path)
         if not loaded.groups:
             raise ValueError("JSON source contains no convertible package groups.")
+        for group in loaded.groups:
+            self._validate_dataset_id(group.dataset_id)
         return self._convert_groups(
             loaded,
             source_json=json_path,
@@ -1438,14 +1442,23 @@ class JSON2H5ADConverter:
             import anndata
             import numpy
             import pandas
-            import scanpy
             from scipy import sparse
         except ImportError as exc:
             raise RuntimeError(
                 "json2h5ad requires optional dependencies; install "
                 "meta-standards-converter[h5ad]."
             ) from exc
-        return anndata, numpy, pandas, scanpy, sparse
+        return anndata, numpy, pandas, sparse
+
+    def _scanpy_module(self):
+        try:
+            import scanpy
+        except ImportError as exc:
+            raise RuntimeError(
+                "10x matrix input requires Scanpy; install "
+                "meta-standards-converter[h5ad]."
+            ) from exc
+        return scanpy
 
     def _read_processed_asset(self, asset: Asset, orientation: str = "auto"):
         if (
@@ -1479,7 +1492,7 @@ class JSON2H5ADConverter:
                     ),
                     orientation=orientation,
                 )
-        anndata, numpy, pandas, scanpy, sparse = self._scientific_modules()
+        anndata, numpy, pandas, sparse = self._scientific_modules()
         path = self._local_path(asset.path, md5=asset.md5)
         if asset.kind == "h5ad":
             adata = self._read_h5ad(anndata, path)
@@ -1510,8 +1523,10 @@ class JSON2H5ADConverter:
                     raise ValueError(f"Study H5AD {asset.path} contains no observations for {asset.scope_id}.")
                 adata = adata[mask].copy()
         elif self._underlying_suffix(path) == ".h5":
+            scanpy = self._scanpy_module()
             adata = scanpy.read_10x_h5(path, gex_only=True)
         elif self._underlying_suffix(path) == ".mtx" or Path(path).is_dir():
+            scanpy = self._scanpy_module()
             matrix_dir = path if Path(path).is_dir() else str(Path(path).parent)
             adata = scanpy.read_10x_mtx(matrix_dir, var_names="gene_ids", make_unique=True)
         else:
@@ -1990,7 +2005,7 @@ class JSON2H5ADConverter:
         sample_id: str | None = None,
         artifact_parent: Path | None = None,
     ) -> None:
-        _anndata, _numpy, pandas, _scanpy, _sparse = self._scientific_modules()
+        _anndata, _numpy, pandas, _sparse = self._scientific_modules()
         rows = []
         for package_index, package in enumerate(packages):
             if sample_id is not None and not self._package_has_sample(package, sample_id):
@@ -2249,7 +2264,7 @@ class JSON2H5ADConverter:
     def _combine(self, adatas: dict[str, object]):
         if not adatas:
             raise ValueError("No sample H5ADs were produced.")
-        anndata, _numpy, _pandas, _scanpy, sparse = self._scientific_modules()
+        anndata, _numpy, _pandas, sparse = self._scientific_modules()
         organisms = {
             str(
                 adata.obs[
