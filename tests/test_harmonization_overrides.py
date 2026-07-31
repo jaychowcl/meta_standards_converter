@@ -7,12 +7,20 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import json
+import csv
+import inspect
 
 from meta_standards_converter.converters.harmonization_overrides import (
     resolve_harmonization_overrides,
 )
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
+from meta_standards_converter.converters.json2ae import json2ae
+from meta_standards_converter.converters.json2tabular import JSON2TSVConverter
 from meta_standards_converter.converters.json_source import JSONPackageSource
+from meta_standards_converter.cli import json2ae as json2ae_cli
+from meta_standards_converter.cli import json2h5ad as json2h5ad_cli
+from meta_standards_converter.cli import json2obs as json2obs_cli
+from meta_standards_converter.cli import json2tsv as json2tsv_cli
 
 
 PROFILE = {
@@ -109,3 +117,52 @@ def test_resolved_view_drives_canonical_metadata_and_preserves_hz_characteristic
     assert metadata["disease"] == ("fallback disease",)
     assert metadata["organism_part"] == ("lung",)
     assert metadata["characteristics"]["hz_tissue_name"] == ("lung",)
+
+
+def test_tabular_opt_in_uses_resolved_destinations_and_retains_hz_columns(tmp_path):
+    source = tmp_path / "agentic.json"
+    destination = tmp_path / "manifest.tsv"
+    source.write_text(json.dumps({
+        "miniml_json": package(), "harmonization_overrides": PROFILE
+    }), encoding="utf-8")
+
+    JSON2TSVConverter().convert_source(
+        source, destination, use_harmonization_overrides=True
+    )
+    with destination.open(encoding="utf-8", newline="") as stream:
+        row = next(csv.DictReader(stream, delimiter="\t"))
+
+    assert row["msc.sample.channel.organism.value"] == "Homo sapiens"
+    assert row["msc.sample.channel.disease"] == "fallback disease"
+    assert row["msc.characteristics.hz_tissue_name"] == "lung"
+    assert row["msc.harmonization.organism.source_field"] == "species_name"
+
+
+def test_magetab_opt_in_replaces_destinations_with_companions_and_retains_hz(tmp_path):
+    source = tmp_path / "agentic.json"
+    source.write_text(json.dumps({
+        "miniml_json": package(), "harmonization_overrides": PROFILE
+    }), encoding="utf-8")
+
+    magetab = json2ae().convert(
+        str(source), enrich=False, use_harmonization_overrides=True
+    )[0]
+    sdrf = next(row[1] for row in magetab if row and row[0] == "SDRF File")
+    header, values = sdrf[0], sdrf[1]
+
+    disease = header.index("Characteristics[disease]")
+    assert values[disease] == "fallback disease"
+    assert header[disease + 1:disease + 3] == ["Term Source REF", "Term Accession Number"]
+    assert values[disease + 1:disease + 3] == ["mondo", "MONDO:9"]
+    assert "Characteristics[hz_tissue_name]" in header
+
+
+def test_all_json_consumers_expose_explicit_opt_in():
+    assert "use_harmonization_overrides" in inspect.signature(json2ae.convert).parameters
+    assert "use_harmonization_overrides" in inspect.signature(JSON2H5ADConverter.convert).parameters
+    assert "use_harmonization_overrides" in inspect.signature(JSON2TSVConverter.convert_source).parameters
+    for cli in (json2ae_cli, json2h5ad_cli, json2obs_cli, json2tsv_cli):
+        assert any(
+            action.dest == "use_harmonization_overrides"
+            for action in cli._parser()._actions
+        )
