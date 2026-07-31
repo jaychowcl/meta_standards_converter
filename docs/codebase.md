@@ -181,7 +181,7 @@ The supported public entrypoints are:
 - seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
   `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv`;
 <a id="interface-python"></a>
-- direct Python converter classes, the eleven formal exports from
+- direct Python converter classes, the fourteen formal exports from
   `meta_standards_converter.converters`, and the four-name
   `meta_standards_converter.atlas_v2` facade;
 <a id="interface-docker"></a>
@@ -231,7 +231,7 @@ failure behavior are detailed in
 <a id="public-api-reference"></a>
 ## Public API reference
 
-The formal support boundary is the eleven names in
+The formal support boundary is the fourteen names in
 `meta_standards_converter.converters.__all__` plus the four names in
 `meta_standards_converter.atlas_v2.__all__`. CLI converter classes are also
 supported through their registered commands. Other non-underscored
@@ -267,6 +267,49 @@ statement for them; treat those as **evidence-gap**, not stable API.
   `meta_standards_converter.atlas_v2.reader.AtlasV2Reader`.
 - Side effects are limited to reading the supplied path. The reader performs no
   network, subprocess, database, or output writes.
+
+<a id="api-asset"></a>
+### `Asset`
+
+- **Signature:** `Asset(scope_id, path, kind, role="primary", source="json", members=(), features_path=None, barcodes_path=None, orientation="auto", md5=None, study_scope=None, reference=None, annotation_source=None, annotation_format=None, annotation_sha256=None, effective_annotation=None)`.
+- **Inputs:** sample/study scope, source path/kind, role and optional matrix,
+  checksum, reference, and annotation metadata.
+- **Outputs:** frozen description of one processed, matrix, 10x, or raw
+  expression source.
+- **Failures:** construction performs no custom validation; consuming planners
+  and converters validate supported combinations.
+- **Side effects:** none.
+- **Support:** formal export for source-planner and adapter integrations.
+- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+
+<a id="api-json2h5ad-converter"></a>
+### `JSON2H5ADConverter`
+
+- **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
+- **Inputs:** native MINiML or Atlas v2 JSON, source/reference/runtime options,
+  and optional public collaborators.
+- **Outputs:** single or batch conversion results plus a transactional H5AD
+  artifact bundle.
+- **Failures:** structural, validation, filesystem, external process, and
+  publication failures follow the strict/permissive and batch contracts in
+  [JSON to H5AD](#workflow-json2h5ad).
+- **Side effects:** may read/download assets, run nf-core, and publish staged
+  H5AD/provenance artifacts.
+- **Support:** formal export and composition boundary.
+- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+
+<a id="api-source-planner"></a>
+### `SourcePlanner`
+
+- **Signature:** `SourcePlanner()`; `discover(packages) -> list[Asset]` and
+  `plan(packages, explicit_assets=None, force_reprocess=False) -> dict[str, Asset]`.
+- **Inputs:** MINiML packages and optional explicit assets.
+- **Outputs:** one ranked `Asset` per sample; subclasses may specialize
+  discovery while retaining converter-owned lifecycle policy.
+- **Failures:** unsupported or missing sources raise `ValueError`.
+- **Side effects:** planning does not download, execute, or publish.
+- **Support:** formal export and source-planning extension point.
+- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
 
 <a id="api-anndata-metadata-projection"></a>
 ### `AnnDataMetadataProjection`

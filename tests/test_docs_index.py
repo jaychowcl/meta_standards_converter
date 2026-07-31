@@ -111,11 +111,14 @@ PRINCIPAL_WORKFLOW_ANCHORS = (
     "workflow-json2csv",
 )
 FORMAL_EXPORT_ANCHORS = (
+    "api-asset",
     "api-anndata-metadata-projection",
     "api-anndata-metadata-projector",
     "api-metadata-projection-context",
     "api-json2csv-converter",
+    "api-json2h5ad-converter",
     "api-json2tsv-converter",
+    "api-source-planner",
     "api-msc-metadata-projector",
     "api-tabular-conversion-result",
     "api-tabular-metadata-context",
@@ -191,6 +194,10 @@ class DocsIndexTests(unittest.TestCase):
 
         for symbol in exports:
             self.assertRegex(codebase_text, rf"`(?:[^`]*\.)?{re.escape(symbol)}`")
+
+        self.assertTrue(
+            {"Asset", "JSON2H5ADConverter", "SourcePlanner"} <= set(exports)
+        )
 
         source_root = ROOT / "src" / "meta_standards_converter"
         public_symbols = set()

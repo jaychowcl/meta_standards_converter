@@ -11,6 +11,8 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 Version 2.0.0 is the clean-break Atlas v2 consumer release. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
 import or depend on ThematicAtlases.
+Organization-specific H5AD adapters compose through the public `Asset`,
+`SourcePlanner`, projector protocols, and `JSON2H5ADConverter` facade.
 
 The seven primary workflows are:
 
