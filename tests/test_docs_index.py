@@ -99,7 +99,7 @@ CLI_COMMANDS = (
     "ae2json",
     "json2h5ad",
     "json2tsv",
-    "json2csv",
+    "json2obs",
 )
 PRINCIPAL_WORKFLOW_ANCHORS = (
     "workflow-geo2ae",
@@ -108,7 +108,7 @@ PRINCIPAL_WORKFLOW_ANCHORS = (
     "workflow-ae2json",
     "workflow-json2h5ad",
     "workflow-json2tsv",
-    "workflow-json2csv",
+    "workflow-json2obs",
 )
 FORMAL_EXPORT_ANCHORS = (
     "api-asset",

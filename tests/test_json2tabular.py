@@ -15,7 +15,6 @@ from meta_standards_converter.converters import (
     TabularMetadataProjection,
 )
 from meta_standards_converter.converters.json2tabular import (
-    JSON2CSVConverter,
     JSON2TSVConverter,
     TabularProjectionError,
 )
@@ -119,12 +118,17 @@ def test_atlas_json_is_aggregated_into_one_csv(tmp_path):
         encoding="utf-8",
     )
 
-    result = JSON2CSVConverter().convert_source(source, output)
+    result = JSON2TSVConverter(output_format="csv").convert_source(source, output)
     _columns, rows = read_rows(output, ",")
 
     assert result.row_count == 2
     assert [row["msc.sample.accession"] for row in rows] == ["GSM1", "GSM2"]
     assert result.dataset_ids == ("GSE1", "GSE2")
+
+
+def test_manifest_converter_rejects_unknown_output_format():
+    with pytest.raises(ValueError, match="output_format must be 'tsv' or 'csv'"):
+        JSON2TSVConverter(output_format="json")
 
 
 def test_explicit_projector_replaces_default_contract(tmp_path):

@@ -34,7 +34,7 @@ class TestProjectScripts(unittest.TestCase):
             "json2ae",
             "json2h5ad",
             "json2tsv",
-            "json2csv",
+            "json2obs",
         ):
             with self.subTest(name=name):
                 self.assertEqual(

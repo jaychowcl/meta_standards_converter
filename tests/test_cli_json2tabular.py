@@ -6,28 +6,31 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-from unittest.mock import patch
+import json
+from unittest.mock import Mock, patch
 
-from meta_standards_converter.cli import json2csv, json2tsv
+from meta_standards_converter.cli import json2tsv
 
 
 def test_json2tsv_cli_converts_inputs_in_order():
-    with patch.object(json2tsv, "JSON2TSVConverter") as factory:
-        factory.return_value.convert_source.return_value.partial = False
+    summary = {"operation": "manifest", "status": "complete", "datasets": []}
+    result = Mock(partial=False)
+    result.to_dict.return_value = summary
+    with patch.object(json2tsv, "JSONDataOutputOrchestrator") as factory:
+        factory.return_value.export_manifest.return_value = result
 
-        status = json2tsv.main(["one.json", "two.json", "--out", "tables"])
+        with patch("builtins.print") as emit:
+            status = json2tsv.main(
+                ["one.json", "two.json", "--outdir", "tables", "--format", "csv"]
+            )
 
     assert status == 0
-    assert [call.args[0].name for call in factory.return_value.convert_source.call_args_list] == [
+    assert [call.args[0] for call in factory.return_value.export_manifest.call_args_list] == [
         "one.json",
         "two.json",
     ]
-
-
-def test_json2csv_cli_returns_one_after_partial_result():
-    with patch.object(json2csv, "JSON2CSVConverter") as factory:
-        factory.return_value.convert_source.return_value.partial = True
-
-        status = json2csv.main(["one.json"])
-
-    assert status == 1
+    assert all(
+        call.kwargs["output_format"] == "csv"
+        for call in factory.return_value.export_manifest.call_args_list
+    )
+    assert json.loads(emit.call_args.args[0])["status"] == "complete"
