@@ -8,7 +8,7 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 3.0.0 introduces the canonical H5AD metadata schema while continuing to
+Version 4.0.0 introduces unified JSON-output orchestration while continuing to
 consume Atlas wire schema 2.0 and MINiML ledger schema 1.0. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
 import or depend on ThematicAtlases.
@@ -22,8 +22,8 @@ The seven primary workflows are:
 - `json2ae`: parsed MINiML or canonical Atlas v2 JSON to MAGE-TAB IDF and SDRF.
 - `ae2json`: local, HTTP(S), or BioStudies MAGE-TAB to parsed JSON.
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
-- `json2tsv`: parsed MINiML or canonical Atlas v2 JSON to a sample metadata TSV.
-- `json2csv`: parsed MINiML or canonical Atlas v2 JSON to a sample metadata CSV.
+- `json2tsv`: parsed JSON to a sample manifest in TSV or CSV format.
+- `json2obs`: parsed JSON plus expression assets to combined AnnData metadata sidecars.
 
 ## Installation
 
@@ -126,8 +126,8 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `json2ae` | Parsed MINiML object/list or canonical Atlas v2 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
 | `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns a one-package list with a `mage_tab` extension |
 | `json2h5ad` | Parsed MINiML object/list or canonical Atlas v2 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
-| `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v2 document | One normalized sample metadata TSV per input |
-| `json2csv` | Parsed MINiML package JSON or a canonical Atlas v2 document | One normalized sample metadata CSV per input |
+| `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v2 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
+| `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Combined `.obs.csv`, optional `.var.csv` and `.uns.json`, plus a JSON result manifest |
 
 GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds `mage_tab.model`, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, normalized sample values in `uns["msc_metadata"]`, flattened MINiML metadata in `uns["msc_miniml"]`, and conversion provenance.
 
@@ -188,7 +188,7 @@ The rootless Compose helper derives `DOCKER_HOST` and its runtime paths. `ROOTLE
 
 ### CLI
 
-The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv`. Run `<command> --help` for generated usage text.
+The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs`. Run `<command> --help` for generated usage text.
 
 All commands process multiple positional inputs in order. A failed input is logged, later inputs continue, and the final exit status is `1`; a fully successful invocation returns `0`. Logging defaults to `WARNING`. `-v` selects `INFO`, `-vv` selects `DEBUG`, and `-q` selects `ERROR`.
 
@@ -322,7 +322,7 @@ json2h5ad output/GSE234602.json \
 | --- | --- |
 | `json_path` | One or more paths containing parsed MINiML packages or a canonical Atlas v2 document. |
 | `-h`, `--help` | Display generated help and exit. |
-| `--out` `OUT` | Output directory; default `.`. |
+| `--out`, `--outdir` `OUTDIR` | Output directory; default `.`. |
 | `--asset-manifest` `ASSET_MANIFEST` | CSV/TSV mapping with required `scope_id` and `path` columns and optional kind, role, read/lane, matrix, checksum, and orientation metadata. |
 | `--asset` `ACCESSION=PATH` | Explicit local or remote H5AD, matrix, or FASTQ; repeat as needed. |
 | `--force-reprocess` | Ignore processed sources and require raw FASTQ for every sample. |
@@ -383,44 +383,73 @@ use the same globally unique identifiers.
 
 #### `json2tsv`
 
-Write one tab-separated row per sample using the neutral dotted `msc.*`
-metadata contract. The command accepts ordinary MINiML package JSON or a
+Write one row per sample using the neutral dotted `msc.*` metadata contract.
+The command accepts ordinary MINiML package JSON or a
 canonical Atlas v2 document and retains only datasets whose status is
-`harmonized`.
+`harmonized`. TSV is the default; `--format csv` selects CSV without a second
+command. The table and JSON result manifest publish as one bundle, and stdout
+contains the same machine-readable result summary while logs use stderr.
 
 ```bash
-json2tsv atlas.json --out output
+json2tsv atlas.json --outdir output --format csv
 ```
 
 | Argument | Behavior |
 | --- | --- |
 | `json_path` | One or more parsed MINiML or canonical Atlas v2 JSON paths. |
 | `-h`, `--help` | Display generated help and exit. |
-| `--out` `OUT` | Output directory; default `.`. |
+| `--out`, `--outdir` `OUTDIR` | Output directory; default `.`. |
+| `--format` `{tsv,csv}` | Manifest serialization; default `tsv`. |
 | `--allow-invalid` | Write projected rows despite projector-reported errors and return a partial result; default behavior raises before writing. |
 | `--overwrite` | Replace an existing destination; existing files are protected by default. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-#### `json2csv`
+#### `json2obs`
 
-Write the same normalized sample projection as comma-separated output with CSV
-quoting. Its inputs, defaults, validation, partial-result behavior, logging, and
-overwrite policy are identical to [`json2tsv`](#json2tsv); only the delimiter
-and `.csv` output suffix differ.
+Build the same combined AnnData view as `json2h5ad`, then export cell metadata
+without publishing normalized H5AD files. The required output directory
+contains `<study>.obs.csv` with an explicit `cell_id` column. Optional typed
+sidecars expose feature metadata and reconstructable unstructured metadata.
 
 ```bash
-json2csv atlas.json --out output
+json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
+  --include-var --include-uns
 ```
 
-The shared interface is `json_path`, `-h`/`--help`, `--out`,
-`--allow-invalid`, `--overwrite`, `-v`/`--verbose`, `-q`/`--quiet`, and
-`--log-file`; accepted values and semantics are defined once in the
-[`json2tsv` option table](#json2tsv).
+| Argument | Behavior |
+| --- | --- |
+| `json_path` | One or more parsed MINiML or canonical Atlas v2 JSON paths. |
+| `-h`, `--help` | Display generated help and exit. |
+| `--outdir` `OUTDIR` | Required component-output directory. |
+| `--include-var` | Add `<study>.var.csv` with a `feature_id` column. |
+| `--include-uns` | Add typed `<study>.uns.json`. |
+| `--asset-manifest` `ASSET_MANIFEST` | CSV/TSV mapping accessions to assets. |
+| `--asset` `ACCESSION=PATH` | Explicit H5AD, matrix, or FASTQ asset; repeatable. |
+| `--force-reprocess` | Prefer raw processing over discovered processed assets. |
+| `--pipeline` `{auto,scrnaseq,rnaseq}` | Raw-input pipeline. |
+| `--genome` `GENOME` | nf-core genome key. |
+| `--fasta` `FASTA` | Custom reference FASTA. |
+| `--gtf` `GTF` | Custom GTF annotation. |
+| `--gff` `GFF` | Custom GFF/GFF3 annotation. |
+| `--accept-inferred-reference` | Permit supported organism-based reference inference. |
+| `--profile` `PROFILE` | Nextflow profile; default `docker`. |
+| `--revision` `REVISION` | Override the pinned nf-core revision. |
+| `--params-file` `PARAMS_FILE` | Additional nf-core parameters. |
+| `--nextflow-config` `NEXTFLOW_CONFIG` | Nextflow infrastructure configuration. |
+| `--work-dir` `WORK_DIR` | Nextflow working directory. |
+| `--resume` | Resume the Nextflow cache. |
+| `--overwrite` | Replace the complete component bundle. |
+| `--allow-invalid` | Publish projector-reported validation errors as a partial result. |
+| `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Generic delimited-matrix orientation. |
+| `-v`, `--verbose` | Increase verbosity; repeat for DEBUG. |
+| `-q`, `--quiet` | Emit ERROR logs only. |
+| `--log-file` `LOG_FILE` | Write detailed logs to a file. |
 
-Programmatic callers can replace the default MSC columns by passing explicit
-`TabularMetadataProjector` objects.
+Programmatic callers use `JSONDataOutputOrchestrator`; its manifest, H5AD, and
+AnnData-metadata methods return typed result objects. Injected
+`TabularMetadataProjector` objects can replace the default manifest columns.
 
 ### Python API
 
@@ -701,7 +730,8 @@ CLI or Python API
   |
   +-- parsed JSON
   |     +-> json2ae: validate -> [enrich] -> AEConstructor -> IDF + SDRF
-  |     +-> json2tsv/json2csv: group datasets -> project sample rows -> table
+  |     +-> json2tsv: group datasets -> project sample rows -> TSV/CSV manifest
+  |     +-> json2obs: assemble AnnData -> obs/optional var+uns sidecars
   |     `-> json2h5ad: plan assets -> [nf-core for FASTQ]
   |                         -> normalize AnnData -> sample/combined H5AD + manifest
   |

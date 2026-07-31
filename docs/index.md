@@ -58,7 +58,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Entrypoints and interfaces
   anchor: entrypoints-and-interfaces
   purpose: Inventories supported CLI, Python, Docker, Compose, and operational interfaces.
-  keywords: entrypoint, CLI, Python, Docker, Compose, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2csv
+  keywords: entrypoint, CLI, Python, Docker, Compose, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2obs
   link: [Open section](codebase.md#entrypoints-and-interfaces)
 
 - id: orchestrators-and-core-types
@@ -99,8 +99,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: runtime-behavior
   title: Runtime behavior and packaging
   anchor: runtime-behavior
-  purpose: Defines the standalone 3.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
-  keywords: version 3.0.0, standalone, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
+  purpose: Defines the standalone 4.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
+  keywords: version 4.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
   link: [Open section](codebase.md#runtime-behavior)
 
 ## Workflow routes
@@ -147,12 +147,12 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: json2tsv, Atlas, projector, TabularConversionResult, allow_invalid
   link: [Open section](codebase.md#workflow-json2tsv)
 
-- id: workflow-json2csv
-  title: MINiML or Atlas JSON to CSV
-  anchor: workflow-json2csv
-  purpose: Traces the CSV specialization and its shared validation and partial-result terminals.
-  keywords: json2csv, CSV, quoting, projector, partial
-  link: [Open section](codebase.md#workflow-json2csv)
+- id: workflow-json2obs
+  title: MINiML or Atlas JSON to AnnData metadata
+  anchor: workflow-json2obs
+  purpose: Traces shared AnnData assembly and combined obs, optional var, and typed uns publication.
+  keywords: json2obs, obs CSV, var CSV, uns JSON, cell_id, feature_id, atomic, partial
+  link: [Open section](codebase.md#workflow-json2obs)
 
 ## Detailed evidence routes
 

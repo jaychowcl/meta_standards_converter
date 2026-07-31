@@ -179,9 +179,9 @@ The supported public entrypoints are:
 
 <a id="interface-cli"></a>
 - seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
-  `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv`;
+  `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs`;
 <a id="interface-python"></a>
-- direct Python converter classes, the fourteen formal exports from
+- direct Python converter classes, the sixteen formal exports from
   `meta_standards_converter.converters`, and the four-name
   `meta_standards_converter.atlas_v2` facade;
 <a id="interface-docker"></a>
@@ -208,14 +208,16 @@ database service, or plugin discovery mechanism is exposed.
   conversions. `AEConstructor` owns MAGE-TAB handler selection and writing;
   `AEParser` owns reverse mapping and round-trip extensions.
 <a id="orchestrator-json2h5ad-converter"></a>
-- `JSON2H5ADConverter` owns the full expression conversion lifecycle.
+- `JSONDataOutputOrchestrator` is the public JSON-origin facade. Its manifest,
+  H5AD, and AnnData-metadata methods back the three thin CLI wrappers.
+  `JSON2H5ADConverter` owns the expression conversion lifecycle beneath it.
   `SourcePlanner`, `AssetManifest`, and `AssetDownloader` resolve inputs;
   `ReferenceResolver`, `AnnotationConverter`, and `NFCoreRunner` own raw-data
   execution; result dataclasses expose complete and partial outcomes.
 <a id="orchestrator-json2delimited-converter"></a>
 - `JSON2DelimitedConverter` owns JSON grouping, sample iteration, projection,
-  column ordering, validation policy, and file output. `JSON2TSVConverter` and
-  `JSON2CSVConverter` bind delimiters.
+  column ordering, validation policy, and file output. `JSON2TSVConverter`
+  selects TSV or CSV through `output_format`.
 <a id="core-rate-limited-requester"></a>
 - `RateLimitedRequester` is the shared external-call boundary.
   `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
@@ -231,7 +233,7 @@ failure behavior are detailed in
 <a id="public-api-reference"></a>
 ## Public API reference
 
-The formal support boundary is the fourteen names in
+The formal support boundary is the sixteen names in
 `meta_standards_converter.converters.__all__` plus the four names in
 `meta_standards_converter.atlas_v2.__all__`. CLI converter classes are also
 supported through their registered commands. Other non-underscored
@@ -355,25 +357,47 @@ statement for them; treat those as **evidence-gap**, not stable API.
 - **Support:** formal export; these are all current fields.
 - **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
 
-<a id="api-json2csv-converter"></a>
-### `JSON2CSVConverter`
+<a id="api-json-data-output-orchestrator"></a>
+### `JSONDataOutputOrchestrator`
 
-- **Signature:** `JSON2CSVConverter(metadata_projectors=None, package_source=None)`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
-- **Inputs:** parsed MINiML JSON or a canonical Atlas v2 document and a CSV destination.
-- **Outputs:** comma-delimited file and result metadata.
-- **Failures:** source, projector, collision, fail-closed diagnostic, and protected-output errors propagate.
-- **Side effects:** creates the destination parent and writes CSV.
-- **Support:** formal export.
-- **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+- **Signature:** `JSONDataOutputOrchestrator(tabular_projectors=None, h5ad_converter=None)` with `export_manifest`, `export_h5ad`, and `export_anndata_metadata`.
+- **Inputs:** parsed MINiML/Atlas JSON, output directory, format/component controls, and the H5AD asset/reference/pipeline options.
+- **Outputs:** `TabularConversionResult`, H5AD results, or `AnnDataMetadataExportResult`/`AnnDataMetadataBatchResult`.
+- **Failures:** source, validation, asset, pipeline, serialization, collision, and atomic-publication failures propagate or enter batch failures.
+- **Side effects:** publishes operation-owned artifact bundles and JSON result manifests.
+- **Support:** formal export and preferred Python interface for JSON-origin outputs.
+- **Source:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py).
+
+<a id="api-anndata-metadata-export-result"></a>
+### `AnnDataMetadataExportResult`
+
+- **Signature:** `AnnDataMetadataExportResult(dataset_id, obs, var, uns, obs_path, var_path, uns_path, manifest_path, warnings=(), errors=(), partial=False)`.
+- **Inputs:** one dataset's combined typed AnnData metadata, optional published paths, and diagnostics.
+- **Outputs:** in-memory `obs`, optional `var`/`uns`, artifact locations, and a compact `to_dict()` summary.
+- **Failures:** construction performs no custom validation; the orchestrator validates and serializes its data.
+- **Side effects:** none.
+- **Support:** formal export and successful per-dataset result for `json2obs`.
+- **Source:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py).
+
+<a id="api-anndata-metadata-batch-result"></a>
+### `AnnDataMetadataBatchResult`
+
+- **Signature:** `AnnDataMetadataBatchResult(source, conversions=(), warnings=(), failures=())`.
+- **Inputs:** source path, completed dataset exports, cross-dataset warnings, and keyed failures.
+- **Outputs:** immutable batch status, `partial` state, and compact `to_dict()` summary.
+- **Failures:** construction performs no custom validation; conversion failures are retained in `failures`.
+- **Side effects:** none.
+- **Support:** formal export and multi-dataset result for `json2obs`.
+- **Source:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py).
 
 <a id="api-json2tsv-converter"></a>
 ### `JSON2TSVConverter`
 
-- **Signature:** `JSON2TSVConverter(metadata_projectors=None, package_source=None)`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
-- **Inputs:** parsed MINiML JSON or a canonical Atlas v2 document and a TSV destination.
-- **Outputs:** tab-delimited file and result metadata.
-- **Failures:** the same validation and output failures as `JSON2CSVConverter`.
-- **Side effects:** creates the destination parent and writes TSV.
+- **Signature:** `JSON2TSVConverter(metadata_projectors=None, package_source=None, *, output_format="tsv")`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
+- **Inputs:** parsed MINiML JSON or canonical Atlas v2, TSV/CSV format, and destination.
+- **Outputs:** selected delimited file and result metadata.
+- **Failures:** invalid formats, source, projector, collision, fail-closed diagnostic, and protected-output errors propagate.
+- **Side effects:** creates the destination parent and writes TSV or CSV.
 - **Support:** formal export.
 - **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
 
@@ -471,7 +495,7 @@ follow this canonical overview.
   `meta_standards_converter.cli.json2ae.main`,
   `meta_standards_converter.cli.json2h5ad.main`,
   `meta_standards_converter.cli.json2tsv.main`,
-  `meta_standards_converter.cli.json2csv.main`,
+  `meta_standards_converter.cli.json2obs.main`,
   `meta_standards_converter.cli.common.add_platform_handler_arguments`,
   `meta_standards_converter.cli.common.print_platform_handlers`,
   `meta_standards_converter.cli.common.add_logging_arguments`,
@@ -508,9 +532,10 @@ follow this canonical overview.
   `meta_standards_converter.converters.json2tabular.MSCMetadataProjector`,
   `meta_standards_converter.converters.json2tabular.JSON2DelimitedConverter`,
   `meta_standards_converter.converters.json2tabular.JSON2TSVConverter`,
-  `meta_standards_converter.converters.json2tabular.JSON2CSVConverter`,
   `meta_standards_converter.converters.json2tabular.json2tsv`,
-  `meta_standards_converter.converters.json2tabular.json2csv`,
+  `meta_standards_converter.converters.json_outputs.JSONDataOutputOrchestrator`,
+  `meta_standards_converter.converters.json_outputs.AnnDataMetadataExportResult`,
+  `meta_standards_converter.converters.json_outputs.AnnDataMetadataBatchResult`,
   `meta_standards_converter.converters.json_source.DatasetPackageGroup`,
   `meta_standards_converter.converters.json_source.SourceLoadResult`, and
   `meta_standards_converter.converters.json_source.JSONPackageSource`.
@@ -663,7 +688,7 @@ Pseudocode: `load -> if one and convert: convert_packages; else for group: try c
 **Evidence:** [`JSON2H5ADConverter`](../src/meta_standards_converter/converters/json2h5ad.py), [`JSONPackageSource`](../src/meta_standards_converter/converters/json_source.py), and [`cli/json2h5ad.py`](../src/meta_standards_converter/cli/json2h5ad.py).
 
 <a id="workflow-json2tsv"></a>
-### `json2tsv`: MINiML/Atlas JSON to TSV
+### `json2tsv`: MINiML/Atlas JSON to sample manifest
 
 ```text
 source -> load/group --failure--> exception
@@ -672,35 +697,39 @@ source -> load/group --failure--> exception
           -> errors + !allow_invalid ----------------------> TabularProjectionError
           -> errors + allow_invalid -----------------------> partial result
        -> destination exists + !overwrite ----------------> FileExistsError
-       -> write TSV ---------------------------------------> result
+       -> write selected TSV/CSV + JSON manifest ----------> result
 ```
 
 1. `JSONPackageSource.load` accepts native MINiML or canonical Atlas v2 data.
 2. The converter builds base metadata and invokes every projector per sample.
 3. Preferred columns precede sorted extras; diagnostics are deduplicated.
 4. Validation is fail-closed unless `allow_invalid=True`.
-5. Parent and TSV are written only after validation and output protection.
+5. The selected table and result JSON are staged and published as one bundle.
 
-Pseudocode: `load -> project -> validate -> order -> protect -> write tab-delimited -> result`.
+Pseudocode: `load -> project -> validate -> order -> protect -> write selected delimiter + result JSON`.
 
 **Evidence:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py), [`converters/json_source.py`](../src/meta_standards_converter/converters/json_source.py), and [`cli/json2tsv.py`](../src/meta_standards_converter/cli/json2tsv.py).
 
-<a id="workflow-json2csv"></a>
-### `json2csv`: MINiML/Atlas JSON to CSV
+<a id="workflow-json2obs"></a>
+### `json2obs`: MINiML/Atlas JSON to AnnData metadata
 
 ```text
-source -> shared delimited workflow and terminals
-       -> delimiter "," with csv.DictWriter quoting
-       -> CSV file + TabularConversionResult
+JSON + expression assets -> shared H5AD assembly
+       -> combined AnnData unavailable -------------------> failure
+       -> obs with named cell_id --------------------------> .obs.csv
+       -> include_var -------------------------------------> .var.csv
+       -> include_uns -------------------------------------> typed .uns.json
+       -> atomic component bundle + JSON result manifest
 ```
 
-1. Grouping, projection, validation, ordering, overwrite, and partial behavior match `json2tsv`.
-2. `JSON2CSVConverter.delimiter` changes only the delimiter; `csv.DictWriter` owns quoting.
-3. CLI batches continue after source failures and return status `1` for failure or partial results.
+1. Asset resolution, raw processing, normalization, projectors, smart IDs, and combination exactly match `json2h5ad`.
+2. The combined `obs` is exported with `cell_id`; source and canonical names remain unchanged.
+3. Optional `var` uses `feature_id`; optional `uns` uses tagged JSON for nested mappings, arrays, and DataFrames.
+4. The CLI prints only a compact JSON summary to stdout, sends logs to stderr, and returns status `1` for partial/failure outcomes.
 
-Pseudocode: `JSON2DelimitedConverter.convert_source with delimiter="," -> result`.
+Pseudocode: `assemble -> read combined AnnData -> serialize selected components -> atomic publish -> result`.
 
-**Evidence:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py) and [`cli/json2csv.py`](../src/meta_standards_converter/cli/json2csv.py).
+**Evidence:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py) and [`cli/json2obs.py`](../src/meta_standards_converter/cli/json2obs.py).
 
 <a id="extension-and-change-guidance"></a>
 ## Extension and change guidance
@@ -738,8 +767,8 @@ src/meta_standards_converter/
 │   ├── json2ae.py                 # parsed JSON-to-MAGE-TAB command-line entrypoint
 │   ├── ae2json.py                 # MAGE-TAB-to-JSON command-line entrypoint
 │   ├── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
-│   ├── json2tsv.py               # JSON/Atlas-to-TSV command-line entrypoint
-│   └── json2csv.py               # JSON/Atlas-to-CSV command-line entrypoint
+│   ├── json2tsv.py               # JSON/Atlas-to-TSV-or-CSV manifest entrypoint
+│   └── json2obs.py               # JSON/Atlas plus data assets to obs/var/uns entrypoint
 ├── converters/
 │   ├── geo2ae.py                 # top-level GEO to AE orchestration
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
@@ -747,6 +776,7 @@ src/meta_standards_converter/
 │   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
 │   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 │   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
+│   ├── json_outputs.py           # shared manifest/H5AD/obs output orchestration
 │   └── json_source.py            # MINiML and Atlas v2 package grouping
 ├── atlas_v2/
 │   └── reader.py                 # standalone v2 validation and adaptation
@@ -806,12 +836,13 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `3.0.0` is the canonical H5AD metadata release. It
+- Distribution version `4.0.0` is the unified JSON-output release. It retains
+  H5AD metadata schema 3.0 and
   continues to consume Atlas wire schema 2.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
 - The package requires Python `>=3.10`.
 - Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
-- The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv` console scripts point to their matching modules under `meta_standards_converter.cli`.
+- The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp`, `biostudies`, and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
 - Library logging propagates safe structured telemetry to caller handlers.
@@ -825,7 +856,7 @@ tests/GSE328265_family.xml
 - `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
-- `json2tsv` and `json2csv` accept MINiML or canonical Atlas v2 JSON, emit the neutral MSC sample projection by default, and accept replacement tabular projectors through the Python API.
+- `json2tsv --format {tsv,csv}` emits the neutral MSC sample projection; `json2obs` exports the combined AnnData metadata view. Both are orchestrator methods with CLI wrappers.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
@@ -1073,10 +1104,10 @@ all members into a temporary Scanpy-compatible directory, including legacy
 gzip-compressed genes trios.
 
 <a id="json2tabular-flow"></a>
-## End-To-End json2tsv And json2csv Flow
+## End-To-End json2tsv Manifest Flow
 
 ```text
-JSON2TSVConverter/JSON2CSVConverter.convert_source(source, destination)
+JSONDataOutputOrchestrator.export_manifest(source, outdir, output_format)
   -> AtlasV2Reader/JSONPackageSource loads MINiML or harmonized v2 metadata
   -> group packages by study and visit every sample in source order
   -> build TabularMetadataContext with normalized MINiML sample metadata
@@ -1440,7 +1471,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 This section lists public and semi-public callables used by tests or by package orchestration. Many helper methods are intentionally private but documented here because this project currently relies on direct helper behavior in tests and internal composition.
 
 <a id="cli"></a>
-### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, `cli/ae2json.py`, `cli/json2h5ad.py`, `cli/json2tsv.py`, and `cli/json2csv.py`
+### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, `cli/ae2json.py`, `cli/json2h5ad.py`, `cli/json2tsv.py`, and `cli/json2obs.py`
 
 `_parser() -> argparse.ArgumentParser`
 
@@ -1454,7 +1485,8 @@ This section lists public and semi-public callables used by tests or by package 
 - `json2ae` accepts one or more parsed MINiML or canonical Atlas v2 JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--overwrite`, and `--allow-invalid`.
-- `json2tsv` and `json2csv` accept parsed MINiML or Atlas JSON, write one table per input under `--out`, and expose `--allow-invalid` and `--overwrite`.
+- `json2tsv` accepts parsed MINiML or Atlas JSON and writes the sample manifest as TSV by default or CSV with `--format csv`; `--out` selects an exact file and `--outdir` derives a filename.
+- `json2obs` accepts the same metadata and raw/processed data inputs as `json2h5ad`, writes a required combined `obs.csv` with an explicit `cell_id` column, and can add typed `var.csv` and `uns.json` sidecars.
 
 `main(argv=None) -> int`
 
@@ -1568,12 +1600,13 @@ unconditional. All H5ADs and the manifest are staged before a backup/swap
 commit; commit failure restores the prior complete bundle. With no projectors,
 output is unchanged.
 
-`JSON2TSVConverter` and `JSON2CSVConverter`
+`JSON2TSVConverter`
 
 - Accept injectable ordered `TabularMetadataProjector` collaborators.
 - Use `MSCMetadataProjector` only when no explicit projector list is supplied.
 - Accept both MINiML package JSON and canonical Atlas v2 JSON through
   `JSONPackageSource`.
+- Select TSV or CSV serialization with the validated `output_format` argument.
 - Return `TabularConversionResult`; projection errors fail closed unless
   `allow_invalid=True`.
 
