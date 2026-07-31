@@ -40,6 +40,17 @@ Include AnnData/H5AD support when using `json2h5ad`:
 python -m pip install -e '.[h5ad]'
 ```
 
+Install the complete test stack and run the canonical suite with pytest:
+
+```bash
+python -m pip install -e '.[test]'
+PYTHONDONTWRITEBYTECODE=1 MPLCONFIGDIR=/tmp/matplotlib-meta-standards \
+  pytest -p no:cacheprovider -q
+```
+
+`unittest discover` is not a supported substitute because it does not collect
+the repository's pytest functions, fixtures, parametrization, or subtests.
+
 Build the project image, which includes the H5AD extra, Java 21, Nextflow, `gffread`, and the Docker CLI:
 
 ```bash
@@ -133,6 +144,7 @@ The package has no mandatory application config file. Configure conversions with
 | Reference | `--genome`, or `--fasta` with `--gtf`/`--gff` | Explicitly accepted human/mouse inference when available |
 | Nextflow | `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, `--resume` | Docker profile and pinned pipeline revision |
 | Existing H5AD outputs | `--overwrite` / `overwrite=True` | Protect existing outputs |
+| H5AD projector validation | `--allow-invalid` / `allow_invalid=True` | Fail closed before publishing artifacts |
 
 #### Platform handlers
 
@@ -165,7 +177,7 @@ GSM9651992,https://example.org/GSM9651992_R2.fastq.gz,raw,primary,2,L001,,
 
 Reference combinations accepted for raw processing are `--genome GENOME`, `--genome GENOME` with one annotation override, or `--fasta FASTA` with exactly one of `--gtf GTF` and `--gff GFF`. GFF/GFF3 is converted to a checksum-addressed GTF. A JSON object supplied through `--params-file` is merged into nf-core parameters, but converter-owned input, output, and reference values take precedence; `--nextflow-config` is reserved for resource and infrastructure configuration.
 
-The rootless Compose helper derives `DOCKER_HOST`, `ROOTLESS_DOCKER_SOCKET`, and its runtime paths. Set `JSON2H5AD_OUT` only when overriding the default `.out/json2h5ad` tree. Compose sets `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1`, causing Docker-profile raw processing to fail before Nextflow starts unless the connected daemon reports rootless security mode.
+The rootless Compose helper derives `DOCKER_HOST` and its runtime paths. `ROOTLESS_DOCKER_SOCKET` is the single test/operations seam for overriding the derived user socket; `JSON2H5AD_OUT` overrides the default `.out/json2h5ad` tree. Compose sets `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1`, causing Docker-profile raw processing to fail before Nextflow starts unless the connected daemon reports rootless security mode.
 
 ### CLI
 
@@ -319,6 +331,7 @@ json2h5ad output/GSE234602.json \
 | `--work-dir` `WORK_DIR` | Nextflow work directory; defaults below the study/pipeline output tree. |
 | `--resume` | Add `-resume` to the Nextflow invocation. |
 | `--overwrite` | Replace normalized H5AD and manifest outputs; existing outputs are protected by default. |
+| `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
@@ -326,7 +339,7 @@ json2h5ad output/GSE234602.json \
 
 Processed assets may be local or HTTP(S)/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote processed assets are cached under the output directory and an available MD5 is verified. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
 
-Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
+Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
 
 #### `json2tsv`
 
@@ -478,10 +491,12 @@ one dataset group and `BatchConversionResult` for multiple groups.
 `BatchConversionResult`. For multiple groups, each dataset is converted below
 an output child directory named for its dataset ID; per-group exceptions are
 recorded in `BatchConversionResult.failures` while later groups continue.
-Invalid paths, invalid source shapes, and sources with no convertible groups
-raise before aggregation. `ConversionResult` exposes `study_accession`,
+Invalid paths, unsafe dataset IDs, invalid source shapes, sources with no
+convertible groups, and sources with no convertible samples raise before
+aggregation. `ConversionResult` exposes `study_accession`,
 `sample_h5ads`, `combined_h5ad`, `retained_h5ads`, `pipeline_runs`,
-`manifest_path`, `warnings`, `failures`, `primary_h5ad`, and `partial`.
+`manifest_path`, `warnings`, `errors`, `failures`, `primary_h5ad`, and
+`partial`.
 In-memory paths are absolute; persisted provenance paths are relative to their
 artifact parent where possible. See the
 [H5AD workflow contract](docs/codebase.md#workflow-json2h5ad).
@@ -517,7 +532,11 @@ Projectors run after standard `msc_*` normalization and before H5AD writing.
 Scalars are broadcast over the selected axis, vectors must match the axis
 length, and existing `obs`, `var`, or top-level `uns` keys cannot be replaced.
 Warnings returned by a projector are added to the conversion result and
-manifest. Omitting projectors preserves the standard output.
+manifest. Projector-reported `errors` raise `AnnDataProjectionError` and leave
+no final bundle by default. `allow_invalid=True` writes artifacts, records the
+errors in the result and manifest, and makes `partial` true. Structural
+`TypeError` and `ValueError` conditions remain unconditional. Omitting
+projectors preserves the standard output.
 
 Create a private or organization-specific table without modifying MSC:
 

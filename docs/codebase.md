@@ -121,8 +121,8 @@ credentials, or tokens.
 <a id="design-invariants-and-expectations"></a>
 ## Design invariants and expectations
 
-- A parsed source is a non-empty package list (or one object where the
-  converter explicitly accepts it); packages remain scoped to their Series.
+- A parsed source contains at least one package group and at least one
+  convertible sample; packages remain scoped to their Series.
 - CLI batch commands continue after an input failure and return `1` if any
   input fails. Most programmatic workflows propagate exceptions; H5AD group
   aggregation is the explicit exception and converts per-group exceptions
@@ -134,10 +134,12 @@ credentials, or tokens.
 - H5AD source priority remains manifest, explicit specification, then JSON
   discovery; processed H5AD/matrix sources outrank raw FASTQ within a tier.
 - Existing H5AD, tabular, and provenance outputs are protected unless the
-  relevant overwrite option is explicit.
+  relevant overwrite option is explicit. H5AD sample, combined, and manifest
+  artifacts publish as one staged bundle with backup/rollback on commit error.
 - Metadata projectors cannot silently replace existing AnnData keys or emit
   axis vectors of the wrong length. Tabular collisions and invalid projections
-  fail closed unless `allow_invalid=True`.
+  fail closed unless `allow_invalid=True`; projector-reported H5AD errors use
+  the same explicit policy, while structural errors always fail.
 - External calls use service-specific requester settings. Safe telemetry never
   logs credentials, URL queries, raw XML, or study payloads.
 - Converter-owned nf-core input/output/reference parameters override additional
@@ -175,7 +177,7 @@ The supported public entrypoints are:
 - seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
   `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv`;
 <a id="interface-python"></a>
-- direct Python converter classes and the ten formal exports from
+- direct Python converter classes and the eleven formal exports from
   `meta_standards_converter.converters`;
 <a id="interface-docker"></a>
 - a Docker image that accepts any installed console command;
@@ -218,7 +220,7 @@ failure behavior are detailed in
 <a id="public-api-reference"></a>
 ## Public API reference
 
-The formal support boundary is the ten names in
+The formal support boundary is the eleven names in
 `meta_standards_converter.converters.__all__`. CLI converter classes are also
 supported through their registered commands. Other non-underscored
 module-level symbols are inventoried later because Python makes them
@@ -228,11 +230,22 @@ statement for them; treat those as **evidence-gap**, not stable API.
 <a id="api-anndata-metadata-projection"></a>
 ### `AnnDataMetadataProjection`
 
-- **Signature:** `AnnDataMetadataProjection(obs={}, var={}, uns={}, warnings=())`.
-- **Inputs:** mappings of additions for AnnData axes/unstructured metadata and warning strings.
+- **Signature:** `AnnDataMetadataProjection(obs={}, var={}, uns={}, warnings=(), errors=())`.
+- **Inputs:** mappings of additions for AnnData axes/unstructured metadata plus warning and validation-error strings.
 - **Outputs:** frozen projector-result dataclass.
 - **Failures:** construction performs no validation; application rejects collisions and wrong-length axis values.
 - **Side effects:** none.
+- **Support:** formal export.
+- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+
+<a id="api-anndata-projection-error"></a>
+### `AnnDataProjectionError`
+
+- **Signature:** `AnnDataProjectionError(errors)`; subclass of `ValueError`.
+- **Inputs:** projector-reported validation error strings.
+- **Outputs:** fail-closed exception exposing the normalized `errors` tuple.
+- **Failures:** raised before final bundle publication unless `allow_invalid=True`.
+- **Side effects:** none; staged files are discarded.
 - **Support:** formal export.
 - **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
 
@@ -388,6 +401,7 @@ follow this canonical overview.
   `meta_standards_converter.converters.json2h5ad.Asset`,
   `meta_standards_converter.converters.json2h5ad.MetadataProjectionContext`,
   `meta_standards_converter.converters.json2h5ad.AnnDataMetadataProjection`,
+  `meta_standards_converter.converters.json2h5ad.AnnDataProjectionError`,
   `meta_standards_converter.converters.json2h5ad.AnnDataMetadataProjector`,
   `meta_standards_converter.converters.json2h5ad.AssetManifest`,
   `meta_standards_converter.converters.json2h5ad.AssetDownloader`,
@@ -548,9 +562,9 @@ package conversion -> processed normalize / raw reference + nf-core
 4. Planning applies manifest, explicit, then discovered asset precedence.
 5. Processed assets normalize directly; raw assets call reference resolution
    and Nextflow/nf-core through `NFCoreRunner`.
-6. Per-sample failures and incompatibility can make `ConversionResult.partial`;
+6. Per-sample failures, incompatibility, and allowed projector errors can make `ConversionResult.partial`;
    per-group exceptions are caught in `BatchConversionResult.failures`.
-7. Invalid path/source/no-group conditions raise before aggregation; successful
+7. Invalid path/source/no-group/no-sample and unsafe dataset-ID conditions raise before aggregation; successful
    groups and diagnostics survive later failures.
 
 Pseudocode: `load -> if one and convert: convert_packages; else for group: try convert_packages into child; except record; return batch`.
@@ -997,7 +1011,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 
 `scripts/provision-rootless-json2h5ad.sh` is the administrative boundary. It installs rootless prerequisites, creates the locked `nfcore-runner` account, allocates a non-overlapping 65,536-ID subordinate range, enables its user service, and configures ACLs. The build context is read-only to the runner; `.out/json2h5ad` is the only writable project path.
 
-`scripts/json2h5ad-compose.sh` must run as `nfcore-runner`. It resolves that user's socket, refuses a daemon without the `rootless` security option, prepares output-local home and Nextflow caches, and invokes `compose.yaml` with absolute paths. Compose passes the same absolute `JSON2H5AD_OUT` into the container that it uses for the working directory and bind mount. The application process uses container UID/GID 0:0, which the rootless daemon maps to the unprivileged host `nfcore-runner` identity; using UID 1001 inside the container would instead map to a subordinate host UID without output or socket access.
+`scripts/json2h5ad-compose.sh` must run as `nfcore-runner`. It resolves that user's socket, with `ROOTLESS_DOCKER_SOCKET` as the only override seam, refuses a daemon without the `rootless` security option, prepares output-local home and Nextflow caches, and invokes `compose.yaml` with absolute paths. Compose passes the same absolute `JSON2H5AD_OUT` into the container that it uses for the working directory and bind mount. The application process uses container UID/GID 0:0, which the rootless daemon maps to the unprivileged host `nfcore-runner` identity; using UID 1001 inside the container would instead map to a subordinate host UID without output or socket access.
 
 ```text
 administrator provisions nfcore-runner once
@@ -1330,7 +1344,7 @@ This section lists public and semi-public callables used by tests or by package 
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
 - `json2ae` accepts one or more parsed MINiML or completed ThematicAtlases JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
-- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, and `--overwrite`.
+- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--overwrite`, and `--allow-invalid`.
 - `json2tsv` and `json2csv` accept parsed MINiML or Atlas JSON, write one table per input under `--out`, and expose `--allow-invalid` and `--overwrite`.
 
 `main(argv=None) -> int`
@@ -1348,14 +1362,14 @@ This section lists public and semi-public callables used by tests or by package 
 
 - Main programmatic converter.
 - The class inherits `JSONHandler`, though the converter path does not currently rely on inherited helper methods.
-- `__init__(enricher=None, geo_fetcher=None, parser=None)` accepts enrichment, GEO fetcher, and parser dependencies. Defaults are `MINiMLEnricher()`, `GEOWebFetcher()`, and `GEOParser(geo_fetcher=self.geo_fetcher)`.
+- `__init__(enricher=None, geo_fetcher=None, parser=None, ae_constructor=None)` accepts enrichment, GEO fetcher, parser, and MAGE-TAB constructor dependencies. Defaults are `MINiMLEnricher()`, `GEOWebFetcher()`, `GEOParser(geo_fetcher=self.geo_fetcher)`, and `AEConstructor()`.
 
 `convert(gse, related_series=False, remove_empty=True, out=None, platform_handler=None)`
 
 - Fetches MINiML with `self.geo_fetcher.fetch_gse_miniml(gse=gse)`.
 - Parses with `self.parser.parse(miniml, remove_empty=remove_empty, related_series=related_series)`.
 - Enriches each parsed package with `self.enricher.enrich(data=meta_json)`.
-- Instantiates one `AEConstructor`.
+- Reuses the injected or default `AEConstructor`.
 - Converts each enriched package to a MAGE-TAB payload.
 - Passes a non-`None` `platform_handler` through to `AEConstructor.miniml2magetab()`.
 - Writes each payload when `out` is truthy.
@@ -1394,13 +1408,13 @@ This section lists public and semi-public callables used by tests or by package 
 
 - Accepts injectable `SourcePlanner`, `NFCoreRunner`, `AssetDownloader`, and
   ordered `AnnDataMetadataProjector` collaborators.
-- `convert(...) -> ConversionResult | BatchConversionResult` accepts ordinary
+- `convert(..., allow_invalid=False) -> ConversionResult | BatchConversionResult` accepts ordinary
   parsed MINiML JSON or a completed ThematicAtlases envelope. It returns the
   single-group result directly and aggregates multiple groups.
-- `convert_source(json_path, out=None, **options) -> BatchConversionResult`
+- `convert_source(json_path, out=None, allow_invalid=False, **options) -> BatchConversionResult`
   always aggregates groups. Per-group exceptions populate `failures` and do
   not discard successful conversions.
-- `ConversionResult` exposes `combined_h5ad`, `sample_h5ads`, retained pipeline files, pipeline commands, warnings/failures, `primary_h5ad`, and `partial`.
+- `ConversionResult` exposes `combined_h5ad`, `sample_h5ads`, retained pipeline files, pipeline commands, warnings/errors/failures, `primary_h5ad`, and `partial`.
 - `AssetManifest` loads CSV/TSV mappings or `ACCESSION=PATH` CLI specifications. Manifest entries outrank CLI entries, which outrank discovered JSON assets.
 - `AssetManifest.load(path: str) -> list[Asset]` reads CSV/TSV, requires
   `scope_id`/`path`, groups raw members, and raises `ValueError` for blank or
@@ -1434,8 +1448,13 @@ before MINiML attachment/writing; combined projectors run after
 `anndata.concat()` and before combined MINiML attachment/writing. Scalar
 `obs`/`var` values broadcast, vector values must match their axis, and existing
 axis or top-level `uns` keys cannot be overwritten. Projector warnings are
-deduplicated into `ConversionResult.warnings` and the manifest. With no
-projectors, output is unchanged.
+deduplicated into `ConversionResult.warnings` and the manifest. Reported
+`errors` raise `AnnDataProjectionError` before publication unless
+`allow_invalid=True`, which records them and returns a partial result.
+Structural return-type, collision, and vector-length errors remain
+unconditional. All H5ADs and the manifest are staged before a backup/swap
+commit; commit failure restores the prior complete bundle. With no projectors,
+output is unchanged.
 
 `JSON2TSVConverter` and `JSON2CSVConverter`
 
@@ -1912,6 +1931,7 @@ Other helpers:
   shared limiter timestamps; it mutates process-global requester state.
 - Maintains shared per-service limiter state, so separate fetcher instances still respect the same sequential request delay.
 - Retries transient HTTP statuses. Numeric `Retry-After` headers control retry sleep; otherwise fallback delay is `min(0.5 * (2 ** attempt), 8.0)`.
+- Retries `ConnectionError`, `Timeout`, and `ChunkedEncodingError` with the same deterministic exponential schedule and exact configured attempt count.
 - Raises the exhausted retry response through `response.raise_for_status()`.
 
 <a id="pubmed-fetcher"></a>
@@ -2007,15 +2027,21 @@ SRA XML helper methods:
 Run the full suite:
 
 ```bash
-MPLCONFIGDIR=/tmp/matplotlib-meta-standards python -m unittest discover tests
+PYTHONDONTWRITEBYTECODE=1 MPLCONFIGDIR=/tmp/matplotlib-meta-standards \
+  pytest -p no:cacheprovider -q
 ```
+
+Install `.[test]` first. Pytest is canonical because unittest discovery skips
+pytest functions, fixtures, parametrization, and subtests. The autouse guard in
+`tests/conftest.py` blocks network and child processes fail-closed. Only
+reviewed bounded-PATH shell tests carry the `fake_process` marker.
 
 Important test coverage:
 
 - `tests/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
-- `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, and fixture-backed parity with direct AE construction.
+- `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, and output writing.
 - `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, real dictionary reference scoping, case-insensitive metadata de-duplication, artifact-relative provenance, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
@@ -2023,7 +2049,10 @@ Important test coverage:
 - `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, replacement projectors, collisions, and validation behavior.
 - `tests/test_metadata_projector.py`: generic sample/combined projector
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,
-  and warning propagation.
+  warning/error propagation, fail-closed output, invalid-output opt-in, and
+  bundle rollback fault injection.
+- `tests/test_external_guard.py`: fail-closed network/process guard self-tests and bounded fake-process opt-in.
+- `tests/test_public_e2e.py`: offline public GEO/JSON/MAGE-TAB round trips and processed-H5AD bundle conversion without nf-core.
 - `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, warning extraction, output discovery, and workflow failure logs.
 - `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
 - `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.

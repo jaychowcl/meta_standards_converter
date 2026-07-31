@@ -174,5 +174,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Test plan
   anchor: test-plan
   purpose: Routes maintainers to behavioral and documentation verification coverage.
-  keywords: tests, unittest, CLI, documentation, acceptance, regression
+  keywords: tests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)
