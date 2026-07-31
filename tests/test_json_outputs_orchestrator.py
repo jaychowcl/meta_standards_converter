@@ -14,6 +14,10 @@ import pandas
 from scipy import sparse
 
 from meta_standards_converter.converters import JSONDataOutputOrchestrator
+from meta_standards_converter.converters.json2h5ad import (
+    BatchConversionResult,
+    ConversionResult,
+)
 
 
 def _source(tmp_path: Path) -> tuple[Path, Path]:
@@ -102,3 +106,30 @@ def test_orchestrator_manifest_writes_selected_format_and_json_summary(tmp_path)
     assert json.loads(Path(result.manifest_path).read_text())["artifacts"][
         "table"
     ] == result.output_path
+
+
+def test_batch_obs_keeps_dataset_directory_when_other_group_fails(
+    tmp_path, monkeypatch
+):
+    class FakeH5ADConverter:
+        def convert(self, *_args, **_kwargs):
+            return BatchConversionResult(
+                conversions={"GSE1": ConversionResult("GSE1")},
+                failures=["GSE2: conversion failed"],
+            )
+
+    orchestrator = JSONDataOutputOrchestrator(h5ad_converter=FakeH5ADConverter())
+    targets = []
+
+    def export_components(_conversion, destination, **_options):
+        targets.append(destination)
+        return object()
+
+    monkeypatch.setattr(orchestrator, "_export_components", export_components)
+
+    result = orchestrator.export_anndata_metadata(
+        tmp_path / "atlas.json", outdir=tmp_path / "outputs"
+    )
+
+    assert targets == [tmp_path / "outputs" / "GSE1"]
+    assert result.partial
