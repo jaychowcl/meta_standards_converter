@@ -763,6 +763,8 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
+- Distribution version `2.0.0` is the standalone Atlas v2 consumer release;
+  neither build metadata nor production imports depend on ThematicAtlases.
 - The package requires Python `>=3.10`.
 - Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
 - The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv` console scripts point to their matching modules under `meta_standards_converter.cli`.

@@ -96,6 +96,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: extension, projector, platform handler, asset, service, round trip, tests
   link: [Open section](codebase.md#extension-and-change-guidance)
 
+- id: runtime-behavior
+  title: Runtime behavior and packaging
+  anchor: runtime-behavior
+  purpose: Defines the standalone 2.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
+  keywords: version 2.0.0, standalone, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
+  link: [Open section](codebase.md#runtime-behavior)
+
 ## Workflow routes
 
 - id: workflow-geo2ae
