@@ -9,6 +9,9 @@
 import json
 import csv
 import inspect
+import anndata
+import pandas
+from scipy import sparse
 
 from meta_standards_converter.converters.harmonization_overrides import (
     resolve_harmonization_overrides,
@@ -35,6 +38,10 @@ PROFILE = {
 
 def package():
     return {
+        "database": [],
+        "organization": [],
+        "contributor": [],
+        "platform": [],
         "series": {"accession": [{"value": "GSE1"}]},
         "sample": [{
             "iid": "GSM1",
@@ -166,3 +173,31 @@ def test_all_json_consumers_expose_explicit_opt_in():
             action.dest == "use_harmonization_overrides"
             for action in cli._parser()._actions
         )
+
+
+def test_h5ad_publishes_resolved_columns_and_raw_and_harmonization_ledgers(tmp_path):
+    source = tmp_path / "agentic.json"
+    source.write_text(json.dumps({
+        "miniml_json": package(), "harmonization_overrides": PROFILE
+    }), encoding="utf-8")
+    expression = tmp_path / "GSM1.h5ad"
+    anndata.AnnData(
+        X=sparse.csr_matrix([[1]]),
+        obs=pandas.DataFrame(index=["cell-1"]),
+        var=pandas.DataFrame(index=["gene-1"]),
+    ).write_h5ad(expression)
+
+    result = JSON2H5ADConverter().convert(
+        str(source),
+        out=str(tmp_path / "out"),
+        asset_specs=[f"GSM1={expression}"],
+        use_harmonization_overrides=True,
+    )
+    converted = anndata.read_h5ad(result.sample_h5ads["GSM1"])
+
+    assert converted.obs["msc.sample.channel.organism.value"].iat[0] == "Homo sapiens"
+    assert converted.obs["msc.harmonization.organism.source_field"].iat[0] == "species_name"
+    assert converted.uns["msc_harmonization"]["schema_version"] == "1.0"
+    fields = converted.uns["msc_miniml"]["fields"]
+    raw_organism = fields.loc[fields["path"] == "channel[0].organism[0].value", "value"]
+    assert raw_organism.tolist() == ["human"]
