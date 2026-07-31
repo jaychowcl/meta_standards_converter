@@ -431,6 +431,7 @@ class DocsIndexTests(unittest.TestCase):
             "docs/MAGE-TABv1.1_2011_07_28.pdf",
             "docs/MINiML.xsd",
             "tests/GSE328265_family.xml",
+            "tests/fixtures/contracts/atlas-document-v2.json",
         }
         hash_comment_files = {
             ".dockerignore",

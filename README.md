@@ -406,7 +406,10 @@ The reader validates the v2 identity, collections, cross-references and summary,
 returns only harmonized dataset metadata, and reports skipped states through
 `result.warnings`. MSC intentionally has no runtime or build dependency on
 ThematicAtlases; compatibility is verified with the producer-owned golden wire
-fixture copied into `tests/fixtures/contracts/`.
+fixture copied into `tests/fixtures/contracts/`. A harmonized dataset whose
+metadata is exactly `{"packages": [...]}` remains one dataset group while each
+contained MINiML package is converted independently; this preserves related
+series packages without treating them as separate Atlas datasets.
 
 Convert GEO to MAGE-TAB:
 

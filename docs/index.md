@@ -79,7 +79,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Atlas v2 reader
   anchor: atlas-v2-reader
   purpose: Defines the standalone versioned wire reader, dataset adaptation, warnings, v1 rejection, and dependency boundary.
-  keywords: AtlasV2Reader, AtlasV2Error, schema_version, golden fixture, harmonized, standalone, no dependency
+  keywords: AtlasV2Reader, AtlasV2Error, schema_version, golden fixture, harmonized, metadata.packages, DatasetPackageGroup, standalone, no dependency
   link: [Open section](codebase.md#atlas-v2-reader)
 
 - id: principal-workflows

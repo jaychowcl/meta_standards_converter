@@ -248,6 +248,11 @@ statement for them; treat those as **evidence-gap**, not stable API.
   datasets whose status is `harmonized`; each record carries `dataset_id`,
   `source_repository`, `source_ordinal`, and copied MINiML-compatible metadata.
   `warnings` describes every skipped state and its document diagnostics.
+- `JSONPackageSource` turns each retained dataset into one
+  `DatasetPackageGroup`. Ordinary metadata is one package; metadata whose exact
+  shape is `{"packages": [...]}` expands the validated object list within that
+  same group. Sample deduplication and conflicting-metadata rejection then run
+  across all contained packages.
 - `AtlasV2Error` is the fail-closed `ValueError` subclass for unsupported
   versions, legacy v1 envelopes, malformed collections, duplicate IDs, broken
   publication references, invalid dataset metadata, and inconsistent summary
@@ -540,11 +545,13 @@ path -> AtlasV2Reader/JSONPackageSource -> invalid/version/v1 -> exception
    `harmonized` datasets and emits warnings for other states and their
    diagnostics. V1 envelopes are rejected. No remaining groups raises
    `ValueError`.
-3. Every retained package must be an object with a usable study accession,
+3. Exact Atlas metadata wrappers `{"packages": [...]}` expand within the
+   dataset's single group; non-object entries fail before conversion.
+4. Every retained package must be an object with a usable study accession,
    and all packages are validated before collaborator calls.
-4. Optional enrichment precedes `AEConstructor.miniml2magetab`.
-5. Round-trip evidence may restore source tables; mapped edits use overlay rules.
-6. `out` controls writing; construction errors propagate.
+5. Optional enrichment precedes `AEConstructor.miniml2magetab`.
+6. Round-trip evidence may restore source tables; mapped edits use overlay rules.
+7. `out` controls writing; construction errors propagate.
 
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
 [enrich] -> construct -> [write]; return`.
@@ -575,7 +582,9 @@ Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved
 The source may be ordinary parsed MINiML JSON (one object or list) or a
 canonical Atlas v2 document. `AtlasV2Reader` validates and selects harmonized
 datasets; `JSONPackageSource` adapts each selected dataset to one package group
-and carries skipped-state warnings.
+and carries skipped-state warnings. An exact `metadata.packages` wrapper
+expands multiple MINiML packages inside that group without changing the Atlas
+dataset ID or output containment scope.
 
 ```text
 path -> missing/invalid/no groups --------------------------> exception
@@ -991,7 +1000,9 @@ Combination preserves successful per-sample outputs when expression modalities, 
 
 `JSONPackageSource` delegates canonical documents to `AtlasV2Reader`. The
 reader retains only `harmonized` datasets, preserves canonical dataset IDs,
-and reports other states with diagnostics; v1 envelopes are rejected.
+and reports other states with diagnostics; v1 envelopes are rejected. Exact
+`metadata.packages` wrappers expand within the dataset group before shared
+sample deduplication.
 Native MINiML grouping still deduplicates identical samples and rejects
 conflicting duplicates. `JSON2H5ADConverter.convert_source()` runs every group separately;
 multi-study output uses one child directory per study and returns

@@ -84,12 +84,31 @@ class JSONPackageSource:
         groups = tuple(
             DatasetPackageGroup(
                 dataset.dataset_id,
-                self._dedupe_samples([dataset.metadata]),
+                self._dedupe_samples(
+                    self._atlas_packages(dataset.dataset_id, dataset.metadata)
+                ),
                 source_accession=dataset.dataset_id,
             )
             for dataset in result.datasets
         )
         return SourceLoadResult(groups, result.warnings)
+
+    @staticmethod
+    def _atlas_packages(
+        dataset_id: str, metadata: Mapping[str, Any]
+    ) -> list[Mapping[str, Any]]:
+        if set(metadata) != {"packages"}:
+            return [metadata]
+        packages = metadata["packages"]
+        if not isinstance(packages, list):
+            raise ValueError(
+                f"Atlas v2 dataset {dataset_id} metadata.packages must be a list."
+            )
+        if any(not isinstance(package, Mapping) for package in packages):
+            raise ValueError(
+                f"Atlas v2 dataset {dataset_id} metadata.packages must contain objects."
+            )
+        return packages
 
     def _group_packages(
         self, packages: list[Mapping[str, Any]], fallback: str

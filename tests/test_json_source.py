@@ -115,6 +115,37 @@ def test_atlas_v2_document_yields_only_harmonized_metadata(tmp_path):
     )
 
 
+def test_atlas_v2_dataset_expands_multiple_miniml_packages(tmp_path):
+    source = tmp_path / "atlas.json"
+    source.write_text(
+        json.dumps(
+            atlas_v2(
+                [
+                    dataset(
+                        "GSE1",
+                        "harmonized",
+                        {
+                            "packages": [
+                                package("GSE1", "GSM1"),
+                                package("GSE1-related", "GSM2"),
+                            ]
+                        },
+                    )
+                ]
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    result = JSONPackageSource().load(source)
+
+    assert len(result.groups) == 1
+    assert result.groups[0].dataset_id == "GSE1"
+    assert [
+        item["sample"][0]["iid"] for item in result.groups[0].packages
+    ] == ["GSM1", "GSM2"]
+
+
 def test_conflicting_duplicate_samples_are_rejected(tmp_path):
     first = package("GSE1", "GSM1")
     second = package("GSE1", "GSM1")
