@@ -725,7 +725,8 @@ JSON + expression assets -> shared H5AD assembly
 1. Asset resolution, raw processing, normalization, projectors, smart IDs, and combination exactly match `json2h5ad`.
 2. The combined `obs` is exported with `cell_id`; source and canonical names remain unchanged.
 3. Optional `var` uses `feature_id`; optional `uns` uses tagged JSON for nested mappings, arrays, and DataFrames.
-4. The CLI prints only a compact JSON summary to stdout, sends logs to stderr, and returns status `1` for partial/failure outcomes.
+4. Every batch conversion publishes beneath its dataset-ID directory, even when other groups fail and only one dataset succeeds.
+5. The CLI prints only a compact JSON summary to stdout, sends logs to stderr, and returns status `1` for partial/failure outcomes.
 
 Pseudocode: `assemble -> read combined AnnData -> serialize selected components -> atomic publish -> result`.
 

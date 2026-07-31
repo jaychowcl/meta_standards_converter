@@ -412,6 +412,8 @@ Build the same combined AnnData view as `json2h5ad`, then export cell metadata
 without publishing normalized H5AD files. The required output directory
 contains `<study>.obs.csv` with an explicit `cell_id` column. Optional typed
 sidecars expose feature metadata and reconstructable unstructured metadata.
+Atlas batches always isolate every completed dataset below
+`OUTDIR/<dataset_id>/`, including partial batches with only one success.
 
 ```bash
 json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
