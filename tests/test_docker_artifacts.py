@@ -8,6 +8,7 @@
 # =============================================================================
 import unittest
 import os
+import socket
 import subprocess
 from pathlib import Path
 
@@ -178,7 +179,18 @@ def test_compose_runner_uses_only_reviewed_fake_path_and_socket_seam(
         'if [[ "${1:-}" == "info" ]]; then echo \'["name=rootless"]\'; fi',
     )
 
-    socket_path = Path("/run/uuidd/request")
+    socket_path = tmp_path / "rootless.sock"
+    rootless = socket.socket(socket.AF_UNIX)
+    try:
+        rootless.bind(os.fspath(socket_path))
+    except PermissionError:
+        rootless.close()
+        rootless = None
+        socket_path = next(
+            path
+            for path in (Path("/run/uuidd/request"), Path("/run/docker.sock"))
+            if path.is_socket()
+        )
     output = tmp_path / "output"
     docker_log = tmp_path / "docker.log"
     monkeypatch.setenv("PATH", os.fspath(fake_bin))
@@ -186,12 +198,16 @@ def test_compose_runner_uses_only_reviewed_fake_path_and_socket_seam(
     monkeypatch.setenv("JSON2H5AD_OUT", os.fspath(output))
     monkeypatch.setenv("FAKE_DOCKER_LOG", os.fspath(docker_log))
 
-    completed = subprocess.run(
-        [os.fspath(ROOT / "scripts" / "json2h5ad-compose.sh"), "run", "--rm"],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    try:
+        completed = subprocess.run(
+            [os.fspath(ROOT / "scripts" / "json2h5ad-compose.sh"), "run", "--rm"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    finally:
+        if rootless is not None:
+            rootless.close()
 
     assert completed.returncode == 0, completed.stderr
     calls = docker_log.read_text(encoding="utf-8").splitlines()
