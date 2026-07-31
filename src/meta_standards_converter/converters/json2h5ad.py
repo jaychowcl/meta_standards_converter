@@ -1891,6 +1891,14 @@ class JSON2H5ADConverter:
         )
         characteristic_values = {}
         for channel in channels:
+            for key, value in channel.items():
+                if not str(key).startswith("hz_"):
+                    continue
+                values = self._values(value)
+                if values:
+                    characteristic_values.setdefault(
+                        self._metadata_slug(key), []
+                    ).extend(values)
             for item in self.planner._as_list(channel.get("characteristics")):
                 if not isinstance(item, dict) or not item.get("tag"):
                     continue
