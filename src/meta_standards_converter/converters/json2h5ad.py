@@ -1048,43 +1048,37 @@ class SourcePlanner:
 
 class JSON2H5ADConverter:
     MINIML_SCHEMA_VERSION = "1.0"
+    H5AD_METADATA_SCHEMA_VERSION = "3.0"
     PUBLICATION_POLICY = "citation_metadata_only"
-    SECTIONED_OBS_COLUMNS = {
-        "msc_accession": "msc.sample.accession",
-        "msc_series_accession": "msc.series.accession",
-        "msc_title": "msc.sample.title",
-        "msc_description": "msc.sample.description",
-        "msc_organism": "msc.sample.channel.organism.value",
-        "msc_organism_taxid": "msc.sample.channel.organism.taxid",
-        "msc_organism_part": "msc.sample.channel.organism_part",
-        "msc_developmental_stage": "msc.sample.channel.developmental_stage",
-        "msc_disease": "msc.sample.channel.disease",
-        "msc_genotype": "msc.sample.channel.genotype",
-        "msc_source_name": "msc.sample.channel.source",
-        "msc_biomaterial_provider": "msc.sample.channel.biomaterial_provider",
-        "msc_material_type": "msc.sample.channel.material_type",
-        "msc_molecule": "msc.sample.channel.molecule",
-        "msc_platform_accession": "msc.platform.accession",
-        "msc_sra_accession": "msc.archive.sra_accession",
-        "msc_ena_accession": "msc.archive.ena_accession",
-        "msc_biosample_accession": "msc.archive.biosample_accession",
-        "msc_sra_run_accessions": "msc.archive.sra_run_accessions",
-        "msc_library_strategy": "msc.library.strategy",
-        "msc_library_source": "msc.library.source",
-        "msc_library_selection": "msc.library.selection",
-        "msc_library_layout": "msc.library.layout",
-        "msc_instrument_model": "msc.instrument.model",
-        "msc_protocol_types": "msc.protocol.types",
-        "msc_protocol_term_source_refs": "msc.protocol.term_source_refs",
-        "msc_protocol_term_accession_numbers": "msc.protocol.term_accession_numbers",
-        "msc_metadata_source": "msc.database.identifier",
-        "msc_metadata_source_name": "msc.database.name",
-        "msc_metadata_source_uri": "msc.database.uri",
-        "msc_source_tier": "msc.asset.tier",
-        "msc_source_uri": "msc.asset.uri",
-        "msc_source_uri_scope": "msc.asset.uri_scope",
-        "msc_modality": "msc.expression.modality",
-        "msc_batch": "msc.combination.batch",
+    OBS_METADATA_FIELDS = {
+        "msc.sample.title": "title",
+        "msc.sample.description": "description",
+        "msc.sample.channel.organism.value": "organism",
+        "msc.sample.channel.organism.taxid": "organism_taxid",
+        "msc.sample.channel.organism_part": "organism_part",
+        "msc.sample.channel.developmental_stage": "developmental_stage",
+        "msc.sample.channel.disease": "disease",
+        "msc.sample.channel.genotype": "genotype",
+        "msc.sample.channel.source": "source",
+        "msc.sample.channel.biomaterial_provider": "biomaterial_provider",
+        "msc.sample.channel.material_type": "material_type",
+        "msc.sample.channel.molecule": "molecule",
+        "msc.platform.accession": "platform_accession",
+        "msc.archive.sra_accession": "sra_accession",
+        "msc.archive.ena_accession": "ena_accession",
+        "msc.archive.biosample_accession": "biosample_accession",
+        "msc.archive.sra_run_accessions": "sra_run_accessions",
+        "msc.library.strategy": "library_strategy",
+        "msc.library.source": "library_source",
+        "msc.library.selection": "library_selection",
+        "msc.library.layout": "library_layout",
+        "msc.instrument.model": "instrument_model",
+        "msc.protocol.types": "protocol_types",
+        "msc.protocol.term_source_refs": "protocol_term_source_refs",
+        "msc.protocol.term_accession_numbers": "protocol_term_accession_numbers",
+        "msc.database.identifier": "metadata_source",
+        "msc.database.name": "metadata_source_name",
+        "msc.database.uri": "metadata_source_uri",
     }
     PUBLICATION_FIELDS = (
         "pubmed_id",
@@ -1367,6 +1361,7 @@ class JSON2H5ADConverter:
             result.sample_h5ads[sample_id] = str(sample_path)
             adatas[sample_id] = adata
 
+        self._ensure_global_observation_ids(adatas)
         try:
             combined = self._combine(adatas)
         except ValueError as exc:
@@ -1502,7 +1497,6 @@ class JSON2H5ADConverter:
                         column
                         for column in (
                             "msc.sample.accession",
-                            "msc_accession",
                             "geo_accession",
                             "sample_id",
                             "sample",
@@ -1515,7 +1509,7 @@ class JSON2H5ADConverter:
                 if not accession_column:
                     raise ValueError(
                         f"Study H5AD {asset.path} cannot be mapped to samples; "
-                        "obs needs msc.sample.accession, msc_accession, geo_accession, "
+                        "obs needs msc.sample.accession, geo_accession, "
                         "sample_id, sample, or gsm_accession."
                     )
                 mask = adata.obs[accession_column].astype(str).str.upper() == asset.scope_id.upper()
@@ -1629,62 +1623,41 @@ class JSON2H5ADConverter:
         artifact_parent: Path,
     ) -> dict:
         sample_id = self.planner.sample_accession(sample)
-        metadata = self._sample_metadata(sample, package)
+        metadata_values = self._sample_metadata_values(sample, package)
+        metadata = self._render_sample_metadata(metadata_values)
         modality = self._sample_modality(sample)
         original_names = [str(value) for value in adata.obs_names]
-        sample_suffix = f"-{sample_id}".casefold()
-        adata.obs_names = [
+        adata.obs["msc.observation.original_id"] = original_names
+        candidates = [
             value
-            if value.casefold() == sample_id.casefold() or value.casefold().endswith(sample_suffix)
+            if self._is_sample_qualified(value, sample_id)
             else f"{value}-{sample_id}"
             for value in original_names
         ]
-        adata.obs_names_make_unique()
+        adata.obs_names = self._deduplicate_observation_ids(candidates)
         source_uri, source_uri_scope = self._portable_location(asset.path, artifact_parent)
-        annotations = {
-            "msc_accession": sample_id,
-            "msc_series_accession": study_accession,
-            "msc_title": metadata.get("title"),
-            "msc_description": metadata.get("description"),
-            "msc_organism": metadata.get("organism"),
-            "msc_organism_taxid": metadata.get("organism_taxid"),
-            "msc_organism_part": metadata.get("organism_part"),
-            "msc_developmental_stage": metadata.get("developmental_stage"),
-            "msc_disease": metadata.get("disease"),
-            "msc_genotype": metadata.get("genotype"),
-            "msc_source_name": metadata.get("source"),
-            "msc_biomaterial_provider": metadata.get("biomaterial_provider"),
-            "msc_material_type": metadata.get("material_type"),
-            "msc_molecule": metadata.get("molecule"),
-            "msc_platform_accession": metadata.get("platform_accession"),
-            "msc_sra_accession": metadata.get("sra_accession"),
-            "msc_ena_accession": metadata.get("ena_accession"),
-            "msc_biosample_accession": metadata.get("biosample_accession"),
-            "msc_sra_run_accessions": metadata.get("sra_run_accessions"),
-            "msc_library_strategy": metadata.get("library_strategy"),
-            "msc_library_source": metadata.get("library_source"),
-            "msc_library_selection": metadata.get("library_selection"),
-            "msc_library_layout": metadata.get("library_layout"),
-            "msc_instrument_model": metadata.get("instrument_model"),
-            "msc_protocol_types": metadata.get("protocol_types"),
-            "msc_protocol_term_source_refs": metadata.get("protocol_term_source_refs"),
-            "msc_protocol_term_accession_numbers": metadata.get("protocol_term_accession_numbers"),
-            "msc_metadata_source": metadata.get("metadata_source"),
-            "msc_metadata_source_name": metadata.get("metadata_source_name"),
-            "msc_metadata_source_uri": metadata.get("metadata_source_uri"),
-            "msc_source_tier": asset.kind,
-            "msc_source_uri": source_uri,
-            "msc_source_uri_scope": source_uri_scope,
-            "msc_modality": modality,
+        canonical_values = {
+            "msc.sample.accession": (sample_id,),
+            "msc.series.accession": (study_accession,),
+            **{
+                column: metadata_values.get(key, ())
+                for column, key in self.OBS_METADATA_FIELDS.items()
+            },
+            "msc.asset.tier": (asset.kind,),
+            "msc.asset.uri": (source_uri,) if source_uri else (),
+            "msc.asset.uri_scope": (source_uri_scope,) if source_uri_scope else (),
+            "msc.expression.modality": (modality,),
         }
         for column in characteristic_columns:
-            annotations[f"msc_characteristic_{column}"] = metadata["characteristics"].get(column)
-        for key, value in annotations.items():
-            serialized = "" if value is None else str(value)
-            adata.obs[key] = serialized
-            sectioned = self._sectioned_obs_column(key)
-            if sectioned:
-                adata.obs[sectioned] = serialized
+            canonical_values[f"msc.characteristics.{column}"] = metadata_values[
+                "characteristics"
+            ].get(column, ())
+        for key, values in canonical_values.items():
+            adata.obs[key] = self._join_values(values)
+        self._attach_sample_values(
+            adata,
+            {sample_id: canonical_values},
+        )
         provenance = {
             "study_accession": study_accession,
             "sample_accession": sample_id,
@@ -1695,6 +1668,7 @@ class JSON2H5ADConverter:
             "source_origin": asset.source,
             "source_sha256": self._sha256(asset.path, md5=asset.md5),
             "converter_version": self._package_version(),
+            "metadata_schema_version": self.H5AD_METADATA_SCHEMA_VERSION,
             "modality": modality,
         }
         declared_reference = asset.reference or self._declared_reference(adata)
@@ -1817,12 +1791,19 @@ class JSON2H5ADConverter:
                 target.append(rendered)
 
     def _sample_metadata(self, sample: dict, package: dict) -> dict:
+        return self._render_sample_metadata(
+            self._sample_metadata_values(sample, package)
+        )
+
+    def _sample_metadata_values(self, sample: dict, package: dict) -> dict:
         metadata = {
-            "title": self._join_values(sample.get("title")),
-            "description": self._join_values(sample.get("description")),
+            "title": tuple(self._values(sample.get("title"))),
+            "description": tuple(self._values(sample.get("description"))),
         }
         channels = [x for x in self.planner._as_list(sample.get("channel")) if isinstance(x, dict)]
-        metadata["source"] = self._join_values(channel.get("source") for channel in channels)
+        metadata["source"] = tuple(
+            self._values(channel.get("source") for channel in channels)
+        )
         organisms = [
             organism
             for channel in channels
@@ -1832,9 +1813,13 @@ class JSON2H5ADConverter:
         for channel in channels:
             harmonized = self._values(channel.get("hz_organism"))
             organism_values.extend(harmonized or self._values(channel.get("organism")))
-        metadata["organism"] = self._join_values(organism_values)
-        metadata["organism_taxid"] = self._join_values(
-            organism.get("taxid") for organism in organisms if isinstance(organism, dict)
+        metadata["organism"] = tuple(self._values(organism_values))
+        metadata["organism_taxid"] = tuple(
+            self._values(
+                organism.get("taxid")
+                for organism in organisms
+                if isinstance(organism, dict)
+            )
         )
         characteristic_values = {}
         for channel in channels:
@@ -1842,11 +1827,11 @@ class JSON2H5ADConverter:
                 if not isinstance(item, dict) or not item.get("tag"):
                     continue
                 slug = self._metadata_slug(item.get("tag"))
-                value = self._join_values(item.get("value"))
-                if slug and value:
-                    characteristic_values.setdefault(slug, []).append(value)
+                values = self._values(item.get("value"))
+                if slug and values:
+                    characteristic_values.setdefault(slug, []).extend(values)
         characteristics = {
-            slug: self._join_values(values)
+            slug: tuple(self._values(values))
             for slug, values in characteristic_values.items()
         }
         metadata["characteristics"] = characteristics
@@ -1855,38 +1840,56 @@ class JSON2H5ADConverter:
             or characteristics.get("tissue")
             or metadata["source"]
         )
-        metadata["developmental_stage"] = characteristics.get("developmental_stage")
-        metadata["disease"] = characteristics.get("disease")
-        metadata["genotype"] = characteristics.get("genotype")
+        metadata["developmental_stage"] = characteristics.get("developmental_stage", ())
+        metadata["disease"] = characteristics.get("disease", ())
+        metadata["genotype"] = characteristics.get("genotype", ())
 
-        metadata["biomaterial_provider"] = self._join_values(
-            channel.get("biomaterial_provider") for channel in channels
+        metadata["biomaterial_provider"] = tuple(
+            self._values(channel.get("biomaterial_provider") for channel in channels)
         )
-        metadata["molecule"] = self._join_values(channel.get("molecule") for channel in channels)
+        metadata["molecule"] = tuple(
+            self._values(channel.get("molecule") for channel in channels)
+        )
         material_types = []
         for value in self._values(channel.get("molecule") for channel in channels):
             material_types.append(re.sub(r"^total\s+", "", value, flags=re.IGNORECASE))
-        metadata["material_type"] = self._join_values(material_types) or metadata["organism_part"]
+        metadata["material_type"] = tuple(self._values(material_types)) or metadata["organism_part"]
 
         runs = [item for item in self.planner._as_list(sample.get("sra_run")) if isinstance(item, dict)]
-        metadata["sra_accession"] = self._join_values(sample.get("sra_accession"))
-        metadata["ena_accession"] = self._join_values(sample.get("ena_accession"))
-        metadata["biosample_accession"] = self._join_values(run.get("biosample") for run in runs)
-        metadata["sra_run_accessions"] = self._join_values(run.get("run") for run in runs)
-        metadata["library_strategy"] = self._join_values(
-            [sample.get("library_strategy"), *(run.get("library_strategy") for run in runs)]
+        metadata["sra_accession"] = tuple(self._values(sample.get("sra_accession")))
+        metadata["ena_accession"] = tuple(self._values(sample.get("ena_accession")))
+        metadata["biosample_accession"] = tuple(
+            self._values(run.get("biosample") for run in runs)
         )
-        metadata["library_source"] = self._join_values(
-            [sample.get("library_source"), *(run.get("library_source") for run in runs)]
+        metadata["sra_run_accessions"] = tuple(
+            self._values(run.get("run") for run in runs)
         )
-        metadata["library_selection"] = self._join_values(
-            [sample.get("library_selection"), *(run.get("library_selection") for run in runs)]
+        metadata["library_strategy"] = tuple(
+            self._values(
+                [sample.get("library_strategy"), *(run.get("library_strategy") for run in runs)]
+            )
         )
-        metadata["library_layout"] = self._join_values(run.get("library_layout") for run in runs)
-        metadata["instrument_model"] = self._join_values(
-            [sample.get("instrument_model"), *(run.get("instrument_model") for run in runs)]
+        metadata["library_source"] = tuple(
+            self._values(
+                [sample.get("library_source"), *(run.get("library_source") for run in runs)]
+            )
         )
-        metadata["platform_accession"] = self._platform_accessions(sample, package)
+        metadata["library_selection"] = tuple(
+            self._values(
+                [sample.get("library_selection"), *(run.get("library_selection") for run in runs)]
+            )
+        )
+        metadata["library_layout"] = tuple(
+            self._values(run.get("library_layout") for run in runs)
+        )
+        metadata["instrument_model"] = tuple(
+            self._values(
+                [sample.get("instrument_model"), *(run.get("instrument_model") for run in runs)]
+            )
+        )
+        metadata["platform_accession"] = tuple(
+            self._platform_accession_values(sample, package)
+        )
 
         protocol_types = []
         protocol_sources = []
@@ -1899,26 +1902,128 @@ class JSON2H5ADConverter:
             protocol_types.append(protocol_type)
             protocol_sources.append(source_ref)
             protocol_accessions.append(accession)
-        metadata["protocol_types"] = self._join_values(protocol_types)
-        metadata["protocol_term_source_refs"] = self._join_values(protocol_sources)
-        metadata["protocol_term_accession_numbers"] = self._join_values(protocol_accessions)
+        metadata["protocol_types"] = tuple(self._values(protocol_types))
+        metadata["protocol_term_source_refs"] = tuple(self._values(protocol_sources))
+        metadata["protocol_term_accession_numbers"] = tuple(self._values(protocol_accessions))
 
         database = self._metadata_database(package)
-        metadata["metadata_source"] = self._join_values(
-            database.get("public_id") or database.get("iid") or database.get("name")
+        metadata["metadata_source"] = tuple(
+            self._values(
+                database.get("public_id") or database.get("iid") or database.get("name")
+            )
         )
-        metadata["metadata_source_name"] = self._join_values(database.get("name"))
-        metadata["metadata_source_uri"] = self._join_values(database.get("web_link"))
+        metadata["metadata_source_name"] = tuple(self._values(database.get("name")))
+        metadata["metadata_source_uri"] = tuple(self._values(database.get("web_link")))
         return metadata
 
-    def _sectioned_obs_column(self, column: str) -> str | None:
-        sectioned = self.SECTIONED_OBS_COLUMNS.get(column)
-        if sectioned:
-            return sectioned
-        characteristic_prefix = "msc_characteristic_"
-        if column.startswith(characteristic_prefix):
-            return f"msc.characteristics.{column.removeprefix(characteristic_prefix)}"
-        return None
+    def _render_sample_metadata(self, values: Mapping[str, Any]) -> dict:
+        return {
+            key: (
+                {
+                    characteristic: self._join_values(items)
+                    for characteristic, items in value.items()
+                }
+                if key == "characteristics"
+                else self._join_values(value)
+            )
+            for key, value in values.items()
+        }
+
+    def _attach_sample_values(
+        self,
+        adata,
+        samples: Mapping[str, Mapping[str, Sequence[Any]]],
+    ) -> None:
+        _anndata, _numpy, pandas, _sparse = self._scientific_modules()
+        rows = []
+        for sample_accession, fields in samples.items():
+            for field_name, values in fields.items():
+                for ordinal, value in enumerate(values):
+                    if value is None or str(value) == "":
+                        continue
+                    rows.append(
+                        (
+                            str(sample_accession),
+                            str(field_name),
+                            ordinal,
+                            str(value),
+                            self._metadata_value_type(value),
+                        )
+                    )
+        frame = pandas.DataFrame(
+            rows,
+            columns=(
+                "sample_accession",
+                "field",
+                "ordinal",
+                "value",
+                "value_type",
+            ),
+        )
+        frame.index = [f"value_{index:06d}" for index in range(len(frame))]
+        adata.uns["msc_metadata"] = {
+            "schema_version": self.H5AD_METADATA_SCHEMA_VERSION,
+            "sample_values": frame,
+        }
+
+    @staticmethod
+    def _metadata_value_type(value: Any) -> str:
+        if isinstance(value, bool):
+            return "boolean"
+        if isinstance(value, int):
+            return "integer"
+        if isinstance(value, float):
+            return "number"
+        return "string"
+
+    @staticmethod
+    def _is_sample_qualified(observation_id: str, sample_id: str) -> bool:
+        token = re.escape(str(sample_id))
+        return re.search(
+            rf"(?:^|[-_.:]){token}(?:$|[-_.:])",
+            str(observation_id),
+            flags=re.IGNORECASE,
+        ) is not None
+
+    @staticmethod
+    def _deduplicate_observation_ids(values: Sequence[str]) -> list[str]:
+        totals = {}
+        for value in values:
+            totals[value] = totals.get(value, 0) + 1
+        seen = {}
+        rendered = []
+        for value in values:
+            if totals[value] == 1:
+                rendered.append(value)
+                continue
+            seen[value] = seen.get(value, 0) + 1
+            rendered.append(f"{value}-{seen[value]}")
+        return rendered
+
+    def _ensure_global_observation_ids(self, adatas: Mapping[str, Any]) -> None:
+        locations: dict[str, list[tuple[str, int]]] = {}
+        for sample_id, adata in adatas.items():
+            for position, value in enumerate(adata.obs_names.astype(str)):
+                locations.setdefault(value, []).append((sample_id, position))
+        collisions = {
+            value: entries
+            for value, entries in locations.items()
+            if len(entries) > 1
+        }
+        if not collisions:
+            return
+        for value, entries in collisions.items():
+            for sample_id, position in entries:
+                names = list(adatas[sample_id].obs_names.astype(str))
+                names[position] = f"{value}-{sample_id}"
+                adatas[sample_id].obs_names = names
+        all_values = [
+            value
+            for adata in adatas.values()
+            for value in adata.obs_names.astype(str)
+        ]
+        if len(all_values) != len(set(all_values)):
+            raise ValueError("Observation identifiers remain non-unique after sample qualification.")
 
     def _characteristic_columns(self, packages: list[dict]) -> list[str]:
         columns = []
@@ -1985,6 +2090,9 @@ class JSON2H5ADConverter:
         )
 
     def _platform_accessions(self, sample: dict, package: dict) -> str:
+        return self._join_values(self._platform_accession_values(sample, package))
+
+    def _platform_accession_values(self, sample: dict, package: dict) -> list[str]:
         references = set(self._values(sample.get("platform_ref")))
         values = []
         for platform in self.planner._as_list(package.get("platform")):
@@ -1994,7 +2102,7 @@ class JSON2H5ADConverter:
             if references and not references.intersection(identifier for identifier in identifiers if identifier):
                 continue
             values.extend(self._values(platform.get("accession")))
-        return self._join_values(values or references)
+        return self._values(values or references)
 
     def _attach_miniml(
         self,
@@ -2267,23 +2375,12 @@ class JSON2H5ADConverter:
         anndata, _numpy, _pandas, sparse = self._scientific_modules()
         organisms = {
             str(
-                adata.obs[
-                    "msc.sample.channel.organism.value"
-                    if "msc.sample.channel.organism.value" in adata.obs
-                    else "msc_organism"
-                ].iloc[0]
+                adata.obs["msc.sample.channel.organism.value"].iloc[0]
             ).strip()
             for adata in adatas.values()
-            if (
-                "msc.sample.channel.organism.value" in adata.obs
-                or "msc_organism" in adata.obs
-            )
+            if "msc.sample.channel.organism.value" in adata.obs
             and str(
-                adata.obs[
-                    "msc.sample.channel.organism.value"
-                    if "msc.sample.channel.organism.value" in adata.obs
-                    else "msc_organism"
-                ].iloc[0]
+                adata.obs["msc.sample.channel.organism.value"].iloc[0]
             ).strip()
         }
         if len(organisms) > 1:
@@ -2315,7 +2412,7 @@ class JSON2H5ADConverter:
             axis="obs",
             join="outer",
             merge="first",
-            label="msc_batch",
+            label="msc.combination.batch",
             index_unique=None,
             fill_value=0,
         )
@@ -2323,12 +2420,12 @@ class JSON2H5ADConverter:
             combined.X = sparse.csr_matrix(combined.X)
         else:
             combined.X = combined.X.tocsr()
-        combined.obs[self.SECTIONED_OBS_COLUMNS["msc_batch"]] = combined.obs["msc_batch"]
         combined.uns["meta_standards_converter"] = {
             "combined_samples": list(adatas),
             "join": "outer",
             "fill_value": 0,
             "converter_version": self._package_version(),
+            "metadata_schema_version": self.H5AD_METADATA_SCHEMA_VERSION,
             "path_base": "artifact_parent",
             "sample_provenance": {
                 sample_id: dict(adata.uns.get("meta_standards_converter", {}))
@@ -2336,6 +2433,16 @@ class JSON2H5ADConverter:
                 if isinstance(adata.uns.get("meta_standards_converter"), dict)
             },
         }
+        sample_values = {}
+        for sample_id, adata in adatas.items():
+            values = adata.uns.get("msc_metadata", {}).get("sample_values")
+            fields = {}
+            if values is not None:
+                for row in values.to_dict("records"):
+                    fields.setdefault(str(row["field"]), []).append(row["value"])
+            fields["msc.combination.batch"] = [sample_id]
+            sample_values[sample_id] = fields
+        self._attach_sample_values(combined, sample_values)
         return combined
 
     def _feature_namespace(self, adata) -> str:
@@ -2482,6 +2589,7 @@ class JSON2H5ADConverter:
             retained_h5ad_scopes.append(scope)
         payload = {
             "path_base": "artifact_parent",
+            "h5ad_metadata_schema_version": self.H5AD_METADATA_SCHEMA_VERSION,
             "study_accession": result.study_accession,
             "source_json": source_json,
             "source_json_scope": source_json_scope,
