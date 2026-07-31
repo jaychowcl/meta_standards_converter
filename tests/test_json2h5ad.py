@@ -226,6 +226,25 @@ def test_convert_source_rejects_unsafe_dataset_id_without_escaping_output(tmp_pa
     assert not (tmp_path / "escape").exists()
 
 
+def test_convert_rejects_unsafe_single_dataset_id_before_conversion(tmp_path):
+    class UnsafeSource:
+        def load(self, _path):
+            return SourceLoadResult(
+                groups=(DatasetPackageGroup("../escape", (package("one.h5ad"),)),)
+            )
+
+    source = tmp_path / "input.json"
+    source.write_text("{}", encoding="utf-8")
+    converter = JSON2H5ADConverter(package_source=UnsafeSource())
+
+    with pytest.raises(
+        ValueError, match=r"^Unsafe dataset_id path component: '\.\./escape'$"
+    ):
+        converter.convert(str(source), out=str(tmp_path / "out"))
+
+    assert not (tmp_path / "escape").exists()
+
+
 class TestAssetInputs(unittest.TestCase):
     def test_manifest_loads_processed_and_grouped_raw_assets(self):
         with tempfile.TemporaryDirectory() as tmpdir:

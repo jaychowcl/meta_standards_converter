@@ -9,6 +9,7 @@
 """Offline end-to-end coverage through the supported converter interfaces."""
 
 import json
+import builtins
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -92,7 +93,9 @@ def test_public_metadata_converters_write_interoperable_artifacts(tmp_path):
     assert list(roundtrip_out.glob("*.json"))
 
 
-def test_public_processed_h5ad_conversion_writes_bundle_without_nfcore(tmp_path):
+def test_public_processed_h5ad_conversion_does_not_import_scanpy(
+    tmp_path, monkeypatch
+):
     import anndata
     import pandas
     from scipy import sparse
@@ -115,6 +118,15 @@ def test_public_processed_h5ad_conversion_writes_bundle_without_nfcore(tmp_path)
     }
     source_json = tmp_path / "GSE1.json"
     source_json.write_text(json.dumps(package), encoding="utf-8")
+
+    original_import = builtins.__import__
+
+    def reject_scanpy(name, *args, **kwargs):
+        if name == "scanpy" or name.startswith("scanpy."):
+            raise ImportError("scanpy must stay lazy for processed H5AD")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", reject_scanpy)
 
     result = JSON2H5ADConverter().convert(
         str(source_json), out=str(tmp_path / "h5ad")
