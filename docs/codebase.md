@@ -40,8 +40,9 @@ Users: CLI / Python / Docker / rootless Compose
 ```
 
 The package owns conversion policy and emitted artifacts. GEO, NCBI, ENA,
-BioStudies, OLS, nf-core, Nextflow, Docker, and ThematicAtlases envelope
-semantics are delegated boundaries. See
+BioStudies, OLS, nf-core, Nextflow, Docker, and the Atlas v2 wire contract are
+delegated boundaries. MSC implements that wire boundary locally and does not
+import its producer package. See
 [Project purpose and layout](#project-purpose-and-layout) for the module tree
 and [Runtime behavior](#runtime-behavior) for concrete dependencies.
 
@@ -57,7 +58,7 @@ and [Runtime behavior](#runtime-behavior) for concrete dependencies.
 | Filesystem | JSON, MAGE-TAB, matrices, H5AD, manifests, references | Validate paths, protect existing output unless overwrite is explicit, and write provenance | Converter owning the artifact |
 | Nextflow/nf-core/runtime | FASTQ samplesheet, references, workflow parameters | Pin default revisions, reserve converter-owned parameters, execute and collect outputs | `NFCoreRunner`; subprocess failures become conversion failures |
 | Docker/rootless Compose | Image, socket, output tree, caches | Provide a hardened supported process boundary, not a daemon | Provisioning/helper scripts and connected daemon operator |
-| ThematicAtlases JSON | Atlas envelope and completed dataset metadata | Read the delegated envelope and emit organization-neutral sample rows | `JSONPackageSource`; MSC does not own atlas creation |
+| Atlas v2 JSON | Versioned document and harmonized dataset metadata | Validate the delegated wire format with `AtlasV2Reader` and emit organization-neutral package groups | MSC owns reading/adaptation; the producer owns atlas creation and the canonical model |
 
 The base Python path has no persistent database. Files are the durable boundary;
 in-memory dictionaries, typed MAGE-TAB models, and AnnData objects are
@@ -123,6 +124,9 @@ credentials, or tokens.
 
 - A parsed source contains at least one package group and at least one
   convertible sample; packages remain scoped to their Series.
+- JSON consumers accept native parsed MINiML or `schema_version = "2.0"` Atlas
+  documents. Atlas v1 `accessions` envelopes fail with explicit pinned-v1
+  guidance; MSC has no runtime/build dependency on ThematicAtlases.
 - CLI batch commands continue after an input failure and return `1` if any
   input fails. Most programmatic workflows propagate exceptions; H5AD group
   aggregation is the explicit exception and converts per-group exceptions
@@ -160,7 +164,7 @@ credentials, or tokens.
 | tabular converters | `JSONPackageSource` → projectors | load/group then `project_sample` | Dataset groups become ordered row maps | Collisions/invalid output fail closed by default |
 | `JSON2H5ADConverter` | planner/downloader/runner | plan, localize, or process | Per-conversion state becomes sample AnnData | Per-sample failures retained; aggregate can be partial |
 | H5AD converter | metadata projectors | `project_sample`/`project_combined` | Projection applied before each write | Collision/shape/projector error fails conversion |
-| Atlas/MINiML source | `JSON2H5ADConverter` | `JSONPackageSource.load` then group conversion | Completed Atlas accessions or ordinary packages become one conversion per dataset | Invalid source raises before aggregation; per-group conversion failures are retained |
+| Atlas/MINiML source | `JSON2H5ADConverter` | `AtlasV2Reader` → `JSONPackageSource.load` then group conversion | Harmonized v2 datasets or ordinary packages become one conversion per dataset | Invalid versions/shapes raise before aggregation; non-harmonized states warn; per-group conversion failures are retained |
 | `NFCoreRunner` | Nextflow/nf-core | subprocess/system call | Samplesheet + reference + params produce pipeline results | Exit/output failure becomes a recorded pipeline failure |
 
 The orchestrating converter owns transient conversion state and output
@@ -177,8 +181,9 @@ The supported public entrypoints are:
 - seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
   `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2csv`;
 <a id="interface-python"></a>
-- direct Python converter classes and the eleven formal exports from
-  `meta_standards_converter.converters`;
+- direct Python converter classes, the eleven formal exports from
+  `meta_standards_converter.converters`, and the four-name
+  `meta_standards_converter.atlas_v2` facade;
 <a id="interface-docker"></a>
 - a Docker image that accepts any installed console command;
 <a id="interface-rootless-compose"></a>
@@ -191,6 +196,12 @@ database service, or plugin discovery mechanism is exposed.
 
 <a id="orchestrators-and-core-types"></a>
 ## Orchestrators and core types
+
+<a id="orchestrator-atlas-v2-reader"></a>
+- `AtlasV2Reader` owns version detection, structural/cross-reference/summary
+  validation, harmonized-dataset selection, skipped-state diagnostics, and
+  adaptation to locally owned immutable reader results. `JSONPackageSource`
+  owns the subsequent MINiML package grouping/deduplication contract.
 
 <a id="orchestrator-metadata-converters"></a>
 - `geo2ae`, `geo2json`, `json2ae`, and `ae2json` coordinate metadata-only
@@ -221,11 +232,36 @@ failure behavior are detailed in
 ## Public API reference
 
 The formal support boundary is the eleven names in
-`meta_standards_converter.converters.__all__`. CLI converter classes are also
+`meta_standards_converter.converters.__all__` plus the four names in
+`meta_standards_converter.atlas_v2.__all__`. CLI converter classes are also
 supported through their registered commands. Other non-underscored
 module-level symbols are inventoried later because Python makes them
 importable, but the repository contains no export declaration or compatibility
 statement for them; treat those as **evidence-gap**, not stable API.
+
+<a id="atlas-v2-reader"></a>
+### Atlas v2 reader facade
+
+- `AtlasV2Reader.load(path) -> AtlasV2ReadResult` reads UTF-8 JSON;
+  `from_mapping(value) -> AtlasV2ReadResult` accepts an already decoded object.
+- `AtlasV2ReadResult.datasets` contains immutable `AtlasV2Dataset` records for
+  datasets whose status is `harmonized`; each record carries `dataset_id`,
+  `source_repository`, `source_ordinal`, and copied MINiML-compatible metadata.
+  `warnings` describes every skipped state and its document diagnostics.
+- `AtlasV2Error` is the fail-closed `ValueError` subclass for unsupported
+  versions, legacy v1 envelopes, malformed collections, duplicate IDs, broken
+  publication references, invalid dataset metadata, and inconsistent summary
+  counts.
+- `SCHEMA_VERSION` is currently `"2.0"`. The producer-owned golden fixture is
+  copied verbatim to `tests/fixtures/contracts/atlas-document-v2.json`; tests
+  consume it without importing ThematicAtlases.
+- Qualified production symbols are
+  `meta_standards_converter.atlas_v2.reader.AtlasV2Dataset`,
+  `meta_standards_converter.atlas_v2.reader.AtlasV2Error`,
+  `meta_standards_converter.atlas_v2.reader.AtlasV2ReadResult`, and
+  `meta_standards_converter.atlas_v2.reader.AtlasV2Reader`.
+- Side effects are limited to reading the supplied path. The reader performs no
+  network, subprocess, database, or output writes.
 
 <a id="api-anndata-metadata-projection"></a>
 ### `AnnDataMetadataProjection`
@@ -275,7 +311,7 @@ statement for them; treat those as **evidence-gap**, not stable API.
 ### `JSON2CSVConverter`
 
 - **Signature:** `JSON2CSVConverter(metadata_projectors=None, package_source=None)`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
-- **Inputs:** parsed MINiML JSON or a ThematicAtlases envelope and a CSV destination.
+- **Inputs:** parsed MINiML JSON or a canonical Atlas v2 document and a CSV destination.
 - **Outputs:** comma-delimited file and result metadata.
 - **Failures:** source, projector, collision, fail-closed diagnostic, and protected-output errors propagate.
 - **Side effects:** creates the destination parent and writes CSV.
@@ -286,7 +322,7 @@ statement for them; treat those as **evidence-gap**, not stable API.
 ### `JSON2TSVConverter`
 
 - **Signature:** `JSON2TSVConverter(metadata_projectors=None, package_source=None)`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
-- **Inputs:** parsed MINiML JSON or a ThematicAtlases envelope and a TSV destination.
+- **Inputs:** parsed MINiML JSON or a canonical Atlas v2 document and a TSV destination.
 - **Outputs:** tab-delimited file and result metadata.
 - **Failures:** the same validation and output failures as `JSON2CSVConverter`.
 - **Side effects:** creates the destination parent and writes TSV.
@@ -489,20 +525,21 @@ Pseudocode: `packages = parse(fetch(gse)); [enrich packages]; [write]; return`.
 **Evidence:** [`converters/geo2json.py`](../src/meta_standards_converter/converters/geo2json.py) and [`cli/geo2json.py`](../src/meta_standards_converter/cli/geo2json.py).
 
 <a id="workflow-json2ae"></a>
-### `json2ae`: MINiML/Atlas JSON to MAGE-TAB
+### `json2ae`: MINiML/Atlas v2 JSON to MAGE-TAB
 
 ```text
-path -> JSONPackageSource -> no groups/non-object/no accession -> exception
-                         \-> incomplete/error record -> warning + skip
+path -> AtlasV2Reader/JSONPackageSource -> invalid/version/v1 -> exception
+                                      \-> non-harmonized dataset -> warning + skip
      -> [enrich?] -> construct each package --failure--> exception
      -> [out?] IDF/SDRF files / else in-memory MAGE-TAB list
 ```
 
 1. `JSONPackageSource` accepts one parsed MINiML object, a non-empty package
-   list, or a completed ThematicAtlases envelope.
-2. Atlas loading retains completed records with object-valued
-   `accession_metadata`; incomplete and failed records emit warnings and are
-   skipped. No remaining groups raises `ValueError`.
+   list, or a canonical Atlas v2 document.
+2. `AtlasV2Reader` validates version, IDs, references and summary; it retains
+   `harmonized` datasets and emits warnings for other states and their
+   diagnostics. V1 envelopes are rejected. No remaining groups raises
+   `ValueError`.
 3. Every retained package must be an object with a usable study accession,
    and all packages are validated before collaborator calls.
 4. Optional enrichment precedes `AEConstructor.miniml2magetab`.
@@ -533,11 +570,12 @@ Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved
 **Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/ae_handlers/ae_webfetcher.py), and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
 
 <a id="workflow-json2h5ad"></a>
-### `json2h5ad`: MINiML/Atlas JSON to H5AD
+### `json2h5ad`: MINiML/Atlas v2 JSON to H5AD
 
 The source may be ordinary parsed MINiML JSON (one object or list) or a
-completed ThematicAtlases envelope. `JSONPackageSource` groups packages by
-dataset and skips incomplete Atlas accessions with warnings.
+canonical Atlas v2 document. `AtlasV2Reader` validates and selects harmonized
+datasets; `JSONPackageSource` adapts each selected dataset to one package group
+and carries skipped-state warnings.
 
 ```text
 path -> missing/invalid/no groups --------------------------> exception
@@ -585,7 +623,7 @@ source -> load/group --failure--> exception
        -> write TSV ---------------------------------------> result
 ```
 
-1. `JSONPackageSource.load` accepts MINiML or completed Atlas data.
+1. `JSONPackageSource.load` accepts native MINiML or canonical Atlas v2 data.
 2. The converter builds base metadata and invokes every projector per sample.
 3. Preferred columns precede sorted extras; diagnostics are deduplicated.
 4. Validation is fail-closed unless `allow_invalid=True`.
@@ -657,7 +695,9 @@ src/meta_standards_converter/
 │   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
 │   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 │   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
-│   └── json_source.py            # MINiML and ThematicAtlases JSON grouping
+│   └── json_source.py            # MINiML and Atlas v2 package grouping
+├── atlas_v2/
+│   └── reader.py                 # standalone v2 validation and adaptation
 ├── geo_handlers/
 │   ├── geo_webfetcher.py         # GEO MINiML URL building and download
 │   └── geo_parser.py             # MINiML XML to JSON-ready per-Series packages
@@ -730,7 +770,7 @@ tests/GSE328265_family.xml
 - `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
-- `json2tsv` and `json2csv` accept MINiML or ThematicAtlases JSON, emit the neutral MSC sample projection by default, and accept replacement tabular projectors through the Python API.
+- `json2tsv` and `json2csv` accept MINiML or canonical Atlas v2 JSON, emit the neutral MSC sample projection by default, and accept replacement tabular projectors through the Python API.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
@@ -908,7 +948,7 @@ The shared core makes downstream processing reusable; it does not imply field-fo
 
 ```text
 json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, ...)
-  -> load ordinary parsed MINiML JSON or a completed Atlas envelope
+  -> load ordinary parsed MINiML JSON or validate a canonical Atlas v2 document
   -> group packages by dataset; fail if no convertible groups
   -> one group: convert directly
   -> multiple groups: convert each below out/{dataset_id}, recording group exceptions
@@ -949,10 +989,11 @@ When `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER` is truthy and the Docker profile i
 
 Combination preserves successful per-sample outputs when expression modalities, organisms, declared reference builds, or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
 
-`JSONPackageSource` also recognizes a ThematicAtlases envelope. It retains only
-accessions whose ontology harmonization status is `completed`, groups packages
-by study accession, deduplicates identical samples, and rejects conflicting
-duplicates. `JSON2H5ADConverter.convert_source()` runs every group separately;
+`JSONPackageSource` delegates canonical documents to `AtlasV2Reader`. The
+reader retains only `harmonized` datasets, preserves canonical dataset IDs,
+and reports other states with diagnostics; v1 envelopes are rejected.
+Native MINiML grouping still deduplicates identical samples and rejects
+conflicting duplicates. `JSON2H5ADConverter.convert_source()` runs every group separately;
 multi-study output uses one child directory per study and returns
 `BatchConversionResult`. The existing `convert()` contract remains a
 `ConversionResult` for one study and returns the batch result only for a
@@ -969,7 +1010,7 @@ gzip-compressed genes trios.
 
 ```text
 JSON2TSVConverter/JSON2CSVConverter.convert_source(source, destination)
-  -> JSONPackageSource loads MINiML or completed Atlas accession metadata
+  -> AtlasV2Reader/JSONPackageSource loads MINiML or harmonized v2 metadata
   -> group packages by study and visit every sample in source order
   -> build TabularMetadataContext with normalized MINiML sample metadata
   -> invoke ordered TabularMetadataProjector objects
@@ -1343,7 +1384,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
 - `geo2ae` and `json2ae` add mutually exclusive `--platform-handler` and `--list-platform-handlers`; list mode runs without positional inputs or converter construction.
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
-- `json2ae` accepts one or more parsed MINiML or completed ThematicAtlases JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
+- `json2ae` accepts one or more parsed MINiML or canonical Atlas v2 JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--overwrite`, and `--allow-invalid`.
 - `json2tsv` and `json2csv` accept parsed MINiML or Atlas JSON, write one table per input under `--out`, and expose `--allow-invalid` and `--overwrite`.
@@ -1391,8 +1432,8 @@ This section lists public and semi-public callables used by tests or by package 
 `class json2ae(JSONHandler)`
 
 - `__init__(enricher=None, ae_constructor=None, package_source=None)` accepts injectable enrichment, MAGE-TAB construction, and JSON package-source collaborators.
-- `convert(json_path, out=None, enrich=True, platform_handler=None) -> list[list]` accepts the package form written by `geo2json`, one package object, or a completed ThematicAtlases envelope.
-- Atlas loading retains completed object-valued metadata, logs shared-loader warnings for skipped records, and raises `ValueError` when no convertible groups remain.
+- `convert(json_path, out=None, enrich=True, platform_handler=None) -> list[list]` accepts the package form written by `geo2json`, one package object, or a canonical Atlas v2 document.
+- Atlas loading retains harmonized dataset metadata, logs shared-reader warnings for skipped states, rejects v1 envelopes, and raises `ValueError` when no convertible groups remain.
 - Validates the entire top-level shape, package types, and study accessions before invoking collaborators. Non-GEO accessions are accepted; `GSE...` values retain numeric validation.
 - Enriches packages by default; `enrich=False` preserves the supplied metadata and avoids enrichment calls.
 - Passes a non-`None` `platform_handler` through to `AEConstructor.miniml2magetab()`.
@@ -1410,7 +1451,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Accepts injectable `SourcePlanner`, `NFCoreRunner`, `AssetDownloader`, and
   ordered `AnnDataMetadataProjector` collaborators.
 - `convert(..., allow_invalid=False) -> ConversionResult | BatchConversionResult` accepts ordinary
-  parsed MINiML JSON or a completed ThematicAtlases envelope. It returns the
+  parsed MINiML JSON or a canonical Atlas v2 document. It returns the
   single-group result directly and aggregates multiple groups.
 - `convert_source(json_path, out=None, allow_invalid=False, **options) -> BatchConversionResult`
   always aggregates groups. Per-group exceptions populate `failures` and do
@@ -1464,7 +1505,7 @@ output is unchanged.
 
 - Accept injectable ordered `TabularMetadataProjector` collaborators.
 - Use `MSCMetadataProjector` only when no explicit projector list is supplied.
-- Accept both MINiML package JSON and full ThematicAtlases JSON through
+- Accept both MINiML package JSON and canonical Atlas v2 JSON through
   `JSONPackageSource`.
 - Return `TabularConversionResult`; projection errors fail closed unless
   `allow_invalid=True`.
@@ -2049,7 +2090,8 @@ Important test coverage:
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, and output writing.
 - `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, H5AD normalization, real dictionary reference scoping, case-insensitive metadata de-duplication, artifact-relative provenance, `msc_*` MINiML enrichment and publication filtering, ontology-aware protocol summaries, count/TPM matrices, sparse combination, canonical/legacy study splitting, partial results, and raw-output reintegration.
-- `tests/test_json_source.py`: MINiML and Atlas envelope grouping, completed-status filtering, source diagnostics, and duplicate conflict handling.
+- `tests/test_atlas_v2_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
+- `tests/test_json_source.py`: native MINiML and Atlas v2 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
 - `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, replacement projectors, collisions, and validation behavior.
 - `tests/test_metadata_projector.py`: generic sample/combined projector
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,

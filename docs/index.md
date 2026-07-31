@@ -30,7 +30,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: System context and boundaries
   anchor: system-context-and-boundaries
   purpose: Maps actors, external services, trust/process boundaries, and failure ownership.
-  keywords: boundary, GEO FTP, NCBI, ENA, PubMed, OLS, BioStudies, filesystem, Nextflow, Docker, ThematicAtlases
+  keywords: boundary, GEO FTP, NCBI, ENA, PubMed, OLS, BioStudies, filesystem, Nextflow, Docker, Atlas v2
   link: [Open section](codebase.md#system-context-and-boundaries)
 
 - id: architectural-decisions
@@ -75,6 +75,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: public API, __all__, signature, constructor, property, method, protocol, failure, side effect
   link: [Open section](codebase.md#public-api-reference)
 
+- id: atlas-v2-reader
+  title: Atlas v2 reader
+  anchor: atlas-v2-reader
+  purpose: Defines the standalone versioned wire reader, dataset adaptation, warnings, v1 rejection, and dependency boundary.
+  keywords: AtlasV2Reader, AtlasV2Error, schema_version, golden fixture, harmonized, standalone, no dependency
+  link: [Open section](codebase.md#atlas-v2-reader)
+
 - id: principal-workflows
   title: Principal workflows
   anchor: principal-workflows
@@ -108,8 +115,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: workflow-json2ae
   title: Parsed JSON to MAGE-TAB
   anchor: workflow-json2ae
-  purpose: Traces MINiML or completed Atlas loading, filtering, validation, enrichment, round-trip restoration, construction, and writing.
-  keywords: json2ae, JSON, ThematicAtlases, completed, warning, MAGE-TAB, round trip, overlay, IDF, SDRF
+  purpose: Traces native MINiML or canonical Atlas v2 loading, filtering, validation, enrichment, round-trip restoration, construction, and writing.
+  keywords: json2ae, JSON, Atlas v2, harmonized, warning, MAGE-TAB, round trip, overlay, IDF, SDRF
   link: [Open section](codebase.md#workflow-json2ae)
 
 - id: workflow-ae2json

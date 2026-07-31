@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Command line interface for parsed or Atlas JSON to CSV conversion."""
+"""Command line interface for parsed MINiML or Atlas v2 JSON to CSV."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Convert parsed MINiML or Atlas JSON files to CSV."
+        description="Convert parsed MINiML or canonical Atlas v2 JSON files to CSV."
     )
     parser.add_argument("json_path", nargs="+")
     parser.add_argument("--out", default=".")

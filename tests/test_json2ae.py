@@ -41,6 +41,45 @@ def package(accession="GSE1"):
     }
 
 
+def atlas_v2(datasets):
+    return {
+        "schema_version": "2.0",
+        "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
+        "run": {
+            "run_id": "run-test",
+            "created_at": "2026-07-31T00:00:00Z",
+            "config": {"queries": [], "metadata_repositories": [], "options": {}},
+            "status": "partial",
+        },
+        "datasets": datasets,
+        "publications": [],
+        "summary": {
+            "dataset_count": len(datasets),
+            "publication_count": 0,
+            "completed_dataset_count": sum(
+                item["status"] == "harmonized" for item in datasets
+            ),
+            "failed_dataset_count": sum(
+                item["status"] == "failed" for item in datasets
+            ),
+        },
+    }
+
+
+def atlas_dataset(dataset_id, status, metadata, diagnostics=None):
+    return {
+        "dataset_id": dataset_id,
+        "source_repository": "geo",
+        "source_ordinal": 0,
+        "status": status,
+        "metadata": metadata,
+        "publication_ids": [],
+        "review": None,
+        "harmonization": None,
+        "diagnostics": diagnostics or [],
+    }
+
+
 class TestJSON2AEConverter(unittest.TestCase):
     def write_json(self, directory, payload, name="input.json"):
         path = os.path.join(directory, name)
@@ -163,32 +202,30 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         self.assertEqual(["magetab"], result)
 
-    def test_convert_accepts_completed_atlas_records_and_warns_for_skipped_records(self):
+    def test_convert_accepts_harmonized_v2_datasets_and_warns_for_skipped_states(self):
         constructor = MagicMock()
         constructor.miniml2magetab.side_effect = ["first", "second"]
         first = package("GSE1")
         second = package("E-MTAB-2")
-        skipped = package("GSE3")
-        payload = {
-            "accessions": [
-                {
-                    "datalink_id": "GSE1",
-                    "ontology_harmonization_run_status": "completed",
-                    "accession_metadata": [first],
-                },
-                {
-                    "datalink_id": "E-MTAB-2",
-                    "ontology_harmonization_run_status": "completed",
-                    "accession_metadata": second,
-                },
-                {
-                    "datalink_id": "GSE3",
-                    "ontology_harmonization_run_status": "error",
-                    "ontology_harmonization_error": "lookup failed",
-                    "accession_metadata": [skipped],
-                },
+        payload = atlas_v2(
+            [
+                atlas_dataset("GSE1", "harmonized", first),
+                atlas_dataset("E-MTAB-2", "harmonized", second),
+                atlas_dataset(
+                    "GSE3",
+                    "failed",
+                    {},
+                    diagnostics=[
+                        {
+                            "code": "harmonization_failed",
+                            "message": "lookup failed",
+                            "severity": "error",
+                            "path": None,
+                        }
+                    ],
+                ),
             ]
-        }
+        )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
@@ -207,20 +244,13 @@ class TestJSON2AEConverter(unittest.TestCase):
             constructor.miniml2magetab.call_args_list,
         )
         self.assertIn(
-            "GSE3: harmonization error: lookup failed",
+            "GSE3: dataset status failed; no convertible metadata; "
+            "harmonization_failed: lookup failed",
             "\n".join(logs.output),
         )
 
-    def test_convert_rejects_atlas_without_completed_metadata(self):
-        payload = {
-            "accessions": [
-                {
-                    "datalink_id": "GSE1",
-                    "ontology_harmonization_run_status": "not_run",
-                    "accession_metadata": None,
-                }
-            ]
-        }
+    def test_convert_rejects_atlas_without_harmonized_metadata(self):
+        payload = atlas_v2([atlas_dataset("GSE1", "collected", {})])
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)

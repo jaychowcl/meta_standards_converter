@@ -12,11 +12,11 @@ The seven primary workflows are:
 
 - `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF.
 - `geo2json`: GEO Series accession to parsed MINiML-compatible JSON.
-- `json2ae`: parsed MINiML or completed ThematicAtlases JSON to MAGE-TAB IDF and SDRF.
+- `json2ae`: parsed MINiML or canonical Atlas v2 JSON to MAGE-TAB IDF and SDRF.
 - `ae2json`: local, HTTP(S), or BioStudies MAGE-TAB to parsed JSON.
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
-- `json2tsv`: parsed MINiML or ThematicAtlases JSON to a sample metadata TSV.
-- `json2csv`: parsed MINiML or ThematicAtlases JSON to a sample metadata CSV.
+- `json2tsv`: parsed MINiML or canonical Atlas v2 JSON to a sample metadata TSV.
+- `json2csv`: parsed MINiML or canonical Atlas v2 JSON to a sample metadata CSV.
 
 ## Installation
 
@@ -116,11 +116,11 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | --- | --- | --- |
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt`; Python returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
-| `json2ae` | Parsed MINiML object/list or completed ThematicAtlases envelope | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
+| `json2ae` | Parsed MINiML object/list or canonical Atlas v2 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
 | `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns a one-package list with a `mage_tab` extension |
-| `json2h5ad` | Parsed MINiML object/list or completed ThematicAtlases envelope plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
-| `json2tsv` | Parsed MINiML package JSON or a ThematicAtlases JSON envelope | One normalized sample metadata TSV per input |
-| `json2csv` | Parsed MINiML package JSON or a ThematicAtlases JSON envelope | One normalized sample metadata CSV per input |
+| `json2h5ad` | Parsed MINiML object/list or canonical Atlas v2 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
+| `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v2 document | One normalized sample metadata TSV per input |
+| `json2csv` | Parsed MINiML package JSON or a canonical Atlas v2 document | One normalized sample metadata CSV per input |
 
 GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds `mage_tab.model`, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, normalized `msc_*` observation metadata, flattened MINiML metadata in `uns["msc_miniml"]`, and conversion provenance.
 
@@ -234,7 +234,7 @@ geo2json GSE234602 --no-enrich --keep-empty --out output
 
 #### `json2ae`
 
-Read parsed MINiML or completed ThematicAtlases JSON and write MAGE-TAB
+Read parsed MINiML or canonical Atlas v2 JSON and write MAGE-TAB
 IDF/SDRF files.
 
 ```bash
@@ -247,7 +247,7 @@ json2ae --list-platform-handlers
 
 | Argument | Behavior |
 | --- | --- |
-| `json_path` | One or more paths containing a parsed MINiML object/list or completed ThematicAtlases envelope. |
+| `json_path` | One or more paths containing a parsed MINiML object/list or canonical Atlas v2 document. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--no-enrich` | Convert supplied metadata without PubMed/SRA enrichment; enrichment is enabled by default. |
 | `--out` `OUT` | Output directory; default `.`. |
@@ -258,9 +258,10 @@ json2ae --list-platform-handlers
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
 `json2ae` validates all retained packages before converting any of them. For
-an Atlas envelope it converts completed records with object-valued
-`accession_metadata`, warns about skipped incomplete or failed records, and
-fails when no convertible package groups remain. If the input came from
+an Atlas v2 document it converts datasets whose status is `harmonized`, warns
+about other dataset states and their diagnostics, and fails when no convertible
+package groups remain. Legacy v1 `accessions` envelopes fail with cutover
+guidance instead of being inferred. If the input came from
 `ae2json`, an unchanged single-SDRF package can reproduce its original tables
 exactly; edits to the typed `mage_tab.model` or mapped core fields regenerate
 the relevant MAGE-TAB content. During regeneration, mapped core content is
@@ -312,7 +313,7 @@ json2h5ad output/GSE234602.json \
 
 | Argument | Behavior |
 | --- | --- |
-| `json_path` | One or more paths containing a non-empty package list. |
+| `json_path` | One or more paths containing parsed MINiML packages or a canonical Atlas v2 document. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--out` `OUT` | Output directory; default `.`. |
 | `--asset-manifest` `ASSET_MANIFEST` | CSV/TSV mapping with required `scope_id` and `path` columns and optional kind, role, read/lane, matrix, checksum, and orientation metadata. |
@@ -350,8 +351,8 @@ Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joine
 
 Write one tab-separated row per sample using the neutral dotted `msc.*`
 metadata contract. The command accepts ordinary MINiML package JSON or a
-complete ThematicAtlases JSON envelope and retains only completed harmonized
-accession metadata.
+canonical Atlas v2 document and retains only datasets whose status is
+`harmonized`.
 
 ```bash
 json2tsv atlas.json --out output
@@ -359,7 +360,7 @@ json2tsv atlas.json --out output
 
 | Argument | Behavior |
 | --- | --- |
-| `json_path` | One or more parsed MINiML or ThematicAtlases JSON paths. |
+| `json_path` | One or more parsed MINiML or canonical Atlas v2 JSON paths. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--out` `OUT` | Output directory; default `.`. |
 | `--allow-invalid` | Write projected rows despite projector-reported errors and return a partial result; default behavior raises before writing. |
@@ -390,6 +391,22 @@ Programmatic callers can replace the default MSC columns by passing explicit
 ### Python API
 
 The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use.
+
+Read the canonical Atlas v2 wire format without installing its producer:
+
+```python
+from meta_standards_converter.atlas_v2 import AtlasV2Reader
+
+result = AtlasV2Reader().load("atlas.json")
+for dataset in result.datasets:
+    print(dataset.dataset_id, dataset.metadata)
+```
+
+The reader validates the v2 identity, collections, cross-references and summary,
+returns only harmonized dataset metadata, and reports skipped states through
+`result.warnings`. MSC intentionally has no runtime or build dependency on
+ThematicAtlases; compatibility is verified with the producer-owned golden wire
+fixture copied into `tests/fixtures/contracts/`.
 
 Convert GEO to MAGE-TAB:
 
@@ -437,7 +454,7 @@ magetabs = json2ae().convert(
 ```
 
 `json2ae.convert(json_path, out=None, enrich=True, platform_handler=None)`
-accepts a parsed MINiML object/list or completed ThematicAtlases envelope and
+accepts a parsed MINiML object/list or canonical Atlas v2 document and
 returns ordered MAGE-TAB payloads. `json2ae(..., package_source=...)` permits
 injection of a compatible source loader. Forcing a handler regenerates
 IDF/SDRF content instead of reusing unchanged round-trip tables or a
@@ -490,7 +507,7 @@ result = json2h5ad().convert(
 ```
 
 `JSON2H5ADConverter.convert()` accepts ordinary parsed MINiML JSON or a
-completed ThematicAtlases envelope. It returns `ConversionResult` for exactly
+canonical Atlas v2 document. It returns `ConversionResult` for exactly
 one dataset group and `BatchConversionResult` for multiple groups.
 `convert_source(json_path, out=None, **options)` always returns
 `BatchConversionResult`. For multiple groups, each dataset is converted below

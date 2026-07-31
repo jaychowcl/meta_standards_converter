@@ -42,6 +42,41 @@ def package(study: str = "GSE1", sample: str = "GSM1") -> dict:
     }
 
 
+def atlas_v2_dataset(dataset_id: str, metadata: dict) -> dict:
+    return {
+        "dataset_id": dataset_id,
+        "source_repository": "geo",
+        "source_ordinal": 0,
+        "status": "harmonized",
+        "metadata": metadata,
+        "publication_ids": [],
+        "review": None,
+        "harmonization": None,
+        "diagnostics": [],
+    }
+
+
+def atlas_v2_payload(datasets: list[dict]) -> dict:
+    return {
+        "schema_version": "2.0",
+        "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
+        "run": {
+            "run_id": "run-test",
+            "created_at": "2026-07-31T00:00:00Z",
+            "config": {"queries": [], "metadata_repositories": [], "options": {}},
+            "status": "complete",
+        },
+        "datasets": datasets,
+        "publications": [],
+        "summary": {
+            "dataset_count": len(datasets),
+            "publication_count": 0,
+            "completed_dataset_count": len(datasets),
+            "failed_dataset_count": 0,
+        },
+    }
+
+
 def read_rows(path, delimiter):
     with path.open(encoding="utf-8", newline="") as stream:
         reader = csv.DictReader(stream, delimiter=delimiter)
@@ -74,20 +109,12 @@ def test_atlas_json_is_aggregated_into_one_csv(tmp_path):
     output = tmp_path / "output.csv"
     source.write_text(
         json.dumps(
-            {
-                "accessions": [
-                    {
-                        "datalink_id": "GSE1",
-                        "ontology_harmonization_run_status": "completed",
-                        "accession_metadata": [package("GSE1", "GSM1")],
-                    },
-                    {
-                        "datalink_id": "GSE2",
-                        "ontology_harmonization_run_status": "completed",
-                        "accession_metadata": [package("GSE2", "GSM2")],
-                    },
+            atlas_v2_payload(
+                [
+                    atlas_v2_dataset("GSE1", package("GSE1", "GSM1")),
+                    atlas_v2_dataset("GSE2", package("GSE2", "GSM2")),
                 ]
-            }
+            )
         ),
         encoding="utf-8",
     )

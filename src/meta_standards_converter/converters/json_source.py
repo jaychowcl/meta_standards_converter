@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Load parsed MINiML or ThematicAtlases JSON as study-scoped packages."""
+"""Load parsed MINiML or canonical Atlas v2 JSON as study-scoped packages."""
 
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
+
+from meta_standards_converter.atlas_v2 import AtlasV2Reader
 
 
 @dataclass(frozen=True)
@@ -35,15 +37,18 @@ class SourceLoadResult:
 
 
 class JSONPackageSource:
-    """Recognize MINiML payloads and completed ThematicAtlases accessions."""
+    """Recognize native MINiML payloads and canonical Atlas v2 documents."""
+
+    def __init__(self, atlas_reader: AtlasV2Reader | None = None) -> None:
+        self._atlas_reader = atlas_reader or AtlasV2Reader()
 
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
         payload = json.loads(source.read_text(encoding="utf-8"))
-        if isinstance(payload, Mapping) and isinstance(
-            payload.get("accessions"), list
+        if isinstance(payload, Mapping) and (
+            "schema_version" in payload or "accessions" in payload
         ):
-            return self._validate_result(self._atlas(payload))
+            return self._validate_result(self._atlas_v2(payload))
         packages = payload if isinstance(payload, list) else [payload]
         if not packages:
             raise ValueError("JSON source contains no convertible package groups.")
@@ -74,50 +79,17 @@ class JSONPackageSource:
             return []
         return value if isinstance(value, list) else [value]
 
-    def _atlas(self, payload: Mapping[str, Any]) -> SourceLoadResult:
-        packages_by_source: list[tuple[Mapping[str, Any], str]] = []
-        warnings: list[str] = []
-        for record in payload.get("accessions", []):
-            if not isinstance(record, Mapping):
-                continue
-            accession = str(record.get("datalink_id") or "unknown accession")
-            status = str(
-                record.get("ontology_harmonization_run_status") or "unknown"
-            )
-            metadata = record.get("accession_metadata")
-            if status != "completed" or not isinstance(metadata, (dict, list)):
-                error = record.get("ontology_harmonization_error")
-                if status == "error" and error:
-                    warnings.append(f"{accession}: harmonization error: {error}")
-                else:
-                    warnings.append(
-                        f"{accession}: harmonization status {status}; "
-                        "no convertible metadata"
-                    )
-                continue
-            values = metadata if isinstance(metadata, list) else [metadata]
-            for package in values:
-                if not isinstance(package, Mapping):
-                    raise ValueError(
-                        f"{accession}: accession_metadata must contain objects"
-                    )
-                packages_by_source.append((package, accession))
-
-        grouped: dict[str, list[Mapping[str, Any]]] = {}
-        sources: dict[str, str] = {}
-        for package, accession in packages_by_source:
-            dataset_id = self._dataset_id(package) or accession
-            grouped.setdefault(dataset_id, []).append(package)
-            sources.setdefault(dataset_id, accession)
+    def _atlas_v2(self, payload: Mapping[str, Any]) -> SourceLoadResult:
+        result = self._atlas_reader.from_mapping(payload)
         groups = tuple(
             DatasetPackageGroup(
-                dataset_id,
-                self._dedupe_samples(values),
-                source_accession=sources[dataset_id],
+                dataset.dataset_id,
+                self._dedupe_samples([dataset.metadata]),
+                source_accession=dataset.dataset_id,
             )
-            for dataset_id, values in grouped.items()
+            for dataset in result.datasets
         )
-        return SourceLoadResult(groups, tuple(warnings))
+        return SourceLoadResult(groups, result.warnings)
 
     def _group_packages(
         self, packages: list[Mapping[str, Any]], fallback: str

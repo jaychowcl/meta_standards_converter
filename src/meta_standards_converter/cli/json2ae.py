@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Convert completed ThematicAtlases JSON or parsed MINiML JSON "
+            "Convert canonical Atlas v2 JSON or parsed MINiML JSON "
             "to ArrayExpress MAGE-TAB files."
         )
     )
@@ -34,7 +34,7 @@ def _parser() -> argparse.ArgumentParser:
         "json_path",
         nargs="*",
         help=(
-            "Parsed MINiML or completed ThematicAtlases JSON file(s), "
+            "Parsed MINiML or canonical Atlas v2 JSON file(s), "
             "for example GSE234602.json."
         ),
     )

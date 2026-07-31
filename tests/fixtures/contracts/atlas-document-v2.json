@@ -1,0 +1,96 @@
+{
+  "atlas": {
+    "atlas_id": "atlas-lung-fibrosis",
+    "theme": "lung fibrosis",
+    "title": "Lung fibrosis atlas"
+  },
+  "datasets": [
+    {
+      "dataset_id": "GSE100",
+      "diagnostics": [],
+      "harmonization": {
+        "degraded_stages": [],
+        "targets": []
+      },
+      "metadata": {
+        "sample": [
+          {
+            "characteristics": [
+              {
+                "tag": "organism",
+                "value": "Homo sapiens"
+              }
+            ],
+            "iid": "GSM100"
+          }
+        ],
+        "series": {
+          "accession": [
+            {
+              "value": "GSE100"
+            }
+          ],
+          "iid": "GSE100"
+        }
+      },
+      "publication_ids": [
+        "PMID:100"
+      ],
+      "review": {
+        "criteria": [],
+        "evidence": [],
+        "judgement": "relevant"
+      },
+      "source_ordinal": 0,
+      "source_repository": "geo",
+      "status": "harmonized"
+    },
+    {
+      "dataset_id": "GSE200",
+      "diagnostics": [
+        {
+          "code": "collection_failed",
+          "message": "fixture collection failure",
+          "path": null,
+          "severity": "error"
+        }
+      ],
+      "harmonization": null,
+      "metadata": {},
+      "publication_ids": [],
+      "review": null,
+      "source_ordinal": 1,
+      "source_repository": "geo",
+      "status": "failed"
+    }
+  ],
+  "publications": [
+    {
+      "abstract": "A fixture publication.",
+      "publication_id": "PMID:100",
+      "review": null,
+      "title": "Fixture study"
+    }
+  ],
+  "run": {
+    "config": {
+      "metadata_repositories": [
+        "geo"
+      ],
+      "options": {},
+      "queries": [
+        "lung fibrosis"
+      ]
+    },
+    "created_at": "2026-07-31T13:39:54Z",
+    "run_id": "01JATLASV2FIXTURE",
+    "status": "partial"
+  },
+  "schema_version": "2.0",
+  "summary": {
+    "completed_dataset_count": 1,
+    "dataset_count": 2,
+    "failed_dataset_count": 1,
+    "publication_count": 1
+  }
+}

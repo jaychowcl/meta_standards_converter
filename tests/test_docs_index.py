@@ -254,7 +254,7 @@ class DocsIndexTests(unittest.TestCase):
         ]
 
         self.assertIn("ordinary parsed MINiML JSON", h5ad)
-        self.assertIn("completed ThematicAtlases envelope", h5ad)
+        self.assertIn("canonical Atlas v2 document", h5ad)
         self.assertIn("one group", h5ad)
         self.assertIn("`ConversionResult`", h5ad)
         self.assertIn("multiple groups", h5ad)

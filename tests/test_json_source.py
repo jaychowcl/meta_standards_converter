@@ -20,6 +20,49 @@ def package(study: str, sample: str) -> dict:
     }
 
 
+def dataset(
+    dataset_id: str,
+    status: str,
+    metadata: dict,
+    *,
+    diagnostics: list[dict] | None = None,
+) -> dict:
+    return {
+        "dataset_id": dataset_id,
+        "source_repository": "geo",
+        "source_ordinal": 0,
+        "status": status,
+        "metadata": metadata,
+        "publication_ids": [],
+        "review": None,
+        "harmonization": None,
+        "diagnostics": diagnostics or [],
+    }
+
+
+def atlas_v2(datasets: list[dict]) -> dict:
+    completed = sum(item["status"] == "harmonized" for item in datasets)
+    failed = sum(item["status"] == "failed" for item in datasets)
+    return {
+        "schema_version": "2.0",
+        "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
+        "run": {
+            "run_id": "run-test",
+            "created_at": "2026-07-31T00:00:00Z",
+            "config": {"queries": [], "metadata_repositories": [], "options": {}},
+            "status": "complete",
+        },
+        "datasets": datasets,
+        "publications": [],
+        "summary": {
+            "dataset_count": len(datasets),
+            "publication_count": 0,
+            "completed_dataset_count": completed,
+            "failed_dataset_count": failed,
+        },
+    }
+
+
 def test_miniml_packages_are_grouped_by_study(tmp_path):
     source = tmp_path / "miniml.json"
     source.write_text(
@@ -34,30 +77,29 @@ def test_miniml_packages_are_grouped_by_study(tmp_path):
     assert result.warnings == ()
 
 
-def test_atlas_envelope_yields_only_completed_harmonized_metadata(tmp_path):
+def test_atlas_v2_document_yields_only_harmonized_metadata(tmp_path):
     source = tmp_path / "atlas.json"
     source.write_text(
         json.dumps(
-            {
-                "accessions": [
-                    {
-                        "datalink_id": "GSE1",
-                        "ontology_harmonization_run_status": "completed",
-                        "accession_metadata": [package("GSE1", "GSM1")],
-                    },
-                    {
-                        "datalink_id": "GSE2",
-                        "ontology_harmonization_run_status": "error",
-                        "ontology_harmonization_error": "lookup failed",
-                        "accession_metadata": [package("GSE2", "GSM2")],
-                    },
-                    {
-                        "datalink_id": "GSE3",
-                        "ontology_harmonization_run_status": "not_run",
-                        "accession_metadata": None,
-                    },
+            atlas_v2(
+                [
+                    dataset("GSE1", "harmonized", package("GSE1", "GSM1")),
+                    dataset(
+                        "GSE2",
+                        "failed",
+                        package("GSE2", "GSM2"),
+                        diagnostics=[
+                            {
+                                "code": "harmonization_failed",
+                                "message": "lookup failed",
+                                "severity": "error",
+                                "path": None,
+                            }
+                        ],
+                    ),
+                    dataset("GSE3", "collected", {}),
                 ]
-            }
+            )
         ),
         encoding="utf-8",
     )
@@ -67,8 +109,9 @@ def test_atlas_envelope_yields_only_completed_harmonized_metadata(tmp_path):
     assert [group.dataset_id for group in result.groups] == ["GSE1"]
     assert result.groups[0].source_accession == "GSE1"
     assert result.warnings == (
-        "GSE2: harmonization error: lookup failed",
-        "GSE3: harmonization status not_run; no convertible metadata",
+        "GSE2: dataset status failed; no convertible metadata; "
+        "harmonization_failed: lookup failed",
+        "GSE3: dataset status collected; no convertible metadata",
     )
 
 
@@ -76,26 +119,8 @@ def test_conflicting_duplicate_samples_are_rejected(tmp_path):
     first = package("GSE1", "GSM1")
     second = package("GSE1", "GSM1")
     second["sample"][0]["title"] = "different"
-    source = tmp_path / "atlas.json"
-    source.write_text(
-        json.dumps(
-            {
-                "accessions": [
-                    {
-                        "datalink_id": "GSE1",
-                        "ontology_harmonization_run_status": "completed",
-                        "accession_metadata": [first],
-                    },
-                    {
-                        "datalink_id": "GSE1-copy",
-                        "ontology_harmonization_run_status": "completed",
-                        "accession_metadata": [second],
-                    },
-                ]
-            }
-        ),
-        encoding="utf-8",
-    )
+    source = tmp_path / "miniml.json"
+    source.write_text(json.dumps([first, second]), encoding="utf-8")
 
     try:
         JSONPackageSource().load(source)
@@ -110,16 +135,8 @@ def test_conflicting_duplicate_samples_are_rejected(tmp_path):
     "payload",
     [
         [],
-        {"accessions": []},
-        {
-            "accessions": [
-                {
-                    "datalink_id": "GSE1",
-                    "ontology_harmonization_run_status": "not_run",
-                    "accession_metadata": None,
-                }
-            ]
-        },
+        atlas_v2([]),
+        atlas_v2([dataset("GSE1", "collected", {})]),
     ],
 )
 def test_sources_without_convertible_groups_fail_closed(tmp_path, payload):
@@ -136,16 +153,15 @@ def test_sources_without_convertible_groups_fail_closed(tmp_path, payload):
     "payload",
     [
         package("GSE1", "GSM1") | {"sample": []},
-        {
-            "accessions": [
-                {
-                    "datalink_id": "GSE1",
-                    "ontology_harmonization_run_status": "completed",
-                    "accession_metadata": package("GSE1", "GSM1")
-                    | {"sample": []},
-                }
+        atlas_v2(
+            [
+                dataset(
+                    "GSE1",
+                    "harmonized",
+                    package("GSE1", "GSM1") | {"sample": []},
+                )
             ]
-        },
+        ),
     ],
 )
 def test_sources_without_convertible_samples_fail_closed(tmp_path, payload):
