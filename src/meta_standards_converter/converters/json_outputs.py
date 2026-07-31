@@ -181,9 +181,8 @@ class JSONDataOutputOrchestrator:
             )
             if isinstance(converted, BatchConversionResult):
                 results: dict[str, AnnDataMetadataExportResult] = {}
-                multiple = len(converted.conversions) > 1
                 for dataset_id, conversion in converted.conversions.items():
-                    target = destination / dataset_id if multiple else destination
+                    target = destination / dataset_id
                     results[dataset_id] = self._export_components(
                         conversion,
                         target,
