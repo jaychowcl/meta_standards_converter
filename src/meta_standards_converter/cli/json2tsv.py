@@ -33,6 +33,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--format", choices=("tsv", "csv"), default="tsv")
     parser.add_argument("--allow-invalid", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument(
+        "--use-harmonization-overrides",
+        action="store_true",
+        help="Apply an Agentic Curator harmonization override profile.",
+    )
     add_logging_arguments(parser)
     return parser
 
@@ -45,13 +50,15 @@ def main(argv=None) -> int:
     summaries = []
     for value in args.json_path:
         try:
-            result = orchestrator.export_manifest(
-                value,
+            export_options = dict(
                 outdir=args.outdir,
                 output_format=args.format,
                 allow_invalid=args.allow_invalid,
                 overwrite=args.overwrite,
             )
+            if args.use_harmonization_overrides:
+                export_options["use_harmonization_overrides"] = True
+            result = orchestrator.export_manifest(value, **export_options)
         except Exception:
             failed = True
             logger.exception("%s: TSV conversion failed", value)

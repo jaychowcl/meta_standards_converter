@@ -169,6 +169,18 @@ class MSCMetadataProjector:
                     for key, value in characteristics.items()
                 }
             )
+        harmonization = context.base_metadata.get("harmonization", ())
+        for item in harmonization if isinstance(harmonization, Sequence) else ():
+            if not isinstance(item, Mapping):
+                continue
+            prefix = f"msc.harmonization.{item['destination']}"
+            values.update({
+                f"{prefix}.value": item.get("value"),
+                f"{prefix}.id": item.get("identifier"),
+                f"{prefix}.ontology": item.get("ontology"),
+                f"{prefix}.source_field": item.get("source_field"),
+                f"{prefix}.hierarchy_depth": item.get("hierarchy_depth"),
+            })
         return TabularMetadataProjection(values=values, columns=self.COLUMNS)
 
 
@@ -198,13 +210,17 @@ class JSON2DelimitedConverter:
         *,
         allow_invalid: bool = False,
         overwrite: bool = False,
+        use_harmonization_overrides: bool = False,
     ) -> TabularConversionResult:
         loaded = self.package_source.load(source)
         records: list[dict[str, Any]] = []
         preferred: list[str] = []
         warnings = list(loaded.warnings)
         errors: list[str] = []
-        for group in loaded.groups:
+        for original_group in loaded.groups:
+            group = original_group.resolved(enabled=use_harmonization_overrides)
+            resolution = group.harmonization_resolution
+            warnings.extend(getattr(resolution, "warnings", ()))
             for package in group.packages:
                 study_accession = (
                     self._metadata_helper._study_accession([package])
@@ -224,6 +240,11 @@ class JSON2DelimitedConverter:
                         "modality": self._metadata_helper._sample_modality(
                             dict(sample)
                         ),
+                        "harmonization": [
+                            vars(item)
+                            for item in getattr(resolution, "selections", ())
+                            if item.sample_accession == sample_accession
+                        ],
                     }
                     context = TabularMetadataContext(
                         package=package,

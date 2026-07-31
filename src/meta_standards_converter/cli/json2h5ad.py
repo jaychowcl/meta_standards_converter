@@ -91,6 +91,11 @@ def _parser() -> argparse.ArgumentParser:
         default="auto",
         help="Orientation for generic delimited matrices.",
     )
+    parser.add_argument(
+        "--use-harmonization-overrides",
+        action="store_true",
+        help="Apply an Agentic Curator harmonization override profile.",
+    )
     add_logging_arguments(parser)
     return parser
 
@@ -133,6 +138,8 @@ def main(argv=None) -> int:
             ):
                 if value != default:
                     convert_options[name] = value
+            if args.use_harmonization_overrides:
+                convert_options["use_harmonization_overrides"] = True
             conversion = orchestrator.export_h5ad(
                 json_path, outdir=args.outdir, **convert_options
             )

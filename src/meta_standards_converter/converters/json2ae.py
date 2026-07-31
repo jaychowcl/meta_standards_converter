@@ -33,9 +33,13 @@ class json2ae(JSONHandler):
         out: str = None,
         enrich: bool = True,
         platform_handler: str | None = None,
+        use_harmonization_overrides: bool = False,
     ) -> list[list]:
         """Load parsed MINiML JSON and optionally write IDF/SDRF files."""
-        packages = self._load_packages(json_path=json_path)
+        packages = self._load_packages(
+            json_path=json_path,
+            use_harmonization_overrides=use_harmonization_overrides,
+        )
         logger.debug("%s: loaded %d parsed package(s)", json_path, len(packages))
 
         magetabs = []
@@ -64,7 +68,9 @@ class json2ae(JSONHandler):
         logger.info("%s: conversion produced %d MAGE-TAB package(s)", json_path, len(magetabs))
         return magetabs
 
-    def _load_packages(self, json_path: str) -> list[dict]:
+    def _load_packages(
+        self, json_path: str, *, use_harmonization_overrides: bool = False
+    ) -> list[dict]:
         try:
             loaded = self.package_source.load(json_path)
         except FileNotFoundError as error:
@@ -76,11 +82,12 @@ class json2ae(JSONHandler):
             logger.warning("%s", warning)
         if not loaded.groups:
             raise ValueError("JSON source contains no convertible package groups.")
-        packages = [
-            package
-            for group in loaded.groups
-            for package in group.packages
-        ]
+        packages = []
+        for original_group in loaded.groups:
+            group = original_group.resolved(enabled=use_harmonization_overrides)
+            for warning in getattr(group.harmonization_resolution, "warnings", ()):
+                logger.warning("%s", warning)
+            packages.extend(group.packages)
 
         for index, package in enumerate(packages, start=1):
             if not isinstance(package, dict):

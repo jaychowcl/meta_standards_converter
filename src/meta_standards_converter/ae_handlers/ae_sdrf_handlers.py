@@ -357,6 +357,11 @@ class _BaseSDRFHandler():
                 organism_values.append(organism_value)
         if organism_values:
             required_attrs["organism"].value = organism_values[0]
+            first_organism = next(
+                (item for item in self._as_list(channel.get("organism")) if isinstance(item, dict)),
+                {},
+            )
+            required_attrs["organism"].attrs = self.ontology_companions(first_organism)
             for organism_value in organism_values[1:]:
                 extra_attrs.append(SDRFAttr(label="Characteristics[organism]", value=organism_value))
 
@@ -374,6 +379,7 @@ class _BaseSDRFHandler():
             if tag.lower() == "organism part":
                 value = self.clean(characteristic.get("value"))
                 if not first_organism_part_preserved and value == organism_part_value:
+                    required_attrs["organism part"].attrs = self.ontology_companions(characteristic)
                     first_organism_part_preserved = True
                     continue
             seen_tags[tag] = seen_tags.get(tag, 0) + 1
@@ -383,9 +389,22 @@ class _BaseSDRFHandler():
             value = self.clean(characteristic.get("value"))
             if lower_tag in required_attrs and required_attrs[lower_tag].value is None:
                 required_attrs[lower_tag].value = value
+                required_attrs[lower_tag].attrs = self.ontology_companions(characteristic)
                 continue
-            extra_attrs.append(SDRFAttr(label=f"Characteristics[{tag}]", value=value))
+            extra_attrs.append(SDRFAttr(
+                label=f"Characteristics[{tag}]",
+                value=value,
+                attrs=self.ontology_companions(characteristic),
+            ))
         return list(required_attrs.values()) + extra_attrs
+
+    def ontology_companions(self, item: dict) -> list[SDRFAttr]:
+        companions = []
+        if item.get("term_source_ref"):
+            companions.append(SDRFAttr(label="Term Source REF", value=self.clean(item["term_source_ref"])))
+        if item.get("term_accession_number"):
+            companions.append(SDRFAttr(label="Term Accession Number", value=self.clean(item["term_accession_number"])))
+        return companions
 
     def organism_part_value(self, channel: dict):
         organism_part = self.characteristic_values(channel=channel, tag="organism part")
@@ -408,6 +427,8 @@ class _BaseSDRFHandler():
         return self.clean(organism.get("name") or organism.get("value")) or None
 
     def material_type(self, channel: dict):
+        if channel.get("material_type"):
+            return self.clean(channel.get("material_type"))
         molecule = channel.get("molecule")
         if molecule:
             return self.clean(molecule).replace("total ", "")

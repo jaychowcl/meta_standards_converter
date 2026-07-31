@@ -26,6 +26,24 @@ class DatasetPackageGroup:
     dataset_id: str
     packages: tuple[dict[str, Any], ...]
     source_accession: str | None = None
+    harmonization_overrides: Mapping[str, Any] | None = None
+    source_packages: tuple[dict[str, Any], ...] | None = None
+    harmonization_resolution: Any | None = None
+
+    def resolved(self, *, enabled: bool) -> "DatasetPackageGroup":
+        from .harmonization_overrides import resolve_harmonization_overrides
+
+        resolution = resolve_harmonization_overrides(
+            self.packages, self.harmonization_overrides, enabled=enabled
+        )
+        return DatasetPackageGroup(
+            self.dataset_id,
+            resolution.packages,
+            source_accession=self.source_accession,
+            harmonization_overrides=self.harmonization_overrides,
+            source_packages=self.packages,
+            harmonization_resolution=resolution,
+        )
 
 
 @dataclass(frozen=True)
@@ -45,6 +63,8 @@ class JSONPackageSource:
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
         payload = json.loads(source.read_text(encoding="utf-8"))
+        if isinstance(payload, Mapping) and "miniml_json" in payload:
+            return self._validate_result(self._agentic_envelope(payload, source.stem))
         if isinstance(payload, Mapping) and (
             "schema_version" in payload or "accessions" in payload
         ):
@@ -60,6 +80,25 @@ class JSONPackageSource:
         return self._validate_result(
             SourceLoadResult(self._group_packages(packages, source.stem))
         )
+
+    def _agentic_envelope(
+        self, payload: Mapping[str, Any], fallback: str
+    ) -> SourceLoadResult:
+        document = payload.get("miniml_json")
+        packages = document if isinstance(document, list) else [document]
+        if not packages or any(not isinstance(package, Mapping) for package in packages):
+            raise ValueError("Agentic Curator miniml_json must be an object or non-empty object list.")
+        profile = payload.get("harmonization_overrides")
+        groups = self._group_packages(packages, fallback)
+        return SourceLoadResult(tuple(
+            DatasetPackageGroup(
+                group.dataset_id,
+                group.packages,
+                source_accession=group.source_accession,
+                harmonization_overrides=deepcopy(profile) if isinstance(profile, Mapping) else profile,
+            )
+            for group in groups
+        ))
 
     def _validate_result(self, result: SourceLoadResult) -> SourceLoadResult:
         if not result.groups:

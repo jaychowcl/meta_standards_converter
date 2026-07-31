@@ -1165,11 +1165,19 @@ class JSON2H5ADConverter:
         work_dir: str | None = None,
         resume: bool = False,
         allow_invalid: bool = False,
+        use_harmonization_overrides: bool = False,
         **options,
     ) -> ConversionResult | BatchConversionResult:
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"MINiML JSON file not found: {json_path}")
         loaded = self.package_source.load(json_path)
+        loaded = replace(
+            loaded,
+            groups=tuple(
+                group.resolved(enabled=use_harmonization_overrides)
+                for group in loaded.groups
+            ),
+        )
         if not loaded.groups:
             raise ValueError("JSON source contains no convertible package groups.")
         for group in loaded.groups:
@@ -1203,8 +1211,11 @@ class JSON2H5ADConverter:
                 out=out,
                 **conversion_options,
             )
+        group = loaded.groups[0]
         result = self._convert_packages(
-            list(loaded.groups[0].packages),
+            list(group.packages),
+            source_packages=list(group.source_packages or group.packages),
+            harmonization_resolution=group.harmonization_resolution,
             source_json=json_path,
             out=out,
             **conversion_options,
@@ -1219,11 +1230,19 @@ class JSON2H5ADConverter:
         json_path: str,
         out: str | None = None,
         allow_invalid: bool = False,
+        use_harmonization_overrides: bool = False,
         **options,
     ) -> BatchConversionResult:
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"JSON file not found: {json_path}")
         loaded = self.package_source.load(json_path)
+        loaded = replace(
+            loaded,
+            groups=tuple(
+                group.resolved(enabled=use_harmonization_overrides)
+                for group in loaded.groups
+            ),
+        )
         if not loaded.groups:
             raise ValueError("JSON source contains no convertible package groups.")
         for group in loaded.groups:
@@ -1253,6 +1272,8 @@ class JSON2H5ADConverter:
             try:
                 converted = self._convert_packages(
                     list(group.packages),
+                    source_packages=list(group.source_packages or group.packages),
+                    harmonization_resolution=group.harmonization_resolution,
                     source_json=source_json,
                     out=str(group_out),
                     **options,
@@ -1267,6 +1288,8 @@ class JSON2H5ADConverter:
         self,
         packages: list[dict],
         *,
+        source_packages: list[dict] | None = None,
+        harmonization_resolution=None,
         source_json: str,
         out: str | None = None,
         explicit_assets: list[Asset] | None = None,
@@ -1311,6 +1334,7 @@ class JSON2H5ADConverter:
         source_json = os.path.abspath(source_json)
         source_json_sha256 = self._sha256(source_json)
         result = ConversionResult(study_accession=study_accession)
+        result.warnings.extend(getattr(harmonization_resolution, "warnings", ()))
         adatas = {}
         combined_adata = None
         projection_contexts: list[MetadataProjectionContext] = []
@@ -1359,6 +1383,7 @@ class JSON2H5ADConverter:
                 asset=asset,
                 characteristic_columns=characteristic_columns,
                 artifact_parent=out_path,
+                harmonization_resolution=harmonization_resolution,
             )
             projection_context = MetadataProjectionContext(
                 sample=sample_context[sample_id][0],
@@ -1378,12 +1403,13 @@ class JSON2H5ADConverter:
             projection_contexts.append(projection_context)
             self._attach_miniml(
                 adata,
-                packages=packages,
+                packages=source_packages or packages,
                 source_json=source_json,
                 source_json_sha256=source_json_sha256,
                 sample_id=sample_id,
                 artifact_parent=out_path,
             )
+            self._attach_harmonization(adata, harmonization_resolution)
             sample_path = out_path / f"{sample_id}.h5ad"
             result.sample_h5ads[sample_id] = str(sample_path)
             adatas[sample_id] = adata
@@ -1404,11 +1430,12 @@ class JSON2H5ADConverter:
             )
             self._attach_miniml(
                 combined,
-                packages=packages,
+                packages=source_packages or packages,
                 source_json=source_json,
                 source_json_sha256=source_json_sha256,
                 artifact_parent=out_path,
             )
+            self._attach_harmonization(combined, harmonization_resolution)
             combined_path = out_path / f"{study_accession}.h5ad"
             result.combined_h5ad = str(combined_path)
 
@@ -1648,6 +1675,7 @@ class JSON2H5ADConverter:
         asset: Asset,
         characteristic_columns: list[str],
         artifact_parent: Path,
+        harmonization_resolution=None,
     ) -> dict:
         sample_id = self.planner.sample_accession(sample)
         metadata_values = self._sample_metadata_values(sample, package)
@@ -1679,6 +1707,19 @@ class JSON2H5ADConverter:
             canonical_values[f"msc.characteristics.{column}"] = metadata_values[
                 "characteristics"
             ].get(column, ())
+        for item in getattr(harmonization_resolution, "selections", ()):
+            if item.sample_accession != sample_id:
+                continue
+            prefix = f"msc.harmonization.{item.destination}"
+            canonical_values.update({
+                f"{prefix}.value": (item.value,),
+                f"{prefix}.id": (item.identifier,) if item.identifier else (),
+                f"{prefix}.ontology": (item.ontology,) if item.ontology else (),
+                f"{prefix}.source_field": (item.source_field,),
+                f"{prefix}.hierarchy_depth": (
+                    (item.hierarchy_depth,) if item.hierarchy_depth is not None else ()
+                ),
+            })
         for key, values in canonical_values.items():
             adata.obs[key] = self._join_values(values)
         self._attach_sample_values(
@@ -1877,10 +1918,17 @@ class JSON2H5ADConverter:
         metadata["molecule"] = tuple(
             self._values(channel.get("molecule") for channel in channels)
         )
+        explicit_material_types = self._values(
+            channel.get("material_type") for channel in channels
+        )
         material_types = []
         for value in self._values(channel.get("molecule") for channel in channels):
             material_types.append(re.sub(r"^total\s+", "", value, flags=re.IGNORECASE))
-        metadata["material_type"] = tuple(self._values(material_types)) or metadata["organism_part"]
+        metadata["material_type"] = (
+            tuple(explicit_material_types)
+            or tuple(self._values(material_types))
+            or metadata["organism_part"]
+        )
 
         runs = [item for item in self.planner._as_list(sample.get("sra_run")) if isinstance(item, dict)]
         metadata["sra_accession"] = tuple(self._values(sample.get("sra_accession")))
@@ -2191,6 +2239,39 @@ class JSON2H5ADConverter:
             "metadata_source_name": self._join_values(database.get("name")),
             "metadata_source_uri": self._join_values(database.get("web_link")),
             "fields": fields,
+        }
+
+    def _attach_harmonization(self, adata, resolution) -> None:
+        if resolution is None or not resolution.enabled:
+            return
+        _anndata, _numpy, pandas, _sparse = self._scientific_modules()
+        rows = [
+            {
+                "sample_accession": item.sample_accession,
+                "destination": item.destination,
+                "value": item.value,
+                "id": item.identifier or "",
+                "ontology": item.ontology or "",
+                "source_field": item.source_field,
+                "hierarchy_depth": (
+                    item.hierarchy_depth if item.hierarchy_depth is not None else -1
+                ),
+                "status": item.status,
+            }
+            for item in resolution.selections
+        ]
+        selections = pandas.DataFrame(rows, columns=(
+            "sample_accession", "destination", "value", "id", "ontology",
+            "source_field", "hierarchy_depth", "status",
+        ))
+        selections.index = [f"selection_{index:06d}" for index in range(len(selections))]
+        adata.uns["msc_harmonization"] = {
+            "schema_version": "1.0",
+            "enabled": True,
+            "applied": bool(resolution.applied),
+            "profile": dict(resolution.profile or {}),
+            "selections": selections,
+            "warnings": list(resolution.warnings),
         }
 
     def _package_has_sample(self, package: dict, sample_id: str) -> bool:

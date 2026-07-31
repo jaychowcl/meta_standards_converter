@@ -47,6 +47,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--allow-invalid", action="store_true")
     parser.add_argument(
+        "--use-harmonization-overrides",
+        action="store_true",
+        help="Apply an Agentic Curator harmonization override profile.",
+    )
+    parser.add_argument(
         "--matrix-orientation",
         choices=("auto", "genes-by-observations", "observations-by-genes"),
         default="auto",
@@ -63,8 +68,7 @@ def main(argv=None) -> int:
     failed = False
     for source in args.json_path:
         try:
-            result = orchestrator.export_anndata_metadata(
-                source,
+            convert_options = dict(
                 outdir=args.outdir,
                 include_var=args.include_var,
                 include_uns=args.include_uns,
@@ -87,6 +91,9 @@ def main(argv=None) -> int:
                 allow_invalid=args.allow_invalid,
                 matrix_orientation=args.matrix_orientation,
             )
+            if args.use_harmonization_overrides:
+                convert_options["use_harmonization_overrides"] = True
+            result = orchestrator.export_anndata_metadata(source, **convert_options)
         except Exception as error:
             failed = True
             logger.exception("%s: observation export failed", source)

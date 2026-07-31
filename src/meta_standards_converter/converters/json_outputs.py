@@ -112,6 +112,7 @@ class JSONDataOutputOrchestrator:
         output_format: str = "tsv",
         allow_invalid: bool = False,
         overwrite: bool = False,
+        use_harmonization_overrides: bool = False,
     ):
         output_dir = Path(outdir)
         output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -135,6 +136,7 @@ class JSONDataOutputOrchestrator:
                 staged_table,
                 allow_invalid=allow_invalid,
                 overwrite=True,
+                use_harmonization_overrides=use_harmonization_overrides,
             )
             result = replace(
                 converted,
