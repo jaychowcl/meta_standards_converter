@@ -94,8 +94,9 @@ class TestAEWebFetcher(unittest.TestCase):
             ]
         }
 
-        def get(url):
+        def get(url, **kwargs):
             if url.endswith("/api/v1/files/E-MTAB-1"):
+                self.assertEqual({"start": 0, "length": 100}, kwargs["params"])
                 return response(payload=files)
             if url.endswith("/api/v1/studies/E-MTAB-1/info"):
                 return response(payload={"httpLink": base})
@@ -114,6 +115,59 @@ class TestAEWebFetcher(unittest.TestCase):
         self.assertEqual("E-MTAB-1", resolved.source)
         self.assertEqual(["part1.sdrf.txt", "part2.sdrf.txt"], [x.name for x in resolved.sdrfs])
         self.assertEqual(5, requester.get.call_count)
+
+    def test_accession_paginates_biostudies_file_discovery(self):
+        requester = Mock()
+        base = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/001/E-MTAB-1"
+        pages = {
+            0: {
+                "recordsFiltered": 2,
+                "data": [
+                    {
+                        "Name": "E-MTAB-1.idf.txt",
+                        "Type": "IDF File",
+                        "path": "E-MTAB-1.idf.txt",
+                    }
+                ],
+            },
+            1: {
+                "recordsFiltered": 2,
+                "data": [
+                    {
+                        "Name": "E-MTAB-1.sdrf.txt",
+                        "Type": "SDRF File",
+                        "path": "E-MTAB-1.sdrf.txt",
+                    }
+                ],
+            },
+        }
+
+        def get(url, **kwargs):
+            if url.endswith("/api/v1/files/E-MTAB-1"):
+                return response(payload=pages[kwargs["params"]["start"]])
+            if url.endswith("/api/v1/studies/E-MTAB-1/info"):
+                return response(payload={"httpLink": base})
+            if url.endswith("/Files/E-MTAB-1.idf.txt"):
+                return response(text=IDF)
+            if url.endswith("/Files/E-MTAB-1.sdrf.txt"):
+                return response(text=SDRF)
+            raise AssertionError(url)
+
+        requester.get.side_effect = get
+
+        resolved = AEWebFetcher(requester=requester).resolve("E-MTAB-1")
+
+        self.assertEqual("E-MTAB-1.idf.txt", resolved.idf.name)
+        self.assertEqual(["E-MTAB-1.sdrf.txt"], [item.name for item in resolved.sdrfs])
+        file_calls = [
+            call.kwargs["params"]
+            for call in requester.get.call_args_list
+            if call.args[0].endswith("/api/v1/files/E-MTAB-1")
+        ]
+        self.assertEqual(
+            [{"start": 0, "length": 100}, {"start": 1, "length": 100}],
+            file_calls,
+        )
 
     def test_accession_rejects_ambiguous_idf_discovery(self):
         requester = Mock()

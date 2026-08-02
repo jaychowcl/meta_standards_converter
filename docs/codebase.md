@@ -955,7 +955,7 @@ ae2json.convert(source, out=None, sdrf_sources=None)
   -> AEWebFetcher.resolve(source, sdrf_sources)
        existing path: read the IDF and relative/local/HTTP SDRF references
        HTTP(S) URL: fetch IDF text and resolve relative/HTTP SDRF references
-       accession: query BioStudies files and study info, then fetch IDF/SDRF text
+       accession: paginate BioStudies files, query study info, then fetch IDF/SDRF text
   -> AEParser.parse(resolved_input)
        parse the IDF and rectangular SDRF tables
        map known investigation, publication, contributor, protocol, sample,
@@ -2219,7 +2219,7 @@ Important test coverage:
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
 - `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, and output writing.
-- `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
+- `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 3 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, sparse combination, canonical/generic study splitting, partial results, and raw-output reintegration.
 - `tests/test_atlas_v2_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v2 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.

@@ -39,6 +39,7 @@ class AEWebFetcher:
     """Load an IDF and its SDRFs without persisting remote metadata files."""
 
     API_ROOT = "https://www.ebi.ac.uk/biostudies/api/v1"
+    FILE_PAGE_SIZE = 100
 
     def __init__(self, requester=None, request_settings=None):
         self.requester = requester or RateLimitedRequester(
@@ -89,10 +90,7 @@ class AEWebFetcher:
     def _resolve_accession(self, accession: str) -> MAGETabInput:
         accession = accession.strip().upper()
         files_url = f"{self.API_ROOT}/files/{quote(accession, safe='')}"
-        files_response = self.requester.get(files_url)
-        files_response.raise_for_status()
-        payload = files_response.json()
-        rows = payload.get("data", []) if isinstance(payload, dict) else []
+        rows = self._biostudies_file_rows(files_url)
         idf_rows = [row for row in rows if self._file_kind(row) == "idf"]
         sdrf_rows = [row for row in rows if self._file_kind(row) == "sdrf"]
         if len(idf_rows) != 1:
@@ -113,6 +111,27 @@ class AEWebFetcher:
         idf = self._fetch_api_file(base_url, idf_rows[0])
         sdrfs = tuple(self._fetch_api_file(base_url, row) for row in sdrf_rows)
         return MAGETabInput(idf, sdrfs, accession, "accession")
+
+    def _biostudies_file_rows(self, files_url: str) -> list[dict]:
+        rows: list[dict] = []
+        while True:
+            response = self.requester.get(
+                files_url,
+                params={"start": len(rows), "length": self.FILE_PAGE_SIZE},
+            )
+            response.raise_for_status()
+            payload = response.json()
+            page = payload.get("data", []) if isinstance(payload, dict) else []
+            page = [row for row in page if isinstance(row, dict)]
+            rows.extend(page)
+
+            total = payload.get("recordsFiltered") if isinstance(payload, dict) else None
+            try:
+                total = int(total) if total is not None else None
+            except (TypeError, ValueError):
+                total = None
+            if not page or total is None or len(rows) >= total:
+                return rows
 
     def _fetch_api_file(self, base_url: str, row: dict) -> TextResource:
         path = str(row.get("path") or row.get("Name") or "").lstrip("/")

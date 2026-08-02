@@ -304,7 +304,9 @@ ae2json study.idf.txt --sdrf first.sdrf.txt --sdrf second.sdrf.txt --out output
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-Remote IDF/SDRF text remains in memory. Accession mode uses BioStudies to discover exactly one IDF and at least one SDRF; assay data files are not downloaded.
+Remote IDF/SDRF text remains in memory. Accession mode paginates the BioStudies
+file listing to discover exactly one IDF and at least one SDRF; assay data files
+are not downloaded.
 
 #### `json2h5ad`
 
