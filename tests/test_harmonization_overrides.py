@@ -19,6 +19,7 @@ from meta_standards_converter.converters.harmonization_overrides import (
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 from meta_standards_converter.converters.json2ae import json2ae
 from meta_standards_converter.converters.json2tabular import JSON2TSVConverter
+from meta_standards_converter.converters.json_outputs import JSONDataOutputOrchestrator
 from meta_standards_converter.converters.json_source import JSONPackageSource
 from meta_standards_converter.cli import json2ae as json2ae_cli
 from meta_standards_converter.cli import json2h5ad as json2h5ad_cli
@@ -93,6 +94,23 @@ def package_with_magetab_parameter():
             }],
         }],
     }}
+    return value
+
+
+def package_with_fibrosis_ontology_annotations():
+    value = package()
+    value["sample"][0]["channel"][0]["characteristics"].extend(
+        [
+            {"tag": "exposure", "value": "bleomycin injection"},
+            {"tag": "hz_exposure_name", "value": "exposure to bleomycin via injection"},
+            {"tag": "hz_exposure_name_id", "value": "ECTO:0900222"},
+            {"tag": "hz_exposure_name_onto", "value": "ecto"},
+            {"tag": "cell state", "value": "Fbl_24"},
+            {"tag": "hz_cell_state_name", "value": "Fbl_24"},
+            {"tag": "hz_cell_state_name_id", "value": "PCL:0015251"},
+            {"tag": "hz_cell_state_name_onto", "value": "pcl"},
+        ]
+    )
     return value
 
 
@@ -186,6 +204,21 @@ def test_tabular_projects_additive_magetab_parameter_columns(tmp_path):
     assert row["msc.mage_tab.parameter.duration.hz_unit_id"] == "UO:0000031"
 
 
+def test_tabular_retains_ecto_and_pcl_harmonization_columns(tmp_path):
+    source = tmp_path / "fibrosis.json"
+    destination = tmp_path / "manifest.tsv"
+    source.write_text(
+        json.dumps(package_with_fibrosis_ontology_annotations()), encoding="utf-8"
+    )
+
+    JSON2TSVConverter().convert_source(source, destination)
+    with destination.open(encoding="utf-8", newline="") as stream:
+        row = next(csv.DictReader(stream, delimiter="\t"))
+
+    assert row["msc.characteristics.hz_exposure_name_id"] == "ECTO:0900222"
+    assert row["msc.characteristics.hz_cell_state_name_id"] == "PCL:0015251"
+
+
 def test_magetab_opt_in_replaces_destinations_with_companions_and_retains_hz(tmp_path):
     source = tmp_path / "agentic.json"
     source.write_text(json.dumps({
@@ -264,3 +297,29 @@ def test_h5ad_publishes_magetab_parameter_obs_and_occurrence_ledger(tmp_path):
     ledger = converted.uns["msc_mage_tab"]["parameters"]
     assert ledger["assay_path_id"].tolist() == ["study.sdrf.txt:row:1"]
     assert ledger["hz_unit_id"].tolist() == ["UO:0000031"]
+
+
+def test_h5ad_and_json2obs_retain_ecto_and_pcl_columns(tmp_path):
+    source = tmp_path / "fibrosis.json"
+    source.write_text(
+        json.dumps(package_with_fibrosis_ontology_annotations()), encoding="utf-8"
+    )
+    expression = tmp_path / "GSM1.h5ad"
+    anndata.AnnData(
+        X=sparse.csr_matrix([[1]]),
+        obs=pandas.DataFrame(index=["cell-1"]),
+        var=pandas.DataFrame(index=["gene-1"]),
+    ).write_h5ad(expression)
+
+    result = JSONDataOutputOrchestrator().export_anndata_metadata(
+        source,
+        outdir=tmp_path / "obs",
+        asset_specs=[f"GSM1={expression}"],
+    )
+
+    assert result.obs["msc.characteristics.hz_exposure_name_id"].iat[0] == (
+        "ECTO:0900222"
+    )
+    assert result.obs["msc.characteristics.hz_cell_state_name_id"].iat[0] == (
+        "PCL:0015251"
+    )

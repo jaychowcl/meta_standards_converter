@@ -292,7 +292,9 @@ overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF
 columns are inserted while model-only rows, assay paths, node columns, and
 `Protocol REF` columns remain authoritative. This lets curator-added fields
 such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`,
-and `Characteristics[hz_cell_type_onto]` survive as separate columns.
+and `Characteristics[hz_cell_type_onto]` survive as separate columns. The same
+ontology-agnostic rule preserves ECTO exposure and PCL provisional-state
+annotations such as `hz_exposure_name_id` and `hz_cell_state_name_id`.
 Duplicate SDRF headers are matched by normalized label and occurrence, and
 values are copied only when source/sample/run identity gives one unambiguous
 value; otherwise existing model content is retained and newly inserted cells

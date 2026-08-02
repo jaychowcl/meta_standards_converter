@@ -661,7 +661,9 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
 5. Optional enrichment precedes `AEConstructor.miniml2magetab`.
 6. Round-trip evidence may restore source tables; mapped edits use overlay
    rules. Enriched `hz_*` attributes become adjacent reserved Comment columns
-   while raw value/unit cells remain unchanged.
+   while raw value/unit cells remain unchanged. Additive characteristic
+   columns are ontology-agnostic, including ECTO `hz_exposure_name*` and PCL
+   `hz_cell_state_name*` annotations.
 7. `out` controls writing; construction errors propagate.
 
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
@@ -2269,7 +2271,9 @@ H5AD/obs publish canonical schema-3 columns, harmonization provenance columns,
 and `uns["msc_harmonization"]`; `uns["msc_miniml"]` retains the untouched source.
 TSV/CSV publish the same canonical and provenance view. MAGE-TAB replaces its
 semantic destination, emits standard ontology companions where available, and
-retains separate `Characteristics[hz_*]` columns.
+retains separate `Characteristics[hz_*]` columns. ECTO exposure and PCL
+provisional-state annotations therefore pass through json2ae/ae2json,
+json2tsv, json2h5ad, and json2obs without format-specific ontology code.
 
 Importable implementation symbols are
 `meta_standards_converter.converters.harmonization_overrides.HarmonizationSelection`,

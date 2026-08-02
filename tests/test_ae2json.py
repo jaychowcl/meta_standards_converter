@@ -283,6 +283,12 @@ class TestAE2JSONConverter(unittest.TestCase):
                 {"tag": "hz_cell_type", "value": "regulatory T cell"},
                 {"tag": "hz_cell_type_id", "value": "CL:0000815"},
                 {"tag": "hz_cell_type_onto", "value": "cl"},
+                {"tag": "hz_exposure_name", "value": "exposure to bleomycin via injection"},
+                {"tag": "hz_exposure_name_id", "value": "ECTO:0900222"},
+                {"tag": "hz_exposure_name_onto", "value": "ecto"},
+                {"tag": "hz_cell_state_name", "value": "Fbl_24"},
+                {"tag": "hz_cell_state_name_id", "value": "PCL:0015251"},
+                {"tag": "hz_cell_state_name_onto", "value": "pcl"},
             ]
         )
 
@@ -293,12 +299,54 @@ class TestAE2JSONConverter(unittest.TestCase):
             ("Characteristics[hz_cell_type]", "regulatory T cell"),
             ("Characteristics[hz_cell_type_id]", "CL:0000815"),
             ("Characteristics[hz_cell_type_onto]", "cl"),
+            ("Characteristics[hz_exposure_name_id]", "ECTO:0900222"),
+            ("Characteristics[hz_cell_state_name_id]", "PCL:0015251"),
         ):
             with self.subTest(label=label):
                 index = rendered_sdrf[0].index(label)
                 self.assertEqual([value, value], [row[index] for row in rendered_sdrf[1:]])
         self.assertEqual(2, len(rendered_sdrf) - 1)
         self.assertIn("Mystery Column", rendered_sdrf[0])
+
+    def test_ecto_and_pcl_characteristics_parse_and_render_additively(self):
+        header = [
+            "Source Name",
+            "Sample Name",
+            "Characteristics[hz_exposure_name]",
+            "Characteristics[hz_exposure_name_id]",
+            "Characteristics[hz_exposure_name_onto]",
+            "Characteristics[hz_cell_state_name]",
+            "Characteristics[hz_cell_state_name_id]",
+            "Characteristics[hz_cell_state_name_onto]",
+            "Assay Name",
+        ]
+        row = [
+            "source-1",
+            "sample-1",
+            "exposure to bleomycin via injection",
+            "ECTO:0900222",
+            "ecto",
+            "Fbl_24",
+            "PCL:0015251",
+            "pcl",
+            "assay-1",
+        ]
+        text = "\n".join("\t".join(values) for values in [header, row]) + "\n"
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(sdrfs=[text])
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        characteristics = {
+            item["tag"]: item["value"]
+            for item in package["sample"][0]["channel"][0]["characteristics"]
+        }
+        rendered = AEConstructor().miniml2magetab(package)
+        sdrf = next(item[1] for item in rendered if item[0] == "SDRF File")
+
+        self.assertEqual("ECTO:0900222", characteristics["hz_exposure_name_id"])
+        self.assertEqual("PCL:0015251", characteristics["hz_cell_state_name_id"])
+        self.assertIn("Characteristics[hz_exposure_name_id]", sdrf[0])
+        self.assertIn("Characteristics[hz_cell_state_name_id]", sdrf[0])
 
     def test_overlay_unions_allowlisted_idf_rows_and_nonstructural_sdrf_columns(self):
         model_sdrf = [

@@ -230,7 +230,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Harmonization overrides
   anchor: harmonization-overrides
   purpose: Defines Agentic Curator envelope recognition, opt-in destination replacement, hz retention, fallback, and provenance.
-  keywords: harmonization overrides, Agentic Curator, hz, profile, destination, provenance
+  keywords: harmonization overrides, Agentic Curator, hz, ECTO, PCL, exposure, cell state, profile, destination, provenance
   link: [Open section](codebase.md#harmonization-overrides)
 
 - id: rootless-json2h5ad-runtime
