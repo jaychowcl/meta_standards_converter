@@ -8,6 +8,7 @@
 # =============================================================================
 import os
 import sys
+import threading
 import unittest
 from unittest.mock import Mock
 
@@ -104,6 +105,84 @@ class TestRateLimitedRequester(unittest.TestCase):
 
         self.assertEqual([0.5], fake_time.sleeps)
         self.assertEqual(2, get.call_count)
+
+    def test_rate_limit_is_shared_by_host_across_service_labels(self):
+        fake_time = FakeTime()
+        get = Mock(return_value=response())
+        first = RateLimitedRequester(
+            service="one",
+            settings=RequestSettings(request_delay=0.5),
+            get=get,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+        second = RateLimitedRequester(
+            service="two",
+            settings=RequestSettings(request_delay=0.5),
+            get=get,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+
+        first.get("https://api.example.org/one")
+        second.get("https://api.example.org/two")
+
+        self.assertEqual([0.5], fake_time.sleeps)
+
+    def test_rate_limit_is_independent_for_different_hosts(self):
+        fake_time = FakeTime()
+        get = Mock(return_value=response())
+        requester = RateLimitedRequester(
+            service="shared",
+            settings=RequestSettings(request_delay=0.5),
+            get=get,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+
+        requester.get("https://one.example.org/data")
+        requester.get("https://two.example.org/data")
+
+        self.assertEqual([], fake_time.sleeps)
+
+    def test_host_in_flight_limit_bounds_overlapping_requests(self):
+        entered = 0
+        maximum_entered = 0
+        state_lock = threading.Lock()
+        release = threading.Event()
+
+        def blocking_get(url, **kwargs):
+            nonlocal entered, maximum_entered
+            with state_lock:
+                entered += 1
+                maximum_entered = max(maximum_entered, entered)
+            release.wait(timeout=1)
+            with state_lock:
+                entered -= 1
+            return response()
+
+        settings = RequestSettings(request_delay=0, max_in_flight=1)
+        requester = RateLimitedRequester(
+            service="bounded", settings=settings, get=blocking_get
+        )
+        first = threading.Thread(
+            target=requester.get, args=("https://api.example.org/one",)
+        )
+        second = threading.Thread(
+            target=requester.get, args=("https://api.example.org/two",)
+        )
+        first.start()
+        second.start()
+        threading.Event().wait(0.05)
+        release.set()
+        first.join()
+        second.join()
+
+        self.assertEqual(1, maximum_entered)
+
+    def test_request_settings_reject_invalid_host_limits(self):
+        with self.assertRaisesRegex(ValueError, "max_in_flight"):
+            RequestSettings(max_in_flight=0)
 
     def test_get_retries_transient_status_using_retry_after(self):
         fake_time = FakeTime()

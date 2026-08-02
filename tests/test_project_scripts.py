@@ -50,14 +50,34 @@ class TestProjectScripts(unittest.TestCase):
             [
                 "pytest>=8.2,<9",
                 "pytest-subtests>=0.14,<1",
-                "anndata",
-                "h5py",
-                "numpy",
-                "pandas",
-                "scanpy",
-                "scipy",
+                "anndata>=0.10.8,<1",
+                "h5py>=3.10.0,<4",
+                "numpy>=1.26.0,<3",
+                "pandas>=2.1.0,<3",
+                "scanpy>=1.10.0,<2",
+                "scipy>=1.11.0,<2",
             ],
             pyproject["project"]["optional-dependencies"]["test"],
+        )
+
+    def test_runtime_and_scientific_dependencies_have_tested_major_bounds(self):
+        with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
+            project = tomllib.load(handle)["project"]
+
+        self.assertEqual(
+            ["python-dateutil>=2.8.2,<3", "requests>=2.31.0,<3"],
+            project["dependencies"],
+        )
+        self.assertEqual(
+            [
+                "anndata>=0.10.8,<1",
+                "h5py>=3.10.0,<4",
+                "numpy>=1.26.0,<3",
+                "pandas>=2.1.0,<3",
+                "scanpy>=1.10.0,<2",
+                "scipy>=1.11.0,<2",
+            ],
+            project["optional-dependencies"]["h5ad"],
         )
 
     def test_project_license_classifier_matches_gplv3_license_file(self):

@@ -842,10 +842,21 @@ tests/GSE328265_family.xml
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
 - The package requires Python `>=3.10`.
-- Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
+- Base runtime dependencies are `requests>=2.31,<3` and
+  `python-dateutil>=2.8.2,<3`; the `h5ad` extra bounds AnnData `<1`, Scanpy
+  `<2`, NumPy `<3`, pandas `<3`, SciPy `<2`, and h5py `<4` while retaining the
+  documented minimum versions.
 - The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
-- Default request settings are per service: `ncbi_eutils` uses timeout 30s, delay 0.5s, and 3 retries; `geo_ftp`, `biostudies`, and `ena_portal` use timeout 30s, delay 1.0s, and 3 retries.
+- The bounded 2026-08-02 live benchmark compared sequential and two-worker
+  calls for fixed NCBI, ENA, and BioStudies records. No provider achieved the
+  required 20% median improvement, so production provider operations remain
+  sequential. Method, official references, thresholds, and raw measurements are
+  in [`provider-benchmark-policy.md`](provider-benchmark-policy.md).
+- Default request settings are selected per service but enforced across the
+  process by normalized hostname: `ncbi_eutils` uses timeout 30s, delay 0.5s,
+  at most two in flight, and 3 retries; `geo_ftp`, `biostudies`, and
+  `ena_portal` use timeout 30s, delay 1.0s, at most two in flight, and 3 retries.
 - Library logging propagates safe structured telemetry to caller handlers.
   DEBUG records service/host, attempt, status, timeout, and duration without URL
   queries or request parameters. INFO records retries, GEO fetch sizes/duration,
@@ -2070,24 +2081,28 @@ Other helpers:
 
 `class RequestSettings`
 
-- Stores request behavior: `timeout`, `request_delay`, `max_retries`, retry HTTP statuses, exponential backoff base, and maximum backoff.
+- Stores request behavior: `timeout`, `request_delay`, `max_in_flight`,
+  `max_retries`, retry HTTP statuses, exponential backoff base, and maximum
+  backoff. Invalid time, delay, concurrency, or retry values fail at construction.
 - Defaults retry HTTP statuses to `{429, 500, 502, 503, 504}`.
 
 `DEFAULT_REQUEST_SETTINGS`
 
-- `ncbi_eutils`: timeout 30 seconds, request delay 0.5 seconds, and 3 retries.
-- `geo_ftp`: timeout 30 seconds, request delay 1.0 seconds, and 3 retries.
-- `biostudies`: timeout 30 seconds, request delay 1.0 seconds, and 3 retries.
-- `ena_portal`: timeout 30 seconds, request delay 1.0 seconds, and 3 retries.
+- `ncbi_eutils`: timeout 30 seconds, request delay 0.5 seconds, two maximum
+  in-flight requests, and 3 retries.
+- `geo_ftp`, `biostudies`, and `ena_portal`: timeout 30 seconds, request delay
+  1.0 seconds, two maximum in-flight requests, and 3 retries.
 
 `class RateLimitedRequester`
 
 - `get(url: str, **kwargs)` wraps `requests.get()`, applies a default timeout,
-  enforces service delay, retries configured statuses, and returns a response
+  enforces host-wide delay and in-flight limits, retries configured statuses, and returns a response
   or raises the exhausted HTTP/transport error.
 - `reset_service_state()` is a class-level test/operations hook that clears
   shared limiter timestamps; it mutates process-global requester state.
-- Maintains shared per-service limiter state, so separate fetcher instances still respect the same sequential request delay.
+- Maintains shared per-host limiter state, so separate fetcher instances and
+  different service labels targeting the same host respect the most conservative
+  registered delay and concurrency ceiling. Different hosts do not block one another.
 - Retries transient HTTP statuses. Numeric `Retry-After` headers control retry sleep; otherwise fallback delay is `min(0.5 * (2 ** attempt), 8.0)`.
 - Retries `ConnectionError`, `Timeout`, and `ChunkedEncodingError` with the same deterministic exponential schedule and exact configured attempt count.
 - Raises the exhausted retry response through `response.raise_for_status()`.
@@ -2302,3 +2317,15 @@ the additive `bundle_pointer_path` field without changing H5AD metadata schema
 `meta_standards_converter.artifact_bundle.PublishedArtifactBundle`, and
 `meta_standards_converter.artifact_bundle.resolve_current_bundle`.
 [source](../src/meta_standards_converter/artifact_bundle.py)
+
+<a id="provider-concurrency-benchmark"></a>
+## Provider concurrency benchmark
+
+The bounded 2026-08-02 public benchmark used fixed NCBI E-utilities, ENA
+Portal, and BioStudies records, one warm-up, three measured runs, and sequential
+versus two-worker execution. It made no model or embedding calls. All content
+was successful and deterministic, but no provider reached the required 20%
+median speedup and NCBI/ENA missed the tail-latency criterion. Provider fetching
+therefore remains sequential. See
+[`provider-benchmark-policy.md`](provider-benchmark-policy.md) for official
+provider references, exact acceptance rules, and the raw report.

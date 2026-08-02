@@ -117,6 +117,20 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: live_api, PubMed, SRA, ENA, BioStudies, pagination, no retries
   link: [Open section](codebase.md#live-api-provider-contracts)
 
+- id: request-helper
+  title: Host-aware request policy
+  anchor: request-helper
+  purpose: Defines conservative provider defaults, process-wide hostname scheduling, in-flight limits, retries, and safe telemetry.
+  keywords: RateLimitedRequester, RequestSettings, hostname, max_in_flight, request_delay, retry, 429
+  link: [Open section](codebase.md#request-helper)
+
+- id: provider-concurrency-benchmark
+  title: Public-provider concurrency benchmark
+  anchor: provider-concurrency-benchmark
+  purpose: Routes to the bounded live method, official rate references, acceptance thresholds, raw result, and sequential decision.
+  keywords: benchmark, NCBI, ENA, BioStudies, concurrency, rate limit, p95, deterministic
+  link: [Open policy](provider-benchmark-policy.md)
+
 ## Workflow routes
 
 - id: workflow-geo2ae

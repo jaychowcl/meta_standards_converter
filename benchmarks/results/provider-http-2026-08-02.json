@@ -1,0 +1,413 @@
+{
+  "created_at": "2026-08-02T18:36:22Z",
+  "embedding_calls": 0,
+  "model_calls": 0,
+  "results": [
+    {
+      "concurrent": [
+        {
+          "digests": [
+            "39c59f9408a7d5f1d3a6e913ef189f944b0e2983e64e6bb80cd6d8fe3b9fa886",
+            "96f82b57b84c6ed8a1239eada6215a0034a4b3ad7dc668775803bd3f5ebfb10b",
+            "d24719173e8c31a72969fea32639c72a748a6a139e061e994df9a3c264b9ae5e"
+          ],
+          "duration_seconds": 1.2092026559985243,
+          "minimum_start_gap_seconds": 0.5001061380025931,
+          "p95_request_seconds": 1.0004211529740132,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "39c59f9408a7d5f1d3a6e913ef189f944b0e2983e64e6bb80cd6d8fe3b9fa886",
+            "96f82b57b84c6ed8a1239eada6215a0034a4b3ad7dc668775803bd3f5ebfb10b",
+            "d24719173e8c31a72969fea32639c72a748a6a139e061e994df9a3c264b9ae5e"
+          ],
+          "duration_seconds": 1.2484942930168472,
+          "minimum_start_gap_seconds": 0.5000862589804456,
+          "p95_request_seconds": 1.0000639320351183,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "39c59f9408a7d5f1d3a6e913ef189f944b0e2983e64e6bb80cd6d8fe3b9fa886",
+            "96f82b57b84c6ed8a1239eada6215a0034a4b3ad7dc668775803bd3f5ebfb10b",
+            "d24719173e8c31a72969fea32639c72a748a6a139e061e994df9a3c264b9ae5e"
+          ],
+          "duration_seconds": 1.3325628020102158,
+          "minimum_start_gap_seconds": 0.5000608019763604,
+          "p95_request_seconds": 1.0003417109837756,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        }
+      ],
+      "decision": {
+        "deterministic": true,
+        "enable_two_workers": false,
+        "speedup_fraction": 0.037587037752235736,
+        "start_rate_cap_ok": true,
+        "statuses_ok": true,
+        "tail_latency_ok": false
+      },
+      "method": {
+        "runs": 3,
+        "warmups": 1,
+        "workers": [
+          1,
+          2
+        ]
+      },
+      "scenario": {
+        "items": [
+          {
+            "db": "pubmed",
+            "id": "27708338",
+            "retmode": "json"
+          },
+          {
+            "db": "pubmed",
+            "id": "31452104",
+            "retmode": "json"
+          },
+          {
+            "db": "pubmed",
+            "id": "34216554",
+            "retmode": "json"
+          }
+        ],
+        "max_in_flight": 2,
+        "name": "ncbi_eutils",
+        "request_delay": 0.5,
+        "service": "ncbi_eutils",
+        "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+      },
+      "sequential": [
+        {
+          "digests": [
+            "39c59f9408a7d5f1d3a6e913ef189f944b0e2983e64e6bb80cd6d8fe3b9fa886",
+            "96f82b57b84c6ed8a1239eada6215a0034a4b3ad7dc668775803bd3f5ebfb10b",
+            "d24719173e8c31a72969fea32639c72a748a6a139e061e994df9a3c264b9ae5e"
+          ],
+          "duration_seconds": 1.2972542369971052,
+          "minimum_start_gap_seconds": 0.5001600250252523,
+          "p95_request_seconds": 0.5104221670189872,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "39c59f9408a7d5f1d3a6e913ef189f944b0e2983e64e6bb80cd6d8fe3b9fa886",
+            "96f82b57b84c6ed8a1239eada6215a0034a4b3ad7dc668775803bd3f5ebfb10b",
+            "d24719173e8c31a72969fea32639c72a748a6a139e061e994df9a3c264b9ae5e"
+          ],
+          "duration_seconds": 1.3966603759909049,
+          "minimum_start_gap_seconds": 0.5002274849684909,
+          "p95_request_seconds": 0.6148042120039463,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "39c59f9408a7d5f1d3a6e913ef189f944b0e2983e64e6bb80cd6d8fe3b9fa886",
+            "96f82b57b84c6ed8a1239eada6215a0034a4b3ad7dc668775803bd3f5ebfb10b",
+            "d24719173e8c31a72969fea32639c72a748a6a139e061e994df9a3c264b9ae5e"
+          ],
+          "duration_seconds": 1.2333103559794836,
+          "minimum_start_gap_seconds": 0.5001944940304384,
+          "p95_request_seconds": 0.6428973870351911,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        }
+      ]
+    },
+    {
+      "concurrent": [
+        {
+          "digests": [
+            "e702434fe282bf76a10e69f008920187daa968bf46c873b64de6bd0d7506cb52",
+            "7654bb79bd5a3ae54e28baef1e173083c98011c6107393a34bd21684360f2ef7",
+            "6a3be9cbfcf7f45ff2f975586ec58496e5f3cd9e15b50864972c2fad98016fbb"
+          ],
+          "duration_seconds": 2.1126417820341885,
+          "minimum_start_gap_seconds": 1.000161975971423,
+          "p95_request_seconds": 1.9972883469890803,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "e702434fe282bf76a10e69f008920187daa968bf46c873b64de6bd0d7506cb52",
+            "7654bb79bd5a3ae54e28baef1e173083c98011c6107393a34bd21684360f2ef7",
+            "6a3be9cbfcf7f45ff2f975586ec58496e5f3cd9e15b50864972c2fad98016fbb"
+          ],
+          "duration_seconds": 2.162132139026653,
+          "minimum_start_gap_seconds": 1.0001461019855924,
+          "p95_request_seconds": 2.002473619999364,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "e702434fe282bf76a10e69f008920187daa968bf46c873b64de6bd0d7506cb52",
+            "7654bb79bd5a3ae54e28baef1e173083c98011c6107393a34bd21684360f2ef7",
+            "6a3be9cbfcf7f45ff2f975586ec58496e5f3cd9e15b50864972c2fad98016fbb"
+          ],
+          "duration_seconds": 2.1201823300216347,
+          "minimum_start_gap_seconds": 1.0000733750057407,
+          "p95_request_seconds": 1.9998393369605765,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        }
+      ],
+      "decision": {
+        "deterministic": true,
+        "enable_two_workers": false,
+        "speedup_fraction": -0.0010659609309734174,
+        "start_rate_cap_ok": true,
+        "statuses_ok": true,
+        "tail_latency_ok": false
+      },
+      "method": {
+        "runs": 3,
+        "warmups": 1,
+        "workers": [
+          1,
+          2
+        ]
+      },
+      "scenario": {
+        "items": [
+          {
+            "accession": "SRR390728",
+            "fields": "run_accession,study_accession",
+            "format": "json",
+            "result": "read_run"
+          },
+          {
+            "accession": "SRR341578",
+            "fields": "run_accession,study_accession",
+            "format": "json",
+            "result": "read_run"
+          },
+          {
+            "accession": "ERR164407",
+            "fields": "run_accession,study_accession",
+            "format": "json",
+            "result": "read_run"
+          }
+        ],
+        "max_in_flight": 2,
+        "name": "ena_portal",
+        "request_delay": 1.0,
+        "service": "ena_portal",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/filereport"
+      },
+      "sequential": [
+        {
+          "digests": [
+            "e702434fe282bf76a10e69f008920187daa968bf46c873b64de6bd0d7506cb52",
+            "7654bb79bd5a3ae54e28baef1e173083c98011c6107393a34bd21684360f2ef7",
+            "6a3be9cbfcf7f45ff2f975586ec58496e5f3cd9e15b50864972c2fad98016fbb"
+          ],
+          "duration_seconds": 2.1054825140163302,
+          "minimum_start_gap_seconds": 1.000148006947711,
+          "p95_request_seconds": 0.997681422973983,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "e702434fe282bf76a10e69f008920187daa968bf46c873b64de6bd0d7506cb52",
+            "7654bb79bd5a3ae54e28baef1e173083c98011c6107393a34bd21684360f2ef7",
+            "6a3be9cbfcf7f45ff2f975586ec58496e5f3cd9e15b50864972c2fad98016fbb"
+          ],
+          "duration_seconds": 2.117924705031328,
+          "minimum_start_gap_seconds": 1.0001400340115651,
+          "p95_request_seconds": 1.023670624999795,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "e702434fe282bf76a10e69f008920187daa968bf46c873b64de6bd0d7506cb52",
+            "7654bb79bd5a3ae54e28baef1e173083c98011c6107393a34bd21684360f2ef7",
+            "6a3be9cbfcf7f45ff2f975586ec58496e5f3cd9e15b50864972c2fad98016fbb"
+          ],
+          "duration_seconds": 2.1289947179611772,
+          "minimum_start_gap_seconds": 1.0001851189881563,
+          "p95_request_seconds": 1.016749755013734,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        }
+      ]
+    },
+    {
+      "concurrent": [
+        {
+          "digests": [
+            "8adcfc784ff44886cdc96f2dc9b44cf55ff1a2fa6951938ad5284ac7a2299cee",
+            "8118b30c51f9ee66c893c47ff25a5940b217678c1a449f46dfd30629792390eb",
+            "57fede154fe039b3046739adb7051a6839433d8ef510b14f3caacd065ef82469"
+          ],
+          "duration_seconds": 2.1395752430544235,
+          "minimum_start_gap_seconds": 1.0001809089444578,
+          "p95_request_seconds": 1.9984424149733968,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "8adcfc784ff44886cdc96f2dc9b44cf55ff1a2fa6951938ad5284ac7a2299cee",
+            "8118b30c51f9ee66c893c47ff25a5940b217678c1a449f46dfd30629792390eb",
+            "57fede154fe039b3046739adb7051a6839433d8ef510b14f3caacd065ef82469"
+          ],
+          "duration_seconds": 3.1860172279994003,
+          "minimum_start_gap_seconds": 1.000113349989988,
+          "p95_request_seconds": 2.17811973701464,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "8adcfc784ff44886cdc96f2dc9b44cf55ff1a2fa6951938ad5284ac7a2299cee",
+            "8118b30c51f9ee66c893c47ff25a5940b217678c1a449f46dfd30629792390eb",
+            "57fede154fe039b3046739adb7051a6839433d8ef510b14f3caacd065ef82469"
+          ],
+          "duration_seconds": 2.195369815977756,
+          "minimum_start_gap_seconds": 1.0000626650289632,
+          "p95_request_seconds": 2.08155539695872,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        }
+      ],
+      "decision": {
+        "deterministic": true,
+        "enable_two_workers": false,
+        "speedup_fraction": -0.02508032022946885,
+        "start_rate_cap_ok": true,
+        "statuses_ok": true,
+        "tail_latency_ok": true
+      },
+      "method": {
+        "runs": 3,
+        "warmups": 1,
+        "workers": [
+          1,
+          2
+        ]
+      },
+      "scenario": {
+        "items": [
+          {
+            "_path": "E-MTAB-5061"
+          },
+          {
+            "_path": "E-MTAB-5214"
+          },
+          {
+            "_path": "E-MTAB-6701"
+          }
+        ],
+        "max_in_flight": 2,
+        "name": "biostudies",
+        "request_delay": 1.0,
+        "service": "biostudies",
+        "url": "https://www.ebi.ac.uk/biostudies/api/v1/studies/"
+      },
+      "sequential": [
+        {
+          "digests": [
+            "8adcfc784ff44886cdc96f2dc9b44cf55ff1a2fa6951938ad5284ac7a2299cee",
+            "8118b30c51f9ee66c893c47ff25a5940b217678c1a449f46dfd30629792390eb",
+            "57fede154fe039b3046739adb7051a6839433d8ef510b14f3caacd065ef82469"
+          ],
+          "duration_seconds": 2.196003118006047,
+          "minimum_start_gap_seconds": 1.0002267329837196,
+          "p95_request_seconds": 1.8071464350214228,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "8adcfc784ff44886cdc96f2dc9b44cf55ff1a2fa6951938ad5284ac7a2299cee",
+            "8118b30c51f9ee66c893c47ff25a5940b217678c1a449f46dfd30629792390eb",
+            "57fede154fe039b3046739adb7051a6839433d8ef510b14f3caacd065ef82469"
+          ],
+          "duration_seconds": 2.1264888949808665,
+          "minimum_start_gap_seconds": 1.0002135100075975,
+          "p95_request_seconds": 1.8210079689742997,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        },
+        {
+          "digests": [
+            "8adcfc784ff44886cdc96f2dc9b44cf55ff1a2fa6951938ad5284ac7a2299cee",
+            "8118b30c51f9ee66c893c47ff25a5940b217678c1a449f46dfd30629792390eb",
+            "57fede154fe039b3046739adb7051a6839433d8ef510b14f3caacd065ef82469"
+          ],
+          "duration_seconds": 2.1416563879465684,
+          "minimum_start_gap_seconds": 1.0002485120203346,
+          "p95_request_seconds": 1.8454852339928038,
+          "statuses": [
+            200,
+            200,
+            200
+          ]
+        }
+      ]
+    }
+  ],
+  "schema_version": "1.0"
+}

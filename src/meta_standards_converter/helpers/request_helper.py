@@ -29,22 +29,35 @@ logger = logging.getLogger(__name__)
 class RequestSettings:
     timeout: float = 30
     request_delay: float = 1.0
+    max_in_flight: int = 2
     max_retries: int = 3
     retry_statuses: frozenset[int] = frozenset({429, 500, 502, 503, 504})
     backoff_base: float = 0.5
     backoff_max: float = 8.0
 
+    def __post_init__(self) -> None:
+        if self.timeout <= 0:
+            raise ValueError("timeout must be positive")
+        if self.request_delay < 0:
+            raise ValueError("request_delay must be non-negative")
+        if self.max_in_flight < 1:
+            raise ValueError("max_in_flight must be a positive integer")
+        if self.max_retries < 0:
+            raise ValueError("max_retries must be non-negative")
+
 
 DEFAULT_REQUEST_SETTINGS = {
-    "ncbi_eutils": RequestSettings(request_delay=0.5),
-    "geo_ftp": RequestSettings(request_delay=1.0),
-    "ena_portal": RequestSettings(request_delay=1.0),
-    "biostudies": RequestSettings(request_delay=1.0),
+    "ncbi_eutils": RequestSettings(request_delay=0.5, max_in_flight=2),
+    "geo_ftp": RequestSettings(request_delay=1.0, max_in_flight=2),
+    "ena_portal": RequestSettings(request_delay=1.0, max_in_flight=2),
+    "biostudies": RequestSettings(request_delay=1.0, max_in_flight=2),
 }
 
 
 class RateLimitedRequester:
-    _service_state = {}
+    """Apply process-wide request-start and in-flight limits per HTTP host."""
+
+    _host_state = {}
     _state_lock = threading.Lock()
 
     def __init__(
@@ -67,9 +80,9 @@ class RateLimitedRequester:
 
         response = None
         for attempt in range(self.settings.max_retries + 1):
-            self._wait_for_service_slot()
+            host = (urlsplit(url).hostname or "").lower()
+            state = self._acquire_host_slot(host)
             started = self._clock()
-            host = urlsplit(url).hostname or ""
             logger.debug(
                 "HTTP request service=%s host=%s attempt=%s timeout=%s",
                 self.service,
@@ -78,7 +91,10 @@ class RateLimitedRequester:
                 kwargs.get("timeout"),
             )
             try:
-                response = self._get(url, **kwargs)
+                try:
+                    response = self._get(url, **kwargs)
+                finally:
+                    self._release_host_slot(state)
             except (
                 requests.exceptions.ConnectionError,
                 requests.exceptions.Timeout,
@@ -128,17 +144,33 @@ class RateLimitedRequester:
 
         return response
 
-    def _wait_for_service_slot(self):
-        state = self._state_for_service()
-        with state["lock"]:
+    def _acquire_host_slot(self, host: str):
+        state = self._state_for_host(host)
+        with state["condition"]:
+            state["request_delay"] = max(
+                state["request_delay"], self.settings.request_delay
+            )
+            state["max_in_flight"] = min(
+                state["max_in_flight"], self.settings.max_in_flight
+            )
+            while state["in_flight"] >= state["max_in_flight"]:
+                state["condition"].wait()
             last_request_at = state["last_request_at"]
             now = self._clock()
             if last_request_at is not None:
-                wait = self.settings.request_delay - (now - last_request_at)
+                wait = state["request_delay"] - (now - last_request_at)
                 if wait > 0:
                     self._sleep(wait)
                     now = self._clock()
             state["last_request_at"] = now
+            state["in_flight"] += 1
+        return state
+
+    @staticmethod
+    def _release_host_slot(state) -> None:
+        with state["condition"]:
+            state["in_flight"] -= 1
+            state["condition"].notify()
 
     def _retry_delay(self, response, attempt: int) -> float:
         retry_after = response.headers.get("Retry-After") if response is not None else None
@@ -149,15 +181,23 @@ class RateLimitedRequester:
                 pass
         return min(self.settings.backoff_base * (2 ** attempt), self.settings.backoff_max)
 
-    def _state_for_service(self):
+    def _state_for_host(self, host: str):
         with self._state_lock:
-            state = self._service_state.get(self.service)
+            state = self._host_state.get(host)
             if state is None:
-                state = {"lock": threading.Lock(), "last_request_at": None}
-                self._service_state[self.service] = state
+                state = {
+                    "condition": threading.Condition(),
+                    "last_request_at": None,
+                    "in_flight": 0,
+                    "max_in_flight": self.settings.max_in_flight,
+                    "request_delay": self.settings.request_delay,
+                }
+                self._host_state[host] = state
             return state
 
     @classmethod
     def reset_service_state(cls):
+        """Reset process host state; retained name preserves the v1 test API."""
+
         with cls._state_lock:
-            cls._service_state = {}
+            cls._host_state = {}

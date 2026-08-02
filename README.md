@@ -74,8 +74,10 @@ docker build -t meta-standards-converter .
 ### Requirements
 
 - Python `>=3.10`.
-- Base dependencies: `requests>=2.31.0` and `python-dateutil>=2.8.2`.
-- H5AD dependencies: AnnData, h5py, NumPy, pandas, Scanpy, and SciPy; install the `h5ad` extra.
+- Base dependencies: `requests>=2.31.0,<3` and `python-dateutil>=2.8.2,<3`.
+- H5AD dependencies have tested major-version bounds: AnnData `>=0.10.8,<1`,
+  h5py `>=3.10,<4`, NumPy `>=1.26,<3`, pandas `>=2.1,<3`, Scanpy
+  `>=1.10,<2`, and SciPy `>=1.11,<2`; install the `h5ad` extra.
 - Network access for live GEO, BioStudies, PubMed, NCBI SRA, and ENA lookups.
 - Host-side raw FASTQ processing: Java, Nextflow, and a supported Nextflow runtime/profile such as Docker or Apptainer.
 - GFF/GFF3 annotation conversion: `gffread`.
@@ -761,6 +763,11 @@ CLI or Python API
 
 Network requests pass through the
 [`RateLimitedRequester`](docs/codebase.md#request-helper) boundary.
+Limits are shared by normalized HTTP hostname, including across different
+service labels. Defaults conservatively allow two NCBI E-utilities starts per
+second and one start per second for GEO FTP, ENA Portal, and BioStudies, with at
+most two requests in flight per host. These are client ceilings, not provider
+entitlements; `429` and transient server responses still use bounded retries.
 [`GEOWebFetcher`](docs/codebase.md#geo-web-fetcher),
 [`GEOParser`](docs/codebase.md#geo-parser),
 [`AEConstructor`](docs/codebase.md#ae-constructor), and the
