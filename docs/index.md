@@ -177,12 +177,12 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: MINiML, JSON, package, series, sample, platform, enrichment
   link: [Open section](codebase.md#parsed-miniml-data-shape)
 
-- id: h5ad-metadata-schema-v3
+- id: h5ad-metadata-schema-v1
   title: H5AD metadata schema 1.0
-  anchor: h5ad-metadata-schema-v3
+  anchor: h5ad-metadata-schema-v1
   purpose: Defines canonical dotted observation columns, normalized sample values, schema markers, source-column treatment, and globally unique observation identifiers.
   keywords: H5AD, schema 1.0, obs, msc_metadata, sample_values, canonical columns, multivalue, observation ID
-  link: [Open section](codebase.md#h5ad-metadata-schema-v3)
+  link: [Open section](codebase.md#h5ad-metadata-schema-v1)
 
 - id: harmonization-overrides
   title: Harmonization overrides
@@ -198,6 +198,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: rootless, Docker, Compose, socket, ACL, Nextflow, noexec
   link: [Open section](codebase.md#rootless-json2h5ad-runtime)
 
+- id: rootless-acceptance-2026-07-31
+  title: Rootless acceptance evidence
+  anchor: rootless-acceptance-2026-07-31
+  purpose: Routes to the successful pinned nf-core rootless acceptance summary and its portable report.
+  keywords: rootless, acceptance, rnaseq 3.26.0, scrnaseq 4.2.0, H5AD, return code 0
+  link: [Open section](codebase.md#rootless-acceptance-2026-07-31)
+
 - id: reference-annotation-flow
   title: Reference and annotation flow
   anchor: reference-annotation-flow
@@ -208,6 +215,6 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: test-plan
   title: Test plan
   anchor: test-plan
-  purpose: Routes maintainers to behavioral and documentation verification coverage.
-  keywords: tests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-02 deterministic result.
+  keywords: tests, 418 passed, 3 skipped, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

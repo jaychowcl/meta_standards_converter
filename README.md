@@ -8,8 +8,9 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 1.0.0 introduces unified JSON-output orchestration while continuing to
-consume Atlas wire schema 2.0 and MINiML ledger schema 1.0. MSC remains
+Version 1.0.0 introduces unified JSON-output orchestration while consuming
+Atlas document schema 1.0, H5AD metadata schema 1.0, and MINiML ledger schema
+1.0. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
 import or depend on ThematicAtlases.
 Organization-specific H5AD adapters compose through the public `Asset`,
@@ -274,7 +275,7 @@ json2ae --list-platform-handlers
 `json2ae` validates all retained packages before converting any of them. For
 an Atlas v1 document it converts datasets whose status is `harmonized`, warns
 about other dataset states and their diagnostics, and fails when no convertible
-package groups remain. Legacy v1 `accessions` envelopes fail with cutover
+package groups remain. Legacy unversioned `accessions` envelopes fail with cutover
 guidance instead of being inferred. If the input came from
 `ae2json`, an unchanged single-SDRF package can reproduce its original tables
 exactly; edits to the typed `mage_tab.model` or mapped core fields regenerate
@@ -479,7 +480,7 @@ for dataset in result.datasets:
     print(dataset.dataset_id, dataset.metadata)
 ```
 
-The reader validates the v2 identity, collections, cross-references and summary,
+The reader validates the Atlas v1 identity, collections, cross-references and summary,
 returns only harmonized dataset metadata, and reports skipped states through
 `result.warnings`. MSC intentionally has no runtime or build dependency on
 ThematicAtlases; compatibility is verified with the producer-owned golden wire
@@ -762,6 +763,22 @@ Network requests pass through the
 [tabular](docs/codebase.md#json2tabular-flow) workflows are traced in the
 canonical handoff. CLI entrypoints catch failures per top-level input, while
 programmatic converter calls raise errors to their caller.
+
+## Testing
+
+The deterministic, network-blocked suite was last verified on 2026-08-02:
+`418 passed, 3 skipped`. The skipped cases are the explicitly opt-in live API
+provider contracts. Normal tests fake HTTP and subprocess boundaries and do
+not launch nf-core.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider
+```
+
+Rootless acceptance was completed separately on 2026-07-31: the pinned
+`nf-core/rnaseq` 3.26.0 and `nf-core/scrnaseq` 4.2.0 profiles returned code 0
+and produced non-partial H5AD results. See the
+[rootless acceptance report](docs/rootless-acceptance-2026-07-31.md).
 
 ## Docs
 

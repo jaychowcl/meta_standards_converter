@@ -343,6 +343,7 @@ class DocsIndexTests(unittest.TestCase):
             "### Docker",
             "### Rootless Docker Compose",
             "### Code flow",
+            "## Testing",
             "## Docs",
             "## Authors",
         ]
@@ -359,6 +360,27 @@ class DocsIndexTests(unittest.TestCase):
 
         self.assertEqual(sorted(positions), positions)
         self.assertNotIn("## Configuration", lines)
+
+    def test_docs_record_current_v1_schema_tests_and_rootless_acceptance(self):
+        readme_text = README.read_text(encoding="utf-8")
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+        index_text = INDEX.read_text(encoding="utf-8")
+        report = ROOT / "docs" / "rootless-acceptance-2026-07-31.md"
+
+        self.assertTrue(report.is_file())
+        report_text = report.read_text(encoding="utf-8")
+        for document in (readme_text, codebase_text):
+            self.assertIn("Atlas document schema 1.0", document)
+            self.assertIn("H5AD metadata schema 1.0", document)
+            self.assertIn("418 passed, 3 skipped", document)
+            self.assertIn("2026-08-02", document)
+        self.assertIn('<a id="h5ad-metadata-schema-v1"></a>', codebase_text)
+        self.assertIn('<a id="h5ad-metadata-schema-v3"></a>', codebase_text)
+        self.assertIn("#h5ad-metadata-schema-v1", index_text)
+        for evidence in ("rnaseq 3.26.0", "scrnaseq 4.2.0", "non-partial H5AD"):
+            self.assertIn(evidence, report_text)
+        for stale in ("Harmonized v2 datasets", "legacy v1 envelopes"):
+            self.assertNotIn(stale, codebase_text)
 
     def test_readme_configuration_documents_platform_handler_hierarchy(self):
         readme_text = README.read_text(encoding="utf-8")

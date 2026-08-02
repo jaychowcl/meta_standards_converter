@@ -164,7 +164,7 @@ credentials, or tokens.
 | tabular converters | `JSONPackageSource` → projectors | load/group then `project_sample` | Dataset groups become ordered row maps | Collisions/invalid output fail closed by default |
 | `JSON2H5ADConverter` | planner/downloader/runner | plan, localize, or process | Per-conversion state becomes sample AnnData | Per-sample failures retained; aggregate can be partial |
 | H5AD converter | metadata projectors | `project_sample`/`project_combined` | Projection applied before each write | Collision/shape/projector error fails conversion |
-| Atlas/MINiML source | `JSON2H5ADConverter` | `AtlasV1Reader` → `JSONPackageSource.load` then group conversion | Harmonized v2 datasets or ordinary packages become one conversion per dataset | Invalid versions/shapes raise before aggregation; non-harmonized states warn; per-group conversion failures are retained |
+| Atlas/MINiML source | `JSON2H5ADConverter` | `AtlasV1Reader` → `JSONPackageSource.load` then group conversion | Harmonized Atlas v1 datasets or ordinary packages become one conversion per dataset | Invalid versions/shapes raise before aggregation; non-harmonized states warn; per-group conversion failures are retained |
 | `NFCoreRunner` | Nextflow/nf-core | subprocess/system call | Samplesheet + reference + params produce pipeline results | Exit/output failure becomes a recorded pipeline failure |
 
 The orchestrating converter owns transient conversion state and output
@@ -256,10 +256,10 @@ statement for them; treat those as **evidence-gap**, not stable API.
   same group. Sample deduplication and conflicting-metadata rejection then run
   across all contained packages.
 - `AtlasV1Error` is the fail-closed `ValueError` subclass for unsupported
-  versions, legacy v1 envelopes, malformed collections, duplicate IDs, broken
+  versions, legacy unversioned envelopes, malformed collections, duplicate IDs, broken
   publication references, invalid dataset metadata, and inconsistent summary
   counts.
-- `SCHEMA_VERSION` is currently `"2.0"`. The producer-owned golden fixture is
+- `SCHEMA_VERSION` is currently `"1.0"`. The producer-owned golden fixture is
   copied verbatim to `tests/fixtures/contracts/atlas-document-v1.json`; tests
   consume it without importing ThematicAtlases.
 - Qualified production symbols are
@@ -780,7 +780,7 @@ src/meta_standards_converter/
 │   ├── json_outputs.py           # shared manifest/H5AD/obs output orchestration
 │   └── json_source.py            # MINiML and Atlas v1 package grouping
 ├── atlas_v1/
-│   └── reader.py                 # standalone v2 validation and adaptation
+│   └── reader.py                 # standalone Atlas v1 validation and adaptation
 ├── geo_handlers/
 │   ├── geo_webfetcher.py         # GEO MINiML URL building and download
 │   └── geo_parser.py             # MINiML XML to JSON-ready per-Series packages
@@ -839,7 +839,7 @@ tests/GSE328265_family.xml
 
 - Distribution version `1.0.0` is the initial unified JSON-output release. It uses
   H5AD metadata schema 1.0 and
-  continues to consume Atlas wire schema 2.0 and MINiML ledger schema 1.0;
+  consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
 - The package requires Python `>=3.10`.
 - Base runtime dependencies are `requests` and `python-dateutil`; the `h5ad` extra adds AnnData, Scanpy, NumPy, pandas, SciPy, and h5py.
@@ -1064,6 +1064,7 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
 `AssetDownloader` streams HTTP(S)/FTP processed assets into an output-local cache and verifies an MD5 when supplied. Source files are never modified. Gzip-compressed H5AD assets are expanded into a temporary `.h5ad` only while AnnData reads them; the cached download remains compressed. Study-level H5AD splitting recognizes canonical `msc.sample.accession` and the external generic columns `geo_accession`, `sample_id`, `sample`, and `gsm_accession`.
 
 <a id="h5ad-metadata-schema-v3"></a>
+<a id="h5ad-metadata-schema-v1"></a>
 ### H5AD metadata schema 1.0
 
 Converter-owned observation metadata uses only dotted names grouped under `msc.sample`, `msc.series`, `msc.platform`, `msc.archive`, `msc.library`, `msc.instrument`, `msc.protocol`, `msc.database`, `msc.asset`, `msc.expression`, `msc.characteristics`, `msc.observation`, and `msc.combination`. The converter does not generate underscore aliases. Existing underscore-style columns from an input H5AD remain opaque source columns: normalization preserves but neither interprets nor validates them. Custom projectors retain ownership of their injected names.
@@ -1109,7 +1110,7 @@ gzip-compressed genes trios.
 
 ```text
 JSONDataOutputOrchestrator.export_manifest(source, outdir, output_format)
-  -> AtlasV1Reader/JSONPackageSource loads MINiML or harmonized v2 metadata
+  -> AtlasV1Reader/JSONPackageSource loads MINiML or harmonized Atlas v1 metadata
   -> group packages by study and visit every sample in source order
   -> build TabularMetadataContext with normalized MINiML sample metadata
   -> invoke ordered TabularMetadataProjector objects
@@ -1148,6 +1149,10 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 <a id="rootless-json2h5ad-runtime"></a>
 ## Rootless json2h5ad Runtime
 
+The deterministic suite was refreshed on 2026-08-02 and reported
+`418 passed, 3 skipped`. The public wire contract is Atlas document schema 1.0
+and converter output uses H5AD metadata schema 1.0.
+
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
 
 `scripts/provision-rootless-json2h5ad.sh` is the administrative boundary. It installs rootless prerequisites, creates the locked `nfcore-runner` account, allocates a non-overlapping 65,536-ID subordinate range, enables its user service, and configures ACLs. The build context is read-only to the runner; `.out/json2h5ad` is the only writable project path.
@@ -1167,6 +1172,13 @@ administrator provisions nfcore-runner once
 ```
 
 The Compose container drops all capabilities, enables `no-new-privileges`, uses a read-only root filesystem, and receives a `noexec` tmpfs `/tmp`. Nextflow alone is pointed through `NXF_OPTS` at a separate executable 2 GiB `/nextflow-tmp`; this is required because its AWS/S3 client extracts a native library before staging iGenomes references. Host and container output paths are identical because the sibling nf-core task containers must bind the Nextflow work files by host-visible absolute path. The system rootful socket is never mounted. Final H5AD files use mode `0660`: this preserves the output directory's named project-user ACL while denying access to other users. Provisioning and Compose verify effective runner/project-owner ACL access; filesystems that map the rootless writer to `nobody:nogroup` are accepted when those checks pass, and no privileged ownership repair is attempted.
+
+<a id="rootless-acceptance-2026-07-31"></a>
+### Rootless acceptance evidence — 2026-07-31
+
+The dedicated acceptance run on 2026-07-31 completed `nf-core/rnaseq` 3.26.0
+and `nf-core/scrnaseq` 4.2.0 with return code 0 and non-partial H5AD results.
+See [`rootless-acceptance-2026-07-31.md`](rootless-acceptance-2026-07-31.md).
 
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape
