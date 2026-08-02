@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Load parsed MINiML or canonical Atlas v2 JSON as study-scoped packages."""
+"""Load parsed MINiML or canonical Atlas v1 JSON as study-scoped packages."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from meta_standards_converter.atlas_v2 import AtlasV2Reader
+from meta_standards_converter.atlas_v1 import AtlasV1Reader
 
 
 @dataclass(frozen=True)
@@ -55,10 +55,10 @@ class SourceLoadResult:
 
 
 class JSONPackageSource:
-    """Recognize native MINiML payloads and canonical Atlas v2 documents."""
+    """Recognize native MINiML payloads and canonical Atlas v1 documents."""
 
-    def __init__(self, atlas_reader: AtlasV2Reader | None = None) -> None:
-        self._atlas_reader = atlas_reader or AtlasV2Reader()
+    def __init__(self, atlas_reader: AtlasV1Reader | None = None) -> None:
+        self._atlas_reader = atlas_reader or AtlasV1Reader()
 
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
@@ -68,7 +68,7 @@ class JSONPackageSource:
         if isinstance(payload, Mapping) and (
             "schema_version" in payload or "accessions" in payload
         ):
-            return self._validate_result(self._atlas_v2(payload))
+            return self._validate_result(self._atlas_v1(payload))
         packages = payload if isinstance(payload, list) else [payload]
         if not packages:
             raise ValueError("JSON source contains no convertible package groups.")
@@ -118,7 +118,7 @@ class JSONPackageSource:
             return []
         return value if isinstance(value, list) else [value]
 
-    def _atlas_v2(self, payload: Mapping[str, Any]) -> SourceLoadResult:
+    def _atlas_v1(self, payload: Mapping[str, Any]) -> SourceLoadResult:
         result = self._atlas_reader.from_mapping(payload)
         groups = tuple(
             DatasetPackageGroup(
@@ -141,11 +141,11 @@ class JSONPackageSource:
         packages = metadata["packages"]
         if not isinstance(packages, list):
             raise ValueError(
-                f"Atlas v2 dataset {dataset_id} metadata.packages must be a list."
+                f"Atlas v1 dataset {dataset_id} metadata.packages must be a list."
             )
         if any(not isinstance(package, Mapping) for package in packages):
             raise ValueError(
-                f"Atlas v2 dataset {dataset_id} metadata.packages must contain objects."
+                f"Atlas v1 dataset {dataset_id} metadata.packages must contain objects."
             )
         return packages
 

@@ -13,15 +13,15 @@ import tomllib
 
 import pytest
 
-from meta_standards_converter.atlas_v2 import AtlasV2Error, AtlasV2Reader
+from meta_standards_converter.atlas_v1 import AtlasV1Error, AtlasV1Reader
 
 
 ROOT = Path(__file__).parents[1]
-FIXTURE = ROOT / "tests" / "fixtures" / "contracts" / "atlas-document-v2.json"
+FIXTURE = ROOT / "tests" / "fixtures" / "contracts" / "atlas-document-v1.json"
 
 
 def test_owner_contract_fixture_yields_only_harmonized_dataset_metadata():
-    result = AtlasV2Reader().load(FIXTURE)
+    result = AtlasV1Reader().load(FIXTURE)
 
     assert [dataset.dataset_id for dataset in result.datasets] == ["GSE100"]
     assert result.datasets[0].source_repository == "geo"
@@ -33,15 +33,15 @@ def test_owner_contract_fixture_yields_only_harmonized_dataset_metadata():
     )
 
 
-def test_reader_rejects_legacy_v1_envelopes_with_cutover_guidance():
+def test_reader_rejects_legacy_unversioned_envelopes_with_cutover_guidance():
     with pytest.raises(
-        AtlasV2Error,
+        AtlasV1Error,
         match=(
-            r"^Legacy Atlas v1 envelopes are not supported; "
-            r"use the pinned v1 tools\.$"
+            r"^Legacy unversioned accessions envelopes are not supported; "
+            r"use the Atlas v1 contract\.$"
         ),
     ):
-        AtlasV2Reader().from_mapping({"accessions": []})
+        AtlasV1Reader().from_mapping({"accessions": []})
 
 
 @pytest.mark.parametrize(
@@ -82,17 +82,17 @@ def test_reader_rejects_legacy_v1_envelopes_with_cutover_guidance():
         ),
     ],
 )
-def test_reader_fails_closed_on_invalid_v2_contracts(mutate, message):
+def test_reader_fails_closed_on_invalid_v1_contracts(mutate, message):
     payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
     mutate(payload)
 
-    with pytest.raises(AtlasV2Error, match=message):
-        AtlasV2Reader().from_mapping(payload)
+    with pytest.raises(AtlasV1Error, match=message):
+        AtlasV1Reader().from_mapping(payload)
 
 
 def test_runtime_and_build_metadata_do_not_depend_on_thematicatlases():
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert pyproject["project"]["version"] == "4.0.0"
+    assert pyproject["project"]["version"] == "1.0.0"
     dependencies = pyproject["project"]["dependencies"]
     assert not any("thematicatlases" in item.lower() for item in dependencies)
 

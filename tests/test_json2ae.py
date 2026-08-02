@@ -41,9 +41,9 @@ def package(accession="GSE1"):
     }
 
 
-def atlas_v2(datasets):
+def atlas_v1(datasets):
     return {
-        "schema_version": "2.0",
+        "schema_version": "1.0",
         "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
         "run": {
             "run_id": "run-test",
@@ -207,7 +207,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         constructor.miniml2magetab.side_effect = ["first", "second"]
         first = package("GSE1")
         second = package("E-MTAB-2")
-        payload = atlas_v2(
+        payload = atlas_v1(
             [
                 atlas_dataset("GSE1", "harmonized", first),
                 atlas_dataset("E-MTAB-2", "harmonized", second),
@@ -250,7 +250,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         )
 
     def test_convert_rejects_atlas_without_harmonized_metadata(self):
-        payload = atlas_v2([atlas_dataset("GSE1", "collected", {})])
+        payload = atlas_v1([atlas_dataset("GSE1", "collected", {})])
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)

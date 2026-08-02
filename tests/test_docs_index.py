@@ -263,7 +263,7 @@ class DocsIndexTests(unittest.TestCase):
         ]
 
         self.assertIn("ordinary parsed MINiML JSON", h5ad)
-        self.assertIn("canonical Atlas v2 document", h5ad)
+        self.assertIn("canonical Atlas v1 document", h5ad)
         self.assertIn("one group", h5ad)
         self.assertIn("`ConversionResult`", h5ad)
         self.assertIn("multiple groups", h5ad)
@@ -440,7 +440,7 @@ class DocsIndexTests(unittest.TestCase):
             "docs/MAGE-TABv1.1_2011_07_28.pdf",
             "docs/MINiML.xsd",
             "tests/GSE328265_family.xml",
-            "tests/fixtures/contracts/atlas-document-v2.json",
+            "tests/fixtures/contracts/atlas-document-v1.json",
         }
         hash_comment_files = {
             ".dockerignore",

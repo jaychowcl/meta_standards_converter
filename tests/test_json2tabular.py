@@ -41,7 +41,7 @@ def package(study: str = "GSE1", sample: str = "GSM1") -> dict:
     }
 
 
-def atlas_v2_dataset(dataset_id: str, metadata: dict) -> dict:
+def atlas_v1_dataset(dataset_id: str, metadata: dict) -> dict:
     return {
         "dataset_id": dataset_id,
         "source_repository": "geo",
@@ -55,9 +55,9 @@ def atlas_v2_dataset(dataset_id: str, metadata: dict) -> dict:
     }
 
 
-def atlas_v2_payload(datasets: list[dict]) -> dict:
+def atlas_v1_payload(datasets: list[dict]) -> dict:
     return {
-        "schema_version": "2.0",
+        "schema_version": "1.0",
         "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
         "run": {
             "run_id": "run-test",
@@ -108,10 +108,10 @@ def test_atlas_json_is_aggregated_into_one_csv(tmp_path):
     output = tmp_path / "output.csv"
     source.write_text(
         json.dumps(
-            atlas_v2_payload(
+            atlas_v1_payload(
                 [
-                    atlas_v2_dataset("GSE1", package("GSE1", "GSM1")),
-                    atlas_v2_dataset("GSE2", package("GSE2", "GSM2")),
+                    atlas_v1_dataset("GSE1", package("GSE1", "GSM1")),
+                    atlas_v1_dataset("GSE2", package("GSE2", "GSM2")),
                 ]
             )
         ),

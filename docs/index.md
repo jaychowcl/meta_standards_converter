@@ -30,7 +30,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: System context and boundaries
   anchor: system-context-and-boundaries
   purpose: Maps actors, external services, trust/process boundaries, and failure ownership.
-  keywords: boundary, GEO FTP, NCBI, ENA, PubMed, OLS, BioStudies, filesystem, Nextflow, Docker, Atlas v2
+  keywords: boundary, GEO FTP, NCBI, ENA, PubMed, OLS, BioStudies, filesystem, Nextflow, Docker, Atlas v1
   link: [Open section](codebase.md#system-context-and-boundaries)
 
 - id: architectural-decisions
@@ -75,12 +75,12 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: public API, __all__, signature, constructor, property, method, protocol, Asset, SourcePlanner, JSON2H5ADConverter, projector, failure, side effect
   link: [Open section](codebase.md#public-api-reference)
 
-- id: atlas-v2-reader
-  title: Atlas v2 reader
-  anchor: atlas-v2-reader
+- id: atlas-v1-reader
+  title: Atlas v1 reader
+  anchor: atlas-v1-reader
   purpose: Defines the standalone versioned wire reader, dataset adaptation, warnings, v1 rejection, and dependency boundary.
-  keywords: AtlasV2Reader, AtlasV2Error, schema_version, golden fixture, harmonized, metadata.packages, DatasetPackageGroup, standalone, no dependency
-  link: [Open section](codebase.md#atlas-v2-reader)
+  keywords: AtlasV1Reader, AtlasV1Error, schema_version, golden fixture, harmonized, metadata.packages, DatasetPackageGroup, standalone, no dependency
+  link: [Open section](codebase.md#atlas-v1-reader)
 
 - id: principal-workflows
   title: Principal workflows
@@ -99,8 +99,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: runtime-behavior
   title: Runtime behavior and packaging
   anchor: runtime-behavior
-  purpose: Defines the standalone 4.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
-  keywords: version 4.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
+  purpose: Defines the standalone 1.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
+  keywords: version 1.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
   link: [Open section](codebase.md#runtime-behavior)
 
 - id: live-api-provider-contracts
@@ -129,8 +129,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: workflow-json2ae
   title: Parsed JSON to MAGE-TAB
   anchor: workflow-json2ae
-  purpose: Traces native MINiML or canonical Atlas v2 loading, filtering, validation, enrichment, round-trip restoration, construction, and writing.
-  keywords: json2ae, JSON, Atlas v2, harmonized, warning, MAGE-TAB, round trip, overlay, IDF, SDRF
+  purpose: Traces native MINiML or canonical Atlas v1 loading, filtering, validation, enrichment, round-trip restoration, construction, and writing.
+  keywords: json2ae, JSON, Atlas v1, harmonized, warning, MAGE-TAB, round trip, overlay, IDF, SDRF
   link: [Open section](codebase.md#workflow-json2ae)
 
 - id: workflow-ae2json
@@ -178,10 +178,10 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   link: [Open section](codebase.md#parsed-miniml-data-shape)
 
 - id: h5ad-metadata-schema-v3
-  title: H5AD metadata schema 3.0
+  title: H5AD metadata schema 1.0
   anchor: h5ad-metadata-schema-v3
   purpose: Defines canonical dotted observation columns, normalized sample values, schema markers, source-column treatment, and globally unique observation identifiers.
-  keywords: H5AD, schema 3.0, obs, msc_metadata, sample_values, canonical columns, multivalue, observation ID, migration
+  keywords: H5AD, schema 1.0, obs, msc_metadata, sample_values, canonical columns, multivalue, observation ID
   link: [Open section](codebase.md#h5ad-metadata-schema-v3)
 
 - id: harmonization-overrides

@@ -64,7 +64,7 @@ def package(*files, accession="GSM1"):
     }
 
 
-def atlas_v2_dataset(dataset_id, metadata):
+def atlas_v1_dataset(dataset_id, metadata):
     return {
         "dataset_id": dataset_id,
         "source_repository": "geo",
@@ -78,9 +78,9 @@ def atlas_v2_dataset(dataset_id, metadata):
     }
 
 
-def atlas_v2_payload(datasets):
+def atlas_v1_payload(datasets):
     return {
-        "schema_version": "2.0",
+        "schema_version": "1.0",
         "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
         "run": {
             "run_id": "run-test",
@@ -194,12 +194,12 @@ def test_convert_source_runs_each_atlas_study_independently(tmp_path):
     source = tmp_path / "atlas.json"
     source.write_text(
         json.dumps(
-            atlas_v2_payload(
+            atlas_v1_payload(
                 [
-                    atlas_v2_dataset(
+                    atlas_v1_dataset(
                         "GSE1", package("one.h5ad", accession="GSM1")
                     ),
-                    atlas_v2_dataset(
+                    atlas_v1_dataset(
                         "GSE2",
                         {
                             **package("two.h5ad", accession="GSM2"),
@@ -453,7 +453,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["cell1", "cell2"], list(original.obs_names))
             self.assertEqual("h5ad", normalized.uns["meta_standards_converter"]["source_tier"])
             self.assertEqual(
-                "3.0",
+                "1.0",
                 normalized.uns["meta_standards_converter"]["metadata_schema_version"],
             )
             self.assertEqual("artifact_parent", normalized.uns["meta_standards_converter"]["path_base"])
@@ -461,7 +461,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["../source.h5ad"] * 2, list(normalized.obs["msc.asset.uri"]))
 
             sample_values = normalized.uns["msc_metadata"]["sample_values"]
-            self.assertEqual("3.0", normalized.uns["msc_metadata"]["schema_version"])
+            self.assertEqual("1.0", normalized.uns["msc_metadata"]["schema_version"])
             self.assertEqual(
                 ["sample_accession", "field", "ordinal", "value", "value_type"],
                 list(sample_values.columns),
@@ -477,7 +477,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual("artifact_parent", manifest["path_base"])
             self.assertEqual("../GSE1.json", manifest["source_json"])
             self.assertEqual("GSE1.h5ad", manifest["combined_h5ad"])
-            self.assertEqual("3.0", manifest["h5ad_metadata_schema_version"])
+            self.assertEqual("1.0", manifest["h5ad_metadata_schema_version"])
             self.assertEqual({"GSM1": "GSM1.h5ad"}, manifest["sample_h5ads"])
             self.assertEqual("../source.h5ad", manifest["assets"]["GSM1"]["path"])
             self.assertEqual("external", manifest["assets"]["GSM1"]["path_scope"])

@@ -40,11 +40,11 @@ def dataset(
     }
 
 
-def atlas_v2(datasets: list[dict]) -> dict:
+def atlas_v1(datasets: list[dict]) -> dict:
     completed = sum(item["status"] == "harmonized" for item in datasets)
     failed = sum(item["status"] == "failed" for item in datasets)
     return {
-        "schema_version": "2.0",
+        "schema_version": "1.0",
         "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
         "run": {
             "run_id": "run-test",
@@ -77,11 +77,11 @@ def test_miniml_packages_are_grouped_by_study(tmp_path):
     assert result.warnings == ()
 
 
-def test_atlas_v2_document_yields_only_harmonized_metadata(tmp_path):
+def test_atlas_v1_document_yields_only_harmonized_metadata(tmp_path):
     source = tmp_path / "atlas.json"
     source.write_text(
         json.dumps(
-            atlas_v2(
+            atlas_v1(
                 [
                     dataset("GSE1", "harmonized", package("GSE1", "GSM1")),
                     dataset(
@@ -115,11 +115,11 @@ def test_atlas_v2_document_yields_only_harmonized_metadata(tmp_path):
     )
 
 
-def test_atlas_v2_dataset_expands_multiple_miniml_packages(tmp_path):
+def test_atlas_v1_dataset_expands_multiple_miniml_packages(tmp_path):
     source = tmp_path / "atlas.json"
     source.write_text(
         json.dumps(
-            atlas_v2(
+            atlas_v1(
                 [
                     dataset(
                         "GSE1",
@@ -166,8 +166,8 @@ def test_conflicting_duplicate_samples_are_rejected(tmp_path):
     "payload",
     [
         [],
-        atlas_v2([]),
-        atlas_v2([dataset("GSE1", "collected", {})]),
+        atlas_v1([]),
+        atlas_v1([dataset("GSE1", "collected", {})]),
     ],
 )
 def test_sources_without_convertible_groups_fail_closed(tmp_path, payload):
@@ -184,7 +184,7 @@ def test_sources_without_convertible_groups_fail_closed(tmp_path, payload):
     "payload",
     [
         package("GSE1", "GSM1") | {"sample": []},
-        atlas_v2(
+        atlas_v1(
             [
                 dataset(
                     "GSE1",

@@ -1075,7 +1075,7 @@ class SourcePlanner:
 
 class JSON2H5ADConverter:
     MINIML_SCHEMA_VERSION = "1.0"
-    H5AD_METADATA_SCHEMA_VERSION = "3.0"
+    H5AD_METADATA_SCHEMA_VERSION = "1.0"
     PUBLICATION_POLICY = "citation_metadata_only"
     OBS_METADATA_FIELDS = {
         "msc.sample.title": "title",

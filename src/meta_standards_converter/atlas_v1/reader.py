@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Validate Atlas v2 JSON and adapt harmonized datasets for conversion."""
+"""Validate Atlas v1 JSON and adapt harmonized datasets for conversion."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 
-SCHEMA_VERSION = "2.0"
+SCHEMA_VERSION = "1.0"
 _TOP_LEVEL_FIELDS = {
     "schema_version",
     "atlas",
@@ -49,13 +49,13 @@ _JUDGEMENTS = {"relevant", "not_relevant", "unsure"}
 _DIAGNOSTIC_SEVERITIES = {"warning", "error"}
 
 
-class AtlasV2Error(ValueError):
-    """The input is not a valid or supported Atlas v2 document."""
+class AtlasV1Error(ValueError):
+    """The input is not a valid or supported Atlas v1 document."""
 
 
 @dataclass(frozen=True)
-class AtlasV2Dataset:
-    """One harmonized dataset adapted from an Atlas v2 document."""
+class AtlasV1Dataset:
+    """One harmonized dataset adapted from an Atlas v1 document."""
 
     dataset_id: str
     source_repository: str
@@ -64,40 +64,40 @@ class AtlasV2Dataset:
 
 
 @dataclass(frozen=True)
-class AtlasV2ReadResult:
+class AtlasV1ReadResult:
     """Convertible datasets plus diagnostics for skipped dataset states."""
 
-    datasets: tuple[AtlasV2Dataset, ...]
+    datasets: tuple[AtlasV1Dataset, ...]
     warnings: tuple[str, ...] = ()
 
 
 def _mapping(value: Any, name: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
-        raise AtlasV2Error(f"{name} must be an object")
+        raise AtlasV1Error(f"{name} must be an object")
     return value
 
 
 def _list(value: Any, name: str) -> list[Any]:
     if not isinstance(value, list):
-        raise AtlasV2Error(f"{name} must be an array")
+        raise AtlasV1Error(f"{name} must be an array")
     return value
 
 
 def _only(value: Mapping[str, Any], allowed: set[str], name: str) -> None:
     unknown = sorted(set(value) - allowed)
     if unknown:
-        raise AtlasV2Error(f"unknown {name} fields: {', '.join(unknown)}")
+        raise AtlasV1Error(f"unknown {name} fields: {', '.join(unknown)}")
 
 
 def _nonblank(value: Any, name: str) -> str:
     if not isinstance(value, str) or not value.strip():
-        raise AtlasV2Error(f"{name} must be a nonblank string")
+        raise AtlasV1Error(f"{name} must be a nonblank string")
     return value
 
 
 def _optional_string(value: Any, name: str) -> None:
     if value is not None and not isinstance(value, str):
-        raise AtlasV2Error(f"{name} must be a string or null")
+        raise AtlasV1Error(f"{name} must be a string or null")
 
 
 def _review(value: Any, name: str) -> None:
@@ -106,7 +106,7 @@ def _review(value: Any, name: str) -> None:
     review = _mapping(value, name)
     _only(review, {"judgement", "criteria", "evidence"}, name)
     if review.get("judgement") not in _JUDGEMENTS:
-        raise AtlasV2Error(f"{name}.judgement is not a supported value")
+        raise AtlasV1Error(f"{name}.judgement is not a supported value")
     for index, raw in enumerate(_list(review.get("criteria"), f"{name}.criteria")):
         criterion = _mapping(raw, f"{name}.criteria[{index}]")
         _only(
@@ -117,7 +117,7 @@ def _review(value: Any, name: str) -> None:
         _nonblank(criterion.get("criterion"), f"{name}.criteria[{index}].criterion")
         passed = criterion.get("passed")
         if passed is not None and not isinstance(passed, bool):
-            raise AtlasV2Error(
+            raise AtlasV1Error(
                 f"{name}.criteria[{index}].passed must be boolean or null"
             )
         _optional_string(
@@ -168,25 +168,25 @@ def _harmonization(value: Any, name: str) -> None:
         _nonblank(stage, f"{name}.degraded_stages[{index}]")
 
 
-class AtlasV2Reader:
+class AtlasV1Reader:
     """Read the versioned wire format without importing its producer package."""
 
-    def load(self, path: str | Path) -> AtlasV2ReadResult:
+    def load(self, path: str | Path) -> AtlasV1ReadResult:
         with Path(path).open(encoding="utf-8") as handle:
             payload = json.load(handle)
         return self.from_mapping(payload)
 
-    def from_mapping(self, value: Mapping[str, Any]) -> AtlasV2ReadResult:
+    def from_mapping(self, value: Mapping[str, Any]) -> AtlasV1ReadResult:
         data = _mapping(value, "AtlasDocument")
         if "accessions" in data and "schema_version" not in data:
-            raise AtlasV2Error(
-                "Legacy Atlas v1 envelopes are not supported; "
-                "use the pinned v1 tools."
+            raise AtlasV1Error(
+                "Legacy unversioned accessions envelopes are not supported; "
+                "use the Atlas v1 contract."
             )
         _only(data, _TOP_LEVEL_FIELDS, "AtlasDocument")
         version = str(data.get("schema_version", ""))
         if version != SCHEMA_VERSION:
-            raise AtlasV2Error(f"unsupported Atlas schema version: {version!r}")
+            raise AtlasV1Error(f"unsupported Atlas schema version: {version!r}")
 
         atlas = _mapping(data.get("atlas"), "atlas")
         _only(atlas, {"atlas_id", "title", "theme"}, "atlas")
@@ -199,7 +199,7 @@ class AtlasV2Reader:
         _nonblank(run.get("run_id"), "run.run_id")
         _nonblank(run.get("created_at"), "run.created_at")
         if run.get("status") not in _RUN_STATUSES:
-            raise AtlasV2Error("run.status is not a supported value")
+            raise AtlasV1Error("run.status is not a supported value")
         config = _mapping(run.get("config"), "run.config")
         _only(
             config,
@@ -235,11 +235,11 @@ class AtlasV2Reader:
             )
             _review(publication.get("review"), f"publications[{index}].review")
         if len(publication_ids) != len(set(publication_ids)):
-            raise AtlasV2Error("duplicate publication_id in AtlasDocument")
+            raise AtlasV1Error("duplicate publication_id in AtlasDocument")
 
         raw_datasets = _list(data.get("datasets"), "datasets")
         dataset_ids: list[str] = []
-        converted: list[AtlasV2Dataset] = []
+        converted: list[AtlasV1Dataset] = []
         warnings: list[str] = []
         failed_count = 0
         harmonized_count = 0
@@ -256,12 +256,12 @@ class AtlasV2Reader:
             )
             ordinal = dataset.get("source_ordinal")
             if isinstance(ordinal, bool) or not isinstance(ordinal, int):
-                raise AtlasV2Error(
+                raise AtlasV1Error(
                     f"datasets[{index}].source_ordinal must be an integer"
                 )
             status = dataset.get("status")
             if status not in _DATASET_STATUSES:
-                raise AtlasV2Error(
+                raise AtlasV1Error(
                     f"datasets[{index}].status is not a supported value"
                 )
             metadata = _mapping(
@@ -277,7 +277,7 @@ class AtlasV2Reader:
             )
             unknown_publications = sorted(set(references) - set(publication_ids))
             if unknown_publications:
-                raise AtlasV2Error(
+                raise AtlasV1Error(
                     f"dataset {dataset_id!r} references unknown publication: "
                     + ", ".join(unknown_publications)
                 )
@@ -305,7 +305,7 @@ class AtlasV2Reader:
                 )
                 severity = diagnostic.get("severity")
                 if severity not in _DIAGNOSTIC_SEVERITIES:
-                    raise AtlasV2Error(
+                    raise AtlasV1Error(
                         f"datasets[{index}].diagnostics[{diagnostic_index}]."
                         "severity is not a supported value"
                     )
@@ -318,7 +318,7 @@ class AtlasV2Reader:
             if status == "harmonized":
                 harmonized_count += 1
                 converted.append(
-                    AtlasV2Dataset(
+                    AtlasV1Dataset(
                         dataset_id=dataset_id,
                         source_repository=repository,
                         source_ordinal=ordinal,
@@ -337,7 +337,7 @@ class AtlasV2Reader:
                 warnings.append(warning)
 
         if len(dataset_ids) != len(set(dataset_ids)):
-            raise AtlasV2Error("duplicate dataset_id in AtlasDocument")
+            raise AtlasV1Error("duplicate dataset_id in AtlasDocument")
 
         summary = _mapping(data.get("summary"), "summary")
         _only(
@@ -358,15 +358,15 @@ class AtlasV2Reader:
         }
         for field, expected in expected_summary.items():
             if summary.get(field) != expected:
-                raise AtlasV2Error(f"summary {field} does not match document")
+                raise AtlasV1Error(f"summary {field} does not match document")
 
-        return AtlasV2ReadResult(tuple(converted), tuple(warnings))
+        return AtlasV1ReadResult(tuple(converted), tuple(warnings))
 
 
 __all__ = [
     "SCHEMA_VERSION",
-    "AtlasV2Dataset",
-    "AtlasV2Error",
-    "AtlasV2ReadResult",
-    "AtlasV2Reader",
+    "AtlasV1Dataset",
+    "AtlasV1Error",
+    "AtlasV1ReadResult",
+    "AtlasV1Reader",
 ]

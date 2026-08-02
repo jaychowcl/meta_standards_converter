@@ -38,7 +38,7 @@ PLATFORM_HANDLERS = (
 
 
 class TestJSON2AECLI(unittest.TestCase):
-    def test_help_advertises_canonical_atlas_v2_json(self):
+    def test_help_advertises_canonical_atlas_v1_json(self):
         stdout = StringIO()
 
         with self.assertRaises(SystemExit) as raised:
@@ -46,7 +46,7 @@ class TestJSON2AECLI(unittest.TestCase):
                 main(["--help"])
 
         self.assertEqual(0, raised.exception.code)
-        self.assertIn("canonical Atlas v2 JSON", stdout.getvalue())
+        self.assertIn("canonical Atlas v1 JSON", stdout.getvalue())
 
     @patch("meta_standards_converter.cli.json2ae.json2ae")
     def test_list_platform_handlers_requires_no_json_or_converter(self, json2ae_mock):

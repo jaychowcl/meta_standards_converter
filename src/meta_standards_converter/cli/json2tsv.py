@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Command line interface for parsed MINiML or Atlas v2 JSON to TSV."""
+"""Command line interface for parsed MINiML or Atlas v1 JSON to TSV."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Convert parsed MINiML or canonical Atlas v2 JSON files to a sample manifest."
+        description="Convert parsed MINiML or canonical Atlas v1 JSON files to a sample manifest."
     )
     parser.add_argument("json_path", nargs="+")
     parser.add_argument("--out", "--outdir", dest="outdir", default=".")

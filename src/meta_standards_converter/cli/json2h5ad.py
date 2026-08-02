@@ -7,7 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """
-Command line interface for parsed MINiML or canonical Atlas v2 JSON to H5AD.
+Command line interface for parsed MINiML or canonical Atlas v1 JSON to H5AD.
 """
 
 import argparse
@@ -25,14 +25,14 @@ logger = logging.getLogger(__name__)
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Convert parsed MINiML or canonical Atlas v2 JSON files to H5AD."
+            "Convert parsed MINiML or canonical Atlas v1 JSON files to H5AD."
         )
     )
     parser.add_argument(
         "json_path",
         nargs="+",
         help=(
-            "Parsed MINiML or canonical Atlas v2 JSON file(s), "
+            "Parsed MINiML or canonical Atlas v1 JSON file(s), "
             "for example GSE234602.json."
         ),
     )

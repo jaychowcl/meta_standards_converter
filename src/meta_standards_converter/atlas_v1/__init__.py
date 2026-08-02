@@ -6,18 +6,18 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Standalone public reader for the Atlas v2 wire contract."""
+"""Standalone public reader for the Atlas v1 wire contract."""
 
 from .reader import (
-    AtlasV2Dataset,
-    AtlasV2Error,
-    AtlasV2ReadResult,
-    AtlasV2Reader,
+    AtlasV1Dataset,
+    AtlasV1Error,
+    AtlasV1ReadResult,
+    AtlasV1Reader,
 )
 
 __all__ = [
-    "AtlasV2Dataset",
-    "AtlasV2Error",
-    "AtlasV2ReadResult",
-    "AtlasV2Reader",
+    "AtlasV1Dataset",
+    "AtlasV1Error",
+    "AtlasV1ReadResult",
+    "AtlasV1Reader",
 ]
