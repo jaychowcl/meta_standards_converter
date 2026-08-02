@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import os
+import inspect
 import sys
 import threading
 import unittest
@@ -52,6 +53,16 @@ def response(status_code=200, headers=None):
 class TestRateLimitedRequester(unittest.TestCase):
     def setUp(self):
         RateLimitedRequester.reset_service_state()
+
+    def test_public_request_boundary_has_explicit_return_types(self):
+        self.assertEqual(
+            inspect.signature(RateLimitedRequester.get).return_annotation,
+            "requests.Response",
+        )
+        self.assertEqual(
+            inspect.signature(RateLimitedRequester.reset_service_state).return_annotation,
+            "None",
+        )
 
     def test_get_applies_default_timeout(self):
         get = Mock(return_value=response())

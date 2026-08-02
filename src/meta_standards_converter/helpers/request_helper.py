@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import logging
 import threading
 import time
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import urlsplit
 
 import requests
@@ -76,7 +76,8 @@ class RateLimitedRequester:
         self._clock = clock or time.monotonic
         self._event_emitter = event_emitter
 
-    def get(self, url: str, **kwargs):
+    def get(self, url: str, **kwargs: Any) -> requests.Response:
+        """GET one URL under the process-wide host policy and bounded retries."""
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.settings.timeout
 
@@ -158,7 +159,14 @@ class RateLimitedRequester:
 
         return response
 
-    def _emit_request_event(self, host, status, attempts, elapsed, status_code):
+    def _emit_request_event(
+        self,
+        host: str,
+        status: str,
+        attempts: int,
+        elapsed: float,
+        status_code: int | None,
+    ) -> None:
         if self._event_emitter is not None:
             self._event_emitter.emit(
                 "provider_request",
@@ -169,7 +177,7 @@ class RateLimitedRequester:
                 attributes={"host": host, "attempts": attempts, "status_code": status_code},
             )
 
-    def _acquire_host_slot(self, host: str):
+    def _acquire_host_slot(self, host: str) -> dict[str, Any]:
         state = self._state_for_host(host)
         with state["condition"]:
             state["request_delay"] = max(
@@ -192,12 +200,14 @@ class RateLimitedRequester:
         return state
 
     @staticmethod
-    def _release_host_slot(state) -> None:
+    def _release_host_slot(state: dict[str, Any]) -> None:
         with state["condition"]:
             state["in_flight"] -= 1
             state["condition"].notify()
 
-    def _retry_delay(self, response, attempt: int) -> float:
+    def _retry_delay(
+        self, response: requests.Response | None, attempt: int
+    ) -> float:
         retry_after = response.headers.get("Retry-After") if response is not None else None
         if retry_after:
             try:
@@ -206,7 +216,7 @@ class RateLimitedRequester:
                 pass
         return min(self.settings.backoff_base * (2 ** attempt), self.settings.backoff_max)
 
-    def _state_for_host(self, host: str):
+    def _state_for_host(self, host: str) -> dict[str, Any]:
         with self._state_lock:
             state = self._host_state.get(host)
             if state is None:
@@ -221,7 +231,7 @@ class RateLimitedRequester:
             return state
 
     @classmethod
-    def reset_service_state(cls):
+    def reset_service_state(cls) -> None:
         """Reset process host state; retained name preserves the v1 test API."""
 
         with cls._state_lock:

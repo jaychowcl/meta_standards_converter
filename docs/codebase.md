@@ -2099,7 +2099,7 @@ Other helpers:
 
 `class RateLimitedRequester`
 
-- `get(url: str, **kwargs)` wraps `requests.get()`, applies a default timeout,
+- `get(url: str, **kwargs: Any) -> requests.Response` wraps `requests.get()`, applies a default timeout,
   enforces host-wide delay and in-flight limits, retries configured statuses, and returns a response
   or raises the exhausted HTTP/transport error.
 - `reset_service_state()` is a class-level test/operations hook that clears
