@@ -465,6 +465,11 @@ json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
 Programmatic callers use `JSONDataOutputOrchestrator`; its manifest, H5AD, and
 AnnData-metadata methods return typed result objects. Injected
 `TabularMetadataProjector` objects can replace the default manifest columns.
+Related manifest and AnnData-metadata files are published into immutable,
+checksummed generations. A single fsynced `current.json` pointer is the
+crash-atomic authority; returned results expose `bundle_pointer_path`. Existing
+direct output files remain v1 compatibility views. If compatibility recovery
+fails, `ArtifactRecoveryError` preserves and reports every remaining backup.
 
 ### Python API
 

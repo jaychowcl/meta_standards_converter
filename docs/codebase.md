@@ -233,7 +233,7 @@ failure behavior are detailed in
 <a id="public-api-reference"></a>
 ## Public API reference
 
-The formal support boundary is the sixteen names in
+The formal support boundary is the twenty names in
 `meta_standards_converter.converters.__all__` plus the four names in
 `meta_standards_converter.atlas_v1.__all__`. CLI converter classes are also
 supported through their registered commands. Other non-underscored
@@ -2277,3 +2277,28 @@ rg -n "^(#|##|###) " docs/codebase.md docs/index.md
 ```
 
 Then retrieve representative anchors with the commands in `docs/index.md` to confirm each index entry resolves to its intended section.
+
+<a id="durable-artifact-publication"></a>
+## Durable artifact publication
+
+`JSONDataOutputOrchestrator` publishes related tabular and AnnData metadata
+artifacts with `DurableArtifactBundlePublisher`. Each commit copies staged files
+into a new immutable generation, records size and SHA-256 values in a schema-1.0
+generation manifest, fsyncs every file and directory, refreshes direct-file
+compatibility views, and atomically replaces one `current.json` pointer.
+`resolve_current_bundle` validates the pointer, manifest, contained paths, and
+content digests. Pointer-aware consumers therefore see one complete generation;
+legacy filenames remain a transition view without bundle-wide atomic visibility.
+
+If publication fails before pointer commit, prior compatibility views are
+restored. A restoration failure raises `ArtifactRecoveryError` with the original
+publication error, all recovery errors, and surviving recovery paths, which are
+deliberately retained. The public surface also exports
+`PublishedArtifactBundle` and `resolve_current_bundle`; result envelopes expose
+the additive `bundle_pointer_path` field without changing H5AD metadata schema
+1.0 or Atlas v1 inputs. Qualified public symbols are
+`meta_standards_converter.artifact_bundle.ArtifactRecoveryError`,
+`meta_standards_converter.artifact_bundle.DurableArtifactBundlePublisher`,
+`meta_standards_converter.artifact_bundle.PublishedArtifactBundle`, and
+`meta_standards_converter.artifact_bundle.resolve_current_bundle`.
+[source](../src/meta_standards_converter/artifact_bundle.py)

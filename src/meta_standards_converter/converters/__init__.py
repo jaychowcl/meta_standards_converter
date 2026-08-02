@@ -29,6 +29,12 @@ from .json_outputs import (
     AnnDataMetadataExportResult,
     JSONDataOutputOrchestrator,
 )
+from meta_standards_converter.artifact_bundle import (
+    ArtifactRecoveryError,
+    DurableArtifactBundlePublisher,
+    PublishedArtifactBundle,
+    resolve_current_bundle,
+)
 
 __all__ = [
     "AnnDataMetadataProjection",
@@ -47,4 +53,8 @@ __all__ = [
     "AnnDataMetadataBatchResult",
     "AnnDataMetadataExportResult",
     "JSONDataOutputOrchestrator",
+    "ArtifactRecoveryError",
+    "DurableArtifactBundlePublisher",
+    "PublishedArtifactBundle",
+    "resolve_current_bundle",
 ]

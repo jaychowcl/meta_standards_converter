@@ -103,6 +103,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: version 1.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
   link: [Open section](codebase.md#runtime-behavior)
 
+- id: durable-artifact-publication
+  title: Durable artifact publication
+  anchor: durable-artifact-publication
+  purpose: Defines immutable generations, the atomic current pointer, compatibility views, digest validation, and recovery failures.
+  keywords: artifact, generation, current.json, fsync, rollback, recovery, bundle pointer
+  link: [Open section](codebase.md#durable-artifact-publication)
+
 - id: live-api-provider-contracts
   title: Live API provider contracts
   anchor: live-api-provider-contracts

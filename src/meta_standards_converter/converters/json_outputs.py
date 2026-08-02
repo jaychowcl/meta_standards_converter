@@ -11,12 +11,15 @@
 from __future__ import annotations
 
 import json
-import os
-import shutil
 import tempfile
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+
+from meta_standards_converter.artifact_bundle import (
+    DurableArtifactBundlePublisher,
+    PublishedArtifactBundle,
+)
 
 from .json2h5ad import BatchConversionResult, ConversionResult, JSON2H5ADConverter
 from .json2tabular import JSON2TSVConverter, TabularMetadataProjector
@@ -37,6 +40,7 @@ class AnnDataMetadataExportResult:
     warnings: tuple[str, ...] = ()
     errors: tuple[str, ...] = ()
     failures: tuple[str, ...] = ()
+    bundle_pointer_path: str | None = None
 
     @property
     def partial(self) -> bool:
@@ -44,6 +48,8 @@ class AnnDataMetadataExportResult:
 
     def to_dict(self) -> dict[str, Any]:
         artifacts = {"obs": self.obs_path, "manifest": self.manifest_path}
+        if self.bundle_pointer_path:
+            artifacts["bundle_pointer"] = self.bundle_pointer_path
         if self.var_path:
             artifacts["var"] = self.var_path
         if self.uns_path:
@@ -148,12 +154,12 @@ class JSONDataOutputOrchestrator:
                 + "\n",
                 encoding="utf-8",
             )
-            _publish_bundle(
+            published = _publish_bundle(
                 {"table": staged_table, "manifest": staged_manifest},
                 {"table": table, "manifest": manifest},
                 overwrite=overwrite,
             )
-        return result
+        return replace(result, bundle_pointer_path=str(published.pointer_path))
 
     def export_h5ad(self, source: str | Path, *, outdir: str | Path, **options):
         return self.h5ad_converter.convert(str(source), out=str(outdir), **options)
@@ -275,8 +281,8 @@ class JSONDataOutputOrchestrator:
                 + "\n",
                 encoding="utf-8",
             )
-            _publish_bundle(staged, destinations, overwrite=overwrite)
-        return result
+            published = _publish_bundle(staged, destinations, overwrite=overwrite)
+        return replace(result, bundle_pointer_path=str(published.pointer_path))
 
 
 def _json_value(value: Any) -> Any:
@@ -315,30 +321,11 @@ def _publish_bundle(
     destinations: Mapping[str, Path],
     *,
     overwrite: bool,
-) -> None:
-    root = next(iter(destinations.values())).parent
-    root.mkdir(parents=True, exist_ok=True)
-    backup = next(iter(staged.values())).parent / "backup"
-    backup.mkdir()
-    published: list[Path] = []
-    backups: dict[Path, Path] = {}
-    try:
-        for name, destination in destinations.items():
-            if destination.exists():
-                if not overwrite:
-                    raise FileExistsError(f"Output already exists: {destination}")
-                saved = backup / destination.name
-                os.replace(destination, saved)
-                backups[destination] = saved
-            os.replace(staged[name], destination)
-            published.append(destination)
-    except Exception:
-        for destination in reversed(published):
-            if destination.exists():
-                destination.unlink()
-        for destination, saved in backups.items():
-            if saved.exists():
-                os.replace(saved, destination)
-        raise
-    finally:
-        shutil.rmtree(backup, ignore_errors=True)
+) -> PublishedArtifactBundle:
+    """Publish one crash-durable generation plus legacy compatibility views."""
+
+    return DurableArtifactBundlePublisher().publish(
+        staged,
+        destinations,
+        overwrite=overwrite,
+    )

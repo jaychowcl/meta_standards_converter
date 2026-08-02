@@ -50,6 +50,8 @@ class TabularMetadataProjector(Protocol):
 
 @dataclass(frozen=True)
 class TabularConversionResult:
+    """Result and compatibility paths for one tabular artifact generation."""
+
     row_count: int
     columns: tuple[str, ...]
     dataset_ids: tuple[str, ...]
@@ -57,6 +59,7 @@ class TabularConversionResult:
     errors: tuple[str, ...] = ()
     output_path: str | None = None
     manifest_path: str | None = None
+    bundle_pointer_path: str | None = None
 
     @property
     def partial(self) -> bool:
@@ -74,6 +77,7 @@ class TabularConversionResult:
             "artifacts": {
                 "table": self.output_path,
                 "manifest": self.manifest_path,
+                "bundle_pointer": self.bundle_pointer_path,
             },
         }
 
