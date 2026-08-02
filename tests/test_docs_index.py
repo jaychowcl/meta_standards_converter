@@ -442,6 +442,32 @@ class DocsIndexTests(unittest.TestCase):
         for command in CLI_COMMANDS:
             self.assertIn(f"`{command}`", readme_text)
 
+    def test_docs_distinguish_current_magetab_roundtrip_from_proposed_core(self):
+        readme_text = README.read_text(encoding="utf-8")
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+        index_text = INDEX.read_text(encoding="utf-8")
+        anchor = "proposed-enriched-miniml-core"
+
+        self.assertIn(f'<a id="{anchor}"></a>', codebase_text)
+        self.assertIn(f"codebase.md#{anchor}", index_text)
+        for phrase in (
+            "not an implemented schema",
+            "mage_tab.model",
+            "mage_tab.roundtrip",
+            "protocols",
+            "assay paths",
+            "typed attributes",
+            "document boundaries",
+            "geo2json",
+            "geo2ae",
+            "json2ae",
+            "json2h5ad",
+            "json2tsv",
+        ):
+            self.assertIn(phrase, codebase_text)
+        self.assertIn("Proposed enriched core", readme_text)
+        self.assertIn("not current runtime behavior", readme_text)
+
     def test_readme_documents_all_console_scripts(self):
         readme_text = README.read_text(encoding="utf-8")
         with PYPROJECT.open("rb") as handle:
