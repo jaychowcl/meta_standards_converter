@@ -846,9 +846,14 @@ tests/GSE328265_family.xml
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
 - The package requires Python `>=3.10`.
+- The 2026-08-02 local compatibility point passed the complete deterministic
+  suite on Python 3.12 with python-dateutil 2.9.0.post0, requests 2.34.2,
+  AnnData 0.13.2, h5py 3.16.0, NumPy 2.4.6, pandas 3.0.5, Scanpy 1.12.3, and
+  SciPy 1.18.0. Declared next-major ceilings contain that tested point; they are
+  compatibility bounds, not claims that every intervening version was tested.
 - Base runtime dependencies are `requests>=2.31,<3` and
   `python-dateutil>=2.8.2,<3`; the `h5ad` extra bounds AnnData `<1`, Scanpy
-  `<2`, NumPy `<3`, pandas `<3`, SciPy `<2`, and h5py `<4` while retaining the
+  `<2`, NumPy `<3`, pandas `<4`, SciPy `<2`, and h5py `<4` while retaining the
   documented minimum versions.
 - The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.

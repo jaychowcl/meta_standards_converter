@@ -76,7 +76,7 @@ docker build -t meta-standards-converter .
 - Python `>=3.10`.
 - Base dependencies: `requests>=2.31.0,<3` and `python-dateutil>=2.8.2,<3`.
 - H5AD dependencies have tested major-version bounds: AnnData `>=0.10.8,<1`,
-  h5py `>=3.10,<4`, NumPy `>=1.26,<3`, pandas `>=2.1,<3`, Scanpy
+  h5py `>=3.10,<4`, NumPy `>=1.26,<3`, pandas `>=2.1,<4`, Scanpy
   `>=1.10,<2`, and SciPy `>=1.11,<2`; install the `h5ad` extra.
 - Network access for live GEO, BioStudies, PubMed, NCBI SRA, and ENA lookups.
 - Host-side raw FASTQ processing: Java, Nextflow, and a supported Nextflow runtime/profile such as Docker or Apptainer.
