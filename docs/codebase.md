@@ -151,6 +151,49 @@ credentials, or tokens.
 - Rootless Compose refuses a daemon without rootless security mode and confines
   writable state to the configured output tree.
 
+<a id="proposed-enriched-miniml-core"></a>
+## Proposed enriched MINiML-compatible core
+
+This section records a design direction, not an implemented schema. Current
+`ae2json` output preserves MAGE-TAB-only semantics under the namespaced
+`mage_tab.model` and preserves exact source tables and fingerprints under
+`mage_tab.roundtrip`. An unchanged single-SDRF package can therefore be
+restored exactly; edited packages regenerate from the typed model and overlay
+only unambiguous mapped core values. Removing `mage_tab` is not lossless.
+
+The fixed MINiML-compatible core has no faithful location for arbitrary
+protocol graphs and their performers, hardware, software, parameters, or
+accessions; independent assay paths and ordered node/`Protocol REF` chains;
+typed attributes with unit and ontology companions; QC, replicate, and
+normalization declarations; arbitrary IDF/SDRF properties; or multiple source
+document boundaries. Flattening these concepts into existing Series, Sample,
+or Platform keys would lose ordering, multiplicity, identity, or
+column-occurrence information needed to reconstruct MAGE-TAB.
+
+The proposed enriched core would add optional, namespaced structured fields
+for protocols, assay paths, typed attributes, declarations, generic
+properties, and document boundaries. It would promote semantic information
+that is currently available only in `mage_tab.model`; source-specific protocol
+identifiers and byte-perfect formatting would remain outside the semantic
+guarantee. `mage_tab.roundtrip` would continue to provide exact restoration
+for unchanged source documents during a compatibility period.
+
+Any implementation must be additive: existing core field names, types, and
+meanings remain unchanged. `geo2json` and `geo2ae` must keep their current GEO
+projection and construction behavior; `json2ae` may consume enriched fields
+only when present; and `json2h5ad` and `json2tsv` must continue to read their
+established metadata paths without output-shape changes. Existing packages
+without the extension remain valid, and unknown extension fields must not
+alter established projections. Implementation requires schema/version rules,
+precedence between core, enriched, model, and raw evidence, migration fixtures,
+and semantic AE→JSON→AE plus GEO/Atlas/H5AD/tabular regression tests before the
+proposal can become a public contract.
+
+**Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py),
+[`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py),
+[`ae_roundtrip.py`](../src/meta_standards_converter/ae_handlers/ae_roundtrip.py),
+and [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constructor.py).
+
 <a id="component-relationships-and-data-flow"></a>
 ## Component relationships and data flow
 
