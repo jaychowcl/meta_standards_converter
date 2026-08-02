@@ -58,6 +58,12 @@ PYTHONDONTWRITEBYTECODE=1 MPLCONFIGDIR=/tmp/matplotlib-meta-standards \
 `unittest discover` is not a supported substitute because it does not collect
 the repository's pytest functions, fixtures, parametrization, or subtests.
 
+MSC owns its public metadata-provider contracts; they are skipped normally:
+
+```bash
+RUN_LIVE_API_TESTS=1 python -m pytest tests/live_api -m live_api -vv
+```
+
 Build the project image, which includes the H5AD extra, Java 21, Nextflow, `gffread`, and the Docker CLI:
 
 ```bash

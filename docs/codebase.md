@@ -2249,6 +2249,15 @@ Important test coverage:
 - `tests/test_insdc_webfetcher.py`: SRA accession extraction, NCBI/ENA requester delegation, parsed SRA run records, and ENA fallback behavior.
 - `tests/test_pubmed_webfetcher.py`: PubMed ESummary requester delegation, parsing, publication status mapping, and IDF constructor delegation.
 
+<a id="live-api-provider-contracts"></a>
+### Live API provider contracts
+
+`tests/live_api/test_public_provider_contracts.py` owns PubMed ESummary, NCBI
+SRA EFetch plus ENA file-report, and paginated BioStudies IDF/SDRF contracts.
+It uses 10-second timeouts, no retries/delays, a 12-send ceiling, and declared
+NCBI/EBI hosts. Run it with
+`RUN_LIVE_API_TESTS=1 python -m pytest tests/live_api -m live_api -vv`.
+
 After documentation edits, also check:
 
 ```bash

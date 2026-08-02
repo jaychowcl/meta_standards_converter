@@ -103,6 +103,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: version 4.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
   link: [Open section](codebase.md#runtime-behavior)
 
+- id: live-api-provider-contracts
+  title: Live API provider contracts
+  anchor: live-api-provider-contracts
+  purpose: Owns opt-in PubMed, SRA/ENA, and BioStudies provider checks.
+  keywords: live_api, PubMed, SRA, ENA, BioStudies, pagination, no retries
+  link: [Open section](codebase.md#live-api-provider-contracts)
+
 ## Workflow routes
 
 - id: workflow-geo2ae
