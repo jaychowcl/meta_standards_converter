@@ -131,6 +131,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: benchmark, NCBI, ENA, BioStudies, concurrency, rate limit, p95, deterministic
   link: [Open policy](provider-benchmark-policy.md)
 
+- id: neutral-ae-construction-state
+  title: Neutral AE construction state
+  anchor: neutral-ae-construction-state
+  purpose: Defines the one-way ProtocolRegistry and technology-detection dependency shared by IDF and SDRF construction.
+  keywords: ae_common, ProtocolRegistry, technology detection, SDRFConstructor, AEConstructor, import cycle
+  link: [Open section](codebase.md#neutral-ae-construction-state)
+
 ## Workflow routes
 
 - id: workflow-geo2ae

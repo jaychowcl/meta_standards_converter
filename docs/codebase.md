@@ -223,8 +223,12 @@ database service, or plugin discovery mechanism is exposed.
   `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
   apply repository-specific URL and response semantics.
 <a id="core-magetab-construction"></a>
-- `ProtocolRegistry`, `IDFConstructor`, `SDRFConstructor`, typed MAGE-TAB
+- Neutral `ae_common.ProtocolRegistry` and technology/file detection feed
+  `IDFConstructor` and `SDRFConstructor`; typed MAGE-TAB
   records, and technology handlers form the MAGE-TAB construction subsystem.
+  Constructor and SDRF modules now depend one-way on that neutral module; they
+  contain no mutual or late imports. `ae_constructor.ProtocolRegistry` remains
+  a v1 compatibility re-export of the same class.
 
 Definitions, signatures, state, internal calls, external operations, and
 failure behavior are detailed in
@@ -2329,3 +2333,18 @@ median speedup and NCBI/ENA missed the tail-latency criterion. Provider fetching
 therefore remains sequential. See
 [`provider-benchmark-policy.md`](provider-benchmark-policy.md) for official
 provider references, exact acceptance rules, and the raw report.
+
+<a id="neutral-ae-construction-state"></a>
+## Neutral AE construction state
+
+`ae_handlers/ae_common.py` owns `ProtocolRegistry`, normalized file-extension
+classification, array-file detection, and platform technology selection. Both
+`AEConstructor` and `SDRFConstructor` import these contracts in one direction.
+This removes their prior mutual import and method-local constructor imports
+without changing handler keys, protocol references, technology decisions, or
+the public `ae_constructor.ProtocolRegistry` import path.
+Importable symbols are
+`meta_standards_converter.ae_handlers.ae_common.ProtocolRegistry`,
+`meta_standards_converter.ae_handlers.ae_common.detect_ae_technology`,
+`meta_standards_converter.ae_handlers.ae_common.has_array_files`, and
+`meta_standards_converter.ae_handlers.ae_common.normalized_extension`.

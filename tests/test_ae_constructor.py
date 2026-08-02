@@ -20,6 +20,7 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor, ProtocolRegistry  # noqa: E402
+from meta_standards_converter.ae_handlers.ae_common import detect_ae_technology  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_idf_handlers import (  # noqa: E402
     IDFConstructor,
     _ArrayPlatformIDFHandler,
@@ -35,6 +36,26 @@ from meta_standards_converter.ae_handlers.ae_idf_handlers import (  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer  # noqa: E402
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
+
+
+class TestAESharedConstructionState(unittest.TestCase):
+    def test_constructor_reexports_neutral_protocol_registry(self):
+        from meta_standards_converter.ae_handlers.ae_common import ProtocolRegistry as SharedRegistry
+
+        self.assertIs(ProtocolRegistry, SharedRegistry)
+
+    def test_sdrf_module_has_no_late_constructor_import(self):
+        path = os.path.join(
+            SRC, "meta_standards_converter", "ae_handlers", "ae_sdrf_handlers.py"
+        )
+        with open(path, encoding="utf-8") as handle:
+            source = handle.read()
+
+        self.assertNotIn("ae_handlers.ae_constructor import", source)
+
+    def test_neutral_detector_remains_the_constructor_result(self):
+        data = {"platform": [{"technology": "expression array"}]}
+        self.assertEqual(detect_ae_technology(data), "array")
 
 
 class TestIDFConstructor(unittest.TestCase):

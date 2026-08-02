@@ -11,11 +11,15 @@ Constructor class for ae MAGETAB sdrf
 '''
 from dataclasses import dataclass, field
 from collections import OrderedDict
-from urllib.parse import urlparse
-import os
 import requests
 import xml.etree.ElementTree as ET
 
+from meta_standards_converter.ae_handlers.ae_common import (
+    ProtocolRegistry,
+    detect_ae_technology,
+    has_array_files,
+    normalized_extension,
+)
 from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 
@@ -95,14 +99,10 @@ class SDRFConstructor():
         return sdrf
 
     def _detect_sdrf_technology(self, data: dict) -> str:
-        from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
-
-        return AEConstructor()._detect_ae_technology(data=data)
+        return detect_ae_technology(data)
 
     def _has_array_files(self, data: dict) -> bool:
-        from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
-
-        return AEConstructor()._has_array_files(data=data)
+        return has_array_files(data)
 
     def _lookup_sra(self, sra: str) -> list:
         '''
@@ -112,16 +112,6 @@ class SDRFConstructor():
             return self.insdc_fetcher.fetch_sra_runs(accession=sra)
         except (requests.RequestException, ET.ParseError):
             return []
-
-
-def normalized_extension(path: str) -> str:
-    parsed = urlparse(str(path))
-    basename = os.path.basename(parsed.path or str(path)).lower()
-    for suffix in (".gz", ".zip", ".bz2", ".xz"):
-        if basename.endswith(suffix):
-            basename = basename[:-len(suffix)]
-            break
-    return os.path.splitext(basename)[1]
 
 
 def classify_file(path: str) -> str:
@@ -154,8 +144,6 @@ class _BaseSDRFHandler():
         }
         self.series_accession = self._series_accession()
         if protocol_registry is None:
-            from meta_standards_converter.ae_handlers.ae_constructor import ProtocolRegistry
-
             protocol_registry = ProtocolRegistry(series_accession=self.series_accession)
         self.protocol_registry = protocol_registry
         self.audit = SDRFAudit()
