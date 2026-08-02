@@ -14,6 +14,63 @@ import copy
 import re
 
 
+class MAGETabModelError(ValueError):
+    """Raised when the enriched MAGE-TAB model contract is invalid."""
+
+
+MODEL_COLLECTIONS = (
+    "idf_layout", "protocols", "assay_paths", "sdrfs", "investigation_fields",
+)
+HZ_FIELDS = (
+    "hz_value", "hz_value_id", "hz_value_onto", "hz_field",
+    "hz_unit", "hz_unit_id", "hz_unit_onto",
+    "hz_value_hierarchy_depth", "hz_unit_hierarchy_depth",
+)
+
+
+def validate_model(model: dict) -> dict:
+    """Validate and return an enriched MAGE-TAB model version 1."""
+    if not isinstance(model, dict):
+        raise MAGETabModelError("mage_tab.model must be an object")
+    if model.get("schema_version") != 1:
+        raise MAGETabModelError("mage_tab.model schema_version must be 1")
+    for field in MODEL_COLLECTIONS:
+        if not isinstance(model.get(field), list):
+            raise MAGETabModelError(f"mage_tab.model {field} must be a list")
+    if not isinstance(model.get("declarations"), dict):
+        raise MAGETabModelError("mage_tab.model declarations must be an object")
+    sdrf_names = {
+        item.get("name") for item in model["sdrfs"]
+        if isinstance(item, dict) and isinstance(item.get("name"), str)
+    }
+    if len(sdrf_names) != len(model["sdrfs"]):
+        raise MAGETabModelError("mage_tab.model sdrfs require unique names")
+    assay_ids: set[str] = set()
+    for assay in model["assay_paths"]:
+        if not isinstance(assay, dict) or not isinstance(assay.get("steps"), list):
+            raise MAGETabModelError("mage_tab.model assay_paths require step lists")
+        assay_id = assay.get("id")
+        if not isinstance(assay_id, str) or not assay_id or assay_id in assay_ids:
+            raise MAGETabModelError("mage_tab.model assay_paths require unique ids")
+        assay_ids.add(assay_id)
+        if assay.get("sdrf") not in sdrf_names:
+            raise MAGETabModelError("mage_tab.model assay path references an unknown SDRF")
+        for step in assay["steps"]:
+            if not isinstance(step, dict) or not isinstance(step.get("column_index"), int):
+                raise MAGETabModelError("mage_tab.model assay steps require column_index")
+            if step.get("kind") == "attribute":
+                if step.get("attribute_type") not in {
+                    "characteristics", "factor value", "parameter value"
+                } or not isinstance(step.get("name"), str):
+                    raise MAGETabModelError("mage_tab.model contains an invalid attribute step")
+                for field in HZ_FIELDS:
+                    if field in step and not isinstance(step[field], (str, int, float)):
+                        raise MAGETabModelError(
+                            f"mage_tab.model attribute {field} must be scalar"
+                        )
+    return model
+
+
 PROTOCOL_FIELDS = {
     "Protocol Name": "name",
     "Protocol Type": "type",
@@ -165,8 +222,9 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
 
 def render_model(model: dict) -> list | None:
     """Render a version-1 typed model into the constructor's in-memory MAGE-TAB form."""
-    if not isinstance(model, dict) or model.get("schema_version") != 1:
+    if not isinstance(model, dict):
         return None
+    validate_model(model)
     sdrfs = model.get("sdrfs") or []
     if not sdrfs:
         return None
@@ -316,6 +374,19 @@ def _assay_path(sdrf_name: str, row_index: int, header: list[str], row: list[str
                 consumed.add(companion_index)
             if companions:
                 base["companion_columns"] = companions
+            annotation_index = max([index, *companions.values()]) + 1
+            while annotation_index < len(header):
+                harmonized = re.fullmatch(
+                    r"\s*Comment\[(hz_(?:value|unit)(?:_id|_onto|_hierarchy_depth)?|hz_field)]\s*",
+                    header[annotation_index],
+                    re.I,
+                )
+                if harmonized is None:
+                    break
+                field = harmonized.group(1).casefold()
+                base[field] = row[annotation_index] if annotation_index < len(row) else ""
+                consumed.add(annotation_index)
+                annotation_index += 1
         elif label in NODE_HEADERS:
             base.update({"kind": "node", "node_type": label})
         elif _normalized(label) == _normalized("Protocol REF"):
@@ -392,6 +463,45 @@ def _render_sdrf(model: dict, descriptor: dict) -> list[list]:
                 if isinstance(companion_index, int) and companion_index < width:
                     row[companion_index] = step.get(field, "")
         rows.append(row)
+    return _insert_harmonization_columns(rows, paths)
+
+
+def _insert_harmonization_columns(
+    rows: list[list], paths: list[dict]
+) -> list[list]:
+    insertions: dict[int, list[str]] = {}
+    for path in paths:
+        for step in path.get("steps", []):
+            if step.get("kind") != "attribute":
+                continue
+            fields = [field for field in HZ_FIELDS if step.get(field) not in (None, "")]
+            if not fields:
+                continue
+            after = max([
+                step.get("column_index", 0),
+                *(step.get("companion_columns") or {}).values(),
+            ])
+            existing = insertions.setdefault(after, [])
+            for field in fields:
+                if field not in existing:
+                    existing.append(field)
+    for after in sorted(insertions, reverse=True):
+        fields = insertions[after]
+        offset = after + 1
+        rows[0][offset:offset] = [f"Comment[{field}]" for field in fields]
+        for row, path in zip(rows[1:], paths):
+            step = next(
+                (
+                    item for item in path.get("steps", [])
+                    if item.get("kind") == "attribute"
+                    and max([
+                        item.get("column_index", 0),
+                        *(item.get("companion_columns") or {}).values(),
+                    ]) == after
+                ),
+                {},
+            )
+            row[offset:offset] = [step.get(field, "") for field in fields]
     return rows
 
 

@@ -22,7 +22,12 @@ if SRC not in sys.path:
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_model import overlay_core, render_model  # noqa: E402
+from meta_standards_converter.ae_handlers.ae_model import (  # noqa: E402
+    MAGETabModelError,
+    overlay_core,
+    render_model,
+    validate_model,
+)
 from meta_standards_converter.ae_handlers.ae_parser import AEParser  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
@@ -105,6 +110,71 @@ def resolved_input(idf=IDF, sdrfs=None):
 
 
 class TestAE2JSONConverter(unittest.TestCase):
+    def test_model_validation_rejects_unsupported_or_malformed_models(self):
+        with self.assertRaisesRegex(MAGETabModelError, "schema_version"):
+            validate_model({"schema_version": 2})
+        with self.assertRaisesRegex(MAGETabModelError, "assay_paths"):
+            validate_model({
+                "schema_version": 1,
+                "idf_layout": [],
+                "protocols": [],
+                "declarations": {},
+                "assay_paths": "invalid",
+                "sdrfs": [],
+                "investigation_fields": [],
+            })
+
+    def test_harmonized_model_annotations_render_and_parse_additively(self):
+        header = [
+            "Source Name", "Sample Name", "Protocol REF",
+            "Parameter Value[duration]", "Unit", "Assay Name",
+        ]
+        rows = [["source-1", "sample-1", "P-extract", "30", "minutes", "assay-1"]]
+        text = "\n".join("\t".join(values) for values in [header, *rows]) + "\n"
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(sdrfs=[text])
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        step = next(
+            item for item in package["mage_tab"]["model"]["assay_paths"][0]["steps"]
+            if item.get("attribute_type") == "parameter value"
+        )
+        step.update({
+            "hz_unit": "minute",
+            "hz_unit_id": "UO:0000031",
+            "hz_unit_onto": "uo",
+        })
+
+        rendered = AEConstructor().miniml2magetab(package)
+        table = next(row[1] for row in rendered if row[0] == "SDRF File")
+        parameter = table[0].index("Parameter Value[duration]")
+        self.assertEqual("30", table[1][parameter])
+        self.assertEqual("minutes", table[1][parameter + 1])
+        self.assertEqual(
+            ["Comment[hz_unit]", "Comment[hz_unit_id]", "Comment[hz_unit_onto]"],
+            table[0][parameter + 2:parameter + 5],
+        )
+        self.assertEqual(
+            ["minute", "UO:0000031", "uo"], table[1][parameter + 2:parameter + 5]
+        )
+
+        idf_rows = []
+        for row in rendered:
+            if row[0] == "SDRF File":
+                idf_rows.append(["SDRF File", "roundtrip.sdrf.txt"])
+            else:
+                idf_rows.append(row)
+        reparsed = AEParser().parse(resolved_input(
+            idf="\n".join("\t".join(str(value) for value in row) for row in idf_rows) + "\n",
+            sdrfs=["\n".join("\t".join(str(value) for value in row) for row in table) + "\n"],
+        ))
+        reparsed_step = next(
+            item for item in reparsed["mage_tab"]["model"]["assay_paths"][0]["steps"]
+            if item.get("attribute_type") == "parameter value"
+        )
+        self.assertEqual("30", reparsed_step["value"])
+        self.assertEqual("minutes", reparsed_step["unit"])
+        self.assertEqual("minute", reparsed_step["hz_unit"])
+        self.assertEqual("UO:0000031", reparsed_step["hz_unit_id"])
     def test_typed_model_preserves_ragged_and_label_only_idf_rows(self):
         idf = IDF.replace(
             "Protocol Description\tCollect samples\tExtract material\n",

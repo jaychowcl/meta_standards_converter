@@ -31,6 +31,7 @@ import requests
 
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
 from .json_source import JSONPackageSource
+from .mage_tab_projection import _parameter_rows, _parameter_summary
 
 
 logger = logging.getLogger(__name__)
@@ -1703,6 +1704,7 @@ class JSON2H5ADConverter:
             "msc.asset.uri_scope": (source_uri_scope,) if source_uri_scope else (),
             "msc.expression.modality": (modality,),
         }
+        canonical_values.update(_parameter_summary(package, sample))
         for column in characteristic_columns:
             canonical_values[f"msc.characteristics.{column}"] = metadata_values[
                 "characteristics"
@@ -2248,6 +2250,30 @@ class JSON2H5ADConverter:
             "metadata_source_uri": self._join_values(database.get("web_link")),
             "fields": fields,
         }
+        parameter_occurrences = []
+        for package in packages:
+            if sample_id is None:
+                parameter_occurrences.extend(_parameter_rows(package))
+                continue
+            sample = next(
+                (
+                    item for item in self.planner._as_list(package.get("sample"))
+                    if isinstance(item, dict)
+                    and self.planner.sample_accession(item) == sample_id
+                ),
+                None,
+            )
+            if sample is not None:
+                parameter_occurrences.extend(_parameter_rows(package, sample=sample))
+        if parameter_occurrences:
+            parameters = pandas.DataFrame(parameter_occurrences)
+            parameters.index = [
+                f"parameter_{index:06d}" for index in range(len(parameters))
+            ]
+            adata.uns["msc_mage_tab"] = {
+                "schema_version": "1.0",
+                "parameters": parameters,
+            }
 
     def _attach_harmonization(self, adata, resolution) -> None:
         if resolution is None or not resolution.enabled:

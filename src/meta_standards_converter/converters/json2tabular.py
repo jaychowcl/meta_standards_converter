@@ -17,6 +17,7 @@ from typing import Any, Mapping, Protocol, Sequence
 
 from .json2h5ad import JSON2H5ADConverter, SourcePlanner
 from .json_source import JSONPackageSource
+from .mage_tab_projection import _parameter_summary
 
 
 @dataclass(frozen=True)
@@ -185,6 +186,10 @@ class MSCMetadataProjector:
                 f"{prefix}.source_field": item.get("source_field"),
                 f"{prefix}.hierarchy_depth": item.get("hierarchy_depth"),
             })
+        values.update({
+            key: "; ".join(str(item) for item in items)
+            for key, items in _parameter_summary(context.package, context.sample).items()
+        })
         return TabularMetadataProjection(values=values, columns=self.COLUMNS)
 
 

@@ -146,10 +146,10 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   link: [Open section](codebase.md#operational-events-v1)
 
 - id: proposed-enriched-miniml-core
-  title: Proposed enriched MINiML-compatible core
+  title: Enriched MINiML-compatible core
   anchor: proposed-enriched-miniml-core
-  purpose: Separates current MAGE-TAB sidecar guarantees from the additive, non-operational enriched-core design direction.
-  keywords: proposal, MINiML, MAGE-TAB, mage_tab.model, mage_tab.roundtrip, protocols, assay paths, typed attributes, compatibility
+  purpose: Defines validated model schema version 1, additive harmonization annotations, consumer projections, and raw evidence boundaries.
+  keywords: MINiML, MAGE-TAB, mage_tab.model, mage_tab.roundtrip, hz_value, hz_unit, protocols, assay paths, typed attributes, compatibility
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
 ## Workflow routes

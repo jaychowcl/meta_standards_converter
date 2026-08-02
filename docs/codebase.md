@@ -152,10 +152,9 @@ credentials, or tokens.
   writable state to the configured output tree.
 
 <a id="proposed-enriched-miniml-core"></a>
-## Proposed enriched MINiML-compatible core
+## Enriched MINiML-compatible core
 
-This section records a design direction, not an implemented schema. Current
-`ae2json` output preserves MAGE-TAB-only semantics under the namespaced
+`ae2json` validates and publishes MAGE-TAB-only semantics under the namespaced
 `mage_tab.model` and preserves exact source tables and fingerprints under
 `mage_tab.roundtrip`. An unchanged single-SDRF package can therefore be
 restored exactly; edited packages regenerate from the typed model and overlay
@@ -170,24 +169,17 @@ document boundaries. Flattening these concepts into existing Series, Sample,
 or Platform keys would lose ordering, multiplicity, identity, or
 column-occurrence information needed to reconstruct MAGE-TAB.
 
-The proposed enriched core would add optional, namespaced structured fields
-for protocols, assay paths, typed attributes, declarations, generic
-properties, and document boundaries. It would promote semantic information
-that is currently available only in `mage_tab.model`; source-specific protocol
-identifiers and byte-perfect formatting would remain outside the semantic
-guarantee. `mage_tab.roundtrip` would continue to provide exact restoration
-for unchanged source documents during a compatibility period.
+Schema version 1 contains protocols, assay paths, typed attributes,
+declarations, generic properties, and document boundaries. Typed attributes
+may carry additive `hz_value*`, `hz_field`, and `hz_unit*` annotations.
+`json2ae` publishes these as adjacent reserved `Comment[hz_*]` columns without
+replacing raw SDRF cells, and `ae2json` reattaches them on parsing.
 
-Any implementation must be additive: existing core field names, types, and
-meanings remain unchanged. `geo2json` and `geo2ae` must keep their current GEO
-projection and construction behavior; `json2ae` may consume enriched fields
-only when present; and `json2h5ad` and `json2tsv` must continue to read their
-established metadata paths without output-shape changes. Existing packages
-without the extension remain valid, and unknown extension fields must not
-alter established projections. Implementation requires schema/version rules,
-precedence between core, enriched, model, and raw evidence, migration fixtures,
-and semantic AE→JSON→AE plus GEO/Atlas/H5AD/tabular regression tests before the
-proposal can become a public contract.
+The contract is additive: existing core names, types, and meanings remain
+unchanged, packages without the extension remain valid, and raw round-trip
+evidence is never harmonized. Tabular consumers add sample-bound
+`msc.mage_tab.parameter.*` summaries; H5AD also publishes the lossless
+occurrence table in `uns["msc_mage_tab"]`.
 
 **Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py),
 [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py),
@@ -513,7 +505,9 @@ follow this canonical overview.
   `meta_standards_converter.ae_handlers.ae_constructor.ProtocolRegistry`,
   `meta_standards_converter.ae_handlers.ae_constructor.AEConstructor`,
   `meta_standards_converter.ae_handlers.ae_idf_handlers.IDFConstructor`,
+  `meta_standards_converter.ae_handlers.ae_model.MAGETabModelError`,
   `meta_standards_converter.ae_handlers.ae_model.build_model`,
+  `meta_standards_converter.ae_handlers.ae_model.validate_model`,
   `meta_standards_converter.ae_handlers.ae_model.render_model`,
   `meta_standards_converter.ae_handlers.ae_model.overlay_core`,
   `meta_standards_converter.ae_handlers.ae_parser.normalized_label`,
@@ -665,7 +659,9 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
 4. Every retained package must be an object with a usable study accession,
    and all packages are validated before collaborator calls.
 5. Optional enrichment precedes `AEConstructor.miniml2magetab`.
-6. Round-trip evidence may restore source tables; mapped edits use overlay rules.
+6. Round-trip evidence may restore source tables; mapped edits use overlay
+   rules. Enriched `hz_*` attributes become adjacent reserved Comment columns
+   while raw value/unit cells remain unchanged.
 7. `out` controls writing; construction errors propagate.
 
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
@@ -729,6 +725,8 @@ package conversion -> processed normalize / raw reference + nf-core
    per-group exceptions are caught in `BatchConversionResult.failures`.
 7. Invalid path/source/no-group/no-sample and unsafe dataset-ID conditions raise before aggregation; successful
    groups and diagnostics survive later failures.
+8. Bound MAGE-TAB Parameter Values are projected to dotted `obs` columns and
+   every typed attribute occurrence is retained in `uns["msc_mage_tab"]`.
 
 Pseudocode: `load -> if one and convert: convert_packages; else for group: try convert_packages into child; except record; return batch`.
 
@@ -1775,6 +1773,10 @@ output is unchanged.
 <a id="typed-mage-tab-model"></a>
 ### `ae_handlers/ae_model.py`
 
+- `MAGETabModelError` is the public validation failure and
+  `validate_model(model)` enforces schema version 1 collections, unique SDRF
+  and assay identities, references, step shapes, and scalar harmonization
+  annotations.
 - `build_model(idf_rows, sdrfs)` creates the version-1 `mage_tab.model` extension without modifying the fixed MINiML projection.
 - `protocols` contains one position-stable record per IDF protocol, including name, arbitrary type, ontology, description, hardware, software, parameters, contact, and performer.
 - `declarations` independently stores aligned quality-control, replicate, and normalization terms with source/accession annotations.

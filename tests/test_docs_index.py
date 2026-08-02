@@ -442,7 +442,7 @@ class DocsIndexTests(unittest.TestCase):
         for command in CLI_COMMANDS:
             self.assertIn(f"`{command}`", readme_text)
 
-    def test_docs_distinguish_current_magetab_roundtrip_from_proposed_core(self):
+    def test_docs_define_implemented_magetab_enriched_core(self):
         readme_text = README.read_text(encoding="utf-8")
         codebase_text = CODEBASE.read_text(encoding="utf-8")
         index_text = INDEX.read_text(encoding="utf-8")
@@ -451,22 +451,20 @@ class DocsIndexTests(unittest.TestCase):
         self.assertIn(f'<a id="{anchor}"></a>', codebase_text)
         self.assertIn(f"codebase.md#{anchor}", index_text)
         for phrase in (
-            "not an implemented schema",
+            "Schema version 1",
             "mage_tab.model",
             "mage_tab.roundtrip",
             "protocols",
             "assay paths",
             "typed attributes",
             "document boundaries",
-            "geo2json",
-            "geo2ae",
             "json2ae",
-            "json2h5ad",
-            "json2tsv",
+            "msc.mage_tab.parameter",
+            "msc_mage_tab",
         ):
             self.assertIn(phrase, codebase_text)
-        self.assertIn("Proposed enriched core", readme_text)
-        self.assertIn("not current runtime behavior", readme_text)
+        self.assertIn("Enriched core", readme_text)
+        self.assertIn("schema version 1", readme_text)
 
     def test_readme_documents_all_console_scripts(self):
         readme_text = README.read_text(encoding="utf-8")

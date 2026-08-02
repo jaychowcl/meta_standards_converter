@@ -138,16 +138,13 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v1 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
 | `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Combined `.obs.csv`, optional `.var.csv` and `.uns.json`, plus a JSON result manifest |
 
-GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds `mage_tab.model`, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, normalized sample values in `uns["msc_metadata"]`, flattened MINiML metadata in `uns["msc_miniml"]`, and conversion provenance.
+GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds validated `mage_tab.model` schema version 1, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, normalized sample values in `uns["msc_metadata"]`, flattened MINiML metadata in `uns["msc_miniml"]`, typed assay occurrences in `uns["msc_mage_tab"]`, and conversion provenance.
 
-**Proposed enriched core:** MSC currently relies on `mage_tab.model` for
-editable MAGE-TAB-only semantics and `mage_tab.roundtrip` for exact unchanged
-source restoration. A future additive MINiML-compatible extension could expose
-protocol graphs, assay paths, typed attributes, declarations, generic
-properties, and document boundaries without changing existing core fields.
-This is a documented design direction, not current runtime behavior or an
-implemented schema. See the
-[proposed enriched-core design](docs/codebase.md#proposed-enriched-miniml-core).
+**Enriched core:** `mage_tab.model` schema version 1 exposes editable protocols,
+assay paths, typed attributes, declarations, properties, and document
+boundaries. Harmonized values and units are additive `hz_*` annotations;
+`mage_tab.roundtrip` remains exact unchanged-source evidence. See the
+[enriched-core contract](docs/codebase.md#proposed-enriched-miniml-core).
 
 ## Guide
 
@@ -300,6 +297,10 @@ Duplicate SDRF headers are matched by normalized label and occurrence, and
 values are copied only when source/sample/run identity gives one unambiguous
 value; otherwise existing model content is retained and newly inserted cells
 stay blank.
+Enriched harmonization annotations regenerate as adjacent reserved
+`Comment[hz_*]` columns. They never replace original Parameter Value, Unit, or
+term-companion cells, and `ae2json` reattaches them to the preceding typed
+attribute on a later parse.
 
 #### `ae2json`
 
@@ -386,6 +387,10 @@ an underscore-style column, it is retained as opaque source data but is not
 used as MSC metadata. Study-level input splitting recognizes
 `msc.sample.accession` and the external generic columns `geo_accession`,
 `sample_id`, `sample`, and `gsm_accession`.
+
+Sample-bound Parameter Values appear as
+`msc.mage_tab.parameter.<slug>.*` columns; the lossless assay/row/column
+occurrences remain in `uns["msc_mage_tab"]["parameters"]`.
 
 Analysis-facing `obs` values remain scalar strings; repeated values are
 de-duplicated in source order and displayed with `; ` separators. The

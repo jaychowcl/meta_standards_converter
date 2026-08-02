@@ -71,6 +71,31 @@ def package():
     }
 
 
+def package_with_magetab_parameter():
+    value = package()
+    value["mage_tab"] = {"model": {
+        "schema_version": 1,
+        "assay_paths": [{
+            "id": "study.sdrf.txt:row:1",
+            "sdrf": "study.sdrf.txt",
+            "row_index": 1,
+            "binding": {"source_name": "GSM1", "sample_name": "GSM1"},
+            "steps": [{
+                "kind": "attribute",
+                "attribute_type": "parameter value",
+                "name": "duration",
+                "column_index": 3,
+                "value": "30",
+                "unit": "minutes",
+                "hz_unit": "minute",
+                "hz_unit_id": "UO:0000031",
+                "hz_unit_onto": "uo",
+            }],
+        }],
+    }}
+    return value
+
+
 def test_agentic_envelope_is_loaded_with_profile_per_group(tmp_path):
     source = tmp_path / "agentic.json"
     source.write_text(json.dumps({
@@ -146,6 +171,21 @@ def test_tabular_opt_in_uses_resolved_destinations_and_retains_hz_columns(tmp_pa
     assert row["msc.harmonization.organism.source_field"] == "species_name"
 
 
+def test_tabular_projects_additive_magetab_parameter_columns(tmp_path):
+    source = tmp_path / "agentic.json"
+    destination = tmp_path / "manifest.tsv"
+    source.write_text(json.dumps(package_with_magetab_parameter()), encoding="utf-8")
+
+    JSON2TSVConverter().convert_source(source, destination)
+    with destination.open(encoding="utf-8", newline="") as stream:
+        row = next(csv.DictReader(stream, delimiter="\t"))
+
+    assert row["msc.mage_tab.parameter.duration.value"] == "30"
+    assert row["msc.mage_tab.parameter.duration.unit"] == "minutes"
+    assert row["msc.mage_tab.parameter.duration.hz_unit"] == "minute"
+    assert row["msc.mage_tab.parameter.duration.hz_unit_id"] == "UO:0000031"
+
+
 def test_magetab_opt_in_replaces_destinations_with_companions_and_retains_hz(tmp_path):
     source = tmp_path / "agentic.json"
     source.write_text(json.dumps({
@@ -202,3 +242,25 @@ def test_h5ad_publishes_resolved_columns_and_raw_and_harmonization_ledgers(tmp_p
     fields = converted.uns["msc_miniml"]["fields"]
     raw_organism = fields.loc[fields["path"] == "channel[0].organism[0].value", "value"]
     assert raw_organism.tolist() == ["human"]
+
+
+def test_h5ad_publishes_magetab_parameter_obs_and_occurrence_ledger(tmp_path):
+    source = tmp_path / "agentic.json"
+    source.write_text(json.dumps(package_with_magetab_parameter()), encoding="utf-8")
+    expression = tmp_path / "GSM1.h5ad"
+    anndata.AnnData(
+        X=sparse.csr_matrix([[1]]),
+        obs=pandas.DataFrame(index=["cell-1"]),
+        var=pandas.DataFrame(index=["gene-1"]),
+    ).write_h5ad(expression)
+
+    result = JSON2H5ADConverter().convert(
+        str(source), out=str(tmp_path / "out"), asset_specs=[f"GSM1={expression}"]
+    )
+    converted = anndata.read_h5ad(result.sample_h5ads["GSM1"])
+
+    assert converted.obs["msc.mage_tab.parameter.duration.value"].iat[0] == "30"
+    assert converted.obs["msc.mage_tab.parameter.duration.hz_unit"].iat[0] == "minute"
+    ledger = converted.uns["msc_mage_tab"]["parameters"]
+    assert ledger["assay_path_id"].tolist() == ["study.sdrf.txt:row:1"]
+    assert ledger["hz_unit_id"].tolist() == ["UO:0000031"]
