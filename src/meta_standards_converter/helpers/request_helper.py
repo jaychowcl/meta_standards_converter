@@ -67,12 +67,14 @@ class RateLimitedRequester:
         get: Callable | None = None,
         sleep: Callable[[float], None] | None = None,
         clock: Callable[[], float] | None = None,
+        event_emitter=None,
     ):
         self.service = service
         self.settings = settings or DEFAULT_REQUEST_SETTINGS.get(service, RequestSettings())
         self._get = get or requests.get
         self._sleep = sleep or time.sleep
         self._clock = clock or time.monotonic
+        self._event_emitter = event_emitter
 
     def get(self, url: str, **kwargs):
         if "timeout" not in kwargs:
@@ -101,6 +103,13 @@ class RateLimitedRequester:
                 requests.exceptions.ChunkedEncodingError,
             ) as error:
                 if attempt >= self.settings.max_retries:
+                    self._emit_request_event(
+                        host,
+                        "failed",
+                        attempt + 1,
+                        self._clock() - started,
+                        None,
+                    )
                     raise
                 delay = self._retry_delay(response=None, attempt=attempt)
                 logger.info(
@@ -125,9 +134,14 @@ class RateLimitedRequester:
             )
 
             if response.status_code not in self.settings.retry_statuses:
+                self._emit_request_event(
+                    host, "success" if response.status_code < 400 else "failed",
+                    attempt + 1, elapsed, response.status_code,
+                )
                 return response
 
             if attempt >= self.settings.max_retries:
+                self._emit_request_event(host, "failed", attempt + 1, elapsed, response.status_code)
                 response.raise_for_status()
                 return response
 
@@ -143,6 +157,17 @@ class RateLimitedRequester:
             self._sleep(delay)
 
         return response
+
+    def _emit_request_event(self, host, status, attempts, elapsed, status_code):
+        if self._event_emitter is not None:
+            self._event_emitter.emit(
+                "provider_request",
+                component=self.service,
+                level="INFO" if status == "success" else "ERROR",
+                status=status,
+                duration_seconds=elapsed,
+                attributes={"host": host, "attempts": attempts, "status_code": status_code},
+            )
 
     def _acquire_host_slot(self, host: str):
         state = self._state_for_host(host)

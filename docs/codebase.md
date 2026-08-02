@@ -2348,3 +2348,18 @@ Importable symbols are
 `meta_standards_converter.ae_handlers.ae_common.detect_ae_technology`,
 `meta_standards_converter.ae_handlers.ae_common.has_array_files`, and
 `meta_standards_converter.ae_handlers.ae_common.normalized_extension`.
+
+<a id="operational-events-v1"></a>
+## Operational events v1
+
+`meta_standards_converter.operational_events.OperationalEventEmitter`
+implements the cross-repository schema-1.0 envelope for structured logging and
+optional JSONL. It recursively redacts credential-like keys and URL query
+strings, aggregates event/status counts and durations, and atomically exports
+aggregate JSON or Prometheus text. `RateLimitedRequester` accepts an optional
+emitter and reports terminal provider success/failure with safe host, attempt,
+status-code, and duration fields; request parameters and response bodies never
+enter events. Qualified symbols are
+`meta_standards_converter.operational_events.EVENT_SCHEMA_VERSION`,
+`meta_standards_converter.operational_events.OperationalEventEmitter`, and
+`meta_standards_converter.operational_events.redact`.

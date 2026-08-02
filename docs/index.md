@@ -138,6 +138,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: ae_common, ProtocolRegistry, technology detection, SDRFConstructor, AEConstructor, import cycle
   link: [Open section](codebase.md#neutral-ae-construction-state)
 
+- id: operational-events-v1
+  title: Operational events v1
+  anchor: operational-events-v1
+  purpose: Shared redacted JSONL/logging envelope and JSON/Prometheus metrics export at provider boundaries.
+  keywords: OperationalEventEmitter, schema 1.0, JSONL, logging, redaction, metrics, Prometheus, RateLimitedRequester
+  link: [Open section](codebase.md#operational-events-v1)
+
 ## Workflow routes
 
 - id: workflow-geo2ae
