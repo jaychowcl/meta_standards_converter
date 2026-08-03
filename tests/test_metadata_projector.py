@@ -127,6 +127,71 @@ class TestMetadataProjectorHook(unittest.TestCase):
                     metadata_projectors=[CollisionProjector()]
                 ).convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
+    def test_projector_atomically_drops_and_renames_observation_metadata(self):
+        class TransformingProjector:
+            def project_sample(self, *, adata, context):
+                return AnnDataMetadataProjection(
+                    obs={"sample_name": "curated"},
+                    obs_renames={"msc.sample.title": "author_sample_name"},
+                    obs_drops=("msc.sample.accession",),
+                )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+            result = JSON2H5ADConverter(
+                metadata_projectors=[TransformingProjector()]
+            ).convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+            sample = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            self.assertNotIn("msc.sample.accession", sample.obs)
+            self.assertNotIn("msc.sample.title", sample.obs)
+            self.assertEqual(
+                ["", ""], sample.obs["author_sample_name"].tolist()
+            )
+            self.assertEqual(["curated", "curated"], sample.obs["sample_name"].tolist())
+
+    def test_projector_rejects_missing_rename_source(self):
+        class MissingSourceProjector:
+            def project_sample(self, *, adata, context):
+                return AnnDataMetadataProjection(
+                    obs_renames={"missing": "author_missing"}
+                )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+            with self.assertRaisesRegex(ValueError, "rename source 'missing'.*does not exist"):
+                JSON2H5ADConverter(
+                    metadata_projectors=[MissingSourceProjector()]
+                ).convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+    def test_projector_rejects_rename_target_collision(self):
+        class CollisionProjector:
+            def project_sample(self, *, adata, context):
+                return AnnDataMetadataProjection(
+                    obs_renames={"msc.sample.title": "msc.sample.accession"}
+                )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _source, json_path = self._fixture(tmpdir)
+            with self.assertRaisesRegex(
+                ValueError, r"rename target 'msc\.sample\.accession'.*already exists"
+            ):
+                JSON2H5ADConverter(
+                    metadata_projectors=[CollisionProjector()]
+                ).convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+
+    def test_projection_context_retains_declared_asset_path(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source, json_path = self._fixture(tmpdir)
+            projector = RecordingProjector()
+
+            JSON2H5ADConverter(metadata_projectors=[projector]).convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+            )
+
+            self.assertEqual(source, projector.sample_contexts[0].asset.path)
+
     def test_projector_vector_lengths_must_match_axis(self):
         class InvalidVectorProjector:
             def project_sample(self, *, adata, context):
