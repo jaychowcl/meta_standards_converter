@@ -84,6 +84,8 @@ class AnnDataMetadataProjection:
     obs: Mapping[str, Any] = field(default_factory=dict)
     var: Mapping[str, Any] = field(default_factory=dict)
     uns: Mapping[str, Any] = field(default_factory=dict)
+    obs_renames: Mapping[str, str] = field(default_factory=dict)
+    obs_drops: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
     errors: tuple[str, ...] = ()
 
@@ -1813,6 +1815,11 @@ class JSON2H5ADConverter:
             raise TypeError(
                 "metadata projector must return AnnDataMetadataProjection"
             )
+        self._apply_obs_transforms(
+            adata.obs,
+            renames=projection.obs_renames,
+            drops=projection.obs_drops,
+        )
         self._apply_axis_projection(
             adata.obs,
             projection.obs,
@@ -1829,6 +1836,47 @@ class JSON2H5ADConverter:
             if key in adata.uns:
                 raise ValueError(f"uns metadata key {key!r} already exists")
             adata.uns[key] = value
+
+    @staticmethod
+    def _apply_obs_transforms(
+        frame,
+        *,
+        renames: Mapping[str, str],
+        drops: Sequence[str],
+    ) -> None:
+        renames = dict(renames)
+        drops = tuple(drops)
+        drop_set = set(drops)
+        if len(drop_set) != len(drops):
+            raise ValueError("obs drop columns must be unique")
+        overlap = sorted(set(renames) & drop_set)
+        if overlap:
+            raise ValueError(
+                f"obs metadata key {overlap[0]!r} cannot be renamed and dropped"
+            )
+        for source, target in renames.items():
+            if not isinstance(source, str) or not isinstance(target, str):
+                raise TypeError("obs rename sources and targets must be strings")
+            if source not in frame:
+                raise ValueError(f"obs rename source {source!r} does not exist")
+            if not target:
+                raise ValueError(f"obs rename target for {source!r} must be nonblank")
+        missing_drops = [column for column in drops if column not in frame]
+        if missing_drops:
+            raise ValueError(f"obs drop source {missing_drops[0]!r} does not exist")
+        targets = list(renames.values())
+        if len(set(targets)) != len(targets):
+            raise ValueError("obs rename targets must be unique")
+        survivors = set(frame.columns) - set(renames) - drop_set
+        collisions = sorted(set(targets) & survivors)
+        if collisions:
+            raise ValueError(
+                f"obs rename target {collisions[0]!r} already exists"
+            )
+        if drops:
+            frame.drop(columns=list(drops), inplace=True)
+        if renames:
+            frame.rename(columns=renames, inplace=True)
 
     @staticmethod
     def _apply_axis_projection(
