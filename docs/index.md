@@ -186,7 +186,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: MINiML or Atlas JSON to H5AD
   anchor: workflow-json2h5ad
   purpose: Traces grouping, asset planning, raw/processed paths, projection, aggregation, and partial failures.
-  keywords: json2h5ad, Atlas, MINiML, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy
+  keywords: json2h5ad, Atlas, MINiML, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2h5ad)
 
 - id: workflow-json2tsv
@@ -200,7 +200,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: MINiML or Atlas JSON to AnnData metadata
   anchor: workflow-json2obs
   purpose: Traces shared AnnData assembly and combined obs, optional var, and typed uns publication.
-  keywords: json2obs, obs CSV, var CSV, uns JSON, cell_id, feature_id, atomic, partial
+  keywords: json2obs, obs CSV, var CSV, uns JSON, cell_id, feature_id, atomic, partial, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2obs)
 
 ## Detailed evidence routes

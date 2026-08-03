@@ -730,6 +730,11 @@ package conversion -> processed normalize / raw reference + nf-core
    groups and diagnostics survive later failures.
 8. Bound MAGE-TAB Parameter Values are projected to dotted `obs` columns and
    every typed attribute occurrence is retained in `uns["msc_mage_tab"]`.
+9. `--processed-checkpoint-dir` writes each normalized, projected sample H5AD
+   atomically with a fingerprint over the source JSON, sample, asset,
+   orientation, and converter version. With `--resume`, matching checkpoints
+   are loaded instead of downloading and converting that sample again;
+   incomplete, corrupt, or stale checkpoint pairs are ignored.
 
 Pseudocode: `load -> if one and convert: convert_packages; else for group: try convert_packages into child; except record; return batch`.
 
@@ -1561,9 +1566,9 @@ This section lists public and semi-public callables used by tests or by package 
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
 - `json2ae` accepts one or more parsed MINiML or canonical Atlas v1 JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
-- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--overwrite`, and `--allow-invalid`.
+- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--processed-checkpoint-dir`, `--overwrite`, and `--allow-invalid`. Resume covers both Nextflow work and fingerprint-valid processed-sample checkpoints.
 - `json2tsv` accepts parsed MINiML or Atlas JSON and writes the sample manifest as TSV by default or CSV with `--format csv`; `--out` selects an exact file and `--outdir` derives a filename.
-- `json2obs` accepts the same metadata and raw/processed data inputs as `json2h5ad`, writes a required combined `obs.csv` with an explicit `cell_id` column, and can add typed `var.csv` and `uns.json` sidecars.
+- `json2obs` accepts the same metadata and raw/processed data inputs and processed-checkpoint controls as `json2h5ad`, writes a required combined `obs.csv` with an explicit `cell_id` column, and can add typed `var.csv` and `uns.json` sidecars.
 
 `main(argv=None) -> int`
 

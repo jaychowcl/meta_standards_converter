@@ -400,6 +400,60 @@ class TestProcessedAssetConversion(unittest.TestCase):
             json.dump([data], handle)
         return path
 
+    def test_processed_conversion_resumes_from_atomic_sample_checkpoint(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_paths = []
+            for sample_id in ("GSM1", "GSM2"):
+                source_path = os.path.join(tmpdir, f"{sample_id}.h5ad")
+                self.anndata.AnnData(
+                    X=self.sparse.csr_matrix([[1]]),
+                    obs=self.pandas.DataFrame(index=[f"cell-{sample_id}"]),
+                    var=self.pandas.DataFrame(index=["ENSG1"]),
+                ).write_h5ad(source_path)
+                source_paths.append(source_path)
+            data = package(source_paths[0], accession="GSM1")
+            data["sample"].append(
+                package(source_paths[1], accession="GSM2")["sample"][0]
+            )
+            json_path = self._write_json(tmpdir, data)
+            checkpoint_dir = os.path.join(tmpdir, "checkpoints")
+
+            class InterruptingConverter(JSON2H5ADConverter):
+                calls = []
+
+                def _read_processed_asset(self, asset, orientation="auto"):
+                    self.calls.append(asset.scope_id)
+                    if asset.scope_id == "GSM2":
+                        raise RuntimeError("interrupted")
+                    return super()._read_processed_asset(asset, orientation)
+
+            with self.assertRaisesRegex(RuntimeError, "interrupted"):
+                InterruptingConverter().convert(
+                    json_path,
+                    out=os.path.join(tmpdir, "first-out"),
+                    resume=True,
+                    processed_checkpoint_dir=checkpoint_dir,
+                )
+            self.assertEqual(1, len(list(Path(checkpoint_dir).rglob("*.h5ad"))))
+
+            class CountingConverter(JSON2H5ADConverter):
+                calls = []
+
+                def _read_processed_asset(self, asset, orientation="auto"):
+                    self.calls.append(asset.scope_id)
+                    return super()._read_processed_asset(asset, orientation)
+
+            result = CountingConverter().convert(
+                json_path,
+                out=os.path.join(tmpdir, "second-out"),
+                resume=True,
+                processed_checkpoint_dir=checkpoint_dir,
+            )
+
+            self.assertEqual(["GSM2"], CountingConverter.calls)
+            self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
+            self.assertTrue(Path(result.combined_h5ad).is_file())
+
     def test_normalizes_supplied_h5ad_without_mutating_source(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             source_path = os.path.join(tmpdir, "source.h5ad")

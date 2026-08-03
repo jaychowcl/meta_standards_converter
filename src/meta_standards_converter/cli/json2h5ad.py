@@ -79,6 +79,10 @@ def _parser() -> argparse.ArgumentParser:
     workflow.add_argument("--nextflow-config", help="Nextflow resource/infrastructure config path.")
     workflow.add_argument("--work-dir", help="Nextflow work directory.")
     workflow.add_argument("--resume", action="store_true", help="Resume from the Nextflow cache.")
+    workflow.add_argument(
+        "--processed-checkpoint-dir",
+        help="Persistent directory for resumable processed-sample checkpoints.",
+    )
     parser.add_argument("--overwrite", action="store_true", help="Replace existing normalized outputs.")
     parser.add_argument(
         "--allow-invalid",
@@ -132,6 +136,7 @@ def main(argv=None) -> int:
                 ("nextflow_config", args.nextflow_config, None),
                 ("work_dir", args.work_dir, None),
                 ("resume", args.resume, False),
+                ("processed_checkpoint_dir", args.processed_checkpoint_dir, None),
                 ("overwrite", args.overwrite, False),
                 ("allow_invalid", args.allow_invalid, False),
                 ("matrix_orientation", args.matrix_orientation, "auto"),

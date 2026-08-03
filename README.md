@@ -361,7 +361,8 @@ json2h5ad output/GSE234602.json \
 | `--params-file` `PARAMS_FILE` | Additional nf-core JSON parameters; converter-owned input, output, and reference values take precedence. |
 | `--nextflow-config` `NEXTFLOW_CONFIG` | Additional Nextflow resource/infrastructure config. |
 | `--work-dir` `WORK_DIR` | Nextflow work directory; defaults below the study/pipeline output tree. |
-| `--resume` | Add `-resume` to the Nextflow invocation. |
+| `--resume` | Resume Nextflow and reuse fingerprint-valid processed-sample checkpoints. |
+| `--processed-checkpoint-dir` `DIR` | Persist atomic normalized sample checkpoints in `DIR`; matching checkpoints are reused with `--resume`. |
 | `--overwrite` | Replace normalized H5AD and manifest outputs; existing outputs are protected by default. |
 | `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
@@ -471,7 +472,8 @@ json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
 | `--params-file` `PARAMS_FILE` | Additional nf-core parameters. |
 | `--nextflow-config` `NEXTFLOW_CONFIG` | Nextflow infrastructure configuration. |
 | `--work-dir` `WORK_DIR` | Nextflow working directory. |
-| `--resume` | Resume the Nextflow cache. |
+| `--resume` | Resume Nextflow and reuse fingerprint-valid processed-sample checkpoints. |
+| `--processed-checkpoint-dir` `DIR` | Persist atomic normalized sample checkpoints in `DIR`; matching checkpoints are reused with `--resume`. |
 | `--overwrite` | Replace the complete component bundle. |
 | `--allow-invalid` | Publish projector-reported validation errors as a partial result. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Generic delimited-matrix orientation. |

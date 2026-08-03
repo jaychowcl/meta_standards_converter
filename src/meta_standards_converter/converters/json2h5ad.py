@@ -1167,6 +1167,7 @@ class JSON2H5ADConverter:
         nextflow_config: str | None = None,
         work_dir: str | None = None,
         resume: bool = False,
+        processed_checkpoint_dir: str | None = None,
         allow_invalid: bool = False,
         use_harmonization_overrides: bool = False,
         **options,
@@ -1204,6 +1205,7 @@ class JSON2H5ADConverter:
             nextflow_config=nextflow_config,
             work_dir=work_dir,
             resume=resume,
+            processed_checkpoint_dir=processed_checkpoint_dir,
             allow_invalid=allow_invalid,
             **options,
         )
@@ -1313,6 +1315,7 @@ class JSON2H5ADConverter:
         nextflow_config: str | None = None,
         work_dir: str | None = None,
         resume: bool = False,
+        processed_checkpoint_dir: str | None = None,
         allow_invalid: bool = False,
         **options,
     ) -> ConversionResult:
@@ -1336,6 +1339,11 @@ class JSON2H5ADConverter:
         characteristic_columns = self._characteristic_columns(packages)
         source_json = os.path.abspath(source_json)
         source_json_sha256 = self._sha256(source_json)
+        checkpoint_root = (
+            Path(processed_checkpoint_dir) / study_accession
+            if processed_checkpoint_dir
+            else None
+        )
         result = ConversionResult(study_accession=study_accession)
         result.warnings.extend(getattr(harmonization_resolution, "warnings", ()))
         adatas = {}
@@ -1374,20 +1382,33 @@ class JSON2H5ADConverter:
         for sample_id, asset in planned.items():
             if asset.kind == "raw":
                 raise RuntimeError(f"nf-core did not replace the raw source for {sample_id}.")
-            adata = self._read_processed_asset(
-                asset,
-                orientation=(asset.orientation if asset.orientation != "auto" else matrix_orientation),
-            )
-            base_metadata = self._normalize(
-                adata,
+            orientation = asset.orientation if asset.orientation != "auto" else matrix_orientation
+            checkpoint = self._processed_checkpoint(
+                checkpoint_root,
+                sample_id=sample_id,
+                source_json_sha256=source_json_sha256,
                 sample=sample_context[sample_id][0],
-                package=sample_context[sample_id][1],
-                study_accession=study_accession,
                 asset=asset,
-                characteristic_columns=characteristic_columns,
-                artifact_parent=out_path,
-                harmonization_resolution=harmonization_resolution,
+                orientation=orientation,
             )
+            restored = self._load_processed_checkpoint(checkpoint) if resume else None
+            if restored is not None:
+                adata, checkpoint_metadata = restored
+                result.warnings.extend(checkpoint_metadata.get("warnings", ()))
+                result.errors.extend(checkpoint_metadata.get("errors", ()))
+                base_metadata = {}
+            else:
+                adata = self._read_processed_asset(asset, orientation=orientation)
+                base_metadata = self._normalize(
+                    adata,
+                    sample=sample_context[sample_id][0],
+                    package=sample_context[sample_id][1],
+                    study_accession=study_accession,
+                    asset=asset,
+                    characteristic_columns=characteristic_columns,
+                    artifact_parent=out_path,
+                    harmonization_resolution=harmonization_resolution,
+                )
             projection_context = MetadataProjectionContext(
                 sample=sample_context[sample_id][0],
                 package=sample_context[sample_id][1],
@@ -1396,23 +1417,32 @@ class JSON2H5ADConverter:
                 asset=asset,
                 base_metadata=base_metadata,
             )
-            self._project_sample_metadata(
-                adata,
-                projection_context,
-                warnings=result.warnings,
-                errors=result.errors,
-                allow_invalid=allow_invalid,
-            )
+            if restored is None:
+                warning_start = len(result.warnings)
+                error_start = len(result.errors)
+                self._project_sample_metadata(
+                    adata,
+                    projection_context,
+                    warnings=result.warnings,
+                    errors=result.errors,
+                    allow_invalid=allow_invalid,
+                )
+                self._attach_miniml(
+                    adata,
+                    packages=source_packages or packages,
+                    source_json=source_json,
+                    source_json_sha256=source_json_sha256,
+                    sample_id=sample_id,
+                    artifact_parent=out_path,
+                )
+                self._attach_harmonization(adata, harmonization_resolution)
+                self._write_processed_checkpoint(
+                    checkpoint,
+                    adata,
+                    warnings=result.warnings[warning_start:],
+                    errors=result.errors[error_start:],
+                )
             projection_contexts.append(projection_context)
-            self._attach_miniml(
-                adata,
-                packages=source_packages or packages,
-                source_json=source_json,
-                source_json_sha256=source_json_sha256,
-                sample_id=sample_id,
-                artifact_parent=out_path,
-            )
-            self._attach_harmonization(adata, harmonization_resolution)
             sample_path = out_path / f"{sample_id}.h5ad"
             result.sample_h5ads[sample_id] = str(sample_path)
             adatas[sample_id] = adata
@@ -1452,6 +1482,88 @@ class JSON2H5ADConverter:
             overwrite=overwrite,
         )
         return result
+
+    def _processed_checkpoint(
+        self,
+        root: Path | None,
+        *,
+        sample_id: str,
+        source_json_sha256: str,
+        sample: Mapping[str, Any],
+        asset: Asset,
+        orientation: str,
+    ) -> tuple[Path, Path, str] | None:
+        if root is None:
+            return None
+        payload = {
+            "schema_version": "1",
+            "converter_version": self._package_version(),
+            "source_json_sha256": source_json_sha256,
+            "sample_id": sample_id,
+            "sample": sample,
+            "asset": vars(asset),
+            "orientation": orientation,
+        }
+        fingerprint = hashlib.sha256(
+            json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+        key = hashlib.sha256(sample_id.encode("utf-8")).hexdigest()[:20]
+        return root / f"{key}.h5ad", root / f"{key}.json", fingerprint
+
+    def _load_processed_checkpoint(self, checkpoint):
+        if checkpoint is None:
+            return None
+        h5ad_path, manifest_path, fingerprint = checkpoint
+        if not h5ad_path.is_file() or not manifest_path.is_file():
+            return None
+        try:
+            metadata = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if metadata.get("fingerprint") != fingerprint:
+                return None
+            anndata = self._scientific_modules()[0]
+            return anndata.read_h5ad(h5ad_path), metadata
+        except (OSError, ValueError, json.JSONDecodeError):
+            return None
+
+    def _write_processed_checkpoint(
+        self,
+        checkpoint,
+        adata,
+        *,
+        warnings: Sequence[str],
+        errors: Sequence[str],
+    ) -> None:
+        if checkpoint is None:
+            return
+        h5ad_path, manifest_path, fingerprint = checkpoint
+        h5ad_path.parent.mkdir(parents=True, exist_ok=True)
+        self._write_h5ad(adata, h5ad_path, overwrite=True)
+        with tempfile.NamedTemporaryFile(
+            dir=manifest_path.parent,
+            suffix=".json",
+            mode="w",
+            encoding="utf-8",
+            delete=False,
+        ) as handle:
+            temporary = Path(handle.name)
+            json.dump(
+                {
+                    "schema_version": "1",
+                    "fingerprint": fingerprint,
+                    "warnings": list(warnings),
+                    "errors": list(errors),
+                },
+                handle,
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.replace(temporary, manifest_path)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     @staticmethod
     def _validate_dataset_id(dataset_id: str) -> None:
