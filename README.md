@@ -639,6 +639,8 @@ class Projector:
     def project_sample(self, *, adata, context):
         return AnnDataMetadataProjection(
             obs={"example.sample_accession": context.sample_accession},
+            obs_renames={"source_label": "author_source_label"},
+            obs_drops=("temporary_source_column",),
             uns={"example": {"schema_version": "1"}},
         )
 
@@ -657,6 +659,9 @@ result = JSON2H5ADConverter(metadata_projectors=[Projector()]).convert(
 Projectors run after standard `msc_*` normalization and before H5AD writing.
 Scalars are broadcast over the selected axis, vectors must match the axis
 length, and existing `obs`, `var`, or top-level `uns` keys cannot be replaced.
+`obs_renames` and `obs_drops` are validated and applied atomically before
+projected `obs` additions; missing sources, duplicate targets, collisions, or
+attempting to rename and drop the same column fail unconditionally.
 Warnings returned by a projector are added to the conversion result and
 manifest. Projector-reported `errors` raise `AnnDataProjectionError` and leave
 no final bundle by default. `allow_invalid=True` writes artifacts, records the

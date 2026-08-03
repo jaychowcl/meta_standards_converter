@@ -273,7 +273,8 @@ failure behavior are detailed in
 ## Public API reference
 
 The formal support boundary is the twenty names in
-`meta_standards_converter.converters.__all__` plus the four names in
+`meta_standards_converter.converters.__all__` (including the public
+`AssetDownloader`) plus the four names in
 `meta_standards_converter.atlas_v1.__all__`. CLI converter classes are also
 supported through their registered commands. Other non-underscored
 module-level symbols are inventoried later because Python makes them
@@ -355,10 +356,10 @@ statement for them; treat those as **evidence-gap**, not stable API.
 <a id="api-anndata-metadata-projection"></a>
 ### `AnnDataMetadataProjection`
 
-- **Signature:** `AnnDataMetadataProjection(obs={}, var={}, uns={}, warnings=(), errors=())`.
-- **Inputs:** mappings of additions for AnnData axes/unstructured metadata plus warning and validation-error strings.
+- **Signature:** `AnnDataMetadataProjection(obs={}, var={}, uns={}, obs_renames={}, obs_drops=(), warnings=(), errors=())`.
+- **Inputs:** mappings of additions for AnnData axes/unstructured metadata, atomic observation rename/drop requests, and warning and validation-error strings.
 - **Outputs:** frozen projector-result dataclass.
-- **Failures:** construction performs no validation; application rejects collisions and wrong-length axis values.
+- **Failures:** construction performs no validation; application rejects missing transform sources, duplicate/colliding targets, rename/drop overlap, addition collisions, and wrong-length axis values.
 - **Side effects:** none.
 - **Support:** formal export.
 - **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
@@ -1662,12 +1663,15 @@ This section lists public and semi-public callables used by tests or by package 
   ordinary processed-H5AD conversion independent of Scanpy import side effects.
 
 `MetadataProjectionContext`, `AnnDataMetadataProjection`, and the
-`AnnDataMetadataProjector` protocol form the additive metadata extension
+`AnnDataMetadataProjector` protocol form the metadata extension
 contract. Sample projectors run after standard `_normalize()` processing and
 before MINiML attachment/writing; combined projectors run after
 `anndata.concat()` and before combined MINiML attachment/writing. Scalar
 `obs`/`var` values broadcast, vector values must match their axis, and existing
-axis or top-level `uns` keys cannot be overwritten. Projector warnings are
+axis or top-level `uns` keys cannot be overwritten. Observation drops and
+renames are checked as one operation and applied before additions; invalid
+sources, duplicate targets, collisions, and rename/drop overlap fail closed.
+Projector warnings are
 deduplicated into `ConversionResult.warnings` and the manifest. Reported
 `errors` raise `AnnDataProjectionError` before publication unless
 `allow_invalid=True`, which records them and returns a partial result.
