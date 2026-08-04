@@ -378,7 +378,7 @@ directly. Scanpy is imported lazily only when reading 10x HDF5 or MTX inputs,
 so processed H5AD conversion does not trigger unrelated plotting/font-system
 process discovery.
 
-Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
+Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Dataset, study, and sample identifiers must be safe single path components. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. If restoration itself fails, `DatasetBundleRecoveryError` reports retained recovery paths instead of deleting the previous artifacts. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
 
 ##### H5AD metadata schema 1.0
 
@@ -802,7 +802,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-02:
-`418 passed, 3 skipped`. The skipped cases are the explicitly opt-in live API
+`464 passed, 3 skipped`. The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

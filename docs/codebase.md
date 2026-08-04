@@ -272,7 +272,7 @@ failure behavior are detailed in
 <a id="public-api-reference"></a>
 ## Public API reference
 
-The formal support boundary is the twenty names in
+The formal support boundary is the twenty-one names in
 `meta_standards_converter.converters.__all__` (including the public
 `AssetDownloader`) plus the four names in
 `meta_standards_converter.atlas_v1.__all__`. CLI converter classes are also
@@ -328,6 +328,8 @@ statement for them; treat those as **evidence-gap**, not stable API.
 ### `JSON2H5ADConverter`
 
 - **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
+- Dataset, study, sample, checkpoint, and output identities are validated as safe single path components before publication. `series.iid` is the canonical native-package study identity, so an ArrayExpress IID is not displaced by an earlier GEO secondary accession.
+- `DatasetBundleRecoveryError` preserves the original publication error, rollback errors, and surviving recovery paths when an overwrite cannot be fully restored.
 - **Inputs:** native MINiML or Atlas v1 JSON, source/reference/runtime options,
   and optional public collaborators.
 - **Outputs:** single or batch conversion results plus a transactional H5AD
@@ -1219,7 +1221,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-02 and reported
-`418 passed, 3 skipped`. The public wire contract is Atlas document schema 1.0
+`464 passed, 3 skipped`. The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -2379,11 +2381,18 @@ deliberately retained. The public surface also exports
 `PublishedArtifactBundle` and `resolve_current_bundle`; result envelopes expose
 the additive `bundle_pointer_path` field without changing H5AD metadata schema
 1.0 or Atlas v1 inputs. Qualified public symbols are
+`meta_standards_converter.converters.DatasetBundleRecoveryError` and
+`meta_standards_converter.converters.json2h5ad.DatasetBundleRecoveryError`,
 `meta_standards_converter.artifact_bundle.ArtifactRecoveryError`,
 `meta_standards_converter.artifact_bundle.DurableArtifactBundlePublisher`,
 `meta_standards_converter.artifact_bundle.PublishedArtifactBundle`, and
 `meta_standards_converter.artifact_bundle.resolve_current_bundle`.
 [source](../src/meta_standards_converter/artifact_bundle.py)
+
+The publisher also backs up the previous pointer before replacement. A failure
+while making the new pointer durable restores both that pointer and the legacy
+views, preventing consumers from observing different generations through the
+two interfaces.
 
 <a id="provider-concurrency-benchmark"></a>
 ## Provider concurrency benchmark

@@ -163,6 +163,8 @@ class DurableArtifactBundlePublisher:
         published: list[str] = []
         pointer = bundle_root / "current.json"
         pointer_stage = bundle_root / f".{generation_id}.current.stage"
+        pointer_backup = recovery / "current.json"
+        pointer_committed = False
         recovery_failed = False
         try:
             for role in roles:
@@ -193,10 +195,25 @@ class DurableArtifactBundlePublisher:
                     "manifest_sha256": _digest(manifest_path),
                 },
             )
+            if pointer.exists():
+                shutil.copyfile(pointer, pointer_backup)
+                with pointer_backup.open("rb") as stream:
+                    os.fsync(stream.fileno())
+                _fsync_directory(recovery)
             self._replace(pointer_stage, pointer)
+            pointer_committed = True
             _fsync_directory(bundle_root)
         except BaseException as publication_error:
             recovery_errors: list[BaseException] = []
+            if pointer_committed:
+                try:
+                    if pointer_backup.exists():
+                        self._replace(pointer_backup, pointer)
+                    else:
+                        pointer.unlink(missing_ok=True)
+                    _fsync_directory(bundle_root)
+                except BaseException as error:
+                    recovery_errors.append(error)
             for role in reversed(published):
                 try:
                     normalized[role].unlink(missing_ok=True)
@@ -217,6 +234,7 @@ class DurableArtifactBundlePublisher:
                 recovery_failed = True
                 recovery_paths = tuple(
                     [path for path in backups.values() if path.exists()]
+                    + ([pointer_backup] if pointer_backup.exists() else [])
                     + [generation, manifest_path]
                 )
                 raise ArtifactRecoveryError(

@@ -29,6 +29,7 @@ from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     AssetDownloader,
     AssetManifest,
     ConversionResult,
+    DatasetBundleRecoveryError,
     JSON2H5ADConverter,
     PipelineRun,
     RawProcessingResult,
@@ -273,6 +274,50 @@ def test_convert_rejects_unsafe_single_dataset_id_before_conversion(tmp_path):
         converter.convert(str(source), out=str(tmp_path / "out"))
 
     assert not (tmp_path / "escape").exists()
+
+
+@pytest.mark.parametrize("value", ["../escape", "..\\escape", ".", "..", "", "/tmp/x"])
+def test_path_components_reject_unsafe_sample_and_study_ids(value):
+    with pytest.raises(ValueError, match="Unsafe sample_id path component"):
+        JSON2H5ADConverter._validate_path_component(value, "sample_id")
+
+
+def test_dataset_bundle_restoration_failure_preserves_recovery_paths(
+    tmp_path, monkeypatch
+):
+    output = tmp_path / "out"
+    output.mkdir()
+    old = output / "sample.h5ad"
+    old.write_text("old", encoding="utf-8")
+    staging = output / "staging"
+    staging.mkdir()
+    new = staging / "sample.h5ad"
+    new.write_text("new", encoding="utf-8")
+    real_replace = os.replace
+
+    def fail_publish_and_restore(source, destination):
+        source = Path(source)
+        destination = Path(destination)
+        if source == new:
+            raise OSError("publish failed")
+        if ".json2h5ad-recovery-" in source.parent.name and destination == old:
+            raise OSError("restore failed")
+        return real_replace(source, destination)
+
+    monkeypatch.setattr(
+        "meta_standards_converter.converters.json2h5ad.os.replace",
+        fail_publish_and_restore,
+    )
+
+    with pytest.raises(DatasetBundleRecoveryError) as raised:
+        JSON2H5ADConverter()._commit_dataset_bundle(
+            [(new, old)], overwrite=True, staging=staging
+        )
+
+    assert "publish failed" in str(raised.value.publication_error)
+    assert any("restore failed" in str(error) for error in raised.value.recovery_errors)
+    assert raised.value.recovery_paths
+    assert all(path.exists() for path in raised.value.recovery_paths)
 
 
 class TestAssetInputs(unittest.TestCase):

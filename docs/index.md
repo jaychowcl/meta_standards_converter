@@ -72,7 +72,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Public API reference
   anchor: public-api-reference
   purpose: Defines formal exports and classifies all importable production symbols by support evidence.
-  keywords: public API, __all__, signature, constructor, property, method, protocol, Asset, AssetDownloader, SourcePlanner, JSON2H5ADConverter, projector, obs_renames, obs_drops, failure, side effect
+  keywords: public API, __all__, signature, constructor, property, method, protocol, Asset, AssetDownloader, SourcePlanner, JSON2H5ADConverter, DatasetBundleRecoveryError, projector, obs_renames, obs_drops, failure, recovery, side effect
   link: [Open section](codebase.md#public-api-reference)
 
 - id: atlas-v1-reader
@@ -258,5 +258,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Test plan
   anchor: test-plan
   purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-02 deterministic result.
-  keywords: tests, 418 passed, 3 skipped, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  keywords: tests, 464 passed, 3 skipped, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

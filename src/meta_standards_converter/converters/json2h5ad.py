@@ -26,6 +26,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 from urllib.parse import urlparse
+from uuid import uuid4
 
 import requests
 
@@ -96,6 +97,25 @@ class AnnDataProjectionError(ValueError):
     def __init__(self, errors: Sequence[str]):
         self.errors = tuple(str(error) for error in errors)
         super().__init__("; ".join(self.errors))
+
+
+class DatasetBundleRecoveryError(RuntimeError):
+    """A dataset bundle failed to publish and could not be fully restored."""
+
+    def __init__(
+        self,
+        publication_error: BaseException,
+        recovery_errors: Sequence[BaseException],
+        recovery_paths: Sequence[Path],
+    ) -> None:
+        self.publication_error = publication_error
+        self.recovery_errors = tuple(recovery_errors)
+        self.recovery_paths = tuple(recovery_paths)
+        locations = ", ".join(str(path) for path in self.recovery_paths) or "none"
+        super().__init__(
+            "dataset bundle publication and recovery failed; preserved recovery "
+            f"paths: {locations}; recovery failed: {self.recovery_errors[0]}"
+        )
 
 
 class AnnDataMetadataProjector(Protocol):
@@ -1219,6 +1239,7 @@ class JSON2H5ADConverter:
         group = loaded.groups[0]
         result = self._convert_packages(
             list(group.packages),
+            dataset_id=group.dataset_id,
             source_packages=list(group.source_packages or group.packages),
             harmonization_resolution=group.harmonization_resolution,
             source_json=json_path,
@@ -1277,6 +1298,7 @@ class JSON2H5ADConverter:
             try:
                 converted = self._convert_packages(
                     list(group.packages),
+                    dataset_id=group.dataset_id,
                     source_packages=list(group.source_packages or group.packages),
                     harmonization_resolution=group.harmonization_resolution,
                     source_json=source_json,
@@ -1293,6 +1315,7 @@ class JSON2H5ADConverter:
         self,
         packages: list[dict],
         *,
+        dataset_id: str | None = None,
         source_packages: list[dict] | None = None,
         harmonization_resolution=None,
         source_json: str,
@@ -1320,7 +1343,8 @@ class JSON2H5ADConverter:
         **options,
     ) -> ConversionResult:
 
-        study_accession = self._study_accession(packages) or Path(source_json).stem
+        study_accession = dataset_id or self._study_accession(packages) or Path(source_json).stem
+        self._validate_path_component(study_accession, "study_accession")
         out_path = Path(out or ".")
         out_path.mkdir(parents=True, exist_ok=True)
         manifest_handler = AssetManifest()
@@ -1335,6 +1359,8 @@ class JSON2H5ADConverter:
             explicit_assets=supplied_assets,
             force_reprocess=force_reprocess,
         )
+        for sample_id in planned:
+            self._validate_path_component(sample_id, "sample_id")
         sample_context = self._sample_context(packages)
         characteristic_columns = self._characteristic_columns(packages)
         source_json = os.path.abspath(source_json)
@@ -1567,7 +1593,11 @@ class JSON2H5ADConverter:
 
     @staticmethod
     def _validate_dataset_id(dataset_id: str) -> None:
-        rendered = str(dataset_id)
+        JSON2H5ADConverter._validate_path_component(dataset_id, "dataset_id")
+
+    @staticmethod
+    def _validate_path_component(value: Any, name: str) -> str:
+        rendered = str(value)
         if (
             not rendered
             or rendered in {".", ".."}
@@ -1575,7 +1605,8 @@ class JSON2H5ADConverter:
             or "/" in rendered
             or "\\" in rendered
         ):
-            raise ValueError(f"Unsafe dataset_id path component: {rendered!r}")
+            raise ValueError(f"Unsafe {name} path component: {rendered!r}")
+        return rendered
 
     def _study_accession(self, packages: list[dict]) -> str | None:
         for package in packages:
@@ -2841,9 +2872,11 @@ class JSON2H5ADConverter:
         overwrite: bool,
         staging: Path,
     ) -> None:
-        backup_dir = staging / "backups"
+        output_dir = staged[0][1].parent
+        backup_dir = output_dir / f".json2h5ad-recovery-{uuid4().hex}"
         backups: list[tuple[Path, Path]] = []
         installed: list[Path] = []
+        recovery_failed = False
         try:
             if overwrite:
                 backup_dir.mkdir()
@@ -2852,17 +2885,54 @@ class JSON2H5ADConverter:
                         backup = backup_dir / f"{index}-{destination.name}"
                         os.replace(destination, backup)
                         backups.append((backup, destination))
+                self._fsync_directory(output_dir)
             for source, destination in staged:
                 os.replace(source, destination)
                 installed.append(destination)
                 if destination.suffix == ".h5ad":
                     destination.chmod(0o660)
-        except Exception:
+            self._fsync_directory(output_dir)
+        except BaseException as publication_error:
+            recovery_errors: list[BaseException] = []
             for destination in reversed(installed):
-                destination.unlink(missing_ok=True)
+                try:
+                    destination.unlink(missing_ok=True)
+                except BaseException as error:
+                    recovery_errors.append(error)
             for backup, destination in reversed(backups):
-                os.replace(backup, destination)
+                try:
+                    if backup.exists():
+                        os.replace(backup, destination)
+                except BaseException as error:
+                    recovery_errors.append(error)
+            try:
+                self._fsync_directory(output_dir)
+            except BaseException as error:
+                recovery_errors.append(error)
+            if recovery_errors:
+                recovery_failed = True
+                recovery_paths = [
+                    path for path, _destination in backups if path.exists()
+                ]
+                if backup_dir.exists():
+                    recovery_paths.append(backup_dir)
+                raise DatasetBundleRecoveryError(
+                    publication_error, recovery_errors, recovery_paths
+                ) from publication_error
             raise
+        finally:
+            if backup_dir.exists() and not recovery_failed:
+                shutil.rmtree(backup_dir)
+
+    @staticmethod
+    def _fsync_directory(path: Path) -> None:
+        descriptor = os.open(
+            path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+        )
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
 
     def _write_manifest(
         self,

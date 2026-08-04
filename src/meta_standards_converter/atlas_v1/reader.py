@@ -100,6 +100,19 @@ def _optional_string(value: Any, name: str) -> None:
         raise AtlasV1Error(f"{name} must be a string or null")
 
 
+def _string_list(value: Any, name: str) -> list[str]:
+    values = _list(value, name)
+    for index, item in enumerate(values):
+        _nonblank(item, f"{name}[{index}]")
+    return values
+
+
+def _integer(value: Any, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise AtlasV1Error(f"{name} must be an integer")
+    return value
+
+
 def _review(value: Any, name: str) -> None:
     if value is None:
         return
@@ -206,8 +219,8 @@ class AtlasV1Reader:
             {"queries", "metadata_repositories", "options"},
             "run.config",
         )
-        _list(config.get("queries"), "run.config.queries")
-        _list(
+        _string_list(config.get("queries"), "run.config.queries")
+        _string_list(
             config.get("metadata_repositories"),
             "run.config.metadata_repositories",
         )
@@ -254,11 +267,9 @@ class AtlasV1Reader:
                 dataset.get("source_repository"),
                 f"datasets[{index}].source_repository",
             )
-            ordinal = dataset.get("source_ordinal")
-            if isinstance(ordinal, bool) or not isinstance(ordinal, int):
-                raise AtlasV1Error(
-                    f"datasets[{index}].source_ordinal must be an integer"
-                )
+            ordinal = _integer(
+                dataset.get("source_ordinal"), f"datasets[{index}].source_ordinal"
+            )
             status = dataset.get("status")
             if status not in _DATASET_STATUSES:
                 raise AtlasV1Error(
@@ -271,7 +282,7 @@ class AtlasV1Reader:
             _harmonization(
                 dataset.get("harmonization"), f"datasets[{index}].harmonization"
             )
-            references = _list(
+            references = _string_list(
                 dataset.get("publication_ids"),
                 f"datasets[{index}].publication_ids",
             )
@@ -357,7 +368,8 @@ class AtlasV1Reader:
             "failed_dataset_count": failed_count,
         }
         for field, expected in expected_summary.items():
-            if summary.get(field) != expected:
+            actual = _integer(summary.get(field), f"summary {field}")
+            if actual != expected:
                 raise AtlasV1Error(f"summary {field} does not match document")
 
         return AtlasV1ReadResult(tuple(converted), tuple(warnings))

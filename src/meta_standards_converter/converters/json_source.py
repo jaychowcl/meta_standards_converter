@@ -196,6 +196,9 @@ class JSONPackageSource:
         series = package.get("series")
         if not isinstance(series, Mapping):
             return None
+        iid = series.get("iid")
+        if iid:
+            return str(iid)
         accessions = series.get("accession", [])
         values = accessions if isinstance(accessions, list) else [accessions]
         for accession in values:
@@ -206,7 +209,7 @@ class JSONPackageSource:
             )
             if value:
                 return str(value)
-        return str(series.get("iid")) if series.get("iid") else None
+        return None
 
     def _sample_accession(self, sample: Mapping[str, Any]) -> str | None:
         accessions = sample.get("accession", [])

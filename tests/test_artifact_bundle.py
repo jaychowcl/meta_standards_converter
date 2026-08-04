@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+import meta_standards_converter.artifact_bundle as artifact_bundle
+
 from meta_standards_converter.artifact_bundle import (
     ArtifactRecoveryError,
     DurableArtifactBundlePublisher,
@@ -90,6 +92,44 @@ def test_pointer_commit_failure_restores_prior_legacy_bundle(tmp_path):
 
     with pytest.raises(OSError, match="pointer commit failed"):
         DurableArtifactBundlePublisher(replace=fail_pointer).publish(
+            _staged(tmp_path, {"first": "new-1", "second": "new-2"}),
+            destinations,
+            overwrite=True,
+        )
+
+    assert destinations["first"].read_text() == "old-1"
+    assert destinations["second"].read_text() == "old-2"
+    assert resolve_current_bundle(prior.pointer_path).generation_path == prior.generation_path
+
+
+def test_post_pointer_fsync_failure_restores_prior_pointer_and_legacy_views(
+    tmp_path, monkeypatch
+):
+    destinations = {
+        "first": tmp_path / "out" / "first.json",
+        "second": tmp_path / "out" / "second.json",
+    }
+    publisher = DurableArtifactBundlePublisher()
+    prior = publisher.publish(
+        _staged(tmp_path, {"first": "old-1", "second": "old-2"}),
+        destinations,
+        overwrite=False,
+    )
+    real_fsync = artifact_bundle._fsync_directory
+    pointer_fsyncs = 0
+
+    def fail_new_pointer_fsync(path):
+        nonlocal pointer_fsyncs
+        if Path(path) == prior.pointer_path.parent:
+            pointer_fsyncs += 1
+            if pointer_fsyncs == 1:
+                raise OSError("pointer fsync failed")
+        return real_fsync(path)
+
+    monkeypatch.setattr(artifact_bundle, "_fsync_directory", fail_new_pointer_fsync)
+
+    with pytest.raises(OSError, match="pointer fsync failed"):
+        publisher.publish(
             _staged(tmp_path, {"first": "new-1", "second": "new-2"}),
             destinations,
             overwrite=True,

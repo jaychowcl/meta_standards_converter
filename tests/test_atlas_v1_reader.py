@@ -90,6 +90,31 @@ def test_reader_fails_closed_on_invalid_v1_contracts(mutate, message):
         AtlasV1Reader().from_mapping(payload)
 
 
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda payload: payload["summary"].update(dataset_count=True), "dataset_count"),
+        (lambda payload: payload["run"]["config"].update(queries=[1]), "queries\\[0\\]"),
+        (
+            lambda payload: payload["datasets"][0].update(publication_ids=[{}]),
+            "publication_ids\\[0\\]",
+        ),
+        (
+            lambda payload: payload["datasets"][0].update(source_ordinal=True),
+            "source_ordinal",
+        ),
+    ],
+)
+def test_reader_rejects_python_scalar_aliases_and_malformed_string_lists(
+    mutate, message
+):
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    mutate(payload)
+
+    with pytest.raises(AtlasV1Error, match=message):
+        AtlasV1Reader().from_mapping(payload)
+
+
 def test_runtime_and_build_metadata_do_not_depend_on_thematicatlases():
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["version"] == "1.0.0"

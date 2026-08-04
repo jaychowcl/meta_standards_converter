@@ -77,6 +77,25 @@ def test_miniml_packages_are_grouped_by_study(tmp_path):
     assert result.warnings == ()
 
 
+def test_arrayexpress_iid_remains_canonical_when_geo_secondary_accession_is_first(
+    tmp_path,
+):
+    payload = package("GSE123", "GSM1")
+    payload["series"] = {
+        "iid": "E-MTAB-1",
+        "accession": [
+            {"value": "GSE123", "database": "GEO"},
+            {"value": "E-MTAB-1", "database": "ArrayExpress"},
+        ],
+    }
+    source = tmp_path / "arrayexpress.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = JSONPackageSource().load(source)
+
+    assert [group.dataset_id for group in result.groups] == ["E-MTAB-1"]
+
+
 def test_atlas_v1_document_yields_only_harmonized_metadata(tmp_path):
     source = tmp_path / "atlas.json"
     source.write_text(
