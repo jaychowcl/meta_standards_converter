@@ -908,11 +908,6 @@ tests/GSE328265_family.xml
   documented minimum versions.
 - The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
-- The bounded 2026-08-02 live benchmark compared sequential and two-worker
-  calls for fixed NCBI, ENA, and BioStudies records. No provider achieved the
-  required 20% median improvement, so production provider operations remain
-  sequential. Method, official references, thresholds, and raw measurements are
-  in [`provider-benchmark-policy.md`](provider-benchmark-policy.md).
 - Default request settings are selected per service but enforced across the
   process by normalized hostname: `ncbi_eutils` uses timeout 30s, delay 0.5s,
   at most two in flight, and 3 retries; `geo_ftp`, `biostudies`, and
@@ -2393,18 +2388,6 @@ The publisher also backs up the previous pointer before replacement. A failure
 while making the new pointer durable restores both that pointer and the legacy
 views, preventing consumers from observing different generations through the
 two interfaces.
-
-<a id="provider-concurrency-benchmark"></a>
-## Provider concurrency benchmark
-
-The bounded 2026-08-02 public benchmark used fixed NCBI E-utilities, ENA
-Portal, and BioStudies records, one warm-up, three measured runs, and sequential
-versus two-worker execution. It made no model or embedding calls. All content
-was successful and deterministic, but no provider reached the required 20%
-median speedup and NCBI/ENA missed the tail-latency criterion. Provider fetching
-therefore remains sequential. See
-[`provider-benchmark-policy.md`](provider-benchmark-policy.md) for official
-provider references, exact acceptance rules, and the raw report.
 
 <a id="neutral-ae-construction-state"></a>
 ## Neutral AE construction state

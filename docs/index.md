@@ -124,13 +124,6 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: RateLimitedRequester, RequestSettings, hostname, max_in_flight, request_delay, retry, 429
   link: [Open section](codebase.md#request-helper)
 
-- id: provider-concurrency-benchmark
-  title: Public-provider concurrency benchmark
-  anchor: provider-concurrency-benchmark
-  purpose: Routes to the bounded live method, official rate references, acceptance thresholds, raw result, and sequential decision.
-  keywords: benchmark, NCBI, ENA, BioStudies, concurrency, rate limit, p95, deterministic
-  link: [Open policy](provider-benchmark-policy.md)
-
 - id: neutral-ae-construction-state
   title: Neutral AE construction state
   anchor: neutral-ae-construction-state
