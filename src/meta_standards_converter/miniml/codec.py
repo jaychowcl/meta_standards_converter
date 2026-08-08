@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Canonical decoding and encoding for MINiML package schema 1.0."""
+"""Canonical decoding, encoding, and explicit migration for MSC MINiML 2.0."""
 
 from __future__ import annotations
 
@@ -42,6 +42,13 @@ class MINiMLBatchDecodeResult:
 
 
 class MINiMLCodec:
+    @staticmethod
+    def migrate_v1(value: Mapping[str, Any]):
+        """Migrate a legacy package without weakening the strict v2 decoder."""
+        from .migration import MINiMLV1Migrator
+
+        return MINiMLV1Migrator().migrate(value)
+
     def decode(self, value: Mapping[str, Any], *, strict: bool = False) -> MINiMLDecodeResult:
         package = value if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
         diagnostics = package.validate()

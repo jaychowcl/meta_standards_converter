@@ -348,7 +348,7 @@ class SRARun:
 
 
 def miniml_schema_path() -> Path:
-    return Path(str(files("meta_standards_converter.miniml").joinpath("miniml-package-v1.schema.json")))
+    return Path(str(files("meta_standards_converter.miniml").joinpath("miniml-package-v2.schema.json")))
 
 
 def _mapping(value: Any, path: str) -> Mapping[str, Any]:
