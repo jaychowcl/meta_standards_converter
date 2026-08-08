@@ -892,7 +892,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `1.0.0` is the initial unified JSON-output release. It uses
+- Distribution version `2.0.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 1.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -1316,7 +1316,7 @@ parses as:
 - `sample.*.sra_run`: run dicts returned by `INSDCWebfetcher.fetch_sra_runs()`, including study accession, library metadata, run/sample IDs, read lengths, instrument model, and per-FASTQ `filename`/`uri`/`md5`.
 
 <a id="miniml-package-model"></a>
-## MINiML package model 1.0
+## MSC 2 typed MINiML package API (wire schema 1.0)
 
 MSC owns the unified metadata representation in
 `meta_standards_converter.miniml`. The dependency-free Python model and its
@@ -1324,14 +1324,19 @@ Draft 2020-12 JSON Schema are derived from the repository's MINiML XSD. They
 cover the package entities (`Database`, `Organization`, `Contributor`,
 `Platform`, `Sample`, and `Series`) and reusable accession, reference, status,
 person, channel, table/data, variable, repeat, organism, relation, and link
-structures. Source-specific extensions such as `mage_tab` and unknown fields
-are preserved.
+structures. Source-specific extensions such as `mage_tab`, `pre_hz_*`,
+`hz_*`, and unknown vendor fields are recursively immutable and preserved.
+PubMed publications, SRA/ENA accessions, SRA runs, and FASTQ file records are
+first-class typed enrichments.
 
 The stable wire discriminator is `miniml_schema_version: "1.0"`. Legacy
 unversioned packages remain accepted and normalize to version 1.0. Canonical
 collections are always lists, while `series` remains a single object.
-`MINiMLPackage.from_mapping()` and `load()` validate structure and identity;
-`to_mapping()` and `dump()` produce deterministic mappings and JSON. Duplicate
+`MINiMLCodec.decode`/`decode_many` return immutable packages plus structured
+compatibility diagnostics; strict mode promotes them to
+`MINiMLCompatibilityError`. `encode`/`encode_many` are the serializer boundary,
+while `load`/`dump` provide deterministic, atomic UTF-8 JSON publication.
+`MINiMLPackage.from_mapping()` and `load()` remain direct model conveniences. Duplicate
 top-level internal identifiers and malformed entity shapes raise
 `MINiMLModelError`.
 
@@ -1357,6 +1362,7 @@ The complete qualified model API is
 `meta_standards_converter.miniml.model.DataColumn`,
 `meta_standards_converter.miniml.model.Database`,
 `meta_standards_converter.miniml.model.DataTable`,
+`meta_standards_converter.miniml.model.FASTQFile`,
 `meta_standards_converter.miniml.model.InstrumentModel`,
 `meta_standards_converter.miniml.model.MINiMLModelError`,
 `meta_standards_converter.miniml.model.MINiMLPackage`,
@@ -1365,16 +1371,22 @@ The complete qualified model API is
 `meta_standards_converter.miniml.model.Organism`,
 `meta_standards_converter.miniml.model.Person`,
 `meta_standards_converter.miniml.model.Platform`,
+`meta_standards_converter.miniml.model.PubMedPublication`,
 `meta_standards_converter.miniml.model.Reference`,
 `meta_standards_converter.miniml.model.Relation`,
 `meta_standards_converter.miniml.model.Repeat`,
 `meta_standards_converter.miniml.model.Sample`,
 `meta_standards_converter.miniml.model.Series`,
+`meta_standards_converter.miniml.model.SRARun`,
 `meta_standards_converter.miniml.model.Status`,
 `meta_standards_converter.miniml.model.SupplementLink`,
 `meta_standards_converter.miniml.model.TableData`,
 `meta_standards_converter.miniml.model.Variable`, and
-`meta_standards_converter.miniml.model.miniml_schema_path`.
+`meta_standards_converter.miniml.model.miniml_schema_path`,
+`meta_standards_converter.miniml.codec.MINiMLBatchDecodeResult`,
+`meta_standards_converter.miniml.codec.MINiMLCodec`,
+`meta_standards_converter.miniml.codec.MINiMLCompatibilityError`, and
+`meta_standards_converter.miniml.codec.MINiMLDecodeResult`.
 
 **Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
 [`miniml-package-v1.schema.json`](../src/meta_standards_converter/miniml/miniml-package-v1.schema.json),

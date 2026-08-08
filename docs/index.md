@@ -146,10 +146,10 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
 - id: miniml-package-model
-  title: MINiML package model 1.0
+  title: MSC 2 typed MINiML package API (wire schema 1.0)
   anchor: miniml-package-model
-  purpose: Defines the XSD-derived JSON Schema and Python model that own the unified internal metadata representation.
-  keywords: MINiML, JSON Schema, MINiMLPackage, miniml_schema_version, XSD, compatibility, validation, diagnostics, mage_tab
+  purpose: Defines the immutable XSD-derived model, codec, enrichments, compatibility diagnostics, and stable 1.0 wire schema.
+  keywords: MSC 2, MINiML, JSON Schema, MINiMLPackage, MINiMLCodec, miniml_schema_version, XSD, compatibility, validation, diagnostics, PubMed, SRA, ENA, FASTQ, mage_tab
   link: [Open section](codebase.md#miniml-package-model)
 
 ## Workflow routes

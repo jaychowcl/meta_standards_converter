@@ -8,7 +8,7 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 1.0.0 introduces unified JSON-output orchestration while consuming
+Version 2.0.0 promotes immutable typed MINiML packages across converter APIs while consuming
 Atlas document schema 1.0, H5AD metadata schema 1.0, and MINiML ledger schema
 1.0. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
