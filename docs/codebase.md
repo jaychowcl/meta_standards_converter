@@ -167,7 +167,11 @@ is a renderer responsibility, while assay-path order and repeated
 characteristic/parameter occurrences remain data. The SDRF renderer reads the
 v2 `name` field (with `tag` only as a migration fallback) and unwraps typed
 ontology values such as channel `source` and `molecule` instead of serializing
-their JSON object representation.
+their JSON object representation. Parsing retains characteristic units and
+ontology companions, folds both Protocol Contact and Protocol Performer into
+`protocol.performers`, and preserves unknown SDRF columns as named assay-node
+comments. Unknown IDF layout rows remain outside the semantic model and are
+reported as warnings rather than replayed.
 
 Runtime converters accept only explicit schema `2.0` packages. Legacy or
 unversioned packages enter through `MINiMLV1Migrator`, which folds supported

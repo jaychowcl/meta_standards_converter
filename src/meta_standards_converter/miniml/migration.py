@@ -135,10 +135,11 @@ class MINiMLV1Migrator:
                 ("parameters", "parameters"),
                 ("hardware", "hardware"),
                 ("software", "software"),
+                ("contact", "performers"),
                 ("performer", "performers"),
             ):
                 if item.get(source):
-                    protocol[destination] = cls._items(item[source])
+                    protocol.setdefault(destination, []).extend(cls._items(item[source]))
                     if destination == "description":
                         protocol[destination] = str(item[source])
             protocols.append(protocol)

@@ -139,7 +139,7 @@ class AEParser:
             if row and normalized_label(row[0]) not in self.KNOWN_IDF_LABELS
         ]
         for row in unmapped_rows:
-            self._warn(f"Unmapped IDF row {row['label']} preserved in mage_tab metadata.")
+            self._warn(f"Unmapped IDF row {row['label']} is outside the semantic MSC MINiML model.")
 
         package = {
             "version": MAGETAB_VERSION,
@@ -392,7 +392,7 @@ class AEParser:
                     "values": [row[index] for row in rows],
                 }
                 unmapped.append(item)
-                self._warn(f"Unmapped SDRF column {label} preserved in mage_tab metadata.")
+                self._warn(f"Unmapped SDRF column {label} preserved as an assay-node comment.")
 
         for row in rows:
             identity = self._row_identity(header, row)
@@ -456,15 +456,31 @@ class AEParser:
                 continue
             tag = match.group(2).strip()
             value = row[index].strip()
+            companions = {}
+            for companion_index in range(index + 1, len(header)):
+                companion = normalized_label(header[companion_index])
+                if companion == normalized_label("Unit"):
+                    if row[companion_index].strip():
+                        companions["unit"] = row[companion_index].strip()
+                    continue
+                if companion == normalized_label("Term Source REF"):
+                    if row[companion_index].strip():
+                        companions["term_source_ref"] = row[companion_index].strip()
+                    continue
+                if companion == normalized_label("Term Accession Number"):
+                    if row[companion_index].strip():
+                        companions["term_accession_number"] = row[companion_index].strip()
+                    continue
+                break
             if tag.casefold() == "organism":
                 organisms = channel.setdefault("organism", [])
-                record = {"value": value}
+                record = {"value": value, **companions}
                 if record not in organisms:
                     organisms.append(record)
                 continue
             key = (tag.casefold(), value)
             if key not in existing:
-                channel["characteristics"].append({"tag": tag, "value": value})
+                channel["characteristics"].append({"tag": tag, "value": value, **companions})
                 existing.add(key)
 
     def _map_protocols(self, header, row, sample, channel, protocols):

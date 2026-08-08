@@ -137,14 +137,14 @@ class TestAE2JSONConverter(unittest.TestCase):
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
         step = next(
-            item for item in payload["mage_tab"]["model"]["assay_paths"][0]["steps"]
-            if item.get("attribute_type") == "parameter value"
+            item for item in payload["series"]["assay_paths"][0]["steps"]
+            if item.get("kind") == "protocol_application"
         )
-        step.update({
-            "hz_unit": "minute",
-            "hz_unit_id": "UO:0000031",
-            "hz_unit_onto": "uo",
-        })
+        unit = step["parameter_values"][0]["unit"]
+        unit["annotations"] = [{
+            "field": "unit", "value": "minute",
+            "term_source_ref": "uo", "term_accession_number": "UO:0000031",
+        }]
         package = MINiMLCodec().decode(payload).package
 
         rendered = AEConstructor().miniml2magetab(package)
@@ -152,13 +152,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         parameter = table[0].index("Parameter Value[duration]")
         self.assertEqual("30", table[1][parameter])
         self.assertEqual("minutes", table[1][parameter + 1])
-        self.assertEqual(
-            ["Comment[hz_unit]", "Comment[hz_unit_id]", "Comment[hz_unit_onto]"],
-            table[0][parameter + 2:parameter + 5],
-        )
-        self.assertEqual(
-            ["minute", "UO:0000031", "uo"], table[1][parameter + 2:parameter + 5]
-        )
+        self.assertNotIn("hz_", "\t".join(table[0]))
 
         idf_rows = []
         for row in rendered:
@@ -171,13 +165,11 @@ class TestAE2JSONConverter(unittest.TestCase):
             sdrfs=["\n".join("\t".join(str(value) for value in row) for row in table) + "\n"],
         ))
         reparsed_step = next(
-            item for item in reparsed["mage_tab"]["model"]["assay_paths"][0]["steps"]
-            if item.get("attribute_type") == "parameter value"
-        )
+            item for item in reparsed["series"]["assay_paths"][0]["steps"]
+            if item.get("kind") == "protocol_application"
+        )["parameter_values"][0]
         self.assertEqual("30", reparsed_step["value"])
-        self.assertEqual("minutes", reparsed_step["unit"])
-        self.assertEqual("minute", reparsed_step["hz_unit"])
-        self.assertEqual("UO:0000031", reparsed_step["hz_unit_id"])
+        self.assertEqual("minutes", reparsed_step["unit"]["value"])
     def test_typed_model_preserves_ragged_and_label_only_idf_rows(self):
         idf = IDF.replace(
             "Protocol Description\tCollect samples\tExtract material\n",
@@ -189,10 +181,8 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher.resolve.return_value = resolved_input(idf=idf)
 
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
-        rendered = render_model(package["mage_tab"]["model"])
-
-        self.assertIn(["Protocol Parameters", "temperature"], rendered)
-        self.assertIn(["Quality Control Type"], rendered)
+        self.assertEqual(["temperature"], package["series"]["protocols"][0]["parameters"])
+        self.assertEqual([{"value": ""}], package["series"]["quality_controls"])
 
     def test_builds_editable_typed_magetab_model(self):
         idf = IDF.replace(
@@ -223,21 +213,28 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher.resolve.return_value = resolved_input(idf=idf, sdrfs=[text])
 
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
-        model = package["mage_tab"]["model"]
-
-        self.assertEqual(1, model["schema_version"])
-        self.assertEqual("centrifuge", model["protocols"][1]["hardware"])
-        self.assertEqual("ExtractSoft", model["protocols"][1]["software"])
-        self.assertEqual("speed", model["protocols"][1]["parameters"])
-        self.assertEqual("John Doe", model["protocols"][1]["contact"])
-        self.assertEqual("biological replicate", model["declarations"]["quality_control"][0]["value"])
-        self.assertEqual("EFO:0000001", model["declarations"]["quality_control"][0]["term_accession_number"])
-        self.assertEqual(2, len(model["assay_paths"]))
-        self.assertEqual(["assay-1", "assay-2"], [path["binding"]["assay_name"] for path in model["assay_paths"]])
-        age = next(step for step in model["assay_paths"][0]["steps"] if step["kind"] == "attribute")
-        self.assertEqual("year", age["unit"])
+        series = package["series"]
+        self.assertEqual(["centrifuge"], series["protocols"][1]["hardware"])
+        self.assertEqual(["ExtractSoft"], series["protocols"][1]["software"])
+        self.assertEqual(["speed"], series["protocols"][1]["parameters"])
+        self.assertEqual(["John Doe"], series["protocols"][1]["performers"])
+        self.assertEqual("biological replicate", series["quality_controls"][0]["value"])
+        self.assertEqual("EFO:0000001", series["quality_controls"][0]["term_accession_number"])
+        self.assertEqual(2, len(series["assay_paths"]))
+        assay_names = [
+            next(step["name"] for step in path["steps"] if step["kind"] == "assay")
+            for path in series["assay_paths"]
+        ]
+        self.assertEqual(["assay-1", "assay-2"], assay_names)
+        age = next(
+            characteristic
+            for step in series["assay_paths"][0]["steps"]
+            for characteristic in step.get("characteristics", [])
+            if characteristic["name"] == "age"
+        )
+        self.assertEqual("year", age["unit"]["value"])
         self.assertEqual("UO:0000036", age["term_accession_number"])
-        barcode = next(step for step in model["assay_paths"][0]["steps"] if step.get("name") == "cell barcode size")
+        barcode = next(comment for step in series["assay_paths"][0]["steps"] for comment in step.get("comments", []) if comment["name"] == "cell barcode size")
         self.assertEqual("16", barcode["value"])
 
     def test_model_edits_render_without_merging_into_miniml_fields(self):
@@ -245,8 +242,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
-        model = payload["mage_tab"]["model"]
-        model["protocols"][1]["hardware"] = "edited centrifuge"
+        payload["series"]["protocols"][1]["hardware"] = ["edited centrifuge"]
         package = MINiMLCodec().decode(payload).package
 
         magetab = AEConstructor().miniml2magetab(package)
@@ -267,7 +263,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
         payload["series"]["title"] = "Edited core title"
-        payload["mage_tab"]["model"]["assay_paths"][1]["steps"][-1]["value"] = "edited-scan-2"
+        payload["series"]["assay_paths"][1]["steps"][-1]["name"] = "edited-scan-2"
         package = MINiMLCodec().decode(payload).package
 
         magetab = AEConstructor().miniml2magetab(package)
@@ -281,63 +277,38 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual(["assay-1", "assay-2"], [row[assay_index] for row in rendered_sdrf[1:]])
         self.assertEqual("edited-scan-2", rendered_sdrf[2][scan_index])
 
-    def test_core_harmonization_columns_are_unioned_while_model_preserves_multiplicity(self):
+    def test_typed_annotations_remain_internal_while_paths_preserve_multiplicity(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
-        payload["sample"][0]["channel"][0]["characteristics"].extend(
-            [
-                {"tag": "hz_cell_type", "value": "regulatory T cell"},
-                {"tag": "hz_cell_type_id", "value": "CL:0000815"},
-                {"tag": "hz_cell_type_onto", "value": "cl"},
-                {"tag": "hz_exposure_name", "value": "exposure to bleomycin via injection"},
-                {"tag": "hz_exposure_name_id", "value": "ECTO:0900222"},
-                {"tag": "hz_exposure_name_onto", "value": "ecto"},
-                {"tag": "hz_cell_state_name", "value": "Fbl_24"},
-                {"tag": "hz_cell_state_name_id", "value": "PCL:0015251"},
-                {"tag": "hz_cell_state_name_onto", "value": "pcl"},
-            ]
-        )
+        payload["sample"][0]["channel"][0]["characteristics"][0]["annotations"] = [{
+            "field": "disease", "value": "disease",
+            "term_source_ref": "mondo", "term_accession_number": "MONDO:0000001",
+        }]
         package = MINiMLCodec().decode(payload).package
 
         magetab = AEConstructor().miniml2magetab(package)
         rendered_sdrf = next(row[1] for row in magetab if row[0] == "SDRF File")
 
-        for label, value in (
-            ("Characteristics[hz_cell_type]", "regulatory T cell"),
-            ("Characteristics[hz_cell_type_id]", "CL:0000815"),
-            ("Characteristics[hz_cell_type_onto]", "cl"),
-            ("Characteristics[hz_exposure_name_id]", "ECTO:0900222"),
-            ("Characteristics[hz_cell_state_name_id]", "PCL:0015251"),
-        ):
-            with self.subTest(label=label):
-                index = rendered_sdrf[0].index(label)
-                self.assertEqual([value, value], [row[index] for row in rendered_sdrf[1:]])
         self.assertEqual(2, len(rendered_sdrf) - 1)
-        self.assertIn("Mystery Column", rendered_sdrf[0])
+        self.assertNotIn("hz_", "\t".join(rendered_sdrf[0]))
+        self.assertEqual("MONDO:0000001", package["sample"][0]["channel"][0]["characteristics"][0]["annotations"][0]["term_accession_number"])
 
     def test_ecto_and_pcl_characteristics_parse_and_render_additively(self):
         header = [
             "Source Name",
             "Sample Name",
-            "Characteristics[hz_exposure_name]",
-            "Characteristics[hz_exposure_name_id]",
-            "Characteristics[hz_exposure_name_onto]",
-            "Characteristics[hz_cell_state_name]",
-            "Characteristics[hz_cell_state_name_id]",
-            "Characteristics[hz_cell_state_name_onto]",
+            "Characteristics[exposure]", "Term Source REF", "Term Accession Number",
+            "Characteristics[cell state]", "Term Source REF", "Term Accession Number",
             "Assay Name",
         ]
         row = [
             "source-1",
             "sample-1",
-            "exposure to bleomycin via injection",
-            "ECTO:0900222",
-            "ecto",
+            "exposure to bleomycin via injection", "ecto", "ECTO:0900222",
             "Fbl_24",
-            "PCL:0015251",
-            "pcl",
+            "pcl", "PCL:0015251",
             "assay-1",
         ]
         text = "\n".join("\t".join(values) for values in [header, row]) + "\n"
@@ -346,16 +317,16 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
         characteristics = {
-            item["tag"]: item["value"]
+            item["name"]: item
             for item in package["sample"][0]["channel"][0]["characteristics"]
         }
         rendered = AEConstructor().miniml2magetab(package)
         sdrf = next(item[1] for item in rendered if item[0] == "SDRF File")
 
-        self.assertEqual("ECTO:0900222", characteristics["hz_exposure_name_id"])
-        self.assertEqual("PCL:0015251", characteristics["hz_cell_state_name_id"])
-        self.assertIn("Characteristics[hz_exposure_name_id]", sdrf[0])
-        self.assertIn("Characteristics[hz_cell_state_name_id]", sdrf[0])
+        self.assertEqual("ECTO:0900222", characteristics["exposure"]["term_accession_number"])
+        self.assertEqual("PCL:0015251", characteristics["cell state"]["term_accession_number"])
+        self.assertIn("Characteristics[exposure]", sdrf[0])
+        self.assertIn("Characteristics[cell state]", sdrf[0])
 
     def test_overlay_unions_allowlisted_idf_rows_and_nonstructural_sdrf_columns(self):
         model_sdrf = [
@@ -539,13 +510,13 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual(1, len(packages))
         package = packages[0]
-        self.assertEqual("magetabv1.1", package["version"])
+        self.assertEqual("2.0", package["miniml_schema_version"])
         self.assertEqual(
             "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
-            package["schema_location"],
+            package["source"]["schema_location"],
         )
         self.assertEqual("E-MTAB-1", package["series"]["iid"])
-        self.assertEqual("1.1", package["mage_tab"]["version"])
+        self.assertEqual("MAGE-TAB", package["source"]["format"])
         self.assertEqual("Example study", package["series"]["title"])
         self.assertEqual(
             ["GSE123", "E-MTAB-1"],
@@ -563,7 +534,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual("TRANSCRIPTOMIC", sample["library_source"])
         self.assertEqual("Extract material", sample["channel"][0]["extract_protocol"])
         self.assertIn(
-            {"tag": "disease", "value": "case"},
+            {"name": "disease", "value": "case"},
             sample["channel"][0]["characteristics"],
         )
         self.assertEqual(1, len(sample["sra_run"]))
@@ -580,7 +551,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertIsInstance(package, MINiMLPackage)
-        self.assertEqual("1.0", package.miniml_schema_version)
+        self.assertEqual("2.0", package.miniml_schema_version)
         self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))
 
     def test_series_iid_prefers_explicit_arrayexpress_accession(self):
@@ -616,12 +587,10 @@ class TestAE2JSONConverter(unittest.TestCase):
         with self.assertLogs("meta_standards_converter", level="WARNING") as logs:
             package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
 
-        extension = package["mage_tab"]
-        self.assertEqual("1.1", extension["version"])
-        self.assertEqual("Mystery Row", extension["unmapped_idf_rows"][0]["label"])
-        self.assertEqual("Mystery Column", extension["unmapped_sdrf_columns"][0]["header"])
-        self.assertEqual(["x", "y"], extension["unmapped_sdrf_columns"][0]["values"])
-        self.assertTrue(extension["warnings"])
+        self.assertNotIn("mage_tab", package)
+        self.assertEqual(["idf", "sdrf"], [item["kind"] for item in package["source"]["documents"]])
+        comments = [comment["name"] for path in package["series"]["assay_paths"] for step in path["steps"] for comment in step.get("comments", [])]
+        self.assertIn("Mystery Column", comments)
         self.assertIn("unmapped", "\n".join(logs.output).lower())
 
     def test_merges_samples_across_multiple_sdrfs_in_first_seen_order(self):
@@ -644,10 +613,11 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=[sdrf(rows)])
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        with self.assertLogs("meta_standards_converter", level="WARNING") as logs:
+            package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertEqual("First", package["sample"][0]["title"])
-        self.assertTrue(any("conflicting" in warning for warning in package["mage_tab"]["warnings"]))
+        self.assertIn("conflicting title", "\n".join(logs.output))
 
     def test_library_protocol_does_not_replace_extraction_protocol(self):
         idf = IDF.replace(
@@ -714,21 +684,18 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertIn("Characteristics[disease]", rendered_sdrf[0])
         self.assertIn("https://example/1.fastq.gz", str(rendered_sdrf))
 
-    def test_records_versioned_lossless_roundtrip_sidecar(self):
+    def test_records_source_documents_without_raw_roundtrip_sidecar(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
 
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
-        roundtrip = package["mage_tab"]["roundtrip"]
+        self.assertNotIn("mage_tab", package)
+        self.assertEqual(
+            ["study.idf.txt", "study1.sdrf.txt"],
+            [item["name"] for item in package["source"]["documents"]],
+        )
 
-        self.assertEqual(1, roundtrip["schema_version"])
-        self.assertEqual(64, len(roundtrip["semantic_sha256"]))
-        self.assertEqual(64, len(roundtrip["model_sha256"]))
-        self.assertEqual("Mystery Row", roundtrip["idf_rows"][-1][0])
-        self.assertEqual("study1.sdrf.txt", roundtrip["sdrfs"][0]["name"])
-        self.assertEqual("Mystery Column", roundtrip["sdrfs"][0]["rows"][0][-1])
-
-    def test_unchanged_package_reuses_original_source_tables(self):
+    def test_unchanged_package_renders_semantic_source_content(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
@@ -737,11 +704,11 @@ class TestAE2JSONConverter(unittest.TestCase):
         rows = {row[0]: row for row in magetab}
 
         self.assertEqual(["Investigation Title", "Example study"], rows["Investigation Title"])
-        self.assertEqual(["Mystery Row", "keep me"], rows["Mystery Row"])
-        self.assertEqual("Mystery Column", rows["SDRF File"][1][0][-1])
+        self.assertNotIn("Mystery Row", rows)
+        self.assertEqual("Comment[Mystery Column]", rows["SDRF File"][1][0][-1])
         self.assertEqual("x", rows["SDRF File"][1][1][-1])
 
-    def test_edited_json_wins_while_unmapped_metadata_is_restored(self):
+    def test_edited_json_wins_while_semantic_sdrf_comments_are_retained(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
@@ -753,8 +720,8 @@ class TestAE2JSONConverter(unittest.TestCase):
         rows = {row[0]: row for row in magetab}
 
         self.assertEqual(["Investigation Title", "Edited title"], rows["Investigation Title"])
-        self.assertEqual(["Mystery Row", "keep me"], rows["Mystery Row"])
-        self.assertIn("Mystery Column", rows["SDRF File"][1][0])
+        self.assertNotIn("Mystery Row", rows)
+        self.assertIn("Comment[Mystery Column]", rows["SDRF File"][1][0])
 
 
 if __name__ == "__main__":
