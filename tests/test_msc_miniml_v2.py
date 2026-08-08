@@ -178,8 +178,8 @@ def test_v2_validates_protocol_references_and_natural_identity() -> None:
 
     payload = package_v2()
     payload["series"]["assay_paths"][0]["steps"][1]["protocol_ref"] = "P-missing"
-    with pytest.raises(MINiMLModelError, match="unknown protocol reference: P-missing"):
-        MINiMLCodec().decode(payload)
+    result = MINiMLCodec().decode(payload)
+    assert [issue.code for issue in result.diagnostics] == ["external_protocol_reference"]
 
 
 def test_explicit_v1_migrator_folds_mage_tab_and_hz_fields() -> None:

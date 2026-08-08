@@ -85,7 +85,8 @@
         "unit": {"$ref": "#/$defs/ontologyValue"},
         "annotations": {"type": "array", "items": {"$ref": "#/$defs/annotation"}},
         "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}},
-        "qualifier": {"type": "string"}
+        "qualifier": {"type": "string"},
+        "unit_type": {"type": "string"}
       },
       "additionalProperties": false
     },
@@ -189,7 +190,7 @@
       "type": "object",
       "required": ["kind", "name"],
       "properties": {
-        "kind": {"enum": ["source", "sample", "extract", "labeled_extract", "hybridization", "assay", "scan", "normalization", "raw_data_file", "derived_data_file", "array_data_file", "image_file", "processed_data_file"]},
+        "kind": {"enum": ["source", "sample", "extract", "labeled_extract", "hybridization", "assay", "scan", "normalization", "array_data_file", "derived_array_data_file", "array_data_matrix_file", "derived_array_data_matrix_file", "image_file"]},
         "name": {"type": "string", "minLength": 1},
         "sample_ref": {"type": "string"},
         "characteristics": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
@@ -232,6 +233,10 @@
         "overall_design": {"type": "string"},
         "experiment_date": {"type": "string"},
         "type": {"type": "array", "items": {"$ref": "#/$defs/ontologyValue"}},
+        "contributor_ref": {"type": "array", "items": {"$ref": "#/$defs/openRecord"}},
+        "contributor": {"type": "array", "items": {"$ref": "#/$defs/contributor"}},
+        "contact_ref": {"type": "array", "items": {"$ref": "#/$defs/openRecord"}},
+        "contact": {"type": "array", "items": {"$ref": "#/$defs/contributor"}},
         "sample_ref": {"type": "array"},
         "variable": {"type": "array"},
         "repeats": {"type": "array"},

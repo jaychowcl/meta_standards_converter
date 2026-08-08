@@ -175,13 +175,14 @@ class NamedValue:
     annotations: tuple[HarmonizedAnnotation, ...] = ()
     comments: tuple[NamedComment, ...] = ()
     qualifier: str | None = None
+    unit_type: str | None = None
 
     @classmethod
     def from_mapping(cls, value: Any) -> "NamedValue":
         data = _mapping(value, "named value")
         known = {
             "name", "value", "term_source_ref", "term_accession_number", "unit",
-            "annotations", "comments", "qualifier",
+            "annotations", "comments", "qualifier", "unit_type",
         }
         _reject_unknown(data, known, "named value")
         name = str(data.get("name", "")).strip()
@@ -196,13 +197,14 @@ class NamedValue:
             _annotations(data.get("annotations")),
             _comments(data.get("comments")),
             data.get("qualifier"),
+            data.get("unit_type"),
         )
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"name": self.name, "value": self.value}
         for key in (
             "term_source_ref", "term_accession_number", "unit", "annotations",
-            "comments", "qualifier",
+            "comments", "qualifier", "unit_type",
         ):
             _put(result, key, getattr(self, key))
         return result
@@ -508,17 +510,24 @@ class SupplementLink:
 class Organism:
     value: str
     taxid: str | None = None
+    annotations: tuple[HarmonizedAnnotation, ...] = ()
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_value(cls, value: Any) -> "Organism":
         if isinstance(value, Mapping):
-            return cls(str(value.get("value", "")), None if value.get("taxid") is None else str(value["taxid"]), _extras(value, {"value", "taxid"}))
+            return cls(
+                str(value.get("value", "")),
+                None if value.get("taxid") is None else str(value["taxid"]),
+                _annotations(value.get("annotations")),
+                _extras(value, {"value", "taxid", "annotations"}),
+            )
         return cls(str(value))
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"value": self.value}
         _put(result, "taxid", self.taxid)
+        _put(result, "annotations", self.annotations)
         return _record(result, self.extras)
 
 
@@ -593,6 +602,7 @@ class Characteristics:
     annotations: tuple[HarmonizedAnnotation, ...] = ()
     comments: tuple[NamedComment, ...] = ()
     qualifier: str | None = None
+    unit_type: str | None = None
 
     @classmethod
     def from_value(cls, value: Any) -> "Characteristics":
@@ -606,6 +616,7 @@ class Characteristics:
             named.annotations,
             named.comments,
             named.qualifier,
+            named.unit_type,
         )
 
     def to_mapping(self) -> dict[str, Any]:
@@ -618,6 +629,7 @@ class Characteristics:
             self.annotations,
             self.comments,
             self.qualifier,
+            self.unit_type,
         ).to_mapping()
 
 
@@ -1001,6 +1013,10 @@ class Protocol:
     performers: tuple[str, ...] = ()
     comments: tuple[NamedComment, ...] = ()
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise MINiMLModelError("protocol requires a nonblank name")
+
     @classmethod
     def from_mapping(cls, value: Any) -> "Protocol":
         data = _mapping(value, "protocol")
@@ -1043,6 +1059,10 @@ class ProtocolApplication:
     comments: tuple[NamedComment, ...] = ()
     kind: str = field(default="protocol_application", init=False)
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.protocol_ref, str) or not self.protocol_ref.strip():
+            raise MINiMLModelError("protocol application requires protocol_ref")
+
     @classmethod
     def from_mapping(cls, value: Any) -> "ProtocolApplication":
         data = _mapping(value, "protocol application")
@@ -1081,6 +1101,12 @@ class AssayNode:
     array_design_ref: Reference | None = None
     link: SupplementLink | None = None
     comments: tuple[NamedComment, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.kind not in ASSAY_NODE_KINDS:
+            raise MINiMLModelError(f"unsupported assay node kind: {self.kind}")
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise MINiMLModelError("assay node requires a nonblank name")
 
     @classmethod
     def from_mapping(cls, value: Any) -> "AssayNode":
@@ -1140,6 +1166,10 @@ class AssayPath:
     steps: tuple[AssayStep, ...]
     document: str | None = None
     comments: tuple[NamedComment, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.steps:
+            raise MINiMLModelError("assay path requires at least one step")
 
     @classmethod
     def from_mapping(cls, value: Any) -> "AssayPath":
@@ -1412,10 +1442,10 @@ class MINiMLPackage(Mapping[str, Any]):
             for step in path.steps:
                 if isinstance(step, ProtocolApplication):
                     if step.protocol_ref not in known_protocols:
-                        raise MINiMLModelError(f"unknown protocol reference: {step.protocol_ref}")
+                        warn("/series/assay_paths/protocol_ref", "external_protocol_reference", f"protocol {step.protocol_ref!r} is not declared in this package")
                     continue
                 if step.sample_ref and step.sample_ref not in sample_ids:
-                    raise MINiMLModelError(f"unknown assay node sample reference: {step.sample_ref}")
+                    warn("/series/assay_paths/sample_ref", "external_sample_reference", f"sample {step.sample_ref!r} is not declared in this package")
         self._validate_links(self.series.supplementary_data, "/series", warn)
         return tuple(issues)
 

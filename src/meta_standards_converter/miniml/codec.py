@@ -50,7 +50,7 @@ class MINiMLCodec:
         return MINiMLV1Migrator().migrate(value)
 
     def decode(self, value: Mapping[str, Any], *, strict: bool = False) -> MINiMLDecodeResult:
-        package = value if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
+        package = MINiMLPackage.from_mapping(value.to_mapping()) if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
         diagnostics = package.validate()
         if strict and diagnostics:
             raise MINiMLCompatibilityError(diagnostics)
@@ -70,7 +70,9 @@ class MINiMLCodec:
     def encode(package: MINiMLPackage) -> dict[str, Any]:
         if not isinstance(package, MINiMLPackage):
             raise TypeError("package must be a MINiMLPackage")
-        return package.to_mapping()
+        canonical = MINiMLPackage.from_mapping(package.to_mapping())
+        canonical.validate()
+        return canonical.to_mapping()
 
     def encode_many(self, packages: Sequence[MINiMLPackage]) -> list[dict[str, Any]]:
         return [self.encode(package) for package in packages]
