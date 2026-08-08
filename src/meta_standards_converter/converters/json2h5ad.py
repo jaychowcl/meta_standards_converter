@@ -2391,9 +2391,14 @@ class JSON2H5ADConverter:
     ) -> None:
         _anndata, _numpy, pandas, _sparse = self._scientific_modules()
         rows = []
+        transported_packages = []
         for package_index, package in enumerate(packages):
             if sample_id is not None and not self._package_has_sample(package, sample_id):
                 continue
+            to_mapping = getattr(package, "to_mapping", None)
+            transported_packages.append(
+                to_mapping() if callable(to_mapping) else package
+            )
             entities = self._metadata_entities(package, sample_id=sample_id)
             for entity_type, entity_id, entity in entities:
                 safe_entity = self._publication_safe(entity)
@@ -2429,6 +2434,9 @@ class JSON2H5ADConverter:
         )
         adata.uns["msc_miniml"] = {
             "schema_version": self.MINIML_SCHEMA_VERSION,
+            "packages_json": json.dumps(
+                transported_packages, sort_keys=True, ensure_ascii=False
+            ),
             "source_json": portable_source,
             "source_json_scope": source_scope,
             "path_base": "artifact_parent",

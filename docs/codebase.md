@@ -732,7 +732,12 @@ package conversion -> processed normalize / raw reference + nf-core
    groups and diagnostics survive later failures.
 8. Bound MAGE-TAB Parameter Values are projected to dotted `obs` columns and
    every typed attribute occurrence is retained in `uns["msc_mage_tab"]`.
-9. `--processed-checkpoint-dir` writes each normalized, projected sample H5AD
+9. `uns["msc_miniml"]` retains the flattened query table and provenance plus
+   `packages_json`, a deterministic JSON encoding of the complete MSC MINiML
+   package list. JSON encoding is intentional because HDF5 cannot represent
+   heterogeneous lists of nested MINiML objects natively; `json.loads`
+   reconstructs the data-model shape losslessly.
+10. `--processed-checkpoint-dir` writes each normalized, projected sample H5AD
    atomically with a fingerprint over the source JSON, sample, asset,
    orientation, and converter version. With `--resume`, matching checkpoints
    are loaded instead of downloading and converting that sample again;
