@@ -361,7 +361,7 @@ class _BaseSDRFHandler():
         for characteristic in channel.get("characteristics", []) or []:
             if not isinstance(characteristic, dict):
                 continue
-            tag = characteristic.get("tag")
+            tag = characteristic.get("name") or characteristic.get("tag")
             if not tag:
                 continue
             if tag.lower() == "organism part":
@@ -622,7 +622,7 @@ class _BaseSDRFHandler():
         for characteristic in channel.get("characteristics", []) or []:
             if not isinstance(characteristic, dict):
                 continue
-            if (characteristic.get("tag") or "").lower() == lower_tag:
+            if (characteristic.get("name") or characteristic.get("tag") or "").lower() == lower_tag:
                 values.append(self.clean(characteristic.get("value")))
         return [x for x in values if x]
 
@@ -636,6 +636,8 @@ class _BaseSDRFHandler():
     def clean(self, value):
         if value is None:
             return None
+        if isinstance(value, dict) and "value" in value:
+            value = value["value"]
         return " ".join(str(value).replace("\t", " ").replace("\n", " ").split())
 
     def _series_accession(self):

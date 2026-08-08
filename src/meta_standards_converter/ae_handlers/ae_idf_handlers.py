@@ -295,7 +295,7 @@ class IDFConstructor():
                     if not isinstance(characteristic, dict):
                         continue
 
-                    tag = clean(characteristic.get("tag"))
+                    tag = clean(characteristic.get("name") or characteristic.get("tag"))
                     value = clean(characteristic.get("value"))
                     if not tag or not value:
                         continue

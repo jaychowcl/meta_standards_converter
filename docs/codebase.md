@@ -154,32 +154,26 @@ credentials, or tokens.
 <a id="proposed-enriched-miniml-core"></a>
 ## Enriched MINiML-compatible core
 
-`ae2json` validates and publishes MAGE-TAB-only semantics under the namespaced
-`mage_tab.model` and preserves exact source tables and fingerprints under
-`mage_tab.roundtrip`. An unchanged single-SDRF package can therefore be
-restored exactly; edited packages regenerate from the typed model and overlay
-only unambiguous mapped core values. Removing `mage_tab` is not lossless.
+MSC MINiML 2.0 folds semantic MAGE-TAB content into the typed package itself:
+`series.protocols` owns protocol identity and details, `series.assay_paths`
+owns ordered node and protocol-application paths, named values own units and
+typed `annotations`, declaration lists retain QC/replicate/normalization
+semantics, and `source.documents` records source-document provenance. Raw IDF
+and SDRF table layouts and the former `mage_tab` replay sidecar are deliberately
+outside the runtime representation.
 
-The fixed MINiML-compatible core has no faithful location for arbitrary
-protocol graphs and their performers, hardware, software, parameters, or
-accessions; independent assay paths and ordered node/`Protocol REF` chains;
-typed attributes with unit and ontology companions; QC, replicate, and
-normalization declarations; arbitrary IDF/SDRF properties; or multiple source
-document boundaries. Flattening these concepts into existing Series, Sample,
-or Platform keys would lose ordering, multiplicity, identity, or
-column-occurrence information needed to reconstruct MAGE-TAB.
+MAGE-TAB construction is therefore semantic and deterministic. IDF ordering
+is a renderer responsibility, while assay-path order and repeated
+characteristic/parameter occurrences remain data. The SDRF renderer reads the
+v2 `name` field (with `tag` only as a migration fallback) and unwraps typed
+ontology values such as channel `source` and `molecule` instead of serializing
+their JSON object representation.
 
-Schema version 1 contains protocols, assay paths, typed attributes,
-declarations, generic properties, and document boundaries. Typed attributes
-may carry additive `hz_value*`, `hz_field`, and `hz_unit*` annotations.
-`json2ae` publishes these as adjacent reserved `Comment[hz_*]` columns without
-replacing raw SDRF cells, and `ae2json` reattaches them on parsing.
-
-The contract is additive: existing core names, types, and meanings remain
-unchanged, packages without the extension remain valid, and raw round-trip
-evidence is never harmonized. Tabular consumers add sample-bound
-`msc.mage_tab.parameter.*` summaries; H5AD also publishes the lossless
-occurrence table in `uns["msc_mage_tab"]`.
+Runtime converters accept only explicit schema `2.0` packages. Legacy or
+unversioned packages enter through `MINiMLV1Migrator`, which folds supported
+sidecar semantics once and reports dropped source-layout evidence. No runtime
+workflow emits or consumes `hz_*` fields; harmonized values live only in typed
+annotation records.
 
 **Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py),
 [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py),
@@ -662,11 +656,9 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
 4. Every retained package must be an object with a usable study accession,
    and all packages are validated before collaborator calls.
 5. Optional enrichment precedes `AEConstructor.miniml2magetab`.
-6. Round-trip evidence may restore source tables; mapped edits use overlay
-   rules. Enriched `hz_*` attributes become adjacent reserved Comment columns
-   while raw value/unit cells remain unchanged. Additive characteristic
-   columns are ontology-agnostic, including ECTO `hz_exposure_name*` and PCL
-   `hz_cell_state_name*` annotations.
+6. `AEConstructor` renders deterministic IDF/SDRF tables from native protocols,
+   assay paths, named characteristics, units, and typed annotations. It does
+   not replay raw source tables or consult a `mage_tab` sidecar.
 7. `out` controls writing; construction errors propagate.
 
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:

@@ -1346,7 +1346,11 @@ class TestIDFConstructor(unittest.TestCase):
 
 class TestAEConstructor(unittest.TestCase):
     def typed(self, data):
-        return MINiMLCodec().decode(data).package
+        return MINiMLCodec().decode({
+            "miniml_schema_version": "2.0",
+            "source": {"format": "test"},
+            **data,
+        }).package
 
     def canonical(self, data):
         return MINiMLCodec().encode(self.typed(data))
@@ -1426,7 +1430,12 @@ class TestAEConstructor(unittest.TestCase):
         )
         sdrf_constructor._add_sdrf_to_idf.assert_not_called()
         self.assertEqual(
-            [["Investigation Title", "Example"], ["SDRF File", sdrf], ["Term Source Name"]],
+            [
+                ["Investigation Title", "Example"],
+                ["SDRF File", sdrf],
+                ["Term Source Name"],
+                ["Investigation Accession", "GSE1"],
+            ],
             result,
         )
 
@@ -1770,14 +1779,14 @@ class TestAEConstructor(unittest.TestCase):
                     "channel": [
                         {
                             "source": "John's \"sample\"",
-                            "characteristics": [{"tag": "condition", "value": "\"treated\""}],
+                            "characteristics": [{"name": "condition", "value": "\"treated\""}],
                         }
                     ],
                 },
             ],
         }
 
-        magetab = AEConstructor().miniml2magetab(data=data)
+        magetab = AEConstructor().miniml2magetab(data=self.typed(data))
         sdrf = self.row(magetab, "SDRF File")[1]
 
         self.assertEqual(["Investigation Title", '"Quoted" study'], self.row(magetab, "Investigation Title"))
@@ -1869,7 +1878,7 @@ class TestAEConstructor(unittest.TestCase):
             ],
         }
 
-        magetab = AEConstructor().miniml2magetab(data=data)
+        magetab = AEConstructor().miniml2magetab(data=self.typed(data))
         sdrf = self.row(magetab, "SDRF File")[1]
         protocol_names = set(self.row(magetab, "Protocol Name")[1:])
         refs = self.non_empty_sdrf_protocol_refs(sdrf=sdrf)
@@ -1942,7 +1951,7 @@ class TestAEConstructor(unittest.TestCase):
 
         magetab = AEConstructor(
             sdrf_constructor=SDRFConstructor(insdc_fetcher=sra_fetcher)
-        ).miniml2magetab(data=data)
+        ).miniml2magetab(data=self.typed(data))
         sdrf = self.row(magetab, "SDRF File")[1]
         protocol_names = set(self.row(magetab, "Protocol Name")[1:])
         refs = self.non_empty_sdrf_protocol_refs(sdrf=sdrf)
@@ -1980,7 +1989,7 @@ class TestAEConstructor(unittest.TestCase):
             "contributor": [],
         }
 
-        magetab = AEConstructor().miniml2magetab(data=data)
+        magetab = AEConstructor().miniml2magetab(data=self.typed(data))
         types = self.row(magetab, "Protocol Type")[1:]
         descriptions = self.row(magetab, "Protocol Description")[1:]
         refs = self.non_empty_sdrf_protocol_refs(self.row(magetab, "SDRF File")[1])
@@ -2024,7 +2033,7 @@ class TestAEConstructor(unittest.TestCase):
             ],
         }
 
-        magetab = AEConstructor().miniml2magetab(data=data)
+        magetab = AEConstructor().miniml2magetab(data=self.typed(data))
         sdrf = self.row(magetab, "SDRF File")[1]
         names_by_type = dict(zip(self.row(magetab, "Protocol Type")[1:], self.row(magetab, "Protocol Name")[1:]))
 
@@ -2059,7 +2068,7 @@ class TestAEConstructor(unittest.TestCase):
             ],
         }
 
-        magetab = AEConstructor().miniml2magetab(data=data)
+        magetab = AEConstructor().miniml2magetab(data=self.typed(data))
         sdrf = self.row(magetab, "SDRF File")[1]
 
         self.assertEqual(["Protocol Type", "sample collection protocol"], self.row(magetab, "Protocol Type"))
@@ -2092,7 +2101,7 @@ class TestAEConstructor(unittest.TestCase):
         }
         constructor = AEConstructor()
 
-        magetab = constructor.miniml2magetab(data=data)
+        magetab = constructor.miniml2magetab(data=self.typed(data))
         sdrf = self.row(magetab, "SDRF File")[1]
 
         self.assertIn("Protocol REF", sdrf[0])
