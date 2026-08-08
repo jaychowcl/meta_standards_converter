@@ -14,6 +14,7 @@ import os
 
 from meta_standards_converter.ae_handlers.ae_parser import AEParser
 from meta_standards_converter.ae_handlers.ae_webfetcher import AEWebFetcher
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class ae2json:
         source: str,
         out: str | None = None,
         sdrf_sources: list[str] | None = None,
-    ) -> list[dict]:
+    ) -> list[MINiMLPackage]:
         logger.info("%s: resolving MAGE-TAB metadata", source)
         resolved = self.fetcher.resolve(source, sdrf_sources=sdrf_sources)
         logger.info("%s: parsing IDF and %d SDRF file(s)", source, len(resolved.sdrfs))
@@ -40,7 +41,7 @@ class ae2json:
             accession = self._study_accession(package)
             path = os.path.join(out, f"{self._safe_filename(accession)}.json")
             with open(path, "w", encoding="utf-8") as handle:
-                json.dump(packages, handle, indent=2, ensure_ascii=False)
+                json.dump(MINiMLCodec().encode_many(packages), handle, indent=2, ensure_ascii=False)
                 handle.write("\n")
             logger.info("%s: wrote parsed JSON to %s", source, path)
         return packages

@@ -64,6 +64,21 @@
       "properties": {"first": {"type": "string"}, "middle": {"type": "string"}, "last": {"type": "string"}},
       "additionalProperties": true
     },
+    "pubmedPublication": {
+      "type": "object", "required": ["pubmed_id"],
+      "properties": {"pubmed_id": {"type": "string"}, "doi": {"type": ["string", "null"]}, "author_list": {"type": ["string", "null"]}, "title": {"type": ["string", "null"]}, "status": {"type": ["string", "null"]}, "status_term_source_ref": {"type": ["string", "null"]}, "status_term_accession_number": {"type": ["string", "null"]}},
+      "additionalProperties": true
+    },
+    "fastqFile": {
+      "type": "object",
+      "properties": {"uri": {"type": "string"}, "filename": {"type": "string"}, "md5": {"type": "string"}, "bytes": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "sraRun": {
+      "type": "object",
+      "properties": {"run": {"type": ["string", "null"]}, "study": {"type": ["string", "null"]}, "experiment": {"type": ["string", "null"]}, "sample": {"type": ["string", "null"]}, "biosample": {"type": ["string", "null"]}, "geo_sample": {"type": ["string", "null"]}, "library_layout": {"type": ["string", "null"]}, "library_selection": {"type": ["string", "null"]}, "library_source": {"type": ["string", "null"]}, "library_strategy": {"type": ["string", "null"]}, "scan_name": {"type": ["string", "null"]}, "instrument_model": {"type": ["string", "null"]}, "fastq_files": {"type": "array", "items": {"$ref": "#/$defs/fastqFile"}}, "submitted_file_name": {"type": ["string", "null"]}, "md5": {"type": ["string", "null"]}, "read_lengths": {"type": "array"}},
+      "additionalProperties": true
+    },
     "database": {
       "type": "object",
       "properties": {"iid": {"type": "string"}, "name": {"type": "string"}, "public_id": {"type": "string"}, "organization_ref": {"$ref": "#/$defs/reference"}, "organization": {"type": "string"}, "web_link": {"type": "string"}, "email": {"type": "string"}},
@@ -111,7 +126,7 @@
     },
     "sample": {
       "type": "object",
-      "properties": {"iid": {"type": "string"}, "accession": {"type": "array", "items": {"$ref": "#/$defs/accession"}}, "status": {"type": "array", "items": {"$ref": "#/$defs/status"}}, "title": {"type": "string"}, "type": {"type": "string", "x-miniml-xsd-vocabulary": "SampleType"}, "channel_count": {"type": "string"}, "channel": {"type": "array", "items": {"$ref": "#/$defs/channel"}}, "platform_ref": {"$ref": "#/$defs/reference"}, "instrument_model": {"type": ["object", "string"]}, "raw_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "supplementary_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "relation": {"type": "array", "items": {"$ref": "#/$defs/relation"}}, "data_table": {"$ref": "#/$defs/dataTable"}},
+      "properties": {"iid": {"type": "string"}, "accession": {"type": "array", "items": {"$ref": "#/$defs/accession"}}, "status": {"type": "array", "items": {"$ref": "#/$defs/status"}}, "title": {"type": "string"}, "type": {"type": "string", "x-miniml-xsd-vocabulary": "SampleType"}, "channel_count": {"type": "string"}, "channel": {"type": "array", "items": {"$ref": "#/$defs/channel"}}, "platform_ref": {"$ref": "#/$defs/reference"}, "instrument_model": {"type": ["object", "string"]}, "raw_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "supplementary_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "relation": {"type": "array", "items": {"$ref": "#/$defs/relation"}}, "data_table": {"$ref": "#/$defs/dataTable"}, "sra_accession": {"type": "array", "items": {"type": "string"}}, "ena_accession": {"type": "array", "items": {"type": "string"}}, "sra_run": {"type": "array", "items": {"$ref": "#/$defs/sraRun"}}},
       "additionalProperties": true
     },
     "variable": {
@@ -127,7 +142,7 @@
     "series": {
       "type": "object",
       "anyOf": [{"required": ["iid"]}, {"required": ["accession"]}],
-      "properties": {"iid": {"type": "string"}, "accession": {"type": "array", "items": {"$ref": "#/$defs/accession"}}, "status": {"type": "array", "items": {"$ref": "#/$defs/status"}}, "title": {"type": "string"}, "pubmed_id": {"type": "array"}, "citation": {"type": "array"}, "web_link": {"type": "array"}, "summary": {"type": "string"}, "overall_design": {"type": "string"}, "type": {"type": "array"}, "sample_ref": {"type": "array", "items": {"$ref": "#/$defs/reference"}}, "variable": {"type": "array", "items": {"$ref": "#/$defs/variable"}}, "repeats": {"type": "array", "items": {"$ref": "#/$defs/repeat"}}, "supplementary_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "relation": {"type": "array", "items": {"$ref": "#/$defs/relation"}}, "data_table": {"type": "array", "items": {"$ref": "#/$defs/dataTable"}}},
+      "properties": {"iid": {"type": "string"}, "accession": {"type": "array", "items": {"$ref": "#/$defs/accession"}}, "status": {"type": "array", "items": {"$ref": "#/$defs/status"}}, "title": {"type": "string"}, "pubmed_id": {"type": "array"}, "pubmed_publication": {"type": "array", "items": {"$ref": "#/$defs/pubmedPublication"}}, "citation": {"type": "array"}, "web_link": {"type": "array"}, "summary": {"type": "string"}, "overall_design": {"type": "string"}, "type": {"type": "array"}, "sample_ref": {"type": "array", "items": {"$ref": "#/$defs/reference"}}, "variable": {"type": "array", "items": {"$ref": "#/$defs/variable"}}, "repeats": {"type": "array", "items": {"$ref": "#/$defs/repeat"}}, "supplementary_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "relation": {"type": "array", "items": {"$ref": "#/$defs/relation"}}, "data_table": {"type": "array", "items": {"$ref": "#/$defs/dataTable"}}},
       "additionalProperties": true
     }
   }

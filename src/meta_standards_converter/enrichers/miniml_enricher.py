@@ -17,6 +17,7 @@ import time
 import requests
 
 from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 from meta_standards_converter.pubmed_handlers.pubmed_webfetcher import PubmedWebFetcher
 
 
@@ -28,15 +29,18 @@ class MINiMLEnricher:
         self.pubmed_fetcher = pubmed_fetcher or PubmedWebFetcher()
         self.insdc_fetcher = insdc_fetcher or INSDCWebfetcher()
 
-    def enrich(self, data: dict) -> dict:
+    def enrich(self, data: MINiMLPackage) -> MINiMLPackage:
         started = time.monotonic()
+        codec = MINiMLCodec()
+        package = codec.decode(data).package
+        mutable = codec.encode(package)
         self._pubmed_failures = 0
         self._sra_failures = 0
-        self.enrich_pubmed(data=data)
-        self.enrich_sra(data=data)
-        series = data.get("series") if isinstance(data.get("series"), dict) else {}
+        self.enrich_pubmed(data=mutable)
+        self.enrich_sra(data=mutable)
+        series = mutable.get("series") if isinstance(mutable.get("series"), dict) else {}
         pubmed_ids = self._dedupe(self._as_list(series.get("pubmed_id")))
-        samples = [item for item in self._as_list(data.get("sample")) if isinstance(item, dict)]
+        samples = [item for item in self._as_list(mutable.get("sample")) if isinstance(item, dict)]
         sra_accessions = sum(len(self._as_list(item.get("sra_accession"))) for item in samples)
         sra_runs = sum(len(self._as_list(item.get("sra_run"))) for item in samples)
         logger.info(
@@ -49,7 +53,7 @@ class MINiMLEnricher:
             self._sra_failures,
             time.monotonic() - started,
         )
-        return data
+        return codec.decode(mutable).package
 
     def enrich_pubmed(self, data: dict) -> dict:
         series = data.get("series")

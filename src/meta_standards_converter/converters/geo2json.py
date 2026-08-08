@@ -18,6 +18,7 @@ from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
 from meta_standards_converter.helpers.json_helper import JSONHandler
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class geo2json(JSONHandler):
       remove_empty: bool = True,
       enrich: bool = True,
       out: str = None,
-   ) -> list[dict]:
+   ) -> list[MINiMLPackage]:
       """
       Fetches GEO MINiML, parses it to JSON packages, optionally enriches, and optionally writes JSON.
       """
@@ -66,11 +67,11 @@ class geo2json(JSONHandler):
       logger.info("%s: conversion produced %d JSON package(s)", gse, len(packages))
       return packages
 
-   def json2file(self, gse: str, packages: list[dict], out: str) -> str:
+   def json2file(self, gse: str, packages: list[MINiMLPackage], out: str) -> str:
       os.makedirs(out, exist_ok=True)
       path = os.path.join(out, f"{gse}.json")
       logger.info("%s: writing JSON package list to %s", gse, path)
       with open(path, "w", encoding="utf-8") as handle:
-         json.dump(packages, handle, indent=2, ensure_ascii=False)
+         json.dump(MINiMLCodec().encode_many(packages), handle, indent=2, ensure_ascii=False)
          handle.write("\n")
       return path

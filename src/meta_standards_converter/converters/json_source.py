@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from meta_standards_converter.atlas_v1 import AtlasV1Reader
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage, MINiMLValidationIssue
 
 
 @dataclass(frozen=True)
@@ -24,21 +25,24 @@ class DatasetPackageGroup:
     """One study-sized group of parsed MINiML packages."""
 
     dataset_id: str
-    packages: tuple[dict[str, Any], ...]
+    packages: tuple[MINiMLPackage, ...]
     source_accession: str | None = None
     harmonization_overrides: Mapping[str, Any] | None = None
-    source_packages: tuple[dict[str, Any], ...] | None = None
+    source_packages: tuple[MINiMLPackage, ...] | None = None
     harmonization_resolution: Any | None = None
 
     def resolved(self, *, enabled: bool) -> "DatasetPackageGroup":
         from .harmonization_overrides import resolve_harmonization_overrides
 
+        codec = MINiMLCodec()
         resolution = resolve_harmonization_overrides(
-            self.packages, self.harmonization_overrides, enabled=enabled
+            tuple(codec.encode(package) for package in self.packages),
+            self.harmonization_overrides,
+            enabled=enabled,
         )
         return DatasetPackageGroup(
             self.dataset_id,
-            resolution.packages,
+            codec.decode_many(resolution.packages).packages,
             source_accession=self.source_accession,
             harmonization_overrides=self.harmonization_overrides,
             source_packages=self.packages,
@@ -52,6 +56,7 @@ class SourceLoadResult:
 
     groups: tuple[DatasetPackageGroup, ...]
     warnings: tuple[str, ...] = ()
+    diagnostics: tuple[MINiMLValidationIssue, ...] = ()
 
 
 class JSONPackageSource:
@@ -59,6 +64,7 @@ class JSONPackageSource:
 
     def __init__(self, atlas_reader: AtlasV1Reader | None = None) -> None:
         self._atlas_reader = atlas_reader or AtlasV1Reader()
+        self._codec = MINiMLCodec()
 
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
@@ -78,7 +84,7 @@ class JSONPackageSource:
                     f"Parsed MINiML package {index} must be a JSON object."
                 )
         return self._validate_result(
-            SourceLoadResult(self._group_packages(packages, source.stem))
+            self._source_result(self._group_packages(packages, source.stem))
         )
 
     def _agentic_envelope(
@@ -90,7 +96,7 @@ class JSONPackageSource:
             raise ValueError("Agentic Curator miniml_json must be an object or non-empty object list.")
         profile = payload.get("harmonization_overrides")
         groups = self._group_packages(packages, fallback)
-        return SourceLoadResult(tuple(
+        return self._source_result(tuple(
             DatasetPackageGroup(
                 group.dataset_id,
                 group.packages,
@@ -104,10 +110,9 @@ class JSONPackageSource:
         if not result.groups:
             raise ValueError("JSON source contains no convertible package groups.")
         if not any(
-            isinstance(sample, Mapping)
+            package.samples
             for group in result.groups
             for package in group.packages
-            for sample in self._as_list(package.get("sample"))
         ):
             raise ValueError("JSON source contains no convertible samples.")
         return result
@@ -130,7 +135,7 @@ class JSONPackageSource:
             )
             for dataset in result.datasets
         )
-        return SourceLoadResult(groups, result.warnings)
+        return self._source_result(groups, result.warnings)
 
     @staticmethod
     def _atlas_packages(
@@ -163,7 +168,7 @@ class JSONPackageSource:
 
     def _dedupe_samples(
         self, packages: list[Mapping[str, Any]]
-    ) -> tuple[dict[str, Any], ...]:
+    ) -> tuple[MINiMLPackage, ...]:
         seen: dict[str, Mapping[str, Any]] = {}
         retained: list[dict[str, Any]] = []
         for package in packages:
@@ -190,7 +195,20 @@ class JSONPackageSource:
             copied["sample"] = unique
             if unique or not samples:
                 retained.append(copied)
-        return tuple(retained)
+        return self._codec.decode_many(retained).packages
+
+    def _source_result(
+        self,
+        groups: tuple[DatasetPackageGroup, ...],
+        warnings: tuple[str, ...] = (),
+    ) -> SourceLoadResult:
+        diagnostics = tuple(
+            issue
+            for group in groups
+            for package in group.packages
+            for issue in package.validate()
+        )
+        return SourceLoadResult(groups, tuple(warnings), diagnostics)
 
     def _dataset_id(self, package: Mapping[str, Any]) -> str | None:
         series = package.get("series")

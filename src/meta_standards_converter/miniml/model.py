@@ -36,6 +36,90 @@ class MINiMLValidationIssue:
     severity: str = "warning"
 
 
+@dataclass(frozen=True)
+class PubMedPublication:
+    pubmed_id: str
+    doi: str | None = None
+    author_list: str | None = None
+    title: str | None = None
+    status: str | None = None
+    status_term_source_ref: str | None = None
+    status_term_accession_number: str | None = None
+    extras: Mapping[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "PubMedPublication":
+        data = _mapping(value, "pubmed_publication")
+        known = {"pubmed_id", "doi", "author_list", "title", "status", "status_term_source_ref", "status_term_accession_number"}
+        return cls(str(data.get("pubmed_id", "")), data.get("doi"), data.get("author_list"), data.get("title"), data.get("status"), data.get("status_term_source_ref"), data.get("status_term_accession_number"), _extras(data, known))
+
+    def to_mapping(self) -> dict[str, Any]:
+        result: dict[str, Any] = {
+            "pubmed_id": self.pubmed_id,
+            "doi": self.doi,
+            "author_list": self.author_list,
+            "title": self.title,
+            "status": self.status,
+            "status_term_source_ref": self.status_term_source_ref,
+            "status_term_accession_number": self.status_term_accession_number,
+        }
+        return _record(result, self.extras)
+
+
+@dataclass(frozen=True)
+class FASTQFile:
+    uri: str | None = None
+    filename: str | None = None
+    md5: str | None = None
+    bytes: str | None = None
+    extras: Mapping[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "FASTQFile":
+        data = _mapping(value, "fastq_file")
+        known = {"uri", "filename", "md5", "bytes"}
+        return cls(data.get("uri"), data.get("filename"), data.get("md5"), data.get("bytes"), _extras(data, known))
+
+    def to_mapping(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key in ("uri", "filename", "md5", "bytes"):
+            _put(result, key, getattr(self, key))
+        return _record(result, self.extras)
+
+
+@dataclass(frozen=True)
+class SRARun:
+    run: str | None = None
+    study: str | None = None
+    experiment: str | None = None
+    sample: str | None = None
+    biosample: str | None = None
+    geo_sample: str | None = None
+    library_layout: str | None = None
+    library_selection: str | None = None
+    library_source: str | None = None
+    library_strategy: str | None = None
+    scan_name: str | None = None
+    instrument_model: str | None = None
+    fastq_files: tuple[FASTQFile, ...] = ()
+    submitted_file_name: str | None = None
+    md5: str | None = None
+    read_lengths: tuple[Any, ...] = ()
+    extras: Mapping[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "SRARun":
+        data = _mapping(value, "sra_run")
+        known = {"run", "study", "experiment", "sample", "biosample", "geo_sample", "library_layout", "library_selection", "library_source", "library_strategy", "scan_name", "instrument_model", "fastq_files", "submitted_file_name", "md5", "read_lengths"}
+        return cls(data.get("run"), data.get("study"), data.get("experiment"), data.get("sample"), data.get("biosample"), data.get("geo_sample"), data.get("library_layout"), data.get("library_selection"), data.get("library_source"), data.get("library_strategy"), data.get("scan_name"), data.get("instrument_model"), _objects(data.get("fastq_files"), FASTQFile.from_mapping, "sra_run.fastq_files"), data.get("submitted_file_name"), data.get("md5"), tuple(_items(data.get("read_lengths"))), _extras(data, known))
+
+    def to_mapping(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"run": self.run, "study": self.study}
+        for key in ("experiment", "sample", "biosample", "geo_sample", "library_layout", "library_selection", "library_source", "library_strategy", "scan_name", "instrument_model", "fastq_files", "submitted_file_name", "md5", "read_lengths"):
+            _put(result, key, getattr(self, key))
+        return _record(result, self.extras)
+
+
 def miniml_schema_path() -> Path:
     return Path(str(files("meta_standards_converter.miniml").joinpath("miniml-package-v1.schema.json")))
 
@@ -622,19 +706,26 @@ class Sample:
     raw_data: tuple[SupplementLink, ...] = ()
     relations: tuple[Relation, ...] = ()
     data_table: DataTable | None = None
+    sra_accessions: tuple[str, ...] = ()
+    ena_accessions: tuple[str, ...] = ()
+    sra_runs: tuple[SRARun, ...] = ()
+    sra_runs_present: bool = False
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Sample":
         data = _mapping(value, "sample")
-        known = {"iid", "accession", "status", "title", "type", "anchor", "tag_length", "tag_count", "channel_count", "channel", "hybridization_protocol", "scan_protocol", "description", "data_processing", "platform_ref", "library_strategy", "library_source", "library_selection", "instrument_model", "barcode", "contact_ref", "contact", "supplementary_data", "raw_data", "relation", "data_table"}
-        return cls(data.get("iid"), _accessions(data.get("accession")), _statuses(data.get("status")), data.get("title"), data.get("type"), data.get("anchor"), data.get("tag_length"), data.get("tag_count"), data.get("channel_count"), _objects(data.get("channel"), Channel.from_mapping, "sample.channel"), data.get("hybridization_protocol"), data.get("scan_protocol"), data.get("description"), data.get("data_processing"), None if data.get("platform_ref") is None else Reference.from_mapping(data["platform_ref"]), data.get("library_strategy"), data.get("library_source"), data.get("library_selection"), None if data.get("instrument_model") is None else InstrumentModel.from_value(data["instrument_model"]), data.get("barcode"), _refs(data.get("contact_ref"), "sample.contact_ref"), _objects(data.get("contact"), Contributor.from_mapping, "sample.contact"), _links(data.get("supplementary_data")), _links(data.get("raw_data")), _relations(data.get("relation")), None if data.get("data_table") is None else DataTable.from_mapping(data["data_table"]), _extras(data, known))
+        known = {"iid", "accession", "status", "title", "type", "anchor", "tag_length", "tag_count", "channel_count", "channel", "hybridization_protocol", "scan_protocol", "description", "data_processing", "platform_ref", "library_strategy", "library_source", "library_selection", "instrument_model", "barcode", "contact_ref", "contact", "supplementary_data", "raw_data", "relation", "data_table", "sra_accession", "ena_accession", "sra_run"}
+        return cls(data.get("iid"), _accessions(data.get("accession")), _statuses(data.get("status")), data.get("title"), data.get("type"), data.get("anchor"), data.get("tag_length"), data.get("tag_count"), data.get("channel_count"), _objects(data.get("channel"), Channel.from_mapping, "sample.channel"), data.get("hybridization_protocol"), data.get("scan_protocol"), data.get("description"), data.get("data_processing"), None if data.get("platform_ref") is None else Reference.from_mapping(data["platform_ref"]), data.get("library_strategy"), data.get("library_source"), data.get("library_selection"), None if data.get("instrument_model") is None else InstrumentModel.from_value(data["instrument_model"]), data.get("barcode"), _refs(data.get("contact_ref"), "sample.contact_ref"), _objects(data.get("contact"), Contributor.from_mapping, "sample.contact"), _links(data.get("supplementary_data")), _links(data.get("raw_data")), _relations(data.get("relation")), None if data.get("data_table") is None else DataTable.from_mapping(data["data_table"]), tuple(str(item) for item in _items(data.get("sra_accession"))), tuple(str(item) for item in _items(data.get("ena_accession"))), _objects(data.get("sra_run"), SRARun.from_mapping, "sample.sra_run"), "sra_run" in data, _extras(data, known))
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
         keys = {"accessions": "accession", "statuses": "status", "channels": "channel", "contacts": "contact", "relations": "relation"}
-        for key in ("iid", "accessions", "statuses", "title", "type", "anchor", "tag_length", "tag_count", "channel_count", "channels", "hybridization_protocol", "scan_protocol", "description", "data_processing", "platform_ref", "library_strategy", "library_source", "library_selection", "instrument_model", "barcode", "contact_ref", "contacts", "supplementary_data", "raw_data", "relations", "data_table"):
+        keys.update({"sra_accessions": "sra_accession", "ena_accessions": "ena_accession", "sra_runs": "sra_run"})
+        for key in ("iid", "accessions", "statuses", "title", "type", "anchor", "tag_length", "tag_count", "channel_count", "channels", "hybridization_protocol", "scan_protocol", "description", "data_processing", "platform_ref", "library_strategy", "library_source", "library_selection", "instrument_model", "barcode", "contact_ref", "contacts", "supplementary_data", "raw_data", "relations", "data_table", "sra_accessions", "ena_accessions", "sra_runs"):
             _put(result, keys.get(key, key), getattr(self, key))
+        if self.sra_runs_present and "sra_run" not in result:
+            result["sra_run"] = []
         return _record(result, self.extras)
 
 
@@ -660,18 +751,20 @@ class Series:
     supplementary_data: tuple[SupplementLink, ...] = ()
     relations: tuple[Relation, ...] = ()
     data_tables: tuple[DataTable, ...] = ()
+    pubmed_publications: tuple[PubMedPublication, ...] = ()
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Series":
         data = _mapping(value, "series")
-        known = {"iid", "accession", "status", "title", "pubmed_id", "citation", "web_link", "summary", "overall_design", "type", "contributor_ref", "contributor", "contact_ref", "contact", "sample_ref", "variable", "repeats", "supplementary_data", "relation", "data_table"}
-        return cls(data.get("iid"), _accessions(data.get("accession")), _statuses(data.get("status")), data.get("title"), tuple(_items(data.get("pubmed_id"))), tuple(_items(data.get("citation"))), tuple(_items(data.get("web_link"))), data.get("summary"), data.get("overall_design"), tuple(_items(data.get("type"))), _refs(data.get("contributor_ref"), "series.contributor_ref"), _objects(data.get("contributor"), Contributor.from_mapping, "series.contributor"), _refs(data.get("contact_ref"), "series.contact_ref"), _objects(data.get("contact"), Contributor.from_mapping, "series.contact"), _refs(data.get("sample_ref"), "series.sample_ref"), _objects(data.get("variable"), Variable.from_mapping, "series.variable"), _objects(data.get("repeats"), Repeat.from_mapping, "series.repeats"), _links(data.get("supplementary_data")), _relations(data.get("relation")), _objects(data.get("data_table"), DataTable.from_mapping, "series.data_table"), _extras(data, known))
+        known = {"iid", "accession", "status", "title", "pubmed_id", "citation", "web_link", "summary", "overall_design", "type", "contributor_ref", "contributor", "contact_ref", "contact", "sample_ref", "variable", "repeats", "supplementary_data", "relation", "data_table", "pubmed_publication"}
+        return cls(data.get("iid"), _accessions(data.get("accession")), _statuses(data.get("status")), data.get("title"), tuple(_items(data.get("pubmed_id"))), tuple(_items(data.get("citation"))), tuple(_items(data.get("web_link"))), data.get("summary"), data.get("overall_design"), tuple(_items(data.get("type"))), _refs(data.get("contributor_ref"), "series.contributor_ref"), _objects(data.get("contributor"), Contributor.from_mapping, "series.contributor"), _refs(data.get("contact_ref"), "series.contact_ref"), _objects(data.get("contact"), Contributor.from_mapping, "series.contact"), _refs(data.get("sample_ref"), "series.sample_ref"), _objects(data.get("variable"), Variable.from_mapping, "series.variable"), _objects(data.get("repeats"), Repeat.from_mapping, "series.repeats"), _links(data.get("supplementary_data")), _relations(data.get("relation")), _objects(data.get("data_table"), DataTable.from_mapping, "series.data_table"), _objects(data.get("pubmed_publication"), PubMedPublication.from_mapping, "series.pubmed_publication"), _extras(data, known))
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
         keys = {"accessions": "accession", "statuses": "status", "pubmed_ids": "pubmed_id", "citations": "citation", "web_links": "web_link", "types": "type", "contributors": "contributor", "contacts": "contact", "variables": "variable", "relations": "relation", "data_tables": "data_table"}
-        for key in ("iid", "accessions", "statuses", "title", "pubmed_ids", "citations", "web_links", "summary", "overall_design", "types", "contributor_ref", "contributors", "contact_ref", "contacts", "sample_ref", "variables", "repeats", "supplementary_data", "relations", "data_tables"):
+        keys["pubmed_publications"] = "pubmed_publication"
+        for key in ("iid", "accessions", "statuses", "title", "pubmed_ids", "citations", "web_links", "summary", "overall_design", "types", "contributor_ref", "contributors", "contact_ref", "contacts", "sample_ref", "variables", "repeats", "supplementary_data", "relations", "data_tables", "pubmed_publications"):
             _put(result, keys.get(key, key), getattr(self, key))
         return _record(result, self.extras)
 
@@ -683,7 +776,7 @@ VARIABLE_FACTORS = {"dose", "time", "tissue", "strain", "gender", "cell line", "
 
 
 @dataclass(frozen=True)
-class MINiMLPackage:
+class MINiMLPackage(Mapping[str, Any]):
     series: Series
     databases: tuple[Database, ...] = ()
     organizations: tuple[Organization, ...] = ()
@@ -695,6 +788,15 @@ class MINiMLPackage:
     mage_tab: Mapping[str, Any] | None = None
     extras: Mapping[str, Any] = field(default_factory=dict)
     miniml_schema_version: str = MINIML_SCHEMA_VERSION
+
+    def __getitem__(self, key: str) -> Any:
+        return self.to_mapping()[key]
+
+    def __iter__(self):
+        return iter(self.to_mapping())
+
+    def __len__(self) -> int:
+        return len(self.to_mapping())
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "MINiMLPackage":

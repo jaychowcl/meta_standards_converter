@@ -49,6 +49,7 @@ def validate_platform_handler(value: str) -> str:
 
 
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
 
 class AEConstructor:
@@ -56,10 +57,11 @@ class AEConstructor:
         self.idf_constructor = idf_constructor or IDFConstructor()
         self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
 
-    def miniml2magetab(self, data: dict, platform_handler: str | None = None) -> list:
+    def miniml2magetab(self, data: MINiMLPackage, platform_handler: str | None = None) -> list:
         """
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
+        data = MINiMLCodec().encode(MINiMLCodec().decode(data).package)
         forced = platform_handler is not None
         if forced:
             technology_type = validate_platform_handler(platform_handler)

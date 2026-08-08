@@ -167,13 +167,14 @@ class AEParser:
         package["mage_tab"]["model"] = validate_model(
             build_model(idf_rows=idf_rows, sdrfs=source_sdrfs)
         )
-        package = MINiMLPackage.from_mapping(package).to_mapping()
+        modeled_package = MINiMLPackage.from_mapping(package)
+        package = modeled_package.to_mapping()
         package["mage_tab"]["roundtrip"] = build_roundtrip(
             package=package,
             idf_rows=idf_rows,
             sdrfs=source_sdrfs,
         )
-        return package
+        return MINiMLPackage.from_mapping(package)
 
     def _table(self, text: str, name: str, rectangular: bool) -> list[list[str]]:
         rows = [row for row in csv.reader(io.StringIO(text), delimiter="\t") if row]

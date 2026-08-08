@@ -14,6 +14,7 @@ from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
 from meta_standards_converter.converters.json_source import JSONPackageSource
 from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
+from meta_standards_converter.miniml import MINiMLPackage
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class json2ae(JSONHandler):
 
     def _load_packages(
         self, json_path: str, *, use_harmonization_overrides: bool = False
-    ) -> list[dict]:
+    ) -> list[MINiMLPackage]:
         try:
             loaded = self.package_source.load(json_path)
         except FileNotFoundError as error:
@@ -90,13 +91,13 @@ class json2ae(JSONHandler):
             packages.extend(group.packages)
 
         for index, package in enumerate(packages, start=1):
-            if not isinstance(package, dict):
-                raise ValueError(f"Parsed MINiML package {index} must be a JSON object.")
+            if not isinstance(package, MINiMLPackage):
+                raise ValueError(f"Parsed MINiML package {index} must decode as MINiMLPackage.")
             if not self._usable_study_accession(package):
                 raise ValueError(f"Parsed MINiML package {index} has no usable study accession.")
         return packages
 
-    def _usable_study_accession(self, package: dict) -> str | None:
+    def _usable_study_accession(self, package: MINiMLPackage) -> str | None:
         series_values = package.get("series")
         if not isinstance(series_values, list):
             series_values = [series_values]

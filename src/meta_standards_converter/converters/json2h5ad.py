@@ -995,7 +995,7 @@ class SourcePlanner:
     def _study_by_sample(self, packages: list[dict]) -> dict[str, str]:
         result = {}
         for package in packages:
-            series = package.get("series") if isinstance(package, dict) else None
+            series = package.get("series") if isinstance(package, Mapping) else None
             study_id = None
             if isinstance(series, dict):
                 for accession in self._as_list(series.get("accession")):
@@ -1610,7 +1610,7 @@ class JSON2H5ADConverter:
 
     def _study_accession(self, packages: list[dict]) -> str | None:
         for package in packages:
-            series = package.get("series") if isinstance(package, dict) else None
+            series = package.get("series") if isinstance(package, Mapping) else None
             if not isinstance(series, dict):
                 continue
             for accession in SourcePlanner()._as_list(series.get("accession")):

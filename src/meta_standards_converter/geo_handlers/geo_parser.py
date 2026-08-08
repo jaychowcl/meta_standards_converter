@@ -96,7 +96,7 @@ class GEOParser:
         miniml: str,
         remove_empty: bool = False,
         related_series: bool = False,
-    ) -> list[dict]:
+    ) -> list[MINiMLPackage]:
         started = time.monotonic()
         parsed = self._parse(miniml=miniml)
 
@@ -106,18 +106,20 @@ class GEOParser:
         if remove_empty:
             parsed = [self.remove_empty_fields(series_package) for series_package in parsed]
 
+        packages = [MINiMLPackage.from_mapping(package) for package in parsed]
+
         logger.info(
             "MINiML parse stats packages=%s series=%s samples=%s platforms=%s related_series=%s remove_empty=%s elapsed_seconds=%.3f",
-            len(parsed),
-            sum(1 for package in parsed if isinstance(package.get("series"), dict)),
-            sum(len(package.get("sample", [])) for package in parsed),
-            sum(len(package.get("platform", [])) for package in parsed),
+            len(packages),
+            len(packages),
+            sum(len(package.samples) for package in packages),
+            sum(len(package.platforms) for package in packages),
             related_series,
             remove_empty,
             time.monotonic() - started,
         )
 
-        return parsed
+        return packages
 
     def _parse(self, miniml: str) -> list[dict]:
         root = ET.fromstring(miniml)
@@ -270,7 +272,7 @@ class GEOParser:
             "series": series,
         }
         self._attach_namespaced_root_attributes(root=root, package=package)
-        return MINiMLPackage.from_mapping(package).to_mapping()
+        return package
 
     def _resolve_samples(self, series: dict, samples_by_iid: dict[str, dict]) -> list[dict]:
         refs = [
