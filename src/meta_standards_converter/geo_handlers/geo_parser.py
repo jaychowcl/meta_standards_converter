@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 from collections import deque
 
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
+from meta_standards_converter.miniml import MINiMLPackage
 
 
 logger = logging.getLogger(__name__)
@@ -269,7 +270,7 @@ class GEOParser:
             "series": series,
         }
         self._attach_namespaced_root_attributes(root=root, package=package)
-        return package
+        return MINiMLPackage.from_mapping(package).to_mapping()
 
     def _resolve_samples(self, series: dict, samples_by_iid: dict[str, dict]) -> list[dict]:
         refs = [

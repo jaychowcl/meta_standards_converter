@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 from meta_standards_converter.ae_handlers.ae_model import build_model, validate_model
 from meta_standards_converter.ae_handlers.ae_roundtrip import build_roundtrip
 from meta_standards_converter.ae_handlers.ae_webfetcher import MAGETabInput
+from meta_standards_converter.miniml import MINiMLPackage
 
 
 logger = logging.getLogger(__name__)
@@ -166,6 +167,7 @@ class AEParser:
         package["mage_tab"]["model"] = validate_model(
             build_model(idf_rows=idf_rows, sdrfs=source_sdrfs)
         )
+        package = MINiMLPackage.from_mapping(package).to_mapping()
         package["mage_tab"]["roundtrip"] = build_roundtrip(
             package=package,
             idf_rows=idf_rows,
