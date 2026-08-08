@@ -36,6 +36,7 @@ from meta_standards_converter.ae_handlers.ae_idf_handlers import (  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer  # noqa: E402
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
+from meta_standards_converter.miniml import MINiMLCodec  # noqa: E402
 
 
 class TestAESharedConstructionState(unittest.TestCase):
@@ -1344,6 +1345,11 @@ class TestIDFConstructor(unittest.TestCase):
 
 
 class TestAEConstructor(unittest.TestCase):
+    def typed(self, data):
+        return MINiMLCodec().decode(data).package
+
+    def canonical(self, data):
+        return MINiMLCodec().encode(self.typed(data))
     def row(self, rows, label):
         return next(row for row in rows if row[0] == label)
 
@@ -1393,7 +1399,8 @@ class TestAEConstructor(unittest.TestCase):
         }
 
     def test_miniml2magetab_builds_sdrf_then_idf_and_inserts_sdrf(self):
-        data = {"series": []}
+        data = self.typed({"series": {"iid": "GSE1"}})
+        canonical = MINiMLCodec().encode(data)
         sdrf = [["Source Name"], ["sample 1"]]
         idf = [["Investigation Title", "Example"], ["SDRF File"], ["Term Source Name"]]
         idf_constructor = Mock()
@@ -1407,13 +1414,13 @@ class TestAEConstructor(unittest.TestCase):
         ).miniml2magetab(data=data)
 
         sdrf_constructor._miniml2sdrf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=ANY,
             technology_type="generic",
         )
         protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=protocol_registry,
             technology_type="generic",
         )
@@ -1424,7 +1431,8 @@ class TestAEConstructor(unittest.TestCase):
         )
 
     def test_miniml2magetab_replaces_existing_sdrf_cell_and_preserves_extra_cells(self):
-        data = {"series": []}
+        data = self.typed({"series": {"iid": "GSE1"}})
+        canonical = MINiMLCodec().encode(data)
         sdrf = [["Source Name"], ["sample 1"]]
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [
@@ -1440,13 +1448,13 @@ class TestAEConstructor(unittest.TestCase):
         ).miniml2magetab(data=data)
 
         sdrf_constructor._miniml2sdrf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=ANY,
             technology_type="generic",
         )
         protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=protocol_registry,
             technology_type="generic",
         )
@@ -1462,6 +1470,8 @@ class TestAEConstructor(unittest.TestCase):
                 "channel": [{"source": "source 1"}],
             }
         )
+        typed_data = self.typed(data)
+        canonical = MINiMLCodec().encode(typed_data)
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
@@ -1470,22 +1480,24 @@ class TestAEConstructor(unittest.TestCase):
         AEConstructor(
             idf_constructor=idf_constructor,
             sdrf_constructor=sdrf_constructor,
-        ).miniml2magetab(data=data)
+        ).miniml2magetab(data=typed_data)
 
         sdrf_constructor._miniml2sdrf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=ANY,
             technology_type="bulk_sequencing",
         )
         protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=protocol_registry,
             technology_type="bulk_sequencing",
         )
 
     def test_miniml2magetab_passes_forced_platform_handler_to_both_constructors(self):
         data = self.detection_data(platform_technology="expression array")
+        typed_data = self.typed(data)
+        canonical = MINiMLCodec().encode(typed_data)
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
@@ -1494,16 +1506,16 @@ class TestAEConstructor(unittest.TestCase):
         AEConstructor(
             idf_constructor=idf_constructor,
             sdrf_constructor=sdrf_constructor,
-        ).miniml2magetab(data=data, platform_handler="bulk_sequencing")
+        ).miniml2magetab(data=typed_data, platform_handler="bulk_sequencing")
 
         sdrf_constructor._miniml2sdrf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=ANY,
             technology_type="bulk_sequencing",
         )
         protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=data,
+            data=canonical,
             protocol_registry=protocol_registry,
             technology_type="bulk_sequencing",
         )
@@ -1511,7 +1523,7 @@ class TestAEConstructor(unittest.TestCase):
     def test_miniml2magetab_rejects_unknown_platform_handler(self):
         with self.assertRaisesRegex(ValueError, "Unsupported platform handler: invalid"):
             AEConstructor().miniml2magetab(
-                data={"series": []},
+                data=self.typed({"series": {"iid": "GSE1"}}),
                 platform_handler="invalid",
             )
 
@@ -1520,7 +1532,7 @@ class TestAEConstructor(unittest.TestCase):
         return_value=[["SDRF File", [["Source Name"], ["preserved"]]]],
     )
     def test_forced_platform_handler_bypasses_unchanged_roundtrip_tables(self, unchanged_mock):
-        data = {"series": []}
+        data = self.typed({"series": {"iid": "GSE1"}})
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
@@ -1665,7 +1677,7 @@ class TestAEConstructor(unittest.TestCase):
             AEConstructor(
                 idf_constructor=idf_constructor,
                 sdrf_constructor=sdrf_constructor,
-            ).miniml2magetab(data={"series": []})
+            ).miniml2magetab(data=self.typed({"series": {"iid": "GSE1"}}))
 
     def test_normalize_magetab_rows_still_accepts_legacy_mixed_payloads(self):
         sdrf = [["Source Name"], ["sample 1"]]
