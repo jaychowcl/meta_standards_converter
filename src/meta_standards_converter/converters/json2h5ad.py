@@ -2072,7 +2072,16 @@ class JSON2H5ADConverter:
         ]
         organism_values = []
         for channel in channels:
-            harmonized = self._values(channel.get("hz_organism"))
+            harmonized = []
+            for organism in self.planner._as_list(channel.get("organism")):
+                if not isinstance(organism, dict):
+                    continue
+                for annotation in self.planner._as_list(organism.get("annotations")):
+                    if (
+                        isinstance(annotation, dict)
+                        and annotation.get("field") in {"organism", "species_name"}
+                    ):
+                        harmonized.extend(self._values(annotation.get("value")))
             organism_values.extend(harmonized or self._values(channel.get("organism")))
         metadata["organism"] = tuple(self._values(organism_values))
         metadata["organism_taxid"] = tuple(
@@ -2093,12 +2102,29 @@ class JSON2H5ADConverter:
                         self._metadata_slug(key), []
                     ).extend(values)
             for item in self.planner._as_list(channel.get("characteristics")):
-                if not isinstance(item, dict) or not item.get("tag"):
+                if not isinstance(item, dict) or not item.get("name", item.get("tag")):
                     continue
-                slug = self._metadata_slug(item.get("tag"))
+                slug = self._metadata_slug(item.get("name", item.get("tag")))
                 values = self._values(item.get("value"))
                 if slug and values:
                     characteristic_values.setdefault(slug, []).extend(values)
+                for annotation in self.planner._as_list(item.get("annotations")):
+                    if not isinstance(annotation, dict) or not annotation.get("field"):
+                        continue
+                    annotation_slug = "harmonized_" + self._metadata_slug(
+                        annotation["field"]
+                    )
+                    characteristic_values.setdefault(annotation_slug, []).extend(
+                        self._values(annotation.get("value"))
+                    )
+                    if annotation.get("term_accession_number"):
+                        characteristic_values.setdefault(
+                            f"{annotation_slug}_id", []
+                        ).extend(self._values(annotation["term_accession_number"]))
+                    if annotation.get("term_source_ref"):
+                        characteristic_values.setdefault(
+                            f"{annotation_slug}_onto", []
+                        ).extend(self._values(annotation["term_source_ref"]))
         characteristics = {
             slug: tuple(self._values(values))
             for slug, values in characteristic_values.items()
@@ -2313,9 +2339,22 @@ class JSON2H5ADConverter:
                     for item in self.planner._as_list(channel.get("characteristics")):
                         if not isinstance(item, dict):
                             continue
-                        slug = self._metadata_slug(item.get("tag"))
+                        slug = self._metadata_slug(item.get("name", item.get("tag")))
                         if slug and slug not in columns:
                             columns.append(slug)
+                        for annotation in self.planner._as_list(item.get("annotations")):
+                            if not isinstance(annotation, dict) or not annotation.get("field"):
+                                continue
+                            annotation_slug = "harmonized_" + self._metadata_slug(
+                                annotation["field"]
+                            )
+                            for candidate in (
+                                annotation_slug,
+                                f"{annotation_slug}_id",
+                                f"{annotation_slug}_onto",
+                            ):
+                                if candidate not in columns:
+                                    columns.append(candidate)
         return columns
 
     def _metadata_slug(self, value) -> str:

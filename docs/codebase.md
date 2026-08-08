@@ -732,6 +732,11 @@ package conversion -> processed normalize / raw reference + nf-core
    groups and diagnostics survive later failures.
 8. Bound MAGE-TAB Parameter Values are projected to dotted `obs` columns and
    every typed attribute occurrence is retained in `uns["msc_mage_tab"]`.
+   Raw named characteristics use `msc.characteristics.<name>`; their typed
+   ontology annotations use separate
+   `msc.characteristics.harmonized_<field>` value/ID/ontology columns. Typed
+   organism annotations take precedence over raw organism labels for sample
+   compatibility and combination checks.
 9. `uns["msc_miniml"]` retains the flattened query table and provenance plus
    `packages_json`, a deterministic JSON encoding of the complete MSC MINiML
    package list. JSON encoding is intentional because HDF5 cannot represent
