@@ -65,7 +65,7 @@ def resolve_harmonization_overrides(
     *,
     enabled: bool,
 ) -> HarmonizationResolution:
-    """Return a harmonization-aware deep copy while retaining every ``hz_*`` field."""
+    """Return a harmonization-aware deep copy derived from typed annotations."""
     raw = tuple(copy.deepcopy(dict(package)) for package in packages)
     if not enabled or profile is None:
         return HarmonizationResolution(raw, profile=profile, enabled=enabled)
@@ -147,46 +147,26 @@ def validate_harmonization_overrides(profile: Mapping[str, Any]) -> dict[str, An
 
 def _harmonized_values(channel: Mapping[str, Any], source: str) -> list[dict[str, Any]]:
     values: list[dict[str, Any]] = []
-    base = f"hz_{source}"
-    container = channel.get(base)
-    if container is not None:
-        for item in _as_list(container):
-            if isinstance(item, Mapping):
-                _append_value(values, item)
-            else:
-                _append_value(values, {
-                    "value": item,
-                    "id": channel.get(f"{base}_id"),
-                    "onto": channel.get(f"{base}_onto"),
-                    "hierarchy_depth": channel.get(f"{base}_hierarchy_depth"),
-                })
-    index = 1
-    while f"{base}_{index}" in channel:
-        _append_value(values, {
-            "value": channel.get(f"{base}_{index}"),
-            "id": channel.get(f"{base}_id_{index}"),
-            "onto": channel.get(f"{base}_onto_{index}"),
-            "hierarchy_depth": channel.get(f"{base}_hierarchy_depth_{index}"),
-        })
-        index += 1
-
-    characteristics = [
-        item for item in _as_list(channel.get("characteristics")) if isinstance(item, Mapping)
-    ]
-    by_tag: dict[str, list[Any]] = {}
-    for item in characteristics:
-        tag = str(item.get("tag") or "")
-        if tag:
-            by_tag.setdefault(tag, []).append(item.get("value"))
-    for ordinal, value in enumerate(by_tag.get(base, [])):
-        _append_value(values, {
-            "value": value,
-            "id": _ordinal(by_tag.get(f"{base}_id", []), ordinal),
-            "onto": _ordinal(by_tag.get(f"{base}_onto", []), ordinal),
-            "hierarchy_depth": _ordinal(
-                by_tag.get(f"{base}_hierarchy_depth", []), ordinal
-            ),
-        })
+    containers = []
+    for field in ("source", "molecule"):
+        item = channel.get(field)
+        if isinstance(item, Mapping):
+            containers.append(item)
+    containers.extend(
+        item
+        for item in _as_list(channel.get("characteristics"))
+        if isinstance(item, Mapping)
+    )
+    for container in containers:
+        for annotation in _as_list(container.get("annotations")):
+            if not isinstance(annotation, Mapping) or annotation.get("field") != source:
+                continue
+            _append_value(values, {
+                "value": annotation.get("value"),
+                "id": annotation.get("term_accession_number"),
+                "onto": annotation.get("term_source_ref"),
+                "hierarchy_depth": annotation.get("hierarchy_depth"),
+            })
     return values
 
 
@@ -218,8 +198,11 @@ def _apply_destination(channel: dict[str, Any], destination: str, values: list[d
         match = _DYNAMIC_DESTINATION.fullmatch(destination)
         tag = match.group(1) if match else destination
     rows = [item for item in _as_list(channel.get("characteristics")) if isinstance(item, dict)]
-    rows = [item for item in rows if str(item.get("tag") or "").casefold() != tag.casefold()]
-    rows.extend({"tag": tag, **_ontology_container(item)} for item in values)
+    rows = [
+        item for item in rows
+        if str(item.get("name") or item.get("tag") or "").casefold() != tag.casefold()
+    ]
+    rows.extend({"name": tag, **_ontology_container(item)} for item in values)
     channel["characteristics"] = rows
 
 

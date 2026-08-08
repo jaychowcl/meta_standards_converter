@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Project enriched MAGE-TAB assay attributes without replacing raw values."""
+"""Project native MSC MINiML assay parameters without replacing raw values."""
 
 from __future__ import annotations
 
@@ -15,8 +15,9 @@ from typing import Any, Mapping
 
 
 PARAMETER_FIELDS = (
-    "value", "unit", "hz_value", "hz_value_id", "hz_value_onto",
-    "hz_unit", "hz_unit_id", "hz_unit_onto",
+    "value", "unit", "harmonized_value", "harmonized_value_id",
+    "harmonized_value_ontology", "harmonized_unit", "harmonized_unit_id",
+    "harmonized_unit_ontology",
 )
 
 
@@ -26,8 +27,6 @@ def _parameter_summary(
     """Return deterministic per-parameter values for one bound sample."""
     result: dict[str, list[Any]] = {}
     for row in _parameter_rows(package, sample=sample):
-        if row["attribute_type"] != "parameter value":
-            continue
         slug = _slug(row["name"])
         if not slug:
             continue
@@ -35,7 +34,7 @@ def _parameter_summary(
             value = row.get(field)
             if value in (None, ""):
                 continue
-            key = f"msc.mage_tab.parameter.{slug}.{_column_field(field)}"
+            key = f"msc.assay.parameter.{slug}.{field}"
             values = result.setdefault(key, [])
             if value not in values:
                 values.append(value)
@@ -45,50 +44,68 @@ def _parameter_summary(
 def _parameter_rows(
     package: Mapping[str, Any], sample: Mapping[str, Any] | None = None
 ) -> list[dict[str, Any]]:
-    """Return lossless typed-attribute occurrence rows, optionally sample-bound."""
-    model = _model(package)
-    if model is None:
+    """Return typed parameter occurrences, optionally restricted to one sample."""
+    series = package.get("series")
+    if not isinstance(series, Mapping):
         return []
     identities = _sample_identities(sample) if sample is not None else set()
     rows = []
-    for assay in model.get("assay_paths", []):
+    for path_index, assay in enumerate(_as_list(series.get("assay_paths"))):
         if not isinstance(assay, Mapping):
             continue
-        binding = assay.get("binding") if isinstance(assay.get("binding"), Mapping) else {}
-        if identities and not identities.intersection(
-            str(value) for value in binding.values() if value not in (None, "")
-        ):
+        steps = [step for step in _as_list(assay.get("steps")) if isinstance(step, Mapping)]
+        bound = {
+            str(step.get("sample_ref") or step.get("name"))
+            for step in steps
+            if step.get("kind") == "sample"
+            and (step.get("sample_ref") or step.get("name")) not in (None, "")
+        }
+        if identities and not identities.intersection(bound):
             continue
-        for step in assay.get("steps", []):
-            if not isinstance(step, Mapping) or step.get("kind") != "attribute":
+        for step_index, step in enumerate(steps):
+            if step.get("kind") != "protocol_application":
                 continue
-            rows.append({
-                "sample_accession": next(iter(sorted(identities)), ""),
-                "assay_path_id": assay.get("id", ""),
-                "sdrf": assay.get("sdrf", ""),
-                "row_index": assay.get("row_index", -1),
-                "column_index": step.get("column_index", -1),
-                "attribute_type": step.get("attribute_type", ""),
-                "name": step.get("name", ""),
-                "value": step.get("value", ""),
-                "unit": step.get("unit", ""),
-                "term_source_ref": step.get("term_source_ref", ""),
-                "term_accession_number": step.get("term_accession_number", ""),
-                "hz_field": step.get("hz_field", ""),
-                "hz_value": step.get("hz_value", ""),
-                "hz_value_id": step.get("hz_value_id", ""),
-                "hz_value_onto": step.get("hz_value_onto", ""),
-                "hz_unit": step.get("hz_unit", ""),
-                "hz_unit_id": step.get("hz_unit_id", ""),
-                "hz_unit_onto": step.get("hz_unit_onto", ""),
-            })
+            for parameter in _as_list(step.get("parameter_values")):
+                if not isinstance(parameter, Mapping):
+                    continue
+                unit = parameter.get("unit")
+                unit = unit if isinstance(unit, Mapping) else {"value": unit}
+                value_annotation = _first_annotation(parameter.get("annotations"))
+                unit_annotation = _first_annotation(unit.get("annotations"), field="unit")
+                rows.append({
+                    "sample_accession": next(iter(sorted(identities or bound)), ""),
+                    "document": assay.get("document", ""),
+                    "path_index": path_index,
+                    "step_index": step_index,
+                    "protocol_ref": step.get("protocol_ref", ""),
+                    "name": parameter.get("name", ""),
+                    "value": parameter.get("value", ""),
+                    "unit": unit.get("value", ""),
+                    "term_source_ref": parameter.get("term_source_ref", ""),
+                    "term_accession_number": parameter.get("term_accession_number", ""),
+                    "harmonized_value": value_annotation.get("value", ""),
+                    "harmonized_value_id": value_annotation.get("term_accession_number", ""),
+                    "harmonized_value_ontology": value_annotation.get("term_source_ref", ""),
+                    "harmonized_unit": unit_annotation.get("value", ""),
+                    "harmonized_unit_id": unit_annotation.get("term_accession_number", ""),
+                    "harmonized_unit_ontology": unit_annotation.get("term_source_ref", ""),
+                })
     return rows
 
 
-def _model(package: Mapping[str, Any]) -> Mapping[str, Any] | None:
-    mage_tab = package.get("mage_tab")
-    model = mage_tab.get("model") if isinstance(mage_tab, Mapping) else None
-    return model if isinstance(model, Mapping) and model.get("schema_version") == 1 else None
+def _first_annotation(value: Any, *, field: str | None = None) -> Mapping[str, Any]:
+    for annotation in _as_list(value):
+        if isinstance(annotation, Mapping) and (
+            field is None or annotation.get("field") == field
+        ):
+            return annotation
+    return {}
+
+
+def _as_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    return value if isinstance(value, list) else [value]
 
 
 def _sample_identities(sample: Mapping[str, Any] | None) -> set[str]:
@@ -106,7 +123,3 @@ def _sample_identities(sample: Mapping[str, Any] | None) -> set[str]:
 
 def _slug(value: Any) -> str:
     return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", str(value).lower())).strip("_")
-
-
-def _column_field(field: str) -> str:
-    return field[:-5] + "ontology" if field.endswith("_onto") else field

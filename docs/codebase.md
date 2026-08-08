@@ -1137,7 +1137,7 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
 
 Converter-owned observation metadata uses only dotted names grouped under `msc.sample`, `msc.series`, `msc.platform`, `msc.archive`, `msc.library`, `msc.instrument`, `msc.protocol`, `msc.database`, `msc.asset`, `msc.expression`, `msc.characteristics`, `msc.observation`, and `msc.combination`. The converter does not generate underscore aliases. Existing underscore-style columns from an input H5AD remain opaque source columns: normalization preserves but neither interprets nor validates them. Custom projectors retain ownership of their injected names.
 
-Stable observation fields cover sample/study accessions, title/description, organism and taxid, organism part, developmental stage, disease, genotype, biological source, material/provider/molecule, platform, SRA/ENA/BioSample/run accessions, library fields, instrument, modality, asset provenance, and database identity. Organism resolution evaluates each channel independently, preferring non-empty `hz_organism` values before raw `organism`; original taxids remain separate. Database identity uses `public_id`, then `iid`, then `name`. Every characteristic becomes `msc.characteristics.<normalized_tag>`, including harmonized `hz_*` tags. Missing values are empty in `obs`; repeated values are case-insensitively de-duplicated in source order and displayed with `; ` separators.
+Stable observation fields cover sample/study accessions, title/description, organism and taxid, organism part, developmental stage, disease, genotype, biological source, material/provider/molecule, platform, SRA/ENA/BioSample/run accessions, library fields, instrument, modality, asset provenance, and database identity. Organism resolution evaluates each channel independently. Database identity uses `public_id`, then `iid`, then `name`. Every raw characteristic becomes `msc.characteristics.<normalized_name>`; typed annotations become `msc.characteristics.harmonized_<field>` plus identifier and ontology companions. Native assay parameters become `msc.assay.parameter.<name>.*`, with their occurrence ledger in `uns["msc_assay"]`. Missing values are empty in `obs`; repeated values are case-insensitively de-duplicated in source order and displayed with `; ` separators.
 
 `uns["msc_metadata"]` declares schema version `1.0` and contains the authoritative normalized `sample_values` DataFrame with `sample_accession`, `field`, `ordinal`, `value`, and `value_type`. It stores one row per non-empty canonical value, so embedded semicolons and list cardinality remain recoverable without parsing the display string. Sample H5ADs contain their sample rows; combined H5ADs contain every sample plus `msc.combination.batch`. `uns["msc_miniml"]` remains the complete typed source ledger at schema 1.0. H5AD provenance and manifests separately declare the H5AD metadata schema version.
 
@@ -2376,21 +2376,21 @@ profile remains attached to each dataset group and is inactive unless a JSON
 consumer receives `use_harmonization_overrides=True` or the corresponding CLI
 flag. Native MINiML and Atlas v1 behavior is unchanged.
 
-The shared resolver validates schema version `1.0`, fixed MSC destinations or
-`characteristics.<normalized_tag>`, and ordered canonical source fields. The
-first populated `hz_<source>` wins. Scalar, numbered, container, and
-characteristic representations carry value, ID, ontology, and hierarchy depth.
-Invalid profiles warn and fall back to the complete raw view. Resolution uses a
-deep copy: destination fields change only in the conversion view and every
-`hz_*` field remains.
+The shared resolver validates profile schema version `1.0`, fixed MSC
+destinations or `characteristics.<normalized_tag>`, and ordered canonical
+source fields. The first populated typed annotation whose `field` matches a
+configured source wins; its value, term source, term accession, and hierarchy
+depth drive the resolved view. Invalid profiles warn and fall back to the
+complete raw package. Resolution uses a deep copy, so destination replacement
+never mutates the canonical typed input.
 
 H5AD/obs publish canonical schema-3 columns, harmonization provenance columns,
 and `uns["msc_harmonization"]`; `uns["msc_miniml"]` retains the untouched source.
 TSV/CSV publish the same canonical and provenance view. MAGE-TAB replaces its
-semantic destination, emits standard ontology companions where available, and
-retains separate `Characteristics[hz_*]` columns. ECTO exposure and PCL
-provisional-state annotations therefore pass through json2ae/ae2json,
-json2tsv, json2h5ad, and json2obs without format-specific ontology code.
+semantic destination and emits standard ontology companions where available;
+private `hz_*` columns are never rendered. ECTO exposure and PCL cell-state
+annotations pass through json2ae/ae2json, json2tsv, json2h5ad, and json2obs as
+typed annotations without format-specific ontology code.
 
 Importable implementation symbols are
 `meta_standards_converter.converters.harmonization_overrides.HarmonizationSelection`,

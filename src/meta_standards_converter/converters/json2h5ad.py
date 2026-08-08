@@ -2093,14 +2093,6 @@ class JSON2H5ADConverter:
         )
         characteristic_values = {}
         for channel in channels:
-            for key, value in channel.items():
-                if not str(key).startswith("hz_"):
-                    continue
-                values = self._values(value)
-                if values:
-                    characteristic_values.setdefault(
-                        self._metadata_slug(key), []
-                    ).extend(values)
             for item in self.planner._as_list(channel.get("characteristics")):
                 if not isinstance(item, dict) or not item.get("name", item.get("tag")):
                     continue
@@ -2508,8 +2500,8 @@ class JSON2H5ADConverter:
             parameters.index = [
                 f"parameter_{index:06d}" for index in range(len(parameters))
             ]
-            adata.uns["msc_mage_tab"] = {
-                "schema_version": "1.0",
+            adata.uns["msc_assay"] = {
+                "schema_version": "2.0",
                 "parameters": parameters,
             }
 

@@ -223,7 +223,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: H5AD metadata schema 1.0
   anchor: h5ad-metadata-schema-v1
   purpose: Defines canonical dotted observation columns, normalized sample values, schema markers, source-column treatment, and globally unique observation identifiers.
-  keywords: H5AD, schema 1.0, obs, msc_metadata, sample_values, canonical columns, multivalue, observation ID
+  keywords: H5AD, schema 1.0, obs, msc_metadata, msc_assay, typed annotations, assay parameters, sample_values, canonical columns, multivalue, observation ID
   link: [Open section](codebase.md#h5ad-metadata-schema-v1)
 
 - id: harmonization-overrides

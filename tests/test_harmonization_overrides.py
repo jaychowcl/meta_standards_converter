@@ -50,24 +50,22 @@ def package():
             "iid": "GSM1",
             "channel": [{
                 "organism": [{"value": "human", "taxid": "9606"}],
-                "hz_species_name": [{
-                    "value": "Homo sapiens", "id": "NCBITaxon:9606",
-                    "onto": "ncbitaxon", "hierarchy_depth": 0,
-                }],
                 "characteristics": [
-                    {"tag": "disease", "value": "raw case"},
-                    {"tag": "tissue", "value": "raw lung"},
-                    {"tag": "hz_disease_category", "value": "fallback disease"},
-                    {"tag": "hz_disease_category_id", "value": "MONDO:9"},
-                    {"tag": "hz_disease_category_onto", "value": "mondo"},
-                    {"tag": "hz_tissue_name", "value": "lung"},
-                    {"tag": "hz_tissue_name_id", "value": "UBERON:0002048"},
-                    {"tag": "hz_tissue_name_onto", "value": "uberon"},
-                    {"tag": "hz_tissue_name_hierarchy_depth", "value": 0},
-                    {"tag": "hz_high_level_tissue", "value": "respiratory system"},
-                    {"tag": "hz_high_level_tissue_id", "value": "UBERON:0001004"},
-                    {"tag": "hz_high_level_tissue_onto", "value": "uberon"},
-                    {"tag": "hz_high_level_tissue_hierarchy_depth", "value": 1},
+                    {"name": "organism", "value": "human", "annotations": [{
+                        "field": "species_name", "value": "Homo sapiens",
+                        "term_source_ref": "ncbitaxon",
+                        "term_accession_number": "NCBITaxon:9606",
+                        "hierarchy_depth": 0,
+                    }]},
+                    {"name": "disease", "value": "raw case", "annotations": [{
+                        "field": "disease_category", "value": "fallback disease",
+                        "term_source_ref": "mondo",
+                        "term_accession_number": "MONDO:9",
+                    }]},
+                    {"name": "tissue", "value": "raw lung", "annotations": [
+                        {"field": "tissue_name", "value": "lung", "term_source_ref": "uberon", "term_accession_number": "UBERON:0002048", "hierarchy_depth": 0},
+                        {"field": "high_level_tissue", "value": "respiratory system", "term_source_ref": "uberon", "term_accession_number": "UBERON:0001004", "hierarchy_depth": 1},
+                    ]},
                 ],
             }],
         }],
@@ -76,26 +74,21 @@ def package():
 
 def package_with_magetab_parameter():
     value = package()
-    value["mage_tab"] = {"model": {
-        "schema_version": 1,
-        "assay_paths": [{
-            "id": "study.sdrf.txt:row:1",
-            "sdrf": "study.sdrf.txt",
-            "row_index": 1,
-            "binding": {"source_name": "GSM1", "sample_name": "GSM1"},
-            "steps": [{
-                "kind": "attribute",
-                "attribute_type": "parameter value",
-                "name": "duration",
-                "column_index": 3,
-                "value": "30",
-                "unit": "minutes",
-                "hz_unit": "minute",
-                "hz_unit_id": "UO:0000031",
-                "hz_unit_onto": "uo",
-            }],
-        }],
-    }}
+    value["series"]["protocols"] = [{"name": "treatment"}]
+    value["series"]["assay_paths"] = [{
+        "document": "study.sdrf.txt",
+        "steps": [
+            {"kind": "sample", "name": "GSM1", "sample_ref": "GSM1"},
+            {"kind": "protocol_application", "protocol_ref": "treatment", "parameter_values": [{
+                "name": "duration", "value": "30",
+                "unit": {"value": "minutes", "annotations": [{
+                    "field": "unit", "value": "minute",
+                    "term_source_ref": "uo",
+                    "term_accession_number": "UO:0000031",
+                }]},
+            }]},
+        ],
+    }]
     return value
 
 
@@ -103,14 +96,8 @@ def package_with_fibrosis_ontology_annotations():
     value = package()
     value["sample"][0]["channel"][0]["characteristics"].extend(
         [
-            {"tag": "exposure", "value": "bleomycin injection"},
-            {"tag": "hz_exposure_name", "value": "exposure to bleomycin via injection"},
-            {"tag": "hz_exposure_name_id", "value": "ECTO:0900222"},
-            {"tag": "hz_exposure_name_onto", "value": "ecto"},
-            {"tag": "cell state", "value": "Fbl_24"},
-            {"tag": "hz_cell_state_name", "value": "Fbl_24"},
-            {"tag": "hz_cell_state_name_id", "value": "PCL:0015251"},
-            {"tag": "hz_cell_state_name_onto", "value": "pcl"},
+            {"name": "exposure", "value": "bleomycin injection", "annotations": [{"field": "exposure_name", "value": "exposure to bleomycin via injection", "term_source_ref": "ecto", "term_accession_number": "ECTO:0900222"}]},
+            {"name": "cell state", "value": "Fbl_24", "annotations": [{"field": "cell_state_name", "value": "Fbl_24", "term_source_ref": "pcl", "term_accession_number": "PCL:0015251"}]},
         ]
     )
     return value
@@ -130,11 +117,11 @@ def test_agentic_envelope_is_loaded_with_profile_per_group(tmp_path):
     assert loaded.groups[0].packages[0]["sample"][0]["iid"] == "GSM1"
 
 
-def test_resolver_replaces_destinations_and_retains_every_hz_field():
+def test_resolver_replaces_destinations_from_typed_annotations():
     original = package()
     result = resolve_harmonization_overrides([original], PROFILE, enabled=True)
     channel = result.packages[0]["sample"][0]["channel"][0]
-    characteristics = {row["tag"]: row for row in channel["characteristics"]}
+    characteristics = {row["name"]: row for row in channel["characteristics"]}
 
     assert channel["organism"] == [{
         "value": "Homo sapiens", "taxid": "9606",
@@ -143,7 +130,7 @@ def test_resolver_replaces_destinations_and_retains_every_hz_field():
     assert characteristics["disease"]["value"] == "fallback disease"
     assert characteristics["organism part"]["value"] == "lung"
     assert characteristics["organism part"]["term_accession_number"] == "UBERON:0002048"
-    assert characteristics["hz_high_level_tissue"]["value"] == "respiratory system"
+    assert any(annotation["field"] == "high_level_tissue" for row in channel["characteristics"] for annotation in row.get("annotations", []))
     assert original["sample"][0]["channel"][0]["organism"][0]["value"] == "human"
     assert result.selections[0].source_field == "species_name"
 
@@ -158,7 +145,7 @@ def test_invalid_profile_warns_and_uses_unchanged_raw_packages():
     assert result.warnings and result.applied is False
 
 
-def test_resolved_view_drives_canonical_metadata_and_preserves_hz_characteristics():
+def test_resolved_view_drives_canonical_metadata_and_preserves_typed_annotations():
     result = resolve_harmonization_overrides([package()], PROFILE, enabled=True)
     package_view = result.packages[0]
     sample = package_view["sample"][0]
@@ -168,11 +155,11 @@ def test_resolved_view_drives_canonical_metadata_and_preserves_hz_characteristic
     assert metadata["organism"] == ("Homo sapiens",)
     assert metadata["disease"] == ("fallback disease",)
     assert metadata["organism_part"] == ("lung",)
-    assert metadata["characteristics"]["hz_tissue_name"] == ("lung",)
-    assert metadata["characteristics"]["hz_species_name"] == ("Homo sapiens",)
+    assert metadata["characteristics"]["harmonized_tissue_name"] == ("lung",)
+    assert metadata["characteristics"]["harmonized_species_name"] == ("Homo sapiens",)
 
 
-def test_tabular_opt_in_uses_resolved_destinations_and_retains_hz_columns(tmp_path):
+def test_tabular_opt_in_uses_resolved_destinations_and_typed_annotation_columns(tmp_path):
     source = tmp_path / "agentic.json"
     destination = tmp_path / "manifest.tsv"
     source.write_text(json.dumps({
@@ -187,11 +174,11 @@ def test_tabular_opt_in_uses_resolved_destinations_and_retains_hz_columns(tmp_pa
 
     assert row["msc.sample.channel.organism.value"] == "Homo sapiens"
     assert row["msc.sample.channel.disease"] == "fallback disease"
-    assert row["msc.characteristics.hz_tissue_name"] == "lung"
+    assert row["msc.characteristics.harmonized_tissue_name"] == "lung"
     assert row["msc.harmonization.organism.source_field"] == "species_name"
 
 
-def test_tabular_projects_additive_magetab_parameter_columns(tmp_path):
+def test_tabular_projects_native_assay_parameter_columns(tmp_path):
     source = tmp_path / "agentic.json"
     destination = tmp_path / "manifest.tsv"
     source.write_text(json.dumps(package_with_magetab_parameter()), encoding="utf-8")
@@ -200,10 +187,10 @@ def test_tabular_projects_additive_magetab_parameter_columns(tmp_path):
     with destination.open(encoding="utf-8", newline="") as stream:
         row = next(csv.DictReader(stream, delimiter="\t"))
 
-    assert row["msc.mage_tab.parameter.duration.value"] == "30"
-    assert row["msc.mage_tab.parameter.duration.unit"] == "minutes"
-    assert row["msc.mage_tab.parameter.duration.hz_unit"] == "minute"
-    assert row["msc.mage_tab.parameter.duration.hz_unit_id"] == "UO:0000031"
+    assert row["msc.assay.parameter.duration.value"] == "30"
+    assert row["msc.assay.parameter.duration.unit"] == "minutes"
+    assert row["msc.assay.parameter.duration.harmonized_unit"] == "minute"
+    assert row["msc.assay.parameter.duration.harmonized_unit_id"] == "UO:0000031"
 
 
 def test_tabular_retains_ecto_and_pcl_harmonization_columns(tmp_path):
@@ -217,11 +204,11 @@ def test_tabular_retains_ecto_and_pcl_harmonization_columns(tmp_path):
     with destination.open(encoding="utf-8", newline="") as stream:
         row = next(csv.DictReader(stream, delimiter="\t"))
 
-    assert row["msc.characteristics.hz_exposure_name_id"] == "ECTO:0900222"
-    assert row["msc.characteristics.hz_cell_state_name_id"] == "PCL:0015251"
+    assert row["msc.characteristics.harmonized_exposure_name_id"] == "ECTO:0900222"
+    assert row["msc.characteristics.harmonized_cell_state_name_id"] == "PCL:0015251"
 
 
-def test_magetab_opt_in_replaces_destinations_with_companions_and_retains_hz(tmp_path):
+def test_magetab_opt_in_replaces_destinations_and_keeps_typed_annotations_internal(tmp_path):
     source = tmp_path / "agentic.json"
     source.write_text(json.dumps({
         "miniml_json": package(), "harmonization_overrides": PROFILE
@@ -237,7 +224,7 @@ def test_magetab_opt_in_replaces_destinations_with_companions_and_retains_hz(tmp
     assert values[disease] == "fallback disease"
     assert header[disease + 1:disease + 3] == ["Term Source REF", "Term Accession Number"]
     assert values[disease + 1:disease + 3] == ["mondo", "MONDO:9"]
-    assert "Characteristics[hz_tissue_name]" in header
+    assert not any("hz_" in str(label) for label in header)
 
 
 def test_all_json_consumers_expose_explicit_opt_in():
@@ -279,7 +266,7 @@ def test_h5ad_publishes_resolved_columns_and_raw_and_harmonization_ledgers(tmp_p
     assert raw_organism.tolist() == ["human"]
 
 
-def test_h5ad_publishes_magetab_parameter_obs_and_occurrence_ledger(tmp_path):
+def test_h5ad_publishes_native_assay_parameter_obs_and_occurrence_ledger(tmp_path):
     source = tmp_path / "agentic.json"
     source.write_text(json.dumps(package_with_magetab_parameter()), encoding="utf-8")
     expression = tmp_path / "GSM1.h5ad"
@@ -294,11 +281,11 @@ def test_h5ad_publishes_magetab_parameter_obs_and_occurrence_ledger(tmp_path):
     )
     converted = anndata.read_h5ad(result.sample_h5ads["GSM1"])
 
-    assert converted.obs["msc.mage_tab.parameter.duration.value"].iat[0] == "30"
-    assert converted.obs["msc.mage_tab.parameter.duration.hz_unit"].iat[0] == "minute"
-    ledger = converted.uns["msc_mage_tab"]["parameters"]
-    assert ledger["assay_path_id"].tolist() == ["study.sdrf.txt:row:1"]
-    assert ledger["hz_unit_id"].tolist() == ["UO:0000031"]
+    assert converted.obs["msc.assay.parameter.duration.value"].iat[0] == "30"
+    assert converted.obs["msc.assay.parameter.duration.harmonized_unit"].iat[0] == "minute"
+    ledger = converted.uns["msc_assay"]["parameters"]
+    assert ledger["document"].tolist() == ["study.sdrf.txt"]
+    assert ledger["harmonized_unit_id"].tolist() == ["UO:0000031"]
 
 
 def test_h5ad_and_json2obs_retain_ecto_and_pcl_columns(tmp_path):
@@ -319,9 +306,9 @@ def test_h5ad_and_json2obs_retain_ecto_and_pcl_columns(tmp_path):
         asset_specs=[f"GSM1={expression}"],
     )
 
-    assert result.obs["msc.characteristics.hz_exposure_name_id"].iat[0] == (
+    assert result.obs["msc.characteristics.harmonized_exposure_name_id"].iat[0] == (
         "ECTO:0900222"
     )
-    assert result.obs["msc.characteristics.hz_cell_state_name_id"].iat[0] == (
+    assert result.obs["msc.characteristics.harmonized_cell_state_name_id"].iat[0] == (
         "PCL:0015251"
     )
