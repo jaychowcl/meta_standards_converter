@@ -98,6 +98,7 @@ class MINiMLV1Migrator:
                 cls._remove_positions(sample.get(ref_name))
             for channel in cls._mappings(sample.get("channel")):
                 channel.pop("position", None)
+                cls._fold_harmonization(channel)
                 if channel.get("source") is not None:
                     channel["source"] = cls._ontology_value(channel["source"])
                 if channel.get("molecule") is not None:
@@ -111,6 +112,95 @@ class MINiMLV1Migrator:
                 cls._remove_positions(series.get(ref_name))
             if "type" in series:
                 series["type"] = [cls._ontology_value(item) for item in cls._items(series["type"])]
+
+    @classmethod
+    def _fold_harmonization(cls, channel: dict[str, Any]) -> None:
+        """Move legacy ``hz_*`` values into v2 characteristic annotations."""
+        rows = [
+            deepcopy(item)
+            for item in cls._items(channel.get("characteristics"))
+            if isinstance(item, Mapping)
+        ]
+        grouped: dict[str, dict[str, Any]] = {}
+
+        def collect(label: str, value: Any) -> None:
+            if not label.startswith("hz_"):
+                return
+            body = label[3:]
+            qualifier = "value"
+            for suffix, candidate in (
+                ("_hierarchy_depth", "hierarchy_depth"),
+                ("_id", "id"),
+                ("_onto", "onto"),
+            ):
+                if body.endswith(suffix):
+                    body = body[:-len(suffix)]
+                    qualifier = candidate
+                    break
+            grouped.setdefault(body, {})[qualifier] = value
+
+        retained = []
+        for row in rows:
+            name = str(row.get("name", row.get("tag", "")))
+            if name.startswith("hz_"):
+                collect(name, row.get("value"))
+            else:
+                retained.append(row)
+        for key in tuple(channel):
+            if not str(key).startswith("hz_"):
+                continue
+            value = channel.pop(key)
+            if isinstance(value, Mapping):
+                body = str(key)[3:]
+                grouped.setdefault(body, {}).update({
+                    "value": value.get("value"),
+                    "id": value.get("id", value.get("term_accession_number")),
+                    "onto": value.get("onto", value.get("term_source_ref")),
+                    "hierarchy_depth": value.get("hierarchy_depth"),
+                })
+            else:
+                collect(str(key), value)
+        raw_label = channel.pop("pre_hz_label", None)
+
+        by_name = {
+            str(item.get("name", item.get("tag", ""))).casefold(): item
+            for item in retained
+        }
+        aliases = {
+            "species": "organism",
+            "organism": "organism",
+            "tissue": "tissue",
+            "disease": "disease",
+            "cell": "cell type",
+            "exposure": "exposure",
+        }
+        for field, item in grouped.items():
+            value = item.get("value")
+            if value in (None, ""):
+                continue
+            prefix = field.split("_", 1)[0].casefold()
+            target_name = aliases.get(prefix, prefix.replace("_", " "))
+            target = by_name.get(target_name.casefold())
+            if target is None:
+                target = {
+                    "name": target_name,
+                    "value": str(raw_label if target_name == "organism" and raw_label else value),
+                }
+                retained.append(target)
+                by_name[target_name.casefold()] = target
+            annotation = {"field": field, "value": str(value)}
+            if item.get("onto") not in (None, ""):
+                annotation["term_source_ref"] = str(item["onto"])
+            if item.get("id") not in (None, ""):
+                annotation["term_accession_number"] = str(item["id"])
+            depth = item.get("hierarchy_depth")
+            if depth not in (None, ""):
+                try:
+                    annotation["hierarchy_depth"] = int(depth)
+                except (TypeError, ValueError):
+                    pass
+            target.setdefault("annotations", []).append(annotation)
+        channel["characteristics"] = retained
 
     @classmethod
     def _fold_model(cls, package: dict[str, Any], model: Any) -> None:

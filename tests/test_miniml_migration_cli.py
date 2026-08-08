@@ -50,3 +50,34 @@ def test_miniml_migrate_cli_writes_v2_and_diagnostics(tmp_path, capsys) -> None:
     assert payload["miniml_schema_version"] == "2.0"
     assert payload["source"]["format"] == "MAGE-TAB"
     assert json.loads(capsys.readouterr().out)["packages_migrated"] == 1
+
+
+def test_v1_migrator_folds_private_harmonization_fields_into_annotations() -> None:
+    legacy = legacy_package()
+    legacy["sample"] = [{
+        "iid": "GSM1",
+        "channel": [{
+            "pre_hz_label": "Homo sapiens",
+            "hz_species_name": {
+                "value": "Homo sapiens",
+                "id": "NCBITaxon:9606",
+                "onto": "NCBITaxon",
+            },
+            "characteristics": [
+                {"tag": "disease", "value": "raw case"},
+                {"tag": "hz_disease_category", "value": "lung carcinoma"},
+                {"tag": "hz_disease_category_id", "value": "MONDO:0008903"},
+                {"tag": "hz_disease_category_onto", "value": "MONDO"},
+            ],
+        }],
+    }]
+
+    migrated = MINiMLCodec().migrate_v1(legacy).package.to_mapping()
+    channel = migrated["sample"][0]["channel"][0]
+    characteristics = {item["name"]: item for item in channel["characteristics"]}
+
+    assert "hz_" not in json.dumps(migrated)
+    assert characteristics["organism"]["annotations"][0]["field"] == "species_name"
+    assert characteristics["organism"]["annotations"][0]["term_accession_number"] == "NCBITaxon:9606"
+    assert characteristics["disease"]["annotations"][0]["field"] == "disease_category"
+    assert characteristics["disease"]["annotations"][0]["term_accession_number"] == "MONDO:0008903"

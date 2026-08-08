@@ -175,9 +175,10 @@ reported as warnings rather than replayed.
 
 Runtime converters accept only explicit schema `2.0` packages. Legacy or
 unversioned packages enter through `MINiMLV1Migrator`, which folds supported
-sidecar semantics once and reports dropped source-layout evidence. No runtime
-workflow emits or consumes `hz_*` fields; harmonized values live only in typed
-annotation records.
+sidecar semantics once, converts legacy `hz_*` channel/characteristic fields
+and `pre_hz_label` into typed characteristic annotations, and reports dropped
+source-layout evidence. No runtime workflow emits or consumes `hz_*` fields;
+harmonized values live only in typed annotation records.
 
 **Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py),
 [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py),
