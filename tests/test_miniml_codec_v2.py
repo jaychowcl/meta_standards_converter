@@ -106,4 +106,19 @@ def test_typed_package_is_immutable_and_preserves_open_harmonization_fields() ->
     assert package.samples[0].channels[0].extras["hz_species_name"] == "homo_sapiens"
     with pytest.raises(FrozenInstanceError):
         package.version = "changed"  # type: ignore[misc]
+    with pytest.raises(TypeError):
+        package.samples[0].channels[0].extras["pre_hz_label"] = "changed"  # type: ignore[index]
 
+
+def test_codec_dump_is_deterministic_and_replaces_existing_file(tmp_path) -> None:
+    codec = MINiMLCodec()
+    package = codec.decode(package_payload()).package
+    destination = tmp_path / "package.json"
+    destination.write_text("old", encoding="utf-8")
+
+    codec.dump(package, destination)
+    first = destination.read_bytes()
+    codec.dump(package, destination)
+
+    assert destination.read_bytes() == first
+    assert not list(tmp_path.glob(".*.tmp"))
