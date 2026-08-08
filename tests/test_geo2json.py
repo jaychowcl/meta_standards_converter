@@ -23,6 +23,14 @@ from meta_standards_converter.converters.geo2json import geo2json  # noqa: E402
 from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
 
 
+def _package(series: dict) -> MINiMLPackage:
+    return MINiMLPackage.from_mapping({
+        "miniml_schema_version": "2.0",
+        "source": {"format": "test"},
+        "series": series,
+    })
+
+
 class TestGeo2JSONConverter(unittest.TestCase):
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
     @patch("meta_standards_converter.converters.geo2json.GEOParser")
@@ -34,8 +42,8 @@ class TestGeo2JSONConverter(unittest.TestCase):
         enricher_mock,
     ):
         fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
-        primary_json = MINiMLPackage.from_mapping({"series": {"iid": "GSE1"}})
-        related_json = MINiMLPackage.from_mapping({"series": {"iid": "GSE2"}})
+        primary_json = _package({"iid": "GSE1"})
+        related_json = _package({"iid": "GSE2"})
         enriched_primary = primary_json
         enriched_related = related_json
         parser_mock.return_value.parse.return_value = [primary_json, related_json]
@@ -70,7 +78,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         enricher_mock,
     ):
         fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
-        parsed_json = MINiMLPackage.from_mapping({"series": {"iid": "GSE1"}})
+        parsed_json = _package({"iid": "GSE1"})
         parser_mock.return_value.parse.return_value = [parsed_json]
 
         result = geo2json().convert(gse="GSE1", enrich=False, out=None)
@@ -88,7 +96,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         enricher_mock,
     ):
         fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
-        parsed_json = MINiMLPackage.from_mapping({"series": {"iid": "GSE1", "title": "Börsch"}})
+        parsed_json = _package({"iid": "GSE1", "title": "Börsch"})
         parser_mock.return_value.parse.return_value = [parsed_json]
         enricher_mock.return_value.enrich.return_value = parsed_json
 
@@ -110,8 +118,8 @@ class TestGeo2JSONConverter(unittest.TestCase):
         enricher_mock,
     ):
         fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML><Series /></MINiML>"
-        parsed_json = MINiMLPackage.from_mapping({"series": {"iid": "GSE1"}})
-        enriched_json = MINiMLPackage.from_mapping({"series": {"iid": "GSE1", "secret": "do-not-log"}})
+        parsed_json = _package({"iid": "GSE1"})
+        enriched_json = _package({"iid": "GSE1", "extensions": {"secret": "do-not-log"}})
         parser_mock.return_value.parse.return_value = [parsed_json]
         enricher_mock.return_value.enrich.return_value = enriched_json
 

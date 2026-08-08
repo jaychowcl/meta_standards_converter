@@ -23,6 +23,15 @@ if SRC not in sys.path:
 from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher  # noqa: E402
 
 
+def _package(*, series: dict, sample: list | None = None) -> dict:
+    return {
+        "miniml_schema_version": "2.0",
+        "source": {"format": "test"},
+        "series": series,
+        **({"sample": sample} if sample is not None else {}),
+    }
+
+
 class TestMINiMLEnricher(unittest.TestCase):
     def test_enrich_adds_pubmed_publications(self):
         pubmed_fetcher = Mock()
@@ -30,7 +39,7 @@ class TestMINiMLEnricher(unittest.TestCase):
             ("doi-1", "authors 1", "title 1", "published", "EFO", "EFO_0001796"),
             ("doi-2", "authors 2", "title 2", "published", "EFO", "EFO_0001796"),
         ]
-        data = {"series": {"iid": "GSE1", "pubmed_id": ["123", "123", "456"]}}
+        data = _package(series={"iid": "GSE1", "pubmed_id": ["123", "123", "456"]})
 
         enriched = MINiMLEnricher(pubmed_fetcher=pubmed_fetcher, insdc_fetcher=Mock()).enrich(data=data)
 
@@ -70,9 +79,9 @@ class TestMINiMLEnricher(unittest.TestCase):
             [{"run": "SRR1", "study": "ERP137216"}],
             [{"run": "ERR2", "study": "ERP137216"}, {"run": "ERR3", "study": "SRP999"}],
         ]
-        data = {
-            "series": {"iid": "GSE1"},
-            "sample": [
+        data = _package(
+            series={"iid": "GSE1"},
+            sample=[
                 {
                     "iid": "GSM1",
                     "relation": [
@@ -80,8 +89,8 @@ class TestMINiMLEnricher(unittest.TestCase):
                         {"type": "sra", "target": "ERR2"},
                     ],
                 }
-            ]
-        }
+            ],
+        )
 
         enriched = MINiMLEnricher(pubmed_fetcher=Mock(), insdc_fetcher=insdc_fetcher).enrich(data=data)
 
@@ -106,10 +115,10 @@ class TestMINiMLEnricher(unittest.TestCase):
         insdc_fetcher = Mock()
         insdc_fetcher._extract_sra.return_value = ["SRX1"]
         insdc_fetcher.fetch_sra_runs.side_effect = ET.ParseError("bad xml")
-        data = {
-            "series": {"iid": "GSE1", "pubmed_id": ["123"]},
-            "sample": [{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}],
-        }
+        data = _package(
+            series={"iid": "GSE1", "pubmed_id": ["123"]},
+            sample=[{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}],
+        )
 
         enriched = MINiMLEnricher(pubmed_fetcher=pubmed_fetcher, insdc_fetcher=insdc_fetcher).enrich(data=data)
 
@@ -133,7 +142,7 @@ class TestMINiMLEnricher(unittest.TestCase):
         insdc_fetcher = Mock()
         insdc_fetcher._extract_sra.return_value = ["SRX1"]
         insdc_fetcher.fetch_sra_runs.return_value = [{"run": "SRR1", "study": None}]
-        data = {"series": {"iid": "GSE1"}, "sample": [{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}]}
+        data = _package(series={"iid": "GSE1"}, sample=[{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}])
 
         enriched = MINiMLEnricher(pubmed_fetcher=Mock(), insdc_fetcher=insdc_fetcher).enrich(data=data)
 
@@ -143,10 +152,10 @@ class TestMINiMLEnricher(unittest.TestCase):
     def test_enrich_logs_counts_and_failures_without_metadata_payload(self):
         pubmed_fetcher = Mock()
         pubmed_fetcher.pubmed_summary.side_effect = requests.RequestException("secret")
-        data = {
-            "series": {"iid": "GSE1", "pubmed_id": ["123"], "summary": "do-not-log"},
-            "sample": [],
-        }
+        data = _package(
+            series={"iid": "GSE1", "pubmed_id": ["123"], "summary": "do-not-log"},
+            sample=[],
+        )
 
         with self.assertLogs(
             "meta_standards_converter.enrichers.miniml_enricher", level="INFO"
