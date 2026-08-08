@@ -30,7 +30,7 @@ class TestMINiMLEnricher(unittest.TestCase):
             ("doi-1", "authors 1", "title 1", "published", "EFO", "EFO_0001796"),
             ("doi-2", "authors 2", "title 2", "published", "EFO", "EFO_0001796"),
         ]
-        data = {"series": {"pubmed_id": ["123", "123", "456"]}}
+        data = {"series": {"iid": "GSE1", "pubmed_id": ["123", "123", "456"]}}
 
         enriched = MINiMLEnricher(pubmed_fetcher=pubmed_fetcher, insdc_fetcher=Mock()).enrich(data=data)
 
@@ -71,6 +71,7 @@ class TestMINiMLEnricher(unittest.TestCase):
             [{"run": "ERR2", "study": "ERP137216"}, {"run": "ERR3", "study": "SRP999"}],
         ]
         data = {
+            "series": {"iid": "GSE1"},
             "sample": [
                 {
                     "iid": "GSM1",
@@ -106,7 +107,7 @@ class TestMINiMLEnricher(unittest.TestCase):
         insdc_fetcher._extract_sra.return_value = ["SRX1"]
         insdc_fetcher.fetch_sra_runs.side_effect = ET.ParseError("bad xml")
         data = {
-            "series": {"pubmed_id": ["123"]},
+            "series": {"iid": "GSE1", "pubmed_id": ["123"]},
             "sample": [{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}],
         }
 
@@ -132,7 +133,7 @@ class TestMINiMLEnricher(unittest.TestCase):
         insdc_fetcher = Mock()
         insdc_fetcher._extract_sra.return_value = ["SRX1"]
         insdc_fetcher.fetch_sra_runs.return_value = [{"run": "SRR1", "study": None}]
-        data = {"sample": [{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}]}
+        data = {"series": {"iid": "GSE1"}, "sample": [{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}]}
 
         enriched = MINiMLEnricher(pubmed_fetcher=Mock(), insdc_fetcher=insdc_fetcher).enrich(data=data)
 
@@ -143,7 +144,7 @@ class TestMINiMLEnricher(unittest.TestCase):
         pubmed_fetcher = Mock()
         pubmed_fetcher.pubmed_summary.side_effect = requests.RequestException("secret")
         data = {
-            "series": {"pubmed_id": ["123"], "summary": "do-not-log"},
+            "series": {"iid": "GSE1", "pubmed_id": ["123"], "summary": "do-not-log"},
             "sample": [],
         }
 
