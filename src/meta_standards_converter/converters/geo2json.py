@@ -53,10 +53,11 @@ class geo2json(JSONHandler):
       logger.debug("%s: parsed %d MINiML package(s)", gse, len(meta_jsons))
 
       if enrich:
+         codec = MINiMLCodec()
          packages = []
          for index, meta_json in enumerate(meta_jsons, start=1):
             logger.info("%s: enriching parsed package %d", gse, index)
-            packages.append(self.enricher.enrich(data=meta_json))
+            packages.append(codec.decode(self.enricher.enrich(data=meta_json)).package)
       else:
          logger.info("%s: skipping JSON enrichment", gse)
          packages = meta_jsons

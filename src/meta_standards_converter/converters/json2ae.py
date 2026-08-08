@@ -14,7 +14,7 @@ from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
 from meta_standards_converter.converters.json_source import JSONPackageSource
 from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
-from meta_standards_converter.miniml import MINiMLPackage
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
 
 logger = logging.getLogger(__name__)
@@ -44,11 +44,14 @@ class json2ae(JSONHandler):
         logger.debug("%s: loaded %d parsed package(s)", json_path, len(packages))
 
         magetabs = []
+        codec = MINiMLCodec()
         for index, package in enumerate(packages, start=1):
             converted_package = package
             if enrich:
                 logger.info("%s: enriching parsed package %d", json_path, index)
-                converted_package = self.enricher.enrich(data=package)
+                converted_package = codec.decode(
+                    self.enricher.enrich(data=package)
+                ).package
             else:
                 logger.info("%s: skipping enrichment for parsed package %d", json_path, index)
             logger.info("%s: building MAGE-TAB package %d", json_path, index)
