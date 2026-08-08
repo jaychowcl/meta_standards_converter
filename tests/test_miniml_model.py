@@ -1,0 +1,217 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+import json
+from pathlib import Path
+
+import pytest
+from jsonschema import Draft202012Validator
+
+from meta_standards_converter.miniml import (
+    MINIML_SCHEMA_VERSION,
+    MINiMLModelError,
+    MINiMLPackage,
+    Series,
+    miniml_schema_path,
+)
+
+
+def complete_package() -> dict:
+    return {
+        "version": "0.5.4",
+        "schema_location": "https://example.org/MINiML.xsd",
+        "database": [
+            {
+                "iid": "GEO",
+                "name": "Gene Expression Omnibus",
+                "public_id": "GEO",
+                "organization_ref": {"ref": "org-1"},
+            }
+        ],
+        "organization": [
+            {
+                "iid": "org-1",
+                "name": "Example Institute",
+                "address": {
+                    "line": ["1 Science Road"],
+                    "city": "London",
+                    "postal_code": "NW1",
+                    "country": "UK",
+                },
+            }
+        ],
+        "contributor": [
+            {
+                "iid": "person-1",
+                "person": {"first": "Ada", "last": "Lovelace"},
+                "email": "ada@example.org",
+                "organization_ref": {"ref": "org-1"},
+            }
+        ],
+        "platform": [
+            {
+                "iid": "GPL1",
+                "accession": [{"database": "GEO", "value": "GPL1"}],
+                "title": "Sequencing platform",
+                "technology": "high-throughput sequencing",
+                "distribution": "virtual",
+                "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
+                "manufacturer": "Example",
+                "contact_ref": [{"ref": "person-1", "position": "0"}],
+            }
+        ],
+        "sample": [
+            {
+                "iid": "GSM1",
+                "accession": [{"database": "GEO", "value": "GSM1"}],
+                "title": "Sample one",
+                "channel_count": "1",
+                "channel": [
+                    {
+                        "position": "1",
+                        "source": "lung",
+                        "organism": [
+                            {"taxid": "9606", "value": "Homo sapiens"}
+                        ],
+                        "characteristics": [
+                            {"tag": "disease state", "value": "normal"}
+                        ],
+                        "molecule": "total RNA",
+                    }
+                ],
+                "platform_ref": {"ref": "GPL1"},
+                "raw_data": [
+                    {
+                        "type": "FASTQ",
+                        "checksum": "0123456789abcdef0123456789abcdef",
+                        "value": "https://example.org/read.fastq.gz",
+                    }
+                ],
+            }
+        ],
+        "series": {
+            "iid": "GSE1",
+            "accession": [{"database": "GEO", "value": "GSE1"}],
+            "title": "Example study",
+            "summary": "A complete model fixture.",
+            "sample_ref": [{"ref": "GSM1", "position": "0"}],
+            "variable": [
+                {
+                    "position": "0",
+                    "factor": "disease state",
+                    "description": "Case versus control",
+                    "sample_ref": [{"ref": "GSM1"}],
+                }
+            ],
+            "relation": [
+                {"type": "SubSeries of", "target": "GSE2", "comment": "test"}
+            ],
+            "data_table": [
+                {
+                    "title": "Series matrix",
+                    "column": [
+                        {"position": "0", "name": "ID_REF", "type": "identifier"}
+                    ],
+                    "external_data": {"rows": "1", "value": "matrix.txt"},
+                }
+            ],
+            "vendor_note": {"value": "preserved"},
+        },
+    }
+
+
+def test_complete_xsd_derived_package_round_trips_and_validates_schema() -> None:
+    model = MINiMLPackage.from_mapping(complete_package())
+
+    assert isinstance(model.series, Series)
+    assert model.series.sample_ref[0].ref == "GSM1"
+    assert model.samples[0].channels[0].characteristics[0].tag == "disease state"
+    assert model.series.extras["vendor_note"] == {"value": "preserved"}
+
+    canonical = model.to_mapping()
+    assert canonical["miniml_schema_version"] == MINIML_SCHEMA_VERSION
+    assert canonical["series"]["vendor_note"] == {"value": "preserved"}
+    schema = json.loads(miniml_schema_path().read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(canonical)
+
+
+def test_legacy_singletons_are_normalized_without_dropping_extensions() -> None:
+    model = MINiMLPackage.from_mapping(
+        {
+            "version": "0.5.4",
+            "sample": {"iid": "GSM1", "custom_sample_field": "kept"},
+            "series": {
+                "iid": "GSE1",
+                "accession": {"value": "GSE1"},
+                "sample_ref": {"ref": "GSM1"},
+            },
+            "custom_root": {"source": "legacy"},
+        }
+    )
+
+    canonical = model.to_mapping()
+    assert canonical["database"] == []
+    assert canonical["sample"] == [
+        {"iid": "GSM1", "custom_sample_field": "kept"}
+    ]
+    assert canonical["series"]["accession"] == [{"value": "GSE1"}]
+    assert canonical["series"]["sample_ref"] == [{"ref": "GSM1"}]
+    assert canonical["custom_root"] == {"source": "legacy"}
+
+
+def test_compatibility_validation_reports_xsd_deviations_as_warnings() -> None:
+    payload = complete_package()
+    payload["platform"][0]["technology"] = "single-cell spatial sequencing"
+    payload["sample"][0]["raw_data"][0]["checksum"] = "not-an-md5"
+    payload["series"]["sample_ref"].append({"ref": "GSM404"})
+    payload["sample"][0]["channel_count"] = "2"
+
+    issues = MINiMLPackage.from_mapping(payload).validate()
+    codes = {issue.code for issue in issues}
+
+    assert {
+        "xsd_enumeration",
+        "xsd_checksum",
+        "unresolved_reference",
+        "channel_count_mismatch",
+    } <= codes
+    assert all(issue.severity == "warning" for issue in issues)
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"series": []}, "series must be an object"),
+        ({"series": {}}, "series requires iid or accession"),
+        (
+            {"series": {"iid": "GSE1"}, "sample": ["bad"]},
+            "sample[0] must be an object",
+        ),
+        (
+            {
+                "series": {"iid": "GSE1"},
+                "sample": [{"iid": "GSM1"}, {"iid": "GSM1"}],
+            },
+            "duplicate sample iid",
+        ),
+    ],
+)
+def test_structural_corruption_fails(payload: dict, message: str) -> None:
+    with pytest.raises(MINiMLModelError, match=message):
+        MINiMLPackage.from_mapping(payload)
+
+
+def test_dump_and_load_are_deterministic_and_atomic(tmp_path: Path) -> None:
+    destination = tmp_path / "package.json"
+    model = MINiMLPackage.from_mapping(complete_package())
+
+    model.dump(destination)
+
+    assert MINiMLPackage.load(destination) == model
+    assert destination.read_text(encoding="utf-8").endswith("\n")
+
