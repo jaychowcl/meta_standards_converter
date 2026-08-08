@@ -70,7 +70,11 @@ class MINiMLV1Migrator:
         if isinstance(source, Mapping):
             for item in source.get("documents", []) or []:
                 if isinstance(item, Mapping) and item.get("kind") and item.get("name"):
-                    record = {key: str(item[key]) for key in ("kind", "name", "uri", "sha256") if item.get(key)}
+                    record = {
+                        key: str(item[key])
+                        for key in ("kind", "name", "uri", "sha256", "media_type")
+                        if item.get(key)
+                    }
                     names.append((record["kind"], record["name"], record))
             if source.get("idf"):
                 names.append(("idf", str(source["idf"]), None))

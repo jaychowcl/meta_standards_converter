@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import logging
 import os
@@ -162,9 +163,21 @@ class AEParser:
                     "idf": source.idf.name,
                     "sdrf": [resource.name for resource in source.sdrfs],
                     "documents": [
-                        {"kind": "idf", "name": source.idf.name, "uri": source.idf.origin},
+                        {
+                            "kind": "idf",
+                            "name": source.idf.name,
+                            "uri": source.idf.origin,
+                            "sha256": hashlib.sha256(source.idf.text.encode("utf-8")).hexdigest(),
+                            "media_type": "text/tab-separated-values",
+                        },
                         *[
-                            {"kind": "sdrf", "name": resource.name, "uri": resource.origin}
+                            {
+                                "kind": "sdrf",
+                                "name": resource.name,
+                                "uri": resource.origin,
+                                "sha256": hashlib.sha256(resource.text.encode("utf-8")).hexdigest(),
+                                "media_type": "text/tab-separated-values",
+                            }
                             for resource in source.sdrfs
                         ],
                     ],

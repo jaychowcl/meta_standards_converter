@@ -99,8 +99,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: runtime-behavior
   title: Runtime behavior and packaging
   anchor: runtime-behavior
-  purpose: Defines the standalone 1.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
-  keywords: version 1.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
+  purpose: Defines the standalone 3.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
+  keywords: version 3.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
   link: [Open section](codebase.md#runtime-behavior)
 
 - id: durable-artifact-publication
@@ -141,8 +141,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: proposed-enriched-miniml-core
   title: Enriched MINiML-compatible core
   anchor: proposed-enriched-miniml-core
-  purpose: Defines MSC MINiML 2.0 protocols, assay paths, typed annotations, units, provenance, migration, and semantic MAGE-TAB boundaries.
-  keywords: MSC MINiML 2.0, MAGE-TAB, annotations, units, protocols, assay paths, migration, semantic round trip
+  purpose: Defines MSC MINiML 2.0 protocols, assay paths, typed annotations, units, provenance, document-scoped SDRF ordering, migration, and semantic MAGE-TAB boundaries.
+  keywords: MSC MINiML 2.0, MAGE-TAB, annotations, units, Unit type, factors, protocols, assay paths, SDRF documents, migration, semantic round trip
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
 - id: miniml-package-model

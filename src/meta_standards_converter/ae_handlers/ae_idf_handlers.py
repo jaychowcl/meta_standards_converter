@@ -411,6 +411,7 @@ class IDFConstructor():
         experiment_dates = [
             self._normalized_idf_date(value)
             for value in handler._from_path(data, "series.experiment_date")
+            if value not in (None, "")
         ]
         release_dates = [
             self._normalized_idf_date(value)

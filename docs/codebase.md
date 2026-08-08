@@ -83,9 +83,9 @@ credentials, or tokens.
 ### AD-002: Preserve MAGE-TAB round trips beside the mapped core
 
 - **Status:** Observed
-- **Decision:** `ae2json` stores a typed `mage_tab.model` plus fingerprints and source tables; `json2ae` restores unchanged tables or overlays eligible mapped edits.
+- **Decision:** `ae2json` maps semantic MAGE-TAB content into MSC MINiML 2.0; `json2ae` regenerates ordered IDF/SDRF tables from that typed model.
 - **Rationale:** Not documented.
-- **Consequences:** Lossless unchanged round trips coexist with editable mapped fields, but fingerprint and keyed-union rules are compatibility-sensitive.
+- **Consequences:** Metadata semantics are editable and format-independent. Raw row layout is not replayed; unsafe consolidation of heterogeneous SDRF document graphs is rejected.
 - **Affected components:** `AEParser`, `ae_roundtrip`, `ae_model`, and `AEConstructor`.
 - **Evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py), [`ae_roundtrip.py`](../src/meta_standards_converter/ae_handlers/ae_roundtrip.py), and [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py).
 
@@ -132,9 +132,8 @@ credentials, or tokens.
   aggregation is the explicit exception and converts per-group exceptions
   into `BatchConversionResult.failures`.
 - `geo2ae`/`json2ae` use the same selected platform handler for IDF and SDRF.
-- Unchanged MAGE-TAB round trips remain lossless. Regeneration preserves
-  typed-model structure and only overlays mapped fields when identity is
-  unambiguous.
+- MAGE-TAB regeneration preserves typed-model semantics. Raw table layout is
+  not part of the runtime model.
 - H5AD source priority remains manifest, explicit specification, then JSON
   discovery; processed H5AD/matrix sources outrank raw FASTQ within a tier.
 - Existing H5AD, tabular, and provenance outputs are protected unless the
@@ -169,10 +168,20 @@ characteristic/parameter occurrences remain data. The SDRF renderer reads the
 v2 `name` field (with `tag` only as a migration fallback) and unwraps typed
 ontology values such as channel `source` and `molecule` instead of serializing
 their JSON object representation. Parsing retains characteristic units and
-ontology companions, folds both Protocol Contact and Protocol Performer into
-`protocol.performers`, and preserves unknown SDRF columns as named assay-node
-comments. Unknown IDF layout rows remain outside the semantic model and are
-reported as warnings rather than replayed.
+ontology companions, keeps Protocol Contact distinct from per-application
+Protocol Performer, and preserves generic IDF/SDRF comments as named comments.
+Blank and external Protocol REF values and external sample names are retained
+with compatibility diagnostics. Unknown layout remains outside the semantic
+model and is reported rather than replayed.
+
+SDRF row order is scoped to each `SourceDocument`. The public
+`meta_standards_converter.ae_handlers.ae_model.render_miniml_assay_documents`
+returns one rendered table per document, preserving repeated Sample Name paths,
+protocol-application performer/date/comments, ontology companion columns,
+`Unit[type]`, factor qualifiers, and repeated headers. The legacy AE constructor
+has a single SDRF-table return shape, so it consolidates compatible document
+graphs and raises for heterogeneous layouts instead of silently losing order or
+path multiplicity.
 
 Runtime converters accept only explicit schema `2.0` packages. Legacy or
 unversioned packages enter through `MINiMLV1Migrator`, which folds supported
@@ -900,7 +909,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `2.0.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `3.0.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 1.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -1346,22 +1355,33 @@ collections are always lists, while `series` remains a single object.
 compatibility diagnostics; strict mode promotes them to
 `MINiMLCompatibilityError`. `encode`/`encode_many` are the serializer boundary,
 while `load`/`dump` provide deterministic, atomic UTF-8 JSON publication.
-`MINiMLPackage.from_mapping()` and `load()` remain direct model conveniences. Duplicate
-top-level internal identifiers and malformed entity shapes raise
+`MINiMLPackage.from_mapping()` and `load()` remain direct model conveniences.
+Construction and codec encode/decode canonicalize and validate nested typed
+objects; duplicate top-level identifiers and malformed entity shapes raise
 `MINiMLModelError`.
 
 `MINiMLPackage.validate()` is compatibility-first. XSD vocabulary deviations,
 checksum formats, unresolved references, and channel-count mismatches are
 reported as structured `MINiMLValidationIssue` diagnostics instead of rejecting
-historically accepted data. This preserves generic GEO parser output while
-making XSD constraints visible to callers. Consumers that need strict wire
-validation can load `miniml_schema_path()` with a JSON Schema validator.
+historically accepted data. External protocol/sample references are therefore
+preserved as warnings. The JSON Schema and Python model agree on their canonical
+field shapes; consumers needing strict wire validation can load
+`miniml_schema_path()` with a JSON Schema validator.
+
+Organisms and channel fields support typed annotations. `NamedValue` carries a
+typed ontology value, optional unit ontology, `unit_type`, and qualifier;
+`Variable.type` is an ontology value so factor type source/accession companions
+round-trip without string flattening. Source documents retain document role,
+source URI, media type, and SHA-256 of the consumed UTF-8 content (never the raw
+body), plus document-scoped order. Series fields retain experiment design ontology,
+experiment date, contacts and roles, and generic IDF comments.
 
 Public symbols are exported from `meta_standards_converter.miniml`. The schema
 ships as package data at `miniml/miniml-package-v2.schema.json`. Contract
 coverage lives in `tests/test_msc_miniml_v2.py`,
 `tests/test_miniml_migration_cli.py`, `tests/test_magetab_miniml_v2.py`, and
-`tests/test_geo_parser.py`.
+`tests/test_geo_parser.py`. Cross-boundary stabilization coverage lives in
+`tests/test_miniml_stabilization.py`.
 
 The complete qualified model API is
 `meta_standards_converter.miniml.model.Accession`,
@@ -1412,6 +1432,7 @@ The 2.0 additions are
 `meta_standards_converter.miniml.migration.MINiMLMigrationResult`,
 `meta_standards_converter.miniml.migration.MINiMLV1Migrator`,
 `meta_standards_converter.ae_handlers.ae_model.overlay_miniml_semantics`, and
+`meta_standards_converter.ae_handlers.ae_model.render_miniml_assay_documents`, and
 `meta_standards_converter.cli.miniml_migrate.main`.
 
 MAGE-TAB parsing folds its parser state immediately into native protocols,

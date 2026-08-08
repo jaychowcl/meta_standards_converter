@@ -1536,11 +1536,7 @@ class TestAEConstructor(unittest.TestCase):
                 platform_handler="invalid",
             )
 
-    @patch(
-        "meta_standards_converter.ae_handlers.ae_constructor.unchanged_magetab",
-        return_value=[["SDRF File", [["Source Name"], ["preserved"]]]],
-    )
-    def test_forced_platform_handler_bypasses_unchanged_roundtrip_tables(self, unchanged_mock):
+    def test_forced_platform_handler_generates_tables_from_the_typed_model(self):
         data = self.typed({"series": {"iid": "GSE1"}})
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
@@ -1553,7 +1549,6 @@ class TestAEConstructor(unittest.TestCase):
             sdrf_constructor=sdrf_constructor,
         ).miniml2magetab(data=data, platform_handler="generic")
 
-        unchanged_mock.assert_not_called()
         self.assertEqual(["SDRF File", generated], self.row(result, "SDRF File"))
 
     def test_detect_ae_technology_returns_bulk_sequencing_for_regular_sra(self):

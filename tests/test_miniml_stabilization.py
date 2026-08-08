@@ -1,5 +1,14 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from __future__ import annotations
 
+import hashlib
 import json
 
 import pytest
@@ -12,7 +21,9 @@ from meta_standards_converter.miniml import (
     MINiMLCodec,
     MINiMLModelError,
     MINiMLPackage,
+    NamedValue,
     Series,
+    SourceDocument,
     SourceInfo,
     miniml_schema_path,
 )
@@ -47,13 +58,19 @@ def test_schema_and_model_accept_the_same_supported_series_and_assay_fields():
 
 
 def test_strict_codec_revalidates_public_dataclass_construction():
-    invalid = MINiMLPackage(series=Series(), source=SourceInfo(""))
+    invalid = MINiMLPackage(series=Series(), source=SourceInfo("test"))
     with pytest.raises(MINiMLModelError):
         MINiMLCodec().decode(invalid, strict=True)
     with pytest.raises(MINiMLModelError):
         MINiMLCodec().encode(invalid)
     with pytest.raises(MINiMLModelError):
         AssayNode("bogus", "")
+    with pytest.raises(MINiMLModelError):
+        NamedValue("", "value")
+    with pytest.raises(MINiMLModelError):
+        SourceDocument("idf", "study.idf.txt", sha256="not-a-digest")
+    with pytest.raises(MINiMLModelError):
+        SourceInfo("")
 
 
 def test_blank_and_external_protocol_references_are_compatible():
@@ -153,7 +170,34 @@ def test_xsd_positions_are_applied_before_lean_v2_serialization():
 
 
 def test_ae_source_documents_keep_resolved_origins():
-    package = AEParser().parse(resolved_input())
-    documents = {item.name: item.uri for item in package.source.documents}
-    assert documents["study.idf.txt"] == "memory:idf"
-    assert documents["study1.sdrf.txt"] == "memory:sdrf:1"
+    source = resolved_input()
+    package = AEParser().parse(source)
+    documents = {item.name: item for item in package.source.documents}
+    assert documents["study.idf.txt"].uri == "memory:idf"
+    assert documents["study.idf.txt"].kind == "idf"
+    assert documents["study.idf.txt"].media_type == "text/tab-separated-values"
+    assert documents["study.idf.txt"].sha256 == hashlib.sha256(source.idf.text.encode("utf-8")).hexdigest()
+    assert documents["study1.sdrf.txt"].uri == "memory:sdrf:1"
+    assert documents["study1.sdrf.txt"].kind == "sdrf"
+    assert documents["study1.sdrf.txt"].media_type == "text/tab-separated-values"
+    assert documents["study1.sdrf.txt"].sha256 == hashlib.sha256(source.sdrfs[0].text.encode("utf-8")).hexdigest()
+
+
+def test_protocol_contact_remains_distinct_from_application_performer():
+    idf = IDF.replace(
+        "Protocol Description\tCollect samples\tExtract material\n",
+        "Protocol Description\tCollect samples\tExtract material\n"
+        "Protocol Contact\tAlice Contact\tBob Contact\n",
+    )
+    text = "Source Name\tProtocol REF\tPerformer\tSample Name\ns1\tP-collect\tPat Performer\tx1\n"
+    package = AEParser().parse(resolved_input(idf=idf, sdrfs=[text]))
+    protocol = next(item for item in package.series.protocols if item.name == "P-collect")
+    application = next(
+        step for step in package.series.assay_paths[0].steps
+        if getattr(step, "kind", None) == "protocol_application"
+    )
+    assert protocol.contacts == ("Alice Contact",)
+    assert protocol.performers == ()
+    assert application.performer == "Pat Performer"
+    idf_rows = AEConstructor().miniml2magetab(package)
+    assert next(row for row in idf_rows if row[0] == "Protocol Contact")[1] == "Alice Contact"

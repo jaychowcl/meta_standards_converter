@@ -115,6 +115,12 @@ class NamedComment:
     name: str
     value: str
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise MINiMLModelError("comment requires a nonblank name")
+        if not isinstance(self.value, str):
+            raise MINiMLModelError("comment value must be a string")
+
     @classmethod
     def from_mapping(cls, value: Any) -> "NamedComment":
         data = _mapping(value, "comment")
@@ -142,6 +148,14 @@ class OntologyValue:
     term_source_ref: str | None = None
     term_accession_number: str | None = None
     annotations: tuple[HarmonizedAnnotation, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.value, str):
+            raise MINiMLModelError("ontology value must be a string")
+        if not isinstance(self.annotations, tuple) or not all(
+            isinstance(item, HarmonizedAnnotation) for item in self.annotations
+        ):
+            raise MINiMLModelError("ontology value annotations must be typed annotations")
 
     @classmethod
     def from_value(cls, value: Any) -> "OntologyValue":
@@ -176,6 +190,22 @@ class NamedValue:
     comments: tuple[NamedComment, ...] = ()
     qualifier: str | None = None
     unit_type: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise MINiMLModelError("named value requires a nonblank name")
+        if not isinstance(self.value, str):
+            raise MINiMLModelError("named value value must be a string")
+        if self.unit is not None and not isinstance(self.unit, OntologyValue):
+            raise MINiMLModelError("named value unit must be an ontology value")
+        if not isinstance(self.annotations, tuple) or not all(
+            isinstance(item, HarmonizedAnnotation) for item in self.annotations
+        ):
+            raise MINiMLModelError("named value annotations must be typed annotations")
+        if not isinstance(self.comments, tuple) or not all(
+            isinstance(item, NamedComment) for item in self.comments
+        ):
+            raise MINiMLModelError("named value comments must be typed comments")
 
     @classmethod
     def from_mapping(cls, value: Any) -> "NamedValue":
@@ -216,11 +246,26 @@ class SourceDocument:
     name: str
     uri: str | None = None
     sha256: str | None = None
+    media_type: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.kind, str) or not self.kind.strip():
+            raise MINiMLModelError("source document requires nonblank kind and name")
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise MINiMLModelError("source document requires nonblank kind and name")
+        if self.sha256 is not None:
+            if not isinstance(self.sha256, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", self.sha256):
+                raise MINiMLModelError("source document sha256 must contain 64 hexadecimal characters")
+            object.__setattr__(self, "sha256", self.sha256.lower())
+        if self.media_type is not None and (
+            not isinstance(self.media_type, str) or not self.media_type.strip()
+        ):
+            raise MINiMLModelError("source document media_type must be nonblank")
 
     @classmethod
     def from_mapping(cls, value: Any) -> "SourceDocument":
         data = _mapping(value, "source document")
-        _reject_unknown(data, {"kind", "name", "uri", "sha256"}, "source document")
+        _reject_unknown(data, {"kind", "name", "uri", "sha256", "media_type"}, "source document")
         kind = str(data.get("kind", "")).strip()
         name = str(data.get("name", "")).strip()
         if not kind or not name:
@@ -228,12 +273,19 @@ class SourceDocument:
         digest = data.get("sha256")
         if digest is not None and not re.fullmatch(r"[0-9a-fA-F]{64}", str(digest)):
             raise MINiMLModelError("source document sha256 must contain 64 hexadecimal characters")
-        return cls(kind, name, data.get("uri"), None if digest is None else str(digest).lower())
+        return cls(
+            kind,
+            name,
+            data.get("uri"),
+            None if digest is None else str(digest).lower(),
+            data.get("media_type"),
+        )
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"kind": self.kind, "name": self.name}
         _put(result, "uri", self.uri)
         _put(result, "sha256", self.sha256)
+        _put(result, "media_type", self.media_type)
         return result
 
 
@@ -243,6 +295,17 @@ class SourceInfo:
     version: str | None = None
     schema_location: str | None = None
     documents: tuple[SourceDocument, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.format, str) or not self.format.strip():
+            raise MINiMLModelError("source requires a nonblank format")
+        if not isinstance(self.documents, tuple) or not all(
+            isinstance(item, SourceDocument) for item in self.documents
+        ):
+            raise MINiMLModelError("source documents must be typed source documents")
+        names = [item.name for item in self.documents]
+        if len(names) != len(set(names)):
+            raise MINiMLModelError("source document names must be unique")
 
     @classmethod
     def from_mapping(cls, value: Any) -> "SourceInfo":

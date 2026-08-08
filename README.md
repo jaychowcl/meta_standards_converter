@@ -140,7 +140,7 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Combined `.obs.csv`, optional `.var.csv` and `.uns.json`, plus a JSON result manifest |
 | `miniml-migrate` | Legacy unversioned or `miniml_schema_version: "1.0"` JSON | Strict MSC MINiML 2.0 JSON plus migration diagnostics |
 
-GEO and MAGE-TAB ingestion both produce MSC MINiML 2.0 packages. MAGE-TAB protocols, declarations, ordered assay paths, repeated attributes, units, ontology annotations, comments, and source-document provenance are first-class model fields. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
+GEO and MAGE-TAB ingestion both produce MSC MINiML 2.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, typed factor and organism annotations, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
 
 Every newly parsed package carries `miniml_schema_version: "2.0"`. MSC owns
 this XSD-derived internal representation through the public
@@ -153,7 +153,9 @@ XSD compatibility deviations remain available as structured diagnostics. See the
 **Unified core:** ordered protocols, assay paths, typed named values, nested
 units, ontology values, and `annotations[]` are native MSC MINiML fields.
 Raw IDF/SDRF layout and the former `mage_tab` sidecar are deliberately absent;
-MAGE-TAB output is regenerated semantically. See the
+MAGE-TAB output is regenerated semantically. The per-document renderer preserves
+heterogeneous SDRF layouts; the legacy single-SDRF constructor rejects layouts
+that cannot be consolidated without loss. See the
 [enriched-core contract](docs/codebase.md#proposed-enriched-miniml-core).
 
 ## Guide
