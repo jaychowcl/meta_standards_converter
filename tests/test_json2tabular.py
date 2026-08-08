@@ -22,6 +22,8 @@ from meta_standards_converter.converters.json2tabular import (
 
 def package(study: str = "GSE1", sample: str = "GSM1") -> dict:
     return {
+        "miniml_schema_version": "2.0",
+        "source": {"format": "test"},
         "database": [{"public_id": "GEO", "name": "Gene Expression Omnibus"}],
         "series": {"accession": [{"value": study}]},
         "sample": [
@@ -32,7 +34,7 @@ def package(study: str = "GSE1", sample: str = "GSM1") -> dict:
                     {
                         "organism": [{"value": "Mus musculus", "taxid": "10090"}],
                         "characteristics": [
-                            {"tag": "tissue", "value": "brain"},
+                            {"name": "tissue", "value": "brain"},
                         ],
                     }
                 ],

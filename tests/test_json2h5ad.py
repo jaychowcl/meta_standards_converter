@@ -46,6 +46,8 @@ from meta_standards_converter.miniml import MINiMLCodec
 def package(*files, accession="GSM1"):
     supplementary_data = [{"value": path} for path in files]
     return {
+        "miniml_schema_version": "2.0",
+        "source": {"format": "test"},
         "series": {"accession": [{"value": "GSE1"}]},
         "sample": [
             {
@@ -527,7 +529,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 {
                     "source": "blood",
                     "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
-                    "characteristics": [{"tag": "disease", "value": "healthy"}],
+                    "characteristics": [{"name": "disease", "value": "healthy"}],
                 }
             ]
             json_path = self._write_json(tmpdir, data)
@@ -697,18 +699,17 @@ class TestProcessedAssetConversion(unittest.TestCase):
             data = package(source_path)
             data["sample"][0]["channel"] = [
                 {
-                    "organism": [{"taxid": "9606", "value": "human"}],
-                    "hz_organism": [
-                        {
-                            "value": "Homo sapiens",
-                            "id": "NCBITaxon_9606",
-                            "onto": "ncbitaxon",
-                        }
-                    ],
+                    "organism": [{
+                        "taxid": "9606", "value": "human",
+                        "annotations": [{
+                            "field": "organism", "value": "Homo sapiens",
+                            "term_source_ref": "ncbitaxon",
+                            "term_accession_number": "NCBITaxon_9606",
+                        }],
+                    }],
                 },
                 {
                     "organism": [{"taxid": "10090", "value": "Mus musculus"}],
-                    "hz_organism": [],
                 },
                 {"organism": [{"taxid": "10090", "value": "mus musculus"}]},
             ]
@@ -730,7 +731,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 converted.obs["msc.sample.channel.organism.taxid"].unique().tolist(),
             )
             fields = converted.uns["msc_miniml"]["fields"]
-            self.assertIn("channel[0].hz_organism[0].value", set(fields["path"]))
+            self.assertIn("channel[0].organism[0].annotations[0].value", set(fields["path"]))
 
     def test_derives_organism_from_scalar_harmonization_and_preserves_missing_as_empty(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -738,10 +739,14 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 (
                     "scalar",
                     {
-                        "organism": [{"value": "human"}],
-                        "hz_organism": "Homo sapiens",
-                        "hz_organism_id": "NCBITaxon_9606",
-                        "hz_organism_onto": "ncbitaxon",
+                        "organism": [{
+                            "value": "human",
+                            "annotations": [{
+                                "field": "organism", "value": "Homo sapiens",
+                                "term_source_ref": "ncbitaxon",
+                                "term_accession_number": "NCBITaxon_9606",
+                            }],
+                        }],
                     },
                     "Homo sapiens",
                 ),
@@ -854,8 +859,12 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 ).write_h5ad(path)
                 paths[sample_id] = path
             data = {
-                "schema_location": "MINiML.xsd",
-                "version": "1.0",
+                "miniml_schema_version": "2.0",
+                "source": {
+                    "format": "GEO MINiML",
+                    "version": "1.0",
+                    "schema_location": "MINiML.xsd",
+                },
                 "database": [
                     {
                         "iid": "GEO",
@@ -934,20 +943,24 @@ class TestProcessedAssetConversion(unittest.TestCase):
                                 "biomaterial_provider": ["Example Biobank"],
                                 "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
                                 "characteristics": [
-                                    {"tag": "cell type", "value": "Treg; memory"},
-                                    {"tag": "developmental stage", "value": "adult"},
-                                    {"tag": "treatment", "value": "CPI-703"},
-                                    {"tag": "hz_cell_type", "value": "regulatory T cell"},
-                                    {"tag": "hz_cell_type_id", "value": "CL:0000815"},
-                                    {"tag": "hz_cell_type_onto", "value": "cl"},
+                                    {
+                                        "name": "cell type", "value": "Treg; memory",
+                                        "annotations": [{
+                                            "field": "cell_type", "value": "regulatory T cell",
+                                            "term_source_ref": "cl",
+                                            "term_accession_number": "CL:0000815",
+                                        }],
+                                    },
+                                    {"name": "developmental stage", "value": "adult"},
+                                    {"name": "treatment", "value": "CPI-703"},
                                 ],
                                 "treatment_protocol": "Long treatment protocol",
                             },
                             {
                                 "source": "blood",
                                 "characteristics": [
-                                    {"tag": "cell-type", "value": "Activated Treg"},
-                                    {"tag": "treatment", "value": "CPI-703"},
+                                    {"name": "cell-type", "value": "Activated Treg"},
+                                    {"name": "treatment", "value": "CPI-703"},
                                 ],
                             },
                         ],
@@ -959,7 +972,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                         "supplementary_data": [{"value": paths["GSM2"]}],
                         "platform_ref": {"ref": "P2"},
                         "contact_ref": [{"ref": "C2"}],
-                        "channel": [{"characteristics": [{"tag": "dose", "value": "5 uM"}]}],
+                        "channel": [{"characteristics": [{"name": "dose", "value": "5 uM"}]}],
                     },
                 ],
             }
@@ -1000,19 +1013,19 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["CPI-703"], first.obs["msc.characteristics.treatment"].unique().tolist())
             self.assertEqual(
                 ["regulatory T cell"],
-                first.obs["msc.characteristics.hz_cell_type"].unique().tolist(),
+                first.obs["msc.characteristics.harmonized_cell_type"].unique().tolist(),
             )
             self.assertEqual(
                 ["CL:0000815"],
-                first.obs["msc.characteristics.hz_cell_type_id"].unique().tolist(),
+                first.obs["msc.characteristics.harmonized_cell_type_id"].unique().tolist(),
             )
             self.assertEqual(
                 ["cl"],
-                first.obs["msc.characteristics.hz_cell_type_onto"].unique().tolist(),
+                first.obs["msc.characteristics.harmonized_cell_type_onto"].unique().tolist(),
             )
             self.assertEqual([""], first.obs["msc.characteristics.dose"].unique().tolist())
             self.assertEqual([""], second.obs["msc.characteristics.cell_type"].unique().tolist())
-            self.assertEqual([""], second.obs["msc.characteristics.hz_cell_type"].unique().tolist())
+            self.assertEqual([""], second.obs["msc.characteristics.harmonized_cell_type"].unique().tolist())
             self.assertFalse(any(column.startswith("geo_") for column in combined.obs))
             self.assertNotIn("msc_batch", combined.obs)
             self.assertIn("msc.combination.batch", combined.obs)
@@ -1108,14 +1121,14 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 sample = package(path, accession=sample_id)["sample"][0]
                 sample["channel"] = [
                     {
-                        "organism": [{"value": raw_organism}],
-                        "hz_organism": [
-                            {
-                                "value": "Homo sapiens",
-                                "id": "NCBITaxon_9606",
-                                "onto": "ncbitaxon",
-                            }
-                        ],
+                        "organism": [{
+                            "value": raw_organism,
+                            "annotations": [{
+                                "field": "organism", "value": "Homo sapiens",
+                                "term_source_ref": "ncbitaxon",
+                                "term_accession_number": "NCBITaxon_9606",
+                            }],
+                        }],
                     }
                 ]
                 samples.append(sample)

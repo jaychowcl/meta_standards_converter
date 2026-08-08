@@ -33,6 +33,8 @@ from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: 
 
 def package(accession="GSE1"):
     return {
+        "miniml_schema_version": "2.0",
+        "source": {"format": "test"},
         "series": {
             "accession": [{"value": accession, "database": "GEO"}],
             "title": f"Study {accession}",
@@ -103,8 +105,8 @@ class TestJSON2AEConverter(unittest.TestCase):
         constructor = MagicMock()
         first = package("GSE1")
         second = package("GSE2")
-        enriched_first = typed({**first, "enriched": True})
-        enriched_second = typed({**second, "enriched": True})
+        enriched_first = typed({**first, "extensions": {"enriched": True}})
+        enriched_second = typed({**second, "extensions": {"enriched": True}})
         enricher.enrich.side_effect = [enriched_first, enriched_second]
         constructor.miniml2magetab.side_effect = ["first-magetab", "second-magetab"]
 
@@ -197,7 +199,12 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(
                 tmpdir,
-                {"series": {"title": "Missing accession"}, "sample": [{"iid": "GSM1"}]},
+                {
+                    "miniml_schema_version": "2.0",
+                    "source": {"format": "test"},
+                    "series": {"title": "Missing accession"},
+                    "sample": [{"iid": "GSM1"}],
+                },
             )
             with self.assertRaisesRegex(ValueError, "series requires iid or accession"):
                 json2ae().convert(path)
@@ -305,7 +312,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         constructor = MagicMock()
         constructor.miniml2magetab.return_value = "magetab"
         payload = package()
-        payload["secret"] = "do-not-log"
+        payload["extensions"] = {"secret": "do-not-log"}
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)

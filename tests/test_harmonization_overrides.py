@@ -39,6 +39,8 @@ PROFILE = {
 
 def package():
     return {
+        "miniml_schema_version": "2.0",
+        "source": {"format": "test"},
         "database": [],
         "organization": [],
         "contributor": [],
