@@ -22,6 +22,7 @@ from meta_standards_converter.converters.geo2json import geo2json
 from meta_standards_converter.converters.json2ae import json2ae
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser
+from meta_standards_converter.miniml import MINiMLCodec
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,7 +67,7 @@ def test_public_metadata_converters_write_interoperable_artifacts(tmp_path):
     ).convert("GSE328265", out=str(json_out))
 
     json_path = json_out / "GSE328265.json"
-    assert json.loads(json_path.read_text(encoding="utf-8")) == packages
+    assert json.loads(json_path.read_text(encoding="utf-8")) == MINiMLCodec().encode_many(packages)
 
     geo_magetab = tmp_path / "geo-magetab"
     geo2ae(
