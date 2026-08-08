@@ -141,15 +141,15 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: proposed-enriched-miniml-core
   title: Enriched MINiML-compatible core
   anchor: proposed-enriched-miniml-core
-  purpose: Defines validated model schema version 1, additive harmonization annotations, consumer projections, and raw evidence boundaries.
-  keywords: MINiML, MAGE-TAB, mage_tab.model, mage_tab.roundtrip, hz_value, hz_unit, protocols, assay paths, typed attributes, compatibility
+  purpose: Defines MSC MINiML 2.0 protocols, assay paths, typed annotations, units, provenance, migration, and semantic MAGE-TAB boundaries.
+  keywords: MSC MINiML 2.0, MAGE-TAB, annotations, units, protocols, assay paths, migration, semantic round trip
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
 - id: miniml-package-model
-  title: MSC 2 typed MINiML package API (wire schema 1.0)
+  title: MSC MINiML 2.0 package API
   anchor: miniml-package-model
   purpose: Defines the immutable XSD-derived model, codec, enrichments, compatibility diagnostics, and stable 1.0 wire schema.
-  keywords: MSC 2, MINiML, JSON Schema, MINiMLPackage, MINiMLCodec, miniml_schema_version, XSD, compatibility, validation, diagnostics, PubMed, SRA, ENA, FASTQ, mage_tab
+  keywords: MSC 3, MINiML 2.0, JSON Schema, MINiMLPackage, MINiMLCodec, MINiMLV1Migrator, protocols, assay paths, annotations, source documents
   link: [Open section](codebase.md#miniml-package-model)
 
 ## Workflow routes

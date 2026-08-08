@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from __future__ import annotations
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor

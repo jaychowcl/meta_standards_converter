@@ -1316,7 +1316,7 @@ parses as:
 - `sample.*.sra_run`: run dicts returned by `INSDCWebfetcher.fetch_sra_runs()`, including study accession, library metadata, run/sample IDs, read lengths, instrument model, and per-FASTQ `filename`/`uri`/`md5`.
 
 <a id="miniml-package-model"></a>
-## MSC 2 typed MINiML package API (wire schema 1.0)
+## MSC MINiML 2.0 package API
 
 MSC owns the unified metadata representation in
 `meta_standards_converter.miniml`. The dependency-free Python model and its
@@ -1324,13 +1324,15 @@ Draft 2020-12 JSON Schema are derived from the repository's MINiML XSD. They
 cover the package entities (`Database`, `Organization`, `Contributor`,
 `Platform`, `Sample`, and `Series`) and reusable accession, reference, status,
 person, channel, table/data, variable, repeat, organism, relation, and link
-structures. Source-specific extensions such as `mage_tab`, `pre_hz_*`,
-`hz_*`, and unknown vendor fields are recursively immutable and preserved.
+structures. Protocols, protocol applications, assay nodes and paths, ontology
+values, named values, harmonized annotations, comments, and source documents
+fold MAGE-TAB semantics into the same immutable representation.
 PubMed publications, SRA/ENA accessions, SRA runs, and FASTQ file records are
 first-class typed enrichments.
 
-The stable wire discriminator is `miniml_schema_version: "1.0"`. Legacy
-unversioned packages remain accepted and normalize to version 1.0. Canonical
+The wire discriminator is `miniml_schema_version: "2.0"`. Runtime decoding
+rejects unversioned, 1.x, and unknown versions. `MINiMLV1Migrator` and the
+`miniml-migrate` command provide explicit one-way migration. Canonical
 collections are always lists, while `series` remains a single object.
 `MINiMLCodec.decode`/`decode_many` return immutable packages plus structured
 compatibility diagnostics; strict mode promotes them to
@@ -1348,10 +1350,10 @@ making XSD constraints visible to callers. Consumers that need strict wire
 validation can load `miniml_schema_path()` with a JSON Schema validator.
 
 Public symbols are exported from `meta_standards_converter.miniml`. The schema
-ships as package data at
-`miniml/miniml-package-v1.schema.json`. Contract coverage lives in
-`tests/test_miniml_model.py`, `tests/test_geo_parser.py`, and
-`tests/test_ae2json.py`.
+ships as package data at `miniml/miniml-package-v2.schema.json`. Contract
+coverage lives in `tests/test_msc_miniml_v2.py`,
+`tests/test_miniml_migration_cli.py`, `tests/test_magetab_miniml_v2.py`, and
+`tests/test_geo_parser.py`.
 
 The complete qualified model API is
 `meta_standards_converter.miniml.model.Accession`,
@@ -1388,8 +1390,30 @@ The complete qualified model API is
 `meta_standards_converter.miniml.codec.MINiMLCompatibilityError`, and
 `meta_standards_converter.miniml.codec.MINiMLDecodeResult`.
 
+The 2.0 additions are
+`meta_standards_converter.miniml.model.HarmonizedAnnotation`,
+`meta_standards_converter.miniml.model.NamedComment`,
+`meta_standards_converter.miniml.model.NamedValue`,
+`meta_standards_converter.miniml.model.OntologyValue`,
+`meta_standards_converter.miniml.model.SourceDocument`,
+`meta_standards_converter.miniml.model.SourceInfo`,
+`meta_standards_converter.miniml.model.Protocol`,
+`meta_standards_converter.miniml.model.ProtocolApplication`,
+`meta_standards_converter.miniml.model.AssayNode`,
+`meta_standards_converter.miniml.model.AssayPath`,
+`meta_standards_converter.miniml.migration.MINiMLMigrationResult`,
+`meta_standards_converter.miniml.migration.MINiMLV1Migrator`,
+`meta_standards_converter.ae_handlers.ae_model.overlay_miniml_semantics`, and
+`meta_standards_converter.cli.miniml_migrate.main`.
+
+MAGE-TAB parsing folds its parser state immediately into native protocols,
+declarations, assay paths, attributes, units, comments, and document
+provenance. No `mage_tab`, raw table, layout, row/column index, ordinal, or
+synthetic object id survives. Construction regenerates ordered IDF rows and
+repeated SDRF columns from the model, so the supported round trip is semantic.
+
 **Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
-[`miniml-package-v1.schema.json`](../src/meta_standards_converter/miniml/miniml-package-v1.schema.json),
+[`miniml-package-v2.schema.json`](../src/meta_standards_converter/miniml/miniml-package-v2.schema.json),
 [`geo_parser.py`](../src/meta_standards_converter/geo_handlers/geo_parser.py),
 and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
 

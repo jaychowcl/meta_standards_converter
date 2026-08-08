@@ -8,7 +8,7 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 2.0.0 promotes immutable typed MINiML packages across converter APIs while consuming
+Version 3.0.0 promotes MSC MINiML 2.0 as the strict immutable metadata model while consuming
 Atlas document schema 1.0, H5AD metadata schema 1.0, and MINiML ledger schema
 1.0. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
@@ -25,6 +25,7 @@ The seven primary workflows are:
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
 - `json2tsv`: parsed JSON to a sample manifest in TSV or CSV format.
 - `json2obs`: parsed JSON plus expression assets to combined AnnData metadata sidecars.
+- `miniml-migrate`: explicitly upgrade legacy MINiML JSON to MSC MINiML 2.0.
 
 ## Installation
 
@@ -133,25 +134,26 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt`; Python returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
 | `json2ae` | Parsed MINiML object/list or canonical Atlas v1 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
-| `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns a one-package list with a `mage_tab` extension |
+| `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 2.0 with typed protocols and assay paths |
 | `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
 | `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v1 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
 | `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Combined `.obs.csv`, optional `.var.csv` and `.uns.json`, plus a JSON result manifest |
+| `miniml-migrate` | Legacy unversioned or `miniml_schema_version: "1.0"` JSON | Strict MSC MINiML 2.0 JSON plus migration diagnostics |
 
-GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds validated `mage_tab.model` schema version 1, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, normalized sample values in `uns["msc_metadata"]`, flattened MINiML metadata in `uns["msc_miniml"]`, typed assay occurrences in `uns["msc_mage_tab"]`, and conversion provenance.
+GEO and MAGE-TAB ingestion both produce MSC MINiML 2.0 packages. MAGE-TAB protocols, declarations, ordered assay paths, repeated attributes, units, ontology annotations, comments, and source-document provenance are first-class model fields. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
 
-Every newly parsed package carries `miniml_schema_version: "1.0"`. MSC owns
+Every newly parsed package carries `miniml_schema_version: "2.0"`. MSC owns
 this XSD-derived internal representation through the public
 `meta_standards_converter.miniml.MINiMLPackage` model and a bundled Draft
-2020-12 JSON Schema. Legacy unversioned packages remain readable, unknown and
-source-specific extensions are preserved, and XSD compatibility deviations
-are available as structured diagnostics. See the
+2020-12 JSON Schema. Runtime decoding rejects unversioned and 1.x documents;
+`MINiMLV1Migrator` and `miniml-migrate` provide the explicit one-way upgrade.
+XSD compatibility deviations remain available as structured diagnostics. See the
 [MINiML package model contract](docs/codebase.md#miniml-package-model).
 
-**Enriched core:** `mage_tab.model` schema version 1 exposes editable protocols,
-assay paths, typed attributes, declarations, properties, and document
-boundaries. Harmonized values and units are additive `hz_*` annotations;
-`mage_tab.roundtrip` remains exact unchanged-source evidence. See the
+**Unified core:** ordered protocols, assay paths, typed named values, nested
+units, ontology values, and `annotations[]` are native MSC MINiML fields.
+Raw IDF/SDRF layout and the former `mage_tab` sidecar are deliberately absent;
+MAGE-TAB output is regenerated semantically. See the
 [enriched-core contract](docs/codebase.md#proposed-enriched-miniml-core).
 
 ## Guide
@@ -211,7 +213,7 @@ The rootless Compose helper derives `DOCKER_HOST` and its runtime paths. `ROOTLE
 
 ### CLI
 
-The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs`. Run `<command> --help` for generated usage text.
+The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`, and `miniml-migrate`. Run `<command> --help` for generated usage text.
 
 All commands process multiple positional inputs in order. A failed input is logged, later inputs continue, and the final exit status is `1`; a fully successful invocation returns `0`. Logging defaults to `WARNING`. `-v` selects `INFO`, `-vv` selects `DEBUG`, and `-q` selects `ERROR`.
 

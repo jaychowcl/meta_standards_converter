@@ -372,7 +372,7 @@ class DocsIndexTests(unittest.TestCase):
         for document in (readme_text, codebase_text):
             self.assertIn("Atlas document schema 1.0", document)
             self.assertIn("H5AD metadata schema 1.0", document)
-            self.assertIn("461 passed, 3 skipped", document)
+            self.assertIn("476 passed, 3 skipped", document)
             self.assertIn("2026-08-02", document)
         self.assertIn('<a id="h5ad-metadata-schema-v1"></a>', codebase_text)
         self.assertIn('<a id="h5ad-metadata-schema-v3"></a>', codebase_text)
@@ -442,7 +442,7 @@ class DocsIndexTests(unittest.TestCase):
         for command in CLI_COMMANDS:
             self.assertIn(f"`{command}`", readme_text)
 
-    def test_docs_define_implemented_magetab_enriched_core(self):
+    def test_docs_define_implemented_msc_miniml_v2_core(self):
         readme_text = README.read_text(encoding="utf-8")
         codebase_text = CODEBASE.read_text(encoding="utf-8")
         index_text = INDEX.read_text(encoding="utf-8")
@@ -451,20 +451,16 @@ class DocsIndexTests(unittest.TestCase):
         self.assertIn(f'<a id="{anchor}"></a>', codebase_text)
         self.assertIn(f"codebase.md#{anchor}", index_text)
         for phrase in (
-            "Schema version 1",
-            "mage_tab.model",
-            "mage_tab.roundtrip",
+            "MSC MINiML 2.0",
+            "MINiMLV1Migrator",
             "protocols",
             "assay paths",
-            "typed attributes",
-            "document boundaries",
-            "json2ae",
-            "msc.mage_tab.parameter",
-            "msc_mage_tab",
+            "annotations",
+            "semantic",
         ):
             self.assertIn(phrase, codebase_text)
-        self.assertIn("Enriched core", readme_text)
-        self.assertIn("schema version 1", readme_text)
+        self.assertIn("Unified core", readme_text)
+        self.assertIn('miniml_schema_version: "2.0"', readme_text)
 
     def test_readme_documents_all_console_scripts(self):
         readme_text = README.read_text(encoding="utf-8")
@@ -488,6 +484,7 @@ class DocsIndexTests(unittest.TestCase):
             "tests/GSE328265_family.xml",
             "tests/fixtures/contracts/atlas-document-v1.json",
             "src/meta_standards_converter/miniml/miniml-package-v1.schema.json",
+            "src/meta_standards_converter/miniml/miniml-package-v2.schema.json",
         }
         hash_comment_files = {
             ".dockerignore",
