@@ -1348,6 +1348,34 @@ ships as package data at
 `tests/test_miniml_model.py`, `tests/test_geo_parser.py`, and
 `tests/test_ae2json.py`.
 
+The complete qualified model API is
+`meta_standards_converter.miniml.model.Accession`,
+`meta_standards_converter.miniml.model.Address`,
+`meta_standards_converter.miniml.model.Channel`,
+`meta_standards_converter.miniml.model.Characteristics`,
+`meta_standards_converter.miniml.model.Contributor`,
+`meta_standards_converter.miniml.model.DataColumn`,
+`meta_standards_converter.miniml.model.Database`,
+`meta_standards_converter.miniml.model.DataTable`,
+`meta_standards_converter.miniml.model.InstrumentModel`,
+`meta_standards_converter.miniml.model.MINiMLModelError`,
+`meta_standards_converter.miniml.model.MINiMLPackage`,
+`meta_standards_converter.miniml.model.MINiMLValidationIssue`,
+`meta_standards_converter.miniml.model.Organization`,
+`meta_standards_converter.miniml.model.Organism`,
+`meta_standards_converter.miniml.model.Person`,
+`meta_standards_converter.miniml.model.Platform`,
+`meta_standards_converter.miniml.model.Reference`,
+`meta_standards_converter.miniml.model.Relation`,
+`meta_standards_converter.miniml.model.Repeat`,
+`meta_standards_converter.miniml.model.Sample`,
+`meta_standards_converter.miniml.model.Series`,
+`meta_standards_converter.miniml.model.Status`,
+`meta_standards_converter.miniml.model.SupplementLink`,
+`meta_standards_converter.miniml.model.TableData`,
+`meta_standards_converter.miniml.model.Variable`, and
+`meta_standards_converter.miniml.model.miniml_schema_path`.
+
 **Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
 [`miniml-package-v1.schema.json`](../src/meta_standards_converter/miniml/miniml-package-v1.schema.json),
 [`geo_parser.py`](../src/meta_standards_converter/geo_handlers/geo_parser.py),

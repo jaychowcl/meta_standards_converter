@@ -502,13 +502,16 @@ class Database:
 class Organization:
     iid: str | None = None
     name: str | None = None
-    address: Address | None = None
+    address: Address | str | None = None
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Organization":
         data = _mapping(value, "organization")
-        return cls(data.get("iid"), data.get("name"), None if data.get("address") is None else Address.from_mapping(data["address"]), _extras(data, {"iid", "name", "address"}))
+        address = data.get("address")
+        if isinstance(address, Mapping):
+            address = Address.from_mapping(address)
+        return cls(data.get("iid"), data.get("name"), address, _extras(data, {"iid", "name", "address"}))
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
@@ -528,7 +531,7 @@ class Contributor:
     fax: str | None = None
     laboratory: str | None = None
     department: str | None = None
-    address: Address | None = None
+    address: Address | str | None = None
     organization_ref: Reference | None = None
     web_link: str | None = None
     position: str | None = None
@@ -538,7 +541,10 @@ class Contributor:
     def from_mapping(cls, value: Any) -> "Contributor":
         data = _mapping(value, "contributor")
         known = {"iid", "person", "organization", "company", "email", "phone", "fax", "laboratory", "department", "address", "organization_ref", "web_link", "position"}
-        return cls(data.get("iid"), None if data.get("person") is None else Person.from_mapping(data["person"]), data.get("organization"), data.get("company"), data.get("email"), data.get("phone"), data.get("fax"), data.get("laboratory"), data.get("department"), None if data.get("address") is None else Address.from_mapping(data["address"]), None if data.get("organization_ref") is None else Reference.from_mapping(data["organization_ref"]), data.get("web_link"), data.get("position"), _extras(data, known))
+        address = data.get("address")
+        if isinstance(address, Mapping):
+            address = Address.from_mapping(address)
+        return cls(data.get("iid"), None if data.get("person") is None else Person.from_mapping(data["person"]), data.get("organization"), data.get("company"), data.get("email"), data.get("phone"), data.get("fax"), data.get("laboratory"), data.get("department"), address, None if data.get("organization_ref") is None else Reference.from_mapping(data["organization_ref"]), data.get("web_link"), data.get("position"), _extras(data, known))
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
@@ -821,4 +827,3 @@ class MINiMLPackage:
         for index, link in enumerate(links):
             if link.checksum and not re.fullmatch(r"[0-9a-fA-F]{32}", link.checksum):
                 warn(f"{path}/supplementary_data/{index}/checksum", "xsd_checksum", "checksum is not a 32-character MD5 value")
-

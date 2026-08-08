@@ -50,9 +50,14 @@
       "additionalProperties": true
     },
     "address": {
-      "type": "object",
-      "properties": {"line": {"type": "array"}, "city": {"type": "string"}, "state": {"type": "string"}, "province": {"type": "string"}, "zip_code": {"type": "string"}, "postal_code": {"type": "string"}, "country": {"type": "string"}},
-      "additionalProperties": true
+      "oneOf": [
+        {"type": "string"},
+        {
+          "type": "object",
+          "properties": {"line": {"type": "array"}, "city": {"type": "string"}, "state": {"type": "string"}, "province": {"type": "string"}, "zip_code": {"type": "string"}, "postal_code": {"type": "string"}, "country": {"type": "string"}},
+          "additionalProperties": true
+        }
+      ]
     },
     "person": {
       "type": "object",
