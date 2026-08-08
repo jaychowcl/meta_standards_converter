@@ -487,6 +487,7 @@ class DocsIndexTests(unittest.TestCase):
             "docs/MINiML.xsd",
             "tests/GSE328265_family.xml",
             "tests/fixtures/contracts/atlas-document-v1.json",
+            "src/meta_standards_converter/miniml/miniml-package-v1.schema.json",
         }
         hash_comment_files = {
             ".dockerignore",

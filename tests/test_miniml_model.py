@@ -144,6 +144,10 @@ def test_legacy_singletons_are_normalized_without_dropping_extensions() -> None:
     model = MINiMLPackage.from_mapping(
         {
             "version": "0.5.4",
+            "contributor": {
+                "iid": "contributor-1",
+                "address": "University Hospital, London, UK",
+            },
             "sample": {"iid": "GSM1", "custom_sample_field": "kept"},
             "series": {
                 "iid": "GSE1",
@@ -156,6 +160,7 @@ def test_legacy_singletons_are_normalized_without_dropping_extensions() -> None:
 
     canonical = model.to_mapping()
     assert canonical["database"] == []
+    assert canonical["contributor"][0]["address"] == "University Hospital, London, UK"
     assert canonical["sample"] == [
         {"iid": "GSM1", "custom_sample_field": "kept"}
     ]
