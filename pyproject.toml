@@ -84,6 +84,9 @@ json2obs = "meta_standards_converter.cli.json2obs:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"meta_standards_converter.miniml" = ["*.json"]
+
 [tool.pytest.ini_options]
 markers = [
   "fake_process: reviewed shell test using a bounded fake PATH",

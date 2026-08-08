@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:meta-standards-converter:miniml-package:1.0",
+  "title": "MINiML-compatible package v1",
+  "type": "object",
+  "required": ["miniml_schema_version", "database", "organization", "contributor", "platform", "sample", "series"],
+  "properties": {
+    "miniml_schema_version": {"const": "1.0"},
+    "version": {"type": ["string", "null"]},
+    "schema_location": {"type": "string"},
+    "database": {"type": "array", "items": {"$ref": "#/$defs/database"}},
+    "organization": {"type": "array", "items": {"$ref": "#/$defs/organization"}},
+    "contributor": {"type": "array", "items": {"$ref": "#/$defs/contributor"}},
+    "platform": {"type": "array", "items": {"$ref": "#/$defs/platform"}},
+    "sample": {"type": "array", "items": {"$ref": "#/$defs/sample"}},
+    "series": {"$ref": "#/$defs/series"},
+    "mage_tab": {"type": "object"}
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "stringValue": {"type": ["string", "number", "boolean"]},
+    "accession": {
+      "type": "object", "required": ["value"],
+      "properties": {"value": {"type": "string"}, "database": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "reference": {
+      "type": "object", "required": ["ref"],
+      "properties": {"ref": {"type": "string", "minLength": 1}, "position": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "status": {
+      "type": "object",
+      "properties": {"submission_date": {"type": "string"}, "release_date": {"type": "string"}, "last_update_date": {"type": "string"}, "comment": {"type": "array"}, "database": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "supplementLink": {
+      "type": "object", "required": ["value"],
+      "properties": {"value": {"type": "string"}, "type": {"type": "string"}, "checksum": {"type": "string"}, "build": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "organism": {
+      "type": "object", "required": ["value"],
+      "properties": {"value": {"type": "string"}, "taxid": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "relation": {
+      "type": "object", "required": ["type", "target"],
+      "properties": {"type": {"type": "string"}, "target": {"type": "string"}, "comment": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "address": {
+      "type": "object",
+      "properties": {"line": {"type": "array"}, "city": {"type": "string"}, "state": {"type": "string"}, "province": {"type": "string"}, "zip_code": {"type": "string"}, "postal_code": {"type": "string"}, "country": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "person": {
+      "type": "object",
+      "properties": {"first": {"type": "string"}, "middle": {"type": "string"}, "last": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "database": {
+      "type": "object",
+      "properties": {"iid": {"type": "string"}, "name": {"type": "string"}, "public_id": {"type": "string"}, "organization_ref": {"$ref": "#/$defs/reference"}, "organization": {"type": "string"}, "web_link": {"type": "string"}, "email": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "organization": {
+      "type": "object",
+      "properties": {"iid": {"type": "string"}, "name": {"type": "string"}, "address": {"$ref": "#/$defs/address"}},
+      "additionalProperties": true
+    },
+    "contributor": {
+      "type": "object",
+      "properties": {"iid": {"type": "string"}, "person": {"$ref": "#/$defs/person"}, "organization": {"type": "string"}, "company": {"type": "string"}, "email": {"type": "string"}, "phone": {"type": "string"}, "fax": {"type": "string"}, "laboratory": {"type": "string"}, "department": {"type": "string"}, "address": {"$ref": "#/$defs/address"}, "organization_ref": {"$ref": "#/$defs/reference"}, "web_link": {"type": "string"}, "position": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "characteristics": {
+      "type": "object", "required": ["value"],
+      "properties": {"value": {"type": "string"}, "tag": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "channel": {
+      "type": "object",
+      "properties": {"source": {"type": "string"}, "organism": {"type": "array", "items": {"$ref": "#/$defs/organism"}}, "characteristics": {"type": "array", "items": {"$ref": "#/$defs/characteristics"}}, "biomaterial_provider": {"type": "array"}, "treatment_protocol": {"type": "string"}, "growth_protocol": {"type": "string"}, "molecule": {"type": "string"}, "extract_protocol": {"type": "string"}, "label": {"type": "string"}, "label_protocol": {"type": "string"}, "position": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "dataColumn": {
+      "type": "object",
+      "properties": {"name": {"type": "string"}, "type": {"type": "string"}, "unit": {"type": "string"}, "description": {"type": "string"}, "link_prefix": {"type": "string"}, "link_suffix": {"type": "string"}, "link_delimiter": {"type": "string"}, "position": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "tableData": {
+      "type": "object", "required": ["value"],
+      "properties": {"value": {"type": "string"}, "rows": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "dataTable": {
+      "type": "object",
+      "properties": {"external_file": {"$ref": "#/$defs/supplementLink"}, "title": {"type": "string"}, "column": {"type": "array", "items": {"$ref": "#/$defs/dataColumn"}}, "internal_data": {"$ref": "#/$defs/tableData"}, "external_data": {"$ref": "#/$defs/tableData"}},
+      "additionalProperties": true
+    },
+    "platform": {
+      "type": "object",
+      "properties": {"iid": {"type": "string"}, "accession": {"type": "array", "items": {"$ref": "#/$defs/accession"}}, "status": {"type": "array", "items": {"$ref": "#/$defs/status"}}, "title": {"type": "string"}, "technology": {"type": "string", "x-miniml-xsd-vocabulary": "TechnologyType"}, "distribution": {"type": "string"}, "organism": {"type": "array", "items": {"$ref": "#/$defs/organism"}}, "supplementary_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "relation": {"type": "array", "items": {"$ref": "#/$defs/relation"}}, "data_table": {"$ref": "#/$defs/dataTable"}},
+      "additionalProperties": true
+    },
+    "sample": {
+      "type": "object",
+      "properties": {"iid": {"type": "string"}, "accession": {"type": "array", "items": {"$ref": "#/$defs/accession"}}, "status": {"type": "array", "items": {"$ref": "#/$defs/status"}}, "title": {"type": "string"}, "type": {"type": "string", "x-miniml-xsd-vocabulary": "SampleType"}, "channel_count": {"type": "string"}, "channel": {"type": "array", "items": {"$ref": "#/$defs/channel"}}, "platform_ref": {"$ref": "#/$defs/reference"}, "instrument_model": {"type": ["object", "string"]}, "raw_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "supplementary_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "relation": {"type": "array", "items": {"$ref": "#/$defs/relation"}}, "data_table": {"$ref": "#/$defs/dataTable"}},
+      "additionalProperties": true
+    },
+    "variable": {
+      "type": "object",
+      "properties": {"factor": {"type": "string", "x-miniml-xsd-vocabulary": "VariableFactorIDType"}, "description": {"type": "string"}, "sample_ref": {"type": "array", "items": {"$ref": "#/$defs/reference"}}, "position": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "repeat": {
+      "type": "object",
+      "properties": {"factor": {"type": "string"}, "sample_ref": {"type": "array", "items": {"$ref": "#/$defs/reference"}}, "position": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "series": {
+      "type": "object",
+      "anyOf": [{"required": ["iid"]}, {"required": ["accession"]}],
+      "properties": {"iid": {"type": "string"}, "accession": {"type": "array", "items": {"$ref": "#/$defs/accession"}}, "status": {"type": "array", "items": {"$ref": "#/$defs/status"}}, "title": {"type": "string"}, "pubmed_id": {"type": "array"}, "citation": {"type": "array"}, "web_link": {"type": "array"}, "summary": {"type": "string"}, "overall_design": {"type": "string"}, "type": {"type": "array"}, "sample_ref": {"type": "array", "items": {"$ref": "#/$defs/reference"}}, "variable": {"type": "array", "items": {"$ref": "#/$defs/variable"}}, "repeats": {"type": "array", "items": {"$ref": "#/$defs/repeat"}}, "supplementary_data": {"type": "array", "items": {"$ref": "#/$defs/supplementLink"}}, "relation": {"type": "array", "items": {"$ref": "#/$defs/relation"}}, "data_table": {"type": "array", "items": {"$ref": "#/$defs/dataTable"}}},
+      "additionalProperties": true
+    }
+  }
+}

@@ -190,7 +190,7 @@ def test_compatibility_validation_reports_xsd_deviations_as_warnings() -> None:
         ({"series": {}}, "series requires iid or accession"),
         (
             {"series": {"iid": "GSE1"}, "sample": ["bad"]},
-            "sample[0] must be an object",
+            r"sample\[0\] must be an object",
         ),
         (
             {
@@ -214,4 +214,3 @@ def test_dump_and_load_are_deterministic_and_atomic(tmp_path: Path) -> None:
 
     assert MINiMLPackage.load(destination) == model
     assert destination.read_text(encoding="utf-8").endswith("\n")
-
