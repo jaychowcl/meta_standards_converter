@@ -35,7 +35,7 @@ from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
     TextResource,
 )
 from meta_standards_converter.converters.ae2json import ae2json  # noqa: E402
-from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: E402
 
 
 IDF = """MAGE-TAB Version\t1.1
@@ -135,8 +135,9 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=[text])
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        payload = package.to_mapping()
         step = next(
-            item for item in package["mage_tab"]["model"]["assay_paths"][0]["steps"]
+            item for item in payload["mage_tab"]["model"]["assay_paths"][0]["steps"]
             if item.get("attribute_type") == "parameter value"
         )
         step.update({
@@ -144,6 +145,7 @@ class TestAE2JSONConverter(unittest.TestCase):
             "hz_unit_id": "UO:0000031",
             "hz_unit_onto": "uo",
         })
+        package = MINiMLCodec().decode(payload).package
 
         rendered = AEConstructor().miniml2magetab(package)
         table = next(row[1] for row in rendered if row[0] == "SDRF File")
@@ -242,8 +244,10 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
-        model = package["mage_tab"]["model"]
+        payload = package.to_mapping()
+        model = payload["mage_tab"]["model"]
         model["protocols"][1]["hardware"] = "edited centrifuge"
+        package = MINiMLCodec().decode(payload).package
 
         magetab = AEConstructor().miniml2magetab(package)
         rows = {row[0]: row for row in magetab}
@@ -261,8 +265,10 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=[text])
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
-        package["series"]["title"] = "Edited core title"
-        package["mage_tab"]["model"]["assay_paths"][1]["steps"][-1]["value"] = "edited-scan-2"
+        payload = package.to_mapping()
+        payload["series"]["title"] = "Edited core title"
+        payload["mage_tab"]["model"]["assay_paths"][1]["steps"][-1]["value"] = "edited-scan-2"
+        package = MINiMLCodec().decode(payload).package
 
         magetab = AEConstructor().miniml2magetab(package)
         rows_by_label = {row[0]: row for row in magetab}
@@ -279,7 +285,8 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
-        package["sample"][0]["channel"][0]["characteristics"].extend(
+        payload = package.to_mapping()
+        payload["sample"][0]["channel"][0]["characteristics"].extend(
             [
                 {"tag": "hz_cell_type", "value": "regulatory T cell"},
                 {"tag": "hz_cell_type_id", "value": "CL:0000815"},
@@ -292,6 +299,7 @@ class TestAE2JSONConverter(unittest.TestCase):
                 {"tag": "hz_cell_state_name_onto", "value": "pcl"},
             ]
         )
+        package = MINiMLCodec().decode(payload).package
 
         magetab = AEConstructor().miniml2magetab(package)
         rendered_sdrf = next(row[1] for row in magetab if row[0] == "SDRF File")
@@ -684,7 +692,7 @@ class TestAE2JSONConverter(unittest.TestCase):
             with open(path, encoding="utf-8") as handle:
                 written = json.load(handle)
 
-        self.assertEqual(packages, written)
+        self.assertEqual(MINiMLCodec().encode_many(packages), written)
 
     def test_semantic_round_trip_through_json2ae(self):
         fetcher = MagicMock()
@@ -737,8 +745,9 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
-        edited = copy.deepcopy(package)
-        edited["series"]["title"] = "Edited title"
+        edited_payload = package.to_mapping()
+        edited_payload["series"]["title"] = "Edited title"
+        edited = MINiMLCodec().decode(edited_payload).package
 
         magetab = AEConstructor().miniml2magetab(edited)
         rows = {row[0]: row for row in magetab}
