@@ -40,6 +40,7 @@ from meta_standards_converter.converters.json_source import (
     DatasetPackageGroup,
     SourceLoadResult,
 )
+from meta_standards_converter.miniml import MINiMLCodec
 
 
 def package(*files, accession="GSM1"):
@@ -48,7 +49,7 @@ def package(*files, accession="GSM1"):
         "series": {"accession": [{"value": "GSE1"}]},
         "sample": [
             {
-                "iid": "Sample1",
+                "iid": accession,
                 "accession": [{"value": accession}],
                 "supplementary_data": supplementary_data,
                 "sra_run": [
@@ -242,7 +243,10 @@ def test_convert_source_rejects_unsafe_dataset_id_without_escaping_output(tmp_pa
     class UnsafeSource:
         def load(self, _path):
             return SourceLoadResult(
-                groups=(DatasetPackageGroup("../escape", (package("one.h5ad"),)),)
+                groups=(DatasetPackageGroup(
+                    "../escape",
+                    (MINiMLCodec().decode(package("one.h5ad")).package,),
+                ),)
             )
 
     source = tmp_path / "input.json"
@@ -261,7 +265,10 @@ def test_convert_rejects_unsafe_single_dataset_id_before_conversion(tmp_path):
     class UnsafeSource:
         def load(self, _path):
             return SourceLoadResult(
-                groups=(DatasetPackageGroup("../escape", (package("one.h5ad"),)),)
+                groups=(DatasetPackageGroup(
+                    "../escape",
+                    (MINiMLCodec().decode(package("one.h5ad")).package,),
+                ),)
             )
 
     source = tmp_path / "input.json"
