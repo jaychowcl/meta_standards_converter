@@ -148,8 +148,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: miniml-package-model
   title: MSC MINiML 2.0 package API
   anchor: miniml-package-model
-  purpose: Defines the immutable XSD-derived model, codec, enrichments, compatibility diagnostics, and stable 1.0 wire schema.
-  keywords: MSC 3, MINiML 2.0, JSON Schema, MINiMLPackage, MINiMLCodec, MINiMLV1Migrator, protocols, assay paths, annotations, source documents
+  purpose: Defines the immutable XSD-derived model, codec, explicit migration, compatibility diagnostics, and stable 2.0 wire schema.
+  keywords: MSC 3, MINiML 2.0, JSON Schema, MINiMLPackage, MINiMLCodec, MINiMLV1Migrator, protocols, assay paths, channel annotations, annotations, source documents
   link: [Open section](codebase.md#miniml-package-model)
 
 ## Workflow routes
