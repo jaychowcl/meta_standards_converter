@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 from collections import deque
 
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
-from meta_standards_converter.miniml import MINiMLPackage
+from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator
 
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,8 @@ class GEOParser:
         if remove_empty:
             parsed = [self.remove_empty_fields(series_package) for series_package in parsed]
 
-        packages = [MINiMLPackage.from_mapping(package) for package in parsed]
+        migrator = MINiMLV1Migrator()
+        packages = [migrator.migrate(package).package for package in parsed]
 
         logger.info(
             "MINiML parse stats packages=%s series=%s samples=%s platforms=%s related_series=%s remove_empty=%s elapsed_seconds=%.3f",

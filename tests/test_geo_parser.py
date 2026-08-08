@@ -61,7 +61,7 @@ class TestGEOParser(unittest.TestCase):
 
         self.assertEqual(1, len(parsed))
         package = parsed[0]
-        self.assertEqual("0.5.4", package["version"])
+        self.assertEqual("0.5.4", package["source"]["version"])
         self.assertEqual("GSE1", package["series"]["iid"])
         self.assertEqual(["GSM1"], [sample["iid"] for sample in package["sample"]])
         self.assertEqual(["GPL1"], [platform["iid"] for platform in package["platform"]])
@@ -111,7 +111,10 @@ class TestGEOParser(unittest.TestCase):
         self.assertEqual("GSE1", package["series"]["accession"][0]["value"])
         self.assertIsInstance(package["series"]["sample_ref"], list)
         self.assertIsInstance(package["series"]["relation"], list)
-        self.assertEqual(["Expression profiling by high throughput sequencing"], package["series"]["type"])
+        self.assertEqual(
+            [{"value": "Expression profiling by high throughput sequencing"}],
+            package["series"]["type"],
+        )
         self.assertEqual("SRA", package["sample"][0]["type"])
         self.assertEqual({"ref": "GPL1"}, package["sample"][0]["platform_ref"])
         self.assertEqual(["one", "two"], package["sample"][0]["extra"])
@@ -131,8 +134,8 @@ class TestGEOParser(unittest.TestCase):
 
         self.assertNotIn("title", package["sample"][0])
         channel = package["sample"][0]["channel"][0]
-        self.assertEqual("1", channel["position"])
-        self.assertEqual({"tag": "tissue", "value": "CSF"}, channel["characteristics"][0])
+        self.assertNotIn("position", channel)
+        self.assertEqual({"name": "tissue", "value": "CSF"}, channel["characteristics"][0])
 
     def test_real_fixture_parses_one_series_package(self):
         fixture = os.path.join(ROOT, "tests", "GSE328265_family.xml")
