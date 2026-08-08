@@ -2093,6 +2093,21 @@ class JSON2H5ADConverter:
         )
         characteristic_values = {}
         for channel in channels:
+            for annotation in self.planner._as_list(channel.get("annotations")):
+                if not isinstance(annotation, dict) or not annotation.get("field"):
+                    continue
+                annotation_slug = "harmonized_" + self._metadata_slug(annotation["field"])
+                characteristic_values.setdefault(annotation_slug, []).extend(
+                    self._values(annotation.get("value"))
+                )
+                if annotation.get("term_accession_number"):
+                    characteristic_values.setdefault(f"{annotation_slug}_id", []).extend(
+                        self._values(annotation["term_accession_number"])
+                    )
+                if annotation.get("term_source_ref"):
+                    characteristic_values.setdefault(f"{annotation_slug}_onto", []).extend(
+                        self._values(annotation["term_source_ref"])
+                    )
             for item in self.planner._as_list(channel.get("characteristics")):
                 if not isinstance(item, dict) or not item.get("name", item.get("tag")):
                     continue
@@ -2328,6 +2343,13 @@ class JSON2H5ADConverter:
                 for channel in self.planner._as_list(sample.get("channel")):
                     if not isinstance(channel, dict):
                         continue
+                    for annotation in self.planner._as_list(channel.get("annotations")):
+                        if not isinstance(annotation, dict) or not annotation.get("field"):
+                            continue
+                        annotation_slug = "harmonized_" + self._metadata_slug(annotation["field"])
+                        for candidate in (annotation_slug, f"{annotation_slug}_id", f"{annotation_slug}_onto"):
+                            if candidate not in columns:
+                                columns.append(candidate)
                     for item in self.planner._as_list(channel.get("characteristics")):
                         if not isinstance(item, dict):
                             continue

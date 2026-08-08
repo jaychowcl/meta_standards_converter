@@ -135,3 +135,23 @@ def test_codec_dump_is_deterministic_and_replaces_existing_file(tmp_path) -> Non
 
     assert destination.read_bytes() == first
     assert not list(tmp_path.glob(".*.tmp"))
+
+
+def test_channel_annotations_cover_harmonized_channel_scalars() -> None:
+    payload = package_payload()
+    payload["sample"][0]["channel"] = [{
+        "source": "lung",
+        "annotations": [{
+            "field": "tissue_name",
+            "value": "lung",
+            "term_source_ref": "UBERON",
+            "term_accession_number": "UBERON:0002048",
+        }],
+    }]
+
+    package = MINiMLCodec().decode(payload).package
+
+    assert package.samples[0].channels[0].annotations[0].field == "tissue_name"
+    assert package.to_mapping()["sample"][0]["channel"][0]["annotations"][0][
+        "term_accession_number"
+    ] == "UBERON:0002048"

@@ -122,6 +122,7 @@
         "extract_protocol": {"type": "string"},
         "label": {"type": "string"},
         "label_protocol": {"type": "string"},
+        "annotations": {"type": "array", "items": {"$ref": "#/$defs/annotation"}},
         "extensions": {"$ref": "#/$defs/extensions"}
       },
       "additionalProperties": false

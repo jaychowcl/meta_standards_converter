@@ -157,7 +157,8 @@ credentials, or tokens.
 MSC MINiML 2.0 folds semantic MAGE-TAB content into the typed package itself:
 `series.protocols` owns protocol identity and details, `series.assay_paths`
 owns ordered node and protocol-application paths, named values own units and
-typed `annotations`, declaration lists retain QC/replicate/normalization
+typed `annotations`, channel-level `annotations` describe harmonized scalar
+channel fields such as `source`, declaration lists retain QC/replicate/normalization
 semantics, and `source.documents` records source-document provenance. Raw IDF
 and SDRF table layouts and the former `mage_tab` replay sidecar are deliberately
 outside the runtime representation.

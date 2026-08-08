@@ -147,7 +147,7 @@ def validate_harmonization_overrides(profile: Mapping[str, Any]) -> dict[str, An
 
 def _harmonized_values(channel: Mapping[str, Any], source: str) -> list[dict[str, Any]]:
     values: list[dict[str, Any]] = []
-    containers = []
+    containers = [channel]
     for field in ("source", "molecule"):
         item = channel.get(field)
         if isinstance(item, Mapping):

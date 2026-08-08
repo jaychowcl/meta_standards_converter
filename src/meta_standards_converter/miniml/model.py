@@ -724,25 +724,26 @@ class Channel:
     extract_protocol: str | None = None
     label: str | None = None
     label_protocol: str | None = None
+    annotations: tuple[HarmonizedAnnotation, ...] = ()
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Channel":
         data = _mapping(value, "channel")
-        known = {"source", "organism", "characteristics", "biomaterial_provider", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "extensions"}
+        known = {"source", "organism", "characteristics", "biomaterial_provider", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "annotations", "extensions"}
         _reject_unknown(data, known, "channel")
         return cls(
             None if data.get("source") is None else OntologyValue.from_value(data["source"]), tuple(Organism.from_value(item) for item in _items(data.get("organism"))),
             tuple(Characteristics.from_value(item) for item in _items(data.get("characteristics"))),
             tuple(_items(data.get("biomaterial_provider"))), data.get("treatment_protocol"),
             data.get("growth_protocol"), None if data.get("molecule") is None else OntologyValue.from_value(data["molecule"]), data.get("extract_protocol"),
-            data.get("label"), data.get("label_protocol"), _FrozenJSONMapping(_mapping(data.get("extensions", {}), "channel.extensions")),
+            data.get("label"), data.get("label_protocol"), _annotations(data.get("annotations")), _FrozenJSONMapping(_mapping(data.get("extensions", {}), "channel.extensions")),
         )
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
         mapping = {"organisms": "organism", "biomaterial_providers": "biomaterial_provider"}
-        for key in ("source", "organisms", "characteristics", "biomaterial_providers", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol"):
+        for key in ("source", "organisms", "characteristics", "biomaterial_providers", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "annotations"):
             _put(result, mapping.get(key, key), getattr(self, key))
         if self.extras:
             result["extensions"] = _plain(self.extras)
