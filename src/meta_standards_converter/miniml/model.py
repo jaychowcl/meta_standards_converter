@@ -21,7 +21,7 @@ from typing import Any, Callable, Mapping, TypeVar
 from uuid import uuid4
 
 
-MINIML_SCHEMA_VERSION = "1.0"
+MINIML_SCHEMA_VERSION = "2.0"
 
 
 class MINiMLModelError(ValueError):
@@ -63,6 +63,204 @@ class MINiMLValidationIssue:
     code: str
     message: str
     severity: str = "warning"
+
+
+def _reject_unknown(data: Mapping[str, Any], known: set[str], path: str) -> None:
+    unknown = sorted(str(key) for key in data if key not in known)
+    if unknown:
+        label = "MINiML package" if path == "MINiML package" else path
+        raise MINiMLModelError(f"unsupported {label} field: {unknown[0]}")
+
+
+@dataclass(frozen=True)
+class HarmonizedAnnotation:
+    field: str
+    value: str
+    term_source_ref: str | None = None
+    term_accession_number: str | None = None
+    hierarchy_depth: int | None = None
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "HarmonizedAnnotation":
+        data = _mapping(value, "annotation")
+        known = {
+            "field", "value", "term_source_ref", "term_accession_number",
+            "hierarchy_depth",
+        }
+        _reject_unknown(data, known, "annotation")
+        field_value = str(data.get("field", "")).strip()
+        label = str(data.get("value", "")).strip()
+        if not field_value or not label:
+            raise MINiMLModelError("annotation requires nonblank field and value")
+        depth = data.get("hierarchy_depth")
+        if depth is not None and (isinstance(depth, bool) or not isinstance(depth, int) or depth < 0):
+            raise MINiMLModelError("annotation hierarchy_depth must be a non-negative integer")
+        return cls(
+            field_value,
+            label,
+            data.get("term_source_ref"),
+            data.get("term_accession_number"),
+            depth,
+        )
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"field": self.field, "value": self.value}
+        for key in ("term_source_ref", "term_accession_number", "hierarchy_depth"):
+            _put(result, key, getattr(self, key))
+        return result
+
+
+@dataclass(frozen=True)
+class NamedComment:
+    name: str
+    value: str
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "NamedComment":
+        data = _mapping(value, "comment")
+        _reject_unknown(data, {"name", "value"}, "comment")
+        name = str(data.get("name", "")).strip()
+        if not name:
+            raise MINiMLModelError("comment requires a nonblank name")
+        return cls(name, str(data.get("value", "")))
+
+    def to_mapping(self) -> dict[str, Any]:
+        return {"name": self.name, "value": self.value}
+
+
+def _annotations(value: Any) -> tuple[HarmonizedAnnotation, ...]:
+    return _objects(value, HarmonizedAnnotation.from_mapping, "annotations")
+
+
+def _comments(value: Any) -> tuple[NamedComment, ...]:
+    return _objects(value, NamedComment.from_mapping, "comments")
+
+
+@dataclass(frozen=True)
+class OntologyValue:
+    value: str
+    term_source_ref: str | None = None
+    term_accession_number: str | None = None
+    annotations: tuple[HarmonizedAnnotation, ...] = ()
+
+    @classmethod
+    def from_value(cls, value: Any) -> "OntologyValue":
+        if isinstance(value, Mapping):
+            known = {"value", "term_source_ref", "term_accession_number", "annotations"}
+            _reject_unknown(value, known, "ontology value")
+            return cls(
+                str(value.get("value", "")),
+                value.get("term_source_ref"),
+                value.get("term_accession_number"),
+                _annotations(value.get("annotations")),
+            )
+        if isinstance(value, (str, int, float, bool)):
+            return cls(str(value))
+        raise MINiMLModelError("ontology value must be a scalar or object")
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"value": self.value}
+        for key in ("term_source_ref", "term_accession_number", "annotations"):
+            _put(result, key, getattr(self, key))
+        return result
+
+
+@dataclass(frozen=True)
+class NamedValue:
+    name: str
+    value: str
+    term_source_ref: str | None = None
+    term_accession_number: str | None = None
+    unit: OntologyValue | None = None
+    annotations: tuple[HarmonizedAnnotation, ...] = ()
+    comments: tuple[NamedComment, ...] = ()
+    qualifier: str | None = None
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "NamedValue":
+        data = _mapping(value, "named value")
+        known = {
+            "name", "value", "term_source_ref", "term_accession_number", "unit",
+            "annotations", "comments", "qualifier",
+        }
+        _reject_unknown(data, known, "named value")
+        name = str(data.get("name", "")).strip()
+        if not name:
+            raise MINiMLModelError("named value requires a nonblank name")
+        return cls(
+            name,
+            str(data.get("value", "")),
+            data.get("term_source_ref"),
+            data.get("term_accession_number"),
+            None if data.get("unit") is None else OntologyValue.from_value(data["unit"]),
+            _annotations(data.get("annotations")),
+            _comments(data.get("comments")),
+            data.get("qualifier"),
+        )
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"name": self.name, "value": self.value}
+        for key in (
+            "term_source_ref", "term_accession_number", "unit", "annotations",
+            "comments", "qualifier",
+        ):
+            _put(result, key, getattr(self, key))
+        return result
+
+
+@dataclass(frozen=True)
+class SourceDocument:
+    kind: str
+    name: str
+    uri: str | None = None
+    sha256: str | None = None
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "SourceDocument":
+        data = _mapping(value, "source document")
+        _reject_unknown(data, {"kind", "name", "uri", "sha256"}, "source document")
+        kind = str(data.get("kind", "")).strip()
+        name = str(data.get("name", "")).strip()
+        if not kind or not name:
+            raise MINiMLModelError("source document requires nonblank kind and name")
+        digest = data.get("sha256")
+        if digest is not None and not re.fullmatch(r"[0-9a-fA-F]{64}", str(digest)):
+            raise MINiMLModelError("source document sha256 must contain 64 hexadecimal characters")
+        return cls(kind, name, data.get("uri"), None if digest is None else str(digest).lower())
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"kind": self.kind, "name": self.name}
+        _put(result, "uri", self.uri)
+        _put(result, "sha256", self.sha256)
+        return result
+
+
+@dataclass(frozen=True)
+class SourceInfo:
+    format: str
+    version: str | None = None
+    schema_location: str | None = None
+    documents: tuple[SourceDocument, ...] = ()
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "SourceInfo":
+        data = _mapping(value, "source")
+        known = {"format", "version", "schema_location", "documents"}
+        _reject_unknown(data, known, "source")
+        format_value = str(data.get("format", "")).strip()
+        if not format_value:
+            raise MINiMLModelError("source requires a nonblank format")
+        documents = _objects(data.get("documents"), SourceDocument.from_mapping, "source.documents")
+        names = [item.name for item in documents]
+        if len(names) != len(set(names)):
+            raise MINiMLModelError("source document names must be unique")
+        return cls(format_value, data.get("version"), data.get("schema_location"), documents)
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"format": self.format}
+        for key in ("version", "schema_location", "documents"):
+            _put(result, key, getattr(self, key))
+        return result
 
 
 @dataclass(frozen=True)
@@ -387,20 +585,40 @@ class Person:
 
 @dataclass(frozen=True)
 class Characteristics:
+    name: str
     value: str
-    tag: str | None = None
-    extras: Mapping[str, Any] = field(default_factory=dict)
+    term_source_ref: str | None = None
+    term_accession_number: str | None = None
+    unit: OntologyValue | None = None
+    annotations: tuple[HarmonizedAnnotation, ...] = ()
+    comments: tuple[NamedComment, ...] = ()
+    qualifier: str | None = None
 
     @classmethod
     def from_value(cls, value: Any) -> "Characteristics":
-        if isinstance(value, Mapping):
-            return cls(str(value.get("value", "")), value.get("tag"), _extras(value, {"value", "tag"}))
-        return cls(str(value))
+        named = NamedValue.from_mapping(value)
+        return cls(
+            named.name,
+            named.value,
+            named.term_source_ref,
+            named.term_accession_number,
+            named.unit,
+            named.annotations,
+            named.comments,
+            named.qualifier,
+        )
 
     def to_mapping(self) -> dict[str, Any]:
-        result = {"value": self.value}
-        _put(result, "tag", self.tag)
-        return _record(result, self.extras)
+        return NamedValue(
+            self.name,
+            self.value,
+            self.term_source_ref,
+            self.term_accession_number,
+            self.unit,
+            self.annotations,
+            self.comments,
+            self.qualifier,
+        ).to_mapping()
 
 
 @dataclass(frozen=True)
@@ -496,37 +714,39 @@ class DataTable:
 
 @dataclass(frozen=True)
 class Channel:
-    source: str | None = None
+    source: OntologyValue | None = None
     organisms: tuple[Organism, ...] = ()
     characteristics: tuple[Characteristics, ...] = ()
     biomaterial_providers: tuple[Any, ...] = ()
     treatment_protocol: str | None = None
     growth_protocol: str | None = None
-    molecule: str | None = None
+    molecule: OntologyValue | None = None
     extract_protocol: str | None = None
     label: str | None = None
     label_protocol: str | None = None
-    position: str | None = None
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Channel":
         data = _mapping(value, "channel")
-        known = {"source", "organism", "characteristics", "biomaterial_provider", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "position"}
+        known = {"source", "organism", "characteristics", "biomaterial_provider", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "extensions"}
+        _reject_unknown(data, known, "channel")
         return cls(
-            data.get("source"), tuple(Organism.from_value(item) for item in _items(data.get("organism"))),
+            None if data.get("source") is None else OntologyValue.from_value(data["source"]), tuple(Organism.from_value(item) for item in _items(data.get("organism"))),
             tuple(Characteristics.from_value(item) for item in _items(data.get("characteristics"))),
             tuple(_items(data.get("biomaterial_provider"))), data.get("treatment_protocol"),
-            data.get("growth_protocol"), data.get("molecule"), data.get("extract_protocol"),
-            data.get("label"), data.get("label_protocol"), data.get("position"), _extras(data, known),
+            data.get("growth_protocol"), None if data.get("molecule") is None else OntologyValue.from_value(data["molecule"]), data.get("extract_protocol"),
+            data.get("label"), data.get("label_protocol"), _FrozenJSONMapping(_mapping(data.get("extensions", {}), "channel.extensions")),
         )
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
         mapping = {"organisms": "organism", "biomaterial_providers": "biomaterial_provider"}
-        for key in ("source", "organisms", "characteristics", "biomaterial_providers", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "position"):
+        for key in ("source", "organisms", "characteristics", "biomaterial_providers", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol"):
             _put(result, mapping.get(key, key), getattr(self, key))
-        return _record(result, self.extras)
+        if self.extras:
+            result["extensions"] = _plain(self.extras)
+        return result
 
 
 @dataclass(frozen=True)
@@ -647,23 +867,26 @@ class Contributor:
     address: Address | str | None = None
     organization_ref: Reference | None = None
     web_link: str | None = None
-    position: str | None = None
+    roles: tuple[OntologyValue, ...] = ()
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Contributor":
         data = _mapping(value, "contributor")
-        known = {"iid", "person", "organization", "company", "email", "phone", "fax", "laboratory", "department", "address", "organization_ref", "web_link", "position"}
+        known = {"iid", "person", "organization", "company", "email", "phone", "fax", "laboratory", "department", "address", "organization_ref", "web_link", "roles", "extensions"}
+        _reject_unknown(data, known, "contributor")
         address = data.get("address")
         if isinstance(address, Mapping):
             address = Address.from_mapping(address)
-        return cls(data.get("iid"), None if data.get("person") is None else Person.from_mapping(data["person"]), data.get("organization"), data.get("company"), data.get("email"), data.get("phone"), data.get("fax"), data.get("laboratory"), data.get("department"), address, None if data.get("organization_ref") is None else Reference.from_mapping(data["organization_ref"]), data.get("web_link"), data.get("position"), _extras(data, known))
+        return cls(data.get("iid"), None if data.get("person") is None else Person.from_mapping(data["person"]), data.get("organization"), data.get("company"), data.get("email"), data.get("phone"), data.get("fax"), data.get("laboratory"), data.get("department"), address, None if data.get("organization_ref") is None else Reference.from_mapping(data["organization_ref"]), data.get("web_link"), tuple(OntologyValue.from_value(item) for item in _items(data.get("roles"))), _FrozenJSONMapping(_mapping(data.get("extensions", {}), "contributor.extensions")))
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
-        for key in ("iid", "person", "organization", "company", "email", "phone", "fax", "laboratory", "department", "address", "organization_ref", "web_link", "position"):
+        for key in ("iid", "person", "organization", "company", "email", "phone", "fax", "laboratory", "department", "address", "organization_ref", "web_link", "roles"):
             _put(result, key, getattr(self, key))
-        return _record(result, self.extras)
+        if self.extras:
+            result["extensions"] = _plain(self.extras)
+        return result
 
 
 @dataclass(frozen=True)
@@ -758,6 +981,181 @@ class Sample:
         return _record(result, self.extras)
 
 
+ASSAY_NODE_KINDS = {
+    "source", "sample", "extract", "labeled_extract", "hybridization", "assay",
+    "scan", "normalization", "array_data_file", "derived_array_data_file",
+    "array_data_matrix_file", "derived_array_data_matrix_file", "image_file",
+}
+
+
+@dataclass(frozen=True)
+class Protocol:
+    name: str
+    type: OntologyValue | None = None
+    description: str | None = None
+    parameters: tuple[str, ...] = ()
+    hardware: tuple[str, ...] = ()
+    software: tuple[str, ...] = ()
+    contacts: tuple[Reference, ...] = ()
+    performers: tuple[str, ...] = ()
+    comments: tuple[NamedComment, ...] = ()
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "Protocol":
+        data = _mapping(value, "protocol")
+        known = {
+            "name", "type", "description", "parameters", "hardware", "software",
+            "contacts", "performers", "comments",
+        }
+        _reject_unknown(data, known, "protocol")
+        name = str(data.get("name", "")).strip()
+        if not name:
+            raise MINiMLModelError("protocol requires a nonblank name")
+        return cls(
+            name,
+            None if data.get("type") is None else OntologyValue.from_value(data["type"]),
+            data.get("description"),
+            tuple(str(item) for item in _items(data.get("parameters"))),
+            tuple(str(item) for item in _items(data.get("hardware"))),
+            tuple(str(item) for item in _items(data.get("software"))),
+            _refs(data.get("contacts"), "protocol.contacts"),
+            tuple(str(item) for item in _items(data.get("performers"))),
+            _comments(data.get("comments")),
+        )
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"name": self.name}
+        for key in (
+            "type", "description", "parameters", "hardware", "software", "contacts",
+            "performers", "comments",
+        ):
+            _put(result, key, getattr(self, key))
+        return result
+
+
+@dataclass(frozen=True)
+class ProtocolApplication:
+    protocol_ref: str
+    parameter_values: tuple[NamedValue, ...] = ()
+    performer: str | None = None
+    date: str | None = None
+    comments: tuple[NamedComment, ...] = ()
+    kind: str = field(default="protocol_application", init=False)
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "ProtocolApplication":
+        data = _mapping(value, "protocol application")
+        known = {"kind", "protocol_ref", "parameter_values", "performer", "date", "comments"}
+        _reject_unknown(data, known, "protocol application")
+        reference = str(data.get("protocol_ref", "")).strip()
+        if not reference:
+            raise MINiMLModelError("protocol application requires protocol_ref")
+        return cls(
+            reference,
+            _objects(data.get("parameter_values"), NamedValue.from_mapping, "parameter_values"),
+            data.get("performer"),
+            data.get("date"),
+            _comments(data.get("comments")),
+        )
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"kind": self.kind, "protocol_ref": self.protocol_ref}
+        for key in ("parameter_values", "performer", "date", "comments"):
+            _put(result, key, getattr(self, key))
+        return result
+
+
+@dataclass(frozen=True)
+class AssayNode:
+    kind: str
+    name: str
+    sample_ref: str | None = None
+    characteristics: tuple[NamedValue, ...] = ()
+    factor_values: tuple[NamedValue, ...] = ()
+    provider: str | None = None
+    material_type: OntologyValue | None = None
+    description: str | None = None
+    label: OntologyValue | None = None
+    technology_type: OntologyValue | None = None
+    array_design_ref: Reference | None = None
+    link: SupplementLink | None = None
+    comments: tuple[NamedComment, ...] = ()
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "AssayNode":
+        data = _mapping(value, "assay node")
+        known = {
+            "kind", "name", "sample_ref", "characteristics", "factor_values",
+            "provider", "material_type", "description", "label", "technology_type",
+            "array_design_ref", "link", "comments",
+        }
+        _reject_unknown(data, known, "assay node")
+        kind = str(data.get("kind", "")).strip()
+        name = str(data.get("name", "")).strip()
+        if kind not in ASSAY_NODE_KINDS:
+            raise MINiMLModelError(f"unsupported assay node kind: {kind}")
+        if not name:
+            raise MINiMLModelError("assay node requires a nonblank name")
+        return cls(
+            kind,
+            name,
+            data.get("sample_ref"),
+            _objects(data.get("characteristics"), NamedValue.from_mapping, "assay node characteristics"),
+            _objects(data.get("factor_values"), NamedValue.from_mapping, "assay node factor_values"),
+            data.get("provider"),
+            None if data.get("material_type") is None else OntologyValue.from_value(data["material_type"]),
+            data.get("description"),
+            None if data.get("label") is None else OntologyValue.from_value(data["label"]),
+            None if data.get("technology_type") is None else OntologyValue.from_value(data["technology_type"]),
+            None if data.get("array_design_ref") is None else Reference.from_mapping(data["array_design_ref"]),
+            None if data.get("link") is None else SupplementLink.from_value(data["link"]),
+            _comments(data.get("comments")),
+        )
+
+    def to_mapping(self) -> dict[str, Any]:
+        result = {"kind": self.kind, "name": self.name}
+        for key in (
+            "sample_ref", "characteristics", "factor_values", "provider", "material_type",
+            "description", "label", "technology_type", "array_design_ref", "link", "comments",
+        ):
+            _put(result, key, getattr(self, key))
+        return result
+
+
+AssayStep = AssayNode | ProtocolApplication
+
+
+def _assay_step(value: Any) -> AssayStep:
+    data = _mapping(value, "assay step")
+    return (
+        ProtocolApplication.from_mapping(data)
+        if data.get("kind") == "protocol_application"
+        else AssayNode.from_mapping(data)
+    )
+
+
+@dataclass(frozen=True)
+class AssayPath:
+    steps: tuple[AssayStep, ...]
+    document: str | None = None
+    comments: tuple[NamedComment, ...] = ()
+
+    @classmethod
+    def from_mapping(cls, value: Any) -> "AssayPath":
+        data = _mapping(value, "assay path")
+        _reject_unknown(data, {"document", "steps", "comments"}, "assay path")
+        steps = tuple(_assay_step(item) for item in _items(data.get("steps")))
+        if not steps:
+            raise MINiMLModelError("assay path requires at least one step")
+        return cls(steps, data.get("document"), _comments(data.get("comments")))
+
+    def to_mapping(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"steps": [_plain(item) for item in self.steps]}
+        _put(result, "document", self.document)
+        _put(result, "comments", self.comments)
+        return result
+
+
 @dataclass(frozen=True)
 class Series:
     iid: str | None = None
@@ -781,21 +1179,68 @@ class Series:
     relations: tuple[Relation, ...] = ()
     data_tables: tuple[DataTable, ...] = ()
     pubmed_publications: tuple[PubMedPublication, ...] = ()
+    experiment_date: str | None = None
+    protocols: tuple[Protocol, ...] = ()
+    assay_paths: tuple[AssayPath, ...] = ()
+    quality_controls: tuple[OntologyValue, ...] = ()
+    replicate_types: tuple[OntologyValue, ...] = ()
+    normalization_types: tuple[OntologyValue, ...] = ()
+    comments: tuple[NamedComment, ...] = ()
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Series":
         data = _mapping(value, "series")
-        known = {"iid", "accession", "status", "title", "pubmed_id", "citation", "web_link", "summary", "overall_design", "type", "contributor_ref", "contributor", "contact_ref", "contact", "sample_ref", "variable", "repeats", "supplementary_data", "relation", "data_table", "pubmed_publication"}
-        return cls(data.get("iid"), _accessions(data.get("accession")), _statuses(data.get("status")), data.get("title"), tuple(_items(data.get("pubmed_id"))), tuple(_items(data.get("citation"))), tuple(_items(data.get("web_link"))), data.get("summary"), data.get("overall_design"), tuple(_items(data.get("type"))), _refs(data.get("contributor_ref"), "series.contributor_ref"), _objects(data.get("contributor"), Contributor.from_mapping, "series.contributor"), _refs(data.get("contact_ref"), "series.contact_ref"), _objects(data.get("contact"), Contributor.from_mapping, "series.contact"), _refs(data.get("sample_ref"), "series.sample_ref"), _objects(data.get("variable"), Variable.from_mapping, "series.variable"), _objects(data.get("repeats"), Repeat.from_mapping, "series.repeats"), _links(data.get("supplementary_data")), _relations(data.get("relation")), _objects(data.get("data_table"), DataTable.from_mapping, "series.data_table"), _objects(data.get("pubmed_publication"), PubMedPublication.from_mapping, "series.pubmed_publication"), _extras(data, known))
+        known = {
+            "iid", "accession", "status", "title", "pubmed_id", "citation", "web_link",
+            "summary", "overall_design", "type", "contributor_ref", "contributor",
+            "contact_ref", "contact", "sample_ref", "variable", "repeats",
+            "supplementary_data", "relation", "data_table", "pubmed_publication",
+            "experiment_date", "protocols", "assay_paths", "quality_controls",
+            "replicate_types", "normalization_types", "comments", "extensions",
+        }
+        _reject_unknown(data, known, "series")
+        return cls(
+            iid=data.get("iid"),
+            accessions=_accessions(data.get("accession")),
+            statuses=_statuses(data.get("status")),
+            title=data.get("title"),
+            pubmed_ids=tuple(_items(data.get("pubmed_id"))),
+            citations=tuple(_items(data.get("citation"))),
+            web_links=tuple(_items(data.get("web_link"))),
+            summary=data.get("summary"),
+            overall_design=data.get("overall_design"),
+            types=tuple(OntologyValue.from_value(item) for item in _items(data.get("type"))),
+            contributor_ref=_refs(data.get("contributor_ref"), "series.contributor_ref"),
+            contributors=_objects(data.get("contributor"), Contributor.from_mapping, "series.contributor"),
+            contact_ref=_refs(data.get("contact_ref"), "series.contact_ref"),
+            contacts=_objects(data.get("contact"), Contributor.from_mapping, "series.contact"),
+            sample_ref=_refs(data.get("sample_ref"), "series.sample_ref"),
+            variables=_objects(data.get("variable"), Variable.from_mapping, "series.variable"),
+            repeats=_objects(data.get("repeats"), Repeat.from_mapping, "series.repeats"),
+            supplementary_data=_links(data.get("supplementary_data")),
+            relations=_relations(data.get("relation")),
+            data_tables=_objects(data.get("data_table"), DataTable.from_mapping, "series.data_table"),
+            pubmed_publications=_objects(data.get("pubmed_publication"), PubMedPublication.from_mapping, "series.pubmed_publication"),
+            experiment_date=data.get("experiment_date"),
+            protocols=_objects(data.get("protocols"), Protocol.from_mapping, "series.protocols"),
+            assay_paths=_objects(data.get("assay_paths"), AssayPath.from_mapping, "series.assay_paths"),
+            quality_controls=tuple(OntologyValue.from_value(item) for item in _items(data.get("quality_controls"))),
+            replicate_types=tuple(OntologyValue.from_value(item) for item in _items(data.get("replicate_types"))),
+            normalization_types=tuple(OntologyValue.from_value(item) for item in _items(data.get("normalization_types"))),
+            comments=_comments(data.get("comments")),
+            extras=_FrozenJSONMapping(_mapping(data.get("extensions", {}), "series.extensions")),
+        )
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
         keys = {"accessions": "accession", "statuses": "status", "pubmed_ids": "pubmed_id", "citations": "citation", "web_links": "web_link", "types": "type", "contributors": "contributor", "contacts": "contact", "variables": "variable", "relations": "relation", "data_tables": "data_table"}
         keys["pubmed_publications"] = "pubmed_publication"
-        for key in ("iid", "accessions", "statuses", "title", "pubmed_ids", "citations", "web_links", "summary", "overall_design", "types", "contributor_ref", "contributors", "contact_ref", "contacts", "sample_ref", "variables", "repeats", "supplementary_data", "relations", "data_tables", "pubmed_publications"):
+        for key in ("iid", "accessions", "statuses", "title", "pubmed_ids", "citations", "web_links", "summary", "overall_design", "types", "contributor_ref", "contributors", "contact_ref", "contacts", "sample_ref", "variables", "repeats", "supplementary_data", "relations", "data_tables", "pubmed_publications", "experiment_date", "protocols", "assay_paths", "quality_controls", "replicate_types", "normalization_types", "comments"):
             _put(result, keys.get(key, key), getattr(self, key))
-        return _record(result, self.extras)
+        if self.extras:
+            result["extensions"] = _plain(self.extras)
+        return result
 
 
 TECHNOLOGIES = {"high-throughput sequencing", "in situ oligonucleotide", "spotted oligonucleotide", "mixed spotted oligonucleotide", "spotted DNA/cDNA", "spotted peptide or protein", "antibody", "tissue", "oligonucleotide beads", "MS", "SAGE NlaIII", "SAGE Sau3A", "SAGE RsaI", "SARST", "MPSS", "RT-PCR", "other"}
@@ -807,15 +1252,13 @@ VARIABLE_FACTORS = {"dose", "time", "tissue", "strain", "gender", "cell line", "
 @dataclass(frozen=True)
 class MINiMLPackage(Mapping[str, Any]):
     series: Series
+    source: SourceInfo
     databases: tuple[Database, ...] = ()
     organizations: tuple[Organization, ...] = ()
     contributors: tuple[Contributor, ...] = ()
     platforms: tuple[Platform, ...] = ()
     samples: tuple[Sample, ...] = ()
-    version: str | None = None
-    schema_location: str | None = None
-    mage_tab: Mapping[str, Any] | None = None
-    extras: Mapping[str, Any] = field(default_factory=dict)
+    extensions: Mapping[str, Any] = field(default_factory=dict)
     miniml_schema_version: str = MINIML_SCHEMA_VERSION
 
     def __getitem__(self, key: str) -> Any:
@@ -831,22 +1274,27 @@ class MINiMLPackage(Mapping[str, Any]):
     def from_mapping(cls, value: Mapping[str, Any]) -> "MINiMLPackage":
         data = _mapping(value, "MINiML package")
         version = data.get("miniml_schema_version")
-        if version is not None and version != MINIML_SCHEMA_VERSION:
-            raise MINiMLModelError(f"unsupported MINiML schema version: {version!r}")
+        if version != MINIML_SCHEMA_VERSION:
+            raise MINiMLModelError(
+                "runtime decoding requires MSC MINiML schema version '2.0'"
+            )
+        known = {
+            "miniml_schema_version", "source", "database", "organization",
+            "contributor", "platform", "sample", "series", "extensions",
+        }
+        _reject_unknown(data, known, "MINiML package")
         series = Series.from_mapping(data.get("series"))
         if not (isinstance(series.iid, str) and series.iid.strip()) and not any(item.value.strip() for item in series.accessions):
             raise MINiMLModelError("series requires iid or accession")
         package = cls(
             series=series,
+            source=SourceInfo.from_mapping(data.get("source")),
             databases=_objects(data.get("database"), Database.from_mapping, "database"),
             organizations=_objects(data.get("organization"), Organization.from_mapping, "organization"),
             contributors=_objects(data.get("contributor"), Contributor.from_mapping, "contributor"),
             platforms=_objects(data.get("platform"), Platform.from_mapping, "platform"),
             samples=_objects(data.get("sample"), Sample.from_mapping, "sample"),
-            version=None if data.get("version") is None else str(data["version"]),
-            schema_location=data.get("schema_location"),
-            mage_tab=None if data.get("mage_tab") is None else _FrozenJSONMapping(_mapping(data["mage_tab"], "mage_tab")),
-            extras=_extras(data, {"miniml_schema_version", "version", "schema_location", "database", "organization", "contributor", "platform", "sample", "series", "mage_tab"}),
+            extensions=_FrozenJSONMapping(_mapping(data.get("extensions", {}), "extensions")),
         )
         package._raise_structural_errors()
         return package
@@ -859,6 +1307,7 @@ class MINiMLPackage(Mapping[str, Any]):
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {
             "miniml_schema_version": self.miniml_schema_version,
+            "source": self.source.to_mapping(),
             "database": [_plain(item) for item in self.databases],
             "organization": [_plain(item) for item in self.organizations],
             "contributor": [_plain(item) for item in self.contributors],
@@ -866,10 +1315,9 @@ class MINiMLPackage(Mapping[str, Any]):
             "sample": [_plain(item) for item in self.samples],
             "series": self.series.to_mapping(),
         }
-        _put(result, "version", self.version)
-        _put(result, "schema_location", self.schema_location)
-        _put(result, "mage_tab", self.mage_tab)
-        return _record(result, self.extras)
+        if self.extensions:
+            result["extensions"] = _plain(self.extensions)
+        return result
 
     def dump(self, path: str | Path) -> None:
         destination = Path(path)
@@ -950,6 +1398,31 @@ class MINiMLPackage(Mapping[str, Any]):
         for index, variable in enumerate(self.series.variables):
             if variable.factor and variable.factor not in VARIABLE_FACTORS:
                 warn(f"/series/variable/{index}/factor", "xsd_enumeration", f"{variable.factor!r} is outside the MINiML 0.5.4 vocabulary")
+        protocol_names = [item.name for item in self.series.protocols]
+        if len(protocol_names) != len(set(protocol_names)):
+            duplicate = next(name for name in protocol_names if protocol_names.count(name) > 1)
+            raise MINiMLModelError(f"duplicate protocol name: {duplicate}")
+        known_protocols = set(protocol_names)
+        known_documents = {item.name for item in self.source.documents if item.kind.casefold() == "sdrf"}
+        shared_nodes: dict[tuple[str, str, str], dict[str, Any]] = {}
+        for path in self.series.assay_paths:
+            if path.document and known_documents and path.document not in known_documents:
+                raise MINiMLModelError(f"unknown assay path document: {path.document}")
+            for step in path.steps:
+                if isinstance(step, ProtocolApplication):
+                    if step.protocol_ref not in known_protocols:
+                        raise MINiMLModelError(f"unknown protocol reference: {step.protocol_ref}")
+                    continue
+                if step.sample_ref and step.sample_ref not in sample_ids:
+                    raise MINiMLModelError(f"unknown assay node sample reference: {step.sample_ref}")
+                key = (path.document or "", step.kind, step.name)
+                rendered = step.to_mapping()
+                previous = shared_nodes.get(key)
+                if previous is not None and previous != rendered:
+                    raise MINiMLModelError(
+                        f"conflicting shared assay node: {step.kind} {step.name}"
+                    )
+                shared_nodes[key] = rendered
         self._validate_links(self.series.supplementary_data, "/series", warn)
         return tuple(issues)
 
