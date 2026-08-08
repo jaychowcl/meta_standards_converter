@@ -1,0 +1,109 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+from __future__ import annotations
+
+from dataclasses import FrozenInstanceError
+
+import pytest
+
+from meta_standards_converter.miniml import (
+    FASTQFile,
+    MINiMLBatchDecodeResult,
+    MINiMLCodec,
+    MINiMLCompatibilityError,
+    MINiMLDecodeResult,
+    MINiMLPackage,
+    PubMedPublication,
+    SRARun,
+)
+
+
+def package_payload() -> dict:
+    return {
+        "series": {
+            "iid": "GSE1",
+            "pubmed_publication": [
+                {
+                    "pubmed_id": "123",
+                    "doi": "10.1/example",
+                    "title": "Study",
+                }
+            ],
+            "sample_ref": [{"ref": "GSM1"}],
+        },
+        "sample": [
+            {
+                "iid": "GSM1",
+                "sra_accession": ["SRX1"],
+                "ena_accession": ["ERP1"],
+                "sra_run": [
+                    {
+                        "run": "SRR1",
+                        "study": "ERP1",
+                        "fastq_files": [
+                            {
+                                "filename": "reads.fastq.gz",
+                                "uri": "https://example/reads.fastq.gz",
+                                "md5": "0123456789abcdef0123456789abcdef",
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def test_codec_decodes_typed_enrichment_and_canonicalizes_legacy_input() -> None:
+    result = MINiMLCodec().decode(package_payload())
+
+    assert isinstance(result, MINiMLDecodeResult)
+    assert isinstance(result.package, MINiMLPackage)
+    assert isinstance(result.package.series.pubmed_publications[0], PubMedPublication)
+    assert isinstance(result.package.samples[0].sra_runs[0], SRARun)
+    assert isinstance(result.package.samples[0].sra_runs[0].fastq_files[0], FASTQFile)
+    assert MINiMLCodec().encode(result.package)["miniml_schema_version"] == "1.0"
+
+
+def test_codec_returns_warnings_and_strict_mode_promotes_them() -> None:
+    payload = package_payload()
+    payload["series"]["sample_ref"].append({"ref": "GSM404"})
+
+    compatible = MINiMLCodec().decode(payload)
+
+    assert [issue.code for issue in compatible.diagnostics] == ["unresolved_reference"]
+    with pytest.raises(MINiMLCompatibilityError, match="unresolved_reference"):
+        MINiMLCodec().decode(payload, strict=True)
+
+
+def test_codec_decodes_one_or_many_packages() -> None:
+    single = MINiMLCodec().decode_many(package_payload())
+    multiple = MINiMLCodec().decode_many([package_payload(), package_payload()])
+
+    assert isinstance(single, MINiMLBatchDecodeResult)
+    assert len(single.packages) == 1
+    assert len(multiple.packages) == 2
+
+
+def test_typed_package_is_immutable_and_preserves_open_harmonization_fields() -> None:
+    payload = package_payload()
+    payload["sample"][0]["channel"] = [
+        {
+            "source": "lung",
+            "pre_hz_label": "Homo sapiens",
+            "hz_species_name": "homo_sapiens",
+        }
+    ]
+    package = MINiMLCodec().decode(payload).package
+
+    assert package.samples[0].channels[0].extras["pre_hz_label"] == "Homo sapiens"
+    assert package.samples[0].channels[0].extras["hz_species_name"] == "homo_sapiens"
+    with pytest.raises(FrozenInstanceError):
+        package.version = "changed"  # type: ignore[misc]
+

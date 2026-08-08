@@ -37,8 +37,9 @@ class TestGEOParser(unittest.TestCase):
             )
         )[0]
 
-        self.assertEqual("1.0", package["miniml_schema_version"])
-        self.assertEqual(package, MINiMLPackage.from_mapping(package).to_mapping())
+        self.assertIsInstance(package, MINiMLPackage)
+        self.assertEqual("1.0", package.miniml_schema_version)
+        self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))
 
     def test_single_series_resolves_relevant_records(self):
         xml = miniml_body(

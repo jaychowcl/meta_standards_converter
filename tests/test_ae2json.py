@@ -571,8 +571,9 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
 
-        self.assertEqual("1.0", package["miniml_schema_version"])
-        self.assertEqual(package, MINiMLPackage.from_mapping(package).to_mapping())
+        self.assertIsInstance(package, MINiMLPackage)
+        self.assertEqual("1.0", package.miniml_schema_version)
+        self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))
 
     def test_series_iid_prefers_explicit_arrayexpress_accession(self):
         idf = IDF.replace(
