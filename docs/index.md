@@ -145,6 +145,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: MINiML, MAGE-TAB, mage_tab.model, mage_tab.roundtrip, hz_value, hz_unit, protocols, assay paths, typed attributes, compatibility
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
+- id: miniml-package-model
+  title: MINiML package model 1.0
+  anchor: miniml-package-model
+  purpose: Defines the XSD-derived JSON Schema and Python model that own the unified internal metadata representation.
+  keywords: MINiML, JSON Schema, MINiMLPackage, miniml_schema_version, XSD, compatibility, validation, diagnostics, mage_tab
+  link: [Open section](codebase.md#miniml-package-model)
+
 ## Workflow routes
 
 - id: workflow-geo2ae

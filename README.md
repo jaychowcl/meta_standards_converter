@@ -140,6 +140,14 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 
 GEO JSON packages contain Series metadata plus the referenced samples, platforms, contributors, organizations, and databases. MAGE-TAB-origin JSON uses the same public package shape and adds validated `mage_tab.model` schema version 1, warnings, unmapped data, and lossless round-trip metadata. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, normalized sample values in `uns["msc_metadata"]`, flattened MINiML metadata in `uns["msc_miniml"]`, typed assay occurrences in `uns["msc_mage_tab"]`, and conversion provenance.
 
+Every newly parsed package carries `miniml_schema_version: "1.0"`. MSC owns
+this XSD-derived internal representation through the public
+`meta_standards_converter.miniml.MINiMLPackage` model and a bundled Draft
+2020-12 JSON Schema. Legacy unversioned packages remain readable, unknown and
+source-specific extensions are preserved, and XSD compatibility deviations
+are available as structured diagnostics. See the
+[MINiML package model contract](docs/codebase.md#miniml-package-model).
+
 **Enriched core:** `mage_tab.model` schema version 1 exposes editable protocols,
 assay paths, typed attributes, declarations, properties, and document
 boundaries. Harmonized values and units are additive `hz_*` annotations;

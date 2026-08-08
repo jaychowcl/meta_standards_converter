@@ -1249,11 +1249,15 @@ See [`rootless-acceptance-2026-07-31.md`](rootless-acceptance-2026-07-31.md).
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape
 
-`GEOParser.parse()` returns `list[dict]`, with one self-contained package per top-level MINiML `Series`.
+`GEOParser.parse()` returns `list[dict]`, with one canonical, self-contained
+package per top-level MINiML `Series`. `AEParser.parse()` returns the same
+canonical representation. Both parsers route their result through
+`MINiMLPackage` before exposing dictionaries.
 
 ```python
 [
     {
+        "miniml_schema_version": "1.0",
         "version": str | None,
         "database": list[dict],
         "organization": list[dict],
@@ -1266,6 +1270,9 @@ See [`rootless-acceptance-2026-07-31.md`](rootless-acceptance-2026-07-31.md).
 ```
 
 `AEParser.parse()` uses the same core package vocabulary but identifies its source dialect with `version = "magetabv1.1"` and the BioStudies MAGE-TAB specification URL in `schema_location`. Its `series.iid` is the explicit ArrayExpress accession, then an ArrayExpress-form investigation accession, then another ArrayExpress-classified accession, with the investigation accession as fallback. GEO secondary accessions remain in `series.accession` and do not displace an available ArrayExpress IID.
+
+`miniml_schema_version` versions MSC's JSON representation. It is independent
+of `version`, which records the source MINiML or MAGE-TAB dialect.
 
 Top-level package keys are singular. Parser keys inside each parsed XML element are original XML names converted to snake_case. Repeated XML elements also keep the singular snake_case key and point to a list.
 
@@ -1307,6 +1314,44 @@ parses as:
 - `sample.*.sra_accession`: SRA/ENA/DDBJ accessions extracted from SRA sample relations.
 - `sample.*.ena_accession`: deduplicated study/project accessions such as `ERP137216` collected from SRA run enrichment.
 - `sample.*.sra_run`: run dicts returned by `INSDCWebfetcher.fetch_sra_runs()`, including study accession, library metadata, run/sample IDs, read lengths, instrument model, and per-FASTQ `filename`/`uri`/`md5`.
+
+<a id="miniml-package-model"></a>
+## MINiML package model 1.0
+
+MSC owns the unified metadata representation in
+`meta_standards_converter.miniml`. The dependency-free Python model and its
+Draft 2020-12 JSON Schema are derived from the repository's MINiML XSD. They
+cover the package entities (`Database`, `Organization`, `Contributor`,
+`Platform`, `Sample`, and `Series`) and reusable accession, reference, status,
+person, channel, table/data, variable, repeat, organism, relation, and link
+structures. Source-specific extensions such as `mage_tab` and unknown fields
+are preserved.
+
+The stable wire discriminator is `miniml_schema_version: "1.0"`. Legacy
+unversioned packages remain accepted and normalize to version 1.0. Canonical
+collections are always lists, while `series` remains a single object.
+`MINiMLPackage.from_mapping()` and `load()` validate structure and identity;
+`to_mapping()` and `dump()` produce deterministic mappings and JSON. Duplicate
+top-level internal identifiers and malformed entity shapes raise
+`MINiMLModelError`.
+
+`MINiMLPackage.validate()` is compatibility-first. XSD vocabulary deviations,
+checksum formats, unresolved references, and channel-count mismatches are
+reported as structured `MINiMLValidationIssue` diagnostics instead of rejecting
+historically accepted data. This preserves generic GEO parser output while
+making XSD constraints visible to callers. Consumers that need strict wire
+validation can load `miniml_schema_path()` with a JSON Schema validator.
+
+Public symbols are exported from `meta_standards_converter.miniml`. The schema
+ships as package data at
+`miniml/miniml-package-v1.schema.json`. Contract coverage lives in
+`tests/test_miniml_model.py`, `tests/test_geo_parser.py`, and
+`tests/test_ae2json.py`.
+
+**Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
+[`miniml-package-v1.schema.json`](../src/meta_standards_converter/miniml/miniml-package-v1.schema.json),
+[`geo_parser.py`](../src/meta_standards_converter/geo_handlers/geo_parser.py),
+and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
 
 <a id="workflow-details"></a>
 ## Workflow Details
