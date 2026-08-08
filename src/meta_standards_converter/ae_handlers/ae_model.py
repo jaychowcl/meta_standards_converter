@@ -259,6 +259,154 @@ def render_model(model: dict) -> list | None:
     return rows
 
 
+def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
+    """Render ordered MSC MINiML semantics over constructor-generated IDF/SDRF rows."""
+    rows = copy.deepcopy(core_rows)
+    series = package.get("series") if isinstance(package, dict) else None
+    if not isinstance(series, dict):
+        return rows
+    _replace_row(rows, "Investigation Accession", [series.get("iid")])
+    protocols = [item for item in series.get("protocols", []) if isinstance(item, dict)]
+    if protocols:
+        fields = (
+            ("Protocol Name", lambda item: item.get("name")),
+            ("Protocol Type", lambda item: _ontology_text(item.get("type"))),
+            ("Protocol Type Term Source REF", lambda item: _ontology_field(item.get("type"), "term_source_ref")),
+            ("Protocol Type Term Accession Number", lambda item: _ontology_field(item.get("type"), "term_accession_number")),
+            ("Protocol Description", lambda item: item.get("description")),
+            ("Protocol Hardware", lambda item: " | ".join(str(value) for value in item.get("hardware", []))),
+            ("Protocol Software", lambda item: " | ".join(str(value) for value in item.get("software", []))),
+            ("Protocol Parameters", lambda item: " | ".join(str(value) for value in item.get("parameters", []))),
+            ("Protocol Performer", lambda item: " | ".join(str(value) for value in item.get("performers", []))),
+        )
+        for label, accessor in fields:
+            _replace_row(rows, label, [accessor(item) or "" for item in protocols])
+    for field, labels in (
+        ("quality_controls", DECLARATION_FIELDS["quality_control"]),
+        ("replicate_types", DECLARATION_FIELDS["replicate"]),
+        ("normalization_types", DECLARATION_FIELDS["normalization"]),
+    ):
+        values = [item for item in series.get(field, []) if isinstance(item, dict)]
+        if values:
+            _replace_row(rows, labels[0], [_ontology_text(item) for item in values])
+            _replace_row(rows, labels[1], [_ontology_field(item, "term_source_ref") for item in values])
+            _replace_row(rows, labels[2], [_ontology_field(item, "term_accession_number") for item in values])
+    assay_table = _render_miniml_assay_paths(series.get("assay_paths"))
+    if assay_table:
+        _replace_row(rows, "SDRF File", [assay_table])
+    return rows
+
+
+def _replace_row(rows: list, label: str, values: list) -> None:
+    normalized = _normalized(label)
+    for index, row in enumerate(rows):
+        if row and _normalized(row[0]) == normalized:
+            rows[index] = [label, *values]
+            return
+    rows.append([label, *values])
+
+
+def _ontology_text(value):
+    return value.get("value", "") if isinstance(value, dict) else (value or "")
+
+
+def _ontology_field(value, field):
+    return value.get(field, "") if isinstance(value, dict) else ""
+
+
+def _render_miniml_assay_paths(paths) -> list | None:
+    path_columns = []
+    union = []
+    for path in paths if isinstance(paths, list) else []:
+        if not isinstance(path, dict):
+            continue
+        columns = _miniml_path_columns(path.get("steps"))
+        seen = {}
+        identified = []
+        for header, value in columns:
+            seen[header] = seen.get(header, 0) + 1
+            key = (header, seen[header])
+            identified.append((key, value))
+            if key not in union:
+                union.append(key)
+        path_columns.append(dict(identified))
+    if not path_columns:
+        return None
+    return [
+        [header for header, _occurrence in union],
+        *[[values.get(key, "") for key in union] for values in path_columns],
+    ]
+
+
+def _miniml_path_columns(steps) -> list[tuple[str, object]]:
+    result = []
+    headers = {
+        "source": "Source Name", "sample": "Sample Name", "extract": "Extract Name",
+        "labeled_extract": "Labeled Extract Name", "hybridization": "Hybridization Name",
+        "assay": "Assay Name", "scan": "Scan Name", "normalization": "Normalization Name",
+        "array_data_file": "Array Data File", "array_data_matrix_file": "Array Data Matrix File",
+        "derived_array_data_file": "Derived Array Data File",
+        "derived_array_data_matrix_file": "Derived Array Data Matrix File", "image_file": "Image File",
+    }
+    for step in steps if isinstance(steps, list) else []:
+        if not isinstance(step, dict):
+            continue
+        if step.get("kind") == "protocol_application":
+            result.append(("Protocol REF", step.get("protocol_ref", "")))
+            for value in step.get("parameter_values", []) or []:
+                result.extend(_named_value_columns("Parameter Value", value))
+            for comment in step.get("comments", []) or []:
+                result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
+            continue
+        header = headers.get(step.get("kind"))
+        if not header:
+            continue
+        result.append((header, step.get("name", "")))
+        for value in step.get("characteristics", []) or []:
+            result.extend(_named_value_columns("Characteristics", value))
+        for value in step.get("factor_values", []) or []:
+            result.extend(_named_value_columns("Factor Value", value))
+        for field, field_header in (
+            ("provider", "Provider"), ("material_type", "Material Type"),
+            ("description", "Description"), ("label", "Label"),
+            ("technology_type", "Technology Type"),
+        ):
+            if step.get(field) not in (None, ""):
+                result.extend(_ontology_columns(field_header, step[field]))
+        reference = step.get("array_design_ref")
+        if isinstance(reference, dict) and reference.get("ref"):
+            result.append(("Array Design REF", reference["ref"]))
+        for comment in step.get("comments", []) or []:
+            result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
+    return result
+
+
+def _named_value_columns(prefix: str, value) -> list[tuple[str, object]]:
+    if not isinstance(value, dict):
+        return []
+    result = [(f"{prefix}[{value.get('name', '')}]", value.get("value", ""))]
+    if value.get("term_source_ref"):
+        result.append(("Term Source REF", value["term_source_ref"]))
+    if value.get("term_accession_number"):
+        result.append(("Term Accession Number", value["term_accession_number"]))
+    if value.get("unit") is not None:
+        result.extend(_ontology_columns("Unit", value["unit"]))
+    for comment in value.get("comments", []) or []:
+        result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
+    return result
+
+
+def _ontology_columns(header: str, value) -> list[tuple[str, object]]:
+    result = [(header, _ontology_text(value))]
+    source = _ontology_field(value, "term_source_ref")
+    accession = _ontology_field(value, "term_accession_number")
+    if source:
+        result.append(("Term Source REF", source))
+    if accession:
+        result.append(("Term Accession Number", accession))
+    return result
+
+
 def overlay_core(model_rows: list, core_rows: list) -> list:
     """Union MINiML projections into model tables while preserving model structure."""
     result = copy.deepcopy(model_rows)

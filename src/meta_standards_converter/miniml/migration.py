@@ -66,6 +66,13 @@ class MINiMLV1Migrator:
         if not isinstance(mage_tab, Mapping):
             return []
         names: list[tuple[str, str]] = []
+        source = mage_tab.get("source")
+        if isinstance(source, Mapping):
+            if source.get("idf"):
+                names.append(("idf", str(source["idf"])))
+            for name in source.get("sdrf", []) or []:
+                if name:
+                    names.append(("sdrf", str(name)))
         model = mage_tab.get("model")
         if isinstance(model, Mapping):
             for item in model.get("sdrfs", []) or []:
@@ -176,7 +183,7 @@ class MINiMLV1Migrator:
             if not isinstance(step, Mapping):
                 continue
             kind = step.get("kind")
-            if kind == "protocol":
+            if kind in {"protocol", "protocol_ref"}:
                 current_application = {
                     "kind": "protocol_application",
                     "protocol_ref": str(step.get("value") or step.get("protocol_ref") or ""),
@@ -191,6 +198,15 @@ class MINiMLV1Migrator:
                     destination = "factor_values" if step.get("attribute_type") == "factor value" else "characteristics"
                     result[-1].setdefault(destination, []).append(attribute)
                 continue
+            if kind == "comment" and result and result[-1].get("kind") != "protocol_application":
+                result[-1].setdefault("comments", []).append({
+                    "name": str(step.get("name") or step.get("header") or "comment"),
+                    "value": str(step.get("value", "")),
+                })
+                continue
+            if kind == "field" and result and result[-1].get("kind") != "protocol_application":
+                cls._attach_node_field(result[-1], step)
+                continue
             if kind in {"node", "file"}:
                 label = str(step.get("name") or step.get("header") or "").strip().casefold()
                 node_kind = header_kinds.get(label)
@@ -201,6 +217,35 @@ class MINiMLV1Migrator:
                     result.append(node)
                     current_application = None
         return result
+
+    @classmethod
+    def _attach_node_field(cls, node: dict[str, Any], item: Mapping[str, Any]) -> None:
+        header = str(item.get("header") or item.get("name") or "").strip().casefold()
+        value = str(item.get("value", ""))
+        ontology = cls._ontology_value(value)
+        if item.get("term_source_ref"):
+            ontology["term_source_ref"] = item["term_source_ref"]
+        if item.get("term_accession_number"):
+            ontology["term_accession_number"] = item["term_accession_number"]
+        destinations = {
+            "provider": "provider",
+            "description": "description",
+            "material type": "material_type",
+            "label": "label",
+            "technology type": "technology_type",
+        }
+        destination = destinations.get(header)
+        if destination in {"material_type", "label", "technology_type"}:
+            node[destination] = ontology
+        elif destination:
+            node[destination] = value
+        elif header == "array design ref":
+            node["array_design_ref"] = {"ref": value}
+        else:
+            node.setdefault("comments", []).append({
+                "name": str(item.get("header") or item.get("name") or "field"),
+                "value": value,
+            })
 
     @classmethod
     def _legacy_attribute(cls, item: Mapping[str, Any]) -> dict[str, Any]:

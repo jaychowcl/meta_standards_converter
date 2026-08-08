@@ -159,14 +159,14 @@
       "required": ["name"],
       "properties": {
         "name": {"type": "string", "minLength": 1},
-        "types": {"type": "array", "items": {"$ref": "#/$defs/ontologyValue"}},
-        "descriptions": {"type": "array", "items": {"type": "string"}},
-        "parameters": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
+        "type": {"$ref": "#/$defs/ontologyValue"},
+        "description": {"type": "string"},
+        "parameters": {"type": "array", "items": {"type": "string"}},
         "hardware": {"type": "array", "items": {"type": "string"}},
         "software": {"type": "array", "items": {"type": "string"}},
-        "contacts": {"type": "array", "items": {"type": "string"}},
-        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}},
-        "extensions": {"$ref": "#/$defs/extensions"}
+        "contacts": {"type": "array", "items": {"$ref": "#/$defs/openRecord"}},
+        "performers": {"type": "array", "items": {"type": "string"}},
+        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}}
       },
       "additionalProperties": false
     },
@@ -176,9 +176,11 @@
       "properties": {
         "kind": {"const": "protocol_application"},
         "protocol_ref": {"type": "string", "minLength": 1},
-        "parameters": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
+        "parameter_values": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
+        "performer": {"type": "string"},
+        "date": {"type": "string"},
         "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}},
-        "extensions": {"$ref": "#/$defs/extensions"}
+        "extensions": false
       },
       "additionalProperties": false
     },
@@ -188,9 +190,18 @@
       "properties": {
         "kind": {"enum": ["source", "sample", "extract", "labeled_extract", "hybridization", "assay", "scan", "normalization", "raw_data_file", "derived_data_file", "array_data_file", "image_file", "processed_data_file"]},
         "name": {"type": "string", "minLength": 1},
-        "attributes": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
+        "sample_ref": {"type": "string"},
+        "characteristics": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
+        "factor_values": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
+        "provider": {"type": "string"},
+        "material_type": {"$ref": "#/$defs/ontologyValue"},
+        "description": {"type": "string"},
+        "label": {"$ref": "#/$defs/ontologyValue"},
+        "technology_type": {"$ref": "#/$defs/ontologyValue"},
+        "array_design_ref": {"$ref": "#/$defs/openRecord"},
+        "link": {},
         "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}},
-        "extensions": {"$ref": "#/$defs/extensions"}
+        "extensions": false
       },
       "additionalProperties": false
     },
@@ -200,8 +211,7 @@
       "properties": {
         "document": {"type": "string"},
         "steps": {"type": "array", "items": {"oneOf": [{"$ref": "#/$defs/assayNode"}, {"$ref": "#/$defs/protocolApplication"}]}},
-        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}},
-        "extensions": {"$ref": "#/$defs/extensions"}
+        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}}
       },
       "additionalProperties": false
     },

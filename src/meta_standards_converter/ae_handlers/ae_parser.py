@@ -18,9 +18,8 @@ import re
 from urllib.parse import urlparse
 
 from meta_standards_converter.ae_handlers.ae_model import build_model, validate_model
-from meta_standards_converter.ae_handlers.ae_roundtrip import build_roundtrip
 from meta_standards_converter.ae_handlers.ae_webfetcher import MAGETabInput
-from meta_standards_converter.miniml import MINiMLPackage
+from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator
 
 
 logger = logging.getLogger(__name__)
@@ -167,14 +166,7 @@ class AEParser:
         package["mage_tab"]["model"] = validate_model(
             build_model(idf_rows=idf_rows, sdrfs=source_sdrfs)
         )
-        modeled_package = MINiMLPackage.from_mapping(package)
-        package = modeled_package.to_mapping()
-        package["mage_tab"]["roundtrip"] = build_roundtrip(
-            package=package,
-            idf_rows=idf_rows,
-            sdrfs=source_sdrfs,
-        )
-        return MINiMLPackage.from_mapping(package)
+        return MINiMLV1Migrator().migrate(package).package
 
     def _table(self, text: str, name: str, rectangular: bool) -> list[list[str]]:
         rows = [row for row in csv.reader(io.StringIO(text), delimiter="\t") if row]

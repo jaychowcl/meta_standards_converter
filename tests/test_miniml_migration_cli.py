@@ -6,6 +6,7 @@ from jsonschema import Draft202012Validator
 
 from meta_standards_converter.cli.miniml_migrate import main
 from meta_standards_converter.miniml import MINiMLCodec, miniml_schema_path
+from tests.test_msc_miniml_v2 import package_v2
 
 
 def legacy_package() -> dict:
@@ -22,6 +23,12 @@ def test_v2_schema_accepts_migrated_package() -> None:
 
     Draft202012Validator(schema).validate(migrated)
     assert miniml_schema_path().name == "miniml-package-v2.schema.json"
+
+
+def test_v2_schema_accepts_complete_typed_package() -> None:
+    schema = json.loads(miniml_schema_path().read_text(encoding="utf-8"))
+
+    Draft202012Validator(schema).validate(package_v2())
 
 
 def test_miniml_migrate_cli_writes_v2_and_diagnostics(tmp_path, capsys) -> None:

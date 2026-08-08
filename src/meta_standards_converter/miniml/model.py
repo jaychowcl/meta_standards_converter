@@ -1373,8 +1373,9 @@ class MINiMLPackage(Mapping[str, Any]):
             if sample.type and sample.type not in SAMPLE_TYPES:
                 warn(f"/sample/{index}/type", "xsd_enumeration", f"{sample.type!r} is outside the MINiML 0.5.4 vocabulary")
             for channel_index, channel in enumerate(sample.channels):
-                if channel.molecule and channel.molecule not in MOLECULES:
-                    warn(f"/sample/{index}/channel/{channel_index}/molecule", "xsd_enumeration", f"{channel.molecule!r} is outside the MINiML 0.5.4 vocabulary")
+                molecule = channel.molecule.value if channel.molecule else None
+                if molecule and molecule not in MOLECULES:
+                    warn(f"/sample/{index}/channel/{channel_index}/molecule", "xsd_enumeration", f"{molecule!r} is outside the MINiML 0.5.4 vocabulary")
             self._validate_links(sample.supplementary_data + sample.raw_data, f"/sample/{index}", warn)
         for index, platform in enumerate(self.platforms):
             if platform.technology and platform.technology not in TECHNOLOGIES:
@@ -1404,7 +1405,6 @@ class MINiMLPackage(Mapping[str, Any]):
             raise MINiMLModelError(f"duplicate protocol name: {duplicate}")
         known_protocols = set(protocol_names)
         known_documents = {item.name for item in self.source.documents if item.kind.casefold() == "sdrf"}
-        shared_nodes: dict[tuple[str, str, str], dict[str, Any]] = {}
         for path in self.series.assay_paths:
             if path.document and known_documents and path.document not in known_documents:
                 raise MINiMLModelError(f"unknown assay path document: {path.document}")
@@ -1415,14 +1415,6 @@ class MINiMLPackage(Mapping[str, Any]):
                     continue
                 if step.sample_ref and step.sample_ref not in sample_ids:
                     raise MINiMLModelError(f"unknown assay node sample reference: {step.sample_ref}")
-                key = (path.document or "", step.kind, step.name)
-                rendered = step.to_mapping()
-                previous = shared_nodes.get(key)
-                if previous is not None and previous != rendered:
-                    raise MINiMLModelError(
-                        f"conflicting shared assay node: {step.kind} {step.name}"
-                    )
-                shared_nodes[key] = rendered
         self._validate_links(self.series.supplementary_data, "/series", warn)
         return tuple(issues)
 

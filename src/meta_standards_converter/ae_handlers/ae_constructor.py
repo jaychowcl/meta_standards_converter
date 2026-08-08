@@ -10,7 +10,7 @@
 Constructor class for ae MAGETAB idf and sdrf
 '''
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor
-from meta_standards_converter.ae_handlers.ae_model import overlay_core, render_model
+from meta_standards_converter.ae_handlers.ae_model import overlay_core, overlay_miniml_semantics, render_model
 from meta_standards_converter.ae_handlers.ae_roundtrip import restore_extensions, semantic_sha256, unchanged_magetab
 from meta_standards_converter.ae_handlers.ae_common import (
     ProtocolRegistry,
@@ -98,7 +98,7 @@ class AEConstructor:
         idf[sdrf_index] = ["SDRF File", sdrf, *idf[sdrf_index][2:]]
         if modeled is not None:
             return overlay_core(modeled, idf)
-        return restore_extensions(data, idf)
+        return overlay_miniml_semantics(data, restore_extensions(data, idf))
 
     def _detect_ae_technology(self, data: dict) -> str:
         return detect_ae_technology(data)
