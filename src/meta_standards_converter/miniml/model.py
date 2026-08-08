@@ -28,7 +28,7 @@ class MINiMLModelError(ValueError):
     """A package cannot be represented by the stable MINiML JSON model."""
 
 
-class FrozenJSONMapping(Mapping[str, Any]):
+class _FrozenJSONMapping(Mapping[str, Any]):
     """Recursively immutable storage for open MINiML extension fields."""
 
     def __init__(self, value: Mapping[str, Any] | None = None) -> None:
@@ -51,7 +51,7 @@ class FrozenJSONMapping(Mapping[str, Any]):
 
 def _freeze_json(value: Any) -> Any:
     if isinstance(value, Mapping):
-        return FrozenJSONMapping(value)
+        return _FrozenJSONMapping(value)
     if isinstance(value, (list, tuple)):
         return tuple(_freeze_json(item) for item in value)
     return deepcopy(value)
@@ -166,7 +166,7 @@ def _items(value: Any) -> list[Any]:
 
 
 def _extras(data: Mapping[str, Any], known: set[str]) -> Mapping[str, Any]:
-    return FrozenJSONMapping({key: value for key, value in data.items() if key not in known})
+    return _FrozenJSONMapping({key: value for key, value in data.items() if key not in known})
 
 
 def _put(result: dict[str, Any], key: str, value: Any) -> None:
@@ -845,7 +845,7 @@ class MINiMLPackage(Mapping[str, Any]):
             samples=_objects(data.get("sample"), Sample.from_mapping, "sample"),
             version=None if data.get("version") is None else str(data["version"]),
             schema_location=data.get("schema_location"),
-            mage_tab=None if data.get("mage_tab") is None else FrozenJSONMapping(_mapping(data["mage_tab"], "mage_tab")),
+            mage_tab=None if data.get("mage_tab") is None else _FrozenJSONMapping(_mapping(data["mage_tab"], "mage_tab")),
             extras=_extras(data, {"miniml_schema_version", "version", "schema_location", "database", "organization", "contributor", "platform", "sample", "series", "mage_tab"}),
         )
         package._raise_structural_errors()
