@@ -74,6 +74,16 @@
       },
       "additionalProperties": false
     },
+    "organism": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {"type": "string"},
+        "taxid": {"type": "string"},
+        "annotations": {"type": "array", "items": {"$ref": "#/$defs/annotation"}}
+      },
+      "additionalProperties": true
+    },
     "namedValue": {
       "type": "object",
       "required": ["name", "value"],
@@ -114,7 +124,7 @@
       "type": "object",
       "properties": {
         "source": {"$ref": "#/$defs/ontologyValue"},
-        "organism": {"type": "array", "items": {"$ref": "#/$defs/openRecord"}},
+        "organism": {"type": "array", "items": {"$ref": "#/$defs/organism"}},
         "characteristics": {"type": "array", "items": {"$ref": "#/$defs/namedValue"}},
         "biomaterial_provider": {"type": "array"},
         "treatment_protocol": {"type": "string"},
@@ -166,11 +176,22 @@
         "parameters": {"type": "array", "items": {"type": "string"}},
         "hardware": {"type": "array", "items": {"type": "string"}},
         "software": {"type": "array", "items": {"type": "string"}},
-        "contacts": {"type": "array", "items": {"$ref": "#/$defs/openRecord"}},
+        "contacts": {"type": "array", "items": {"type": "string"}},
         "performers": {"type": "array", "items": {"type": "string"}},
         "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}}
       },
       "additionalProperties": false
+    },
+    "variable": {
+      "type": "object",
+      "properties": {
+        "factor": {"type": "string"},
+        "type": {"$ref": "#/$defs/ontologyValue"},
+        "description": {"type": "string"},
+        "sample_ref": {"type": "array", "items": {"$ref": "#/$defs/openRecord"}},
+        "position": {"type": "string"}
+      },
+      "additionalProperties": true
     },
     "protocolApplication": {
       "type": "object",
@@ -238,7 +259,7 @@
         "contact_ref": {"type": "array", "items": {"$ref": "#/$defs/openRecord"}},
         "contact": {"type": "array", "items": {"$ref": "#/$defs/contributor"}},
         "sample_ref": {"type": "array"},
-        "variable": {"type": "array"},
+        "variable": {"type": "array", "items": {"$ref": "#/$defs/variable"}},
         "repeats": {"type": "array"},
         "supplementary_data": {"type": "array"},
         "relation": {"type": "array"},

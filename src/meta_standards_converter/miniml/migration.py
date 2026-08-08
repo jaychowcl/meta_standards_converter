@@ -65,26 +65,32 @@ class MINiMLV1Migrator:
     def _documents(mage_tab: Any) -> list[dict[str, str]]:
         if not isinstance(mage_tab, Mapping):
             return []
-        names: list[tuple[str, str]] = []
+        names: list[tuple[str, str, dict[str, str] | None]] = []
         source = mage_tab.get("source")
         if isinstance(source, Mapping):
+            for item in source.get("documents", []) or []:
+                if isinstance(item, Mapping) and item.get("kind") and item.get("name"):
+                    record = {key: str(item[key]) for key in ("kind", "name", "uri", "sha256") if item.get(key)}
+                    names.append((record["kind"], record["name"], record))
             if source.get("idf"):
-                names.append(("idf", str(source["idf"])))
+                names.append(("idf", str(source["idf"]), None))
             for name in source.get("sdrf", []) or []:
                 if name:
-                    names.append(("sdrf", str(name)))
+                    names.append(("sdrf", str(name), None))
         model = mage_tab.get("model")
         if isinstance(model, Mapping):
             for item in model.get("sdrfs", []) or []:
                 if isinstance(item, Mapping) and item.get("name"):
-                    names.append(("sdrf", str(item["name"])))
+                    names.append(("sdrf", str(item["name"]), None))
         roundtrip = mage_tab.get("roundtrip")
         if isinstance(roundtrip, Mapping):
             for item in roundtrip.get("sdrfs", []) or []:
                 if isinstance(item, Mapping) and item.get("name"):
-                    names.append(("sdrf", str(item["name"])))
-        result = [{"kind": kind, "name": name} for kind, name in dict.fromkeys(names)]
-        return result
+                    names.append(("sdrf", str(item["name"]), None))
+        result = {}
+        for kind, name, record in names:
+            result.setdefault((kind, name), record or {"kind": kind, "name": name})
+        return list(result.values())
 
     @classmethod
     def _migrate_core(cls, package: dict[str, Any]) -> None:
@@ -96,6 +102,9 @@ class MINiMLV1Migrator:
         for sample in cls._mappings(package.get("sample")):
             for ref_name in ("contact_ref",):
                 cls._remove_positions(sample.get(ref_name))
+            channels = cls._sort_positioned(sample.get("channel"))
+            if channels:
+                sample["channel"] = channels
             for channel in cls._mappings(sample.get("channel")):
                 channel.pop("position", None)
                 cls._fold_harmonization(channel)
@@ -106,12 +115,22 @@ class MINiMLV1Migrator:
                 channel["characteristics"] = [
                     cls._named_value(item) for item in cls._items(channel.get("characteristics"))
                 ]
+            cls._normalize_inline_contributors(sample)
+        for platform in cls._mappings(package.get("platform")):
+            cls._normalize_inline_contributors(platform)
         series = package.get("series")
         if isinstance(series, dict):
             for ref_name in ("sample_ref", "contributor_ref", "contact_ref"):
+                ordered = cls._sort_positioned(series.get(ref_name))
+                if ordered:
+                    series[ref_name] = ordered
                 cls._remove_positions(series.get(ref_name))
+            cls._normalize_inline_contributors(series)
             if "type" in series:
                 series["type"] = [cls._ontology_value(item) for item in cls._items(series["type"])]
+            for variable in cls._mappings(series.get("variable")):
+                if variable.get("type") is not None:
+                    variable["type"] = cls._ontology_value(variable["type"])
 
     @classmethod
     def _fold_harmonization(cls, channel: dict[str, Any]) -> None:
@@ -225,11 +244,11 @@ class MINiMLV1Migrator:
                 ("parameters", "parameters"),
                 ("hardware", "hardware"),
                 ("software", "software"),
-                ("contact", "performers"),
+                ("contact", "contacts"),
                 ("performer", "performers"),
             ):
                 if item.get(source):
-                    protocol.setdefault(destination, []).extend(cls._items(item[source]))
+                    protocol.setdefault(destination, []).extend(cls._text_items(item[source]))
                     if destination == "description":
                         protocol[destination] = str(item[source])
             protocols.append(protocol)
@@ -262,6 +281,8 @@ class MINiMLV1Migrator:
     def _assay_steps(cls, values: Any) -> list[dict[str, Any]]:
         result: list[dict[str, Any]] = []
         current_application: dict[str, Any] | None = None
+        last_named: dict[str, Any] | None = None
+        last_ontology: dict[str, Any] | None = None
         header_kinds = {
             "source name": "source", "sample name": "sample", "extract name": "extract",
             "labeled extract name": "labeled_extract", "hybridization name": "hybridization",
@@ -275,11 +296,19 @@ class MINiMLV1Migrator:
                 continue
             kind = step.get("kind")
             if kind in {"protocol", "protocol_ref"}:
+                reference = str(step.get("value") or step.get("protocol_ref") or "").strip()
+                if not reference:
+                    current_application = None
+                    last_named = None
+                    last_ontology = None
+                    continue
                 current_application = {
                     "kind": "protocol_application",
-                    "protocol_ref": str(step.get("value") or step.get("protocol_ref") or ""),
+                    "protocol_ref": reference,
                 }
                 result.append(current_application)
+                last_named = None
+                last_ontology = None
                 continue
             if kind == "attribute":
                 attribute = cls._legacy_attribute(step)
@@ -288,15 +317,29 @@ class MINiMLV1Migrator:
                 elif result and result[-1].get("kind") != "protocol_application":
                     destination = "factor_values" if step.get("attribute_type") == "factor value" else "characteristics"
                     result[-1].setdefault(destination, []).append(attribute)
+                last_named = attribute
+                last_ontology = attribute
                 continue
-            if kind == "comment" and result and result[-1].get("kind") != "protocol_application":
-                result[-1].setdefault("comments", []).append({
+            if kind == "comment" and result:
+                comment = {
                     "name": str(step.get("name") or step.get("header") or "comment"),
                     "value": str(step.get("value", "")),
-                })
+                }
+                target = last_named or current_application or result[-1]
+                target.setdefault("comments", []).append(comment)
                 continue
-            if kind == "field" and result and result[-1].get("kind") != "protocol_application":
-                cls._attach_node_field(result[-1], step)
+            if kind == "field" and result:
+                header = str(step.get("header") or step.get("name") or "").strip().casefold()
+                if current_application is not None and header == "performer":
+                    current_application["performer"] = str(step.get("value", ""))
+                elif current_application is not None and header == "date":
+                    current_application["date"] = str(step.get("value", ""))
+                elif header == "term source ref" and last_ontology is not None:
+                    last_ontology["term_source_ref"] = str(step.get("value", ""))
+                elif header == "term accession number" and last_ontology is not None:
+                    last_ontology["term_accession_number"] = str(step.get("value", ""))
+                elif result[-1].get("kind") != "protocol_application":
+                    last_ontology = cls._attach_node_field(result[-1], step)
                 continue
             if kind in {"node", "file"}:
                 label = str(step.get("name") or step.get("header") or "").strip().casefold()
@@ -307,10 +350,12 @@ class MINiMLV1Migrator:
                         node["sample_ref"] = str(step["value"])
                     result.append(node)
                     current_application = None
+                    last_named = None
+                    last_ontology = None
         return result
 
     @classmethod
-    def _attach_node_field(cls, node: dict[str, Any], item: Mapping[str, Any]) -> None:
+    def _attach_node_field(cls, node: dict[str, Any], item: Mapping[str, Any]) -> dict[str, Any] | None:
         header = str(item.get("header") or item.get("name") or "").strip().casefold()
         value = str(item.get("value", ""))
         ontology = cls._ontology_value(value)
@@ -328,6 +373,7 @@ class MINiMLV1Migrator:
         destination = destinations.get(header)
         if destination in {"material_type", "label", "technology_type"}:
             node[destination] = ontology
+            return ontology
         elif destination:
             node[destination] = value
         elif header == "array design ref":
@@ -337,6 +383,7 @@ class MINiMLV1Migrator:
                 "name": str(item.get("header") or item.get("name") or "field"),
                 "value": value,
             })
+        return None
 
     @classmethod
     def _legacy_attribute(cls, item: Mapping[str, Any]) -> dict[str, Any]:
@@ -350,10 +397,18 @@ class MINiMLV1Migrator:
             result["term_accession_number"] = item["term_accession_number"]
         if item.get("unit"):
             unit: dict[str, Any] = {"value": str(item["unit"])}
+            if item.get("unit_term_source_ref"):
+                unit["term_source_ref"] = item["unit_term_source_ref"]
+            if item.get("unit_term_accession_number"):
+                unit["term_accession_number"] = item["unit_term_accession_number"]
             annotation = cls._legacy_annotation(item, "unit")
             if annotation:
                 unit["annotations"] = [annotation]
             result["unit"] = unit
+        if item.get("unit_type"):
+            result["unit_type"] = str(item["unit_type"])
+        if item.get("qualifier"):
+            result["qualifier"] = str(item["qualifier"])
         annotation = cls._legacy_annotation(item, "value")
         if annotation:
             result["annotations"] = [annotation]
@@ -388,7 +443,7 @@ class MINiMLV1Migrator:
         if isinstance(value, Mapping):
             name = value.get("name", value.get("tag"))
             result = {"name": str(name or "unspecified"), "value": str(value.get("value", ""))}
-            for key in ("term_source_ref", "term_accession_number", "unit", "annotations", "comments", "qualifier"):
+            for key in ("term_source_ref", "term_accession_number", "unit", "annotations", "comments", "qualifier", "unit_type"):
                 if value.get(key) is not None:
                     result[key] = deepcopy(value[key])
             return result
@@ -405,6 +460,10 @@ class MINiMLV1Migrator:
         return list(value) if isinstance(value, (list, tuple)) else [value]
 
     @classmethod
+    def _text_items(cls, value: Any) -> list[str]:
+        return [part.strip() for item in cls._items(value) for part in str(item).split(";") if part.strip()]
+
+    @classmethod
     def _mappings(cls, value: Any) -> list[dict[str, Any]]:
         return [item for item in cls._items(value) if isinstance(item, dict)]
 
@@ -412,6 +471,30 @@ class MINiMLV1Migrator:
     def _remove_positions(cls, value: Any) -> None:
         for item in cls._mappings(value):
             item.pop("position", None)
+
+    @classmethod
+    def _sort_positioned(cls, value: Any) -> list[Any]:
+        items = cls._items(value)
+        return sorted(items, key=lambda item: cls._position_key(item, items.index(item)))
+
+    @staticmethod
+    def _position_key(item: Any, fallback: int) -> tuple[int, int]:
+        if isinstance(item, Mapping) and item.get("position") not in (None, ""):
+            try:
+                return (0, int(item["position"]))
+            except (TypeError, ValueError):
+                pass
+        return (1, fallback)
+
+    @classmethod
+    def _normalize_inline_contributors(cls, owner: dict[str, Any]) -> None:
+        for key in ("contributor", "contact"):
+            if key not in owner:
+                continue
+            ordered = cls._sort_positioned(owner.get(key))
+            for item in cls._mappings(ordered):
+                item.pop("position", None)
+            owner[key] = ordered
 
 
 __all__ = ["MINiMLMigrationResult", "MINiMLV1Migrator"]

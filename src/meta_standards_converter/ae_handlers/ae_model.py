@@ -276,8 +276,9 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
             ("Protocol Description", lambda item: item.get("description")),
             ("Protocol Hardware", lambda item: " | ".join(str(value) for value in item.get("hardware", []))),
             ("Protocol Software", lambda item: " | ".join(str(value) for value in item.get("software", []))),
-            ("Protocol Parameters", lambda item: " | ".join(str(value) for value in item.get("parameters", []))),
-            ("Protocol Performer", lambda item: " | ".join(str(value) for value in item.get("performers", []))),
+            ("Protocol Parameters", lambda item: "; ".join(str(value) for value in item.get("parameters", []))),
+            ("Protocol Contact", lambda item: "; ".join(str(value) for value in item.get("contacts", []))),
+            ("Protocol Performer", lambda item: "; ".join(str(value) for value in item.get("performers", []))),
         )
         for label, accessor in fields:
             _replace_row(rows, label, [accessor(item) or "" for item in protocols])
@@ -291,6 +292,9 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
             _replace_row(rows, labels[0], [_ontology_text(item) for item in values])
             _replace_row(rows, labels[1], [_ontology_field(item, "term_source_ref") for item in values])
             _replace_row(rows, labels[2], [_ontology_field(item, "term_accession_number") for item in values])
+    for comment in series.get("comments", []) or []:
+        if isinstance(comment, dict) and comment.get("name"):
+            _replace_row(rows, f"Comment[{comment['name']}]", [comment.get("value", "")])
     assay_table = _render_miniml_assay_paths(series.get("assay_paths"))
     if assay_table:
         _replace_row(rows, "SDRF File", [assay_table])
@@ -315,9 +319,30 @@ def _ontology_field(value, field):
 
 
 def _render_miniml_assay_paths(paths) -> list | None:
+    documents = render_miniml_assay_documents(paths)
+    if not documents:
+        return None
+    tables = list(documents.values())
+    if len(tables) == 1:
+        return tables[0]
+    header = tables[0][0]
+    if any(table[0] != header for table in tables[1:]):
+        raise ValueError("Multiple SDRF documents with different graph layouts cannot be consolidated safely.")
+    return [header, *(row for table in tables for row in table[1:])]
+
+
+def render_miniml_assay_documents(paths) -> dict[str, list[list]]:
+    grouped = {}
+    for index, path in enumerate(paths if isinstance(paths, list) else []):
+        if isinstance(path, dict):
+            grouped.setdefault(str(path.get("document") or "study.sdrf.txt"), []).append(path)
+    return {name: _render_assay_path_group(values) for name, values in grouped.items()}
+
+
+def _render_assay_path_group(paths) -> list[list]:
     path_columns = []
     union = []
-    for path in paths if isinstance(paths, list) else []:
+    for path in paths:
         if not isinstance(path, dict):
             continue
         columns = _miniml_path_columns(path.get("steps"))
@@ -330,8 +355,6 @@ def _render_miniml_assay_paths(paths) -> list | None:
             if key not in union:
                 union.append(key)
         path_columns.append(dict(identified))
-    if not path_columns:
-        return None
     return [
         [header for header, _occurrence in union],
         *[[values.get(key, "") for key in union] for values in path_columns],
@@ -353,6 +376,10 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
             continue
         if step.get("kind") == "protocol_application":
             result.append(("Protocol REF", step.get("protocol_ref", "")))
+            if step.get("performer") not in (None, ""):
+                result.append(("Performer", step["performer"]))
+            if step.get("date") not in (None, ""):
+                result.append(("Date", step["date"]))
             for value in step.get("parameter_values", []) or []:
                 result.extend(_named_value_columns("Parameter Value", value))
             for comment in step.get("comments", []) or []:
@@ -384,13 +411,15 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
 def _named_value_columns(prefix: str, value) -> list[tuple[str, object]]:
     if not isinstance(value, dict):
         return []
-    result = [(f"{prefix}[{value.get('name', '')}]", value.get("value", ""))]
+    qualifier = f" ({value['qualifier']})" if value.get("qualifier") else ""
+    result = [(f"{prefix}[{value.get('name', '')}]{qualifier}", value.get("value", ""))]
     if value.get("term_source_ref"):
         result.append(("Term Source REF", value["term_source_ref"]))
     if value.get("term_accession_number"):
         result.append(("Term Accession Number", value["term_accession_number"]))
     if value.get("unit") is not None:
-        result.extend(_ontology_columns("Unit", value["unit"]))
+        unit_header = f"Unit[{value['unit_type']}]" if value.get("unit_type") else "Unit"
+        result.extend(_ontology_columns(unit_header, value["unit"]))
     for comment in value.get("comments", []) or []:
         result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
     return result
@@ -495,28 +524,32 @@ def _assay_path(sdrf_name: str, row_index: int, header: list[str], row: list[str
             "occurrence": occurrences[key],
             "value": value,
         }
-        annotation = re.fullmatch(r"\s*(Characteristics|Factor\s+Value|Parameter\s+Value)\s*\[(.*)]\s*", label, re.I)
+        annotation = re.fullmatch(r"\s*(Characteristics|Factor\s+Value|Parameter\s+Value)\s*\[([^]]*)]\s*(?:\(([^)]*)\))?\s*", label, re.I)
         if annotation:
             base.update({
                 "kind": "attribute",
                 "attribute_type": " ".join(annotation.group(1).split()).lower(),
                 "name": annotation.group(2).strip(),
+                **({"qualifier": annotation.group(3).strip()} if annotation.group(3) else {}),
             })
             companions = {}
+            unit_seen = False
             for companion_index in range(index + 1, len(header)):
                 companion_label = header[companion_index]
                 normalized = _normalized(companion_label)
-                if normalized not in {
-                    _normalized("Unit"), _normalized("Term Source REF"),
-                    _normalized("Term Accession Number"),
-                }:
+                unit_match = re.fullmatch(r"\s*Unit(?:\[([^]]*)])?\s*", companion_label, re.I)
+                if unit_match:
+                    field = "unit"
+                    unit_seen = True
+                    if unit_match.group(1):
+                        base["unit_type"] = unit_match.group(1).strip()
+                elif normalized == _normalized("Term Source REF"):
+                    field = "unit_term_source_ref" if unit_seen else "term_source_ref"
+                elif normalized == _normalized("Term Accession Number"):
+                    field = "unit_term_accession_number" if unit_seen else "term_accession_number"
+                else:
                     break
                 companion_value = row[companion_index] if companion_index < len(row) else ""
-                field = {
-                    _normalized("Unit"): "unit",
-                    _normalized("Term Source REF"): "term_source_ref",
-                    _normalized("Term Accession Number"): "term_accession_number",
-                }[normalized]
                 base[field] = companion_value
                 companions[field] = companion_index
                 consumed.add(companion_index)

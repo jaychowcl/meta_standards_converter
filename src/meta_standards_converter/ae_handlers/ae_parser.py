@@ -78,6 +78,7 @@ class AEParser:
             "Source Name", "Sample Name", "Extract Name", "Labeled Extract Name",
             "Hybridization Name", "Assay Name", "Scan Name", "Normalization Name",
             "Protocol REF", "Provider", "Material Type", "Description", "Label",
+            "Performer", "Date",
             "Array Design REF", "Array Design File", "Technology Type", "Term Source REF",
             "Term Accession Number", "Unit", "Array Data File", "Array Data Matrix File",
             "Derived Array Data File", "Derived Array Data Matrix File",
@@ -107,6 +108,9 @@ class AEParser:
         idf = self._idf_index(idf_rows)
         protocols = self._protocols(idf)
         series = self._series(idf)
+        idf_comments = self._idf_comments(idf_rows)
+        if idf_comments:
+            series["comments"] = idf_comments
         contributors = self._contributors(idf)
         databases = self._databases(idf)
         samples = {}
@@ -157,6 +161,13 @@ class AEParser:
                     "value": source.source,
                     "idf": source.idf.name,
                     "sdrf": [resource.name for resource in source.sdrfs],
+                    "documents": [
+                        {"kind": "idf", "name": source.idf.name, "uri": source.idf.origin},
+                        *[
+                            {"kind": "sdrf", "name": resource.name, "uri": resource.origin}
+                            for resource in source.sdrfs
+                        ],
+                    ],
                 },
                 "unmapped_idf_rows": unmapped_rows,
                 "unmapped_sdrf_columns": unmapped_columns,
@@ -239,20 +250,38 @@ class AEParser:
         description = self._first(idf, "Experiment Description")
         if description:
             series["summary"] = description
-        design = self._nonblank(idf, "Experimental Design")
-        if design:
-            series["type"] = design
+        design = self._values(idf, "Experimental Design")
+        design_sources = self._values(idf, "Experimental Design Term Source REF")
+        design_accessions = self._values(idf, "Experimental Design Term Accession Number")
+        if any(value.strip() for value in design):
+            series["type"] = [
+                {
+                    "value": value.strip(),
+                    **({"term_source_ref": design_sources[index].strip()} if index < len(design_sources) and design_sources[index].strip() else {}),
+                    **({"term_accession_number": design_accessions[index].strip()} if index < len(design_accessions) and design_accessions[index].strip() else {}),
+                }
+                for index, value in enumerate(design) if value.strip()
+            ]
         factors = self._values(idf, "Experimental Factor Name")
         factor_types = self._values(idf, "Experimental Factor Type")
+        factor_sources = self._values(idf, "Experimental Factor Term Source REF")
+        factor_accessions = self._values(idf, "Experimental Factor Term Accession Number")
         variables = []
         for index, factor in enumerate(factors):
             if factor.strip():
                 variables.append({
                     "factor": factor.strip(),
-                    "type": factor_types[index].strip() if index < len(factor_types) else factor.strip(),
+                    "type": {
+                        "value": factor_types[index].strip() if index < len(factor_types) else factor.strip(),
+                        **({"term_source_ref": factor_sources[index].strip()} if index < len(factor_sources) and factor_sources[index].strip() else {}),
+                        **({"term_accession_number": factor_accessions[index].strip()} if index < len(factor_accessions) and factor_accessions[index].strip() else {}),
+                    },
                 })
         if variables:
             series["variable"] = variables
+        experiment_date = self._first(idf, "Date of Experiment")
+        if experiment_date:
+            series["experiment_date"] = experiment_date
         related = self._nonblank(idf, "Comment[RelatedExperiment]")
         if related:
             series["relation"] = [
@@ -317,6 +346,9 @@ class AEParser:
             "fax": self._values(idf, "Person Fax"),
             "address": self._values(idf, "Person Address"),
             "organization": self._values(idf, "Person Affiliation"),
+            "role": self._values(idf, "Person Roles"),
+            "role_source": self._values(idf, "Person Roles Term Source Ref"),
+            "role_accession": self._values(idf, "Person Roles Term Accession Number"),
         }
         count = max((len(values) for values in fields.values()), default=0)
         contributors = []
@@ -338,8 +370,27 @@ class AEParser:
             for key in ("email", "phone", "fax", "address", "organization"):
                 if values[key]:
                     contributor[key] = values[key]
+            if values.get("role"):
+                contributor["role"] = [{
+                    "value": values["role"],
+                    **({"term_source_ref": values["role_source"]} if values.get("role_source") else {}),
+                    **({"term_accession_number": values["role_accession"]} if values.get("role_accession") else {}),
+                }]
             contributors.append(contributor)
         return contributors
+
+    @staticmethod
+    def _idf_comments(rows: list[list[str]]) -> list[dict[str, str]]:
+        comments = []
+        reserved = {
+            "secondaryaccession", "secondaryaccessiontermsourceref", "arrayexpressaccession",
+            "relatedexperiment", "georeleasedate", "geolastupdatedate", "arrayexpresssubmissiondate",
+        }
+        for row in rows:
+            match = re.fullmatch(r"\s*Comment\[(.*)]\s*", row[0], re.I) if row else None
+            if match and normalized_label(match.group(1)) not in reserved:
+                comments.extend({"name": match.group(1), "value": value.strip()} for value in row[1:] if value.strip())
+        return comments
 
     def _databases(self, idf: dict) -> list[dict]:
         names = self._values(idf, "Term Source Name")
@@ -590,7 +641,9 @@ class AEParser:
         normalized = normalized_label(label)
         if normalized in self.EXACT_SDRF_HEADERS:
             return True
-        if re.fullmatch(r"(characteristics|factorvalue|parameterValue)\[.*]", normalized, re.I):
+        if re.fullmatch(r"(characteristics|factorvalue|parametervalue)\[.*](?:\(.*\))?", normalized, re.I):
+            return True
+        if re.fullmatch(r"unit\[.*]", normalized, re.I):
             return True
         match = re.fullmatch(r"comment\[(.*)]", label.strip(), re.I)
         if not match:

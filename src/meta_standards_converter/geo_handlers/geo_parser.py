@@ -276,12 +276,21 @@ class GEOParser:
         return package
 
     def _resolve_samples(self, series: dict, samples_by_iid: dict[str, dict]) -> list[dict]:
+        values = self._as_list(series.get("sample_ref"))
+        values = sorted(values, key=lambda item: self._position_key(item, values.index(item)))
         refs = [
             ref.get("ref")
-            for ref in self._as_list(series.get("sample_ref"))
+            for ref in values
             if isinstance(ref, dict)
         ]
         return self._items_for_refs(refs=refs, index=samples_by_iid)
+
+    @staticmethod
+    def _position_key(item, fallback):
+        try:
+            return (0, int(item["position"])) if isinstance(item, dict) and item.get("position") not in (None, "") else (1, fallback)
+        except (TypeError, ValueError):
+            return (1, fallback)
 
     def _resolve_platforms(
         self,

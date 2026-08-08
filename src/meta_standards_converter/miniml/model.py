@@ -765,6 +765,7 @@ class Channel:
 @dataclass(frozen=True)
 class Variable:
     factor: str | None = None
+    type: OntologyValue | None = None
     description: str | None = None
     sample_ref: tuple[Reference, ...] = ()
     position: str | None = None
@@ -773,11 +774,11 @@ class Variable:
     @classmethod
     def from_mapping(cls, value: Any) -> "Variable":
         data = _mapping(value, "variable")
-        return cls(data.get("factor"), data.get("description"), _objects(data.get("sample_ref"), Reference.from_mapping, "variable.sample_ref"), data.get("position"), _extras(data, {"factor", "description", "sample_ref", "position"}))
+        return cls(data.get("factor"), None if data.get("type") is None else OntologyValue.from_value(data["type"]), data.get("description"), _objects(data.get("sample_ref"), Reference.from_mapping, "variable.sample_ref"), data.get("position"), _extras(data, {"factor", "type", "description", "sample_ref", "position"}))
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
-        for key in ("factor", "description", "sample_ref", "position"):
+        for key in ("factor", "type", "description", "sample_ref", "position"):
             _put(result, key, getattr(self, key))
         return _record(result, self.extras)
 
@@ -1009,7 +1010,7 @@ class Protocol:
     parameters: tuple[str, ...] = ()
     hardware: tuple[str, ...] = ()
     software: tuple[str, ...] = ()
-    contacts: tuple[Reference, ...] = ()
+    contacts: tuple[str, ...] = ()
     performers: tuple[str, ...] = ()
     comments: tuple[NamedComment, ...] = ()
 
@@ -1035,7 +1036,7 @@ class Protocol:
             tuple(str(item) for item in _items(data.get("parameters"))),
             tuple(str(item) for item in _items(data.get("hardware"))),
             tuple(str(item) for item in _items(data.get("software"))),
-            _refs(data.get("contacts"), "protocol.contacts"),
+            tuple(str(item) for item in _items(data.get("contacts"))),
             tuple(str(item) for item in _items(data.get("performers"))),
             _comments(data.get("comments")),
         )

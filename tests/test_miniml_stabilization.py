@@ -17,6 +17,8 @@ from meta_standards_converter.miniml import (
     miniml_schema_path,
 )
 from tests.test_ae2json import IDF, resolved_input
+from tests.test_geo_parser import miniml_body
+from meta_standards_converter.geo_handlers.geo_parser import GEOParser
 
 
 def _parse_sdrf(header: list[str], row: list[str]):
@@ -108,18 +110,21 @@ def test_protocol_application_metadata_and_ontology_companions_round_trip():
 
 def test_factor_qualifier_and_idf_semantics_are_typed():
     idf = IDF.replace(
-        "Experimental Design\ttranscription profiling by high throughput sequencing\n",
-        "Experimental Design\ttranscription profiling by high throughput sequencing\n"
+        "Experimental Design\tRNA-seq\n",
+        "Experimental Design\tRNA-seq\n"
         "Experimental Design Term Source REF\tEFO\n"
         "Experimental Design Term Accession Number\tEFO:0002768\n"
+        "Experimental Factor Term Source REF\tEFO\n"
+        "Experimental Factor Term Accession Number\tEFO:0000408\n"
         "Person Roles\tinvestigator\nPerson Roles Term Source Ref\tEFO\n"
-        "Person Roles Term Accession Number\tEFO:0000001\nComment[Goal]\tTest mechanism\n",
+        "Person Roles Term Accession Number\tEFO:0000001\nComment[Goal]\tTest mechanism\nDate of Experiment\t2024-01-02\n",
     )
     text = "Source Name\tFactor Value[age] (time)\tSample Name\ns1\t5\tx1\n"
     package = AEParser().parse(resolved_input(idf=idf, sdrfs=[text]))
     assert package.series.types[0].term_accession_number == "EFO:0002768"
     assert package.contributors[0].roles[0].value == "investigator"
-    assert package.series.comments[0].name == "Goal"
+    assert package.series.variables[0].type.term_accession_number == "EFO:0000408"
+    assert next(item.value for item in package.series.comments if item.name == "Goal") == "Test mechanism"
     assert package.series.experiment_date == "2024-01-02"
     factor = next(step for step in package["series"]["assay_paths"][0]["steps"] if step["kind"] == "source")["factor_values"][0]
     assert factor["name"] == "age" and factor["qualifier"] == "time"
@@ -134,3 +139,21 @@ def test_multiple_documents_render_without_cross_document_reordering():
     documents = render_miniml_assay_documents(paths)
     assert documents["a.sdrf"][0] == ["Source Name", "Protocol REF", "Sample Name"]
     assert documents["b.sdrf"][0] == ["Source Name", "Sample Name", "Protocol REF", "Assay Name"]
+
+
+def test_xsd_positions_are_applied_before_lean_v2_serialization():
+    xml = miniml_body('''
+      <Sample iid="GSM1"><Channel position="2"><Source>second</Source></Channel><Channel position="1"><Source>first</Source></Channel></Sample>
+      <Series iid="GSE1"><Contributor position="2"><Person><First>B</First><Last>Two</Last></Person></Contributor><Contributor position="1"><Person><First>A</First><Last>One</Last></Person></Contributor><Sample-Ref ref="GSM1"/></Series>
+    ''')
+    package = GEOParser().parse(xml)[0]
+    assert [channel.source.value for channel in package.samples[0].channels] == ["first", "second"]
+    assert [item.person.first for item in package.series.contributors] == ["A", "B"]
+    assert "position" not in package.to_mapping()["sample"][0]["channel"][0]
+
+
+def test_ae_source_documents_keep_resolved_origins():
+    package = AEParser().parse(resolved_input())
+    documents = {item.name: item.uri for item in package.source.documents}
+    assert documents["study.idf.txt"] == "memory:idf"
+    assert documents["study1.sdrf.txt"] == "memory:sdrf:1"

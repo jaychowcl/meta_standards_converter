@@ -273,15 +273,21 @@ class IDFConstructor():
             for design in self._as_list(series.get("type")):
                 value = design.get("value") or design.get("name") if isinstance(design, dict) else design
                 value = clean(value)
-                if value and value not in declared_designs:
-                    declared_designs.append(value)
+                source = clean(design.get("term_source_ref")) if isinstance(design, dict) else None
+                accession = clean(design.get("term_accession_number")) if isinstance(design, dict) else None
+                if value and not any(item[0] == value for item in declared_designs):
+                    declared_designs.append((value, source, accession))
             for variable in self._as_list(series.get("variable")):
                 if not isinstance(variable, dict):
                     continue
                 name = clean(variable.get("factor") or variable.get("name") or variable.get("tag"))
-                factor_type = clean(variable.get("type")) or name
+                typed = variable.get("type")
+                factor_type = clean(typed.get("value")) if isinstance(typed, dict) else clean(typed)
+                factor_type = factor_type or name
+                source = clean(typed.get("term_source_ref")) if isinstance(typed, dict) else None
+                accession = clean(typed.get("term_accession_number")) if isinstance(typed, dict) else None
                 if name and not any(item[0].lower() == name.lower() for item in declared_factors):
-                    declared_factors.append((name, factor_type))
+                    declared_factors.append((name, factor_type, source, accession))
 
         for sample in self._as_list(data.get("sample")):
             if not isinstance(sample, dict):
@@ -318,17 +324,19 @@ class IDFConstructor():
                 if len(factors[tag_key]["values"]) > 1
             ]
         )
-        factor_types = [item[1] for item in declared_factors] if declared_factors else factor_names
         blanks = [None for _ in factor_names]
+        factor_types = [item[1] for item in declared_factors] if declared_factors else factor_names
+        factor_sources = [item[2] for item in declared_factors] if declared_factors else blanks
+        factor_accessions = [item[3] for item in declared_factors] if declared_factors else blanks
 
         return [
-            ["Experimental Design", *declared_designs],
-            ["Experimental Design Term Source REF", *([None] * len(declared_designs))],
-            ["Experimental Design Term Accession Number", *([None] * len(declared_designs))],
+            ["Experimental Design", *(item[0] for item in declared_designs)],
+            ["Experimental Design Term Source REF", *(item[1] for item in declared_designs)],
+            ["Experimental Design Term Accession Number", *(item[2] for item in declared_designs)],
             ["Experimental Factor Name", *factor_names],
             ["Experimental Factor Type", *factor_types],
-            ["Experimental Factor Term Source REF", *blanks],
-            ["Experimental Factor Term Accession Number", *blanks],
+            ["Experimental Factor Term Source REF", *factor_sources],
+            ["Experimental Factor Term Accession Number", *factor_accessions],
         ]
 
     def _idf_persons(self, data: dict) -> list:
@@ -400,6 +408,10 @@ class IDFConstructor():
             self._normalized_idf_date(value)
             for value in handler._from_path(data, "series.status.*.submission_date")
         ]
+        experiment_dates = [
+            self._normalized_idf_date(value)
+            for value in handler._from_path(data, "series.experiment_date")
+        ]
         release_dates = [
             self._normalized_idf_date(value)
             for value in handler._from_path(data, "series.status.*.release_date")
@@ -411,7 +423,7 @@ class IDFConstructor():
         public_release_date = self._earliest_idf_date(values=release_dates)
 
         return [
-            ["Date of Experiment", *submission_dates],
+            ["Date of Experiment", *(experiment_dates or submission_dates)],
             ["Public Release Date", public_release_date],
             ["Comment[GEOReleaseDate]", *release_dates],
             ["Comment[GEOLastUpdateDate]", *last_update_dates],

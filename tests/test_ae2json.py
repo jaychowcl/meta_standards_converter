@@ -217,7 +217,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual(["centrifuge"], series["protocols"][1]["hardware"])
         self.assertEqual(["ExtractSoft"], series["protocols"][1]["software"])
         self.assertEqual(["speed"], series["protocols"][1]["parameters"])
-        self.assertEqual(["John Doe"], series["protocols"][1]["performers"])
+        self.assertEqual(["John Doe"], series["protocols"][1]["contacts"])
         self.assertEqual("biological replicate", series["quality_controls"][0]["value"])
         self.assertEqual("EFO:0000001", series["quality_controls"][0]["term_accession_number"])
         self.assertEqual(2, len(series["assay_paths"]))
@@ -233,8 +233,8 @@ class TestAE2JSONConverter(unittest.TestCase):
             if characteristic["name"] == "age"
         )
         self.assertEqual("year", age["unit"]["value"])
-        self.assertEqual("UO:0000036", age["term_accession_number"])
-        barcode = next(comment for step in series["assay_paths"][0]["steps"] for comment in step.get("comments", []) if comment["name"] == "cell barcode size")
+        self.assertEqual("UO:0000036", age["unit"]["term_accession_number"])
+        barcode = next(comment for comment in age["comments"] if comment["name"] == "cell barcode size")
         self.assertEqual("16", barcode["value"])
 
     def test_model_edits_render_without_merging_into_miniml_fields(self):
@@ -522,7 +522,7 @@ class TestAE2JSONConverter(unittest.TestCase):
             ["GSE123", "E-MTAB-1"],
             [item["value"] for item in package["series"]["accession"]],
         )
-        self.assertEqual([{"factor": "disease", "type": "disease"}], package["series"]["variable"])
+        self.assertEqual([{"factor": "disease", "type": {"value": "disease"}}], package["series"]["variable"])
         self.assertEqual("12345", package["series"]["pubmed_publication"][0]["pubmed_id"])
         self.assertEqual("Doe", package["contributor"][0]["person"]["last"])
         self.assertEqual("EFO", package["database"][0]["iid"])
