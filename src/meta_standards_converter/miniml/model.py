@@ -28,6 +28,35 @@ class MINiMLModelError(ValueError):
     """A package cannot be represented by the stable MINiML JSON model."""
 
 
+class FrozenJSONMapping(Mapping[str, Any]):
+    """Recursively immutable storage for open MINiML extension fields."""
+
+    def __init__(self, value: Mapping[str, Any] | None = None) -> None:
+        self._data = {
+            str(key): _freeze_json(item) for key, item in (value or {}).items()
+        }
+
+    def __getitem__(self, key: str) -> Any:
+        return self._data[key]
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
+
+    def __deepcopy__(self, memo):
+        return self
+
+
+def _freeze_json(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return FrozenJSONMapping(value)
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_json(item) for item in value)
+    return deepcopy(value)
+
+
 @dataclass(frozen=True)
 class MINiMLValidationIssue:
     path: str
@@ -136,8 +165,8 @@ def _items(value: Any) -> list[Any]:
     return list(value) if isinstance(value, (list, tuple)) else [value]
 
 
-def _extras(data: Mapping[str, Any], known: set[str]) -> dict[str, Any]:
-    return {str(key): deepcopy(value) for key, value in data.items() if key not in known}
+def _extras(data: Mapping[str, Any], known: set[str]) -> Mapping[str, Any]:
+    return FrozenJSONMapping({key: value for key, value in data.items() if key not in known})
 
 
 def _put(result: dict[str, Any], key: str, value: Any) -> None:
@@ -160,7 +189,7 @@ def _plain(value: Any) -> Any:
 
 
 def _record(result: dict[str, Any], extras: Mapping[str, Any]) -> dict[str, Any]:
-    return {**deepcopy(dict(extras)), **result}
+    return {**_plain(extras), **result}
 
 
 T = TypeVar("T")
@@ -816,7 +845,7 @@ class MINiMLPackage(Mapping[str, Any]):
             samples=_objects(data.get("sample"), Sample.from_mapping, "sample"),
             version=None if data.get("version") is None else str(data["version"]),
             schema_location=data.get("schema_location"),
-            mage_tab=None if data.get("mage_tab") is None else deepcopy(dict(_mapping(data["mage_tab"], "mage_tab"))),
+            mage_tab=None if data.get("mage_tab") is None else FrozenJSONMapping(_mapping(data["mage_tab"], "mage_tab")),
             extras=_extras(data, {"miniml_schema_version", "version", "schema_location", "database", "organization", "contributor", "platform", "sample", "series", "mage_tab"}),
         )
         package._raise_structural_errors()

@@ -12,8 +12,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+from uuid import uuid4
 
 from .model import MINiMLPackage, MINiMLValidationIssue
 
@@ -74,4 +76,19 @@ class MINiMLCodec:
         values = [packages] if isinstance(packages, MINiMLPackage) else list(packages)
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(json.dumps(self.encode_many(values), indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+        temporary = destination.with_name(f".{destination.name}.{uuid4().hex}.tmp")
+        try:
+            with temporary.open("x", encoding="utf-8") as handle:
+                json.dump(
+                    self.encode_many(values),
+                    handle,
+                    indent=2,
+                    sort_keys=True,
+                    ensure_ascii=False,
+                )
+                handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, destination)
+        finally:
+            temporary.unlink(missing_ok=True)
