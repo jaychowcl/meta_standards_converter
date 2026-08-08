@@ -35,6 +35,7 @@ from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
     TextResource,
 )
 from meta_standards_converter.converters.ae2json import ae2json  # noqa: E402
+from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
 
 
 IDF = """MAGE-TAB Version\t1.1
@@ -563,6 +564,15 @@ class TestAE2JSONConverter(unittest.TestCase):
             [item["uri"] for item in sample["sra_run"][0]["fastq_files"]],
         )
         self.assertEqual([{"ref": "GSM1"}], package["series"]["sample_ref"])
+
+    def test_parser_emits_canonical_versioned_package(self):
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input()
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+
+        self.assertEqual("1.0", package["miniml_schema_version"])
+        self.assertEqual(package, MINiMLPackage.from_mapping(package).to_mapping())
 
     def test_series_iid_prefers_explicit_arrayexpress_accession(self):
         idf = IDF.replace(

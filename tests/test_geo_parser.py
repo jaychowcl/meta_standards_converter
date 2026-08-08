@@ -18,6 +18,7 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
+from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
 
 
 def miniml_body(body: str) -> str:
@@ -29,6 +30,16 @@ def miniml_body(body: str) -> str:
 
 
 class TestGEOParser(unittest.TestCase):
+    def test_parser_emits_canonical_versioned_package(self):
+        package = GEOParser().parse(
+            miniml_body(
+                '<Sample iid="GSM1" /><Series iid="GSE1"><Sample-Ref ref="GSM1" /></Series>'
+            )
+        )[0]
+
+        self.assertEqual("1.0", package["miniml_schema_version"])
+        self.assertEqual(package, MINiMLPackage.from_mapping(package).to_mapping())
+
     def test_single_series_resolves_relevant_records(self):
         xml = miniml_body(
             """
