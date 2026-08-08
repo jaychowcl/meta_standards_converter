@@ -117,7 +117,7 @@ def test_reader_rejects_python_scalar_aliases_and_malformed_string_lists(
 
 def test_runtime_and_build_metadata_do_not_depend_on_thematicatlases():
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert pyproject["project"]["version"] == "1.0.0"
+    assert pyproject["project"]["version"] == "2.0.0"
     dependencies = pyproject["project"]["dependencies"]
     assert not any("thematicatlases" in item.lower() for item in dependencies)
 
