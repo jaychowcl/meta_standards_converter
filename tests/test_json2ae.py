@@ -28,6 +28,7 @@ from meta_standards_converter.converters.json_source import (  # noqa: E402
     SourceLoadResult,
 )
 from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
+from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: E402
 
 
 def package(accession="GSE1"):
@@ -39,6 +40,10 @@ def package(accession="GSE1"):
         "sample": [{"iid": f"GSM-{accession}"}],
         "platform": [],
     }
+
+
+def typed(payload):
+    return MINiMLCodec().decode(payload).package
 
 
 def atlas_v1(datasets):
@@ -83,6 +88,12 @@ def atlas_dataset(dataset_id, status, metadata, diagnostics=None):
 class TestJSON2AEConverter(unittest.TestCase):
     def write_json(self, directory, payload, name="input.json"):
         path = os.path.join(directory, name)
+        if isinstance(payload, MINiMLPackage):
+            payload = MINiMLCodec().encode(payload)
+        elif isinstance(payload, list) and payload and all(
+            isinstance(item, MINiMLPackage) for item in payload
+        ):
+            payload = MINiMLCodec().encode_many(payload)
         with open(path, "w", encoding="utf-8") as handle:
             json.dump(payload, handle)
         return path
@@ -92,8 +103,8 @@ class TestJSON2AEConverter(unittest.TestCase):
         constructor = MagicMock()
         first = package("GSE1")
         second = package("GSE2")
-        enriched_first = {**first, "enriched": True}
-        enriched_second = {**second, "enriched": True}
+        enriched_first = typed({**first, "enriched": True})
+        enriched_second = typed({**second, "enriched": True})
         enricher.enrich.side_effect = [enriched_first, enriched_second]
         constructor.miniml2magetab.side_effect = ["first-magetab", "second-magetab"]
 
@@ -102,7 +113,7 @@ class TestJSON2AEConverter(unittest.TestCase):
             result = json2ae(enricher=enricher, ae_constructor=constructor).convert(path)
 
         self.assertEqual(["first-magetab", "second-magetab"], result)
-        self.assertEqual([call(data=first), call(data=second)], enricher.enrich.call_args_list)
+        self.assertEqual([call(data=typed(first)), call(data=typed(second))], enricher.enrich.call_args_list)
         self.assertEqual(
             [call(data=enriched_first), call(data=enriched_second)],
             constructor.miniml2magetab.call_args_list,
@@ -124,7 +135,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         self.assertEqual(["magetab"], result)
         enricher.enrich.assert_not_called()
-        constructor.miniml2magetab.assert_called_once_with(data=payload)
+        constructor.miniml2magetab.assert_called_once_with(data=typed(payload))
 
     def test_convert_forwards_forced_platform_handler(self):
         constructor = MagicMock()
@@ -141,7 +152,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         self.assertEqual(["magetab"], result)
         constructor.miniml2magetab.assert_called_once_with(
-            data=payload,
+            data=typed(payload),
             platform_handler="bulk_sequencing",
         )
 
@@ -188,7 +199,7 @@ class TestJSON2AEConverter(unittest.TestCase):
                 tmpdir,
                 {"series": {"title": "Missing accession"}, "sample": [{"iid": "GSM1"}]},
             )
-            with self.assertRaisesRegex(ValueError, "package 1 has no usable study accession"):
+            with self.assertRaisesRegex(ValueError, "series requires iid or accession"):
                 json2ae().convert(path)
 
     def test_convert_accepts_non_geo_study_accession(self):
@@ -240,7 +251,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         self.assertEqual(["first", "second"], result)
         self.assertEqual(
-            [call(data=first), call(data=second)],
+            [call(data=typed(first)), call(data=typed(second))],
             constructor.miniml2magetab.call_args_list,
         )
         self.assertIn(
@@ -269,7 +280,7 @@ class TestJSON2AEConverter(unittest.TestCase):
             groups=(
                 DatasetPackageGroup(
                     dataset_id="GSE1",
-                    packages=(payload,),
+                    packages=(typed(payload),),
                     source_accession="GSE1",
                 ),
             ),
@@ -282,7 +293,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         self.assertEqual(["magetab"], result)
         source.load.assert_called_once_with("virtual-atlas.json")
-        constructor.miniml2magetab.assert_called_once_with(data=payload)
+        constructor.miniml2magetab.assert_called_once_with(data=typed(payload))
 
     def test_convert_still_rejects_malformed_geo_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
