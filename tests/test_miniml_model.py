@@ -23,8 +23,12 @@ from meta_standards_converter.miniml import (
 
 def complete_package() -> dict:
     return {
-        "version": "0.5.4",
-        "schema_location": "https://example.org/MINiML.xsd",
+        "miniml_schema_version": "2.0",
+        "source": {
+            "format": "GEO MINiML",
+            "version": "0.5.4",
+            "schema_location": "https://example.org/MINiML.xsd",
+        },
         "database": [
             {
                 "iid": "GEO",
@@ -73,13 +77,12 @@ def complete_package() -> dict:
                 "channel_count": "1",
                 "channel": [
                     {
-                        "position": "1",
                         "source": "lung",
                         "organism": [
                             {"taxid": "9606", "value": "Homo sapiens"}
                         ],
                         "characteristics": [
-                            {"tag": "disease state", "value": "normal"}
+                            {"name": "disease state", "value": "normal"}
                         ],
                         "molecule": "total RNA",
                     }
@@ -120,7 +123,7 @@ def complete_package() -> dict:
                     "external_data": {"rows": "1", "value": "matrix.txt"},
                 }
             ],
-            "vendor_note": {"value": "preserved"},
+            "extensions": {"vendor_note": {"value": "preserved"}},
         },
     }
 
@@ -130,31 +133,32 @@ def test_complete_xsd_derived_package_round_trips_and_validates_schema() -> None
 
     assert isinstance(model.series, Series)
     assert model.series.sample_ref[0].ref == "GSM1"
-    assert model.samples[0].channels[0].characteristics[0].tag == "disease state"
+    assert model.samples[0].channels[0].characteristics[0].name == "disease state"
     assert model.series.extras["vendor_note"] == {"value": "preserved"}
 
     canonical = model.to_mapping()
     assert canonical["miniml_schema_version"] == MINIML_SCHEMA_VERSION
-    assert canonical["series"]["vendor_note"] == {"value": "preserved"}
+    assert canonical["series"]["extensions"]["vendor_note"] == {"value": "preserved"}
     schema = json.loads(miniml_schema_path().read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(canonical)
 
 
-def test_legacy_singletons_are_normalized_without_dropping_extensions() -> None:
+def test_v2_singletons_are_normalized_without_dropping_extensions() -> None:
     model = MINiMLPackage.from_mapping(
         {
-            "version": "0.5.4",
+            "miniml_schema_version": "2.0",
+            "source": {"format": "test"},
             "contributor": {
                 "iid": "contributor-1",
                 "address": "University Hospital, London, UK",
             },
-            "sample": {"iid": "GSM1", "custom_sample_field": "kept"},
+            "sample": {"iid": "GSM1", "extensions": {"custom_sample_field": "kept"}},
             "series": {
                 "iid": "GSE1",
                 "accession": {"value": "GSE1"},
                 "sample_ref": {"ref": "GSM1"},
             },
-            "custom_root": {"source": "legacy"},
+            "extensions": {"custom_root": {"source": "legacy"}},
         }
     )
 
@@ -162,11 +166,11 @@ def test_legacy_singletons_are_normalized_without_dropping_extensions() -> None:
     assert canonical["database"] == []
     assert canonical["contributor"][0]["address"] == "University Hospital, London, UK"
     assert canonical["sample"] == [
-        {"iid": "GSM1", "custom_sample_field": "kept"}
+        {"iid": "GSM1", "extensions": {"custom_sample_field": "kept"}}
     ]
     assert canonical["series"]["accession"] == [{"value": "GSE1"}]
     assert canonical["series"]["sample_ref"] == [{"ref": "GSM1"}]
-    assert canonical["custom_root"] == {"source": "legacy"}
+    assert canonical["extensions"]["custom_root"] == {"source": "legacy"}
 
 
 def test_compatibility_validation_reports_xsd_deviations_as_warnings() -> None:
@@ -191,14 +195,16 @@ def test_compatibility_validation_reports_xsd_deviations_as_warnings() -> None:
 @pytest.mark.parametrize(
     ("payload", "message"),
     [
-        ({"series": []}, "series must be an object"),
-        ({"series": {}}, "series requires iid or accession"),
+        ({"miniml_schema_version": "2.0", "series": []}, "series must be an object"),
+        ({"miniml_schema_version": "2.0", "series": {}}, "series requires iid or accession"),
         (
-            {"series": {"iid": "GSE1"}, "sample": ["bad"]},
+            {"miniml_schema_version": "2.0", "source": {"format": "test"}, "series": {"iid": "GSE1"}, "sample": ["bad"]},
             r"sample\[0\] must be an object",
         ),
         (
             {
+                "miniml_schema_version": "2.0",
+                "source": {"format": "test"},
                 "series": {"iid": "GSE1"},
                 "sample": [{"iid": "GSM1"}, {"iid": "GSM1"}],
             },

@@ -26,6 +26,8 @@ from meta_standards_converter.miniml import (
 
 def package_payload() -> dict:
     return {
+        "miniml_schema_version": "2.0",
+        "source": {"format": "test"},
         "series": {
             "iid": "GSE1",
             "pubmed_publication": [
@@ -60,7 +62,7 @@ def package_payload() -> dict:
     }
 
 
-def test_codec_decodes_typed_enrichment_and_canonicalizes_legacy_input() -> None:
+def test_codec_decodes_typed_enrichment_from_v2_input() -> None:
     result = MINiMLCodec().decode(package_payload())
 
     assert isinstance(result, MINiMLDecodeResult)
@@ -68,7 +70,7 @@ def test_codec_decodes_typed_enrichment_and_canonicalizes_legacy_input() -> None
     assert isinstance(result.package.series.pubmed_publications[0], PubMedPublication)
     assert isinstance(result.package.samples[0].sra_runs[0], SRARun)
     assert isinstance(result.package.samples[0].sra_runs[0].fastq_files[0], FASTQFile)
-    assert MINiMLCodec().encode(result.package)["miniml_schema_version"] == "1.0"
+    assert MINiMLCodec().encode(result.package)["miniml_schema_version"] == "2.0"
 
 
 def test_codec_returns_warnings_and_strict_mode_promotes_them() -> None:
@@ -91,23 +93,34 @@ def test_codec_decodes_one_or_many_packages() -> None:
     assert len(multiple.packages) == 2
 
 
-def test_typed_package_is_immutable_and_preserves_open_harmonization_fields() -> None:
+def test_typed_package_is_immutable_and_preserves_typed_annotations() -> None:
     payload = package_payload()
     payload["sample"][0]["channel"] = [
         {
             "source": "lung",
-            "pre_hz_label": "Homo sapiens",
-            "hz_species_name": "homo_sapiens",
+            "characteristics": [{
+                "name": "organism",
+                "value": "Homo sapiens",
+                "annotations": [
+                    {
+                        "field": "organism",
+                        "value": "Homo sapiens",
+                        "term_source_ref": "NCBITaxon",
+                        "term_accession_number": "NCBITaxon:9606",
+                    }
+                ],
+            }],
         }
     ]
     package = MINiMLCodec().decode(payload).package
 
-    assert package.samples[0].channels[0].extras["pre_hz_label"] == "Homo sapiens"
-    assert package.samples[0].channels[0].extras["hz_species_name"] == "homo_sapiens"
+    annotation = package.samples[0].channels[0].characteristics[0].annotations[0]
+    assert annotation.value == "Homo sapiens"
+    assert annotation.term_accession_number == "NCBITaxon:9606"
     with pytest.raises(FrozenInstanceError):
         package.version = "changed"  # type: ignore[misc]
-    with pytest.raises(TypeError):
-        package.samples[0].channels[0].extras["pre_hz_label"] = "changed"  # type: ignore[index]
+    with pytest.raises(FrozenInstanceError):
+        package.samples[0].channels[0].characteristics[0].annotations[0].value = "changed"  # type: ignore[misc]
 
 
 def test_codec_dump_is_deterministic_and_replaces_existing_file(tmp_path) -> None:
