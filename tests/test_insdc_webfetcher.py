@@ -32,7 +32,11 @@ class TestINSDCWebfetcher(unittest.TestCase):
         )
 
     def test_ncbi_nrx_uses_ncbi_requester(self):
-        response = Mock(content=b"<EXPERIMENT_PACKAGE_SET />")
+        content = b"<EXPERIMENT_PACKAGE_SET />"
+        response = Mock(
+            headers={"Content-Length": str(len(content))},
+            iter_content=Mock(return_value=iter([content])),
+        )
         response.raise_for_status = Mock()
         requester = Mock()
         requester.get.return_value = response
@@ -40,10 +44,24 @@ class TestINSDCWebfetcher(unittest.TestCase):
         root = INSDCWebfetcher(ncbi_requester=requester)._ncbi_nrx("SRX1")
 
         requester.get.assert_called_once_with(
-            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id=SRX1&retmode=xml"
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id=SRX1&retmode=xml",
+            stream=True,
         )
         response.raise_for_status.assert_called_once()
         self.assertEqual("EXPERIMENT_PACKAGE_SET", root.tag)
+
+    def test_ncbi_nrx_rejects_entity_declarations(self):
+        content = b'<!DOCTYPE x [<!ENTITY y "boom">]><x>&y;</x>'
+        response = Mock(
+            headers={"Content-Length": str(len(content))},
+            iter_content=Mock(return_value=iter([content])),
+        )
+        response.raise_for_status = Mock()
+        requester = Mock()
+        requester.get.return_value = response
+
+        with self.assertRaisesRegex(ValueError, "DTD/entity"):
+            INSDCWebfetcher(ncbi_requester=requester)._ncbi_nrx("SRX1")
 
     def test_fetch_ena_file_report_uses_ena_requester(self):
         response = Mock()

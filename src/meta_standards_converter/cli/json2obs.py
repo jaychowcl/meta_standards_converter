@@ -15,7 +15,11 @@ import json
 import logging
 import sys
 
-from meta_standards_converter.cli.common import add_logging_arguments, configure_logging
+from meta_standards_converter.cli.common import (
+    add_logging_arguments,
+    configure_logging,
+    record_safe_cli_error,
+)
 from meta_standards_converter.converters import JSONDataOutputOrchestrator
 
 logger = logging.getLogger(__name__)
@@ -98,8 +102,19 @@ def main(argv=None) -> int:
             result = orchestrator.export_anndata_metadata(source, **convert_options)
         except Exception as error:
             failed = True
-            logger.exception("%s: observation export failed", source)
-            summaries.append({"source": source, "status": "failed", "error": str(error)})
+            safe_error = record_safe_cli_error(
+                logger,
+                error,
+                location=source,
+                stage="observation_export",
+            )
+            summaries.append(
+                {
+                    "source": safe_error.location,
+                    "status": "failed",
+                    "error": safe_error.to_dict(),
+                }
+            )
             continue
         failed = failed or result.partial
         summaries.append(result.to_dict())

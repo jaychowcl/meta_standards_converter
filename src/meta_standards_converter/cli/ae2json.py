@@ -11,7 +11,11 @@
 import argparse
 import logging
 
-from meta_standards_converter.cli.common import add_logging_arguments, configure_logging
+from meta_standards_converter.cli.common import (
+    add_logging_arguments,
+    configure_logging,
+    record_safe_cli_error,
+)
 from meta_standards_converter.converters.ae2json import ae2json
 
 
@@ -55,9 +59,14 @@ def main(argv=None):
                 out=args.out,
                 sdrf_sources=args.sdrf,
             )
-        except Exception:
+        except Exception as error:
             failed = True
-            logger.exception("%s: conversion failed", source)
+            record_safe_cli_error(
+                logger,
+                error,
+                location=source,
+                stage="ae_json_conversion",
+            )
             continue
         logger.info("%s: converted %d package(s) to %s", source, len(packages), args.out)
     return 1 if failed else 0

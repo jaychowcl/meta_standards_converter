@@ -139,7 +139,11 @@ class TestJSON2AECLI(unittest.TestCase):
 
     @patch("meta_standards_converter.cli.json2ae.json2ae")
     def test_failed_json_returns_one_and_continues(self, json2ae_mock):
-        json2ae_mock.return_value.convert.side_effect = [RuntimeError("invalid JSON"), ["magetab"]]
+        canary = "private-json-detail"
+        json2ae_mock.return_value.convert.side_effect = [
+            RuntimeError(f"invalid JSON: {canary}"),
+            ["magetab"],
+        ]
         stdout = StringIO()
         stderr = StringIO()
 
@@ -154,8 +158,11 @@ class TestJSON2AECLI(unittest.TestCase):
             ],
             json2ae_mock.return_value.convert.call_args_list,
         )
-        self.assertIn("ERROR meta_standards_converter.cli.json2ae: bad.json: conversion failed", stdout.getvalue())
-        self.assertIn("RuntimeError: invalid JSON", stdout.getvalue())
+        self.assertIn(
+            "ERROR meta_standards_converter.cli.json2ae: bad.json: magetab_conversion failed error_type=RuntimeError",
+            stdout.getvalue(),
+        )
+        self.assertNotIn(canary, stdout.getvalue())
         self.assertEqual("", stderr.getvalue())
 
     @patch("meta_standards_converter.cli.json2ae.json2ae")

@@ -21,13 +21,15 @@ from urllib.parse import urlsplit
 
 import requests
 
+from meta_standards_converter.runtime_contracts import ResourceProfile
+
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class RequestSettings:
-    timeout: float = 30
+    timeout: float | tuple[float, float] = 30
     request_delay: float = 1.0
     max_in_flight: int = 2
     max_retries: int = 3
@@ -36,7 +38,15 @@ class RequestSettings:
     backoff_max: float = 8.0
 
     def __post_init__(self) -> None:
-        if self.timeout <= 0:
+        timeout_values = (
+            self.timeout
+            if isinstance(self.timeout, tuple)
+            else (self.timeout,)
+        )
+        if (
+            len(timeout_values) not in {1, 2}
+            or any(value <= 0 for value in timeout_values)
+        ):
             raise ValueError("timeout must be positive")
         if self.request_delay < 0:
             raise ValueError("request_delay must be non-negative")
@@ -44,6 +54,21 @@ class RequestSettings:
             raise ValueError("max_in_flight must be a positive integer")
         if self.max_retries < 0:
             raise ValueError("max_retries must be non-negative")
+
+    @classmethod
+    def from_resource_profile(
+        cls,
+        profile: ResourceProfile,
+        **overrides: Any,
+    ) -> "RequestSettings":
+        return cls(
+            timeout=(
+                profile.connect_timeout_seconds,
+                profile.read_timeout_seconds,
+            ),
+            max_in_flight=profile.network_workers,
+            **overrides,
+        )
 
 
 DEFAULT_REQUEST_SETTINGS = {

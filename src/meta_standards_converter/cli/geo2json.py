@@ -13,7 +13,11 @@ Command line interface for GEO to parsed MINiML JSON conversion.
 import argparse
 import logging
 
-from meta_standards_converter.cli.common import add_logging_arguments, configure_logging
+from meta_standards_converter.cli.common import (
+    add_logging_arguments,
+    configure_logging,
+    record_safe_cli_error,
+)
 from meta_standards_converter.converters.geo2json import geo2json
 
 logger = logging.getLogger(__name__)
@@ -90,9 +94,14 @@ def main(argv=None) -> int:
                 enrich=args.enrich,
                 out=args.out,
             )
-        except Exception:
+        except Exception as error:
             failed = True
-            logger.exception("%s: JSON conversion failed", gse)
+            record_safe_cli_error(
+                logger,
+                error,
+                location=gse,
+                stage="json_conversion",
+            )
             continue
 
         logger.info("%s: converted %d JSON package(s) to %s", gse, len(packages), args.out)

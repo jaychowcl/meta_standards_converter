@@ -15,11 +15,40 @@ import json
 import logging
 import sys
 
-from meta_standards_converter.cli.common import add_logging_arguments, configure_logging
-from meta_standards_converter.converters import JSONDataOutputOrchestrator
+from meta_standards_converter.cli.common import (
+    add_logging_arguments,
+    configure_logging,
+    record_safe_cli_error,
+)
+from meta_standards_converter.converters import (
+    JSON2H5ADConverter,
+    JSONDataOutputOrchestrator,
+)
+from meta_standards_converter.retrieval import RetrievalPolicy
+from meta_standards_converter.runtime_contracts import get_resource_profile
 
 
 logger = logging.getLogger(__name__)
+
+
+def _resource_override(value: str) -> tuple[str, int | float]:
+    name, separator, raw_value = value.partition("=")
+    if not separator or not name.strip() or not raw_value.strip():
+        raise argparse.ArgumentTypeError(
+            "resource override must use FIELD=VALUE"
+        )
+    try:
+        parsed: int | float
+        parsed = (
+            float(raw_value)
+            if name.strip() == "disk_headroom_fraction"
+            else int(raw_value)
+        )
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            "resource override VALUE must be numeric"
+        ) from error
+    return name.strip(), parsed
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -100,6 +129,27 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Apply an Agentic Curator harmonization override profile.",
     )
+    resources = parser.add_argument_group("resource and retrieval policy")
+    resources.add_argument(
+        "--resource-profile",
+        choices=("standard", "large"),
+        default="standard",
+        help="Typed resource envelope. Defaults to standard.",
+    )
+    resources.add_argument(
+        "--resource-override",
+        action="append",
+        default=[],
+        type=_resource_override,
+        metavar="FIELD=VALUE",
+        help="Override one typed profile field; repeat for multiple fields.",
+    )
+    resources.add_argument(
+        "--asset-host",
+        action="append",
+        default=[],
+        help="Explicitly allow one additional exact remote asset hostname.",
+    )
     add_logging_arguments(parser)
     return parser
 
@@ -107,7 +157,26 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     args = _parser().parse_args(argv)
     configure_logging(args, stream=sys.stderr)
-    orchestrator = JSONDataOutputOrchestrator()
+    if (
+        args.resource_profile != "standard"
+        or args.resource_override
+        or args.asset_host
+    ):
+        resource_profile = get_resource_profile(
+            args.resource_profile,
+            overrides=dict(args.resource_override),
+        )
+        retrieval_policy = RetrievalPolicy(
+            resource_profile=resource_profile,
+            allowed_hosts=frozenset(args.asset_host),
+        )
+        orchestrator = JSONDataOutputOrchestrator(
+            h5ad_converter=JSON2H5ADConverter(
+                retrieval_policy=retrieval_policy,
+            )
+        )
+    else:
+        orchestrator = JSONDataOutputOrchestrator()
     failed = False
     summaries = []
     logger.debug(
@@ -150,9 +219,18 @@ def main(argv=None) -> int:
             )
         except Exception as error:
             failed = True
-            logger.exception("%s: H5AD conversion failed", json_path)
+            safe_error = record_safe_cli_error(
+                logger,
+                error,
+                location=json_path,
+                stage="h5ad_conversion",
+            )
             summaries.append(
-                {"source": json_path, "status": "failed", "error": str(error)}
+                {
+                    "source": safe_error.location,
+                    "status": "failed",
+                    "error": safe_error.to_dict(),
+                }
             )
             continue
 

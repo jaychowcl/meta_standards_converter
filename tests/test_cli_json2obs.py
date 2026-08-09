@@ -70,3 +70,20 @@ def test_json2obs_forwards_asset_and_component_options(capsys):
         matrix_orientation="auto",
     )
     assert json.loads(capsys.readouterr().out)["status"] == "complete"
+
+
+def test_json2obs_failure_is_sanitized_and_reported(capsys):
+    canary = "private-observation-detail"
+    with patch.object(json2obs, "JSONDataOutputOrchestrator") as factory:
+        factory.return_value.export_anndata_metadata.side_effect = RuntimeError(
+            f"export failed: {canary}"
+        )
+        status = json2obs.main(["private/input.json", "--outdir", "metadata"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+    assert status == 1
+    assert canary not in captured.err
+    assert canary not in captured.out
+    assert payload["datasets"][0]["source"] == "input.json"
+    assert payload["datasets"][0]["error"]["error_type"] == "RuntimeError"

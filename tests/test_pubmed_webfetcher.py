@@ -67,7 +67,10 @@ class TestPubmedWebFetcher(unittest.TestCase):
   </DocSum>
 </eSummaryResult>
 """
-        response = Mock(content=xml)
+        response = Mock(
+            headers={"Content-Length": str(len(xml))},
+            iter_content=Mock(return_value=iter([xml])),
+        )
         response.raise_for_status = Mock()
 
         requester = Mock()
@@ -76,7 +79,8 @@ class TestPubmedWebFetcher(unittest.TestCase):
         summary = PubmedWebFetcher(requester=requester).pubmed_summary(pubmed_id="12345")
 
         requester.get.assert_called_once_with(
-            "http://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=12345"
+            "https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=12345",
+            stream=True,
         )
         response.raise_for_status.assert_called_once()
         self.assertEqual(
@@ -100,7 +104,10 @@ class TestPubmedWebFetcher(unittest.TestCase):
   </DocSum>
 </eSummaryResult>
 """
-        response = Mock(content=xml)
+        response = Mock(
+            headers={"Content-Length": str(len(xml))},
+            iter_content=Mock(return_value=iter([xml])),
+        )
         response.raise_for_status = Mock()
 
         requester = Mock()

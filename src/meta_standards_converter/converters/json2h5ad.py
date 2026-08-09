@@ -20,17 +20,15 @@ import re
 import shutil
 import subprocess
 import tempfile
-import urllib.request
 from dataclasses import dataclass, field, replace
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
-from urllib.parse import urlparse
 from uuid import uuid4
 
-import requests
-
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+from meta_standards_converter.retrieval import AssetDownloader, RetrievalPolicy
+from meta_standards_converter.runtime_contracts import get_resource_profile
 from .json_source import JSONPackageSource
 from .mage_tab_projection import _parameter_rows, _parameter_summary
 
@@ -208,60 +206,6 @@ class AssetManifest:
             member = {"uri": path, "read": None, "run": None}
             return Asset(scope_id, path, kind, source="cli", members=(member,))
         return Asset(scope_id, path, kind, source="cli")
-
-
-class AssetDownloader:
-    """Stream remote processed assets into a deterministic local cache."""
-
-    def __init__(self, cache_dir: str, session=None, urlopen=None):
-        self.cache_dir = Path(cache_dir)
-        self.session = session or requests.Session()
-        self.urlopen = urlopen or urllib.request.urlopen
-
-    def localize(self, value: str, md5: str | None = None) -> str:
-        parsed = urlparse(value)
-        if parsed.scheme in ("", "file"):
-            return parsed.path if parsed.scheme == "file" else value
-        if parsed.scheme not in {"http", "https", "ftp"}:
-            raise ValueError(f"Unsupported asset URL scheme: {parsed.scheme}")
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        basename = os.path.basename(parsed.path) or "asset"
-        prefix = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
-        destination = self.cache_dir / f"{prefix}-{basename}"
-        if destination.exists():
-            self._verify_md5(destination, md5)
-            return str(destination)
-        with tempfile.NamedTemporaryFile(dir=self.cache_dir, delete=False) as handle:
-            temporary = Path(handle.name)
-            try:
-                if parsed.scheme in {"http", "https"}:
-                    response = self.session.get(value, stream=True, timeout=30)
-                    response.raise_for_status()
-                    for chunk in response.iter_content(chunk_size=1024 * 1024):
-                        if chunk:
-                            handle.write(chunk)
-                else:
-                    with self.urlopen(value, timeout=30) as response:
-                        shutil.copyfileobj(response, handle, length=1024 * 1024)
-            except Exception:
-                temporary.unlink(missing_ok=True)
-                raise
-        try:
-            self._verify_md5(temporary, md5)
-            os.replace(temporary, destination)
-        finally:
-            temporary.unlink(missing_ok=True)
-        return str(destination)
-
-    def _verify_md5(self, path: Path, expected: str | None) -> None:
-        if not expected:
-            return
-        digest = hashlib.md5(usedforsecurity=False)
-        with open(path, "rb") as handle:
-            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                digest.update(chunk)
-        if digest.hexdigest().lower() != expected.lower():
-            raise ValueError(f"MD5 checksum mismatch for {path}")
 
 
 @dataclass
@@ -1158,12 +1102,25 @@ class JSON2H5ADConverter:
         downloader: AssetDownloader | None = None,
         metadata_projectors: Sequence[AnnDataMetadataProjector] | None = None,
         package_source: JSONPackageSource | None = None,
+        retrieval_policy: RetrievalPolicy | None = None,
+        resource_profile: str = "standard",
+        resource_overrides: Mapping[str, int | float] | None = None,
     ):
+        if downloader is not None and retrieval_policy is not None:
+            raise ValueError(
+                "downloader and retrieval_policy are mutually exclusive"
+            )
         self.planner = planner or SourcePlanner()
         self.pipeline_runner = pipeline_runner or NFCoreRunner()
         self.downloader = downloader
         self.metadata_projectors = tuple(metadata_projectors or ())
         self.package_source = package_source or JSONPackageSource()
+        self.retrieval_policy = retrieval_policy or RetrievalPolicy(
+            resource_profile=get_resource_profile(
+                resource_profile,
+                overrides=resource_overrides,
+            )
+        )
 
     def convert(
         self,
@@ -1353,7 +1310,10 @@ class JSON2H5ADConverter:
         if asset_manifest:
             supplied_assets.extend(manifest_handler.load(asset_manifest))
         if self.downloader is None:
-            self.downloader = AssetDownloader(str(out_path / ".cache"))
+            self.downloader = AssetDownloader(
+                str(out_path / ".cache"),
+                policy=self.retrieval_policy,
+            )
         planned = self.planner.plan(
             packages,
             explicit_assets=supplied_assets,

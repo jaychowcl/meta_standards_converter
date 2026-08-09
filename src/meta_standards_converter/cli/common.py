@@ -15,6 +15,7 @@ import logging
 import sys
 
 from meta_standards_converter.ae_handlers.ae_constructor import PLATFORM_HANDLER_KEYS
+from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
 
 
 def add_platform_handler_arguments(parser: argparse.ArgumentParser) -> None:
@@ -88,3 +89,29 @@ def configure_logging(args, *, stream=None) -> None:
             logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
         )
         package_logger.addHandler(file_handler)
+
+
+def record_safe_cli_error(
+    logger: logging.Logger,
+    error: BaseException,
+    *,
+    location: str,
+    stage: str,
+    provider: str | None = None,
+) -> SafeErrorEnvelope:
+    """Log and return a durable error without serializing its raw message."""
+
+    envelope = SafeErrorEnvelope.from_exception(
+        error,
+        provider=provider,
+        location=location,
+        stage=stage,
+    )
+    logger.error(
+        "%s: %s failed error_type=%s correlation_id=%s",
+        envelope.location or "input",
+        stage,
+        envelope.error_type,
+        envelope.correlation_id,
+    )
+    return envelope

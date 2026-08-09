@@ -18,6 +18,7 @@ import sys
 from meta_standards_converter.cli.common import (
     add_logging_arguments,
     configure_logging,
+    record_safe_cli_error,
 )
 from meta_standards_converter.converters import JSONDataOutputOrchestrator
 
@@ -59,9 +60,21 @@ def main(argv=None) -> int:
             if args.use_harmonization_overrides:
                 export_options["use_harmonization_overrides"] = True
             result = orchestrator.export_manifest(value, **export_options)
-        except Exception:
+        except Exception as error:
             failed = True
-            logger.exception("%s: TSV conversion failed", value)
+            safe_error = record_safe_cli_error(
+                logger,
+                error,
+                location=value,
+                stage="manifest_export",
+            )
+            summaries.append(
+                {
+                    "source": safe_error.location,
+                    "status": "failed",
+                    "error": safe_error.to_dict(),
+                }
+            )
             continue
         failed = failed or result.partial
         summaries.append(result.to_dict())

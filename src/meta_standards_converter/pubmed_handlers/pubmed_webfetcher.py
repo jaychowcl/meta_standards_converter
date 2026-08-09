@@ -13,21 +13,44 @@ Fetches and parses PubMed summary metadata.
 import xml.etree.ElementTree as ET
 
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
-from meta_standards_converter.helpers.request_helper import RateLimitedRequester
+from meta_standards_converter.helpers.request_helper import (
+    RateLimitedRequester,
+    RequestSettings,
+)
+from meta_standards_converter.runtime_contracts import get_resource_profile
+from meta_standards_converter.xml_safety import parse_xml, read_limited_response
 
 
 class PubmedWebFetcher:
-    def __init__(self, requester=None, request_settings=None):
+    def __init__(
+        self,
+        requester=None,
+        request_settings=None,
+        resource_profile: str = "standard",
+        resource_overrides=None,
+    ):
+        self.resource_profile = get_resource_profile(
+            resource_profile,
+            overrides=resource_overrides,
+        )
         self.requester = requester or RateLimitedRequester(
             service="ncbi_eutils",
-            settings=request_settings,
+            settings=request_settings
+            or RequestSettings.from_resource_profile(
+                self.resource_profile,
+                request_delay=0.5,
+            ),
         )
 
     def fetch_pubmed_summary(self, pubmed_id: str) -> ET.Element:
-        url = f"http://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id={pubmed_id}"
-        response = self.requester.get(url)
+        url = f"https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id={pubmed_id}"
+        response = self.requester.get(url, stream=True)
         response.raise_for_status()
-        return ET.fromstring(response.content)
+        content = read_limited_response(
+            response,
+            max_bytes=self.resource_profile.max_xml_bytes,
+        )
+        return parse_xml(content, max_bytes=self.resource_profile.max_xml_bytes)
 
     def pubmed_summary(self, pubmed_id: str) -> tuple:
         root = self.fetch_pubmed_summary(pubmed_id=pubmed_id)

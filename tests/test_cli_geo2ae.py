@@ -186,8 +186,9 @@ class TestGeo2AECLI(unittest.TestCase):
     @patch("meta_standards_converter.cli.geo2ae.geo2ae")
     def test_failed_accession_returns_one_and_continues(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
+        canary = "network-secret-token"
         converter.convert.side_effect = [
-            RuntimeError("network unavailable"),
+            RuntimeError(f"network unavailable?token={canary}"),
             ["magetab"],
         ]
 
@@ -205,11 +206,11 @@ class TestGeo2AECLI(unittest.TestCase):
             converter.convert.call_args_list,
         )
         self.assertIn(
-            "ERROR meta_standards_converter.cli.geo2ae: GSE1: conversion failed",
+            "ERROR meta_standards_converter.cli.geo2ae: GSE1: magetab_conversion failed error_type=RuntimeError",
             stdout.getvalue(),
         )
-        self.assertIn("Traceback (most recent call last):", stdout.getvalue())
-        self.assertIn("RuntimeError: network unavailable", stdout.getvalue())
+        self.assertNotIn("Traceback (most recent call last):", stdout.getvalue())
+        self.assertNotIn(canary, stdout.getvalue())
         self.assertEqual("", stderr.getvalue())
 
     @patch("meta_standards_converter.cli.geo2ae.geo2ae")

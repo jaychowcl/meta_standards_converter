@@ -145,6 +145,14 @@ credentials, or tokens.
   the same explicit policy, while structural errors always fail.
 - External calls use service-specific requester settings. Safe telemetry never
   logs credentials, URL queries, raw XML, or study payloads.
+- Remote expression assets cross `RetrievalPolicy`: provider hosts and public
+  addresses are checked before every request/redirect, cross-scheme redirects
+  and URL credentials are rejected, and object/run/cache/disk ceilings are
+  mandatory. Cache reuse requires a matching SHA-256 sidecar.
+- XML provider bodies and GEO archives use the selected typed resource profile.
+  XML is byte-bounded and rejects DTD/entity declarations; GEO archives are
+  streamed to a disk-preflighted temporary file and must contain exactly one
+  expected bounded XML member.
 - Converter-owned nf-core input/output/reference parameters override additional
   params JSON; Nextflow config is for infrastructure and resources.
 - Rootless Compose refuses a daemon without rootless security mode and confines
@@ -266,6 +274,10 @@ database service, or plugin discovery mechanism is exposed.
 - `RateLimitedRequester` is the shared external-call boundary.
   `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
   apply repository-specific URL and response semantics.
+- `OperationStatusV2`, `SafeErrorEnvelope`, and `ResourceProfile` are the
+  shared status, persistence-safe error, and resource-policy vocabulary.
+  `RetrievalService` consumes the resource profile behind the supported
+  `AssetDownloader` facade.
 <a id="core-magetab-construction"></a>
 - Neutral `ae_common.ProtocolRegistry` and technology/file detection feed
   `IDFConstructor` and `SDRFConstructor`; typed MAGE-TAB
@@ -903,6 +915,9 @@ tests/test_request_helper.py
 tests/test_geo_webfetcher.py
 tests/test_insdc_webfetcher.py
 tests/test_pubmed_webfetcher.py
+tests/test_retrieval.py
+tests/test_runtime_contracts.py
+tests/test_xml_safety.py
 tests/GSE328265_family.xml
 ```
 
@@ -925,10 +940,11 @@ tests/GSE328265_family.xml
   documented minimum versions.
 - The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
-- Default request settings are selected per service but enforced across the
-  process by normalized hostname: `ncbi_eutils` uses timeout 30s, delay 0.5s,
-  at most two in flight, and 3 retries; `geo_ftp`, `biostudies`, and
-  `ena_portal` use timeout 30s, delay 1.0s, at most two in flight, and 3 retries.
+- Default request settings are derived from the standard resource profile and
+  enforced across the process by normalized hostname: 10-second connect and
+  60-second read timeouts with at most four network workers. Service-specific
+  request delays and three bounded retries remain in force. The opt-in large
+  profile uses 30/300-second timeouts and eight network workers.
 - Library logging propagates safe structured telemetry to caller handlers.
   DEBUG records service/host, attempt, status, timeout, and duration without URL
   queries or request parameters. INFO records retries, GEO fetch sizes/duration,
@@ -2556,3 +2572,80 @@ enter events. Qualified symbols are
 `meta_standards_converter.operational_events.EVENT_SCHEMA_VERSION`,
 `meta_standards_converter.operational_events.OperationalEventEmitter`, and
 `meta_standards_converter.operational_events.redact`.
+
+<a id="runtime-contracts-v2"></a>
+## Runtime contracts v2
+
+`meta_standards_converter.runtime_contracts.OperationStatusV2` is the clean
+status-2.0 boundary. It keeps execution, completeness, evidence confidence,
+validation, and publication disposition independent, preserves stable terminal
+reason codes, and rejects legacy/unversioned mappings. A successful lookup with
+no scientific match is therefore representable as operationally succeeded and
+complete while evidence is insufficient and publication requires review.
+Failed/invalid/incomplete work cannot claim a publishable disposition, and
+`safe_to_publish` is true only for succeeded, complete, valid, explicitly
+publishable results. `aggregate()` applies deterministic worst-axis rules while
+retaining item-safe errors.
+
+`meta_standards_converter.runtime_contracts.SafeErrorEnvelope` is the mandatory
+persistence-safe error shape. `from_exception()` records only the exception
+class, provider, URL-without-userinfo/query/fragment or path basename, HTTP
+status, retry category, stage/item, and correlation ID. Raw exception text is
+not serialized. `meta_standards_converter.cli.common.record_safe_cli_error`
+is the single CLI boundary: every converter logs only this safe metadata, never
+a traceback or raw exception message, and structured CLI summaries persist the
+same envelope. The independent enums and error/status types are:
+
+- `meta_standards_converter.runtime_contracts.ExecutionStatus`;
+- `meta_standards_converter.runtime_contracts.CompletenessStatus`;
+- `meta_standards_converter.runtime_contracts.EvidenceConfidence`;
+- `meta_standards_converter.runtime_contracts.ValidationStatus`;
+- `meta_standards_converter.runtime_contracts.PublicationDisposition`;
+- `meta_standards_converter.runtime_contracts.RetryCategory`.
+
+`meta_standards_converter.runtime_contracts.ResourceProfile` owns typed
+standard/large ceilings. Standard uses 3 redirects, 10/60-second connect/read
+timeouts, 128 MiB XML, 256 MiB compressed and 1 GiB expanded archives, 3 GiB
+per ontology file, 100 GiB per matrix/H5AD, 200 GiB aggregate downloads,
+250 GiB cache, four network workers, and one ontology-build worker. Large uses
+5 redirects, 30/300 seconds, 512 MiB XML, 1/4 GiB archive limits, 5 GiB per
+ontology file, 500 GiB matrix/H5AD, 1 TiB aggregate downloads, 500 GiB cache,
+eight network workers, and two ontology-build workers. Ontology and matrix byte
+ceilings are disk/download object sizes, not RAM allocations. Both require 10%
+disk headroom. `--resource-profile`, repeated `--resource-override`, and the
+Python constructors expose explicit selection/overrides.
+
+Qualified resource/disk symbols are
+`meta_standards_converter.runtime_contracts.DiskBudget`,
+`meta_standards_converter.runtime_contracts.DiskBudgetError`,
+`meta_standards_converter.runtime_contracts.get_resource_profile`, and
+`meta_standards_converter.runtime_contracts.require_disk_headroom`.
+
+<a id="secure-retrieval-and-xml"></a>
+## Secure retrieval and XML boundaries
+
+`meta_standards_converter.retrieval.RetrievalPolicy` accepts only configured
+schemes and exact/provider-suffix hosts, rejects URL userinfo and non-public
+IPv4/IPv6 answers, and revalidates each same-scheme redirect.
+`meta_standards_converter.retrieval.RetrievalService` streams assets with
+connect/read timeouts and object, aggregate-run, cache, and disk-headroom
+checks. Cache publication records sanitized origin, byte count, SHA-256,
+optional MD5, fetch time, and profile; reuse fails closed if bytes or sidecar
+do not match. `meta_standards_converter.retrieval.AssetDownloader` preserves
+the former supported facade while delegating to this service. Failure types are
+`meta_standards_converter.retrieval.RetrievalError`,
+`meta_standards_converter.retrieval.RetrievalSecurityError`,
+`meta_standards_converter.retrieval.RetrievalSizeError`, and
+`meta_standards_converter.retrieval.CacheIntegrityError`.
+
+`meta_standards_converter.xml_safety.read_limited_response` and
+`meta_standards_converter.xml_safety.stream_limited_response` enforce declared
+and actual body limits. `meta_standards_converter.xml_safety.parse_xml` rejects
+DTD/entity declarations before standard-library parsing. Errors are typed as
+`meta_standards_converter.xml_safety.XMLSafetyError`,
+`meta_standards_converter.xml_safety.XMLSizeLimitError`, and
+`meta_standards_converter.xml_safety.UnsafeXMLDocumentError`. GEO retrieval
+streams the compressed response to a disk-preflighted temporary archive,
+requires exactly `{GSE}_family.xml`, validates its expanded/XML size, and never
+calls `extractall`. SRA/PubMed XML uses the same bounded parser, and PubMed now
+uses HTTPS.

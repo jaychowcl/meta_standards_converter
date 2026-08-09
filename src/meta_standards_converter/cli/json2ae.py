@@ -16,6 +16,7 @@ from meta_standards_converter.cli.common import (
     add_platform_handler_arguments,
     configure_logging,
     print_platform_handlers,
+    record_safe_cli_error,
 )
 from meta_standards_converter.converters.json2ae import json2ae
 
@@ -91,9 +92,14 @@ def main(argv=None) -> int:
             if args.use_harmonization_overrides:
                 convert_options["use_harmonization_overrides"] = True
             magetabs = converter.convert(**convert_options)
-        except Exception:
+        except Exception as error:
             failed = True
-            logger.exception("%s: conversion failed", json_path)
+            record_safe_cli_error(
+                logger,
+                error,
+                location=json_path,
+                stage="magetab_conversion",
+            )
             continue
 
         logger.info(

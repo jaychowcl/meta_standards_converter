@@ -100,8 +100,9 @@ class TestGeo2JSONCLI(unittest.TestCase):
     @patch("meta_standards_converter.cli.geo2json.geo2json")
     def test_failed_accession_returns_one_and_continues(self, geo2json_mock):
         converter = geo2json_mock.return_value
+        canary = "network-secret-token"
         converter.convert.side_effect = [
-            RuntimeError("network unavailable"),
+            RuntimeError(f"network unavailable?token={canary}"),
             [{"series": {"accession": "GSE2"}}],
         ]
 
@@ -119,11 +120,11 @@ class TestGeo2JSONCLI(unittest.TestCase):
             converter.convert.call_args_list,
         )
         self.assertIn(
-            "ERROR meta_standards_converter.cli.geo2json: GSE1: JSON conversion failed",
+            "ERROR meta_standards_converter.cli.geo2json: GSE1: json_conversion failed error_type=RuntimeError",
             stdout.getvalue(),
         )
-        self.assertIn("Traceback (most recent call last):", stdout.getvalue())
-        self.assertIn("RuntimeError: network unavailable", stdout.getvalue())
+        self.assertNotIn("Traceback (most recent call last):", stdout.getvalue())
+        self.assertNotIn(canary, stdout.getvalue())
         self.assertEqual("", stderr.getvalue())
 
     @patch("meta_standards_converter.cli.geo2json.geo2json")

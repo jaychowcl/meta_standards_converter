@@ -15,7 +15,12 @@ import xml.etree.ElementTree as ET
 import requests
 from urllib.parse import urlparse
 
-from meta_standards_converter.helpers.request_helper import RateLimitedRequester
+from meta_standards_converter.helpers.request_helper import (
+    RateLimitedRequester,
+    RequestSettings,
+)
+from meta_standards_converter.runtime_contracts import get_resource_profile
+from meta_standards_converter.xml_safety import parse_xml, read_limited_response
 
 
 class INSDCWebfetcher():
@@ -25,14 +30,28 @@ class INSDCWebfetcher():
         ena_requester=None,
         ncbi_request_settings=None,
         ena_request_settings=None,
+        resource_profile: str = "standard",
+        resource_overrides=None,
     ):
+        self.resource_profile = get_resource_profile(
+            resource_profile,
+            overrides=resource_overrides,
+        )
         self.ncbi_requester = ncbi_requester or RateLimitedRequester(
             service="ncbi_eutils",
-            settings=ncbi_request_settings,
+            settings=ncbi_request_settings
+            or RequestSettings.from_resource_profile(
+                self.resource_profile,
+                request_delay=0.5,
+            ),
         )
         self.ena_requester = ena_requester or RateLimitedRequester(
             service="ena_portal",
-            settings=ena_request_settings,
+            settings=ena_request_settings
+            or RequestSettings.from_resource_profile(
+                self.resource_profile,
+                request_delay=1.0,
+            ),
         )
 
     def _extract_sra(self, sra: str) -> list:
@@ -49,10 +68,17 @@ class INSDCWebfetcher():
         lookup nrx accession to get nrr accessions
         '''
         url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id={nrx}&retmode=xml"
-        response = self.ncbi_requester.get(url)
+        response = self.ncbi_requester.get(url, stream=True)
         response.raise_for_status()
 
-        root = ET.fromstring(response.content)
+        content = read_limited_response(
+            response,
+            max_bytes=self.resource_profile.max_xml_bytes,
+        )
+        root = parse_xml(
+            content,
+            max_bytes=self.resource_profile.max_xml_bytes,
+        )
         
 
         return root

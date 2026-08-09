@@ -379,11 +379,14 @@ json2h5ad output/GSE234602.json \
 | `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
 | `--use-harmonization-overrides` | Replace canonical metadata destinations from the envelope profile and publish `msc_harmonization` provenance. |
+| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
+| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
+| `--asset-host` `HOST` | Explicitly allow one additional exact remote asset hostname; repeat as needed. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-Processed assets may be local or HTTP(S)/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote processed assets are cached under the output directory and an available MD5 is verified. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
+Processed assets may be local or policy-approved HTTPS/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote retrieval revalidates every redirect host/address, rejects private addresses and URL credentials, enforces typed object/run/cache/disk limits, and writes a SHA-256 integrity sidecar. Provider hosts are allowed by default; any additional exact host requires `--asset-host`. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
 
 Ordinary H5AD and delimited-matrix paths use AnnData, pandas, NumPy, and SciPy
 directly. Scanpy is imported lazily only when reading 10x HDF5 or MTX inputs,

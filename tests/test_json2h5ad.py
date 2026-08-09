@@ -41,6 +41,7 @@ from meta_standards_converter.converters.json_source import (
     SourceLoadResult,
 )
 from meta_standards_converter.miniml import MINiMLCodec
+from meta_standards_converter.retrieval import RetrievalPolicy
 
 
 def package(*files, accession="GSM1"):
@@ -356,11 +357,17 @@ class TestAssetInputs(unittest.TestCase):
 
     def test_streaming_downloader_caches_and_verifies_md5(self):
         class Response:
+            status_code = 200
+            headers = {"Content-Length": "6"}
+
             def raise_for_status(self):
                 return None
 
             def iter_content(self, chunk_size):
                 return iter([b"abc", b"123"])
+
+            def close(self):
+                return None
 
         class Session:
             def __init__(self):
@@ -372,7 +379,18 @@ class TestAssetInputs(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             session = Session()
-            downloader = AssetDownloader(cache_dir=tmpdir, session=session)
+            policy = RetrievalPolicy(
+                allowed_hosts=frozenset({"example"}),
+                resolver=lambda host, port, **kwargs: [
+                    (2, 1, 6, "", ("93.184.216.34", port))
+                ],
+                disk_preflight=lambda *args, **kwargs: None,
+            )
+            downloader = AssetDownloader(
+                cache_dir=tmpdir,
+                session=session,
+                policy=policy,
+            )
 
             first = downloader.localize(
                 "https://example/data.h5ad",

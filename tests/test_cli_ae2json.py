@@ -74,7 +74,11 @@ class TestAE2JSONCLI(unittest.TestCase):
 
     @patch("meta_standards_converter.cli.ae2json.ae2json")
     def test_failure_returns_one_and_continues(self, converter_mock):
-        converter_mock.return_value.convert.side_effect = [RuntimeError("bad MAGE-TAB"), [{"series": {}}]]
+        canary = "private-magetab-detail"
+        converter_mock.return_value.convert.side_effect = [
+            RuntimeError(f"bad MAGE-TAB: {canary}"),
+            [{"series": {}}],
+        ]
         stdout = StringIO()
 
         with redirect_stdout(stdout):
@@ -82,8 +86,11 @@ class TestAE2JSONCLI(unittest.TestCase):
 
         self.assertEqual(1, exit_code)
         self.assertEqual(2, converter_mock.return_value.convert.call_count)
-        self.assertIn("bad.idf.txt: conversion failed", stdout.getvalue())
-        self.assertIn("RuntimeError: bad MAGE-TAB", stdout.getvalue())
+        self.assertIn(
+            "bad.idf.txt: ae_json_conversion failed error_type=RuntimeError",
+            stdout.getvalue(),
+        )
+        self.assertNotIn(canary, stdout.getvalue())
 
     @patch("meta_standards_converter.cli.ae2json.ae2json")
     def test_verbose_logs_success(self, converter_mock):

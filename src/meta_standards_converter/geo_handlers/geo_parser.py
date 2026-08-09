@@ -15,19 +15,32 @@ from __future__ import annotations
 import re
 import logging
 import time
-import xml.etree.ElementTree as ET
 from collections import deque
 
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
 from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator
+from meta_standards_converter.runtime_contracts import get_resource_profile
+from meta_standards_converter.xml_safety import parse_xml
 
 
 logger = logging.getLogger(__name__)
 
 
 class GEOParser:
-    def __init__(self, geo_fetcher=None):
-        self.geo_fetcher = geo_fetcher or GEOWebFetcher()
+    def __init__(
+        self,
+        geo_fetcher=None,
+        resource_profile: str = "standard",
+        resource_overrides=None,
+    ):
+        self.resource_profile = get_resource_profile(
+            resource_profile,
+            overrides=resource_overrides,
+        )
+        self.geo_fetcher = geo_fetcher or GEOWebFetcher(
+            resource_profile=resource_profile,
+            resource_overrides=resource_overrides,
+        )
         self.repeated_children = {
             "MINiML": {
                 "Organization",
@@ -123,7 +136,10 @@ class GEOParser:
         return packages
 
     def _parse(self, miniml: str) -> list[dict]:
-        root = ET.fromstring(miniml)
+        root = parse_xml(
+            miniml,
+            max_bytes=self.resource_profile.max_xml_bytes,
+        )
         top_level = self._top_level_nodes(root=root)
         parsed_top_level = {
             name: [self._parse_element(node) for node in nodes]

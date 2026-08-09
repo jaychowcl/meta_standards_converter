@@ -25,6 +25,39 @@ from meta_standards_converter.converters.json2h5ad import ConversionResult  # no
 
 
 class TestJSON2H5ADCLI(unittest.TestCase):
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
+    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    def test_resource_profile_and_explicit_overrides_configure_retrieval(
+        self,
+        orchestrator_mock,
+        converter_mock,
+    ):
+        orchestrator_mock.return_value.export_h5ad.return_value = ConversionResult(
+            "GSE1", combined_h5ad="GSE1.h5ad"
+        )
+
+        with redirect_stdout(StringIO()):
+            exit_code = main(
+                [
+                    "GSE1.json",
+                    "--resource-profile",
+                    "large",
+                    "--resource-override",
+                    "max_matrix_bytes=123",
+                    "--asset-host",
+                    "data.example.org",
+                ]
+            )
+
+        self.assertEqual(0, exit_code)
+        policy = converter_mock.call_args.kwargs["retrieval_policy"]
+        self.assertEqual("large", policy.resource_profile.name)
+        self.assertEqual(123, policy.resource_profile.max_matrix_bytes)
+        self.assertIn("data.example.org", policy.allowed_hosts)
+        orchestrator_mock.assert_called_once_with(
+            h5ad_converter=converter_mock.return_value
+        )
+
     @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
     def test_workflow_and_asset_options_are_forwarded(self, orchestrator_mock):
         orchestrator = orchestrator_mock.return_value
@@ -130,8 +163,9 @@ class TestJSON2H5ADCLI(unittest.TestCase):
     @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
     def test_failed_json_returns_one_and_continues(self, orchestrator_mock):
         orchestrator = orchestrator_mock.return_value
+        canary = "canary-super-secret"
         orchestrator.export_h5ad.side_effect = [
-            NotImplementedError("json2h5ad is not implemented yet"),
+            NotImplementedError(f"request failed?token={canary}"),
             ConversionResult("GSE2", combined_h5ad="GSE2.h5ad"),
         ]
 
@@ -149,12 +183,18 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             orchestrator.export_h5ad.call_args_list,
         )
         self.assertIn(
-            "ERROR meta_standards_converter.cli.json2h5ad: GSE1.json: H5AD conversion failed",
+            "ERROR meta_standards_converter.cli.json2h5ad: GSE1.json: h5ad_conversion failed error_type=NotImplementedError",
             stderr.getvalue(),
         )
-        self.assertIn("Traceback (most recent call last):", stderr.getvalue())
-        self.assertIn("NotImplementedError: json2h5ad is not implemented yet", stderr.getvalue())
-        self.assertEqual("partial", __import__("json").loads(stdout.getvalue())["status"])
+        self.assertNotIn("Traceback (most recent call last):", stderr.getvalue())
+        self.assertNotIn(canary, stderr.getvalue())
+        payload = __import__("json").loads(stdout.getvalue())
+        self.assertEqual("partial", payload["status"])
+        self.assertNotIn(canary, stdout.getvalue())
+        self.assertEqual(
+            "NotImplementedError",
+            payload["datasets"][0]["error"]["error_type"],
+        )
 
     @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
     def test_verbose_emits_success_logs_to_stderr(self, orchestrator_mock):

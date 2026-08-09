@@ -138,6 +138,20 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: OperationalEventEmitter, schema 1.0, JSONL, logging, redaction, metrics, Prometheus, RateLimitedRequester
   link: [Open section](codebase.md#operational-events-v1)
 
+- id: runtime-contracts-v2
+  title: Runtime contracts v2
+  anchor: runtime-contracts-v2
+  purpose: Defines independent status axes, safe error serialization, standard/large resource profiles, explicit overrides, and disk preflight.
+  keywords: status 2.0, execution, completeness, evidence confidence, validation, publication, SafeErrorEnvelope, resource profile, standard, large, disk headroom
+  link: [Open section](codebase.md#runtime-contracts-v2)
+
+- id: secure-retrieval-and-xml
+  title: Secure retrieval and XML boundaries
+  anchor: secure-retrieval-and-xml
+  purpose: Defines provider-host/public-address policy, redirects, byte quotas, cache integrity, streamed archives, and DTD/entity rejection.
+  keywords: retrieval, SSRF, redirect, private IP, SHA-256, cache, XML, archive, DTD, entity
+  link: [Open section](codebase.md#secure-retrieval-and-xml)
+
 - id: proposed-enriched-miniml-core
   title: Enriched MINiML-compatible core
   anchor: proposed-enriched-miniml-core
