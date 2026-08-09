@@ -16,6 +16,7 @@ import requests
 from urllib.parse import urlparse
 
 from meta_standards_converter.helpers.request_helper import (
+    NCBIApplicationIdentity,
     RateLimitedRequester,
     RequestSettings,
 )
@@ -30,6 +31,7 @@ class INSDCWebfetcher():
         ena_requester=None,
         ncbi_request_settings=None,
         ena_request_settings=None,
+        ncbi_identity: NCBIApplicationIdentity | None = None,
         resource_profile: str = "standard",
         resource_overrides=None,
     ):
@@ -37,6 +39,7 @@ class INSDCWebfetcher():
             resource_profile,
             overrides=resource_overrides,
         )
+        self.ncbi_identity = ncbi_identity or NCBIApplicationIdentity()
         self.ncbi_requester = ncbi_requester or RateLimitedRequester(
             service="ncbi_eutils",
             settings=ncbi_request_settings
@@ -67,8 +70,17 @@ class INSDCWebfetcher():
         '''
         lookup nrx accession to get nrr accessions
         '''
-        url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id={nrx}&retmode=xml"
-        response = self.ncbi_requester.get(url, stream=True)
+        url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
+        response = self.ncbi_requester.get(
+            url,
+            params={
+                "db": "sra",
+                "id": nrx,
+                "retmode": "xml",
+                **self.ncbi_identity.params(),
+            },
+            stream=True,
+        )
         response.raise_for_status()
 
         content = read_limited_response(

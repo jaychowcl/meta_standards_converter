@@ -79,7 +79,13 @@ class TestPubmedWebFetcher(unittest.TestCase):
         summary = PubmedWebFetcher(requester=requester).pubmed_summary(pubmed_id="12345")
 
         requester.get.assert_called_once_with(
-            "https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=12345",
+            "https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
+            params={
+                "db": "pubmed",
+                "id": "12345",
+                "tool": "meta_standards_converter",
+                "email": "jaychowcl@gmail.com",
+            },
             stream=True,
         )
         response.raise_for_status.assert_called_once()

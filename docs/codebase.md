@@ -283,6 +283,9 @@ database service, or plugin discovery mechanism is exposed.
 - `RateLimitedRequester` is the shared external-call boundary.
   `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
   apply repository-specific URL and response semantics.
+- `NCBIApplicationIdentity` supplies validated application tool/contact
+  parameters to every PubMed/SRA E-utilities request without exposing the
+  contact value in logs.
 - `OperationStatusV2`, `SafeErrorEnvelope`, and `ResourceProfile` are the
   shared status, persistence-safe error, and resource-policy vocabulary.
   `RetrievalService` consumes the resource profile behind the supported
@@ -654,6 +657,7 @@ follow this canonical overview.
   `meta_standards_converter.harmonizers.harmonizers.Harmonizer`,
   `meta_standards_converter.harmonizers.pubmed2ols.Pubmed2OLS`,
   `meta_standards_converter.helpers.json_helper.JSONHandler`,
+  `meta_standards_converter.helpers.request_helper.NCBIApplicationIdentity`,
   `meta_standards_converter.helpers.request_helper.RequestSettings`,
   `meta_standards_converter.helpers.request_helper.RateLimitedRequester`,
   `meta_standards_converter.insdc_handlers.insdc_webfetcher.INSDCWebfetcher`, and
@@ -1328,7 +1332,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-10 and reported
-`569 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`570 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -2405,6 +2409,15 @@ Other helpers:
 <a id="request-helper"></a>
 ### `helpers/request_helper.py`
 
+`class NCBIApplicationIdentity`
+
+- Validates a 1-64 character NCBI tool identifier and a nonblank contact email.
+- `params() -> dict[str, str]` returns the exact `tool`/`email` parameters used
+  by both NCBI fetchers. Defaults identify the released MSC application and its
+  public maintainer contact; callers may inject an approved replacement.
+- Request telemetry contains service/host/attempt/status only and never logs
+  these parameters.
+
 `class RequestSettings`
 
 - Stores request behavior: `timeout`, `request_delay`, `max_in_flight`,
@@ -2438,14 +2451,17 @@ Other helpers:
 
 `class PubmedWebFetcher`
 
-`__init__(requester=None, request_settings=None)`
+`__init__(requester=None, request_settings=None, ncbi_identity=None,
+resource_profile="standard", resource_overrides=None)`
 
 - Defaults to `RateLimitedRequester(service="ncbi_eutils")`.
-- Accepts a custom requester or NCBI E-utilities request settings.
+- Accepts a custom requester, NCBI E-utilities request settings, or validated
+  application identity.
 
 `fetch_pubmed_summary(pubmed_id: str) -> ET.Element`
 
-- Calls NCBI PubMed ESummary for one PubMed ID through the `ncbi_eutils` requester.
+- Calls NCBI PubMed ESummary for one PubMed ID through the `ncbi_eutils`
+  requester with the configured tool/contact parameters.
 - Raises for HTTP errors and returns the parsed XML root.
 
 `pubmed_summary(pubmed_id: str) -> tuple`
@@ -2459,11 +2475,15 @@ Other helpers:
 
 `class INSDCWebfetcher`
 
-`__init__(ncbi_requester=None, ena_requester=None, ncbi_request_settings=None, ena_request_settings=None)`
+`__init__(ncbi_requester=None, ena_requester=None,
+ncbi_request_settings=None, ena_request_settings=None, ncbi_identity=None,
+resource_profile="standard", resource_overrides=None)`
 
 - Defaults to `RateLimitedRequester(service="ncbi_eutils")` for NCBI SRA EFetch.
 - Defaults to `RateLimitedRequester(service="ena_portal")` for ENA Portal file reports.
-- Accepts custom requesters or per-service request settings.
+- Accepts custom requesters, per-service request settings, or a validated NCBI
+  application identity. EFetch receives its tool/contact parameters; ENA calls
+  do not receive NCBI-specific fields.
 
 `_extract_sra(sra: str)`
 

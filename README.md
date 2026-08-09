@@ -856,7 +856,11 @@ Network requests pass through the
 [`RateLimitedRequester`](docs/codebase.md#request-helper) boundary.
 Limits are shared by normalized HTTP hostname, including across different
 service labels. Defaults conservatively allow two NCBI E-utilities starts per
-second and one start per second for GEO FTP, ENA Portal, and BioStudies. The
+second and one start per second for GEO FTP, ENA Portal, and BioStudies.
+PubMed and SRA E-utilities fetchers also send the centrally validated
+`NCBIApplicationIdentity` tool/contact parameters on every request; callers
+may inject an approved replacement, and request logging never includes those
+parameters. The
 standard/large profiles cap default collaborators at four/eight requests in
 flight per host. These are client ceilings, not provider
 entitlements; `429` and transient server responses still use bounded retries.
@@ -879,7 +883,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-10:
-`569 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+`570 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

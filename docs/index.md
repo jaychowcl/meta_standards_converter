@@ -121,7 +121,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Host-aware request policy
   anchor: request-helper
   purpose: Defines conservative provider defaults, process-wide hostname scheduling, in-flight limits, retries, and safe telemetry.
-  keywords: RateLimitedRequester, RequestSettings, hostname, max_in_flight, request_delay, retry, 429
+  keywords: RateLimitedRequester, RequestSettings, NCBIApplicationIdentity, tool, email, contact, hostname, max_in_flight, request_delay, retry, 429
   link: [Open section](codebase.md#request-helper)
 
 - id: neutral-ae-construction-state
@@ -272,5 +272,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Test plan
   anchor: test-plan
   purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
-  keywords: tests, 569 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  keywords: tests, 570 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

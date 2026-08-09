@@ -44,7 +44,14 @@ class TestINSDCWebfetcher(unittest.TestCase):
         root = INSDCWebfetcher(ncbi_requester=requester)._ncbi_nrx("SRX1")
 
         requester.get.assert_called_once_with(
-            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id=SRX1&retmode=xml",
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+            params={
+                "db": "sra",
+                "id": "SRX1",
+                "retmode": "xml",
+                "tool": "meta_standards_converter",
+                "email": "jaychowcl@gmail.com",
+            },
             stream=True,
         )
         response.raise_for_status.assert_called_once()

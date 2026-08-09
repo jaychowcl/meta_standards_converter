@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
 from meta_standards_converter.helpers.request_helper import (
+    NCBIApplicationIdentity,
     RateLimitedRequester,
     RequestSettings,
 )
@@ -26,6 +27,7 @@ class PubmedWebFetcher:
         self,
         requester=None,
         request_settings=None,
+        ncbi_identity: NCBIApplicationIdentity | None = None,
         resource_profile: str = "standard",
         resource_overrides=None,
     ):
@@ -33,6 +35,7 @@ class PubmedWebFetcher:
             resource_profile,
             overrides=resource_overrides,
         )
+        self.ncbi_identity = ncbi_identity or NCBIApplicationIdentity()
         self.requester = requester or RateLimitedRequester(
             service="ncbi_eutils",
             settings=request_settings
@@ -43,8 +46,16 @@ class PubmedWebFetcher:
         )
 
     def fetch_pubmed_summary(self, pubmed_id: str) -> ET.Element:
-        url = f"https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id={pubmed_id}"
-        response = self.requester.get(url, stream=True)
+        url = "https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+        response = self.requester.get(
+            url,
+            params={
+                "db": "pubmed",
+                "id": pubmed_id,
+                **self.ncbi_identity.params(),
+            },
+            stream=True,
+        )
         response.raise_for_status()
         content = read_limited_response(
             response,

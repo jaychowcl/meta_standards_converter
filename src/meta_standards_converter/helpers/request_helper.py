@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+import re
 import threading
 import time
 from typing import Any, Callable
@@ -25,6 +26,31 @@ from meta_standards_converter.runtime_contracts import ResourceProfile
 
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_NCBI_TOOL = "meta_standards_converter"
+DEFAULT_NCBI_EMAIL = "jaychowcl@gmail.com"
+_NCBI_TOOL_PATTERN = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+@dataclass(frozen=True)
+class NCBIApplicationIdentity:
+    """Contactable application identity required by NCBI E-utilities."""
+
+    tool: str = DEFAULT_NCBI_TOOL
+    email: str = DEFAULT_NCBI_EMAIL
+
+    def __post_init__(self) -> None:
+        if not _NCBI_TOOL_PATTERN.fullmatch(self.tool):
+            raise ValueError(
+                "NCBI application tool must contain 1-64 letters, digits, "
+                "underscores, dots, or hyphens"
+            )
+        if not _EMAIL_PATTERN.fullmatch(self.email):
+            raise ValueError("NCBI application email must be a valid contact address")
+
+    def params(self) -> dict[str, str]:
+        return {"tool": self.tool, "email": self.email}
 
 
 @dataclass(frozen=True)

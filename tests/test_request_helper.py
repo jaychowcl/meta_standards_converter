@@ -22,6 +22,7 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.helpers.request_helper import (  # noqa: E402
+    NCBIApplicationIdentity,
     RateLimitedRequester,
     RequestSettings,
 )
@@ -51,6 +52,19 @@ def response(status_code=200, headers=None):
 
 
 class TestRateLimitedRequester(unittest.TestCase):
+    def test_ncbi_application_identity_validates_and_builds_parameters(self):
+        identity = NCBIApplicationIdentity(
+            tool="fibrosis_atlas",
+            email="atlas@example.org",
+        )
+
+        self.assertEqual(
+            {"tool": "fibrosis_atlas", "email": "atlas@example.org"},
+            identity.params(),
+        )
+        with self.assertRaisesRegex(ValueError, "email"):
+            NCBIApplicationIdentity(tool="fibrosis_atlas", email="not-an-email")
+
     def setUp(self):
         RateLimitedRequester.reset_service_state()
 
