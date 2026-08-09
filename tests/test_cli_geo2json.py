@@ -25,6 +25,22 @@ from meta_standards_converter.cli.geo2json import main  # noqa: E402
 
 class TestGeo2JSONCLI(unittest.TestCase):
     @patch("meta_standards_converter.cli.geo2json.geo2json")
+    def test_resource_profile_and_overrides_configure_converter(self, converter_mock):
+        converter_mock.return_value.convert.return_value = []
+
+        exit_code = main([
+            "GSE1",
+            "--resource-profile", "large",
+            "--resource-override", "max_xml_bytes=4096",
+        ])
+
+        self.assertEqual(0, exit_code)
+        converter_mock.assert_called_once()
+        profile = converter_mock.call_args.kwargs["resource_profile"]
+        self.assertEqual("large", profile.name)
+        self.assertEqual(4096, profile.max_xml_bytes)
+
+    @patch("meta_standards_converter.cli.geo2json.geo2json")
     def test_one_accession_uses_defaults(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]

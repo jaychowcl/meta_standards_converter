@@ -16,12 +16,12 @@ import or depend on ThematicAtlases.
 Organization-specific H5AD adapters compose through the public `Asset`,
 `SourcePlanner`, projector protocols, and `JSON2H5ADConverter` facade.
 
-The seven primary workflows are:
+The eight primary workflows are:
 
 - `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF.
 - `geo2json`: GEO Series accession to parsed MINiML-compatible JSON.
 - `json2ae`: parsed MINiML or canonical Atlas v1 JSON to MAGE-TAB IDF and SDRF.
-- `ae2json`: local, HTTP(S), or BioStudies MAGE-TAB to parsed JSON.
+- `ae2json`: local, policy-approved HTTPS, or BioStudies MAGE-TAB to parsed JSON.
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
 - `json2tsv`: parsed JSON to a sample manifest in TSV or CSV format.
 - `json2obs`: parsed JSON plus expression assets to combined AnnData metadata sidecars.
@@ -134,7 +134,7 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt`; Python returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
 | `json2ae` | Parsed MINiML object/list or canonical Atlas v1 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
-| `ae2json` | IDF path, HTTP(S) IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 2.0 with typed protocols and assay paths |
+| `ae2json` | IDF path, policy-approved HTTPS IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 2.0 with typed protocols and assay paths |
 | `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
 | `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v1 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
 | `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Combined `.obs.csv`, optional `.var.csv` and `.uns.json`, plus a JSON result manifest |
@@ -170,6 +170,8 @@ The package has no mandatory application config file. Configure conversions with
 | Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
 | Remote enrichment | `--no-enrich` / `enrich=False` | PubMed and SRA/ENA enrichment enabled |
 | MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
+| Resource envelope | `--resource-profile`, `--resource-override` / `resource_profile`, `resource_overrides` | Typed `standard` profile |
+| Additional MAGE-TAB source host | `ae2json --source-host` / `source_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
 | Output location | `--out` / `out` | Current directory |
 | Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING and above to stdout |
 | H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
@@ -240,6 +242,8 @@ geo2ae --list-platform-handlers
 | `--out` `OUT` | Output directory; default `.`. |
 | `--platform-handler` `KEY` | Force both IDF and SDRF generation through a listed platform handler. |
 | `--list-platform-handlers` | Print valid handler keys, one per line, and exit without converting. |
+| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
+| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
@@ -262,6 +266,8 @@ geo2json GSE234602 --no-enrich --keep-empty --out output
 | `--keep-empty` | Preserve empty parsed fields; mutually exclusive with `--remove-empty`. |
 | `--no-enrich` | Skip PubMed and SRA/ENA enrichment; enrichment is enabled by default. |
 | `--out` `OUT` | Output directory; default `.`. |
+| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
+| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
@@ -297,9 +303,9 @@ an Atlas v1 document it converts datasets whose status is `harmonized`, warns
 about other dataset states and their diagnostics, and fails when no convertible
 package groups remain. Legacy unversioned `accessions` envelopes fail with cutover
 guidance instead of being inferred. If the input came from
-`ae2json`, an unchanged single-SDRF package can reproduce its original tables
-exactly; edits to the typed `mage_tab.model` or mapped core fields regenerate
-the relevant MAGE-TAB content. During regeneration, mapped core content is
+`ae2json`, MAGE-TAB is regenerated deterministically from the typed MINiML 2.0
+model; raw table bodies and the former `mage_tab` sidecar are not retained.
+During regeneration, mapped core content is
 overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF
 columns are inserted while model-only rows, assay paths, node columns, and
 `Protocol REF` columns remain authoritative. This lets curator-added fields
@@ -322,24 +328,30 @@ Resolve an IDF and its SDRFs, then write a MINiML-compatible JSON package.
 
 ```bash
 ae2json study.idf.txt --out output
-ae2json https://example.org/study.idf.txt --out output
+ae2json https://example.org/study.idf.txt --source-host example.org --out output
 ae2json E-MTAB-1990 --out output
 ae2json study.idf.txt --sdrf first.sdrf.txt --sdrf second.sdrf.txt --out output
 ```
 
 | Argument | Behavior |
 | --- | --- |
-| `source` | One or more IDF paths, HTTP(S) IDF URLs, or BioStudies/ArrayExpress accessions. |
+| `source` | One or more IDF paths, policy-approved HTTPS IDF URLs, or BioStudies/ArrayExpress accessions. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--sdrf` `PATH_OR_URL` | Override IDF SDRF references; repeat for multiple SDRFs. Requires exactly one `source` and cannot accompany an accession source. |
 | `--out` `OUT` | Output directory; default `.`. |
+| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
+| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
+| `--source-host` `HOST` | Allow one additional exact HTTPS IDF/SDRF hostname; repeat for multiple hosts. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-Remote IDF/SDRF text remains in memory. Accession mode paginates the BioStudies
-file listing to discover exactly one IDF and at least one SDRF; assay data files
-are not downloaded.
+Remote IDF/SDRF text remains in memory under the selected per-file and aggregate
+byte ceilings. Accession mode paginates the BioStudies file listing to discover
+exactly one IDF and at least one SDRF; assay data files are not downloaded.
+Remote URLs are HTTPS-only, revalidate bounded redirects and public DNS answers,
+and accept provider hosts by default. Use `--source-host` for an additional
+exact host. Local IDF/SDRF reads stop at the same configured file ceiling.
 
 #### `json2h5ad`
 
@@ -596,7 +608,7 @@ packages = ae2json().convert(
 )
 ```
 
-`ae2json.convert(source, out=None, sdrf_sources=None)` returns a one-package list. `sdrf_sources` is a list of explicit local paths or HTTP(S) URLs and follows the same constraints as repeated CLI `--sdrf` values.
+`ae2json.convert(source, out=None, sdrf_sources=None)` returns a one-package list. Configure the constructor with `resource_profile`, `resource_overrides`, and additional exact `source_hosts`. `sdrf_sources` is a list of explicit local paths or policy-approved HTTPS URLs and follows the same constraints as repeated CLI `--sdrf` values.
 
 Convert parsed JSON and expression assets to H5AD:
 
@@ -795,16 +807,17 @@ CLI or Python API
   |     `-> json2h5ad: plan assets -> [nf-core for FASTQ]
   |                         -> normalize AnnData -> sample/combined H5AD + manifest
   |
-  `-- IDF path, URL, or BioStudies accession
-        -> AEWebFetcher -> AEParser -> JSON package + mage_tab sidecar
+  `-- IDF path, approved HTTPS URL, or BioStudies accession
+        -> bounded AEWebFetcher -> AEParser -> strict MINiML 2.0 package
 ```
 
 Network requests pass through the
 [`RateLimitedRequester`](docs/codebase.md#request-helper) boundary.
 Limits are shared by normalized HTTP hostname, including across different
 service labels. Defaults conservatively allow two NCBI E-utilities starts per
-second and one start per second for GEO FTP, ENA Portal, and BioStudies, with at
-most two requests in flight per host. These are client ceilings, not provider
+second and one start per second for GEO FTP, ENA Portal, and BioStudies. The
+standard/large profiles cap default collaborators at four/eight requests in
+flight per host. These are client ceilings, not provider
 entitlements; `429` and transient server responses still use bounded retries.
 [`GEOWebFetcher`](docs/codebase.md#geo-web-fetcher),
 [`GEOParser`](docs/codebase.md#geo-parser),
@@ -816,8 +829,8 @@ programmatic converter calls raise errors to their caller.
 
 ## Testing
 
-The deterministic, network-blocked suite was last verified on 2026-08-02:
-`476 passed, 3 skipped` (plus 91 unittest subtests). The skipped cases are the explicitly opt-in live API
+The deterministic, network-blocked suite was last verified on 2026-08-09:
+`538 passed, 3 skipped` (plus 86 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

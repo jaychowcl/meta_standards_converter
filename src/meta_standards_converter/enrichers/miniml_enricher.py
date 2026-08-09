@@ -19,15 +19,33 @@ import requests
 from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 from meta_standards_converter.pubmed_handlers.pubmed_webfetcher import PubmedWebFetcher
+from meta_standards_converter.runtime_contracts import (
+    ResourceProfile,
+    get_resource_profile,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 class MINiMLEnricher:
-    def __init__(self, pubmed_fetcher=None, insdc_fetcher=None):
-        self.pubmed_fetcher = pubmed_fetcher or PubmedWebFetcher()
-        self.insdc_fetcher = insdc_fetcher or INSDCWebfetcher()
+    def __init__(
+        self,
+        pubmed_fetcher=None,
+        insdc_fetcher=None,
+        resource_profile: str | ResourceProfile = "standard",
+        resource_overrides=None,
+    ):
+        profile = get_resource_profile(
+            resource_profile,
+            overrides=resource_overrides,
+        )
+        self.pubmed_fetcher = pubmed_fetcher or PubmedWebFetcher(
+            resource_profile=profile
+        )
+        self.insdc_fetcher = insdc_fetcher or INSDCWebfetcher(
+            resource_profile=profile
+        )
 
     def enrich(self, data: MINiMLPackage) -> MINiMLPackage:
         started = time.monotonic()

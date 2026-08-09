@@ -29,6 +29,31 @@ MAGETAB_VERSION = "magetabv1.1"
 MAGETAB_SCHEMA_LOCATION = (
     "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf"
 )
+MINIML_MOLECULES = {
+    "genomic DNA",
+    "polyA RNA",
+    "total RNA",
+    "cytoplasmic RNA",
+    "nuclear RNA",
+    "protein",
+    "other",
+}
+MINIML_VARIABLE_FACTORS = {
+    "dose", "time", "tissue", "strain", "gender", "cell line",
+    "development stage", "age", "agent", "cell type", "infection",
+    "isolate", "metabolism", "shock", "stress", "temperature",
+    "speciman", "disease state", "protocol", "growth protocol", "other",
+    "genotype/variation", "species", "individual",
+}
+FACTOR_NORMALIZATION = {
+    "compound": "agent",
+    "treatment": "agent",
+    "drug": "agent",
+    "disease": "disease state",
+    "organism": "species",
+    "sex": "gender",
+    "genotype": "genotype/variation",
+}
 
 
 def normalized_label(value: str) -> str:
@@ -114,6 +139,12 @@ class AEParser:
             series["comments"] = idf_comments
         contributors = self._contributors(idf)
         databases = self._databases(idf)
+        database_ids = {item["iid"] for item in databases}
+        for accession in series.get("accession", []):
+            database = accession.get("database")
+            if database and database not in database_ids:
+                databases.append({"iid": database, "name": database})
+                database_ids.add(database)
         samples = {}
         platforms = {}
         unmapped_columns = []
@@ -283,7 +314,7 @@ class AEParser:
         for index, factor in enumerate(factors):
             if factor.strip():
                 variables.append({
-                    "factor": factor.strip(),
+                    "factor": self._normalized_variable_factor(factor),
                     "type": {
                         "value": factor_types[index].strip() if index < len(factor_types) else factor.strip(),
                         **({"term_source_ref": factor_sources[index].strip()} if index < len(factor_sources) and factor_sources[index].strip() else {}),
@@ -497,7 +528,6 @@ class AEParser:
             ("Comment[Sample_source_name]", channel, "source"),
             ("Description", sample, "description"),
             ("Provider", channel, "biomaterial_provider"),
-            ("Material Type", channel, "molecule"),
             ("Comment[LIBRARY_LAYOUT]", sample, "library_layout"),
             ("Comment[LIBRARY_SELECTION]", sample, "library_selection"),
             ("Comment[LIBRARY_SOURCE]", sample, "library_source"),
@@ -508,6 +538,38 @@ class AEParser:
             value = self._cell(header, row, label)
             if value:
                 self._set_scalar(target, key, value, f"{filename} sample {sample['iid']}")
+        self._map_material_types(
+            filename=filename,
+            header=header,
+            row=row,
+            sample=sample,
+            channel=channel,
+        )
+
+    def _map_material_types(self, *, filename, header, row, sample, channel):
+        for raw_value in self._cells(header, row, "Material Type"):
+            value = raw_value.strip()
+            if not value:
+                continue
+            molecule = next(
+                (
+                    candidate
+                    for candidate in MINIML_MOLECULES
+                    if candidate.casefold() == value.casefold()
+                ),
+                None,
+            )
+            if molecule is not None:
+                self._set_scalar(
+                    channel,
+                    "molecule",
+                    molecule,
+                    f"{filename} sample {sample['iid']}",
+                )
+                continue
+            material = {"tag": "material type", "value": value}
+            if material not in channel["characteristics"]:
+                channel["characteristics"].append(material)
 
     def _map_characteristics(self, header, row, channel):
         existing = {
@@ -684,6 +746,12 @@ class AEParser:
         if upper.startswith("DRP"):
             return "DRA"
         return None
+
+    @staticmethod
+    def _normalized_variable_factor(value: str) -> str:
+        normalized = " ".join(value.strip().casefold().split())
+        mapped = FACTOR_NORMALIZATION.get(normalized, normalized)
+        return mapped if mapped in MINIML_VARIABLE_FACTORS else "other"
 
     def _series_iid(self, investigation, arrayexpress, accessions):
         if arrayexpress:

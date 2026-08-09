@@ -21,6 +21,7 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher  # noqa: E402
+from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
 
 def _package(*, series: dict, sample: list | None = None) -> dict:
@@ -33,6 +34,16 @@ def _package(*, series: dict, sample: list | None = None) -> dict:
 
 
 class TestMINiMLEnricher(unittest.TestCase):
+    def test_default_fetchers_share_typed_resource_profile(self):
+        profile = get_resource_profile(
+            "standard", overrides={"max_xml_bytes": 4096, "network_workers": 2}
+        )
+
+        enricher = MINiMLEnricher(resource_profile=profile)
+
+        self.assertIs(profile, enricher.pubmed_fetcher.resource_profile)
+        self.assertIs(profile, enricher.insdc_fetcher.resource_profile)
+
     def test_enrich_adds_pubmed_publications(self):
         pubmed_fetcher = Mock()
         pubmed_fetcher.pubmed_summary.side_effect = [

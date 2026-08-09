@@ -19,14 +19,32 @@ from meta_standards_converter.geo_handlers.geo_parser import GEOParser
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
+from meta_standards_converter.runtime_contracts import (
+   ResourceProfile,
+   get_resource_profile,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class geo2json(JSONHandler):
-   def __init__(self, enricher=None, geo_fetcher=None, parser=None):
-      self.enricher = enricher or MINiMLEnricher()
-      self.geo_fetcher = geo_fetcher or GEOWebFetcher()
+   def __init__(
+      self,
+      enricher=None,
+      geo_fetcher=None,
+      parser=None,
+      resource_profile: str | ResourceProfile = "standard",
+      resource_overrides=None,
+   ):
+      self.resource_profile = get_resource_profile(
+         resource_profile, overrides=resource_overrides
+      )
+      self.enricher = enricher or MINiMLEnricher(
+         resource_profile=self.resource_profile, resource_overrides=None
+      )
+      self.geo_fetcher = geo_fetcher or GEOWebFetcher(
+         resource_profile=self.resource_profile, resource_overrides=None
+      )
       self.parser = parser or GEOParser(geo_fetcher=self.geo_fetcher)
 
    def convert(

@@ -16,6 +16,8 @@ import logging
 from meta_standards_converter.cli.common import (
     add_logging_arguments,
     add_platform_handler_arguments,
+    add_resource_profile_arguments,
+    configured_resource_profile,
     configure_logging,
     print_platform_handlers,
     record_safe_cli_error,
@@ -62,6 +64,7 @@ def _parser() -> argparse.ArgumentParser:
         help="Directory for generated IDF and SDRF files. Defaults to the current directory.",
     )
     add_platform_handler_arguments(parser)
+    add_resource_profile_arguments(parser.add_argument_group("resource policy"))
     add_logging_arguments(parser)
     return parser
 
@@ -75,7 +78,9 @@ def main(argv=None) -> int:
     if not args.gse:
         parser.error("the following arguments are required: gse")
     configure_logging(args)
-    converter = geo2ae()
+    converter = geo2ae(
+        resource_profile=configured_resource_profile(args, parser)
+    )
     failed = False
     logger.debug(
         "Starting geo2ae CLI with %d accession(s), related_series=%s, remove_empty=%s, out=%s",

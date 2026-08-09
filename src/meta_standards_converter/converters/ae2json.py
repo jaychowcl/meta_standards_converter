@@ -15,14 +15,37 @@ import os
 from meta_standards_converter.ae_handlers.ae_parser import AEParser
 from meta_standards_converter.ae_handlers.ae_webfetcher import AEWebFetcher
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
+from meta_standards_converter.retrieval import RetrievalPolicy
+from meta_standards_converter.runtime_contracts import (
+    ResourceProfile,
+    get_resource_profile,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 class ae2json:
-    def __init__(self, fetcher=None, parser=None):
-        self.fetcher = fetcher or AEWebFetcher()
+    def __init__(
+        self,
+        fetcher=None,
+        parser=None,
+        resource_profile: str | ResourceProfile = "standard",
+        resource_overrides=None,
+        source_hosts=(),
+    ):
+        profile = get_resource_profile(
+            resource_profile,
+            overrides=resource_overrides,
+        )
+        self.fetcher = fetcher or AEWebFetcher(
+            resource_profile=profile,
+            retrieval_policy=RetrievalPolicy(
+                resource_profile=profile,
+                allowed_hosts=frozenset(source_hosts),
+                allowed_schemes=frozenset({"https"}),
+            ),
+        )
         self.parser = parser or AEParser()
 
     def convert(

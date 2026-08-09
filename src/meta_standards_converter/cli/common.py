@@ -15,7 +15,57 @@ import logging
 import sys
 
 from meta_standards_converter.ae_handlers.ae_constructor import PLATFORM_HANDLER_KEYS
-from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
+from meta_standards_converter.runtime_contracts import (
+    ResourceProfile,
+    SafeErrorEnvelope,
+    get_resource_profile,
+)
+
+
+def parse_resource_override(value: str) -> tuple[str, int | float]:
+    name, separator, raw_value = value.partition("=")
+    if not separator or not name.strip() or not raw_value.strip():
+        raise argparse.ArgumentTypeError(
+            "resource override must use FIELD=VALUE"
+        )
+    try:
+        parsed: int | float = (
+            float(raw_value)
+            if name.strip() == "disk_headroom_fraction"
+            else int(raw_value)
+        )
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            "resource override VALUE must be numeric"
+        ) from error
+    return name.strip(), parsed
+
+
+def add_resource_profile_arguments(parser) -> None:
+    parser.add_argument(
+        "--resource-profile",
+        choices=("standard", "large"),
+        default="standard",
+        help="Typed resource envelope. Defaults to standard.",
+    )
+    parser.add_argument(
+        "--resource-override",
+        action="append",
+        default=[],
+        type=parse_resource_override,
+        metavar="FIELD=VALUE",
+        help="Override one typed profile field; repeat for multiple fields.",
+    )
+
+
+def configured_resource_profile(args, parser) -> ResourceProfile:
+    try:
+        return get_resource_profile(
+            args.resource_profile,
+            overrides=dict(args.resource_override),
+        )
+    except ValueError as error:
+        parser.error(str(error))
 
 
 def add_platform_handler_arguments(parser: argparse.ArgumentParser) -> None:

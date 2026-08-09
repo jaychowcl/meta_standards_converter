@@ -192,8 +192,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: workflow-ae2json
   title: MAGE-TAB to parsed JSON
   anchor: workflow-ae2json
-  purpose: Traces local, HTTP, and paginated BioStudies resolution through typed JSON output.
-  keywords: ae2json, BioStudies, pagination, IDF, SDRF, AEParser, typed model
+  purpose: Traces bounded local, policy-approved HTTPS, and paginated BioStudies resolution through strict typed JSON output.
+  keywords: ae2json, BioStudies, E-MTAB-6486, pagination, IDF, SDRF, factor normalization, material type, resource profile, egress, AEParser, typed model
   link: [Open section](codebase.md#workflow-ae2json)
 
 - id: workflow-json2h5ad

@@ -24,6 +24,29 @@ from meta_standards_converter.cli.ae2json import main  # noqa: E402
 
 class TestAE2JSONCLI(unittest.TestCase):
     @patch("meta_standards_converter.cli.ae2json.ae2json")
+    def test_resource_profile_and_overrides_configure_converter(self, converter_mock):
+        converter_mock.return_value.convert.return_value = [{"series": {}}]
+
+        exit_code = main([
+            "E-MTAB-1",
+            "--resource-profile", "large",
+            "--resource-override", "max_xml_bytes=4096",
+            "--resource-override", "network_workers=2",
+            "--source-host", "metadata.example.org",
+        ])
+
+        self.assertEqual(0, exit_code)
+        converter_mock.assert_called_once()
+        profile = converter_mock.call_args.kwargs["resource_profile"]
+        self.assertEqual("large", profile.name)
+        self.assertEqual(4096, profile.max_xml_bytes)
+        self.assertEqual(2, profile.network_workers)
+        self.assertEqual(
+            ("metadata.example.org",),
+            converter_mock.call_args.kwargs["source_hosts"],
+        )
+
+    @patch("meta_standards_converter.cli.ae2json.ae2json")
     def test_one_source_uses_defaults(self, converter_mock):
         converter_mock.return_value.convert.return_value = [{"series": {}}]
 

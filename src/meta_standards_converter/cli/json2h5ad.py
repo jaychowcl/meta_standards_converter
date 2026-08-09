@@ -17,7 +17,10 @@ import sys
 
 from meta_standards_converter.cli.common import (
     add_logging_arguments,
+    add_resource_profile_arguments,
+    configured_resource_profile,
     configure_logging,
+    parse_resource_override as _resource_override,
     record_safe_cli_error,
 )
 from meta_standards_converter.converters import (
@@ -25,30 +28,9 @@ from meta_standards_converter.converters import (
     JSONDataOutputOrchestrator,
 )
 from meta_standards_converter.retrieval import RetrievalPolicy
-from meta_standards_converter.runtime_contracts import get_resource_profile
 
 
 logger = logging.getLogger(__name__)
-
-
-def _resource_override(value: str) -> tuple[str, int | float]:
-    name, separator, raw_value = value.partition("=")
-    if not separator or not name.strip() or not raw_value.strip():
-        raise argparse.ArgumentTypeError(
-            "resource override must use FIELD=VALUE"
-        )
-    try:
-        parsed: int | float
-        parsed = (
-            float(raw_value)
-            if name.strip() == "disk_headroom_fraction"
-            else int(raw_value)
-        )
-    except ValueError as error:
-        raise argparse.ArgumentTypeError(
-            "resource override VALUE must be numeric"
-        ) from error
-    return name.strip(), parsed
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -130,20 +112,7 @@ def _parser() -> argparse.ArgumentParser:
         help="Apply an Agentic Curator harmonization override profile.",
     )
     resources = parser.add_argument_group("resource and retrieval policy")
-    resources.add_argument(
-        "--resource-profile",
-        choices=("standard", "large"),
-        default="standard",
-        help="Typed resource envelope. Defaults to standard.",
-    )
-    resources.add_argument(
-        "--resource-override",
-        action="append",
-        default=[],
-        type=_resource_override,
-        metavar="FIELD=VALUE",
-        help="Override one typed profile field; repeat for multiple fields.",
-    )
+    add_resource_profile_arguments(resources)
     resources.add_argument(
         "--asset-host",
         action="append",
@@ -155,17 +124,15 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
     configure_logging(args, stream=sys.stderr)
     if (
         args.resource_profile != "standard"
         or args.resource_override
         or args.asset_host
     ):
-        resource_profile = get_resource_profile(
-            args.resource_profile,
-            overrides=dict(args.resource_override),
-        )
+        resource_profile = configured_resource_profile(args, parser)
         retrieval_policy = RetrievalPolicy(
             resource_profile=resource_profile,
             allowed_hosts=frozenset(args.asset_host),

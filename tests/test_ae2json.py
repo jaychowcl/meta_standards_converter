@@ -36,6 +36,7 @@ from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
 )
 from meta_standards_converter.converters.ae2json import ae2json  # noqa: E402
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: E402
+from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
 
 IDF = """MAGE-TAB Version\t1.1
@@ -111,6 +112,22 @@ def resolved_input(idf=IDF, sdrfs=None):
 
 
 class TestAE2JSONConverter(unittest.TestCase):
+    def test_resource_profile_and_explicit_source_hosts_reach_default_fetcher(self):
+        profile = get_resource_profile(
+            "standard", overrides={"max_xml_bytes": 4096}
+        )
+
+        converter = ae2json(
+            resource_profile=profile,
+            source_hosts=("metadata.example.org",),
+        )
+
+        self.assertIs(profile, converter.fetcher.resource_profile)
+        self.assertEqual(
+            frozenset({"metadata.example.org"}),
+            converter.fetcher.retrieval_policy.allowed_hosts,
+        )
+
     def test_model_validation_rejects_unsupported_or_malformed_models(self):
         with self.assertRaisesRegex(MAGETabModelError, "schema_version"):
             validate_model({"schema_version": 2})
@@ -522,7 +539,10 @@ class TestAE2JSONConverter(unittest.TestCase):
             ["GSE123", "E-MTAB-1"],
             [item["value"] for item in package["series"]["accession"]],
         )
-        self.assertEqual([{"factor": "disease", "type": {"value": "disease"}}], package["series"]["variable"])
+        self.assertEqual(
+            [{"factor": "disease state", "type": {"value": "disease"}}],
+            package["series"]["variable"],
+        )
         self.assertEqual("12345", package["series"]["pubmed_publication"][0]["pubmed_id"])
         self.assertEqual("Doe", package["contributor"][0]["person"]["last"])
         self.assertEqual("EFO", package["database"][0]["iid"])
@@ -553,6 +573,44 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertIsInstance(package, MINiMLPackage)
         self.assertEqual("2.0", package.miniml_schema_version)
         self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))
+
+    def test_e_mtab_6486_values_are_losslessly_normalized_for_strict_miniml(self):
+        fixture_dir = os.path.join(ROOT, "tests", "fixtures", "arrayexpress")
+        with open(
+            os.path.join(fixture_dir, "E-MTAB-6486.idf.txt"), encoding="utf-8"
+        ) as handle:
+            idf = handle.read()
+        with open(
+            os.path.join(fixture_dir, "E-MTAB-6486.sdrf.txt"), encoding="utf-8"
+        ) as handle:
+            frozen_sdrf = handle.read()
+        fetcher = MagicMock()
+        fetcher.resolve.return_value = resolved_input(
+            idf=idf,
+            sdrfs=[frozen_sdrf],
+        )
+
+        package = ae2json(fetcher=fetcher).convert("E-MTAB-6486")[0]
+        mapping = MINiMLCodec().decode(
+            package.to_mapping(), strict=True
+        ).package.to_mapping()
+
+        self.assertEqual(
+            "total RNA",
+            mapping["sample"][0]["channel"][0]["molecule"]["value"],
+        )
+        self.assertIn(
+            {"name": "material type", "value": "cell"},
+            mapping["sample"][0]["channel"][0]["characteristics"],
+        )
+        self.assertEqual(
+            [{"factor": "agent", "type": {"value": "compound"}}],
+            mapping["series"]["variable"],
+        )
+        self.assertGreaterEqual(
+            {item["iid"] for item in mapping["database"]},
+            {"ArrayExpress", "ENA"},
+        )
 
     def test_series_iid_prefers_explicit_arrayexpress_accession(self):
         idf = IDF.replace(

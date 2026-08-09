@@ -13,6 +13,8 @@ import logging
 
 from meta_standards_converter.cli.common import (
     add_logging_arguments,
+    add_resource_profile_arguments,
+    configured_resource_profile,
     configure_logging,
     record_safe_cli_error,
 )
@@ -38,6 +40,14 @@ def _parser():
         help="Explicit SDRF path or HTTP(S) URL. Repeat for multiple SDRFs; requires one source.",
     )
     parser.add_argument("--out", default=".", help="Directory for generated JSON files.")
+    resources = parser.add_argument_group("resource policy")
+    add_resource_profile_arguments(resources)
+    resources.add_argument(
+        "--source-host",
+        action="append",
+        default=[],
+        help="Explicitly allow one exact remote IDF/SDRF hostname.",
+    )
     add_logging_arguments(parser)
     return parser
 
@@ -48,7 +58,10 @@ def main(argv=None):
     if args.sdrf and len(args.source) != 1:
         parser.error("--sdrf overrides require exactly one source")
     configure_logging(args)
-    converter = ae2json()
+    converter = ae2json(
+        resource_profile=configured_resource_profile(args, parser),
+        source_hosts=tuple(args.source_host),
+    )
     failed = False
     logger.debug("Starting ae2json CLI with %d source(s), out=%s", len(args.source), args.out)
     for source in args.source:

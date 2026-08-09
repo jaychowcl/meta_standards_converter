@@ -13,11 +13,24 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 import io
+import json
 import os
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse
 
-from meta_standards_converter.helpers.request_helper import RateLimitedRequester
+from meta_standards_converter.helpers.request_helper import (
+    RateLimitedRequester,
+    RequestSettings,
+)
+from meta_standards_converter.retrieval import RetrievalPolicy, RetrievalSecurityError
+from meta_standards_converter.runtime_contracts import (
+    ResourceProfile,
+    get_resource_profile,
+)
+from meta_standards_converter.xml_safety import (
+    XMLSizeLimitError,
+    read_limited_response,
+)
 
 
 @dataclass(frozen=True)
@@ -40,14 +53,36 @@ class AEWebFetcher:
 
     API_ROOT = "https://www.ebi.ac.uk/biostudies/api/v1"
     FILE_PAGE_SIZE = 100
+    REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
-    def __init__(self, requester=None, request_settings=None):
+    def __init__(
+        self,
+        requester=None,
+        request_settings=None,
+        resource_profile: str | ResourceProfile = "standard",
+        resource_overrides=None,
+        retrieval_policy: RetrievalPolicy | None = None,
+    ):
+        self.resource_profile = get_resource_profile(
+            resource_profile,
+            overrides=resource_overrides,
+        )
+        self.retrieval_policy = retrieval_policy or RetrievalPolicy(
+            resource_profile=self.resource_profile,
+            allowed_schemes=frozenset({"https"}),
+        )
         self.requester = requester or RateLimitedRequester(
             service="biostudies",
-            settings=request_settings,
+            settings=request_settings
+            or RequestSettings.from_resource_profile(
+                self.resource_profile,
+                request_delay=1.0,
+            ),
         )
+        self._downloaded_bytes = 0
 
     def resolve(self, source: str, sdrf_sources: list[str] | None = None) -> MAGETabInput:
+        self._downloaded_bytes = 0
         if os.path.exists(source):
             return self._resolve_local(source, sdrf_sources=sdrf_sources)
         if self._is_http(source):
@@ -101,9 +136,7 @@ class AEWebFetcher:
             raise ValueError(f"BioStudies accession {accession} exposes no SDRF files.")
 
         info_url = f"{self.API_ROOT}/studies/{quote(accession, safe='')}/info"
-        info_response = self.requester.get(info_url)
-        info_response.raise_for_status()
-        info = info_response.json()
+        info = self._fetch_json(info_url)
         base_url = info.get("httpLink") if isinstance(info, dict) else None
         if not base_url or not self._is_http(base_url):
             raise ValueError(f"BioStudies accession {accession} has no HTTP download link.")
@@ -115,12 +148,10 @@ class AEWebFetcher:
     def _biostudies_file_rows(self, files_url: str) -> list[dict]:
         rows: list[dict] = []
         while True:
-            response = self.requester.get(
+            payload = self._fetch_json(
                 files_url,
                 params={"start": len(rows), "length": self.FILE_PAGE_SIZE},
             )
-            response.raise_for_status()
-            payload = response.json()
             page = payload.get("data", []) if isinstance(payload, dict) else []
             page = [row for row in page if isinstance(row, dict)]
             rows.extend(page)
@@ -140,25 +171,96 @@ class AEWebFetcher:
         url = f"{base_url.rstrip('/')}/Files/{quote(path, safe='/')}"
         resource = self._fetch_http(url)
         name = str(row.get("Name") or os.path.basename(path))
-        return TextResource(name, resource.text, url)
+        return TextResource(name, resource.text, resource.origin)
 
     def _fetch_http(self, url: str) -> TextResource:
-        response = self.requester.get(url)
-        response.raise_for_status()
-        content = getattr(response, "content", None)
-        if content:
-            text = content.decode("utf-8-sig")
-        else:
-            text = response.text
-            if text.startswith("\ufeff"):
-                text = text.lstrip("\ufeff")
-        name = os.path.basename(urlparse(url).path) or "metadata.txt"
-        return TextResource(name, text, url)
+        response, resolved_url = self._request(url)
+        try:
+            response.raise_for_status()
+            content = self._read_response(response)
+        finally:
+            response.close()
+        text = content.decode("utf-8-sig")
+        name = os.path.basename(urlparse(resolved_url).path) or "metadata.txt"
+        return TextResource(name, text, resolved_url)
+
+    def _fetch_json(self, url: str, **kwargs):
+        response, _ = self._request(url, **kwargs)
+        try:
+            response.raise_for_status()
+            content = self._read_response(response)
+        finally:
+            response.close()
+        try:
+            return json.loads(content.decode("utf-8-sig"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError("BioStudies returned invalid UTF-8 JSON metadata.") from error
+
+    def _request(self, url: str, **kwargs):
+        current = url
+        request_kwargs = dict(kwargs)
+        for redirect_count in range(self.resource_profile.max_redirects + 1):
+            self.retrieval_policy.validate_url(current)
+            response = self.requester.get(
+                current,
+                stream=True,
+                allow_redirects=False,
+                **request_kwargs,
+            )
+            if response.status_code not in self.REDIRECT_STATUSES:
+                return response, current
+            location = response.headers.get("Location")
+            response.close()
+            if not location:
+                raise RetrievalSecurityError(
+                    "MAGE-TAB metadata redirect omitted Location."
+                )
+            if redirect_count >= self.resource_profile.max_redirects:
+                raise RetrievalSecurityError(
+                    "MAGE-TAB metadata exceeded the redirect limit."
+                )
+            target = urljoin(current, location)
+            if urlparse(target).scheme.casefold() != urlparse(current).scheme.casefold():
+                raise RetrievalSecurityError(
+                    "Cross-scheme MAGE-TAB metadata redirects are not allowed."
+                )
+            self.retrieval_policy.validate_url(target)
+            current = target
+            request_kwargs = {}
+        raise RetrievalSecurityError("MAGE-TAB metadata exceeded the redirect limit.")
+
+    def _read_response(self, response) -> bytes:
+        content = read_limited_response(
+            response,
+            max_bytes=self.resource_profile.max_xml_bytes,
+        )
+        self._consume_bytes(len(content))
+        return content
+
+    def _consume_bytes(self, byte_count: int) -> None:
+        aggregate = self._downloaded_bytes + byte_count
+        if aggregate > self.resource_profile.max_aggregate_download_bytes:
+            raise XMLSizeLimitError(
+                "MAGE-TAB metadata exceeded the aggregate run download limit."
+            )
+        self._downloaded_bytes = aggregate
 
     def _read_local(self, path: Path) -> str:
         if not path.is_file():
             raise FileNotFoundError(f"MAGE-TAB metadata file not found: {path}")
-        return path.read_text(encoding="utf-8-sig")
+        declared = path.stat().st_size
+        if declared > self.resource_profile.max_xml_bytes:
+            raise XMLSizeLimitError(
+                f"MAGE-TAB metadata declares {declared} bytes and exceeds the "
+                f"{self.resource_profile.max_xml_bytes} byte file limit."
+            )
+        with path.open("rb") as handle:
+            content = handle.read(self.resource_profile.max_xml_bytes + 1)
+        if len(content) > self.resource_profile.max_xml_bytes:
+            raise XMLSizeLimitError(
+                "MAGE-TAB metadata exceeded the configured file limit."
+            )
+        return content.decode("utf-8-sig")
 
     def _sdrf_references(self, idf_text: str) -> list[str]:
         references = []

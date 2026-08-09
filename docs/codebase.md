@@ -702,10 +702,12 @@ local/HTTP/accession -> resolve IDF + SDRF(s) --failure--> exception
                      -> [out?] accession JSON / else return package list
 ```
 
-1. `AEWebFetcher.resolve` accepts a local/HTTP IDF or BioStudies accession and optional SDRF overrides.
-2. Resolution requires exactly one IDF and at least one SDRF.
-3. `AEParser.parse` maps core fields and retains typed/source round-trip evidence.
-4. `out` writes a sanitized accession filename; otherwise no file is created.
+1. `AEWebFetcher.resolve` accepts a bounded local IDF, a policy-approved HTTPS IDF, or a BioStudies accession and optional SDRF overrides.
+2. Every API, IDF, and SDRF response is host/public-address checked, manually redirected under the selected profile, streamed under the per-file ceiling, and charged to the aggregate run limit. Local reads stop at the same ceiling.
+3. Resolution requires exactly one IDF and at least one SDRF.
+4. `AEParser.parse` maps core fields and retains typed/source provenance. It registers referenced accession databases, maps non-MINiML source material types to lossless characteristics, keeps extract molecules in the typed molecule field, and maps MAGE-TAB factors such as `compound` to the nearest XSD factor while retaining the original type value.
+5. The frozen E-MTAB-6486 IDF/SDRF contract exercises the ENA secondary accession, repeated material columns, and `compound` factor through strict `MINiMLCodec` validation.
+6. `out` writes a sanitized accession filename; otherwise no file is created.
 
 Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved); [write]; return [package]`.
 
@@ -1043,35 +1045,37 @@ Both MAGE-TAB-producing CLIs expose `--platform-handler KEY` and standalone `--l
 
 ```text
 main(argv)
-  -> parse one or more sources, optional repeated --sdrf, --out, and logging flags
+  -> parse one or more sources, optional repeated --sdrf, --out,
+     --resource-profile/--resource-override, --source-host, and logging flags
   -> require exactly one source when --sdrf is present
   -> for each source:
        ae2json.convert(source, out, sdrf_sources)
        continue to the next source if conversion fails
   -> return 1 if any source failed, else 0
 
-ae2json.convert(source, out=None, sdrf_sources=None)
+ae2json(resource_profile, resource_overrides, source_hosts)
+  .convert(source, out=None, sdrf_sources=None)
   -> AEWebFetcher.resolve(source, sdrf_sources)
-       existing path: read the IDF and relative/local/HTTP SDRF references
-       HTTP(S) URL: fetch IDF text and resolve relative/HTTP SDRF references
-       accession: paginate BioStudies files, query study info, then fetch IDF/SDRF text
+       existing path: bounded-read the IDF and relative/local/HTTPS SDRFs
+       HTTPS URL: validate egress, stream IDF text, and resolve approved SDRFs
+       accession: paginate bounded BioStudies JSON, query study info, then
+                  validate and stream only the IDF/SDRF metadata files
   -> AEParser.parse(resolved_input)
        parse the IDF and rectangular SDRF tables
        map known investigation, publication, contributor, protocol, sample,
        platform, factor, characteristic, SRA/FASTQ, and array-file metadata
        merge repeated sample/platform records in first-seen order
        keep the first conflicting scalar and record a warning
-       identify the root as magetabv1.1 with the BioStudies specification URL
        set series.iid from the primary ArrayExpress/investigation accession
-       preserve unmapped metadata, typed MAGE-TAB entities, and source tables under mage_tab
-       fingerprint the public package fields for unchanged-table detection
+       normalize factor/material values into the strict MINiML 2.0 vocabulary
+       preserve original values in typed fields/characteristics and source digests
   -> if out, write [{package}] to {study_accession}.json
   -> return [package]
 ```
 
-IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its output uses the existing MINiML-compatible top-level shape (`database`, `organization`, `contributor`, `platform`, `sample`, and `series`), plus a namespaced `mage_tab` extension containing source/version metadata, unmapped data, warnings, an editable typed model, and an optional lossless round-trip sidecar. AE-origin packages use root `version = "magetabv1.1"`, root `schema_location = "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf"`, and an ArrayExpress/investigation accession as `series.iid`; `mage_tab.version` separately retains the original IDF value such as `1.1`. An unchanged one-SDRF package reproduces its parsed source rows exactly. Typed-model edits regenerate MAGE-TAB without merging unsupported values into MINiML fields; exact core edits overlay the corresponding modeled output.
+IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its public output is immutable MSC MINiML 2.0: repository source format and document name/URI/media type/SHA-256 live under `source`, while typed protocols, variables, assay paths, samples, platforms, and accessions live in their canonical model fields. Raw IDF/SDRF bodies and the former `mage_tab` runtime sidecar are not retained. `series.iid` prefers the explicit ArrayExpress accession and cannot be displaced by a GEO or ENA secondary accession. Values outside the XSD vocabulary are normalized only where required for strict validation, with the original scientific value retained in the adjacent typed value or characteristic rather than discarded.
 
-Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTP base, and downloads only those metadata files beneath `Files/`. Remote content is decoded as UTF-8 with optional BOM and remains in memory. FTP sources and referenced assay data downloads are not supported.
+Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTPS base, and downloads only those metadata files beneath `Files/`. API JSON and MAGE-TAB text are UTF-8/BOM decoded only after streamed declared/actual byte checks. Every URL and redirect is restricted to HTTPS, approved provider or explicit exact hosts, and public DNS answers. Referenced assay data is not downloaded.
 
 <a id="geo2json-vs-ae2json"></a>
 ## geo2json Versus ae2json
@@ -1248,8 +1252,8 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 <a id="rootless-json2h5ad-runtime"></a>
 ## Rootless json2h5ad Runtime
 
-The deterministic suite was refreshed on 2026-08-02 and reported
-`476 passed, 3 skipped` (plus 91 unittest subtests). The public wire contract is Atlas document schema 1.0
+The deterministic suite was refreshed on 2026-08-09 and reported
+`538 passed, 3 skipped` (plus 86 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -2463,8 +2467,8 @@ Important test coverage:
 - `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
 - `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
-- `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, and output writing.
-- `tests/test_ae_webfetcher.py`: local and HTTP relative resolution, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
+- `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
+- `tests/test_ae_webfetcher.py`: bounded local and streamed HTTPS resolution, typed profile propagation, explicit host policy, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 3 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, sparse combination, canonical/generic study splitting, partial results, and raw-output reintegration.
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
@@ -2613,7 +2617,16 @@ ontology file, 500 GiB matrix/H5AD, 1 TiB aggregate downloads, 500 GiB cache,
 eight network workers, and two ontology-build workers. Ontology and matrix byte
 ceilings are disk/download object sizes, not RAM allocations. Both require 10%
 disk headroom. `--resource-profile`, repeated `--resource-override`, and the
-Python constructors expose explicit selection/overrides.
+Python constructors expose explicit selection/overrides. `geo2ae`, `geo2json`,
+`ae2json`, and `json2h5ad` expose the shared CLI options; default network
+collaborators receive the same immutable configured profile. Passing an
+already-configured `ResourceProfile` preserves all existing overrides unless
+new explicit overrides replace named fields.
+
+The shared CLI parsing/configuration symbols are
+`meta_standards_converter.cli.common.add_resource_profile_arguments`,
+`meta_standards_converter.cli.common.parse_resource_override`, and
+`meta_standards_converter.cli.common.configured_resource_profile`.
 
 Qualified resource/disk symbols are
 `meta_standards_converter.runtime_contracts.DiskBudget`,
@@ -2648,4 +2661,8 @@ DTD/entity declarations before standard-library parsing. Errors are typed as
 streams the compressed response to a disk-preflighted temporary archive,
 requires exactly `{GSE}_family.xml`, validates its expanded/XML size, and never
 calls `extractall`. SRA/PubMed XML uses the same bounded parser, and PubMed now
-uses HTTPS.
+uses HTTPS. `AEWebFetcher` applies the same `RetrievalPolicy` host, credential,
+public-address, and redirect checks to BioStudies API/file URLs and explicit
+IDF/SDRF URLs; it bounds UTF-8 API JSON and MAGE-TAB text per file and across
+the run. Provider suffixes are trusted by default. Additional exact explicit
+source hosts require `ae2json --source-host HOST` or an injected policy.

@@ -21,6 +21,7 @@ if SRC not in sys.path:
 
 from meta_standards_converter.converters.geo2json import geo2json  # noqa: E402
 from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
+from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
 
 def _package(series: dict) -> MINiMLPackage:
@@ -32,6 +33,26 @@ def _package(series: dict) -> MINiMLPackage:
 
 
 class TestGeo2JSONConverter(unittest.TestCase):
+    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
+    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
+    def test_typed_resource_profile_is_shared_by_default_network_collaborators(
+        self, fetcher_mock, parser_mock, enricher_mock
+    ):
+        profile = get_resource_profile(
+            "standard", overrides={"max_xml_bytes": 4096}
+        )
+
+        converter = geo2json(resource_profile=profile)
+
+        fetcher_mock.assert_called_once_with(
+            resource_profile=profile, resource_overrides=None
+        )
+        enricher_mock.assert_called_once_with(
+            resource_profile=profile, resource_overrides=None
+        )
+        parser_mock.assert_called_once_with(geo_fetcher=converter.geo_fetcher)
+
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
     @patch("meta_standards_converter.converters.geo2json.GEOParser")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")

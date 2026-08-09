@@ -1,0 +1,14 @@
+MAGE-TAB Version	1.1
+Investigation Title	Frozen E-MTAB-6486 normalization contract
+Investigation Accession	E-MTAB-6486
+Comment[SecondaryAccession]	ERP106767
+Comment[SecondaryAccessionTermSourceRef]	ENA
+Experimental Design	single-cell RNA sequencing
+Experimental Factor Name	compound
+Experimental Factor Type	compound
+Protocol Name	P-collect	P-extract
+Protocol Type	sample collection protocol	nucleic acid extraction protocol
+Protocol Description	Collect cells	Extract total RNA
+SDRF File	E-MTAB-6486.sdrf.txt
+Term Source Name	EFO
+Term Source File	https://www.ebi.ac.uk/efo/

@@ -101,6 +101,21 @@ def test_resource_profile_api_overrides_are_explicit_and_validated() -> None:
         get_resource_profile("standard", overrides={"max_xml_bytes": 0})
 
 
+def test_resource_profile_api_preserves_typed_profiles_and_applies_new_overrides() -> None:
+    configured = get_resource_profile(
+        "standard",
+        overrides={"max_xml_bytes": 4096, "network_workers": 2},
+    )
+
+    assert get_resource_profile(configured) is configured
+    replaced = get_resource_profile(
+        configured,
+        overrides={"max_xml_bytes": 8192},
+    )
+    assert replaced.max_xml_bytes == 8192
+    assert replaced.network_workers == 2
+
+
 def test_disk_preflight_requires_ten_percent_headroom(monkeypatch, tmp_path) -> None:
     class _Usage:
         total = 1_000

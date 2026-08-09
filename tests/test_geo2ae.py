@@ -18,9 +18,31 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.converters.geo2ae import geo2ae  # noqa: E402
+from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
 
 class TestGeo2AEConverter(unittest.TestCase):
+    @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
+    @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
+    @patch("meta_standards_converter.converters.geo2ae.GEOParser")
+    @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
+    def test_typed_resource_profile_is_shared_by_default_network_collaborators(
+        self, fetcher_mock, parser_mock, enricher_mock, constructor_mock
+    ):
+        profile = get_resource_profile(
+            "standard", overrides={"max_xml_bytes": 4096}
+        )
+
+        converter = geo2ae(resource_profile=profile)
+
+        fetcher_mock.assert_called_once_with(
+            resource_profile=profile, resource_overrides=None
+        )
+        enricher_mock.assert_called_once_with(
+            resource_profile=profile, resource_overrides=None
+        )
+        parser_mock.assert_called_once_with(geo_fetcher=converter.geo_fetcher)
+        constructor_mock.assert_called_once_with()
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
     @patch("meta_standards_converter.converters.geo2ae.GEOParser")

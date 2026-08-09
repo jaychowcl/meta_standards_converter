@@ -15,6 +15,8 @@ import logging
 
 from meta_standards_converter.cli.common import (
     add_logging_arguments,
+    add_resource_profile_arguments,
+    configured_resource_profile,
     configure_logging,
     record_safe_cli_error,
 )
@@ -66,14 +68,18 @@ def _parser() -> argparse.ArgumentParser:
         default=".",
         help="Directory for generated JSON files. Defaults to the current directory.",
     )
+    add_resource_profile_arguments(parser.add_argument_group("resource policy"))
     add_logging_arguments(parser)
     return parser
 
 
 def main(argv=None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
     configure_logging(args)
-    converter = geo2json()
+    converter = geo2json(
+        resource_profile=configured_resource_profile(args, parser)
+    )
     failed = False
     logger.debug(
         "Starting geo2json CLI with %d accession(s), related_series=%s, remove_empty=%s, enrich=%s, out=%s",

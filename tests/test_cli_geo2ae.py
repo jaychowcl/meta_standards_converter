@@ -39,6 +39,22 @@ PLATFORM_HANDLERS = (
 
 class TestGeo2AECLI(unittest.TestCase):
     @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    def test_resource_profile_and_overrides_configure_converter(self, converter_mock):
+        converter_mock.return_value.convert.return_value = []
+
+        exit_code = main([
+            "GSE1",
+            "--resource-profile", "large",
+            "--resource-override", "max_xml_bytes=4096",
+        ])
+
+        self.assertEqual(0, exit_code)
+        converter_mock.assert_called_once()
+        profile = converter_mock.call_args.kwargs["resource_profile"]
+        self.assertEqual("large", profile.name)
+        self.assertEqual(4096, profile.max_xml_bytes)
+
+    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
     def test_list_platform_handlers_requires_no_accession_or_converter(self, geo2ae_mock):
         stdout = StringIO()
 

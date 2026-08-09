@@ -355,10 +355,12 @@ RESOURCE_PROFILES = {
 
 
 def get_resource_profile(
-    name: str = "standard",
+    name: str | ResourceProfile = "standard",
     *,
     overrides: Mapping[str, int | float] | None = None,
 ) -> ResourceProfile:
+    if isinstance(name, ResourceProfile):
+        return name.with_overrides(overrides) if overrides else name
     try:
         profile = RESOURCE_PROFILES[name]
     except KeyError as error:

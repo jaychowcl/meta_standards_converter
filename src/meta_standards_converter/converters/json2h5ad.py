@@ -24,6 +24,7 @@ from dataclasses import dataclass, field, replace
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
+from urllib.parse import urlparse
 from uuid import uuid4
 
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
