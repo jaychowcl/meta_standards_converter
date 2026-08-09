@@ -402,7 +402,7 @@ json2h5ad output/GSE234602.json \
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-Processed assets may be local or policy-approved HTTPS/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote retrieval revalidates every redirect host/address, rejects private addresses and URL credentials, enforces typed object/run/cache/disk limits, and writes a SHA-256 integrity sidecar. A narrowly scoped NCBI HTTPS range fallback handles `ftp.ncbi.nlm.nih.gov` responses that reject ordinary streaming while preserving the same DNS, redirect, byte, cache-integrity, aggregate, and disk limits. Provider hosts are allowed by default; any additional exact host requires `--asset-host`. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
+Processed assets may be local or policy-approved HTTPS/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote retrieval revalidates every redirect host/address, rejects private addresses and URL credentials, enforces typed object/run/cache/disk limits, and writes a SHA-256 integrity sidecar. A cache lock covers verification, capacity reservation, streaming, and publication; declared bytes—or the object ceiling for an unknown-length response—are reserved with one cache snapshot and one disk preflight before the body is consumed. A narrowly scoped NCBI HTTPS range fallback handles `ftp.ncbi.nlm.nih.gov` responses that reject ordinary streaming while preserving the same DNS, redirect, byte, cache-integrity, aggregate, and disk limits. Provider hosts are allowed by default; any additional exact host requires `--asset-host`. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
 
 Ordinary H5AD and delimited-matrix paths use AnnData, pandas, NumPy, and SciPy
 directly. Scanpy is imported lazily only when reading 10x HDF5 or MTX inputs,
@@ -873,7 +873,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-10:
-`564 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+`566 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

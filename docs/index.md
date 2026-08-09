@@ -149,7 +149,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Secure retrieval and XML boundaries
   anchor: secure-retrieval-and-xml
   purpose: Defines provider-host/public-address policy, redirects, byte quotas, cache integrity, safe multi-member archives, and non-resolving external-DTD handling.
-  keywords: retrieval, SSRF, redirect, private IP, SHA-256, cache, NCBI range fallback, Content-Range, compressed response, XML, archive, auxiliary member, traversal, DTD, SYSTEM, PUBLIC, entity
+  keywords: retrieval, SSRF, redirect, private IP, SHA-256, cache lock, capacity reservation, one cache scan, disk preflight, NCBI range fallback, Content-Range, compressed response, XML, archive, auxiliary member, traversal, DTD, SYSTEM, PUBLIC, entity
   link: [Open section](codebase.md#secure-retrieval-and-xml)
 
 - id: proposed-enriched-miniml-core
@@ -272,5 +272,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Test plan
   anchor: test-plan
   purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
-  keywords: tests, 564 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  keywords: tests, 566 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

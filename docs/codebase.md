@@ -1327,7 +1327,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-10 and reported
-`564 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`566 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -2720,7 +2720,12 @@ schemes and exact/provider-suffix hosts, rejects URL userinfo and non-public
 IPv4/IPv6 answers, and revalidates each same-scheme redirect.
 `meta_standards_converter.retrieval.RetrievalService` streams assets with
 connect/read timeouts and object, aggregate-run, cache, and disk-headroom
-checks. For the exact configured `ftp.ncbi.nlm.nih.gov` host, an HTTP 403 may
+checks. An exclusive cache lock covers verification, capacity reservation,
+streaming, and atomic publication. Before consuming a body, one cache snapshot
+and one disk preflight reserve the declared response size, or the full object
+ceiling when length is unknown; chunk processing updates only byte counters and
+digests and never rescans the directory. For the exact configured
+`ftp.ncbi.nlm.nih.gov` host, an HTTP 403 may
 activate bounded 16 MiB HTTPS range requests; every request repeats URL/DNS
 validation, redirects remain disabled, `Content-Range` must be contiguous and
 truthful, and the same object/run/cache/disk limits apply. Cache publication

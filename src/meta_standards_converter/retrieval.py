@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import hashlib
@@ -21,11 +22,17 @@ from pathlib import Path
 import re
 import socket
 import tempfile
+import threading
 from typing import Any, Callable
 import urllib.request
 from urllib.parse import urljoin, urlparse, urlsplit, urlunsplit
 
 import requests
+
+try:  # POSIX cache coordination; non-POSIX retains process-local safety.
+    import fcntl
+except ImportError:  # pragma: no cover - exercised on non-POSIX platforms.
+    fcntl = None
 
 from meta_standards_converter.runtime_contracts import (
     ResourceProfile,
@@ -44,6 +51,7 @@ DEFAULT_PROVIDER_HOST_SUFFIXES = frozenset(
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 _CONTENT_RANGE = re.compile(r"^bytes (\d+)-(\d+)/(\d+)$")
 _RANGE_CHUNK_BYTES = 16 * 1024 * 1024
+_FALLBACK_CACHE_LOCK = threading.RLock()
 
 
 class RetrievalError(RuntimeError):
@@ -167,23 +175,24 @@ class RetrievalService:
             raise ValueError("max_bytes must be positive")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         destination = self._destination(value)
-        if destination.exists():
-            self._verify_cached(destination, origin=value, expected_md5=md5)
-            return str(destination)
-        if parsed.scheme in {"http", "https"}:
-            self._download_http(
-                value,
-                destination=destination,
-                object_limit=object_limit,
-                expected_md5=md5,
-            )
-        else:
-            self._download_ftp(
-                value,
-                destination=destination,
-                object_limit=object_limit,
-                expected_md5=md5,
-            )
+        with self._cache_lock():
+            if destination.exists():
+                self._verify_cached(destination, origin=value, expected_md5=md5)
+                return str(destination)
+            if parsed.scheme in {"http", "https"}:
+                self._download_http(
+                    value,
+                    destination=destination,
+                    object_limit=object_limit,
+                    expected_md5=md5,
+                )
+            else:
+                self._download_ftp(
+                    value,
+                    destination=destination,
+                    object_limit=object_limit,
+                    expected_md5=md5,
+                )
         return str(destination)
 
     def _download_http(
@@ -392,8 +401,6 @@ class RetrievalService:
                 f"{object_limit} byte object limit."
             )
         self._check_aggregate(declared)
-        self._check_cache_quota(declared)
-        self._disk_preflight(declared)
 
     def _write_stream(
         self,
@@ -408,6 +415,12 @@ class RetrievalService:
         sha256 = hashlib.sha256()
         md5_digest = hashlib.md5(usedforsecurity=False)
         byte_count = 0
+        reserved_bytes = (
+            declared_bytes if declared_bytes is not None else object_limit
+        )
+        self._check_aggregate(reserved_bytes)
+        self._check_cache_quota(reserved_bytes)
+        self._disk_preflight(reserved_bytes)
         with tempfile.NamedTemporaryFile(
             dir=self.cache_dir,
             prefix=f".{destination.name}.",
@@ -432,9 +445,6 @@ class RetrievalService:
                         raise RetrievalSizeError(
                             "Remote assets exceed the aggregate download limit."
                         )
-                    self._check_cache_quota(byte_count)
-                    if declared_bytes is None:
-                        self._disk_preflight(byte_count)
                     handle.write(chunk)
                     sha256.update(chunk)
                     md5_digest.update(chunk)
@@ -533,13 +543,36 @@ class RetrievalService:
             raise RetrievalSizeError("Remote assets exceed the aggregate download limit.")
 
     def _check_cache_quota(self, additional_bytes: int) -> None:
-        cache_bytes = sum(
-            path.stat().st_size
-            for path in self.cache_dir.iterdir()
-            if path.is_file() and not path.name.endswith(".metadata.json")
-        )
+        cache_bytes = self._cache_usage_bytes()
         if cache_bytes + additional_bytes > self.policy.resource_profile.max_cache_bytes:
             raise RetrievalSizeError("Remote asset exceeds the cache byte limit.")
+
+    def _cache_usage_bytes(self) -> int:
+        """Snapshot committed asset bytes once for a locked reservation."""
+
+        return sum(
+            path.stat().st_size
+            for path in self.cache_dir.iterdir()
+            if path.is_file()
+            and not path.name.startswith(".")
+            and not path.name.endswith(".metadata.json")
+        )
+
+    @contextmanager
+    def _cache_lock(self):
+        """Serialize cache verification, reservation, and publication."""
+
+        lock_path = self.cache_dir / ".retrieval-cache.lock"
+        with lock_path.open("a+b") as handle:
+            if fcntl is None:
+                with _FALLBACK_CACHE_LOCK:
+                    yield
+                return
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
     def _disk_preflight(self, required_bytes: int) -> None:
         self.policy.disk_preflight(

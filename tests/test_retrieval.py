@@ -141,6 +141,73 @@ def test_retrieval_enforces_declared_and_streamed_object_limits(tmp_path) -> Non
     assert not list(tmp_path.glob("*.stage"))
 
 
+def test_unknown_length_retrieval_reserves_object_budget_before_streaming(
+    tmp_path,
+) -> None:
+    class ObservedResponse(_Response):
+        stream_started = False
+
+        def iter_content(self, chunk_size: int):
+            self.stream_started = True
+            yield b"12345678"
+
+    (tmp_path / "existing.bin").write_bytes(b"x" * 25)
+    response = ObservedResponse(headers={"X-Unknown-Length": "true"})
+    service = RetrievalService(
+        tmp_path,
+        policy=_policy(),
+        session=_Session([response]),
+    )
+
+    with pytest.raises(RetrievalSizeError, match="cache byte limit"):
+        service.localize(
+            "https://data.example.org/chunked.h5ad",
+            max_bytes=8,
+        )
+
+    assert response.stream_started is False
+
+
+def test_streaming_retrieval_scans_cache_and_preflights_disk_once(tmp_path) -> None:
+    disk_preflights: list[int] = []
+
+    class CountingService(RetrievalService):
+        cache_scans = 0
+
+        def _cache_usage_bytes(self) -> int:
+            self.cache_scans += 1
+            return super()._cache_usage_bytes()
+
+    policy = _policy(
+        disk_preflight=lambda path, required_bytes, headroom_fraction: (
+            disk_preflights.append(required_bytes)
+        )
+    )
+    service = CountingService(
+        tmp_path,
+        policy=policy,
+        session=_Session(
+            [
+                _Response(
+                    headers={"X-Unknown-Length": "true"},
+                    chunks=(b"a",) * 8,
+                )
+            ]
+        ),
+    )
+
+    localized = Path(
+        service.localize(
+            "https://data.example.org/chunked.h5ad",
+            max_bytes=8,
+        )
+    )
+
+    assert localized.read_bytes() == b"a" * 8
+    assert service.cache_scans == 1
+    assert disk_preflights == [8]
+
+
 def test_retrieval_uses_connect_read_timeouts_and_integrity_sidecar(tmp_path) -> None:
     session = _Session([_Response(chunks=(b"abc", b"123"))])
     service = RetrievalService(tmp_path, policy=_policy(), session=session)
