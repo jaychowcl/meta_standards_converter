@@ -150,9 +150,11 @@ credentials, or tokens.
   and URL credentials are rejected, and object/run/cache/disk ceilings are
   mandatory. Cache reuse requires a matching SHA-256 sidecar.
 - XML provider bodies and GEO archives use the selected typed resource profile.
-  XML is byte-bounded and rejects DTD/entity declarations; GEO archives are
-  streamed to a disk-preflighted temporary file and must contain exactly one
-  expected bounded XML member.
+  XML is byte-bounded; one ordinary external SYSTEM/PUBLIC DTD may be stripped
+  without resolution, while entities, internal subsets, malformed declarations,
+  and misplaced declarations fail closed. GEO archives are streamed to a
+  disk-preflighted temporary file and may contain safe auxiliary files and
+  directories alongside exactly one expected bounded XML member.
 - Converter-owned nf-core input/output/reference parameters override additional
   params JSON; Nextflow config is for infrastructure and resources.
 - Rootless Compose refuses a daemon without rootless security mode and confines
@@ -1298,7 +1300,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-09 and reported
-`538 passed, 3 skipped` (plus 86 unittest subtests). The public wire contract is Atlas document schema 1.0
+`558 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -1943,7 +1945,11 @@ output is unchanged.
 
 - Builds the URL with `url_gse_miniml()`.
 - Downloads the `.tgz` archive through the `geo_ftp` requester and calls `raise_for_status()`.
-- Extracts `{gse}_family.xml` from the tarball and returns it as UTF-8 text.
+- Streams every tar member without filesystem extraction, accepting safe
+  auxiliary regular files/directories but requiring exactly one root
+  `{gse}_family.xml`. Absolute/traversal paths, duplicate names, links and
+  special files, unexpected XML, excessive member counts, and excessive total
+  expanded size fail closed. The bounded expected XML is returned as UTF-8.
 
 <a id="ae-web-fetcher"></a>
 ### `ae_handlers/ae_webfetcher.py`
@@ -2693,15 +2699,22 @@ the former supported facade while delegating to this service. Failure types are
 
 `meta_standards_converter.xml_safety.read_limited_response` and
 `meta_standards_converter.xml_safety.stream_limited_response` enforce declared
-and actual body limits. `meta_standards_converter.xml_safety.parse_xml` rejects
-DTD/entity declarations before standard-library parsing. Errors are typed as
+and actual decoded-body limits. A compressed transport's `Content-Length`
+describes its encoded body and is therefore not compared with decoded bytes;
+the declared and decoded ceilings are still independently enforced.
+`meta_standards_converter.xml_safety.parse_xml` accepts and removes one ordinary
+external SYSTEM/PUBLIC DTD without resolving it, then uses standard-library
+parsing. Entity declarations, internal subsets, malformed/multiple DTDs, and
+DTDs outside the prolog are rejected. Errors are typed as
 `meta_standards_converter.xml_safety.XMLSafetyError`,
 `meta_standards_converter.xml_safety.XMLSizeLimitError`, and
 `meta_standards_converter.xml_safety.UnsafeXMLDocumentError`. GEO retrieval
 streams the compressed response to a disk-preflighted temporary archive,
-requires exactly `{GSE}_family.xml`, validates its expanded/XML size, and never
-calls `extractall`. SRA/PubMed XML uses the same bounded parser, and PubMed now
-uses HTTPS. `AEWebFetcher` applies the same `RetrievalPolicy` host, credential,
+requires exactly one root `{GSE}_family.xml`, permits safe auxiliary regular
+files/directories, validates member count and aggregate expanded/XML size, and
+rejects unsafe paths, duplicate names, links, special files, and unexpected
+XML without calling `extractall`. SRA/PubMed XML uses the same bounded parser,
+and PubMed uses HTTPS. `AEWebFetcher` applies the same `RetrievalPolicy` host, credential,
 public-address, and redirect checks to BioStudies API/file URLs and explicit
 IDF/SDRF URLs; it bounds UTF-8 API JSON and MAGE-TAB text per file and across
 the run. Provider suffixes are trusted by default. Additional exact explicit

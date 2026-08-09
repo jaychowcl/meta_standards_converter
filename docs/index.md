@@ -148,8 +148,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: secure-retrieval-and-xml
   title: Secure retrieval and XML boundaries
   anchor: secure-retrieval-and-xml
-  purpose: Defines provider-host/public-address policy, redirects, byte quotas, cache integrity, streamed archives, and DTD/entity rejection.
-  keywords: retrieval, SSRF, redirect, private IP, SHA-256, cache, NCBI range fallback, Content-Range, XML, archive, DTD, entity
+  purpose: Defines provider-host/public-address policy, redirects, byte quotas, cache integrity, safe multi-member archives, and non-resolving external-DTD handling.
+  keywords: retrieval, SSRF, redirect, private IP, SHA-256, cache, NCBI range fallback, Content-Range, compressed response, XML, archive, auxiliary member, traversal, DTD, SYSTEM, PUBLIC, entity
   link: [Open section](codebase.md#secure-retrieval-and-xml)
 
 - id: proposed-enriched-miniml-core

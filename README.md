@@ -827,6 +827,14 @@ second and one start per second for GEO FTP, ENA Portal, and BioStudies. The
 standard/large profiles cap default collaborators at four/eight requests in
 flight per host. These are client ceilings, not provider
 entitlements; `429` and transient server responses still use bounded retries.
+GEO MINiML tarballs may contain safe auxiliary regular files and directories,
+but exactly one root `{GSE}_family.xml` is required; traversal paths, duplicate
+members, links/special files, unexpected XML, and expansion-limit violations
+fail closed. Ordinary external SYSTEM/PUBLIC DTD declarations are stripped
+without network resolution before XML parsing, while entities and internal or
+malformed DTD subsets remain forbidden. Compressed responses are bounded by
+their decoded size without treating the encoded `Content-Length` as a decoded
+byte count.
 [`GEOWebFetcher`](docs/codebase.md#geo-web-fetcher),
 [`GEOParser`](docs/codebase.md#geo-parser),
 [`AEConstructor`](docs/codebase.md#ae-constructor), and the
@@ -838,7 +846,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-09:
-`538 passed, 3 skipped` (plus 86 unittest subtests). The skipped cases are the explicitly opt-in live API
+`558 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

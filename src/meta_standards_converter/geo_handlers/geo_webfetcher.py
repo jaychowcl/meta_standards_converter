@@ -14,6 +14,7 @@ import logging
 import tarfile
 import tempfile
 import time
+from pathlib import PurePosixPath
 
 from meta_standards_converter.helpers.request_helper import (
     RateLimitedRequester,
@@ -27,6 +28,20 @@ from meta_standards_converter.xml_safety import parse_xml, stream_limited_respon
 
 
 logger = logging.getLogger(__name__)
+MAX_GEO_ARCHIVE_MEMBERS = 10_000
+
+
+def _normalise_archive_member_name(name: str) -> str:
+    """Return a safe canonical POSIX member name or reject it."""
+
+    if not name or name.startswith("/") or "\\" in name or "\x00" in name:
+        raise ValueError(f"GEO archive contains an unsafe path: {name!r}.")
+    parts = name.split("/")
+    while parts and parts[0] == ".":
+        parts.pop(0)
+    if not parts or any(part in {"", ".", ".."} for part in parts):
+        raise ValueError(f"GEO archive contains an unsafe path: {name!r}.")
+    return PurePosixPath(*parts).as_posix()
 
 
 class GEOWebFetcher:
@@ -95,7 +110,8 @@ class GEOWebFetcher:
             headroom_fraction=self.resource_profile.disk_headroom_fraction,
         )
 
-        # Stream the archive to disk, then validate the exact single member.
+        # Stream the archive to disk, then inspect every member without
+        # extracting paths onto the filesystem.
         with tempfile.NamedTemporaryFile(suffix=".tgz") as archive:
             archive_bytes = stream_limited_response(
                 response,
@@ -103,33 +119,69 @@ class GEOWebFetcher:
                 max_bytes=self.resource_profile.max_compressed_archive_bytes,
             )
             archive.flush()
-            with tarfile.open(name=archive.name, mode="r:gz") as tar:
-                members = tar.getmembers()
+            with tarfile.open(name=archive.name, mode="r|gz") as tar:
                 expected_name = f"{gse}_family.xml"
-                if (
-                    len(members) != 1
-                    or not members[0].isfile()
-                    or members[0].name != expected_name
-                ):
-                    raise ValueError(
-                        "GEO archive must contain exactly one expected XML member."
-                    )
-                member = members[0]
                 xml_limit = min(
                     self.resource_profile.max_xml_bytes,
                     self.resource_profile.max_expanded_archive_bytes,
                 )
-                if member.size > xml_limit:
+                seen_names: set[str] = set()
+                expanded_bytes = 0
+                member_count = 0
+                encoded: bytes | None = None
+                for member in tar:
+                    member_count += 1
+                    if member_count > MAX_GEO_ARCHIVE_MEMBERS:
+                        raise ValueError(
+                            "GEO archive exceeds the member-count limit."
+                        )
+                    member_name = _normalise_archive_member_name(member.name)
+                    if member_name in seen_names:
+                        raise ValueError(
+                            f"GEO archive contains duplicate member {member_name!r}."
+                        )
+                    seen_names.add(member_name)
+
+                    if not (member.isdir() or member.isfile()):
+                        raise ValueError(
+                            "GEO archive contains a link or unsafe member type."
+                        )
+                    if member.isdir():
+                        continue
+                    if member.size < 0:
+                        raise ValueError("GEO archive member has an invalid size.")
+                    expanded_bytes += member.size
+                    if (
+                        expanded_bytes
+                        > self.resource_profile.max_expanded_archive_bytes
+                    ):
+                        raise ValueError(
+                            "GEO archive exceeds the expanded-byte limit."
+                        )
+                    if member_name.casefold().endswith(".xml"):
+                        if member_name != expected_name:
+                            raise ValueError(
+                                "GEO archive contains an unexpected XML member."
+                            )
+                        if member.size > xml_limit:
+                            raise ValueError(
+                                "GEO XML member exceeds the "
+                                f"{xml_limit} byte expanded limit."
+                            )
+                        miniml_file = tar.extractfile(member)
+                        if miniml_file is None:
+                            raise ValueError(
+                                "GEO archive XML member could not be read."
+                            )
+                        encoded = miniml_file.read(xml_limit + 1)
+                        if len(encoded) > xml_limit:
+                            raise ValueError(
+                                "GEO XML member exceeds the "
+                                f"{xml_limit} byte expanded limit."
+                            )
+                if encoded is None:
                     raise ValueError(
-                        f"GEO XML member exceeds the {xml_limit} byte expanded limit."
-                    )
-                miniml_file = tar.extractfile(member)
-                if miniml_file is None:
-                    raise ValueError("GEO archive XML member could not be read.")
-                encoded = miniml_file.read(xml_limit + 1)
-                if len(encoded) > xml_limit:
-                    raise ValueError(
-                        f"GEO XML member exceeds the {xml_limit} byte expanded limit."
+                        "GEO archive is missing the expected XML member."
                     )
         parse_xml(encoded, max_bytes=self.resource_profile.max_xml_bytes)
         miniml = encoded.decode("utf-8")
