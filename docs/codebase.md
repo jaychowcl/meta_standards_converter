@@ -266,7 +266,10 @@ database service, or plugin discovery mechanism is exposed.
   `JSON2H5ADConverter` owns the expression conversion lifecycle beneath it.
   `SourcePlanner`, `AssetManifest`, and `AssetDownloader` resolve inputs;
   `ReferenceResolver`, `AnnotationConverter`, and `NFCoreRunner` own raw-data
-  execution; result dataclasses expose complete and partial outcomes.
+  execution; an injected `DatasetCombinationPolicy` owns compatibility evidence,
+  organism/reference/modality/feature-namespace checks, sparse join semantics,
+  and acknowledgement provenance; result dataclasses expose complete and
+  partial outcomes.
 <a id="orchestrator-json2delimited-converter"></a>
 - `JSON2DelimitedConverter` owns JSON grouping, sample iteration, projection,
   column ordering, validation policy, and file output. `JSON2TSVConverter`
@@ -354,8 +357,13 @@ statement for them; treat those as **evidence-gap**, not stable API.
 <a id="api-json2h5ad-converter"></a>
 ### `JSON2H5ADConverter`
 
-- **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None, retrieval_policy=None, resource_profile="standard", resource_overrides=None, metadata_service=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
+- **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None, retrieval_policy=None, resource_profile="standard", resource_overrides=None, metadata_service=None, combination_policy=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
 - Dataset, study, sample, checkpoint, and output identities are validated as safe single path components before publication. `series.iid` is the canonical native-package study identity, so an ArrayExpress IID is not displaced by an earlier GEO secondary accession.
+- The injected/default combination policy is the sole owner of multi-sample
+  scientific compatibility. It fails closed on incompatible or partially known
+  evidence unless the caller explicitly acknowledges an unverified partial
+  result; the converter facade retains source, normalization, and publication
+  orchestration.
 - `DatasetBundleRecoveryError` preserves the original publication error, rollback errors, and surviving recovery paths when an overwrite cannot be fully restored.
 - **Inputs:** native MINiML or Atlas v1 JSON, source/reference/runtime options,
   and optional public collaborators.
@@ -368,6 +376,14 @@ statement for them; treat those as **evidence-gap**, not stable API.
   H5AD/provenance artifacts.
 - **Support:** formal export and composition boundary.
 - **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+
+The non-exported injection implementation and its typed scientific rejection
+are importable as
+`meta_standards_converter.converters.dataset_combination.DatasetCombinationPolicy`
+and
+`meta_standards_converter.converters.dataset_combination.DatasetCompatibilityError`.
+They are documented implementation seams rather than additions to
+`converters.__all__`.
 
 <a id="api-source-planner"></a>
 ### `SourcePlanner`
@@ -891,6 +907,7 @@ src/meta_standards_converter/
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
 │   ├── json2ae.py                 # parsed JSON validation and AE orchestration
 │   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
+│   ├── dataset_combination.py     # scientific H5AD compatibility and sparse join policy
 │   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 │   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
 │   ├── miniml_metadata.py        # format-neutral sample metadata service
@@ -1812,8 +1829,9 @@ This section lists public and semi-public callables used by tests or by package 
 
 `class JSON2H5ADConverter`; compatibility alias `class json2h5ad`
 
-- Accepts injectable `SourcePlanner`, `NFCoreRunner`, `AssetDownloader`, and
-  ordered `AnnDataMetadataProjector` collaborators.
+- Accepts injectable `SourcePlanner`, `NFCoreRunner`, `AssetDownloader`,
+  `DatasetCombinationPolicy`, and ordered `AnnDataMetadataProjector`
+  collaborators.
 - `convert(..., allow_invalid=False) -> ConversionResult | BatchConversionResult` accepts ordinary
   parsed MINiML JSON or a canonical Atlas v1 document. It returns the
   single-group result directly and aggregates multiple groups.

@@ -14,7 +14,8 @@ Atlas document schema 1.0, H5AD metadata schema 1.0, and MINiML ledger schema
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
 import or depend on ThematicAtlases.
 Organization-specific H5AD adapters compose through the public `Asset`,
-`SourcePlanner`, projector protocols, and `JSON2H5ADConverter` facade.
+`SourcePlanner`, `DatasetCombinationPolicy`, projector protocols, and the
+`JSON2H5ADConverter` facade.
 
 The eight primary workflows are:
 
@@ -522,7 +523,7 @@ fails, `ArtifactRecoveryError` preserves and reports every remaining backup.
 
 ### Python API
 
-The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use.
+The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use. `JSON2H5ADConverter(..., combination_policy=None)` uses a dedicated default policy for organism, reference, expression-modality, and feature-namespace compatibility, missing-evidence acknowledgement, sparse outer joining, and combination provenance. Replacements must preserve those scientific contracts; source processing and transactional publication remain converter responsibilities.
 
 Read the canonical Atlas v1 wire format without installing its producer:
 

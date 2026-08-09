@@ -65,14 +65,14 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Orchestrators and core types
   anchor: orchestrators-and-core-types
   purpose: Explains state ownership and responsibilities of converters, constructors, planners, runners, and fetchers.
-  keywords: orchestrator, AEConstructor, AEParser, JSON2H5ADConverter, JSON2DelimitedConverter, RateLimitedRequester
+  keywords: orchestrator, AEConstructor, AEParser, JSON2H5ADConverter, DatasetCombinationPolicy, scientific compatibility, JSON2DelimitedConverter, RateLimitedRequester
   link: [Open section](codebase.md#orchestrators-and-core-types)
 
 - id: public-api-reference
   title: Public API reference
   anchor: public-api-reference
   purpose: Defines formal exports and classifies all importable production symbols by support evidence.
-  keywords: public API, __all__, signature, constructor, property, method, protocol, Asset, AssetDownloader, SourcePlanner, JSON2H5ADConverter, MINiMLMetadataProvider, MINiMLMetadataService, DatasetBundleRecoveryError, projector, obs_renames, obs_drops, failure, recovery, side effect
+  keywords: public API, __all__, signature, constructor, property, method, protocol, Asset, AssetDownloader, SourcePlanner, JSON2H5ADConverter, DatasetCombinationPolicy, MINiMLMetadataProvider, MINiMLMetadataService, DatasetBundleRecoveryError, projector, obs_renames, obs_drops, failure, recovery, side effect
   link: [Open section](codebase.md#public-api-reference)
 
 - id: atlas-v1-reader
@@ -200,7 +200,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: MINiML or Atlas JSON to H5AD
   anchor: workflow-json2h5ad
   purpose: Traces grouping, asset planning, raw/processed paths, projection, aggregation, and partial failures.
-  keywords: json2h5ad, Atlas, MINiML, SourcePlanner, scope index, asset performance, typed annotations, harmonized characteristic, organism, known unknown compatibility, allow unverified combination, msc_miniml, packages_json, canonical JSON, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
+  keywords: json2h5ad, Atlas, MINiML, SourcePlanner, DatasetCombinationPolicy, scope index, asset performance, typed annotations, harmonized characteristic, organism, reference, modality, feature namespace, known unknown compatibility, allow unverified combination, msc_miniml, packages_json, canonical JSON, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2h5ad)
 
 - id: workflow-json2tsv

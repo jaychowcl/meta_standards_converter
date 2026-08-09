@@ -69,6 +69,22 @@ def package(*files, accession="GSM1"):
     }
 
 
+def test_converter_accepts_injected_dataset_combination_policy() -> None:
+    class CombinationPolicy:
+        @staticmethod
+        def combine(adatas, **options):
+            assert adatas == {"GSM1": "sample"}
+            assert options["allow_unverified"] is True
+            return "combined"
+
+    converter = JSON2H5ADConverter(combination_policy=CombinationPolicy())
+
+    assert converter._combine(
+        {"GSM1": "sample"},
+        allow_unverified=True,
+    ) == "combined"
+
+
 def atlas_v1_dataset(dataset_id, metadata):
     return {
         "dataset_id": dataset_id,
