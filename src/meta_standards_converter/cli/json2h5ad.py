@@ -20,7 +20,6 @@ from meta_standards_converter.cli.common import (
     add_resource_profile_arguments,
     configured_resource_profile,
     configure_logging,
-    parse_resource_override as _resource_override,
     record_safe_cli_error,
 )
 from meta_standards_converter.converters import (

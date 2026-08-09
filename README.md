@@ -873,7 +873,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-10:
-`566 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+`568 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

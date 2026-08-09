@@ -372,7 +372,7 @@ class DocsIndexTests(unittest.TestCase):
         for document in (readme_text, codebase_text):
             self.assertIn("Atlas document schema 1.0", document)
             self.assertIn("H5AD metadata schema 1.0", document)
-            self.assertIn("566 passed, 3 skipped", document)
+            self.assertIn("568 passed, 3 skipped", document)
             self.assertIn("2026-08-10", document)
         self.assertIn('<a id="h5ad-metadata-schema-v1"></a>', codebase_text)
         self.assertIn('<a id="h5ad-metadata-schema-v3"></a>', codebase_text)
@@ -381,6 +381,22 @@ class DocsIndexTests(unittest.TestCase):
             self.assertIn(evidence, report_text)
         for stale in ("Harmonized v2 datasets", "legacy v1 envelopes"):
             self.assertNotIn(stale, codebase_text)
+
+    def test_raw_magetab_roundtrip_module_is_retired_from_miniml_v2(self):
+        codebase_text = CODEBASE.read_text(encoding="utf-8")
+
+        self.assertFalse(
+            (ROOT / "src/meta_standards_converter/ae_handlers/ae_roundtrip.py").exists()
+        )
+        self.assertIn("Raw-table round-trip helpers are retired", codebase_text)
+        for symbol in (
+            "ae_roundtrip.semantic_sha256",
+            "ae_roundtrip.model_sha256",
+            "ae_roundtrip.build_roundtrip",
+            "ae_roundtrip.unchanged_magetab",
+            "ae_roundtrip.restore_extensions",
+        ):
+            self.assertNotIn(symbol, codebase_text)
 
     def test_readme_configuration_documents_platform_handler_hierarchy(self):
         readme_text = README.read_text(encoding="utf-8")

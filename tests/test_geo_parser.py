@@ -8,6 +8,7 @@
 # =============================================================================
 import os
 import sys
+from typing import get_type_hints
 import unittest
 from unittest.mock import patch
 
@@ -30,6 +31,11 @@ def miniml_body(body: str) -> str:
 
 
 class TestGEOParser(unittest.TestCase):
+    def test_xml_type_hints_resolve_at_runtime(self):
+        hints = get_type_hints(GEOParser._top_level_nodes)
+
+        self.assertEqual("Element", hints["root"].__name__)
+
     def test_parser_emits_canonical_versioned_package(self):
         package = GEOParser().parse(
             miniml_body(

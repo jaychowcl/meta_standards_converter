@@ -16,6 +16,7 @@ import re
 import logging
 import time
 from collections import deque
+from xml.etree import ElementTree as ET
 
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
 from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator

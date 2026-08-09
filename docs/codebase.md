@@ -86,8 +86,8 @@ credentials, or tokens.
 - **Decision:** `ae2json` maps semantic MAGE-TAB content into MSC MINiML 2.0; `json2ae` regenerates ordered IDF/SDRF tables from that typed model.
 - **Rationale:** Not documented.
 - **Consequences:** Metadata semantics are editable and format-independent. Raw row layout is not replayed; unsafe consolidation of heterogeneous SDRF document graphs is rejected.
-- **Affected components:** `AEParser`, `ae_roundtrip`, `ae_model`, and `AEConstructor`.
-- **Evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py), [`ae_roundtrip.py`](../src/meta_standards_converter/ae_handlers/ae_roundtrip.py), and [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py).
+- **Affected components:** `AEParser`, `ae_model`, `MINiMLV1Migrator`, and `AEConstructor`.
+- **Evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py), [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py), and [`migration.py`](../src/meta_standards_converter/miniml/migration.py).
 
 <a id="decision-expression-source-planning"></a>
 ### AD-003: Select expression assets before normalizing AnnData
@@ -202,7 +202,7 @@ harmonized values live only in typed annotation records.
 
 **Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py),
 [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py),
-[`ae_roundtrip.py`](../src/meta_standards_converter/ae_handlers/ae_roundtrip.py),
+[`migration.py`](../src/meta_standards_converter/miniml/migration.py),
 and [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constructor.py).
 
 <a id="component-relationships-and-data-flow"></a>
@@ -580,11 +580,6 @@ follow this canonical overview.
   `meta_standards_converter.ae_handlers.ae_model.overlay_core`,
   `meta_standards_converter.ae_handlers.ae_parser.normalized_label`,
   `meta_standards_converter.ae_handlers.ae_parser.AEParser`,
-  `meta_standards_converter.ae_handlers.ae_roundtrip.semantic_sha256`,
-  `meta_standards_converter.ae_handlers.ae_roundtrip.model_sha256`,
-  `meta_standards_converter.ae_handlers.ae_roundtrip.build_roundtrip`,
-  `meta_standards_converter.ae_handlers.ae_roundtrip.unchanged_magetab`,
-  `meta_standards_converter.ae_handlers.ae_roundtrip.restore_extensions`,
   `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFAttr`,
   `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFNode`,
   `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFEdge`,
@@ -736,7 +731,7 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
 [enrich] -> construct -> [write]; return`.
 
-**Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constructor.py), and [`ae_roundtrip.py`](../src/meta_standards_converter/ae_handlers/ae_roundtrip.py).
+**Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constructor.py), and [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py).
 
 <a id="workflow-ae2json"></a>
 ### `ae2json`: MAGE-TAB to parsed JSON
@@ -947,7 +942,6 @@ src/meta_standards_converter/
 │   ├── ae_idf_handlers.py        # IDF row construction
 │   ├── ae_constructor.py         # MAGE-TAB coordination, protocol registry, file writing
 │   ├── ae_parser.py              # IDF/SDRF to MINiML-compatible package mapping
-│   ├── ae_roundtrip.py           # source-table sidecar, fingerprint, and restoration
 │   ├── ae_webfetcher.py          # local, HTTP, and BioStudies MAGE-TAB resolution
 │   └── ae_sdrf_handlers.py       # SDRF graph model and technology handlers
 ├── harmonizers/
@@ -1158,13 +1152,13 @@ Both converters return a list of package dictionaries using the same MINiML-comp
 | `series.iid` | GEO Series IID, normally the `GSE...` accession | Primary ArrayExpress accession, with investigation-accession fallback |
 | Series/sample fields | Every field present in the selected MINiML elements | Only fields with an explicit exact core mapping |
 | Factors | Native MINiML `Variable` records when supplied | IDF experimental factors plus SDRF factor values |
-| Protocols | Native GEO protocol elements | Recognized descriptions in the core; complete independent records in `mage_tab.model.protocols` |
+| Protocols | Native GEO protocol elements | Complete typed records in `series.protocols` |
 | Platform/contributors | Referenced GEO records with their available MINiML fields | IDF/SDRF projection, usually a smaller record |
 | PubMed/SRA enrichment | Enabled by default and optional with `enrich=False`/`--no-enrich` | No remote enrichment stage; publication, ENA, run, and file metadata come from IDF/SDRF fields |
 | Empty fields | Removed by default or retained with `remove_empty=False`/`--keep-empty` | Omitted unless a mapped source value exists; required extension structure remains present |
-| Assay-row multiplicity | MINiML samples plus optionally enriched `sra_run` lists | Core samples/runs may consolidate rows; every original SDRF row remains an independent `mage_tab.model.assay_paths` record |
-| Unsupported metadata | Remains available when it exists as an XML element/attribute | Stored independently in the typed model, unmapped lists, and raw round-trip tables |
-| Lossless MAGE-TAB round trip | Not applicable; no `mage_tab` extension | `mage_tab.model` is editable and `mage_tab.roundtrip` retains exact source IDF/SDRF tables and fingerprints |
+| Assay-row multiplicity | MINiML samples plus optionally enriched `sra_run` lists | Core samples/runs may consolidate rows; every modeled SDRF row remains an independent `series.assay_paths` record |
+| Unsupported metadata | Remains available when it exists as an XML element/attribute | Supported protocol/assay extensions become typed steps; source document names, URIs, media types, and digests remain as provenance, while unmodeled raw layout is deliberately dropped |
+| Lossless MAGE-TAB round trip | Not applicable | Semantic typed content is reconstructable; exact raw row order/layout requires retaining the original IDF/SDRF documents outside MINiML 2.0 |
 
 Representative GEO output:
 
@@ -1183,21 +1177,27 @@ Representative AE output:
 
 ```json
 {
-  "version": "magetabv1.1",
-  "schema_location": "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
-  "series": {"iid": "E-MTAB-1", "accession": [{"value": "E-MTAB-1", "database": "ArrayExpress"}]},
+  "miniml_schema_version": "2.0",
+  "source": {
+    "format": "MAGE-TAB",
+    "documents": [{"kind": "idf", "name": "E-MTAB-1.idf.txt", "sha256": "..."}]
+  },
+  "series": {
+    "iid": "E-MTAB-1",
+    "accession": [{"value": "E-MTAB-1", "database": "ArrayExpress"}],
+    "protocols": [],
+    "assay_paths": []
+  },
   "sample": [],
   "platform": [],
-  "contributor": [],
-  "mage_tab": {
-    "version": "1.1",
-    "model": {"schema_version": 1, "protocols": [], "declarations": {}, "assay_paths": []},
-    "roundtrip": {"schema_version": 1, "semantic_sha256": "...", "model_sha256": "..."}
-  }
+  "contributor": []
 }
 ```
 
-The shared core makes downstream processing reusable; it does not imply field-for-field parity between repositories. Consumers that need complete MAGE-TAB semantics must retain `mage_tab`, while consumers using only common study/sample metadata can read the core fields from either converter.
+The shared core makes downstream processing reusable; it does not imply
+field-for-field parity between repositories. Consumers that need exact source
+layout must retain the original MAGE-TAB documents; MINiML 2.0 preserves their
+identity/digests and the supported typed scientific semantics, not raw tables.
 
 <a id="json2h5ad-flow"></a>
 ## End-To-End json2h5ad Flow
@@ -1327,7 +1327,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-10 and reported
-`566 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`568 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -2001,23 +2001,29 @@ output is unchanged.
 `class AEParser`
 
 - `parse(source: MAGETabInput) -> dict` parses one IDF plus all SDRFs into the existing MINiML-compatible package shape.
-- Root metadata uses the normalized MAGE-TAB format/version and specification URL. `series.iid` prefers `Comment[ArrayExpressAccession]`, then an ArrayExpress-form investigation/classified accession, then the investigation accession; `mage_tab.version` retains the exact IDF version.
+- Root metadata uses MINiML 2.0 with normalized MAGE-TAB format/version and specification provenance under `source`. `series.iid` prefers `Comment[ArrayExpressAccession]`, then an ArrayExpress-form investigation/classified accession, then the investigation accession.
 - IDF rows are normalized by case and whitespace. Repeated row values remain ordered and feed investigation, accessions, design/factor, status, publication, contributor, database, and protocol records.
 - SDRF headers map source/sample identities, characteristics, factors, protocol refs, platforms, technology, SRA/ENA runs, FASTQ metadata, and array raw/derived files. Repeated sample rows merge without duplicating list values.
-- Conflicting scalar values keep the first value and append a warning. Unknown IDF rows and SDRF columns are preserved verbatim under `package["mage_tab"]` and also generate warnings.
-- `build_model(...)` records complete protocol columns, QC/replicate/normalization declarations, every SDRF assay path, ordered nodes and protocol references, comments/files, and per-value unit/ontology companions under `package["mage_tab"]["model"]`.
+- Conflicting scalar values keep the first value and append a warning. Unknown IDF rows are diagnosed but not retained as raw layout; supported generic SDRF values become typed assay-path steps.
+- `build_model(...)` creates an internal semantic bridge containing complete protocol columns, QC/replicate/normalization declarations, every SDRF assay path, ordered nodes and protocol references, comments/files, and per-value unit/ontology companions. The migrator folds it into canonical `series.protocols`, variables, and assay paths before the package leaves `parse()`.
 - Malformed non-rectangular SDRF rows fail with a filename and column-count error.
 
 <a id="ae-roundtrip"></a>
-### `ae_handlers/ae_roundtrip.py`
+### Retired raw MAGE-TAB round-trip sidecar
 
-- `semantic_sha256(package)` hashes every top-level public field except `mage_tab` using stable JSON encoding.
-- `build_roundtrip(...)` stores schema version 1, core and typed-model fingerprints, complete parsed IDF rows, and named SDRF row tables under `mage_tab.roundtrip`.
-- `unchanged_magetab(package)` returns the preserved source payload when the fingerprint still matches and exactly one SDRF is present.
-- `restore_extensions(package, magetab)` runs after normal rendering for edited packages. Generated JSON fields win; unsupported IDF rows and SDRF columns are restored by row count or source/sample/assay identity when safe, otherwise a warning is logged.
-- When a typed model is combined with a changed mapped core, `overlay_core()` performs a keyed union rather than an intersection-only replacement: missing allowlisted IDF rows and missing non-structural SDRF columns are inserted at core-order anchors. Model assay rows, material/assay node columns, and `Protocol REF` columns are never synthesized from the core projection.
-- Packages without the optional sidecar follow the ordinary GEO/JSON rendering path unchanged. Multiple source SDRFs use semantic consolidation rather than the one-SDRF exact fast path.
-- The fixed GEO/MINiML-compatible core still has no generic entities for arbitrary protocol graphs, assay/hybridization/scan identities, performers, protocol hardware/software/parameters, QC/replicate declarations, per-value units/ontology annotations, or custom MAGE-TAB fields. These are editable through `mage_tab.model` and backed by the raw sidecar; removing `mage_tab` is intentionally not lossless.
+Raw-table round-trip helpers are retired in MSC 4. The disconnected
+`ae_handlers/ae_roundtrip.py` module represented the pre-MINiML-2.0
+`mage_tab.roundtrip` sidecar and was neither emitted nor consumed by the active
+conversion path. Keeping it public would falsely imply exact IDF/SDRF layout
+survives the canonical boundary.
+
+`AEParser` now maps supported scientific content into typed MINiML 2.0
+protocols, assay paths, values, units, annotations, and source-document
+provenance. `MINiMLV1Migrator` explicitly reports `source_layout_dropped` when
+it encounters an old raw-table sidecar, and `AEConstructor` reconstructs
+semantic MAGE-TAB from the typed model. Operators requiring byte/layout-exact
+round trips must retain the original IDF/SDRF source files identified by the
+package's source-document records.
 
 <a id="typed-mage-tab-model"></a>
 ### `ae_handlers/ae_model.py`
@@ -2026,7 +2032,7 @@ output is unchanged.
   `validate_model(model)` enforces schema version 1 collections, unique SDRF
   and assay identities, references, step shapes, and scalar harmonization
   annotations.
-- `build_model(idf_rows, sdrfs)` creates the version-1 `mage_tab.model` extension without modifying the fixed MINiML projection.
+- `build_model(idf_rows, sdrfs)` creates the version-1 internal semantic bridge consumed immediately by `MINiMLV1Migrator`; it is not a public wire extension.
 - `protocols` contains one position-stable record per IDF protocol, including name, arbitrary type, ontology, description, hardware, software, parameters, contact, and performer.
 - `declarations` independently stores aligned quality-control, replicate, and normalization terms with source/accession annotations.
 - `assay_paths` contains one record per original SDRF data row. Ordered steps distinguish material/assay nodes, protocol references, annotated characteristics/factors/parameters, comments, files, and generic fields. This preserves array assay multiplicity and many-to-one sample relationships.
@@ -2034,7 +2040,7 @@ output is unchanged.
 - `render_model(model)` regenerates one SDRF directly or consolidates multiple SDRFs by header plus occurrence. `overlay_core(model_rows, core_rows)` unions eligible core fields into that rendering while retaining model-only protocols, identities, annotations, rows, and structural graph columns.
 - IDF matching uses normalized row labels and inserts only rows in the mapped allowlist. SDRF matching uses `(normalized header, occurrence)` keys, so repeated characteristics remain position-stable. Missing core columns are inserted relative to the nearest core-order neighbor; independent curator fields such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`, and `Characteristics[hz_cell_type_onto]` remain separate rather than being reinterpreted as native ontology companions.
 - SDRF values align through the available `Sample Name`, `Source Name`, and `Comment[ENA_RUN]` identities. A core value replaces or populates a model cell only when all matching core rows agree on exactly one value. An unmatched model row keeps its existing value; an ambiguous newly inserted cell remains blank. Core-only rows are not added or broadcast as new assay paths.
-- Editing `mage_tab.model` invalidates raw-table reuse through `model_sha256`. Old packages without a typed model or model hash continue through the existing sidecar or ordinary renderer.
+- `MINiMLV1Migrator` folds this bridge into the canonical v2 package and drops the internal container. `AEConstructor` renders from those canonical protocol and assay-path fields; no raw-table fingerprint or replay sidecar participates.
 
 <a id="geo-parser"></a>
 ### `geo_handlers/geo_parser.py`
