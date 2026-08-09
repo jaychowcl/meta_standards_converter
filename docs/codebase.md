@@ -972,7 +972,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `3.0.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `4.0.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 1.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
