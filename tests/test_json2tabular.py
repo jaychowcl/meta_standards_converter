@@ -105,6 +105,39 @@ def test_default_tsv_emits_stable_msc_metadata_and_characteristics(tmp_path):
     assert rows[0]["msc.characteristics.tissue"] == "brain"
 
 
+def test_tabular_converter_uses_injected_neutral_metadata_service(tmp_path):
+    class MetadataService:
+        def study_accession(self, packages):
+            assert len(packages) == 1
+            return "GSE-SERVICE"
+
+        def samples(self, package):
+            return tuple(package.get("sample", ()))
+
+        def sample_accession(self, sample):
+            return "GSM-SERVICE"
+
+        def sample_metadata(self, sample, package):
+            return {"title": "from-service"}
+
+        def sample_modality(self, sample):
+            return "single_cell"
+
+    source = tmp_path / "input.json"
+    output = tmp_path / "output.tsv"
+    source.write_text(json.dumps([package()]), encoding="utf-8")
+
+    JSON2TSVConverter(metadata_service=MetadataService()).convert_source(
+        source, output
+    )
+    _columns, rows = read_rows(output, "\t")
+
+    assert rows[0]["msc.sample.accession"] == "GSM-SERVICE"
+    assert rows[0]["msc.series.accession"] == "GSE-SERVICE"
+    assert rows[0]["msc.sample.title"] == "from-service"
+    assert rows[0]["msc.expression.modality"] == "single_cell"
+
+
 def test_atlas_json_is_aggregated_into_one_csv(tmp_path):
     source = tmp_path / "atlas.json"
     output = tmp_path / "output.csv"

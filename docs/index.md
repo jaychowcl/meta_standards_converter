@@ -72,7 +72,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Public API reference
   anchor: public-api-reference
   purpose: Defines formal exports and classifies all importable production symbols by support evidence.
-  keywords: public API, __all__, signature, constructor, property, method, protocol, Asset, AssetDownloader, SourcePlanner, JSON2H5ADConverter, DatasetBundleRecoveryError, projector, obs_renames, obs_drops, failure, recovery, side effect
+  keywords: public API, __all__, signature, constructor, property, method, protocol, Asset, AssetDownloader, SourcePlanner, JSON2H5ADConverter, MINiMLMetadataProvider, MINiMLMetadataService, DatasetBundleRecoveryError, projector, obs_renames, obs_drops, failure, recovery, side effect
   link: [Open section](codebase.md#public-api-reference)
 
 - id: atlas-v1-reader

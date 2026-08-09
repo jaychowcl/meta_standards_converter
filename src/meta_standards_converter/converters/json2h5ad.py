@@ -28,11 +28,14 @@ from typing import Any, Mapping, Protocol, Sequence
 from urllib.parse import urlparse
 from uuid import uuid4
 
-from meta_standards_converter.harmonizers.harmonizers import Harmonizer
 from meta_standards_converter.retrieval import AssetDownloader, RetrievalPolicy
-from meta_standards_converter.runtime_contracts import get_resource_profile
+from meta_standards_converter.runtime_contracts import (
+    SafeErrorEnvelope,
+    get_resource_profile,
+)
 from .json_source import JSONPackageSource
 from .mage_tab_projection import _parameter_rows, _parameter_summary
+from .miniml_metadata import MINiMLMetadataProvider, MINiMLMetadataService
 
 
 logger = logging.getLogger(__name__)
@@ -116,6 +119,23 @@ class DatasetBundleRecoveryError(RuntimeError):
             "dataset bundle publication and recovery failed; preserved recovery "
             f"paths: {locations}; recovery failed: {self.recovery_errors[0]}"
         )
+
+
+class _DatasetCompatibilityError(ValueError):
+    """A public-safe scientific reason that prevents dataset combination."""
+
+
+def _safe_group_failure(error: BaseException, dataset_id: str) -> str:
+    envelope = SafeErrorEnvelope.from_exception(
+        error,
+        provider="meta_standards_converter",
+        stage="json2h5ad_group_conversion",
+        item_id=dataset_id,
+    )
+    return (
+        f"{dataset_id}: {envelope.error_type} "
+        f"[correlation_id={envelope.correlation_id}]"
+    )
 
 
 class AnnDataMetadataProjector(Protocol):
@@ -1101,16 +1121,6 @@ class JSON2H5ADConverter:
         "status_term_source_ref",
         "status_term_accession_number",
     )
-    PROTOCOL_PATHS = (
-        ("treatment_protocol", "Treatment-Protocol", "channel"),
-        ("growth_protocol", "Growth-Protocol", "channel"),
-        ("extract_protocol", "Extract-Protocol", "channel"),
-        ("label_protocol", "Label-Protocol", "channel"),
-        ("hybridization_protocol", "Hybridization-Protocol", "sample"),
-        ("scan_protocol", "Scan-Protocol", "sample"),
-        ("data_processing", "Data-Processing", "sample"),
-    )
-
     """Top-level JSON-to-H5AD conversion orchestrator."""
 
     def __init__(
@@ -1123,6 +1133,7 @@ class JSON2H5ADConverter:
         retrieval_policy: RetrievalPolicy | None = None,
         resource_profile: str = "standard",
         resource_overrides: Mapping[str, int | float] | None = None,
+        metadata_service: MINiMLMetadataProvider | None = None,
     ):
         if downloader is not None and retrieval_policy is not None:
             raise ValueError(
@@ -1133,6 +1144,7 @@ class JSON2H5ADConverter:
         self.downloader = downloader
         self.metadata_projectors = tuple(metadata_projectors or ())
         self.package_source = package_source or JSONPackageSource()
+        self.metadata_service = metadata_service or MINiMLMetadataService()
         self.retrieval_policy = retrieval_policy or RetrievalPolicy(
             resource_profile=get_resource_profile(
                 resource_profile,
@@ -1283,7 +1295,7 @@ class JSON2H5ADConverter:
                     **options,
                 )
             except Exception as error:
-                result.failures.append(f"{group.dataset_id}: {error}")
+                result.failures.append(_safe_group_failure(error, group.dataset_id))
                 continue
             result.conversions[group.dataset_id] = converted
         return result
@@ -1460,7 +1472,7 @@ class JSON2H5ADConverter:
                 adatas,
                 allow_unverified=allow_unverified_combination,
             )
-        except ValueError as exc:
+        except _DatasetCompatibilityError as exc:
             result.failures.append(str(exc))
         else:
             combined_adata = combined
@@ -1606,15 +1618,7 @@ class JSON2H5ADConverter:
         return rendered
 
     def _study_accession(self, packages: list[dict]) -> str | None:
-        for package in packages:
-            series = package.get("series") if isinstance(package, Mapping) else None
-            if not isinstance(series, dict):
-                continue
-            for accession in SourcePlanner()._as_list(series.get("accession")):
-                value = SourcePlanner()._value(accession)
-                if isinstance(value, str) and value.upper().startswith("GSE"):
-                    return value.upper()
-        return None
+        return self.metadata_service.study_accession(packages)
 
     def _sample_lookup(self, packages: list[dict]) -> dict[str, dict]:
         return {sample_id: context[0] for sample_id, context in self._sample_context(packages).items()}
@@ -2049,191 +2053,13 @@ class JSON2H5ADConverter:
                 target.append(rendered)
 
     def _sample_metadata(self, sample: dict, package: dict) -> dict:
-        return self._render_sample_metadata(
-            self._sample_metadata_values(sample, package)
-        )
+        return self.metadata_service.sample_metadata(sample, package)
 
     def _sample_metadata_values(self, sample: dict, package: dict) -> dict:
-        metadata = {
-            "title": tuple(self._values(sample.get("title"))),
-            "description": tuple(self._values(sample.get("description"))),
-        }
-        channels = [x for x in self.planner._as_list(sample.get("channel")) if isinstance(x, dict)]
-        metadata["source"] = tuple(
-            self._values(channel.get("source") for channel in channels)
-        )
-        organisms = [
-            organism
-            for channel in channels
-            for organism in self.planner._as_list(channel.get("organism"))
-        ]
-        organism_values = []
-        for channel in channels:
-            harmonized = []
-            for organism in self.planner._as_list(channel.get("organism")):
-                if not isinstance(organism, dict):
-                    continue
-                for annotation in self.planner._as_list(organism.get("annotations")):
-                    if (
-                        isinstance(annotation, dict)
-                        and annotation.get("field") in {"organism", "species_name"}
-                    ):
-                        harmonized.extend(self._values(annotation.get("value")))
-            organism_values.extend(harmonized or self._values(channel.get("organism")))
-        metadata["organism"] = tuple(self._values(organism_values))
-        metadata["organism_taxid"] = tuple(
-            self._values(
-                organism.get("taxid")
-                for organism in organisms
-                if isinstance(organism, dict)
-            )
-        )
-        characteristic_values = {}
-        for channel in channels:
-            for annotation in self.planner._as_list(channel.get("annotations")):
-                if not isinstance(annotation, dict) or not annotation.get("field"):
-                    continue
-                annotation_slug = "harmonized_" + self._metadata_slug(annotation["field"])
-                characteristic_values.setdefault(annotation_slug, []).extend(
-                    self._values(annotation.get("value"))
-                )
-                if annotation.get("term_accession_number"):
-                    characteristic_values.setdefault(f"{annotation_slug}_id", []).extend(
-                        self._values(annotation["term_accession_number"])
-                    )
-                if annotation.get("term_source_ref"):
-                    characteristic_values.setdefault(f"{annotation_slug}_onto", []).extend(
-                        self._values(annotation["term_source_ref"])
-                    )
-            for item in self.planner._as_list(channel.get("characteristics")):
-                if not isinstance(item, dict) or not item.get("name", item.get("tag")):
-                    continue
-                slug = self._metadata_slug(item.get("name", item.get("tag")))
-                values = self._values(item.get("value"))
-                if slug and values:
-                    characteristic_values.setdefault(slug, []).extend(values)
-                for annotation in self.planner._as_list(item.get("annotations")):
-                    if not isinstance(annotation, dict) or not annotation.get("field"):
-                        continue
-                    annotation_slug = "harmonized_" + self._metadata_slug(
-                        annotation["field"]
-                    )
-                    characteristic_values.setdefault(annotation_slug, []).extend(
-                        self._values(annotation.get("value"))
-                    )
-                    if annotation.get("term_accession_number"):
-                        characteristic_values.setdefault(
-                            f"{annotation_slug}_id", []
-                        ).extend(self._values(annotation["term_accession_number"]))
-                    if annotation.get("term_source_ref"):
-                        characteristic_values.setdefault(
-                            f"{annotation_slug}_onto", []
-                        ).extend(self._values(annotation["term_source_ref"]))
-        characteristics = {
-            slug: tuple(self._values(values))
-            for slug, values in characteristic_values.items()
-        }
-        metadata["characteristics"] = characteristics
-        metadata["organism_part"] = (
-            characteristics.get("organism_part")
-            or characteristics.get("tissue")
-            or metadata["source"]
-        )
-        metadata["developmental_stage"] = characteristics.get("developmental_stage", ())
-        metadata["disease"] = characteristics.get("disease", ())
-        metadata["genotype"] = characteristics.get("genotype", ())
-
-        metadata["biomaterial_provider"] = tuple(
-            self._values(channel.get("biomaterial_provider") for channel in channels)
-        )
-        metadata["molecule"] = tuple(
-            self._values(channel.get("molecule") for channel in channels)
-        )
-        explicit_material_types = self._values(
-            channel.get("material_type") for channel in channels
-        )
-        material_types = []
-        for value in self._values(channel.get("molecule") for channel in channels):
-            material_types.append(re.sub(r"^total\s+", "", value, flags=re.IGNORECASE))
-        metadata["material_type"] = (
-            tuple(explicit_material_types)
-            or tuple(self._values(material_types))
-            or metadata["organism_part"]
-        )
-
-        runs = [item for item in self.planner._as_list(sample.get("sra_run")) if isinstance(item, dict)]
-        metadata["sra_accession"] = tuple(self._values(sample.get("sra_accession")))
-        metadata["ena_accession"] = tuple(self._values(sample.get("ena_accession")))
-        metadata["biosample_accession"] = tuple(
-            self._values(run.get("biosample") for run in runs)
-        )
-        metadata["sra_run_accessions"] = tuple(
-            self._values(run.get("run") for run in runs)
-        )
-        metadata["library_strategy"] = tuple(
-            self._values(
-                [sample.get("library_strategy"), *(run.get("library_strategy") for run in runs)]
-            )
-        )
-        metadata["library_source"] = tuple(
-            self._values(
-                [sample.get("library_source"), *(run.get("library_source") for run in runs)]
-            )
-        )
-        metadata["library_selection"] = tuple(
-            self._values(
-                [sample.get("library_selection"), *(run.get("library_selection") for run in runs)]
-            )
-        )
-        metadata["library_layout"] = tuple(
-            self._values(run.get("library_layout") for run in runs)
-        )
-        metadata["instrument_model"] = tuple(
-            self._values(
-                [sample.get("instrument_model"), *(run.get("instrument_model") for run in runs)]
-            )
-        )
-        metadata["platform_accession"] = tuple(
-            self._platform_accession_values(sample, package)
-        )
-
-        protocol_types = []
-        protocol_sources = []
-        protocol_accessions = []
-        for field, label, scope in self.PROTOCOL_PATHS:
-            containers = channels if scope == "channel" else [sample]
-            if not self._join_values(container.get(field) for container in containers):
-                continue
-            protocol_type, source_ref, accession = Harmonizer().geoprotocols2efo(label)
-            protocol_types.append(protocol_type)
-            protocol_sources.append(source_ref)
-            protocol_accessions.append(accession)
-        metadata["protocol_types"] = tuple(self._values(protocol_types))
-        metadata["protocol_term_source_refs"] = tuple(self._values(protocol_sources))
-        metadata["protocol_term_accession_numbers"] = tuple(self._values(protocol_accessions))
-
-        database = self._metadata_database(package)
-        metadata["metadata_source"] = tuple(
-            self._values(
-                database.get("public_id") or database.get("iid") or database.get("name")
-            )
-        )
-        metadata["metadata_source_name"] = tuple(self._values(database.get("name")))
-        metadata["metadata_source_uri"] = tuple(self._values(database.get("web_link")))
-        return metadata
+        return self.metadata_service.sample_metadata_values(sample, package)
 
     def _render_sample_metadata(self, values: Mapping[str, Any]) -> dict:
-        return {
-            key: (
-                {
-                    characteristic: self._join_values(items)
-                    for characteristic, items in value.items()
-                }
-                if key == "characteristics"
-                else self._join_values(value)
-            )
-            for key, value in values.items()
-        }
+        return self.metadata_service.render_sample_metadata(values)
 
     def _attach_sample_values(
         self,
@@ -2369,66 +2195,22 @@ class JSON2H5ADConverter:
         return columns
 
     def _metadata_slug(self, value) -> str:
-        value = self._join_values(value).lower()
-        return re.sub(r"_+", "_", re.sub(r"[^a-z0-9]+", "_", value)).strip("_")
+        return self.metadata_service.metadata_slug(value)
 
     def _values(self, values) -> list[str]:
-        flattened = []
-        seen = set()
-
-        def visit(value):
-            if value is None:
-                return
-            if isinstance(value, dict):
-                for key in ("value", "name", "predefined", "public_id", "iid", "ref"):
-                    if value.get(key) is not None:
-                        visit(value[key])
-                        return
-                return
-            if isinstance(value, (list, tuple, set)):
-                for item in value:
-                    visit(item)
-                return
-            if not isinstance(value, (str, bytes)) and hasattr(value, "__iter__"):
-                for item in value:
-                    visit(item)
-                return
-            cleaned = self._text(value)
-            normalized = cleaned.casefold()
-            if cleaned and normalized not in seen:
-                flattened.append(cleaned)
-                seen.add(normalized)
-
-        visit(values)
-        return flattened
+        return self.metadata_service.values(values)
 
     def _join_values(self, values) -> str:
-        return "; ".join(self._values(values))
+        return self.metadata_service.join_values(values)
 
-    def _metadata_database(self, package: dict) -> dict:
-        return next(
-            (
-                item
-                for item in self.planner._as_list(package.get("database"))
-                if isinstance(item, dict)
-            ),
-            {},
-        )
+    def _metadata_database(self, package: dict) -> Mapping[str, Any]:
+        return self.metadata_service.metadata_database(package)
 
     def _platform_accessions(self, sample: dict, package: dict) -> str:
         return self._join_values(self._platform_accession_values(sample, package))
 
     def _platform_accession_values(self, sample: dict, package: dict) -> list[str]:
-        references = set(self._values(sample.get("platform_ref")))
-        values = []
-        for platform in self.planner._as_list(package.get("platform")):
-            if not isinstance(platform, dict):
-                continue
-            identifiers = {platform.get("iid"), *self._values(platform.get("accession"))}
-            if references and not references.intersection(identifier for identifier in identifiers if identifier):
-                continue
-            values.extend(self._values(platform.get("accession")))
-        return self._values(values or references)
+        return self.metadata_service.platform_accession_values(sample, package)
 
     def _attach_miniml(
         self,
@@ -2753,12 +2535,7 @@ class JSON2H5ADConverter:
         rows.append((package_index, entity_type, entity_id, path, serialized, value_type))
 
     def _sample_modality(self, sample: dict) -> str:
-        text = json.dumps(sample).lower()
-        if any(value in text for value in ("single cell", "single-cell", "10x", "chromium", "visium")):
-            return "single_cell"
-        if any(sample.get(key) for key in ("library_source", "library_strategy", "type", "sra_run")):
-            return "bulk"
-        return "unknown"
+        return self.metadata_service.sample_modality(sample)
 
     def _combine(
         self,
@@ -2767,7 +2544,7 @@ class JSON2H5ADConverter:
         allow_unverified: bool = False,
     ):
         if not adatas:
-            raise ValueError("No sample H5ADs were produced.")
+            raise _DatasetCompatibilityError("No sample H5ADs were produced.")
         anndata, _numpy, _pandas, sparse = self._scientific_modules()
         missing_evidence = self._missing_combination_evidence(adatas)
         if missing_evidence and not allow_unverified:
@@ -2775,7 +2552,7 @@ class JSON2H5ADConverter:
                 f"{dimension} ({', '.join(sample_ids)})"
                 for dimension, sample_ids in sorted(missing_evidence.items())
             )
-            raise ValueError(
+            raise _DatasetCompatibilityError(
                 "Cannot combine samples without positive compatibility evidence "
                 f"for every sample: {rendered}. Set allow_unverified_combination "
                 "only to publish an explicitly acknowledged partial result."
@@ -2791,7 +2568,9 @@ class JSON2H5ADConverter:
             ).strip()
         }
         if len(organisms) > 1:
-            raise ValueError(f"Cannot combine samples with incompatible organisms: {sorted(organisms)}")
+            raise _DatasetCompatibilityError(
+                f"Cannot combine samples with incompatible organisms: {sorted(organisms)}"
+            )
         references = {
             str(adata.uns.get("meta_standards_converter", {}).get("reference")).strip()
             for adata in adatas.values()
@@ -2799,7 +2578,7 @@ class JSON2H5ADConverter:
             and adata.uns["meta_standards_converter"].get("reference")
         }
         if len(references) > 1:
-            raise ValueError(
+            raise _DatasetCompatibilityError(
                 f"Cannot combine samples with incompatible reference builds: {sorted(references)}"
             )
         modalities = {
@@ -2809,11 +2588,16 @@ class JSON2H5ADConverter:
             and adata.uns["meta_standards_converter"].get("modality") not in (None, "", "unknown")
         }
         if len(modalities) > 1:
-            raise ValueError(f"Cannot combine incompatible expression modalities: {sorted(modalities)}")
+            raise _DatasetCompatibilityError(
+                f"Cannot combine incompatible expression modalities: {sorted(modalities)}"
+            )
         namespaces = {self._feature_namespace(adata) for adata in adatas.values()}
         namespaces.discard("unknown")
         if len(namespaces) > 1:
-            raise ValueError(f"Cannot combine incompatible feature identifier namespaces: {sorted(namespaces)}")
+            raise _DatasetCompatibilityError(
+                "Cannot combine incompatible feature identifier namespaces: "
+                f"{sorted(namespaces)}"
+            )
         combined = anndata.concat(
             adatas,
             axis="obs",
@@ -3218,11 +3002,7 @@ class JSON2H5ADConverter:
         return Path(name).suffix
 
     def _text(self, value) -> str | None:
-        if isinstance(value, dict):
-            value = value.get("value") or value.get("name")
-        if value is None:
-            return None
-        return " ".join(str(value).split()) or None
+        return self.metadata_service.text(value)
 
     def _sha256(self, path: str, md5: str | None = None) -> str | None:
         local = self._local_path(path, md5=md5)

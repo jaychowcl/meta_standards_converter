@@ -213,8 +213,9 @@ and [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constru
 | GEO/JSON converters | `MINiMLEnricher` | optional internal mutation | Adds PubMed and SRA/ENA evidence to a package | Enricher records service-specific misses where implemented |
 | GEO/JSON converters | `AEConstructor` | `miniml2magetab` then optional `magetab2file` | Package becomes IDF/SDRF row collections and files | Validation/handler/write errors propagate |
 | `ae2json` | `AEWebFetcher` → `AEParser` | resolve and parse | IDF/SDRF text becomes package + typed sidecar | Invalid source cardinality or MAGE-TAB fails |
-| tabular converters | `JSONPackageSource` → projectors | load/group then `project_sample` | Dataset groups become ordered row maps | Collisions/invalid output fail closed by default |
+| tabular converters | `JSONPackageSource` → `MINiMLMetadataProvider` → projectors | load/group, obtain format-neutral sample metadata, then `project_sample` | Dataset groups become ordered row maps | Collisions/invalid output fail closed by default |
 | `JSON2H5ADConverter` | planner/downloader/runner | plan, localize, or process | Per-conversion state becomes sample AnnData | Per-sample failures retained; aggregate can be partial |
+| tabular and H5AD converters | `MINiMLMetadataProvider` | public injected service calls | Study/sample identity, canonical metadata, and modality use one scientific interpretation | Provider failures propagate without partial output |
 | H5AD converter | metadata projectors | `project_sample`/`project_combined` | Projection applied before each write | Collision/shape/projector error fails conversion |
 | Atlas/MINiML source | `JSON2H5ADConverter` | `AtlasV1Reader` → `JSONPackageSource.load` then group conversion | Harmonized Atlas v1 datasets or ordinary packages become one conversion per dataset | Invalid versions/shapes raise before aggregation; non-harmonized states warn; per-group conversion failures are retained |
 | `NFCoreRunner` | Nextflow/nf-core | subprocess/system call | Samplesheet + reference + params produce pipeline results | Exit/output failure becomes a recorded pipeline failure |
@@ -233,7 +234,7 @@ The supported public entrypoints are:
 - seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
   `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs`;
 <a id="interface-python"></a>
-- direct Python converter classes, the sixteen formal exports from
+- direct Python converter classes, the twenty-four formal exports from
   `meta_standards_converter.converters`, and the four-name
   `meta_standards_converter.atlas_v1` facade;
 <a id="interface-docker"></a>
@@ -269,7 +270,9 @@ database service, or plugin discovery mechanism is exposed.
 <a id="orchestrator-json2delimited-converter"></a>
 - `JSON2DelimitedConverter` owns JSON grouping, sample iteration, projection,
   column ordering, validation policy, and file output. `JSON2TSVConverter`
-  selects TSV or CSV through `output_format`.
+  selects TSV or CSV through `output_format`. Both tabular and H5AD conversion
+  depend on the public `MINiMLMetadataProvider` contract instead of calling
+  another converter's private helpers; `MINiMLMetadataService` is the default.
 <a id="core-rate-limited-requester"></a>
 - `RateLimitedRequester` is the shared external-call boundary.
   `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
@@ -293,7 +296,7 @@ failure behavior are detailed in
 <a id="public-api-reference"></a>
 ## Public API reference
 
-The formal support boundary is the twenty-one names in
+The formal support boundary is the twenty-four names in
 `meta_standards_converter.converters.__all__` (including the public
 `AssetDownloader`) plus the four names in
 `meta_standards_converter.atlas_v1.__all__`. CLI converter classes are also
@@ -351,7 +354,7 @@ statement for them; treat those as **evidence-gap**, not stable API.
 <a id="api-json2h5ad-converter"></a>
 ### `JSON2H5ADConverter`
 
-- **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
+- **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None, retrieval_policy=None, resource_profile="standard", resource_overrides=None, metadata_service=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
 - Dataset, study, sample, checkpoint, and output identities are validated as safe single path components before publication. `series.iid` is the canonical native-package study identity, so an ArrayExpress IID is not displaced by an earlier GEO secondary accession.
 - `DatasetBundleRecoveryError` preserves the original publication error, rollback errors, and surviving recovery paths when an overwrite cannot be fully restored.
 - **Inputs:** native MINiML or Atlas v1 JSON, source/reference/runtime options,
@@ -459,13 +462,29 @@ statement for them; treat those as **evidence-gap**, not stable API.
 <a id="api-json2tsv-converter"></a>
 ### `JSON2TSVConverter`
 
-- **Signature:** `JSON2TSVConverter(metadata_projectors=None, package_source=None, *, output_format="tsv")`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
+- **Signature:** `JSON2TSVConverter(metadata_projectors=None, package_source=None, metadata_service=None, *, output_format="tsv")`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
 - **Inputs:** parsed MINiML JSON or canonical Atlas v1, TSV/CSV format, and destination.
 - **Outputs:** selected delimited file and result metadata.
 - **Failures:** invalid formats, source, projector, collision, fail-closed diagnostic, and protected-output errors propagate.
 - **Side effects:** creates the destination parent and writes TSV or CSV.
 - **Support:** formal export.
 - **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+
+<a id="api-miniml-metadata-service"></a>
+### `MINiMLMetadataProvider` and `MINiMLMetadataService`
+
+- **Signature:** `MINiMLMetadataProvider` is the structural service contract;
+  `MINiMLMetadataService()` is its default stateless implementation.
+- **Inputs:** parsed MINiML package/sample mappings.
+- **Outputs:** canonical study/sample identity, tuple-valued or rendered sample
+  metadata, platform resolution, normalized values, and modality.
+- **Failures:** malformed collaborator inputs and ontology protocol mapping
+  failures propagate to the owning converter.
+- **Side effects:** none; the service does not read files, access the network,
+  execute processes, or publish artifacts.
+- **Support:** both names are formal exports and the supported injection seam
+  shared by tabular and AnnData output adapters.
+- **Source:** [`converters/miniml_metadata.py`](../src/meta_standards_converter/converters/miniml_metadata.py).
 
 <a id="api-msc-metadata-projector"></a>
 ### `MSCMetadataProjector`
@@ -606,7 +625,9 @@ follow this canonical overview.
   `meta_standards_converter.converters.json_outputs.AnnDataMetadataBatchResult`,
   `meta_standards_converter.converters.json_source.DatasetPackageGroup`,
   `meta_standards_converter.converters.json_source.SourceLoadResult`, and
-  `meta_standards_converter.converters.json_source.JSONPackageSource`.
+  `meta_standards_converter.converters.json_source.JSONPackageSource`,
+  `meta_standards_converter.converters.miniml_metadata.MINiMLMetadataProvider`,
+  and `meta_standards_converter.converters.miniml_metadata.MINiMLMetadataService`.
 - Fetch, parse, enrich, harmonize, and helpers:
   `meta_standards_converter.enrichers.miniml_enricher.MINiMLEnricher`,
   `meta_standards_converter.geo_handlers.geo_parser.GEOParser`,
@@ -617,8 +638,7 @@ follow this canonical overview.
   `meta_standards_converter.helpers.json_helper.JSONHandler`,
   `meta_standards_converter.helpers.request_helper.RequestSettings`,
   `meta_standards_converter.helpers.request_helper.RateLimitedRequester`,
-  `meta_standards_converter.insdc_handlers.insdc_webfetcher.INSDCWebfetcher`,
-  `meta_standards_converter.meta_store.meta_store.MetaStore`, and
+  `meta_standards_converter.insdc_handlers.insdc_webfetcher.INSDCWebfetcher`, and
   `meta_standards_converter.pubmed_handlers.pubmed_webfetcher.PubmedWebFetcher`.
 
 <a id="principal-workflows"></a>
@@ -873,6 +893,7 @@ src/meta_standards_converter/
 │   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
 │   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 │   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
+│   ├── miniml_metadata.py        # format-neutral sample metadata service
 │   ├── json_outputs.py           # shared manifest/H5AD/obs output orchestration
 │   └── json_source.py            # MINiML and Atlas v1 package grouping
 ├── atlas_v1/
@@ -898,10 +919,8 @@ src/meta_standards_converter/
 ├── helpers/
 │   ├── json_helper.py            # dotted-path JSON helpers
 │   └── request_helper.py         # service-specific rate limiting and retries
-├── insdc_handlers/
-│   └── insdc_webfetcher.py       # SRA accession extraction, NCBI lookup, and run parsing
-└── meta_store/
-    └── meta_store.py             # placeholder metadata validation store
+└── insdc_handlers/
+    └── insdc_webfetcher.py       # SRA accession extraction, NCBI lookup, and run parsing
 ```
 
 Tests cover parser packaging, converter orchestration, CLI flags, AE constructor composition, IDF behavior, and SDRF rendering:
@@ -968,11 +987,10 @@ tests/GSE328265_family.xml
 - `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
-- `json2tsv --format {tsv,csv}` emits the neutral MSC sample projection; `json2obs` exports the combined AnnData metadata view. Both are orchestrator methods with CLI wrappers.
+- `json2tsv --format {tsv,csv}` emits the neutral MSC sample projection; `json2obs` exports the combined AnnData metadata view. Both are orchestrator methods with CLI wrappers, and both share the public `MINiMLMetadataProvider` interpretation boundary with `json2h5ad`.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
-- `MetaStore._validate_investigation_metadata_structure()` is a `pass` placeholder, so `validate_investigation_metadata()` currently asserts for normal input.
 
 <a id="end-to-end-geo2ae-flow"></a>
 ## End-To-End geo2ae Flow
@@ -2395,19 +2413,6 @@ SRA XML helper methods:
 
 - `_parse_sra_library()`, `_parse_sra_sample_ids()`, `_parse_sra_instrument_model()`, `_parse_sra_fastqs()`, `_element_accession()`, `_find_text()`, `_strip_ns()`, and `_clean_sdrf_text()` support SRA parsing.
 
-<a id="metastore"></a>
-### `meta_store/meta_store.py`
-
-`class MetaStore`
-
-`validate_investigation_metadata(investigation_metadata: dict) -> bool`
-
-- Calls `_validate_investigation_metadata_structure()` and asserts it is truthy.
-- Returns `True` only if validation passes.
-
-`_validate_investigation_metadata_structure(investigation_metadata: dict) -> bool`
-
-- Placeholder with `pass`.
 - Because it returns `None`, normal validation currently raises `AssertionError`.
 
 <a id="maintenance-notes"></a>
@@ -2479,12 +2484,13 @@ Important test coverage:
 - `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
 - `tests/test_ae_webfetcher.py`: bounded local and streamed HTTPS resolution, typed profile propagation, explicit host policy, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
-- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 3 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, sparse combination, canonical/generic study splitting, partial results, and raw-output reintegration.
+- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 3 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, sparse combination, canonical/generic study splitting, correlation-safe partial-failure summaries, partial results, and raw-output reintegration.
 - `tests/test_retrieval.py`: host/address/redirect policy, cache integrity,
   byte/disk/aggregate ceilings, and bounded NCBI range fallback behavior.
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
-- `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, replacement projectors, collisions, and validation behavior.
+- `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
+- `tests/test_miniml_stabilization.py`: deterministic MINiML migration, validation, and captured-index ordering without quadratic equality scans.
 - `tests/test_metadata_projector.py`: generic sample/combined projector
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,
   warning/error propagation, fail-closed output, invalid-output opt-in, and

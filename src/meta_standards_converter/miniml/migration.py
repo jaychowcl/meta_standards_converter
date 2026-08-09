@@ -479,7 +479,11 @@ class MINiMLV1Migrator:
     @classmethod
     def _sort_positioned(cls, value: Any) -> list[Any]:
         items = cls._items(value)
-        return sorted(items, key=lambda item: cls._position_key(item, items.index(item)))
+        positioned = sorted(
+            enumerate(items),
+            key=lambda pair: cls._position_key(pair[1], pair[0]),
+        )
+        return [item for _index, item in positioned]
 
     @staticmethod
     def _position_key(item: Any, fallback: int) -> tuple[int, int]:

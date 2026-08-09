@@ -169,6 +169,24 @@ def test_xsd_positions_are_applied_before_lean_v2_serialization():
     assert "position" not in package.to_mapping()["sample"][0]["channel"][0]
 
 
+def test_position_sort_uses_captured_indexes_instead_of_quadratic_equality_scans():
+    from meta_standards_converter.miniml.migration import MINiMLV1Migrator
+
+    class CountingMapping(dict):
+        comparisons = 0
+
+        def __eq__(self, other):
+            type(self).comparisons += 1
+            return super().__eq__(other)
+
+    values = [CountingMapping(value=index) for index in range(100)]
+
+    result = MINiMLV1Migrator._sort_positioned(values)
+
+    assert [item["value"] for item in result] == list(range(100))
+    assert CountingMapping.comparisons < 200
+
+
 def test_ae_source_documents_keep_resolved_origins():
     source = resolved_input()
     package = AEParser().parse(source)

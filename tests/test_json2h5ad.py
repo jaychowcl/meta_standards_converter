@@ -295,6 +295,38 @@ def test_convert_source_rejects_unsafe_dataset_id_without_escaping_output(tmp_pa
     assert not (tmp_path / "escape").exists()
 
 
+def test_convert_source_persists_only_safe_group_failure_summaries(tmp_path):
+    typed = MINiMLCodec().decode(package(), strict=True).package
+
+    class FixedSource:
+        def load(self, _path):
+            return SourceLoadResult(
+                groups=(
+                    DatasetPackageGroup("GSE1", (typed,)),
+                    DatasetPackageGroup("GSE2", (typed,)),
+                )
+            )
+
+    class FailingConverter(JSON2H5ADConverter):
+        def _convert_packages(self, *args, **kwargs):
+            raise RuntimeError(
+                "https://user:super-secret@example.org/data?token=super-secret"
+            )
+
+    source = tmp_path / "source.json"
+    source.write_text("{}", encoding="utf-8")
+
+    result = FailingConverter(package_source=FixedSource()).convert_source(
+        str(source),
+        out=str(tmp_path / "out"),
+    )
+
+    assert len(result.failures) == 2
+    assert all("RuntimeError" in failure for failure in result.failures)
+    assert all("correlation_id=" in failure for failure in result.failures)
+    assert all("super-secret" not in failure for failure in result.failures)
+    assert all("example.org" not in failure for failure in result.failures)
+
 def test_convert_rejects_unsafe_single_dataset_id_before_conversion(tmp_path):
     class UnsafeSource:
         def load(self, _path):

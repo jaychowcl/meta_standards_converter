@@ -31,6 +31,7 @@ from .json_outputs import (
     AnnDataMetadataExportResult,
     JSONDataOutputOrchestrator,
 )
+from .miniml_metadata import MINiMLMetadataProvider, MINiMLMetadataService
 from meta_standards_converter.artifact_bundle import (
     ArtifactRecoveryError,
     DurableArtifactBundlePublisher,
@@ -57,6 +58,8 @@ __all__ = [
     "AnnDataMetadataBatchResult",
     "AnnDataMetadataExportResult",
     "JSONDataOutputOrchestrator",
+    "MINiMLMetadataProvider",
+    "MINiMLMetadataService",
     "ArtifactRecoveryError",
     "DurableArtifactBundlePublisher",
     "PublishedArtifactBundle",

@@ -15,9 +15,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
-from .json2h5ad import JSON2H5ADConverter, SourcePlanner
 from .json_source import JSONPackageSource
 from .mage_tab_projection import _parameter_summary
+from .miniml_metadata import MINiMLMetadataProvider, MINiMLMetadataService
 
 
 @dataclass(frozen=True)
@@ -202,6 +202,7 @@ class JSON2DelimitedConverter:
         self,
         metadata_projectors: Sequence[TabularMetadataProjector] | None = None,
         package_source: JSONPackageSource | None = None,
+        metadata_service: MINiMLMetadataProvider | None = None,
     ) -> None:
         self.metadata_projectors = tuple(
             [MSCMetadataProjector()]
@@ -209,8 +210,7 @@ class JSON2DelimitedConverter:
             else metadata_projectors
         )
         self.package_source = package_source or JSONPackageSource()
-        self._metadata_helper = JSON2H5ADConverter()
-        self._planner = SourcePlanner()
+        self.metadata_service = metadata_service or MINiMLMetadataService()
 
     def convert_source(
         self,
@@ -232,23 +232,19 @@ class JSON2DelimitedConverter:
             warnings.extend(getattr(resolution, "warnings", ()))
             for package in group.packages:
                 study_accession = (
-                    self._metadata_helper._study_accession([package])
+                    self.metadata_service.study_accession([package])
                     or group.dataset_id
                 )
-                for sample in self._planner._as_list(package.get("sample")):
-                    if not isinstance(sample, Mapping):
-                        continue
+                for sample in self.metadata_service.samples(package):
                     sample_accession = (
-                        self._planner.sample_accession(dict(sample)) or ""
+                        self.metadata_service.sample_accession(sample) or ""
                     )
-                    base = self._metadata_helper._sample_metadata(
-                        dict(sample), dict(package)
+                    base = self.metadata_service.sample_metadata(
+                        sample, package
                     )
                     base = {
                         **base,
-                        "modality": self._metadata_helper._sample_modality(
-                            dict(sample)
-                        ),
+                        "modality": self.metadata_service.sample_modality(sample),
                         "harmonization": [
                             vars(item)
                             for item in getattr(resolution, "selections", ())
@@ -330,6 +326,7 @@ class JSON2TSVConverter(JSON2DelimitedConverter):
         self,
         metadata_projectors: Sequence[TabularMetadataProjector] | None = None,
         package_source: JSONPackageSource | None = None,
+        metadata_service: MINiMLMetadataProvider | None = None,
         *,
         output_format: str = "tsv",
     ) -> None:
@@ -340,6 +337,7 @@ class JSON2TSVConverter(JSON2DelimitedConverter):
         super().__init__(
             metadata_projectors=metadata_projectors,
             package_source=package_source,
+            metadata_service=metadata_service,
         )
 
 

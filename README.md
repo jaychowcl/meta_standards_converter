@@ -723,6 +723,11 @@ result = JSON2TSVConverter(
 Explicit projector lists replace the default MSC table contract. Preferred
 columns are written first, remaining columns are sorted, collisions fail, and
 projector errors fail closed unless `allow_invalid=True`.
+`JSON2TSVConverter` and `JSON2H5ADConverter` also accept an optional
+`metadata_service` implementing the exported `MINiMLMetadataProvider`
+protocol. The default `MINiMLMetadataService` keeps study/sample identity,
+canonical sample fields, and modality scientifically consistent across
+delimited and AnnData outputs without coupling either exporter to the other.
 
 ### Docker
 
