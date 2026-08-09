@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -244,6 +245,85 @@ def test_retrieval_validates_cached_bytes_before_reuse(tmp_path) -> None:
         service.localize(value)
 
     assert len(session.calls) == 1
+
+
+def test_cached_reuse_updates_last_use_without_exposing_origin_query(tmp_path) -> None:
+    session = _Session([_Response(chunks=(b"abc",))])
+    service = RetrievalService(tmp_path, policy=_policy(), session=session)
+    value = "https://data.example.org/data.h5ad?token=canary-secret"
+    localized = Path(service.localize(value))
+    sidecar_path = localized.with_suffix(localized.suffix + ".metadata.json")
+    initial = json.loads(sidecar_path.read_text(encoding="utf-8"))
+
+    service.localize(value)
+
+    reused = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    assert reused["last_used_at"] >= initial["last_used_at"]
+    assert "canary-secret" not in json.dumps(reused)
+
+
+def test_cache_retention_is_dry_run_verified_active_safe_and_quarantined(
+    tmp_path,
+) -> None:
+    now = datetime(2026, 8, 10, tzinfo=timezone.utc)
+
+    def asset(name: str, content: bytes, last_used_at: str) -> Path:
+        path = tmp_path / name
+        path.write_bytes(content)
+        sidecar = path.with_suffix(path.suffix + ".metadata.json")
+        sidecar.write_text(
+            json.dumps(
+                {
+                    "contract_version": "1.0",
+                    "origin": f"https://data.example.org/{name}",
+                    "byte_count": len(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "md5": None,
+                    "fetched_at": last_used_at,
+                    "last_used_at": last_used_at,
+                    "resource_profile": "standard",
+                }
+            ),
+            encoding="utf-8",
+        )
+        return path
+
+    candidate = asset("old.h5ad", b"old", "2026-01-01T00:00:00Z")
+    active = asset("active.h5ad", b"active", "2026-01-01T00:00:00Z")
+    retained = asset("new.h5ad", b"new", "2026-08-09T00:00:00Z")
+    corrupt = asset("corrupt.h5ad", b"corrupt", "2026-01-01T00:00:00Z")
+    corrupt.write_bytes(b"tampered")
+    service = RetrievalService(tmp_path, policy=_policy(), session=_Session([]))
+
+    dry_run = service.retention_report(
+        max_age_seconds=30 * 24 * 60 * 60,
+        min_retained_assets=1,
+        active_paths=[active],
+        now=now,
+    )
+
+    by_name = {item["name"]: item for item in dry_run["items"]}
+    assert dry_run["dry_run"] is True
+    assert by_name["old.h5ad"]["action"] == "candidate"
+    assert by_name["active.h5ad"]["reason"] == "active_reference"
+    assert by_name["new.h5ad"]["reason"] == "minimum_retained"
+    assert by_name["corrupt.h5ad"]["reason"] == "integrity_failed"
+    assert all(path.exists() for path in (candidate, active, retained, corrupt))
+
+    applied = service.retention_report(
+        max_age_seconds=30 * 24 * 60 * 60,
+        min_retained_assets=1,
+        active_paths=[active],
+        now=now,
+        apply=True,
+    )
+    applied_by_name = {item["name"]: item for item in applied["items"]}
+
+    assert applied["dry_run"] is False
+    assert applied_by_name["old.h5ad"]["action"] == "quarantined"
+    assert not candidate.exists()
+    assert Path(applied_by_name["old.h5ad"]["quarantine_path"]).is_file()
+    assert active.exists() and retained.exists() and corrupt.exists()
 
 
 def test_retrieval_enforces_aggregate_run_limit(tmp_path) -> None:

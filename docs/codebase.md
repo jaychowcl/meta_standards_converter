@@ -1332,7 +1332,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-10 and reported
-`570 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`572 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -1897,6 +1897,11 @@ This section lists public and semi-public callables used by tests or by package 
   returns local paths unchanged or streams HTTP(S)/FTP into its cache, verifies
   an optional digest, and raises on transport/checksum failure; downloading is
   its filesystem/network side effect.
+- `AssetDownloader.retention_report(*, max_age_seconds,
+  min_retained_assets=1, active_paths=(), now=None, apply=False) -> dict`
+  returns a dry-run-first integrity/age/source report. Applying a plan moves
+  only verified, old, non-active, non-minimum assets and their sidecars into a
+  timestamped recoverable quarantine; it never deletes cache data.
 - `SourcePlanner.plan(packages, explicit_assets=None, force_reprocess=False)
   -> dict[str, Asset]` selects one asset per sample; `discover(packages) ->
   list[Asset]`, `samples(packages) -> list[str]`,
@@ -2767,7 +2772,11 @@ checks. An exclusive cache lock covers verification, capacity reservation,
 streaming, and atomic publication. Before consuming a body, one cache snapshot
 and one disk preflight reserve the declared response size, or the full object
 ceiling when length is unknown; chunk processing updates only byte counters and
-digests and never rescans the directory. For the exact configured
+digests and never rescans the directory. Successful reuse atomically refreshes
+the sidecar's `last_used_at`. Retention reporting is locked and dry-run by
+default, verifies candidate SHA-256/size/sidecar contracts, preserves explicit
+active references and a configurable newest minimum, and can only quarantine
+with recovery paths—never delete. For the exact configured
 `ftp.ncbi.nlm.nih.gov` host, an HTTP 403 may
 activate bounded 16 MiB HTTPS range requests; every request repeats URL/DNS
 validation, redirects remain disabled, `Content-Range` must be contiguous and

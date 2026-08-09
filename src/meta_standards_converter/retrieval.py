@@ -505,6 +505,8 @@ class RetrievalService:
             raise CacheIntegrityError("Cached asset byte count integrity check failed.")
         if expected_md5 and _file_digest(destination, "md5") != expected_md5.casefold():
             raise CacheIntegrityError("Cached asset MD5 integrity check failed.")
+        metadata["last_used_at"] = self._utc_now()
+        self._write_sidecar_payload(sidecar_path, metadata)
 
     def _write_sidecar(
         self,
@@ -516,16 +518,22 @@ class RetrievalService:
         md5: str | None,
     ) -> None:
         sidecar = self._sidecar_path(destination)
-        temporary = sidecar.with_name(f".{sidecar.name}.{os.getpid()}.stage")
+        timestamp = self._utc_now()
         payload = {
             "contract_version": "1.0",
             "origin": _sanitize_origin(origin),
             "byte_count": byte_count,
             "sha256": sha256,
             "md5": md5,
-            "fetched_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "fetched_at": timestamp,
+            "last_used_at": timestamp,
             "resource_profile": self.policy.resource_profile.name,
         }
+        self._write_sidecar_payload(sidecar, payload)
+
+    @staticmethod
+    def _write_sidecar_payload(sidecar: Path, payload: dict) -> None:
+        temporary = sidecar.with_name(f".{sidecar.name}.{os.getpid()}.stage")
         try:
             temporary.write_text(
                 json.dumps(payload, indent=2, sort_keys=True) + "\n",
@@ -534,6 +542,154 @@ class RetrievalService:
             os.replace(temporary, sidecar)
         finally:
             temporary.unlink(missing_ok=True)
+
+    @staticmethod
+    def _utc_now() -> str:
+        return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+    def retention_report(
+        self,
+        *,
+        max_age_seconds: float,
+        min_retained_assets: int = 1,
+        active_paths=(),
+        now: datetime | None = None,
+        apply: bool = False,
+    ) -> dict:
+        """Plan or quarantine old verified assets; never delete cache data."""
+
+        if max_age_seconds < 0:
+            raise ValueError("max_age_seconds must be non-negative")
+        if min_retained_assets < 0:
+            raise ValueError("min_retained_assets must be non-negative")
+        current = now or datetime.now(timezone.utc)
+        if current.tzinfo is None:
+            raise ValueError("now must be timezone-aware")
+        active = {
+            Path(path).resolve(strict=False)
+            for path in active_paths
+        }
+        with self._cache_lock():
+            entries = [
+                self._retention_entry(path)
+                for path in sorted(
+                    (
+                        path
+                        for path in self.cache_dir.iterdir()
+                        if path.is_file()
+                        and not path.name.startswith(".")
+                        and not path.name.endswith(".metadata.json")
+                    ),
+                    key=lambda path: path.name,
+                )
+            ]
+            valid_by_recency = sorted(
+                (entry for entry in entries if entry["integrity"] == "verified"),
+                key=lambda entry: entry["last_used_timestamp"],
+                reverse=True,
+            )
+            minimum_retained = {
+                entry["path"] for entry in valid_by_recency[:min_retained_assets]
+            }
+            quarantine_dir = None
+            if apply:
+                stamp = current.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+                quarantine_dir = self.cache_dir / ".quarantine" / stamp
+
+            items = []
+            for entry in entries:
+                path = Path(entry.pop("path"))
+                sidecar = self._sidecar_path(path)
+                item = {
+                    **entry,
+                    "name": path.name,
+                    "path": str(path.resolve(strict=False)),
+                }
+                item.pop("last_used_timestamp", None)
+                if entry["integrity"] != "verified":
+                    item.update(action="retained", reason="integrity_failed")
+                elif path.resolve(strict=False) in active:
+                    item.update(action="retained", reason="active_reference")
+                elif str(path) in minimum_retained:
+                    item.update(action="retained", reason="minimum_retained")
+                else:
+                    age_seconds = max(
+                        0.0,
+                        current.timestamp() - entry["last_used_timestamp"],
+                    )
+                    if age_seconds < max_age_seconds:
+                        item.update(action="retained", reason="recently_used")
+                    elif not apply:
+                        item.update(action="candidate", reason="retention_age")
+                    else:
+                        quarantine_dir.mkdir(parents=True, exist_ok=True)
+                        quarantined = quarantine_dir / path.name
+                        quarantined_sidecar = self._sidecar_path(quarantined)
+                        os.replace(path, quarantined)
+                        try:
+                            os.replace(sidecar, quarantined_sidecar)
+                        except BaseException:
+                            os.replace(quarantined, path)
+                            raise
+                        item.update(
+                            action="quarantined",
+                            reason="retention_age",
+                            quarantine_path=str(quarantined.resolve()),
+                            recovery_path=str(path.resolve(strict=False)),
+                        )
+                items.append(item)
+
+        return {
+            "contract_version": "1.0",
+            "dry_run": not apply,
+            "max_age_seconds": max_age_seconds,
+            "min_retained_assets": min_retained_assets,
+            "active_paths": sorted(str(path) for path in active),
+            "quarantine_dir": (
+                str(quarantine_dir.resolve()) if quarantine_dir is not None else None
+            ),
+            "items": items,
+        }
+
+    def _retention_entry(self, path: Path) -> dict:
+        sidecar = self._sidecar_path(path)
+        metadata = None
+        integrity = "verified"
+        try:
+            metadata = json.loads(sidecar.read_text(encoding="utf-8"))
+            if metadata.get("contract_version") != "1.0":
+                raise ValueError("unsupported sidecar contract")
+            if path.stat().st_size != metadata.get("byte_count"):
+                raise ValueError("byte count mismatch")
+            if _file_digest(path, "sha256") != metadata.get("sha256"):
+                raise ValueError("sha256 mismatch")
+            last_used = self._parse_cache_timestamp(
+                metadata.get("last_used_at") or metadata.get("fetched_at")
+            )
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
+            integrity = "failed"
+            last_used = datetime.fromtimestamp(
+                path.stat().st_mtime,
+                tz=timezone.utc,
+            )
+        return {
+            "path": str(path),
+            "origin": metadata.get("origin") if isinstance(metadata, dict) else None,
+            "byte_count": path.stat().st_size,
+            "sha256": metadata.get("sha256") if isinstance(metadata, dict) else None,
+            "last_used_at": last_used.isoformat().replace("+00:00", "Z"),
+            "last_used_timestamp": last_used.timestamp(),
+            "integrity": integrity,
+        }
+
+    @staticmethod
+    def _parse_cache_timestamp(value) -> datetime:
+        if not isinstance(value, str) or not value:
+            raise ValueError("cache timestamp is missing")
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            raise ValueError("cache timestamp must include timezone")
+        return parsed.astimezone(timezone.utc)
 
     def _check_aggregate(self, additional_bytes: int) -> None:
         if (
