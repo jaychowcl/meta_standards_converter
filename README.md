@@ -602,6 +602,12 @@ packages = geo2json().convert(
 
 `geo2json.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`.
 
+For callers that collect related studies directly,
+`GEOParser.parse_related_series(..., strict=False)` returns a list-compatible
+`RelatedSeriesParseResult`. Its status 2.0 envelope, attempted/failed accession
+lists, and persistence-safe errors make partial traversal explicit; provider
+exception messages are neither returned nor logged.
+
 Convert parsed JSON to MAGE-TAB:
 
 ```python
@@ -873,7 +879,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-10:
-`568 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+`569 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

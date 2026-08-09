@@ -648,6 +648,7 @@ follow this canonical overview.
 - Fetch, parse, enrich, harmonize, and helpers:
   `meta_standards_converter.enrichers.miniml_enricher.MINiMLEnricher`,
   `meta_standards_converter.geo_handlers.geo_parser.GEOParser`,
+  `meta_standards_converter.geo_handlers.geo_parser.RelatedSeriesParseResult`,
   `meta_standards_converter.geo_handlers.geo_webfetcher.GEOWebFetcher`,
   `meta_standards_converter.harmonizers.geo2ols.GEO2OLS`,
   `meta_standards_converter.harmonizers.harmonizers.Harmonizer`,
@@ -1327,7 +1328,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-10 and reported
-`568 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`569 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -1360,16 +1361,16 @@ See [`rootless-acceptance-2026-07-31.md`](rootless-acceptance-2026-07-31.md).
 <a id="parsed-miniml-data-shape"></a>
 ## Parsed MINiML Data Shape
 
-`GEOParser.parse()` returns `list[dict]`, with one canonical, self-contained
-package per top-level MINiML `Series`. `AEParser.parse()` returns the same
-canonical representation. Both parsers route their result through
-`MINiMLPackage` before exposing dictionaries.
+`GEOParser.parse()` returns `list[MINiMLPackage]`, with one canonical,
+self-contained package per top-level MINiML `Series`. `AEParser.parse()`
+returns one `MINiMLPackage` in the same canonical representation. Package
+objects implement the read-only mapping interface used by legacy callers.
 
 ```python
 [
     {
-        "miniml_schema_version": "1.0",
-        "version": str | None,
+        "miniml_schema_version": "2.0",
+        "source": {"format": str, "version": str | None, "documents": list[dict]},
         "database": list[dict],
         "organization": list[dict],
         "contributor": list[dict],
@@ -1380,10 +1381,15 @@ canonical representation. Both parsers route their result through
 ]
 ```
 
-`AEParser.parse()` uses the same core package vocabulary but identifies its source dialect with `version = "magetabv1.1"` and the BioStudies MAGE-TAB specification URL in `schema_location`. Its `series.iid` is the explicit ArrayExpress accession, then an ArrayExpress-form investigation accession, then another ArrayExpress-classified accession, with the investigation accession as fallback. GEO secondary accessions remain in `series.accession` and do not displace an available ArrayExpress IID.
+`AEParser.parse()` uses the same core package vocabulary but identifies its
+source dialect and documents under `source`. Its `series.iid` is the explicit
+ArrayExpress accession, then an ArrayExpress-form investigation accession,
+then another ArrayExpress-classified accession, with the investigation
+accession as fallback. GEO secondary accessions remain in `series.accession`
+and do not displace an available ArrayExpress IID.
 
 `miniml_schema_version` versions MSC's JSON representation. It is independent
-of `version`, which records the source MINiML or MAGE-TAB dialect.
+of `source.version`, which records the source MINiML or MAGE-TAB dialect.
 
 Top-level package keys are singular. Parser keys inside each parsed XML element are original XML names converted to snake_case. Repeated XML elements also keep the singular snake_case key and point to a list.
 
@@ -1590,7 +1596,13 @@ parse(miniml, related_series=True)
   -> return root packages plus related packages
 ```
 
-`GEOParser.parse_related_series(miniml, remove_empty=False, strict=True)` uses the same traversal logic but returns only related packages, excluding the input packages. When `strict=True`, fetch or parse failures raise. When `strict=False`, failed related accessions are skipped.
+`GEOParser.parse_related_series(miniml, remove_empty=False, strict=True)` uses
+the same traversal logic but returns only related packages, excluding the input
+packages, in a list-compatible `RelatedSeriesParseResult`. The result always
+contains status 2.0 plus attempted/failed accessions. When `strict=True`, fetch
+or parse failures raise. When `strict=False`, successful packages are retained
+with degraded/partial/review-required status and persistence-safe error
+envelopes; raw provider exception messages are neither returned nor logged.
 
 Related GSE accessions are discovered from `series.relation` entries only when relation `type`, `target`, or `comment` mentions superseries/subseries and contains `GSE` followed by digits.
 
@@ -2065,12 +2077,17 @@ package's source-document records.
 - Parses one MINiML XML string without related-series fetching or cleanup.
 - Builds top-level parsed records, indexes them by `iid`, and creates one package per series.
 
-`parse_related_series(miniml, remove_empty=False, strict=True) -> list[dict]`
+`parse_related_series(miniml, remove_empty=False, strict=True) -> RelatedSeriesParseResult`
 
 - Parses the input MINiML, seeds a queue from related-series relations, and returns only fetched related packages.
 - Deduplicates GSE accessions.
-- Raises on fetch/parse failures in strict mode; skips failures in non-strict mode.
+- Raises on fetch/parse failures in strict mode; non-strict mode retains
+  successes with a degraded status 2.0 envelope, attempted/failed accessions,
+  and safe errors.
 - Applies empty cleanup to related packages when requested.
+
+`RelatedSeriesParseResult` subclasses `list[dict]` for compatibility and adds
+`status`, `attempted_accessions`, `failed_accessions`, and `summary_dict()`.
 
 `remove_empty_fields(data)`
 

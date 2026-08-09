@@ -20,11 +20,45 @@ from xml.etree import ElementTree as ET
 
 from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
 from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator
-from meta_standards_converter.runtime_contracts import get_resource_profile
+from meta_standards_converter.runtime_contracts import (
+    CompletenessStatus,
+    EvidenceConfidence,
+    ExecutionStatus,
+    OperationStatusV2,
+    PublicationDisposition,
+    SafeErrorEnvelope,
+    ValidationStatus,
+    get_resource_profile,
+)
 from meta_standards_converter.xml_safety import parse_xml
 
 
 logger = logging.getLogger(__name__)
+
+
+class RelatedSeriesParseResult(list[dict]):
+    """List-compatible related-series result with explicit completeness."""
+
+    def __init__(
+        self,
+        packages,
+        *,
+        status: OperationStatusV2,
+        attempted_accessions,
+        failed_accessions,
+    ) -> None:
+        super().__init__(packages)
+        self.status = status
+        self.attempted_accessions = tuple(attempted_accessions)
+        self.failed_accessions = tuple(failed_accessions)
+
+    def summary_dict(self) -> dict:
+        return {
+            "status": self.status.to_dict(),
+            "attempted_accessions": list(self.attempted_accessions),
+            "failed_accessions": list(self.failed_accessions),
+            "package_count": len(self),
+        }
 
 
 class GEOParser:
@@ -165,9 +199,12 @@ class GEOParser:
         miniml: str,
         remove_empty: bool = False,
         strict: bool = True,
-    ) -> list[dict]:
+    ) -> RelatedSeriesParseResult:
         root_parsed = self._parse(miniml=miniml)
         related_parsed = []
+        attempted_accessions = []
+        failed_accessions = []
+        errors = []
         seen_gses = set(self._extract_series_accessions(root_parsed))
         pending_gses = deque()
 
@@ -178,6 +215,7 @@ class GEOParser:
 
         while pending_gses:
             gse = pending_gses.popleft()
+            attempted_accessions.append(gse)
             logger.info(
                 "Related-series progress accession=%s pending=%s seen=%s",
                 gse,
@@ -187,9 +225,24 @@ class GEOParser:
             try:
                 related_miniml = self.geo_fetcher.fetch_gse_miniml(gse=gse)
                 parsed = self._parse(miniml=related_miniml)
-            except Exception:
+            except Exception as error:
                 if strict:
                     raise
+                safe_error = SafeErrorEnvelope.from_exception(
+                    error,
+                    provider="ncbi_geo",
+                    stage="related_series",
+                    item_id=gse,
+                )
+                failed_accessions.append(gse)
+                errors.append(safe_error)
+                logger.warning(
+                    "Related-series collection degraded accession=%s "
+                    "error_type=%s correlation_id=%s",
+                    gse,
+                    safe_error.error_type,
+                    safe_error.correlation_id,
+                )
                 continue
 
             related_parsed.extend(parsed)
@@ -204,7 +257,41 @@ class GEOParser:
                 for series_package in related_parsed
             ]
 
-        return related_parsed
+        if errors:
+            status = OperationStatusV2(
+                execution=ExecutionStatus.DEGRADED,
+                completeness=CompletenessStatus.PARTIAL,
+                evidence_confidence=EvidenceConfidence.NOT_ASSESSED,
+                validation=ValidationStatus.VALID,
+                publication=PublicationDisposition.REVIEW_REQUIRED,
+                terminal_reason="related_series_partial",
+                errors=tuple(errors),
+            )
+        elif related_parsed:
+            status = OperationStatusV2(
+                execution=ExecutionStatus.SUCCEEDED,
+                completeness=CompletenessStatus.COMPLETE,
+                evidence_confidence=EvidenceConfidence.NOT_ASSESSED,
+                validation=ValidationStatus.VALID,
+                publication=PublicationDisposition.PUBLISHABLE,
+                terminal_reason="related_series_complete",
+            )
+        else:
+            status = OperationStatusV2(
+                execution=ExecutionStatus.SUCCEEDED,
+                completeness=CompletenessStatus.EMPTY,
+                evidence_confidence=EvidenceConfidence.NOT_ASSESSED,
+                validation=ValidationStatus.VALID,
+                publication=PublicationDisposition.NOT_REQUESTED,
+                terminal_reason="no_related_series",
+            )
+
+        return RelatedSeriesParseResult(
+            related_parsed,
+            status=status,
+            attempted_accessions=attempted_accessions,
+            failed_accessions=failed_accessions,
+        )
 
     def _parse_with_related_series(self, parsed: list[dict]) -> list[dict]:
         all_series = list(parsed)

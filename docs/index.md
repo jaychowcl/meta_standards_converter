@@ -179,13 +179,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: GEO to parsed JSON
   anchor: workflow-geo2json
   purpose: Traces the distinct GEO-to-JSON path, optional enrichment, writing, and errors.
-  keywords: geo2json, GSE, GEOParser, enrichment, JSON
+  keywords: geo2json, GSE, GEOParser, RelatedSeriesParseResult, related series, degraded, partial, safe error, enrichment, JSON
   link: [Open section](codebase.md#workflow-geo2json)
 
 - id: workflow-json2ae
   title: Parsed JSON to MAGE-TAB
   anchor: workflow-json2ae
-  purpose: Traces native MINiML or canonical Atlas v1 loading, filtering, validation, enrichment, round-trip restoration, construction, and writing.
+  purpose: Traces native MINiML or canonical Atlas v1 loading, filtering, validation, enrichment, typed semantic MAGE-TAB reconstruction, and writing.
   keywords: json2ae, JSON, Atlas v1, harmonized, warning, MAGE-TAB, round trip, overlay, IDF, SDRF
   link: [Open section](codebase.md#workflow-json2ae)
 
@@ -272,5 +272,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Test plan
   anchor: test-plan
   purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
-  keywords: tests, 568 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  keywords: tests, 569 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

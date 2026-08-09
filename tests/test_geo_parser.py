@@ -18,7 +18,10 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
+from meta_standards_converter.geo_handlers.geo_parser import (  # noqa: E402
+    GEOParser,
+    RelatedSeriesParseResult,
+)
 from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
 
 
@@ -191,6 +194,43 @@ class TestGEOParser(unittest.TestCase):
 
         self.assertEqual(["GSE1", "GSE2"], [package["series"]["iid"] for package in parsed])
         fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE2")
+
+    def test_permissive_related_series_returns_typed_partial_summary(self):
+        root_xml = miniml_body(
+            """
+  <Series iid="GSE1"><Accession database="GEO">GSE1</Accession><Relation type="SuperSeries of" target="GSE2" /><Relation type="SuperSeries of" target="GSE3" /></Series>
+"""
+        )
+        related_xml = miniml_body(
+            """
+  <Series iid="GSE3"><Accession database="GEO">GSE3</Accession></Series>
+"""
+        )
+
+        class PartialFetcher:
+            def fetch_gse_miniml(self, gse):
+                if gse == "GSE2":
+                    raise RuntimeError("private-provider-detail")
+                return related_xml
+
+        with self.assertLogs(
+            "meta_standards_converter.geo_handlers.geo_parser", level="WARNING"
+        ) as logs:
+            result = GEOParser(geo_fetcher=PartialFetcher()).parse_related_series(
+                root_xml,
+                strict=False,
+            )
+
+        self.assertIsInstance(result, RelatedSeriesParseResult)
+        self.assertEqual(["GSE3"], [item["series"]["iid"] for item in result])
+        self.assertEqual("degraded", result.status.execution.value)
+        self.assertEqual("partial", result.status.completeness.value)
+        self.assertEqual("review_required", result.status.publication.value)
+        self.assertEqual(("GSE2", "GSE3"), result.attempted_accessions)
+        self.assertEqual(("GSE2",), result.failed_accessions)
+        self.assertEqual("RuntimeError", result.status.errors[0].error_type)
+        self.assertEqual("GSE2", result.status.errors[0].item_id)
+        self.assertNotIn("private-provider-detail", "\n".join(logs.output))
 
 
 if __name__ == "__main__":
