@@ -105,6 +105,18 @@ def atlas_v1_payload(datasets):
 
 
 class TestSourcePlanner(unittest.TestCase):
+    def test_indexes_assets_by_scope_without_changing_candidate_order(self):
+        assets = [
+            Asset("GSM2", "second.h5ad", "h5ad", source="json"),
+            Asset("GSE1", "study.tsv", "matrix", source="json"),
+            Asset("GSM2", "preferred.h5ad", "h5ad", source="manifest"),
+        ]
+
+        indexed = SourcePlanner()._index_assets_by_scope(assets)
+
+        self.assertEqual([assets[0], assets[2]], indexed["GSM2"])
+        self.assertEqual([assets[1]], indexed["GSE1"])
+
     def test_groups_10x_matrix_barcode_and_gene_companions(self):
         data = package(
             "GSM1_brain.barcodes.tsv.gz",

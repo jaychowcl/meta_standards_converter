@@ -746,7 +746,9 @@ package conversion -> processed normalize / raw reference + nf-core
    including for one group.
 3. With multiple groups, `_convert_groups` places each group in an output-root
    child directory named for `dataset_id`; one group uses the root directly.
-4. Planning applies manifest, explicit, then discovered asset precedence.
+4. Planning applies manifest, explicit, then discovered asset precedence. It
+   indexes candidates once by sample/study scope, avoiding a full asset scan
+   for every sample while preserving source order and rank behavior.
 5. Processed assets normalize directly; ordinary H5AD and delimited paths do
    not import Scanpy, while 10x HDF5/MTX branches import it lazily. Raw assets
    call reference resolution and Nextflow/nf-core through `NFCoreRunner`.

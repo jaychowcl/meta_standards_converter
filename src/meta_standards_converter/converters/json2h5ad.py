@@ -840,16 +840,17 @@ class SourcePlanner:
         assets = self._coalesce_raw_assets(assets)
         samples = self.samples(packages)
         study_by_sample = self._study_by_sample(packages)
+        assets_by_scope = self._index_assets_by_scope(assets)
         planned = {}
 
         for sample_id in samples:
             study_id = study_by_sample.get(sample_id)
-            candidates = []
-            for asset in assets:
-                if asset.scope_id == sample_id:
-                    candidates.append(asset)
-                elif study_id and asset.scope_id == study_id:
-                    candidates.append(replace(asset, scope_id=sample_id, study_scope=study_id))
+            candidates = list(assets_by_scope.get(sample_id, ()))
+            if study_id:
+                candidates.extend(
+                    replace(asset, scope_id=sample_id, study_scope=study_id)
+                    for asset in assets_by_scope.get(study_id, ())
+                )
             if force_reprocess:
                 candidates = [asset for asset in candidates if asset.kind == "raw"]
                 if not candidates:
@@ -864,6 +865,15 @@ class SourcePlanner:
                 ),
             )
         return planned
+
+    @staticmethod
+    def _index_assets_by_scope(
+        assets: list[Asset],
+    ) -> dict[str, list[Asset]]:
+        by_scope: dict[str, list[Asset]] = {}
+        for asset in assets:
+            by_scope.setdefault(asset.scope_id, []).append(asset)
+        return by_scope
 
     def _group_10x_assets(self, assets: list[Asset]) -> list[Asset]:
         groups: dict[

@@ -356,7 +356,7 @@ exact host. Local IDF/SDRF reads stop at the same configured file ceiling.
 
 #### `json2h5ad`
 
-Select the best available expression source for every sample, normalize it into AnnData, and write H5AD outputs. Explicit manifest assets outrank `--asset` entries, which outrank JSON-discovered assets; within a source tier the order is H5AD, matrix, then raw FASTQ.
+Select the best available expression source for every sample, normalize it into AnnData, and write H5AD outputs. Explicit manifest assets outrank `--asset` entries, which outrank JSON-discovered assets; within a source tier the order is H5AD, matrix, then raw FASTQ. Candidate planning indexes assets once by sample/study scope rather than rescanning the complete asset set for every sample.
 
 ```bash
 json2h5ad output/GSE234602.json --out output
