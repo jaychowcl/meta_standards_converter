@@ -16,6 +16,8 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from meta_standards_converter.runtime_contracts import OperationStatusV2
+
 
 SCHEMA_VERSION = "1.0"
 _TOP_LEVEL_FIELDS = {
@@ -147,7 +149,13 @@ def _harmonization(value: Any, name: str) -> None:
     if value is None:
         return
     harmonization = _mapping(value, name)
-    _only(harmonization, {"targets", "degraded_stages"}, name)
+    _only(harmonization, {"targets", "degraded_stages", "status"}, name)
+    raw_status = harmonization.get("status")
+    if raw_status is not None:
+        try:
+            OperationStatusV2.from_dict(_mapping(raw_status, f"{name}.status"))
+        except (KeyError, TypeError, ValueError) as error:
+            raise AtlasV1Error(f"{name}.status is invalid: {error}") from error
     for index, raw in enumerate(
         _list(harmonization.get("targets"), f"{name}.targets")
     ):
@@ -175,7 +183,7 @@ def _harmonization(value: Any, name: str) -> None:
                 f"{name}.targets[{index}].match.confidence",
             )
     degraded = _list(
-        harmonization.get("degraded_stages"), f"{name}.degraded_stages"
+        harmonization.get("degraded_stages", []), f"{name}.degraded_stages"
     )
     for index, stage in enumerate(degraded):
         _nonblank(stage, f"{name}.degraded_stages[{index}]")

@@ -320,6 +320,9 @@ statement for them; treat those as **evidence-gap**, not stable API.
   versions, legacy unversioned envelopes, malformed collections, duplicate IDs, broken
   publication references, invalid dataset metadata, and inconsistent summary
   counts.
+- A dataset's optional `harmonization.status` is parsed as the shared
+  `OperationStatusV2` contract. Invalid or legacy status mappings fail closed;
+  documents that omit the field remain compatible with Atlas schema 1.0.
 - `SCHEMA_VERSION` is currently `"1.0"`. The producer-owned golden fixture is
   copied verbatim to `tests/fixtures/contracts/atlas-document-v1.json`; tests
   consume it without importing ThematicAtlases.
@@ -749,6 +752,11 @@ package conversion -> processed normalize / raw reference + nf-core
    call reference resolution and Nextflow/nf-core through `NFCoreRunner`.
 6. Per-sample failures, incompatibility, and allowed projector errors can make `ConversionResult.partial`;
    per-group exceptions are caught in `BatchConversionResult.failures`.
+   Combination fails closed when organism, reference, modality, or feature
+   namespace is known for only some samples. The explicit
+   `allow_unverified_combination=True` / `--allow-unverified-combination`
+   acknowledgement permits the combined artifact but records the missing
+   evidence and keeps the result partial.
 7. Invalid path/source/no-group/no-sample and unsafe dataset-ID conditions raise before aggregation; successful
    groups and diagnostics survive later failures.
 8. Bound MAGE-TAB Parameter Values are projected to dotted `obs` columns and
@@ -2470,6 +2478,8 @@ Important test coverage:
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
 - `tests/test_ae_webfetcher.py`: bounded local and streamed HTTPS resolution, typed profile propagation, explicit host policy, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
 - `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 3 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, sparse combination, canonical/generic study splitting, partial results, and raw-output reintegration.
+- `tests/test_retrieval.py`: host/address/redirect policy, cache integrity,
+  byte/disk/aggregate ceilings, and bounded NCBI range fallback behavior.
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
 - `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, replacement projectors, collisions, and validation behavior.
@@ -2642,7 +2652,11 @@ schemes and exact/provider-suffix hosts, rejects URL userinfo and non-public
 IPv4/IPv6 answers, and revalidates each same-scheme redirect.
 `meta_standards_converter.retrieval.RetrievalService` streams assets with
 connect/read timeouts and object, aggregate-run, cache, and disk-headroom
-checks. Cache publication records sanitized origin, byte count, SHA-256,
+checks. For the exact configured `ftp.ncbi.nlm.nih.gov` host, an HTTP 403 may
+activate bounded 16 MiB HTTPS range requests; every request repeats URL/DNS
+validation, redirects remain disabled, `Content-Range` must be contiguous and
+truthful, and the same object/run/cache/disk limits apply. Cache publication
+records sanitized origin, byte count, SHA-256,
 optional MD5, fetch time, and profile; reuse fails closed if bytes or sidecar
 do not match. `meta_standards_converter.retrieval.AssetDownloader` preserves
 the former supported facade while delegating to this service. Failure types are

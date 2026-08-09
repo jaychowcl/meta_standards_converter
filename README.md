@@ -181,6 +181,7 @@ The package has no mandatory application config file. Configure conversions with
 | Nextflow | `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, `--resume` | Docker profile and pinned pipeline revision |
 | Existing H5AD outputs | `--overwrite` / `overwrite=True` | Protect existing outputs |
 | H5AD projector validation | `--allow-invalid` / `allow_invalid=True` | Fail closed before publishing artifacts |
+| Unverified H5AD combination | `--allow-unverified-combination` / `allow_unverified_combination=True` | Reject known-plus-unknown scientific dimensions |
 
 #### Platform handlers
 
@@ -389,6 +390,7 @@ json2h5ad output/GSE234602.json \
 | `--processed-checkpoint-dir` `DIR` | Persist atomic normalized sample checkpoints in `DIR`; matching checkpoints are reused with `--resume`. |
 | `--overwrite` | Replace normalized H5AD and manifest outputs; existing outputs are protected by default. |
 | `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
+| `--allow-unverified-combination` | Explicitly acknowledge combining samples when organism, reference, modality, or feature-namespace evidence is present for only some samples; the result remains partial and records compatibility provenance. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
 | `--use-harmonization-overrides` | Replace canonical metadata destinations from the envelope profile and publish `msc_harmonization` provenance. |
 | `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
@@ -398,14 +400,14 @@ json2h5ad output/GSE234602.json \
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
 
-Processed assets may be local or policy-approved HTTPS/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote retrieval revalidates every redirect host/address, rejects private addresses and URL credentials, enforces typed object/run/cache/disk limits, and writes a SHA-256 integrity sidecar. Provider hosts are allowed by default; any additional exact host requires `--asset-host`. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
+Processed assets may be local or policy-approved HTTPS/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote retrieval revalidates every redirect host/address, rejects private addresses and URL credentials, enforces typed object/run/cache/disk limits, and writes a SHA-256 integrity sidecar. A narrowly scoped NCBI HTTPS range fallback handles `ftp.ncbi.nlm.nih.gov` responses that reject ordinary streaming while preserving the same DNS, redirect, byte, cache-integrity, aggregate, and disk limits. Provider hosts are allowed by default; any additional exact host requires `--asset-host`. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
 
 Ordinary H5AD and delimited-matrix paths use AnnData, pandas, NumPy, and SciPy
 directly. Scanpy is imported lazily only when reading 10x HDF5 or MTX inputs,
 so processed H5AD conversion does not trigger unrelated plotting/font-system
 process discovery.
 
-Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. Dataset, study, and sample identifiers must be safe single path components. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. If restoration itself fails, `DatasetBundleRecoveryError` reports retained recovery paths instead of deleting the previous artifacts. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
+Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. If a dimension is known for one sample and absent for another, combination also fails closed. `--allow-unverified-combination` is an explicit acknowledgement path: it permits the combined artifact but retains partial status and records the unverified dimensions in provenance. Dataset, study, and sample identifiers must be safe single path components. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. If restoration itself fails, `DatasetBundleRecoveryError` reports retained recovery paths instead of deleting the previous artifacts. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
 
 ##### H5AD metadata schema 1.0
 

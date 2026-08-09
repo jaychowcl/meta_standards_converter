@@ -483,6 +483,8 @@ class DocsIndexTests(unittest.TestCase):
             "docs/MINiML.xsd",
             "tests/GSE328265_family.xml",
             "tests/fixtures/contracts/atlas-document-v1.json",
+            "tests/fixtures/arrayexpress/E-MTAB-6486.idf.txt",
+            "tests/fixtures/arrayexpress/E-MTAB-6486.sdrf.txt",
             "src/meta_standards_converter/miniml/miniml-package-v1.schema.json",
             "src/meta_standards_converter/miniml/miniml-package-v2.schema.json",
         }

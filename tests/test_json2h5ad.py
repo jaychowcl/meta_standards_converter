@@ -990,7 +990,11 @@ class TestProcessedAssetConversion(unittest.TestCase):
                         "supplementary_data": [{"value": paths["GSM2"]}],
                         "platform_ref": {"ref": "P2"},
                         "contact_ref": [{"ref": "C2"}],
-                        "channel": [{"characteristics": [{"name": "dose", "value": "5 uM"}]}],
+                        "library_strategy": "RNA-Seq",
+                        "channel": [{
+                            "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
+                            "characteristics": [{"name": "dose", "value": "5 uM"}],
+                        }],
                     },
                 ],
             }
@@ -1188,6 +1192,48 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
             self.assertIn("reference builds", result.failures[0])
+
+    def test_known_and_unknown_reference_require_explicit_partial_acknowledgement(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            samples = []
+            for sample_id, genome in (("GSM1", "GRCh38"), ("GSM2", None)):
+                path = os.path.join(tmpdir, f"{sample_id}.h5ad")
+                adata = self.anndata.AnnData(
+                    X=self.sparse.csr_matrix([[1]]),
+                    obs=self.pandas.DataFrame(index=["cell"]),
+                    var=self.pandas.DataFrame(
+                        {"gene_ids": ["ENSG1"]}, index=["ENSG1"]
+                    ),
+                )
+                if genome is not None:
+                    adata.uns["genome"] = genome
+                adata.write_h5ad(path)
+                sample = package(path, accession=sample_id)["sample"][0]
+                sample["library_source"] = "single cell transcriptomic"
+                sample["channel"] = [
+                    {"organism": [{"value": "Homo sapiens"}]}
+                ]
+                samples.append(sample)
+            data = package()
+            data["sample"] = samples
+            json_path = self._write_json(tmpdir, data)
+
+            strict = json2h5ad().convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "strict"),
+            )
+            acknowledged = json2h5ad().convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "acknowledged"),
+                allow_unverified_combination=True,
+            )
+
+            self.assertIsNone(strict.combined_h5ad)
+            self.assertIn("positive compatibility evidence", strict.failures[0])
+            self.assertIn("reference", strict.failures[0])
+            self.assertIsNotNone(acknowledged.combined_h5ad)
+            self.assertTrue(acknowledged.partial)
+            self.assertIn("explicitly acknowledged", acknowledged.failures[0])
 
     def test_incompatible_bulk_and_single_cell_modalities_are_not_combined(self):
         with tempfile.TemporaryDirectory() as tmpdir:

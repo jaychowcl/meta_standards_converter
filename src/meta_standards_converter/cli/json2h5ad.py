@@ -101,6 +101,14 @@ def _parser() -> argparse.ArgumentParser:
         help="Write outputs carrying projector-reported validation errors.",
     )
     parser.add_argument(
+        "--allow-unverified-combination",
+        action="store_true",
+        help=(
+            "Combine samples missing otherwise-declared compatibility evidence "
+            "and publish the result as explicitly partial."
+        ),
+    )
+    parser.add_argument(
         "--matrix-orientation",
         choices=("auto", "genes-by-observations", "observations-by-genes"),
         default="auto",
@@ -175,6 +183,11 @@ def main(argv=None) -> int:
                 ("processed_checkpoint_dir", args.processed_checkpoint_dir, None),
                 ("overwrite", args.overwrite, False),
                 ("allow_invalid", args.allow_invalid, False),
+                (
+                    "allow_unverified_combination",
+                    args.allow_unverified_combination,
+                    False,
+                ),
                 ("matrix_orientation", args.matrix_orientation, "auto"),
             ):
                 if value != default:

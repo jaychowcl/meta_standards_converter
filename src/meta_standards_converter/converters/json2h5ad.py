@@ -1147,6 +1147,7 @@ class JSON2H5ADConverter:
         resume: bool = False,
         processed_checkpoint_dir: str | None = None,
         allow_invalid: bool = False,
+        allow_unverified_combination: bool = False,
         use_harmonization_overrides: bool = False,
         **options,
     ) -> ConversionResult | BatchConversionResult:
@@ -1185,6 +1186,7 @@ class JSON2H5ADConverter:
             resume=resume,
             processed_checkpoint_dir=processed_checkpoint_dir,
             allow_invalid=allow_invalid,
+            allow_unverified_combination=allow_unverified_combination,
             **options,
         )
         if len(loaded.groups) > 1:
@@ -1298,6 +1300,7 @@ class JSON2H5ADConverter:
         resume: bool = False,
         processed_checkpoint_dir: str | None = None,
         allow_invalid: bool = False,
+        allow_unverified_combination: bool = False,
         **options,
     ) -> ConversionResult:
 
@@ -1436,11 +1439,27 @@ class JSON2H5ADConverter:
 
         self._ensure_global_observation_ids(adatas)
         try:
-            combined = self._combine(adatas)
+            combined = self._combine(
+                adatas,
+                allow_unverified=allow_unverified_combination,
+            )
         except ValueError as exc:
             result.failures.append(str(exc))
         else:
             combined_adata = combined
+            compatibility = combined.uns.get(
+                "meta_standards_converter", {}
+            ).get("combination_compatibility", {})
+            if compatibility.get("explicitly_acknowledged"):
+                missing = compatibility.get("missing_evidence", {})
+                rendered = ", ".join(
+                    f"{dimension} ({', '.join(sample_ids)})"
+                    for dimension, sample_ids in sorted(missing.items())
+                )
+                result.failures.append(
+                    "Combined samples with unverified compatibility evidence "
+                    f"after it was explicitly acknowledged: {rendered}"
+                )
             self._project_combined_metadata(
                 combined,
                 projection_contexts,
@@ -2724,10 +2743,26 @@ class JSON2H5ADConverter:
             return "bulk"
         return "unknown"
 
-    def _combine(self, adatas: dict[str, object]):
+    def _combine(
+        self,
+        adatas: dict[str, object],
+        *,
+        allow_unverified: bool = False,
+    ):
         if not adatas:
             raise ValueError("No sample H5ADs were produced.")
         anndata, _numpy, _pandas, sparse = self._scientific_modules()
+        missing_evidence = self._missing_combination_evidence(adatas)
+        if missing_evidence and not allow_unverified:
+            rendered = ", ".join(
+                f"{dimension} ({', '.join(sample_ids)})"
+                for dimension, sample_ids in sorted(missing_evidence.items())
+            )
+            raise ValueError(
+                "Cannot combine samples without positive compatibility evidence "
+                f"for every sample: {rendered}. Set allow_unverified_combination "
+                "only to publish an explicitly acknowledged partial result."
+            )
         organisms = {
             str(
                 adata.obs["msc.sample.channel.organism.value"].iloc[0]
@@ -2782,6 +2817,13 @@ class JSON2H5ADConverter:
             "converter_version": self._package_version(),
             "metadata_schema_version": self.H5AD_METADATA_SCHEMA_VERSION,
             "path_base": "artifact_parent",
+            "combination_compatibility": {
+                "verified": not missing_evidence,
+                "missing_evidence": missing_evidence,
+                "explicitly_acknowledged": bool(
+                    missing_evidence and allow_unverified
+                ),
+            },
             "sample_provenance": {
                 sample_id: dict(adata.uns.get("meta_standards_converter", {}))
                 for sample_id, adata in adatas.items()
@@ -2799,6 +2841,63 @@ class JSON2H5ADConverter:
             sample_values[sample_id] = fields
         self._attach_sample_values(combined, sample_values)
         return combined
+
+    def _missing_combination_evidence(
+        self,
+        adatas: Mapping[str, object],
+    ) -> dict[str, list[str]]:
+        if len(adatas) < 2:
+            return {}
+
+        evidence: dict[str, dict[str, str | None]] = {}
+        for sample_id, adata in adatas.items():
+            organism = None
+            if "msc.sample.channel.organism.value" in adata.obs:
+                values = {
+                    str(value).strip()
+                    for value in adata.obs[
+                        "msc.sample.channel.organism.value"
+                    ]
+                    if str(value).strip()
+                }
+                if len(values) == 1:
+                    organism = next(iter(values))
+            provenance = adata.uns.get("meta_standards_converter")
+            provenance = provenance if isinstance(provenance, dict) else {}
+            reference = str(provenance.get("reference") or "").strip() or None
+            raw_modality = str(provenance.get("modality") or "").strip()
+            modality = (
+                raw_modality
+                if raw_modality and raw_modality.casefold() != "unknown"
+                else None
+            )
+            namespace = self._feature_namespace(adata)
+            evidence[sample_id] = {
+                "organism": organism,
+                "reference": reference,
+                "modality": modality,
+                "feature_namespace": (
+                    namespace if namespace != "unknown" else None
+                ),
+            }
+
+        missing: dict[str, list[str]] = {}
+        for dimension in (
+            "organism",
+            "reference",
+            "modality",
+            "feature_namespace",
+        ):
+            if not any(values[dimension] for values in evidence.values()):
+                continue
+            absent = [
+                sample_id
+                for sample_id, values in evidence.items()
+                if not values[dimension]
+            ]
+            if absent:
+                missing[dimension] = absent
+        return missing
 
     def _feature_namespace(self, adata) -> str:
         values = adata.var.get("gene_ids", adata.var_names)

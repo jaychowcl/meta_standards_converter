@@ -81,6 +81,7 @@ class TestJSON2H5ADCLI(unittest.TestCase):
                 "--processed-checkpoint-dir", "checkpoints",
                 "--overwrite",
                 "--allow-invalid",
+                "--allow-unverified-combination",
                 "--matrix-orientation", "genes-by-observations",
             ])
 
@@ -103,6 +104,7 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             processed_checkpoint_dir="checkpoints",
             overwrite=True,
             allow_invalid=True,
+            allow_unverified_combination=True,
             matrix_orientation="genes-by-observations",
         )
 

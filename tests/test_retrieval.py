@@ -36,6 +36,7 @@ class _Response:
         self.status_code = status_code
         self.headers = headers or {"Content-Length": str(sum(map(len, chunks)))}
         self._chunks = chunks
+        self.closed = False
 
     def iter_content(self, chunk_size: int):
         yield from self._chunks
@@ -45,7 +46,7 @@ class _Response:
             raise RuntimeError(f"HTTP {self.status_code}")
 
     def close(self) -> None:
-        pass
+        self.closed = True
 
 
 class _Session:
@@ -190,3 +191,63 @@ def test_retrieval_enforces_aggregate_run_limit(tmp_path) -> None:
     service.localize("https://data.example.org/one.h5ad")
     with pytest.raises(RetrievalSizeError, match="aggregate download limit"):
         service.localize("https://data.example.org/two.h5ad")
+
+
+def test_retrieval_uses_bounded_ncbi_range_fallback_under_same_policy(tmp_path) -> None:
+    session = _Session(
+        [
+            _Response(status_code=403, headers={}, chunks=()),
+            _Response(
+                status_code=206,
+                headers={"Content-Range": "bytes 0-2/6"},
+                chunks=(b"abc",),
+            ),
+            _Response(
+                status_code=206,
+                headers={"Content-Range": "bytes 3-5/6"},
+                chunks=(b"123",),
+            ),
+        ]
+    )
+    policy = _policy(
+        allowed_hosts=frozenset({"ftp.ncbi.nlm.nih.gov"}),
+    )
+    service = RetrievalService(tmp_path, policy=policy, session=session)
+
+    localized = Path(
+        service.localize(
+            "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE1/matrix.h5ad"
+        )
+    )
+
+    assert localized.read_bytes() == b"abc123"
+    assert [call[1].get("headers", {}).get("Range") for call in session.calls] == [
+        None,
+        "bytes=0-7",
+        "bytes=3-5",
+    ]
+    assert all(call[1]["allow_redirects"] is False for call in session.calls)
+
+
+def test_ncbi_range_fallback_closes_first_response_when_size_is_rejected(
+    tmp_path,
+) -> None:
+    rejected = _Response(
+        status_code=206,
+        headers={"Content-Range": "bytes 0-7/9"},
+        chunks=(b"12345678",),
+    )
+    service = RetrievalService(
+        tmp_path,
+        policy=_policy(allowed_hosts=frozenset({"ftp.ncbi.nlm.nih.gov"})),
+        session=_Session(
+            [_Response(status_code=403, headers={}, chunks=()), rejected]
+        ),
+    )
+
+    with pytest.raises(RetrievalSizeError, match="object limit"):
+        service.localize(
+            "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE1/matrix.h5ad"
+        )
+
+    assert rejected.closed is True

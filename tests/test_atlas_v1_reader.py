@@ -33,6 +33,42 @@ def test_owner_contract_fixture_yields_only_harmonized_dataset_metadata():
     )
 
 
+def test_reader_accepts_and_validates_harmonization_status_contract_v2():
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    payload["datasets"][0]["harmonization"].pop("degraded_stages")
+    payload["datasets"][0]["harmonization"]["status"] = {
+        "contract_version": "2.0",
+        "execution": "succeeded",
+        "completeness": "complete",
+        "evidence_confidence": "high",
+        "validation": "valid",
+        "publication": "publishable",
+        "terminal_reason": "harmonization_complete",
+        "errors": [],
+    }
+
+    result = AtlasV1Reader().from_mapping(payload)
+
+    assert [dataset.dataset_id for dataset in result.datasets] == ["GSE100"]
+
+
+def test_reader_rejects_invalid_harmonization_status_contract_v2():
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    payload["datasets"][0]["harmonization"]["status"] = {
+        "contract_version": "2.0",
+        "execution": "succeeded",
+        "completeness": "partial",
+        "evidence_confidence": "high",
+        "validation": "valid",
+        "publication": "publishable",
+        "terminal_reason": "contradictory",
+        "errors": [],
+    }
+
+    with pytest.raises(AtlasV1Error, match="harmonization.status"):
+        AtlasV1Reader().from_mapping(payload)
+
+
 def test_reader_rejects_legacy_unversioned_envelopes_with_cutover_guidance():
     with pytest.raises(
         AtlasV1Error,

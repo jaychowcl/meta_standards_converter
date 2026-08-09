@@ -18,6 +18,7 @@ import ipaddress
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import tempfile
 from typing import Any, Callable
@@ -41,6 +42,8 @@ DEFAULT_PROVIDER_HOST_SUFFIXES = frozenset(
     }
 )
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
+_CONTENT_RANGE = re.compile(r"^bytes (\d+)-(\d+)/(\d+)$")
+_RANGE_CHUNK_BYTES = 16 * 1024 * 1024
 
 
 class RetrievalError(RuntimeError):
@@ -66,6 +69,9 @@ class RetrievalPolicy:
     allowed_host_suffixes: frozenset[str] = DEFAULT_PROVIDER_HOST_SUFFIXES
     allowed_schemes: frozenset[str] = frozenset({"https", "ftp"})
     allow_file_urls: bool = False
+    ranged_fallback_hosts: frozenset[str] = frozenset(
+        {"ftp.ncbi.nlm.nih.gov"}
+    )
     resolver: Callable[..., list[Any]] = socket.getaddrinfo
     disk_preflight: Callable[..., Any] = require_disk_headroom
 
@@ -216,6 +222,25 @@ class RetrievalService:
             current = target
         if response is None:
             raise RetrievalError("Remote asset request did not produce a response.")
+        parsed_current = urlsplit(current)
+        if (
+            response.status_code == 403
+            and parsed_current.scheme.casefold() == "https"
+            and (parsed_current.hostname or "").casefold().rstrip(".")
+            in {
+                host.casefold().rstrip(".")
+                for host in self.policy.ranged_fallback_hosts
+            }
+        ):
+            response.close()
+            self._download_http_ranges(
+                current,
+                destination=destination,
+                object_limit=object_limit,
+                expected_md5=expected_md5,
+                origin=value,
+            )
+            return
         try:
             response.raise_for_status()
             declared = _content_length(response.headers)
@@ -230,6 +255,101 @@ class RetrievalService:
             )
         finally:
             response.close()
+
+    def _download_http_ranges(
+        self,
+        value: str,
+        *,
+        destination: Path,
+        object_limit: int,
+        expected_md5: str | None,
+        origin: str,
+    ) -> None:
+        first = self._range_response(
+            value,
+            start=0,
+            end=min(_RANGE_CHUNK_BYTES, object_limit) - 1,
+        )
+        try:
+            first_start, _first_end, total = _content_range(first.headers)
+            if first_start != 0:
+                raise RetrievalSizeError(
+                    "NCBI ranged asset response is not a valid initial range."
+                )
+            self._preflight_declared(total, object_limit=object_limit)
+        except BaseException:
+            first.close()
+            raise
+
+        def chunks():
+            response = first
+            expected_start = 0
+            expected_total = total
+            while expected_start < expected_total:
+                returned_start, returned_end, returned_total = _content_range(
+                    response.headers
+                )
+                if (
+                    returned_start != expected_start
+                    or returned_end < returned_start
+                    or returned_end >= returned_total
+                    or returned_total != expected_total
+                ):
+                    response.close()
+                    raise RetrievalSizeError(
+                        "NCBI ranged asset response is not contiguous."
+                    )
+                received = 0
+                try:
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            received += len(chunk)
+                            yield chunk
+                finally:
+                    response.close()
+                expected_bytes = returned_end - returned_start + 1
+                if received != expected_bytes:
+                    raise RetrievalSizeError(
+                        "NCBI ranged asset body does not match Content-Range."
+                    )
+                expected_start = returned_end + 1
+                if expected_start < expected_total:
+                    response = self._range_response(
+                        value,
+                        start=expected_start,
+                        end=min(
+                            expected_total - 1,
+                            expected_start + _RANGE_CHUNK_BYTES - 1,
+                        ),
+                    )
+
+        self._write_stream(
+            chunks(),
+            destination=destination,
+            origin=origin,
+            object_limit=object_limit,
+            declared_bytes=total,
+            expected_md5=expected_md5,
+        )
+
+    def _range_response(self, value: str, *, start: int, end: int) -> Any:
+        self.policy.validate_url(value)
+        response = self.session.get(
+            value,
+            headers={"Range": f"bytes={start}-{end}"},
+            stream=True,
+            allow_redirects=False,
+            timeout=(
+                self.policy.resource_profile.connect_timeout_seconds,
+                self.policy.resource_profile.read_timeout_seconds,
+            ),
+        )
+        if response.status_code != 206:
+            response.close()
+            raise RetrievalError(
+                "NCBI ranged asset request did not return partial content."
+            )
+        return response
 
     def _download_ftp(
         self,
@@ -448,6 +568,21 @@ def _content_length(headers: Any) -> int | None:
     if length < 0:
         raise RetrievalSizeError("Remote asset Content-Length is invalid.")
     return length
+
+
+def _content_range(headers: Any) -> tuple[int, int, int]:
+    value = headers.get("Content-Range") if hasattr(headers, "get") else None
+    match = _CONTENT_RANGE.fullmatch(str(value or ""))
+    if match is None:
+        raise RetrievalSizeError(
+            "NCBI ranged asset response has invalid Content-Range."
+        )
+    start, end, total = map(int, match.groups())
+    if total <= 0 or start < 0 or end < start or end >= total:
+        raise RetrievalSizeError(
+            "NCBI ranged asset response has invalid Content-Range."
+        )
+    return start, end, total
 
 
 def _sanitize_origin(value: str) -> str:

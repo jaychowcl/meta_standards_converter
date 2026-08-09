@@ -79,7 +79,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Atlas v1 reader
   anchor: atlas-v1-reader
   purpose: Defines the standalone versioned wire reader, dataset adaptation, warnings, v1 rejection, and dependency boundary.
-  keywords: AtlasV1Reader, AtlasV1Error, schema_version, golden fixture, harmonized, metadata.packages, DatasetPackageGroup, standalone, no dependency
+  keywords: AtlasV1Reader, AtlasV1Error, schema_version, golden fixture, harmonized, status 2.0, metadata.packages, DatasetPackageGroup, standalone, no dependency
   link: [Open section](codebase.md#atlas-v1-reader)
 
 - id: principal-workflows
@@ -149,7 +149,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Secure retrieval and XML boundaries
   anchor: secure-retrieval-and-xml
   purpose: Defines provider-host/public-address policy, redirects, byte quotas, cache integrity, streamed archives, and DTD/entity rejection.
-  keywords: retrieval, SSRF, redirect, private IP, SHA-256, cache, XML, archive, DTD, entity
+  keywords: retrieval, SSRF, redirect, private IP, SHA-256, cache, NCBI range fallback, Content-Range, XML, archive, DTD, entity
   link: [Open section](codebase.md#secure-retrieval-and-xml)
 
 - id: proposed-enriched-miniml-core
@@ -200,7 +200,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: MINiML or Atlas JSON to H5AD
   anchor: workflow-json2h5ad
   purpose: Traces grouping, asset planning, raw/processed paths, projection, aggregation, and partial failures.
-  keywords: json2h5ad, Atlas, MINiML, typed annotations, harmonized characteristic, organism, msc_miniml, packages_json, canonical JSON, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
+  keywords: json2h5ad, Atlas, MINiML, typed annotations, harmonized characteristic, organism, known unknown compatibility, allow unverified combination, msc_miniml, packages_json, canonical JSON, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2h5ad)
 
 - id: workflow-json2tsv
