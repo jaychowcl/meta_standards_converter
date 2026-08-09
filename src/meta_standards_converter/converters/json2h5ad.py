@@ -14,6 +14,7 @@ import json
 import csv
 import gzip
 import hashlib
+import heapq
 import logging
 import os
 import re
@@ -845,12 +846,18 @@ class SourcePlanner:
 
         for sample_id in samples:
             study_id = study_by_sample.get(sample_id)
-            candidates = list(assets_by_scope.get(sample_id, ()))
-            if study_id:
-                candidates.extend(
-                    replace(asset, scope_id=sample_id, study_scope=study_id)
-                    for asset in assets_by_scope.get(study_id, ())
+            scoped = assets_by_scope.get(sample_id, ())
+            study_scoped = assets_by_scope.get(study_id, ()) if study_id else ()
+            candidates = [
+                asset
+                if asset.scope_id == sample_id
+                else replace(asset, scope_id=sample_id, study_scope=study_id)
+                for _order, asset in heapq.merge(
+                    scoped,
+                    study_scoped,
+                    key=lambda item: item[0],
                 )
+            ]
             if force_reprocess:
                 candidates = [asset for asset in candidates if asset.kind == "raw"]
                 if not candidates:
@@ -869,10 +876,10 @@ class SourcePlanner:
     @staticmethod
     def _index_assets_by_scope(
         assets: list[Asset],
-    ) -> dict[str, list[Asset]]:
-        by_scope: dict[str, list[Asset]] = {}
-        for asset in assets:
-            by_scope.setdefault(asset.scope_id, []).append(asset)
+    ) -> dict[str, list[tuple[int, Asset]]]:
+        by_scope: dict[str, list[tuple[int, Asset]]] = {}
+        for order, asset in enumerate(assets):
+            by_scope.setdefault(asset.scope_id, []).append((order, asset))
         return by_scope
 
     def _group_10x_assets(self, assets: list[Asset]) -> list[Asset]:

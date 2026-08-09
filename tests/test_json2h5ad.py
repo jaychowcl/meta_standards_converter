@@ -114,8 +114,27 @@ class TestSourcePlanner(unittest.TestCase):
 
         indexed = SourcePlanner()._index_assets_by_scope(assets)
 
-        self.assertEqual([assets[0], assets[2]], indexed["GSM2"])
-        self.assertEqual([assets[1]], indexed["GSE1"])
+        self.assertEqual([(0, assets[0]), (2, assets[2])], indexed["GSM2"])
+        self.assertEqual([(1, assets[1])], indexed["GSE1"])
+
+    def test_scope_index_preserves_global_tie_precedence(self):
+        study = Asset("GSE1", "study.h5ad", "h5ad", source="json")
+        sample = Asset("GSM1", "sample.h5ad", "h5ad", source="json")
+
+        class FixedPlanner(SourcePlanner):
+            def discover(self, packages):
+                return [study, sample]
+
+            def samples(self, packages):
+                return ["GSM1"]
+
+            def _study_by_sample(self, packages):
+                return {"GSM1": "GSE1"}
+
+        planned = FixedPlanner().plan([{}])
+
+        self.assertEqual("study.h5ad", planned["GSM1"].path)
+        self.assertEqual("GSE1", planned["GSM1"].study_scope)
 
     def test_groups_10x_matrix_barcode_and_gene_companions(self):
         data = package(
