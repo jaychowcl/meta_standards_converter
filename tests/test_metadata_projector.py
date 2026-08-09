@@ -95,7 +95,7 @@ class TestMetadataProjectorHook(unittest.TestCase):
         )
         return h5ad_path, json_path
 
-    def test_projector_adds_sample_and_combined_metadata_and_warnings(self):
+    def test_projector_adds_sample_metadata_without_combined_hook(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             _source, json_path = self._fixture(tmpdir)
             projector = RecordingProjector()
@@ -105,18 +105,17 @@ class TestMetadataProjectorHook(unittest.TestCase):
             ).convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             sample = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
-            combined = self.anndata.read_h5ad(result.combined_h5ad)
             self.assertEqual(["Sample1", "Sample1"], sample.obs["private.sample"].tolist())
             self.assertEqual(
                 ["GRCh38", "GRCh38"],
                 sample.var["private.genome_build"].tolist(),
             )
             self.assertEqual("1.0", sample.uns["private"]["schema_version"])
-            self.assertEqual(1, combined.uns["private_combined"]["sample_count"])
             self.assertEqual(["private projection warning"], result.warnings)
             self.assertEqual("GSM1", projector.sample_contexts[0].sample_accession)
             self.assertEqual("GSE1", projector.sample_contexts[0].study_accession)
-            self.assertEqual(1, len(projector.combined_contexts[0]))
+            self.assertEqual([], projector.combined_contexts)
+            self.assertIsNone(result.combined_h5ad)
 
     def test_projector_cannot_overwrite_existing_metadata(self):
         class CollisionProjector:
@@ -250,7 +249,7 @@ class TestMetadataProjectorHook(unittest.TestCase):
             self.assertEqual(["private validation failed"], result.errors)
             self.assertTrue(result.partial)
             self.assertTrue(Path(result.sample_h5ads["GSM1"]).is_file())
-            self.assertTrue(Path(result.combined_h5ad).is_file())
+            self.assertIsNone(result.combined_h5ad)
             manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
             self.assertEqual(["private validation failed"], manifest["errors"])
             self.assertTrue(manifest["partial"])
@@ -272,7 +271,7 @@ class TestMetadataProjectorHook(unittest.TestCase):
                     allow_invalid=True,
                 )
 
-    def test_combined_projection_error_leaves_no_final_bundle(self):
+    def test_combined_projection_hook_is_not_called_for_catalogue(self):
         class InvalidCombinedProjector:
             def project_sample(self, *, adata, context):
                 return AnnDataMetadataProjection()
@@ -284,13 +283,13 @@ class TestMetadataProjectorHook(unittest.TestCase):
             _source, json_path = self._fixture(tmpdir)
             out = Path(tmpdir) / "out"
 
-            with self.assertRaisesRegex(AnnDataProjectionError, "combined invalid"):
-                JSON2H5ADConverter(
-                    metadata_projectors=[InvalidCombinedProjector()]
-                ).convert(json_path=json_path, out=str(out))
+            result = JSON2H5ADConverter(
+                metadata_projectors=[InvalidCombinedProjector()]
+            ).convert(json_path=json_path, out=str(out))
 
-            self.assertEqual([], list(out.glob("*.h5ad")))
-            self.assertEqual([], list(out.glob("*.json2h5ad.json")))
+            self.assertTrue(Path(result.sample_h5ads["GSM1"]).is_file())
+            self.assertIsNone(result.combined_h5ad)
+            self.assertTrue(Path(result.manifest_path).is_file())
 
     def test_bundle_commit_failure_restores_previous_artifacts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -300,24 +299,23 @@ class TestMetadataProjectorHook(unittest.TestCase):
             first = converter.convert(json_path=json_path, out=str(out))
             paths = [
                 Path(first.sample_h5ads["GSM1"]),
-                Path(first.combined_h5ad),
                 Path(first.manifest_path),
             ]
             originals = {path: path.read_bytes() for path in paths}
             real_replace = os.replace
             injected = False
 
-            def fail_combined_once(source, destination):
+            def fail_manifest_once(source, destination):
                 nonlocal injected
                 destination = Path(destination)
-                if destination == Path(first.combined_h5ad) and not injected:
+                if destination == Path(first.manifest_path) and not injected:
                     injected = True
                     raise OSError("injected bundle commit failure")
                 return real_replace(source, destination)
 
             with patch(
                 "meta_standards_converter.converters.json2h5ad.os.replace",
-                side_effect=fail_combined_once,
+                side_effect=fail_manifest_once,
             ):
                 with self.assertRaisesRegex(OSError, "injected bundle commit failure"):
                     converter.convert(

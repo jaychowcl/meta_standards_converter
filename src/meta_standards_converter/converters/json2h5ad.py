@@ -149,14 +149,6 @@ class AnnDataMetadataProjector(Protocol):
     ) -> AnnDataMetadataProjection:
         """Return metadata additions for one sample AnnData object."""
 
-    def project_combined(
-        self,
-        *,
-        adata: Any,
-        contexts: Sequence[MetadataProjectionContext],
-    ) -> AnnDataMetadataProjection:
-        """Return metadata additions for the combined study AnnData object."""
-
 
 class AssetManifest:
     """Load explicit asset mappings from CSV/TSV or compact CLI specifications."""
@@ -262,9 +254,7 @@ class ConversionResult:
 
     @property
     def primary_h5ad(self) -> str | None:
-        if self.combined_h5ad:
-            return self.combined_h5ad
-        return next(iter(self.sample_h5ads.values()), None)
+        return next(iter(self.sample_h5ads.values()), self.combined_h5ad)
 
     @property
     def partial(self) -> bool:
@@ -1373,8 +1363,6 @@ class JSON2H5ADConverter:
         result = ConversionResult(study_accession=study_accession)
         result.warnings.extend(getattr(harmonization_resolution, "warnings", ()))
         adatas = {}
-        combined_adata = None
-        projection_contexts: list[MetadataProjectionContext] = []
 
         raw_assets = {sample: asset for sample, asset in planned.items() if asset.kind == "raw"}
         if raw_assets:
@@ -1468,56 +1456,21 @@ class JSON2H5ADConverter:
                     warnings=result.warnings[warning_start:],
                     errors=result.errors[error_start:],
                 )
-            projection_contexts.append(projection_context)
             sample_path = out_path / f"{sample_id}.h5ad"
             result.sample_h5ads[sample_id] = str(sample_path)
             adatas[sample_id] = adata
 
         self._ensure_global_observation_ids(adatas)
-        try:
-            combined = self._combine(
-                adatas,
-                allow_unverified=allow_unverified_combination,
+        if allow_unverified_combination:
+            result.warnings.append(
+                "allow_unverified_combination is ignored because expression "
+                "matrices are published only as a per-sample catalogue."
             )
-        except _DatasetCompatibilityError as exc:
-            result.failures.append(str(exc))
-        else:
-            combined_adata = combined
-            compatibility = combined.uns.get(
-                "meta_standards_converter", {}
-            ).get("combination_compatibility", {})
-            if compatibility.get("explicitly_acknowledged"):
-                missing = compatibility.get("missing_evidence", {})
-                rendered = ", ".join(
-                    f"{dimension} ({', '.join(sample_ids)})"
-                    for dimension, sample_ids in sorted(missing.items())
-                )
-                result.failures.append(
-                    "Combined samples with unverified compatibility evidence "
-                    f"after it was explicitly acknowledged: {rendered}"
-                )
-            self._project_combined_metadata(
-                combined,
-                projection_contexts,
-                warnings=result.warnings,
-                errors=result.errors,
-                allow_invalid=allow_invalid,
-            )
-            self._attach_miniml(
-                combined,
-                packages=source_packages or packages,
-                source_json=source_json,
-                source_json_sha256=source_json_sha256,
-                artifact_parent=out_path,
-            )
-            self._attach_harmonization(combined, harmonization_resolution)
-            combined_path = out_path / f"{study_accession}.h5ad"
-            result.combined_h5ad = str(combined_path)
 
         result.manifest_path = str(out_path / f"{study_accession}.json2h5ad.json")
         self._write_dataset_bundle(
             adatas=adatas,
-            combined=combined_adata,
+            combined=None,
             result=result,
             planned=planned,
             json_path=source_json,
@@ -1931,26 +1884,6 @@ class JSON2H5ADConverter:
             if callback is None:
                 continue
             projection = callback(adata=adata, context=context)
-            self._apply_metadata_projection(adata, projection)
-            self._extend_warnings(warnings, projection.warnings)
-            self._extend_warnings(errors, projection.errors)
-            if projection.errors and not allow_invalid:
-                raise AnnDataProjectionError(projection.errors)
-
-    def _project_combined_metadata(
-        self,
-        adata,
-        contexts: Sequence[MetadataProjectionContext],
-        *,
-        warnings: list[str],
-        errors: list[str],
-        allow_invalid: bool,
-    ) -> None:
-        for projector in self.metadata_projectors:
-            callback = getattr(projector, "project_combined", None)
-            if callback is None:
-                continue
-            projection = callback(adata=adata, contexts=tuple(contexts))
             self._apply_metadata_projection(adata, projection)
             self._extend_warnings(warnings, projection.warnings)
             self._extend_warnings(errors, projection.errors)
@@ -2724,6 +2657,14 @@ class JSON2H5ADConverter:
             retained_h5ad_scopes.append(scope)
         payload = {
             "path_base": "artifact_parent",
+            "artifact_kind": "per_sample_h5ad_catalogue",
+            "expression_integration": "none",
+            "sample_count": len(sample_h5ads),
+            "combination_compatibility": {
+                "assessed": False,
+                "verified": False,
+                "reason": "catalogue_only_no_expression_matrix_combination",
+            },
             "h5ad_metadata_schema_version": self.H5AD_METADATA_SCHEMA_VERSION,
             "study_accession": result.study_accession,
             "source_json": source_json,

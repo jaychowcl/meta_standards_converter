@@ -94,6 +94,48 @@ def test_orchestrator_obs_export_omits_unrequested_sidecars(tmp_path):
     assert result.uns is None and result.uns_path is None
 
 
+def test_orchestrator_aggregates_obs_metadata_without_combining_expression(tmp_path):
+    sources = []
+    samples = []
+    for sample_id in ("GSM1", "GSM2"):
+        h5ad = tmp_path / f"{sample_id}.h5ad"
+        anndata.AnnData(
+            X=sparse.csr_matrix([[1]]),
+            obs=pandas.DataFrame(index=[f"{sample_id}-cell"]),
+            var=pandas.DataFrame(index=[f"{sample_id}-feature"]),
+        ).write_h5ad(h5ad)
+        sources.append(f"{sample_id}={h5ad}")
+        samples.append(
+            {
+                "iid": sample_id,
+                "accession": [{"value": sample_id}],
+                "title": sample_id,
+            }
+        )
+    source = tmp_path / "GSE1.json"
+    source.write_text(
+        json.dumps(
+            {
+                "miniml_schema_version": "2.0",
+                "source": {"format": "test"},
+                "series": {"accession": [{"value": "GSE1"}]},
+                "sample": samples,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = JSONDataOutputOrchestrator().export_anndata_metadata(
+        source,
+        outdir=tmp_path / "obs-catalogue",
+        asset_specs=sources,
+    )
+
+    assert result.obs.index.tolist() == ["GSM1-cell", "GSM2-cell"]
+    assert result.obs["msc.sample.accession"].tolist() == ["GSM1", "GSM2"]
+    assert result.failures == ()
+
+
 def test_orchestrator_manifest_writes_selected_format_and_json_summary(tmp_path):
     source, _h5ad = _source(tmp_path)
 

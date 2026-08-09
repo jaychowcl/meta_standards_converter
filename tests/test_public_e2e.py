@@ -136,6 +136,7 @@ def test_public_processed_h5ad_conversion_does_not_import_scanpy(
     )
 
     assert Path(result.sample_h5ads["GSM1"]).is_file()
-    assert Path(result.combined_h5ad).is_file()
+    assert result.combined_h5ad is None
+    assert Path(result.manifest_path).is_file()
     assert Path(result.manifest_path).is_file()
     assert not result.partial

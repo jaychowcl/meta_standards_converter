@@ -199,8 +199,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: workflow-json2h5ad
   title: MINiML or Atlas JSON to H5AD
   anchor: workflow-json2h5ad
-  purpose: Traces grouping, asset planning, raw/processed paths, projection, aggregation, and partial failures.
-  keywords: json2h5ad, Atlas, MINiML, SourcePlanner, DatasetCombinationPolicy, scope index, asset performance, typed annotations, harmonized characteristic, organism, reference, modality, feature namespace, known unknown compatibility, allow unverified combination, msc_miniml, packages_json, canonical JSON, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
+  purpose: Traces grouping, asset planning, raw/processed paths, sample projection, catalogue-only publication, fail-closed compatibility evidence, and partial failures.
+  keywords: json2h5ad, Atlas, MINiML, SourcePlanner, DatasetCombinationPolicy, per-sample catalogue, no expression integration, Entrez, gene symbol, all unknown evidence, scope index, asset performance, typed annotations, organism, reference, modality, feature namespace, deprecated allow unverified combination, msc_miniml, packages_json, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2h5ad)
 
 - id: workflow-json2tsv
@@ -213,8 +213,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: workflow-json2obs
   title: MINiML or Atlas JSON to AnnData metadata
   anchor: workflow-json2obs
-  purpose: Traces shared AnnData assembly and combined obs, optional var, and typed uns publication.
-  keywords: json2obs, obs CSV, var CSV, uns JSON, cell_id, feature_id, atomic, partial, processed checkpoint, resume
+  purpose: Traces catalogue-backed observation-row aggregation without expression integration, single-sample var, and typed sample-namespaced uns publication.
+  keywords: json2obs, obs CSV, row aggregation, no matrix combination, backed read, single-sample var CSV, sample-namespaced uns JSON, cell_id, feature_id, atomic, partial, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2obs)
 
 ## Detailed evidence routes

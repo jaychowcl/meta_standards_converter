@@ -268,9 +268,10 @@ database service, or plugin discovery mechanism is exposed.
   `JSON2H5ADConverter` owns the expression conversion lifecycle beneath it.
   `SourcePlanner`, `AssetManifest`, and `AssetDownloader` resolve inputs;
   `ReferenceResolver`, `AnnotationConverter`, and `NFCoreRunner` own raw-data
-  execution; an injected `DatasetCombinationPolicy` owns compatibility evidence,
-  organism/reference/modality/feature-namespace checks, sparse join semantics,
-  and acknowledgement provenance; result dataclasses expose complete and
+  execution; an injected `DatasetCombinationPolicy` owns fail-closed
+  organism/reference/modality/feature-namespace evidence inspection but refuses
+  implicit matrix combination. Per-sample H5ADs plus a truthful catalogue
+  manifest are the expression output; result dataclasses expose complete and
   partial outcomes.
 <a id="orchestrator-json2delimited-converter"></a>
 - `JSON2DelimitedConverter` owns JSON grouping, sample iteration, projection,
@@ -361,16 +362,17 @@ statement for them; treat those as **evidence-gap**, not stable API.
 
 - **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None, retrieval_policy=None, resource_profile="standard", resource_overrides=None, metadata_service=None, combination_policy=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
 - Dataset, study, sample, checkpoint, and output identities are validated as safe single path components before publication. `series.iid` is the canonical native-package study identity, so an ArrayExpress IID is not displaced by an earlier GEO secondary accession.
-- The injected/default combination policy is the sole owner of multi-sample
-  scientific compatibility. It fails closed on incompatible or partially known
-  evidence unless the caller explicitly acknowledges an unverified partial
-  result; the converter facade retains source, normalization, and publication
-  orchestration.
+- The injected/default combination policy owns multi-sample scientific
+  compatibility evidence. All-unknown dimensions are missing, Entrez IDs and
+  gene symbols are distinct namespaces, and `combine()` fails with guidance
+  because catalogue conversion never treats an outer join as integration. The
+  converter facade retains source, normalization, and publication orchestration.
 - `DatasetBundleRecoveryError` preserves the original publication error, rollback errors, and surviving recovery paths when an overwrite cannot be fully restored.
 - **Inputs:** native MINiML or Atlas v1 JSON, source/reference/runtime options,
   and optional public collaborators.
-- **Outputs:** single or batch conversion results plus a transactional H5AD
-  artifact bundle.
+- **Outputs:** single or batch conversion results plus a transactional
+  per-sample H5AD catalogue bundle and manifest declaring no expression
+  integration.
 - **Failures:** structural, validation, filesystem, external process, and
   publication failures follow the strict/permissive and batch contracts in
   [JSON to H5AD](#workflow-json2h5ad).
@@ -425,8 +427,10 @@ They are documented implementation seams rather than additions to
 <a id="api-anndata-metadata-projector"></a>
 ### `AnnDataMetadataProjector`
 
-- **Signature:** structural `Protocol` with `project_sample(*, adata, context) -> AnnDataMetadataProjection` and `project_combined(*, adata, contexts) -> AnnDataMetadataProjection`.
-- **Inputs:** current AnnData plus one context, or combined AnnData plus a context sequence.
+- **Signature:** structural `Protocol` with `project_sample(*, adata, context) -> AnnDataMetadataProjection`.
+- **Inputs:** current sample AnnData plus one context. Former
+  `project_combined` methods on third-party objects are ignored because no
+  combined expression object exists.
 - **Outputs:** metadata additions and warnings.
 - **Failures:** projector exceptions, collisions, invalid vectors, and wrong result types fail conversion.
 - **Side effects:** the converter, not the projector contract, owns applying returned additions.
@@ -459,7 +463,7 @@ They are documented implementation seams rather than additions to
 ### `AnnDataMetadataExportResult`
 
 - **Signature:** `AnnDataMetadataExportResult(dataset_id, obs, var, uns, obs_path, var_path, uns_path, manifest_path, warnings=(), errors=(), partial=False)`.
-- **Inputs:** one dataset's combined typed AnnData metadata, optional published paths, and diagnostics.
+- **Inputs:** one dataset's row-aggregated sample observation metadata, optional published paths, and diagnostics.
 - **Outputs:** in-memory `obs`, optional `var`/`uns`, artifact locations, and a compact `to_dict()` summary.
 - **Failures:** construction performs no custom validation; the orchestrator validates and serializes its data.
 - **Side effects:** none.
@@ -774,8 +778,8 @@ path -> missing/invalid/no groups --------------------------> exception
           -> aggregate -------------------------------------> BatchConversionResult
 package conversion -> processed normalize / raw reference + nf-core
           -> per-sample failure retained; successes continue
-          -> sample H5AD -> [compatible?] combined H5AD
-          -> provenance manifest / partial result
+          -> one H5AD per sample; no expression-matrix join
+          -> catalogue manifest declaring expression_integration=none
 ```
 
 1. `convert(json_path, ...)` returns `ConversionResult` for one group or
@@ -790,13 +794,13 @@ package conversion -> processed normalize / raw reference + nf-core
 5. Processed assets normalize directly; ordinary H5AD and delimited paths do
    not import Scanpy, while 10x HDF5/MTX branches import it lazily. Raw assets
    call reference resolution and Nextflow/nf-core through `NFCoreRunner`.
-6. Per-sample failures, incompatibility, and allowed projector errors can make `ConversionResult.partial`;
-   per-group exceptions are caught in `BatchConversionResult.failures`.
-   Combination fails closed when organism, reference, modality, or feature
-   namespace is known for only some samples. The explicit
-   `allow_unverified_combination=True` / `--allow-unverified-combination`
-   acknowledgement permits the combined artifact but records the missing
-   evidence and keeps the result partial.
+6. Per-sample failures and allowed projector errors can make
+   `ConversionResult.partial`; per-group exceptions are caught in
+   `BatchConversionResult.failures`. Organism, reference, modality, and feature
+   namespace heterogeneity is catalogued rather than joined and is not itself a
+   conversion failure. `allow_unverified_combination=True` /
+   `--allow-unverified-combination` is retained as a deprecated compatibility
+   option and ignored with a warning.
 7. Invalid path/source/no-group/no-sample and unsafe dataset-ID conditions raise before aggregation; successful
    groups and diagnostics survive later failures.
 8. Bound MAGE-TAB Parameter Values are projected to dotted `obs` columns and
@@ -804,8 +808,8 @@ package conversion -> processed normalize / raw reference + nf-core
    Raw named characteristics use `msc.characteristics.<name>`; their typed
    ontology annotations use separate
    `msc.characteristics.harmonized_<field>` value/ID/ontology columns. Typed
-   organism annotations take precedence over raw organism labels for sample
-   compatibility and combination checks.
+   organism annotations take precedence over raw organism labels in each
+   sample artifact.
 9. `uns["msc_miniml"]` retains the flattened query table and provenance plus
    `packages_json`, a deterministic JSON encoding of the complete MSC MINiML
    package list. JSON encoding is intentional because HDF5 cannot represent
@@ -848,21 +852,27 @@ Pseudocode: `load -> project -> validate -> order -> protect -> write selected d
 ### `json2obs`: MINiML/Atlas JSON to AnnData metadata
 
 ```text
-JSON + expression assets -> shared H5AD assembly
-       -> combined AnnData unavailable -------------------> failure
-       -> obs with named cell_id --------------------------> .obs.csv
-       -> include_var -------------------------------------> .var.csv
-       -> include_uns -------------------------------------> typed .uns.json
+JSON + expression assets -> per-sample H5AD catalogue
+       -> no sample H5AD ----------------------------------> failure
+       -> concatenate obs metadata rows only --------------> .obs.csv
+       -> include_var + one sample ------------------------> .var.csv
+       -> include_var + multiple samples ------------------> explicit failure
+       -> include_uns -------------------------------------> typed sample-namespaced .uns.json
        -> atomic component bundle + JSON result manifest
 ```
 
-1. Asset resolution, raw processing, normalization, projectors, smart IDs, and combination exactly match `json2h5ad`.
-2. The combined `obs` is exported with `cell_id`; source and canonical names remain unchanged.
-3. Optional `var` uses `feature_id`; optional `uns` uses tagged JSON for nested mappings, arrays, and DataFrames.
+1. Asset resolution, raw processing, normalization, projectors, and smart IDs
+   exactly match `json2h5ad`; expression matrices are not combined.
+2. Sample `obs` tables are read in backed mode and row-aggregated with
+   `cell_id`; source and canonical names remain unchanged.
+3. Optional `var` uses `feature_id` only for a single-sample catalogue because
+   a union feature table would imply an unperformed integration. Optional
+   `uns` uses tagged JSON for nested mappings, arrays, and DataFrames and is
+   namespaced by sample for multi-sample catalogues.
 4. Every batch conversion publishes beneath its dataset-ID directory, even when other groups fail and only one dataset succeeds.
 5. The CLI prints only a compact JSON summary to stdout, sends logs to stderr, and returns status `1` for partial/failure outcomes.
 
-Pseudocode: `assemble -> read combined AnnData -> serialize selected components -> atomic publish -> result`.
+Pseudocode: `catalogue -> backed-read each sample metadata -> concatenate obs rows -> serialize selected components -> atomic publish -> result`.
 
 **Evidence:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py) and [`cli/json2obs.py`](../src/meta_standards_converter/cli/json2obs.py).
 
@@ -909,7 +919,7 @@ src/meta_standards_converter/
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
 │   ├── json2ae.py                 # parsed JSON validation and AE orchestration
 │   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
-│   ├── dataset_combination.py     # scientific H5AD compatibility and sparse join policy
+│   ├── dataset_combination.py     # scientific compatibility evidence; implicit joins disabled
 │   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 │   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
 │   ├── miniml_metadata.py        # format-neutral sample metadata service
@@ -1005,8 +1015,8 @@ tests/GSE328265_family.xml
 - `geo2json.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
 - `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
-- `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes per-sample plus compatible combined H5AD outputs.
-- `json2tsv --format {tsv,csv}` emits the neutral MSC sample projection; `json2obs` exports the combined AnnData metadata view. Both are orchestrator methods with CLI wrappers, and both share the public `MINiMLMetadataProvider` interpretation boundary with `json2h5ad`.
+- `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes a per-sample H5AD catalogue without matrix integration.
+- `json2tsv --format {tsv,csv}` emits the neutral MSC sample projection; `json2obs` row-aggregates only sample observation metadata. Both are orchestrator methods with CLI wrappers, and both share the public `MINiMLMetadataProvider` interpretation boundary with `json2h5ad`.
 - When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
@@ -1205,9 +1215,8 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
   -> invoke ordered metadata projectors for additive sample obs/var/uns metadata
   -> flatten the permitted MINiML metadata into uns["msc_miniml"]
   -> write one normalized H5AD per sample
-  -> combine compatible samples using an outer sparse feature join
-  -> invoke ordered combined-study metadata projector callbacks
-  -> write optional combined study H5AD and JSON provenance manifest
+  -> do not join expression matrices or invoke combined-study projector callbacks
+  -> write JSON catalogue manifest with expression_integration=none
   -> return ConversionResult for one group or BatchConversionResult for multiple
 ```
 
@@ -1217,13 +1226,13 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
 <a id="h5ad-metadata-schema-v1"></a>
 ### H5AD metadata schema 1.0
 
-Converter-owned observation metadata uses only dotted names grouped under `msc.sample`, `msc.series`, `msc.platform`, `msc.archive`, `msc.library`, `msc.instrument`, `msc.protocol`, `msc.database`, `msc.asset`, `msc.expression`, `msc.characteristics`, `msc.observation`, and `msc.combination`. The converter does not generate underscore aliases. Existing underscore-style columns from an input H5AD remain opaque source columns: normalization preserves but neither interprets nor validates them. Custom projectors retain ownership of their injected names.
+Converter-owned observation metadata uses only dotted names grouped under `msc.sample`, `msc.series`, `msc.platform`, `msc.archive`, `msc.library`, `msc.instrument`, `msc.protocol`, `msc.database`, `msc.asset`, `msc.expression`, `msc.characteristics`, and `msc.observation`. The converter does not generate underscore aliases. Existing underscore-style columns from an input H5AD remain opaque source columns: normalization preserves but neither interprets nor validates them. Custom projectors retain ownership of their injected names.
 
 Stable observation fields cover sample/study accessions, title/description, organism and taxid, organism part, developmental stage, disease, genotype, biological source, material/provider/molecule, platform, SRA/ENA/BioSample/run accessions, library fields, instrument, modality, asset provenance, and database identity. Organism resolution evaluates each channel independently. Database identity uses `public_id`, then `iid`, then `name`. Every raw characteristic becomes `msc.characteristics.<normalized_name>`; typed annotations become `msc.characteristics.harmonized_<field>` plus identifier and ontology companions. Native assay parameters become `msc.assay.parameter.<name>.*`, with their occurrence ledger in `uns["msc_assay"]`. Missing values are empty in `obs`; repeated values are case-insensitively de-duplicated in source order and displayed with `; ` separators.
 
-`uns["msc_metadata"]` declares schema version `1.0` and contains the authoritative normalized `sample_values` DataFrame with `sample_accession`, `field`, `ordinal`, `value`, and `value_type`. It stores one row per non-empty canonical value, so embedded semicolons and list cardinality remain recoverable without parsing the display string. Sample H5ADs contain their sample rows; combined H5ADs contain every sample plus `msc.combination.batch`. `uns["msc_miniml"]` remains the complete typed source ledger at schema 1.0. H5AD provenance and manifests separately declare the H5AD metadata schema version.
+`uns["msc_metadata"]` declares schema version `1.0` and contains the authoritative normalized `sample_values` DataFrame with `sample_accession`, `field`, `ordinal`, `value`, and `value_type`. It stores one row per non-empty canonical value, so embedded semicolons and list cardinality remain recoverable without parsing the display string. Each sample H5AD contains only its sample rows. `uns["msc_miniml"]` remains the complete typed source ledger at schema 1.0. H5AD provenance and manifests separately declare the H5AD metadata schema version; the catalogue manifest additionally declares `artifact_kind = per_sample_h5ad_catalogue`, `expression_integration = none`, and a non-verified combination state.
 
-Normalization copies each incoming index into `msc.observation.original_id`. An identifier is already sample-qualified when its accession occurs case-insensitively as a token bounded by the start/end or `-`, `_`, `.`, or `:`. Qualified identifiers are preserved; other identifiers receive `-{sample_accession}`. Repeated candidates receive source-order numeric suffixes. A final cross-sample pass qualifies any remaining collision before concatenation and fails if uniqueness cannot be established. Sample H5ADs and the combined H5AD therefore expose identical, globally unique observation identifiers.
+Normalization copies each incoming index into `msc.observation.original_id`. An identifier is already sample-qualified when its accession occurs case-insensitively as a token bounded by the start/end or `-`, `_`, `.`, or `:`. Qualified identifiers are preserved; other identifiers receive `-{sample_accession}`. Repeated candidates receive source-order numeric suffixes. A final cross-sample pass qualifies any remaining catalogue collision and fails if uniqueness cannot be established, so observation metadata can be row-aggregated without changing expression matrices.
 
 `uns["msc_miniml"]` contains schema/policy metadata, the source JSON path and SHA-256, and a typed long-form `fields` DataFrame (`package_index`, `entity_type`, `entity_id`, `path`, `value`, `value_type`). GSM files contain the sample plus its series and transitively referenced platform, contributor, and database records without following `sample_ref`; both scalar references and real MINiML `{"ref": "..."}` objects are resolved. GSE files contain all package entities. Protocol descriptions remain in this table, while `msc.protocol.types`, source refs, and accessions reuse `Harmonizer.geoprotocols2efo()` for the established treatment, growth, extraction, labeling, hybridization, scan, and data-processing paths. Publication records are whitelisted to PubMed ID, DOI, title, authors, status, and status ontology fields; abstracts, full text, article bodies, sections, and other publication content are not embedded. GEO series summary and overall design remain experiment metadata.
 
@@ -1235,7 +1244,13 @@ Raw processing pins `nf-core/scrnaseq` 4.2.0 and `nf-core/rnaseq` 3.26.0 by defa
 
 When `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER` is truthy and the Docker profile is selected, `NFCoreRunner._preflight()` queries `docker info` before creating workflow files. An unreachable daemon or security options without `rootless` abort the conversion before Nextflow starts. Other deployments retain the existing runtime-presence checks.
 
-Combination preserves successful per-sample outputs when expression modalities, organisms, declared reference builds, or feature namespaces are incompatible. The result is marked partial, no combined H5AD is written, and the CLI returns status `1`.
+Catalogue publication preserves successful per-sample outputs regardless of
+expression modality, organism, declared reference build, or feature namespace;
+those differences are descriptive heterogeneity, not an integration claim.
+The compatibility helper treats every all-unknown dimension as missing,
+classifies all-numeric gene IDs as Entrez rather than symbols, and returns
+unknown for mixed/ambiguous namespaces. Its `combine()` method fails with
+guidance to use an explicit scientific integration workflow.
 
 `JSONPackageSource` delegates canonical documents to `AtlasV1Reader`. The
 reader retains only `harmonized` datasets, preserves canonical dataset IDs,
@@ -1300,7 +1315,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-09 and reported
-`558 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`561 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -1770,7 +1785,7 @@ This section lists public and semi-public callables used by tests or by package 
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--processed-checkpoint-dir`, `--overwrite`, and `--allow-invalid`. Resume covers both Nextflow work and fingerprint-valid processed-sample checkpoints.
 - `json2tsv` accepts parsed MINiML or Atlas JSON and writes the sample manifest as TSV by default or CSV with `--format csv`; `--out` selects an exact file and `--outdir` derives a filename.
-- `json2obs` accepts the same metadata and raw/processed data inputs and processed-checkpoint controls as `json2h5ad`, writes a required combined `obs.csv` with an explicit `cell_id` column, and can add typed `var.csv` and `uns.json` sidecars.
+- `json2obs` accepts the same metadata and raw/processed data inputs and processed-checkpoint controls as `json2h5ad`, writes a required row-aggregated `obs.csv` with an explicit `cell_id` column without combining expression matrices, and can add typed `uns.json` or single-sample `var.csv` sidecars.
 
 `main(argv=None) -> int`
 
@@ -1840,7 +1855,10 @@ This section lists public and semi-public callables used by tests or by package 
 - `convert_source(json_path, out=None, allow_invalid=False, **options) -> BatchConversionResult`
   always aggregates groups. Per-group exceptions populate `failures` and do
   not discard successful conversions.
-- `ConversionResult` exposes `combined_h5ad`, `sample_h5ads`, retained pipeline files, pipeline commands, warnings/errors/failures, `primary_h5ad`, and `partial`.
+- `ConversionResult` exposes the compatibility field `combined_h5ad` (always
+  `None` for catalogue conversion), `sample_h5ads`, retained pipeline files,
+  pipeline commands, warnings/errors/failures, first-sample `primary_h5ad`, and
+  `partial`.
 - `AssetManifest` loads CSV/TSV mappings or `ACCESSION=PATH` CLI specifications. Manifest entries outrank CLI entries, which outrank discovered JSON assets.
 - `AssetManifest.load(path: str) -> list[Asset]` reads CSV/TSV, requires
   `scope_id`/`path`, groups raw members, and raises `ValueError` for blank or
@@ -1873,8 +1891,8 @@ This section lists public and semi-public callables used by tests or by package 
 `MetadataProjectionContext`, `AnnDataMetadataProjection`, and the
 `AnnDataMetadataProjector` protocol form the metadata extension
 contract. Sample projectors run after standard `_normalize()` processing and
-before MINiML attachment/writing; combined projectors run after
-`anndata.concat()` and before combined MINiML attachment/writing. Scalar
+before MINiML attachment/writing. Former `project_combined` callbacks are not
+part of the protocol and are not invoked. Scalar
 `obs`/`var` values broadcast, vector values must match their axis, and existing
 axis or top-level `uns` keys cannot be overwritten. Observation drops and
 renames are checked as one operation and applied before additions; invalid
@@ -2508,14 +2526,14 @@ Important test coverage:
 - `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
 - `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
 - `tests/test_ae_webfetcher.py`: bounded local and streamed HTTPS resolution, typed profile propagation, explicit host policy, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
-- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 3 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, sparse combination, canonical/generic study splitting, correlation-safe partial-failure summaries, partial results, and raw-output reintegration.
+- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 1 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, catalogue-only output, fail-closed compatibility evidence, Entrez/symbol separation, canonical/generic study splitting, correlation-safe partial-failure summaries, partial results, and raw-output reintegration.
 - `tests/test_retrieval.py`: host/address/redirect policy, cache integrity,
   byte/disk/aggregate ceilings, and bounded NCBI range fallback behavior.
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
 - `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
 - `tests/test_miniml_stabilization.py`: deterministic MINiML migration, validation, and captured-index ordering without quadratic equality scans.
-- `tests/test_metadata_projector.py`: generic sample/combined projector
+- `tests/test_metadata_projector.py`: generic sample projector and ignored legacy combined-hook
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,
   warning/error propagation, fail-closed output, invalid-output opt-in, and
   bundle rollback fault injection.

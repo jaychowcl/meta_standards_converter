@@ -104,8 +104,8 @@ def _parser() -> argparse.ArgumentParser:
         "--allow-unverified-combination",
         action="store_true",
         help=(
-            "Combine samples missing otherwise-declared compatibility evidence "
-            "and publish the result as explicitly partial."
+            "Deprecated compatibility flag; ignored because outputs are a "
+            "per-sample catalogue and expression matrices are never combined."
         ),
     )
     parser.add_argument(

@@ -6,11 +6,12 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Scientific compatibility and assembly policy for combined H5AD datasets."""
+"""Scientific compatibility evidence for catalogue H5AD datasets."""
 
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+import re
 from typing import Any
 
 
@@ -19,7 +20,7 @@ class DatasetCompatibilityError(ValueError):
 
 
 class DatasetCombinationPolicy:
-    """Validate evidence and combine compatible AnnData values deterministically."""
+    """Inspect compatibility evidence without claiming matrix integration."""
 
     def __init__(
         self,
@@ -40,104 +41,11 @@ class DatasetCombinationPolicy:
         *,
         allow_unverified: bool = False,
     ):
-        if not adatas:
-            raise DatasetCompatibilityError("No sample H5ADs were produced.")
-        anndata, _numpy, _pandas, sparse = self._scientific_modules()
-        missing_evidence = self.missing_combination_evidence(adatas)
-        if missing_evidence and not allow_unverified:
-            rendered = ", ".join(
-                f"{dimension} ({', '.join(sample_ids)})"
-                for dimension, sample_ids in sorted(missing_evidence.items())
-            )
-            raise DatasetCompatibilityError(
-                "Cannot combine samples without positive compatibility evidence "
-                f"for every sample: {rendered}. Set allow_unverified_combination "
-                "only to publish an explicitly acknowledged partial result."
-            )
-        organisms = {
-            str(adata.obs["msc.sample.channel.organism.value"].iloc[0]).strip()
-            for adata in adatas.values()
-            if "msc.sample.channel.organism.value" in adata.obs
-            and str(adata.obs["msc.sample.channel.organism.value"].iloc[0]).strip()
-        }
-        if len(organisms) > 1:
-            raise DatasetCompatibilityError(
-                f"Cannot combine samples with incompatible organisms: {sorted(organisms)}"
-            )
-        references = {
-            str(adata.uns.get("meta_standards_converter", {}).get("reference")).strip()
-            for adata in adatas.values()
-            if isinstance(adata.uns.get("meta_standards_converter"), dict)
-            and adata.uns["meta_standards_converter"].get("reference")
-        }
-        if len(references) > 1:
-            raise DatasetCompatibilityError(
-                "Cannot combine samples with incompatible reference builds: "
-                f"{sorted(references)}"
-            )
-        modalities = {
-            str(adata.uns.get("meta_standards_converter", {}).get("modality")).strip()
-            for adata in adatas.values()
-            if isinstance(adata.uns.get("meta_standards_converter"), dict)
-            and adata.uns["meta_standards_converter"].get("modality")
-            not in (None, "", "unknown")
-        }
-        if len(modalities) > 1:
-            raise DatasetCompatibilityError(
-                "Cannot combine incompatible expression modalities: "
-                f"{sorted(modalities)}"
-            )
-        namespaces = {self.feature_namespace(adata) for adata in adatas.values()}
-        namespaces.discard("unknown")
-        if len(namespaces) > 1:
-            raise DatasetCompatibilityError(
-                "Cannot combine incompatible feature identifier namespaces: "
-                f"{sorted(namespaces)}"
-            )
-        combined = anndata.concat(
-            adatas,
-            axis="obs",
-            join="outer",
-            merge="first",
-            label="msc.combination.batch",
-            index_unique=None,
-            fill_value=0,
+        raise DatasetCompatibilityError(
+            "Expression matrix combination is disabled: outer concatenation is "
+            "not scientific integration. Publish the per-sample H5AD catalogue "
+            "and perform an explicit integration workflow separately."
         )
-        if not sparse.issparse(combined.X):
-            combined.X = sparse.csr_matrix(combined.X)
-        else:
-            combined.X = combined.X.tocsr()
-        combined.uns["meta_standards_converter"] = {
-            "combined_samples": list(adatas),
-            "join": "outer",
-            "fill_value": 0,
-            "converter_version": self._package_version(),
-            "metadata_schema_version": self._metadata_schema_version,
-            "path_base": "artifact_parent",
-            "combination_compatibility": {
-                "verified": not missing_evidence,
-                "missing_evidence": missing_evidence,
-                "explicitly_acknowledged": bool(
-                    missing_evidence and allow_unverified
-                ),
-            },
-            "sample_provenance": {
-                sample_id: dict(adata.uns.get("meta_standards_converter", {}))
-                for sample_id, adata in adatas.items()
-                if isinstance(adata.uns.get("meta_standards_converter"), dict)
-            },
-        }
-        sample_values = {}
-        for sample_id, adata in adatas.items():
-            values = adata.uns.get("msc_metadata", {}).get("sample_values")
-            fields = {}
-            if values is not None:
-                for row in values.to_dict("records"):
-                    fields.setdefault(str(row["field"]), []).append(row["value"])
-            fields["msc.combination.batch"] = [sample_id]
-            sample_values[sample_id] = fields
-        self._attach_sample_values(combined, sample_values)
-        return combined
 
     def missing_combination_evidence(
         self,
@@ -181,8 +89,6 @@ class DatasetCombinationPolicy:
             "modality",
             "feature_namespace",
         ):
-            if not any(values[dimension] for values in evidence.values()):
-                continue
             absent = [
                 sample_id
                 for sample_id, values in evidence.items()
@@ -200,11 +106,17 @@ class DatasetCombinationPolicy:
             for value in list(values)[:100]
             if value
         ]
-        if values and sum(
-            value.startswith(("ENSG", "ENSMUSG", "ENSRNOG")) for value in values
-        ) >= len(values) / 2:
+        if values and all(
+            re.fullmatch(r"ENS(?:G|MUSG|RNOG)\d+", value) for value in values
+        ):
             return "ensembl"
-        if values and sum(value.isalnum() for value in values) >= len(values) / 2:
+        if values and all(value.isdecimal() for value in values):
+            return "entrez"
+        if values and all(
+            re.fullmatch(r"[A-Z][A-Z0-9.-]*", value)
+            and any(character.isalpha() for character in value)
+            for value in values
+        ):
             return "symbol"
         return "unknown"
 

@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Export combined AnnData observation metadata from MINiML or Atlas v1 JSON."
+        description="Aggregate AnnData observation metadata without combining expression matrices."
     )
     parser.add_argument("json_path", nargs="+")
     parser.add_argument("--outdir", required=True)

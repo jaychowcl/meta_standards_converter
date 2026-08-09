@@ -25,7 +25,7 @@ The eight primary workflows are:
 - `ae2json`: local, policy-approved HTTPS, or BioStudies MAGE-TAB to parsed JSON.
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
 - `json2tsv`: parsed JSON to a sample manifest in TSV or CSV format.
-- `json2obs`: parsed JSON plus expression assets to combined AnnData metadata sidecars.
+- `json2obs`: parsed JSON plus expression assets to aggregated observation-metadata sidecars without matrix integration.
 - `miniml-migrate`: explicitly upgrade legacy MINiML JSON to MSC MINiML 2.0.
 
 ## Installation
@@ -136,9 +136,9 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
 | `json2ae` | Parsed MINiML object/list or canonical Atlas v1 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
 | `ae2json` | IDF path, policy-approved HTTPS IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 2.0 with typed protocols and assay paths |
-| `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5ADs, optional compatible combined H5AD, provenance JSON, optional nf-core results, and single- or multi-dataset result objects |
+| `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5AD catalogue, provenance JSON explicitly declaring no expression integration, optional nf-core results, and single- or multi-dataset result objects |
 | `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v1 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
-| `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Combined `.obs.csv`, optional `.var.csv` and `.uns.json`, plus a JSON result manifest |
+| `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Row-aggregated `.obs.csv` without expression integration, optional single-sample `.var.csv` and `.uns.json`, plus a JSON result manifest |
 | `miniml-migrate` | Legacy unversioned or `miniml_schema_version: "1.0"` JSON | Strict MSC MINiML 2.0 JSON plus migration diagnostics |
 
 GEO and MAGE-TAB ingestion both produce MSC MINiML 2.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, typed factor and organism annotations, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
@@ -182,7 +182,7 @@ The package has no mandatory application config file. Configure conversions with
 | Nextflow | `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, `--resume` | Docker profile and pinned pipeline revision |
 | Existing H5AD outputs | `--overwrite` / `overwrite=True` | Protect existing outputs |
 | H5AD projector validation | `--allow-invalid` / `allow_invalid=True` | Fail closed before publishing artifacts |
-| Unverified H5AD combination | `--allow-unverified-combination` / `allow_unverified_combination=True` | Reject known-plus-unknown scientific dimensions |
+| Legacy unverified-combination flag | `--allow-unverified-combination` / `allow_unverified_combination=True` | Deprecated and ignored; matrices are never combined |
 
 #### Platform handlers
 
@@ -391,7 +391,7 @@ json2h5ad output/GSE234602.json \
 | `--processed-checkpoint-dir` `DIR` | Persist atomic normalized sample checkpoints in `DIR`; matching checkpoints are reused with `--resume`. |
 | `--overwrite` | Replace normalized H5AD and manifest outputs; existing outputs are protected by default. |
 | `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
-| `--allow-unverified-combination` | Explicitly acknowledge combining samples when organism, reference, modality, or feature-namespace evidence is present for only some samples; the result remains partial and records compatibility provenance. |
+| `--allow-unverified-combination` | Deprecated compatibility option; ignored with a warning because catalogue outputs never combine expression matrices. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
 | `--use-harmonization-overrides` | Replace canonical metadata destinations from the envelope profile and publish `msc_harmonization` provenance. |
 | `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
@@ -408,13 +408,27 @@ directly. Scanpy is imported lazily only when reading 10x HDF5 or MTX inputs,
 so processed H5AD conversion does not trigger unrelated plotting/font-system
 process discovery.
 
-Each successful sample produces `{GSM}.h5ad`. Compatible samples are outer-joined into `{GSE}.h5ad`; incompatible organisms, references, modalities, or feature namespaces leave the sample files intact, omit the combined file, record a partial failure, and cause CLI status `1`. If a dimension is known for one sample and absent for another, combination also fails closed. `--allow-unverified-combination` is an explicit acknowledgement path: it permits the combined artifact but retains partial status and records the unverified dimensions in provenance. Dataset, study, and sample identifiers must be safe single path components. Sample H5ADs, the combined H5AD, and the manifest are staged and published as one rollback-safe dataset bundle. If restoration itself fails, `DatasetBundleRecoveryError` reports retained recovery paths instead of deleting the previous artifacts. Every run writes `{GSE}.json2h5ad.json` provenance unless output protection rejects an existing file.
+Each successful sample produces `{GSM}.h5ad`; MSC never outer-concatenates
+expression matrices or labels that operation as integration. `{GSE}.json2h5ad.json`
+is the catalogue manifest and records `artifact_kind = per_sample_h5ad_catalogue`,
+`expression_integration = none`, the sample count, and a deliberately false
+combination-verification state. Organism, reference, modality, and feature
+namespace differences are valid catalogue heterogeneity and do not make the
+conversion partial. The compatibility evidence helper remains fail-closed for
+future explicit integration workflows: all-unknown dimensions are missing,
+numeric Entrez identifiers are not treated as gene symbols, and mixed/ambiguous
+feature namespaces are unknown. The legacy `--allow-unverified-combination`
+flag is ignored with a warning. Dataset, study, and sample identifiers must be
+safe single path components. Sample H5ADs and the manifest are staged and
+published as one rollback-safe dataset bundle. If restoration itself fails,
+`DatasetBundleRecoveryError` reports retained recovery paths instead of deleting
+the previous artifacts.
 
 ##### H5AD metadata schema 1.0
 
 Converter-owned observation columns use only canonical dotted names such as
 `msc.sample.accession`, `msc.archive.sra_run_accessions`,
-`msc.characteristics.cell_type`, and `msc.combination.batch`. Version 4 does
+and `msc.characteristics.cell_type`. Version 4 does
 not generate the former underscore aliases. If a source H5AD already contains
 an underscore-style column, it is retained as opaque source data but is not
 used as MSC metadata. Study-level input splitting recognizes
@@ -438,8 +452,8 @@ Original observation identifiers are stored in
 `obs["msc.observation.original_id"]`. Identifiers that already contain their
 sample accession as a delimiter-bounded token are preserved; unqualified IDs
 receive `-{sample_accession}`. Duplicate candidates receive deterministic
-numeric suffixes before sample and combined files are written, so both files
-use the same globally unique identifiers.
+numeric suffixes before catalogue files are written, yielding globally unique
+identifiers for observation-row aggregation without joining matrices.
 
 #### `json2tsv`
 
@@ -469,8 +483,9 @@ json2tsv atlas.json --outdir output --format csv
 
 #### `json2obs`
 
-Build the same combined AnnData view as `json2h5ad`, then export cell metadata
-without publishing normalized H5AD files. The required output directory
+Build the per-sample catalogue through `json2h5ad`, then aggregate only the
+observation rows and export cell metadata without publishing expression
+integration. The required output directory
 contains `<study>.obs.csv` with an explicit `cell_id` column. Optional typed
 sidecars expose feature metadata and reconstructable unstructured metadata.
 Atlas batches always isolate every completed dataset below
@@ -486,8 +501,8 @@ json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
 | `json_path` | One or more parsed MINiML or canonical Atlas v1 JSON paths. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--outdir` `OUTDIR` | Required component-output directory. |
-| `--include-var` | Add `<study>.var.csv` with a `feature_id` column. |
-| `--include-uns` | Add typed `<study>.uns.json`. |
+| `--include-var` | Add `<study>.var.csv` with a `feature_id` column for a single-sample catalogue; multi-sample feature tables require separate export. |
+| `--include-uns` | Add typed `<study>.uns.json`; multi-sample values are namespaced by sample. |
 | `--asset-manifest` `ASSET_MANIFEST` | CSV/TSV mapping accessions to assets. |
 | `--asset` `ACCESSION=PATH` | Explicit H5AD, matrix, or FASTQ asset; repeatable. |
 | `--force-reprocess` | Prefer raw processing over discovered processed assets. |
@@ -523,7 +538,7 @@ fails, `ArtifactRecoveryError` preserves and reports every remaining backup.
 
 ### Python API
 
-The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use. `JSON2H5ADConverter(..., combination_policy=None)` uses a dedicated default policy for organism, reference, expression-modality, and feature-namespace compatibility, missing-evidence acknowledgement, sparse outer joining, and combination provenance. Replacements must preserve those scientific contracts; source processing and transactional publication remain converter responsibilities.
+The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use. `JSON2H5ADConverter(..., combination_policy=None)` retains a dedicated compatibility-evidence policy for future explicit integration workflows, but its `combine()` operation fails with guidance: catalogue conversion never performs a sparse outer join. Replacements must not turn catalogue publication into an implicit integration step; source processing and transactional publication remain converter responsibilities.
 
 Read the canonical Atlas v1 wire format without installing its producer:
 
@@ -654,7 +669,8 @@ convertible groups, and sources with no convertible samples raise before
 aggregation. `ConversionResult` exposes `study_accession`,
 `sample_h5ads`, `combined_h5ad`, `retained_h5ads`, `pipeline_runs`,
 `manifest_path`, `warnings`, `errors`, `failures`, `primary_h5ad`, and
-`partial`.
+`partial`; catalogue conversions leave the compatibility field
+`combined_h5ad` as `None` and choose the first sample artifact as `primary_h5ad`.
 In-memory paths are absolute; persisted provenance paths are relative to their
 artifact parent where possible. See the
 [H5AD workflow contract](docs/codebase.md#workflow-json2h5ad).
@@ -811,9 +827,9 @@ CLI or Python API
   +-- parsed JSON
   |     +-> json2ae: validate -> [enrich] -> AEConstructor -> IDF + SDRF
   |     +-> json2tsv: group datasets -> project sample rows -> TSV/CSV manifest
-  |     +-> json2obs: assemble AnnData -> obs/optional var+uns sidecars
+  |     +-> json2obs: aggregate sample obs -> optional var+uns sidecars
   |     `-> json2h5ad: plan assets -> [nf-core for FASTQ]
-  |                         -> normalize AnnData -> sample/combined H5AD + manifest
+  |                         -> normalize AnnData -> per-sample H5AD catalogue + manifest
   |
   `-- IDF path, approved HTTPS URL, or BioStudies accession
         -> bounded AEWebFetcher -> AEParser -> strict MINiML 2.0 package
@@ -846,7 +862,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-09:
-`558 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+`561 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

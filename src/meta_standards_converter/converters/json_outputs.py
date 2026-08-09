@@ -27,7 +27,7 @@ from .json2tabular import JSON2TSVConverter, TabularMetadataProjector
 
 @dataclass
 class AnnDataMetadataExportResult:
-    """Combined AnnData metadata and its optional published sidecars."""
+    """Aggregated observation metadata and optional catalogue sidecars."""
 
     study_accession: str
     obs: Any
@@ -58,6 +58,8 @@ class AnnDataMetadataExportResult:
             "operation": "anndata_metadata",
             "status": "partial" if self.partial else "complete",
             "study_accession": self.study_accession,
+            "expression_integration": "none",
+            "metadata_aggregation": "observation_rows",
             "artifacts": artifacts,
             "obs": {
                 "rows": int(self.obs.shape[0]),
@@ -220,16 +222,42 @@ class JSONDataOutputOrchestrator:
         include_uns: bool,
         overwrite: bool,
     ) -> AnnDataMetadataExportResult:
-        if not conversion.combined_h5ad:
+        if not conversion.sample_h5ads:
             raise ValueError(
-                "Cannot export observations because no combined H5AD was produced: "
+                "Cannot export observations because no sample H5AD was produced: "
                 + "; ".join(conversion.failures)
             )
-        anndata = self.h5ad_converter._scientific_modules()[0]
-        adata = anndata.read_h5ad(conversion.combined_h5ad)
-        obs = adata.obs.copy()
-        var = adata.var.copy() if include_var else None
-        uns = dict(adata.uns) if include_uns else None
+        anndata, _numpy, pandas, _sparse = self.h5ad_converter._scientific_modules()
+        if include_var and len(conversion.sample_h5ads) != 1:
+            raise ValueError(
+                "A combined var table is not available for a multi-sample "
+                "catalogue; export each sample H5AD separately."
+            )
+        obs_frames = []
+        var = None
+        sample_uns: dict[str, Any] = {}
+        for sample_id, h5ad_path in conversion.sample_h5ads.items():
+            adata = anndata.read_h5ad(h5ad_path, backed="r")
+            try:
+                obs_frames.append(adata.obs.copy())
+                if include_var:
+                    var = adata.var.copy()
+                if include_uns:
+                    sample_uns[sample_id] = dict(adata.uns)
+            finally:
+                adata.file.close()
+        obs = pandas.concat(obs_frames, axis="index", join="outer", sort=False)
+        uns = None
+        if include_uns:
+            uns = (
+                next(iter(sample_uns.values()))
+                if len(sample_uns) == 1
+                else {
+                    "catalogue_contract_version": "1.0",
+                    "expression_integration": "none",
+                    "samples": sample_uns,
+                }
+            )
 
         destinations = {
             "obs": destination / f"{conversion.study_accession}.obs.csv",

@@ -497,14 +497,14 @@ class TestConversionContract(unittest.TestCase):
         self.assertEqual("https://example.org/data/source.h5ad", value)
         self.assertEqual("remote", scope)
 
-    def test_result_exposes_primary_combined_output(self):
+    def test_result_exposes_primary_sample_catalogue_output(self):
         result = ConversionResult(
             study_accession="GSE1",
             combined_h5ad="out/GSE1.h5ad",
             sample_h5ads={"GSM1": "out/GSM1.h5ad"},
         )
 
-        self.assertEqual("out/GSE1.h5ad", result.primary_h5ad)
+        self.assertEqual("out/GSM1.h5ad", result.primary_h5ad)
         self.assertFalse(result.partial)
 
     def test_result_is_partial_when_combination_fails(self):
@@ -603,7 +603,10 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             self.assertEqual(["GSM2"], CountingConverter.calls)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
-            self.assertTrue(Path(result.combined_h5ad).is_file())
+            self.assertIsNone(result.combined_h5ad)
+            self.assertTrue(
+                all(Path(path).is_file() for path in result.sample_h5ads.values())
+            )
 
     def test_normalizes_supplied_h5ad_without_mutating_source(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -681,7 +684,9 @@ class TestProcessedAssetConversion(unittest.TestCase):
             manifest = json.loads(Path(result.manifest_path).read_text())
             self.assertEqual("artifact_parent", manifest["path_base"])
             self.assertEqual("../GSE1.json", manifest["source_json"])
-            self.assertEqual("GSE1.h5ad", manifest["combined_h5ad"])
+            self.assertIsNone(manifest["combined_h5ad"])
+            self.assertEqual("per_sample_h5ad_catalogue", manifest["artifact_kind"])
+            self.assertEqual("none", manifest["expression_integration"])
             self.assertEqual("1.0", manifest["h5ad_metadata_schema_version"])
             self.assertEqual({"GSM1": "GSM1.h5ad"}, manifest["sample_h5ads"])
             self.assertEqual("../source.h5ad", manifest["assets"]["GSM1"]["path"])
@@ -700,9 +705,8 @@ class TestProcessedAssetConversion(unittest.TestCase):
             result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             sample = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
-            combined = self.anndata.read_h5ad(result.combined_h5ad)
             self.assertEqual(["GSM1"], list(sample.obs_names))
-            self.assertEqual(["GSM1"], list(combined.obs_names))
+            self.assertIsNone(result.combined_h5ad)
 
     def test_preserves_delimiter_qualified_ids_and_qualifies_only_unqualified_ids(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -733,7 +737,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 sample.obs["msc.observation.original_id"].tolist(),
             )
 
-    def test_resolves_duplicate_observation_ids_before_sample_and_combined_writes(self):
+    def test_resolves_duplicate_observation_ids_before_catalogue_writes(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             paths = []
             for sample_id in ("GSM1", "GSM2"):
@@ -761,9 +765,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 sample = self.anndata.read_h5ad(result.sample_h5ads[sample_id])
                 self.assertEqual(names, list(sample.obs_names))
                 self.assertEqual(["barcode", "barcode"], sample.obs["msc.observation.original_id"].tolist())
-            combined = self.anndata.read_h5ad(result.combined_h5ad)
-            self.assertEqual(expected["GSM1"] + expected["GSM2"], list(combined.obs_names))
-            self.assertTrue(combined.obs_names.is_unique)
+            self.assertIsNone(result.combined_h5ad)
 
     def test_preserves_legacy_underscore_columns_as_opaque_source_metadata(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -918,7 +920,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["Gene1", "Gene2"], list(adata.var_names))
             self.assertEqual([[1, 2], [0, 3]], adata.X.toarray().tolist())
 
-    def test_combines_compatible_samples_with_outer_sparse_join(self):
+    def test_publishes_compatible_samples_as_catalogue_without_expression_join(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             paths = []
             for sample_id, genes in (("GSM1", ["ENSG1", "ENSG2"]), ("GSM2", ["ENSG2", "ENSG3"])):
@@ -937,12 +939,55 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
-            combined = self.anndata.read_h5ad(result.combined_h5ad)
-            self.assertEqual((2, 3), combined.shape)
-            self.assertEqual({"GSM1", "GSM2"}, set(combined.obs["msc.sample.accession"]))
-            self.assertNotIn("msc_batch", combined.obs)
-            self.assertEqual(["GSM1", "GSM2"], combined.obs["msc.combination.batch"].tolist())
-            self.assertTrue(self.sparse.issparse(combined.X))
+            self.assertIsNone(result.combined_h5ad)
+            self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
+            manifest = json.loads(Path(result.manifest_path).read_text())
+            self.assertEqual("per_sample_h5ad_catalogue", manifest["artifact_kind"])
+            self.assertEqual("none", manifest["expression_integration"])
+            self.assertEqual(2, manifest["sample_count"])
+            self.assertIsNone(manifest["combined_h5ad"])
+            first_sample = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
+            second_sample = self.anndata.read_h5ad(result.sample_h5ads["GSM2"])
+            self.assertEqual((1, 2), first_sample.shape)
+            self.assertEqual((1, 2), second_sample.shape)
+
+    def test_all_unknown_samples_are_not_falsely_compatibility_verified(self):
+        adatas = {
+            sample_id: self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1]]),
+                obs=self.pandas.DataFrame(index=[f"{sample_id}-cell"]),
+                var=self.pandas.DataFrame(index=["feature:1"]),
+            )
+            for sample_id in ("GSM1", "GSM2")
+        }
+
+        missing = JSON2H5ADConverter()._missing_combination_evidence(adatas)
+
+        self.assertEqual(
+            {
+                "organism": ["GSM1", "GSM2"],
+                "reference": ["GSM1", "GSM2"],
+                "modality": ["GSM1", "GSM2"],
+                "feature_namespace": ["GSM1", "GSM2"],
+            },
+            missing,
+        )
+
+    def test_feature_namespace_distinguishes_entrez_ids_from_gene_symbols(self):
+        converter = JSON2H5ADConverter()
+        entrez = self.anndata.AnnData(
+            X=self.sparse.csr_matrix([[1, 2, 3]]),
+            obs=self.pandas.DataFrame(index=["cell"]),
+            var=self.pandas.DataFrame(index=["7157", "1956", "7422"]),
+        )
+        symbols = self.anndata.AnnData(
+            X=self.sparse.csr_matrix([[1, 2, 3]]),
+            obs=self.pandas.DataFrame(index=["cell"]),
+            var=self.pandas.DataFrame(index=["TP53", "EGFR", "VEGFA"]),
+        )
+
+        self.assertEqual("entrez", converter._feature_namespace(entrez))
+        self.assertEqual("symbol", converter._feature_namespace(symbols))
 
     def test_enriches_msc_metadata_and_flattens_relevant_miniml(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1083,7 +1128,6 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             first = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             second = self.anndata.read_h5ad(result.sample_h5ads["GSM2"])
-            combined = self.anndata.read_h5ad(result.combined_h5ad)
             self.assertEqual(["GEO"], first.obs["msc.database.identifier"].unique().tolist())
             self.assertEqual(
                 ["Gene Expression Omnibus (GEO)"],
@@ -1127,9 +1171,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual([""], first.obs["msc.characteristics.dose"].unique().tolist())
             self.assertEqual([""], second.obs["msc.characteristics.cell_type"].unique().tolist())
             self.assertEqual([""], second.obs["msc.characteristics.harmonized_cell_type"].unique().tolist())
-            self.assertFalse(any(column.startswith("geo_") for column in combined.obs))
-            self.assertNotIn("msc_batch", combined.obs)
-            self.assertIn("msc.combination.batch", combined.obs)
+            self.assertIsNone(result.combined_h5ad)
 
             values = first.uns["msc_metadata"]["sample_values"]
             cell_types = values.loc[
@@ -1143,15 +1185,6 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertNotIn(
                 "msc.sample.channel.disease", set(values["field"])
             )
-
-            combined_values = combined.uns["msc_metadata"]["sample_values"]
-            self.assertEqual(
-                {"GSM1", "GSM2"}, set(combined_values["sample_accession"])
-            )
-            batches = combined_values.loc[
-                combined_values["field"] == "msc.combination.batch"
-            ]
-            self.assertEqual(["GSM1", "GSM2"], batches["value"].tolist())
 
             miniml = first.uns["msc_miniml"]
             self.assertEqual("1.0", miniml["schema_version"])
@@ -1171,21 +1204,21 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertNotIn("pubmed_publication[0].full_text", paths_in_sample)
             self.assertFalse(any("article_body" in path for path in paths_in_sample))
 
-            combined_fields = combined.uns["msc_miniml"]["fields"]
+            second_fields = second.uns["msc_miniml"]["fields"]
             self.assertEqual(
-                {"GSM1", "GSM2"},
-                set(combined_fields.loc[combined_fields["entity_type"] == "sample", "entity_id"]),
+                {"GSM2"},
+                set(second_fields.loc[second_fields["entity_type"] == "sample", "entity_id"]),
             )
             self.assertEqual(
                 {"C1", "C2"},
-                set(combined_fields.loc[combined_fields["entity_type"] == "contributor", "entity_id"]),
+                set(second_fields.loc[second_fields["entity_type"] == "contributor", "entity_id"]),
             )
             self.assertEqual(
-                {"GPL1", "GPL2"},
-                set(combined_fields.loc[combined_fields["entity_type"] == "platform", "entity_id"]),
+                {"GPL2"},
+                set(second_fields.loc[second_fields["entity_type"] == "platform", "entity_id"]),
             )
 
-    def test_incompatible_organisms_keep_samples_and_mark_partial(self):
+    def test_catalogue_keeps_samples_with_different_organisms_without_integration_claim(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             samples = []
             for sample_id, organism in (("GSM1", "Homo sapiens"), ("GSM2", "Mus musculus")):
@@ -1206,10 +1239,10 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
-            self.assertTrue(result.partial)
-            self.assertIn("organisms", result.failures[0])
+            self.assertFalse(result.partial)
+            self.assertEqual([], result.failures)
 
-    def test_matching_harmonized_organisms_allow_combination(self):
+    def test_matching_harmonized_organisms_remain_separate_catalogue_members(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             samples = []
             for sample_id, raw_organism in (("GSM1", "human"), ("GSM2", "Homo sapiens")):
@@ -1239,15 +1272,16 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
-            self.assertIsNotNone(result.combined_h5ad)
+            self.assertIsNone(result.combined_h5ad)
             self.assertEqual([], result.failures)
-            combined = self.anndata.read_h5ad(result.combined_h5ad)
-            self.assertEqual(
-                ["Homo sapiens"],
-                combined.obs["msc.sample.channel.organism.value"].unique().tolist(),
-            )
+            for path in result.sample_h5ads.values():
+                sample = self.anndata.read_h5ad(path)
+                self.assertEqual(
+                    ["Homo sapiens"],
+                    sample.obs["msc.sample.channel.organism.value"].unique().tolist(),
+                )
 
-    def test_incompatible_declared_references_keep_samples_and_mark_partial(self):
+    def test_catalogue_keeps_samples_with_different_declared_references(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             samples = []
             for sample_id, genome in (("GSM1", "GRCh37"), ("GSM2", "GRCh38")):
@@ -1270,9 +1304,9 @@ class TestProcessedAssetConversion(unittest.TestCase):
 
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
-            self.assertIn("reference builds", result.failures[0])
+            self.assertEqual([], result.failures)
 
-    def test_known_and_unknown_reference_require_explicit_partial_acknowledgement(self):
+    def test_catalogue_never_requires_combination_acknowledgement(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             samples = []
             for sample_id, genome in (("GSM1", "GRCh38"), ("GSM2", None)):
@@ -1308,13 +1342,12 @@ class TestProcessedAssetConversion(unittest.TestCase):
             )
 
             self.assertIsNone(strict.combined_h5ad)
-            self.assertIn("positive compatibility evidence", strict.failures[0])
-            self.assertIn("reference", strict.failures[0])
-            self.assertIsNotNone(acknowledged.combined_h5ad)
-            self.assertTrue(acknowledged.partial)
-            self.assertIn("explicitly acknowledged", acknowledged.failures[0])
+            self.assertEqual([], strict.failures)
+            self.assertIsNone(acknowledged.combined_h5ad)
+            self.assertFalse(acknowledged.partial)
+            self.assertIn("ignored", acknowledged.warnings[0])
 
-    def test_incompatible_bulk_and_single_cell_modalities_are_not_combined(self):
+    def test_catalogue_keeps_bulk_and_single_cell_modalities_separate(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             samples = []
             for sample_id, library_source in (
@@ -1338,7 +1371,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             self.assertIsNone(result.combined_h5ad)
-            self.assertIn("modalities", result.failures[0])
+            self.assertEqual([], result.failures)
 
     def test_rnaseq_counts_select_sample_column_and_add_tpm_layer(self):
         with tempfile.TemporaryDirectory() as tmpdir:
