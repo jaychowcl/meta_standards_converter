@@ -24,7 +24,7 @@ import tempfile
 from dataclasses import dataclass, field, replace
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, Mapping, Protocol, Sequence
+from typing import Any, Callable, Mapping, Protocol, Sequence
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -43,6 +43,88 @@ from .miniml_metadata import MINiMLMetadataProvider, MINiMLMetadataService
 
 
 logger = logging.getLogger(__name__)
+
+
+def _available_memory_bytes() -> int:
+    """Return the conservative host/cgroup memory currently available."""
+
+    candidates: list[int] = []
+    try:
+        pages = int(os.sysconf("SC_AVPHYS_PAGES"))
+        page_size = int(os.sysconf("SC_PAGE_SIZE"))
+        if pages > 0 and page_size > 0:
+            candidates.append(pages * page_size)
+    except (AttributeError, OSError, TypeError, ValueError):
+        pass
+
+    for limit_path, current_path in (
+        (Path("/sys/fs/cgroup/memory.max"), Path("/sys/fs/cgroup/memory.current")),
+        (
+            Path("/sys/fs/cgroup/memory/memory.limit_in_bytes"),
+            Path("/sys/fs/cgroup/memory/memory.usage_in_bytes"),
+        ),
+    ):
+        try:
+            limit_text = limit_path.read_text(encoding="ascii").strip()
+            if limit_text == "max":
+                continue
+            remaining = int(limit_text) - int(
+                current_path.read_text(encoding="ascii").strip()
+            )
+            if remaining > 0:
+                candidates.append(remaining)
+        except (OSError, TypeError, ValueError):
+            continue
+
+    if not candidates:
+        raise RuntimeError("Unable to determine available memory safely.")
+    return min(candidates)
+
+
+def _path_size_bytes(path: Path) -> int:
+    if path.is_file():
+        return path.stat().st_size
+    if path.is_dir():
+        total = 0
+        for member in path.rglob("*"):
+            if member.is_file():
+                total += member.stat().st_size
+        return total
+    return 0
+
+
+def _estimate_asset_memory_bytes(path: str, asset: "Asset") -> int:
+    """Estimate peak resident bytes before loading an expression asset."""
+
+    local = Path(path)
+    on_disk = max(1, _path_size_bytes(local))
+    name = local.name.casefold()
+    for compression_suffix in (".gz", ".bz2", ".xz", ".zip"):
+        if name.endswith(compression_suffix):
+            name = name[: -len(compression_suffix)]
+            break
+    suffix = Path(name).suffix
+    multiplier = 6
+    if str(path).casefold().endswith((".gz", ".bz2", ".xz", ".zip")):
+        multiplier = 12
+    estimate = on_disk * multiplier
+
+    if asset.kind == "h5ad" or suffix == ".h5":
+        try:
+            import h5py
+
+            logical_bytes = 0
+            with h5py.File(local, "r") as handle:
+                def account(_name, item):
+                    nonlocal logical_bytes
+                    if isinstance(item, h5py.Dataset):
+                        logical_bytes += int(item.size) * int(item.dtype.itemsize)
+
+                handle.visititems(account)
+            estimate = max(estimate, logical_bytes * 3)
+        except (ImportError, OSError, TypeError, ValueError):
+            pass
+    return max(1, int(estimate))
 
 _TENX_MEMBER = re.compile(
     r"^(?P<prefix>.+?)[._](?P<role>"
@@ -251,6 +333,7 @@ class ConversionResult:
     warnings: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    memory_report: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def primary_h5ad(self) -> str | None:
@@ -277,6 +360,7 @@ class ConversionResult:
             "warnings": list(self.warnings),
             "errors": list(self.errors),
             "failures": list(self.failures),
+            "memory_report": list(self.memory_report),
         }
 
 
@@ -1125,6 +1209,8 @@ class JSON2H5ADConverter:
         resource_overrides: Mapping[str, int | float] | None = None,
         metadata_service: MINiMLMetadataProvider | None = None,
         combination_policy: DatasetCombinationPolicy | None = None,
+        available_memory: Callable[[], int] | None = None,
+        memory_estimator: Callable[[str, Asset], int] | None = None,
     ):
         if downloader is not None and retrieval_policy is not None:
             raise ValueError(
@@ -1142,12 +1228,20 @@ class JSON2H5ADConverter:
             package_version=self._package_version,
             metadata_schema_version=self.H5AD_METADATA_SCHEMA_VERSION,
         )
-        self.retrieval_policy = retrieval_policy or RetrievalPolicy(
-            resource_profile=get_resource_profile(
+        resolved_resource_profile = (
+            retrieval_policy.resource_profile
+            if retrieval_policy is not None
+            else get_resource_profile(
                 resource_profile,
                 overrides=resource_overrides,
             )
         )
+        self.retrieval_policy = retrieval_policy or RetrievalPolicy(
+            resource_profile=resolved_resource_profile
+        )
+        self.resource_profile = resolved_resource_profile
+        self.available_memory = available_memory or _available_memory_bytes
+        self.memory_estimator = memory_estimator or _estimate_asset_memory_bytes
 
     def convert(
         self,
@@ -1171,6 +1265,7 @@ class JSON2H5ADConverter:
         nextflow_config: str | None = None,
         work_dir: str | None = None,
         resume: bool = False,
+        force_memory: bool = False,
         processed_checkpoint_dir: str | None = None,
         allow_invalid: bool = False,
         allow_unverified_combination: bool = False,
@@ -1179,6 +1274,8 @@ class JSON2H5ADConverter:
     ) -> ConversionResult | BatchConversionResult:
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"MINiML JSON file not found: {json_path}")
+        if force_memory and not resume:
+            raise ValueError("force_memory requires resume=True")
         loaded = self.package_source.load(json_path)
         loaded = replace(
             loaded,
@@ -1210,6 +1307,7 @@ class JSON2H5ADConverter:
             nextflow_config=nextflow_config,
             work_dir=work_dir,
             resume=resume,
+            force_memory=force_memory,
             processed_checkpoint_dir=processed_checkpoint_dir,
             allow_invalid=allow_invalid,
             allow_unverified_combination=allow_unverified_combination,
@@ -1324,6 +1422,7 @@ class JSON2H5ADConverter:
         nextflow_config: str | None = None,
         work_dir: str | None = None,
         resume: bool = False,
+        force_memory: bool = False,
         processed_checkpoint_dir: str | None = None,
         allow_invalid: bool = False,
         allow_unverified_combination: bool = False,
@@ -1356,13 +1455,14 @@ class JSON2H5ADConverter:
         source_json = os.path.abspath(source_json)
         source_json_sha256 = self._sha256(source_json)
         checkpoint_root = (
-            Path(processed_checkpoint_dir) / study_accession
+            Path(processed_checkpoint_dir)
             if processed_checkpoint_dir
-            else None
-        )
+            else out_path / ".processed"
+        ) / study_accession
         result = ConversionResult(study_accession=study_accession)
         result.warnings.extend(getattr(harmonization_resolution, "warnings", ()))
-        adatas = {}
+        checkpoint_sources: dict[str, Path] = {}
+        used_observation_ids: set[str] = set()
 
         raw_assets = {sample: asset for sample, asset in planned.items() if asset.kind == "raw"}
         if raw_assets:
@@ -1405,24 +1505,70 @@ class JSON2H5ADConverter:
                 asset=asset,
                 orientation=orientation,
             )
-            restored = self._load_processed_checkpoint(checkpoint) if resume else None
-            if restored is not None:
-                adata, checkpoint_metadata = restored
-                result.warnings.extend(checkpoint_metadata.get("warnings", ()))
-                result.errors.extend(checkpoint_metadata.get("errors", ()))
-                base_metadata = {}
-            else:
-                adata = self._read_processed_asset(asset, orientation=orientation)
-                base_metadata = self._normalize(
-                    adata,
-                    sample=sample_context[sample_id][0],
-                    package=sample_context[sample_id][1],
-                    study_accession=study_accession,
-                    asset=asset,
-                    characteristic_columns=characteristic_columns,
-                    artifact_parent=out_path,
-                    harmonization_resolution=harmonization_resolution,
+            checkpoint_metadata = (
+                self._processed_checkpoint_metadata(checkpoint) if resume else None
+            )
+            if checkpoint_metadata is not None:
+                checkpoint_path = checkpoint[0]
+                names = self._checkpoint_observation_ids(checkpoint_path)
+                if names is not None and not (used_observation_ids & names):
+                    result.warnings.extend(checkpoint_metadata.get("warnings", ()))
+                    result.errors.extend(checkpoint_metadata.get("errors", ()))
+                    used_observation_ids.update(names)
+                    sample_path = out_path / f"{sample_id}.h5ad"
+                    result.sample_h5ads[sample_id] = str(sample_path)
+                    checkpoint_sources[sample_id] = checkpoint_path
+                    continue
+
+            local_path = self._local_path(asset.path, md5=asset.md5)
+            available_bytes = int(self.available_memory())
+            estimated_peak_bytes = int(self.memory_estimator(local_path, asset))
+            if available_bytes <= 0 or estimated_peak_bytes <= 0:
+                raise ValueError("Memory admission inputs must be positive byte counts.")
+            fixed_limit = int(self.resource_profile.max_in_memory_matrix_bytes)
+            limit_bytes = (
+                int(available_bytes * self.resource_profile.force_memory_fraction)
+                if force_memory
+                else min(
+                    fixed_limit,
+                    int(available_bytes * self.resource_profile.available_memory_fraction),
                 )
+            )
+            admitted = estimated_peak_bytes <= limit_bytes
+            result.memory_report.append(
+                {
+                    "sample_id": sample_id,
+                    "estimated_peak_bytes": estimated_peak_bytes,
+                    "available_memory_bytes": available_bytes,
+                    "fixed_profile_bytes": fixed_limit,
+                    "limit_bytes": limit_bytes,
+                    "force_memory": bool(force_memory),
+                    "decision": "admitted" if admitted else "skipped",
+                    "reason": (
+                        "within_memory_limit"
+                        if admitted
+                        else "estimated_peak_exceeds_memory_limit"
+                    ),
+                }
+            )
+            if not admitted:
+                result.failures.append(
+                    f"{sample_id}: skipped by memory admission; estimated peak "
+                    f"{estimated_peak_bytes} bytes exceeds {limit_bytes} bytes"
+                )
+                continue
+
+            adata = self._read_processed_asset(asset, orientation=orientation)
+            base_metadata = self._normalize(
+                adata,
+                sample=sample_context[sample_id][0],
+                package=sample_context[sample_id][1],
+                study_accession=study_accession,
+                asset=asset,
+                characteristic_columns=characteristic_columns,
+                artifact_parent=out_path,
+                harmonization_resolution=harmonization_resolution,
+            )
             projection_context = MetadataProjectionContext(
                 sample=sample_context[sample_id][0],
                 package=sample_context[sample_id][1],
@@ -1431,36 +1577,38 @@ class JSON2H5ADConverter:
                 asset=asset,
                 base_metadata=base_metadata,
             )
-            if restored is None:
-                warning_start = len(result.warnings)
-                error_start = len(result.errors)
-                self._project_sample_metadata(
-                    adata,
-                    projection_context,
-                    warnings=result.warnings,
-                    errors=result.errors,
-                    allow_invalid=allow_invalid,
-                )
-                self._attach_miniml(
-                    adata,
-                    packages=source_packages or packages,
-                    source_json=source_json,
-                    source_json_sha256=source_json_sha256,
-                    sample_id=sample_id,
-                    artifact_parent=out_path,
-                )
-                self._attach_harmonization(adata, harmonization_resolution)
-                self._write_processed_checkpoint(
-                    checkpoint,
-                    adata,
-                    warnings=result.warnings[warning_start:],
-                    errors=result.errors[error_start:],
-                )
+            warning_start = len(result.warnings)
+            error_start = len(result.errors)
+            self._project_sample_metadata(
+                adata,
+                projection_context,
+                warnings=result.warnings,
+                errors=result.errors,
+                allow_invalid=allow_invalid,
+            )
+            self._attach_miniml(
+                adata,
+                packages=source_packages or packages,
+                source_json=source_json,
+                source_json_sha256=source_json_sha256,
+                sample_id=sample_id,
+                artifact_parent=out_path,
+            )
+            self._attach_harmonization(adata, harmonization_resolution)
+            self._ensure_incremental_observation_ids(
+                adata, sample_id, used_observation_ids
+            )
+            self._write_processed_checkpoint(
+                checkpoint,
+                adata,
+                warnings=result.warnings[warning_start:],
+                errors=result.errors[error_start:],
+            )
             sample_path = out_path / f"{sample_id}.h5ad"
             result.sample_h5ads[sample_id] = str(sample_path)
-            adatas[sample_id] = adata
+            checkpoint_sources[sample_id] = checkpoint[0]
+            del adata
 
-        self._ensure_global_observation_ids(adatas)
         if allow_unverified_combination:
             result.warnings.append(
                 "allow_unverified_combination is ignored because expression "
@@ -1469,8 +1617,7 @@ class JSON2H5ADConverter:
 
         result.manifest_path = str(out_path / f"{study_accession}.json2h5ad.json")
         self._write_dataset_bundle(
-            adatas=adatas,
-            combined=None,
+            sample_sources=checkpoint_sources,
             result=result,
             planned=planned,
             json_path=source_json,
@@ -1506,6 +1653,17 @@ class JSON2H5ADConverter:
         return root / f"{key}.h5ad", root / f"{key}.json", fingerprint
 
     def _load_processed_checkpoint(self, checkpoint):
+        metadata = self._processed_checkpoint_metadata(checkpoint)
+        if metadata is None:
+            return None
+        h5ad_path = checkpoint[0]
+        try:
+            anndata = self._scientific_modules()[0]
+            return anndata.read_h5ad(h5ad_path), metadata
+        except (OSError, TypeError, ValueError):
+            return None
+
+    def _processed_checkpoint_metadata(self, checkpoint):
         if checkpoint is None:
             return None
         h5ad_path, manifest_path, fingerprint = checkpoint
@@ -1515,10 +1673,23 @@ class JSON2H5ADConverter:
             metadata = json.loads(manifest_path.read_text(encoding="utf-8"))
             if metadata.get("fingerprint") != fingerprint:
                 return None
-            anndata = self._scientific_modules()[0]
-            return anndata.read_h5ad(h5ad_path), metadata
-        except (OSError, ValueError, json.JSONDecodeError):
+            return metadata
+        except (OSError, TypeError, ValueError, json.JSONDecodeError):
             return None
+
+    def _checkpoint_observation_ids(self, path: Path) -> set[str] | None:
+        """Read checkpoint observation metadata without materialising its matrix."""
+
+        backed = None
+        try:
+            anndata = self._scientific_modules()[0]
+            backed = anndata.read_h5ad(path, backed="r")
+            return set(backed.obs_names.astype(str))
+        except (OSError, TypeError, ValueError):
+            return None
+        finally:
+            if backed is not None:
+                backed.file.close()
 
     def _write_processed_checkpoint(
         self,
@@ -2097,6 +2268,28 @@ class JSON2H5ADConverter:
         if len(all_values) != len(set(all_values)):
             raise ValueError("Observation identifiers remain non-unique after sample qualification.")
 
+    def _ensure_incremental_observation_ids(
+        self,
+        adata,
+        sample_id: str,
+        used: set[str],
+    ) -> None:
+        """Make one sample globally unique without retaining earlier matrices."""
+
+        rendered: list[str] = []
+        local: set[str] = set()
+        for original in adata.obs_names.astype(str):
+            candidate = original
+            ordinal = 1
+            while candidate in used or candidate in local:
+                suffix = f"-{sample_id}" if ordinal == 1 else f"-{sample_id}-{ordinal}"
+                candidate = f"{original}{suffix}"
+                ordinal += 1
+            rendered.append(candidate)
+            local.add(candidate)
+        adata.obs_names = rendered
+        used.update(local)
+
     def _characteristic_columns(self, packages: list[dict]) -> list[str]:
         columns = []
         for package in packages:
@@ -2517,8 +2710,7 @@ class JSON2H5ADConverter:
     def _write_dataset_bundle(
         self,
         *,
-        adatas: Mapping[str, Any],
-        combined: Any,
+        sample_sources: Mapping[str, Path],
         result: ConversionResult,
         planned: dict[str, Asset],
         json_path: str,
@@ -2539,15 +2731,10 @@ class JSON2H5ADConverter:
         ) as temporary_dir:
             staging = Path(temporary_dir)
             staged: list[tuple[Path, Path]] = []
-            for sample_id, adata in adatas.items():
+            for sample_id, checkpoint_path in sample_sources.items():
                 destination = Path(result.sample_h5ads[sample_id])
                 source = staging / destination.name
-                self._write_h5ad(adata, source, overwrite=True)
-                staged.append((source, destination))
-            if combined is not None and result.combined_h5ad:
-                destination = Path(result.combined_h5ad)
-                source = staging / destination.name
-                self._write_h5ad(combined, source, overwrite=True)
+                shutil.copy2(checkpoint_path, source)
                 staged.append((source, destination))
             manifest_destination = Path(result.manifest_path)
             manifest_source = staging / manifest_destination.name
@@ -2683,6 +2870,7 @@ class JSON2H5ADConverter:
             "failures": result.failures,
             "errors": result.errors,
             "partial": result.partial,
+            "memory_report": result.memory_report,
             "assets": {
                 sample: self._portable_asset(asset, base)
                 for sample, asset in planned.items()

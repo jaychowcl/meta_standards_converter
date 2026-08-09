@@ -91,6 +91,14 @@ def _parser() -> argparse.ArgumentParser:
     workflow.add_argument("--work-dir", help="Nextflow work directory.")
     workflow.add_argument("--resume", action="store_true", help="Resume from the Nextflow cache.")
     workflow.add_argument(
+        "--force-memory",
+        action="store_true",
+        help=(
+            "On a resumed run, bypass the fixed in-memory profile ceiling while "
+            "retaining the hard 90%% available-memory ceiling."
+        ),
+    )
+    workflow.add_argument(
         "--processed-checkpoint-dir",
         help="Persistent directory for resumable processed-sample checkpoints.",
     )
@@ -180,6 +188,7 @@ def main(argv=None) -> int:
                 ("nextflow_config", args.nextflow_config, None),
                 ("work_dir", args.work_dir, None),
                 ("resume", args.resume, False),
+                ("force_memory", args.force_memory, False),
                 ("processed_checkpoint_dir", args.processed_checkpoint_dir, None),
                 ("overwrite", args.overwrite, False),
                 ("allow_invalid", args.allow_invalid, False),

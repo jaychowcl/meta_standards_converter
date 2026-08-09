@@ -48,6 +48,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--nextflow-config")
     parser.add_argument("--work-dir")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--force-memory",
+        action="store_true",
+        help="On resume, permit conversion up to 90%% of currently available memory.",
+    )
     parser.add_argument("--processed-checkpoint-dir")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--allow-invalid", action="store_true")
@@ -92,6 +97,7 @@ def main(argv=None) -> int:
                 nextflow_config=args.nextflow_config,
                 work_dir=args.work_dir,
                 resume=args.resume,
+                force_memory=args.force_memory,
                 processed_checkpoint_dir=args.processed_checkpoint_dir,
                 overwrite=args.overwrite,
                 allow_invalid=args.allow_invalid,

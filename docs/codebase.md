@@ -777,7 +777,8 @@ path -> missing/invalid/no groups --------------------------> exception
           -> exception -------------------------------------> failures[]; continue
           -> aggregate -------------------------------------> BatchConversionResult
 package conversion -> processed normalize / raw reference + nf-core
-          -> per-sample failure retained; successes continue
+          -> estimate memory; oversized sample retained as partial failure
+          -> admitted samples checkpoint sequentially; release each matrix
           -> one H5AD per sample; no expression-matrix join
           -> catalogue manifest declaring expression_integration=none
 ```
@@ -815,11 +816,19 @@ package conversion -> processed normalize / raw reference + nf-core
    package list. JSON encoding is intentional because HDF5 cannot represent
    heterogeneous lists of nested MINiML objects natively; `json.loads`
    reconstructs the data-model shape losslessly.
-10. `--processed-checkpoint-dir` writes each normalized, projected sample H5AD
-   atomically with a fingerprint over the source JSON, sample, asset,
-   orientation, and converter version. With `--resume`, matching checkpoints
-   are loaded instead of downloading and converting that sample again;
-   incomplete, corrupt, or stale checkpoint pairs are ignored.
+10. Before loading an expression matrix, conversion estimates peak resident
+   memory. Normal admission is `min(profile ceiling, 70% available RAM)`, where
+   `standard` is 8 GiB and `large` is 32 GiB. Oversized samples are skipped and
+   recorded in `memory_report`, making the result partial. Only
+   `--resume --force-memory` bypasses the fixed ceiling; its non-bypassable
+   limit is 90% of current host/cgroup availability.
+11. Every admitted sample is normalized and atomically checkpointed before its
+   AnnData matrix is released. The default checkpoint root is
+   `{out}/.processed/{study}`; `--processed-checkpoint-dir` overrides it. The
+   fingerprint covers source JSON, sample, asset, orientation, and converter
+   version. With `--resume`, valid matching checkpoints are copied into the
+   catalogue without materialising their expression matrices; incomplete,
+   corrupt, colliding, or stale checkpoint pairs are ignored.
 
 Pseudocode: `load -> if one and convert: convert_packages; else for group: try convert_packages into child; except record; return batch`.
 
@@ -1214,7 +1223,10 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
   -> retain reversible sample values in uns["msc_metadata"] and provenance in uns
   -> invoke ordered metadata projectors for additive sample obs/var/uns metadata
   -> flatten the permitted MINiML metadata into uns["msc_miniml"]
-  -> write one normalized H5AD per sample
+  -> estimate peak resident memory against fixed and live-availability bounds
+       -> oversized: record skip in memory_report and continue
+       -> admitted: normalize, checkpoint immediately, release matrix
+  -> copy durable checkpoints into one normalized H5AD per sample
   -> do not join expression matrices or invoke combined-study projector callbacks
   -> write JSON catalogue manifest with expression_integration=none
   -> return ConversionResult for one group or BatchConversionResult for multiple
@@ -1232,7 +1244,7 @@ Stable observation fields cover sample/study accessions, title/description, orga
 
 `uns["msc_metadata"]` declares schema version `1.0` and contains the authoritative normalized `sample_values` DataFrame with `sample_accession`, `field`, `ordinal`, `value`, and `value_type`. It stores one row per non-empty canonical value, so embedded semicolons and list cardinality remain recoverable without parsing the display string. Each sample H5AD contains only its sample rows. `uns["msc_miniml"]` remains the complete typed source ledger at schema 1.0. H5AD provenance and manifests separately declare the H5AD metadata schema version; the catalogue manifest additionally declares `artifact_kind = per_sample_h5ad_catalogue`, `expression_integration = none`, and a non-verified combination state.
 
-Normalization copies each incoming index into `msc.observation.original_id`. An identifier is already sample-qualified when its accession occurs case-insensitively as a token bounded by the start/end or `-`, `_`, `.`, or `:`. Qualified identifiers are preserved; other identifiers receive `-{sample_accession}`. Repeated candidates receive source-order numeric suffixes. A final cross-sample pass qualifies any remaining catalogue collision and fails if uniqueness cannot be established, so observation metadata can be row-aggregated without changing expression matrices.
+Normalization copies each incoming index into `msc.observation.original_id`. An identifier is already sample-qualified when its accession occurs case-insensitively as a token bounded by the start/end or `-`, `_`, `.`, or `:`. Qualified identifiers are preserved; other identifiers receive `-{sample_accession}`. Repeated candidates receive source-order numeric suffixes. A sequential used-ID ledger qualifies any remaining collision before each sample checkpoint is written, so global uniqueness does not require retaining earlier expression matrices.
 
 `uns["msc_miniml"]` contains schema/policy metadata, the source JSON path and SHA-256, and a typed long-form `fields` DataFrame (`package_index`, `entity_type`, `entity_id`, `path`, `value`, `value_type`). GSM files contain the sample plus its series and transitively referenced platform, contributor, and database records without following `sample_ref`; both scalar references and real MINiML `{"ref": "..."}` objects are resolved. GSE files contain all package entities. Protocol descriptions remain in this table, while `msc.protocol.types`, source refs, and accessions reuse `Harmonizer.geoprotocols2efo()` for the established treatment, growth, extraction, labeling, hybridization, scan, and data-processing paths. Publication records are whitelisted to PubMed ID, DOI, title, authors, status, and status ontology fields; abstracts, full text, article bodies, sections, and other publication content are not embedded. GEO series summary and overall design remain experiment metadata.
 
@@ -1314,8 +1326,8 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 <a id="rootless-json2h5ad-runtime"></a>
 ## Rootless json2h5ad Runtime
 
-The deterministic suite was refreshed on 2026-08-09 and reported
-`561 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+The deterministic suite was refreshed on 2026-08-10 and reported
+`564 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -1848,8 +1860,8 @@ This section lists public and semi-public callables used by tests or by package 
 
 - Accepts injectable `SourcePlanner`, `NFCoreRunner`, `AssetDownloader`,
   `DatasetCombinationPolicy`, and ordered `AnnDataMetadataProjector`
-  collaborators.
-- `convert(..., allow_invalid=False) -> ConversionResult | BatchConversionResult` accepts ordinary
+  collaborators, plus available-memory and peak-memory-estimator test seams.
+- `convert(..., allow_invalid=False, resume=False, force_memory=False) -> ConversionResult | BatchConversionResult` accepts ordinary
   parsed MINiML JSON or a canonical Atlas v1 document. It returns the
   single-group result directly and aggregates multiple groups.
 - `convert_source(json_path, out=None, allow_invalid=False, **options) -> BatchConversionResult`
@@ -1858,7 +1870,8 @@ This section lists public and semi-public callables used by tests or by package 
 - `ConversionResult` exposes the compatibility field `combined_h5ad` (always
   `None` for catalogue conversion), `sample_h5ads`, retained pipeline files,
   pipeline commands, warnings/errors/failures, first-sample `primary_h5ad`, and
-  `partial`.
+  `partial`; `memory_report` records every newly assessed sample admission or
+  skip and is also persisted in the catalogue manifest.
 - `AssetManifest` loads CSV/TSV mappings or `ACCESSION=PATH` CLI specifications. Manifest entries outrank CLI entries, which outrank discovered JSON assets.
 - `AssetManifest.load(path: str) -> list[Asset]` reads CSV/TSV, requires
   `scope_id`/`path`, groups raw members, and raises `ValueError` for blank or
@@ -2670,13 +2683,18 @@ same envelope. The independent enums and error/status types are:
 `meta_standards_converter.runtime_contracts.ResourceProfile` owns typed
 standard/large ceilings. Standard uses 3 redirects, 10/60-second connect/read
 timeouts, 128 MiB XML, 256 MiB compressed and 1 GiB expanded archives, 3 GiB
-per ontology file, 100 GiB per matrix/H5AD, 200 GiB aggregate downloads,
+per ontology file, 100 GiB per matrix/H5AD, an 8 GiB in-memory matrix ceiling,
+200 GiB aggregate downloads,
 250 GiB cache, four network workers, and one ontology-build worker. Large uses
 5 redirects, 30/300 seconds, 512 MiB XML, 1/4 GiB archive limits, 5 GiB per
-ontology file, 500 GiB matrix/H5AD, 1 TiB aggregate downloads, 500 GiB cache,
+ontology file, 500 GiB matrix/H5AD, a 32 GiB in-memory matrix ceiling, 1 TiB
+aggregate downloads, 500 GiB cache,
 eight network workers, and two ontology-build workers. Ontology and matrix byte
-ceilings are disk/download object sizes, not RAM allocations. Both require 10%
-disk headroom. `--resource-profile`, repeated `--resource-override`, and the
+ceilings remain disk/download object sizes; the separate in-memory ceilings
+are RAM admission limits. Normal conversion also applies 70% of currently
+available host/cgroup RAM, whichever is lower, and resume-only force admission
+is hard-bounded at 90%. Both profiles require 10% disk headroom.
+`--resource-profile`, repeated `--resource-override`, and the
 Python constructors expose explicit selection/overrides. `geo2ae`, `geo2json`,
 `ae2json`, and `json2h5ad` expose the shared CLI options; default network
 collaborators receive the same immutable configured profile. Passing an

@@ -388,7 +388,8 @@ json2h5ad output/GSE234602.json \
 | `--nextflow-config` `NEXTFLOW_CONFIG` | Additional Nextflow resource/infrastructure config. |
 | `--work-dir` `WORK_DIR` | Nextflow work directory; defaults below the study/pipeline output tree. |
 | `--resume` | Resume Nextflow and reuse fingerprint-valid processed-sample checkpoints. |
-| `--processed-checkpoint-dir` `DIR` | Persist atomic normalized sample checkpoints in `DIR`; matching checkpoints are reused with `--resume`. |
+| `--force-memory` | Resume-only override of the fixed 8/32 GiB profile ceiling; the estimate must still fit within 90% of currently available RAM. |
+| `--processed-checkpoint-dir` `DIR` | Override the default `{OUTDIR}/.processed` location for atomic normalized sample checkpoints; matching checkpoints are reused with `--resume`. |
 | `--overwrite` | Replace normalized H5AD and manifest outputs; existing outputs are protected by default. |
 | `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
 | `--allow-unverified-combination` | Deprecated compatibility option; ignored with a warning because catalogue outputs never combine expression matrices. |
@@ -423,6 +424,15 @@ safe single path components. Sample H5ADs and the manifest are staged and
 published as one rollback-safe dataset bundle. If restoration itself fails,
 `DatasetBundleRecoveryError` reports retained recovery paths instead of deleting
 the previous artifacts.
+
+Before a matrix is loaded, the converter estimates its peak resident-memory
+cost. A normal run admits at most the lower of the selected fixed ceiling
+(`standard`: 8 GiB; `large`: 32 GiB) and 70% of currently available host/cgroup
+RAM. Oversized samples are skipped, make the result partial, and are recorded in
+the result and catalogue `memory_report`. Each admitted sample is normalized,
+written immediately to `{OUTDIR}/.processed/{study}/`, and released before the
+next sample. A later `--resume --force-memory` run may bypass the fixed ceiling,
+but never the hard 90% current-availability limit.
 
 ##### H5AD metadata schema 1.0
 
@@ -518,7 +528,8 @@ json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
 | `--nextflow-config` `NEXTFLOW_CONFIG` | Nextflow infrastructure configuration. |
 | `--work-dir` `WORK_DIR` | Nextflow working directory. |
 | `--resume` | Resume Nextflow and reuse fingerprint-valid processed-sample checkpoints. |
-| `--processed-checkpoint-dir` `DIR` | Persist atomic normalized sample checkpoints in `DIR`; matching checkpoints are reused with `--resume`. |
+| `--force-memory` | Resume-only override of the fixed 8/32 GiB profile ceiling, still bounded to 90% currently available RAM. |
+| `--processed-checkpoint-dir` `DIR` | Override the default processed-checkpoint directory; matching checkpoints are reused with `--resume`. |
 | `--overwrite` | Replace the complete component bundle. |
 | `--allow-invalid` | Publish projector-reported validation errors as a partial result. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Generic delimited-matrix orientation. |
@@ -861,8 +872,8 @@ programmatic converter calls raise errors to their caller.
 
 ## Testing
 
-The deterministic, network-blocked suite was last verified on 2026-08-09:
-`561 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+The deterministic, network-blocked suite was last verified on 2026-08-10:
+`564 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

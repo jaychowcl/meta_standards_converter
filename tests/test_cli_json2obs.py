@@ -38,6 +38,7 @@ def test_json2obs_forwards_asset_and_component_options(capsys):
                 "--allow-invalid",
                 "--overwrite",
                 "--resume",
+                "--force-memory",
                 "--processed-checkpoint-dir",
                 "checkpoints",
             ]
@@ -64,6 +65,7 @@ def test_json2obs_forwards_asset_and_component_options(capsys):
         nextflow_config=None,
         work_dir=None,
         resume=True,
+        force_memory=True,
         processed_checkpoint_dir="checkpoints",
         overwrite=True,
         allow_invalid=True,

@@ -277,7 +277,7 @@ class OperationStatusV2:
 
 @dataclass(frozen=True)
 class ResourceProfile:
-    """Disk/network/worker ceilings; byte limits are not RAM allocations."""
+    """Disk, network, worker, and in-memory admission ceilings."""
 
     name: str
     max_redirects: int
@@ -288,11 +288,14 @@ class ResourceProfile:
     max_expanded_archive_bytes: int
     max_ontology_file_bytes: int
     max_matrix_bytes: int
+    max_in_memory_matrix_bytes: int
     max_aggregate_download_bytes: int
     max_cache_bytes: int
     network_workers: int
     ontology_build_workers: int
     disk_headroom_fraction: float = 0.10
+    available_memory_fraction: float = 0.70
+    force_memory_fraction: float = 0.90
 
     def __post_init__(self) -> None:
         for field in fields(self):
@@ -305,6 +308,14 @@ class ResourceProfile:
                 raise ValueError(f"Resource limit {field.name} must be positive.")
         if not 0 < self.disk_headroom_fraction < 1:
             raise ValueError("disk_headroom_fraction must be between zero and one")
+        if not 0 < self.available_memory_fraction < 1:
+            raise ValueError("available_memory_fraction must be between zero and one")
+        if not 0 < self.force_memory_fraction < 1:
+            raise ValueError("force_memory_fraction must be between zero and one")
+        if self.force_memory_fraction < self.available_memory_fraction:
+            raise ValueError(
+                "force_memory_fraction cannot be lower than available_memory_fraction"
+            )
 
     def with_overrides(self, overrides: Mapping[str, int | float]) -> "ResourceProfile":
         allowed = {field.name for field in fields(self)} - {"name"}
@@ -326,6 +337,7 @@ STANDARD_RESOURCE_PROFILE = ResourceProfile(
     max_expanded_archive_bytes=1 * GIB,
     max_ontology_file_bytes=3 * GIB,
     max_matrix_bytes=100 * GIB,
+    max_in_memory_matrix_bytes=8 * GIB,
     max_aggregate_download_bytes=200 * GIB,
     max_cache_bytes=250 * GIB,
     network_workers=4,
@@ -342,6 +354,7 @@ LARGE_RESOURCE_PROFILE = ResourceProfile(
     max_expanded_archive_bytes=4 * GIB,
     max_ontology_file_bytes=5 * GIB,
     max_matrix_bytes=500 * GIB,
+    max_in_memory_matrix_bytes=32 * GIB,
     max_aggregate_download_bytes=1 * TIB,
     max_cache_bytes=500 * GIB,
     network_workers=8,

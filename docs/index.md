@@ -141,8 +141,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: runtime-contracts-v2
   title: Runtime contracts v2
   anchor: runtime-contracts-v2
-  purpose: Defines independent status axes, safe error serialization, standard/large resource profiles, explicit overrides, and disk preflight.
-  keywords: status 2.0, execution, completeness, evidence confidence, validation, publication, SafeErrorEnvelope, resource profile, standard, large, disk headroom
+  purpose: Defines independent status axes, safe error serialization, standard/large disk and RAM profiles, explicit overrides, memory admission, and disk preflight.
+  keywords: status 2.0, execution, completeness, evidence confidence, validation, publication, SafeErrorEnvelope, resource profile, standard, large, 8 GiB, 32 GiB, 70 percent available RAM, 90 percent force memory, disk headroom
   link: [Open section](codebase.md#runtime-contracts-v2)
 
 - id: secure-retrieval-and-xml
@@ -200,7 +200,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: MINiML or Atlas JSON to H5AD
   anchor: workflow-json2h5ad
   purpose: Traces grouping, asset planning, raw/processed paths, sample projection, catalogue-only publication, fail-closed compatibility evidence, and partial failures.
-  keywords: json2h5ad, Atlas, MINiML, SourcePlanner, DatasetCombinationPolicy, per-sample catalogue, no expression integration, Entrez, gene symbol, all unknown evidence, scope index, asset performance, typed annotations, organism, reference, modality, feature namespace, deprecated allow unverified combination, msc_miniml, packages_json, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
+  keywords: json2h5ad, Atlas, MINiML, SourcePlanner, DatasetCombinationPolicy, per-sample catalogue, no expression integration, Entrez, gene symbol, all unknown evidence, memory report, admission, force memory, 70 percent, 90 percent, sequential durable checkpoint, scope index, asset performance, typed annotations, organism, reference, modality, feature namespace, deprecated allow unverified combination, msc_miniml, packages_json, ConversionResult, BatchConversionResult, nf-core, AnnData, lazy Scanpy, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2h5ad)
 
 - id: workflow-json2tsv
@@ -214,7 +214,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: MINiML or Atlas JSON to AnnData metadata
   anchor: workflow-json2obs
   purpose: Traces catalogue-backed observation-row aggregation without expression integration, single-sample var, and typed sample-namespaced uns publication.
-  keywords: json2obs, obs CSV, row aggregation, no matrix combination, backed read, single-sample var CSV, sample-namespaced uns JSON, cell_id, feature_id, atomic, partial, processed checkpoint, resume
+  keywords: json2obs, obs CSV, row aggregation, no matrix combination, backed read, single-sample var CSV, sample-namespaced uns JSON, cell_id, feature_id, atomic, partial, memory admission, force memory, processed checkpoint, resume
   link: [Open section](codebase.md#workflow-json2obs)
 
 ## Detailed evidence routes
@@ -271,6 +271,6 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: test-plan
   title: Test plan
   anchor: test-plan
-  purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-02 deterministic result.
-  keywords: tests, 476 passed, 3 skipped, 91 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
+  keywords: tests, 564 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

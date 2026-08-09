@@ -46,6 +46,9 @@ def test_standard_resource_profile_has_exact_conservative_limits() -> None:
     assert profile.max_expanded_archive_bytes == 1 * GIB
     assert profile.max_ontology_file_bytes == 3 * GIB
     assert profile.max_matrix_bytes == 100 * GIB
+    assert profile.max_in_memory_matrix_bytes == 8 * GIB
+    assert profile.available_memory_fraction == 0.70
+    assert profile.force_memory_fraction == 0.90
     assert profile.max_aggregate_download_bytes == 200 * GIB
     assert profile.max_cache_bytes == 250 * GIB
     assert profile.network_workers == 4
@@ -65,6 +68,9 @@ def test_large_resource_profile_has_exact_opt_in_limits() -> None:
     assert profile.max_expanded_archive_bytes == 4 * GIB
     assert profile.max_ontology_file_bytes == 5 * GIB
     assert profile.max_matrix_bytes == 500 * GIB
+    assert profile.max_in_memory_matrix_bytes == 32 * GIB
+    assert profile.available_memory_fraction == 0.70
+    assert profile.force_memory_fraction == 0.90
     assert profile.max_aggregate_download_bytes == 1 * TIB
     assert profile.max_cache_bytes == 500 * GIB
     assert profile.network_workers == 8

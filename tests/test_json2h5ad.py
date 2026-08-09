@@ -989,6 +989,86 @@ class TestProcessedAssetConversion(unittest.TestCase):
         self.assertEqual("entrez", converter._feature_namespace(entrez))
         self.assertEqual("symbol", converter._feature_namespace(symbols))
 
+    def test_memory_preflight_skips_then_force_resume_bypasses_only_fixed_profile(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_path = os.path.join(tmpdir, "source.h5ad")
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1]]),
+                obs=self.pandas.DataFrame(index=["cell"]),
+                var=self.pandas.DataFrame(index=["ENSG1"]),
+            ).write_h5ad(source_path)
+            json_path = self._write_json(tmpdir, package(source_path))
+            out = os.path.join(tmpdir, "out")
+            converter = JSON2H5ADConverter(
+                resource_overrides={
+                    "max_in_memory_matrix_bytes": 100,
+                    "available_memory_fraction": 0.70,
+                    "force_memory_fraction": 0.90,
+                },
+                available_memory=lambda: 1_000,
+                memory_estimator=lambda _path, _asset: 800,
+            )
+
+            skipped = converter.convert(json_path=json_path, out=out)
+
+            self.assertEqual({}, skipped.sample_h5ads)
+            self.assertTrue(skipped.partial)
+            self.assertEqual("skipped", skipped.memory_report[0]["decision"])
+            self.assertEqual(100, skipped.memory_report[0]["limit_bytes"])
+            first_manifest = json.loads(Path(skipped.manifest_path).read_text())
+            self.assertEqual(skipped.memory_report, first_manifest["memory_report"])
+
+            resumed = converter.convert(
+                json_path=json_path,
+                out=out,
+                resume=True,
+                force_memory=True,
+                overwrite=True,
+            )
+
+            self.assertEqual({"GSM1"}, set(resumed.sample_h5ads))
+            self.assertEqual("admitted", resumed.memory_report[0]["decision"])
+            self.assertEqual(900, resumed.memory_report[0]["limit_bytes"])
+            self.assertTrue(Path(resumed.sample_h5ads["GSM1"]).is_file())
+            self.assertTrue(any((Path(out) / ".processed").rglob("*.h5ad")))
+
+    def test_force_memory_never_exceeds_ninety_percent_available(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source_path = os.path.join(tmpdir, "source.h5ad")
+            self.anndata.AnnData(
+                X=self.sparse.csr_matrix([[1]]),
+                obs=self.pandas.DataFrame(index=["cell"]),
+                var=self.pandas.DataFrame(index=["ENSG1"]),
+            ).write_h5ad(source_path)
+            json_path = self._write_json(tmpdir, package(source_path))
+            converter = JSON2H5ADConverter(
+                resource_overrides={"max_in_memory_matrix_bytes": 100},
+                available_memory=lambda: 1_000,
+                memory_estimator=lambda _path, _asset: 901,
+            )
+
+            result = converter.convert(
+                json_path=json_path,
+                out=os.path.join(tmpdir, "out"),
+                resume=True,
+                force_memory=True,
+            )
+
+            self.assertEqual({}, result.sample_h5ads)
+            self.assertEqual("skipped", result.memory_report[0]["decision"])
+            self.assertEqual(900, result.memory_report[0]["limit_bytes"])
+
+    def test_force_memory_requires_resume(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_path = self._write_json(tmpdir, package("source.h5ad"))
+
+            with self.assertRaisesRegex(ValueError, "force_memory requires resume"):
+                JSON2H5ADConverter().convert(
+                    json_path=json_path,
+                    out=os.path.join(tmpdir, "out"),
+                    force_memory=True,
+                )
+
     def test_enriches_msc_metadata_and_flattens_relevant_miniml(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             paths = {}
