@@ -156,7 +156,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Enriched MINiML-compatible core
   anchor: proposed-enriched-miniml-core
   purpose: Defines MSC MINiML 2.0 protocols, assay paths, typed annotations, units, provenance, document-scoped SDRF ordering, migration, and semantic MAGE-TAB boundaries.
-  keywords: MSC MINiML 2.0, MAGE-TAB, annotations, units, Unit type, factors, protocols, assay paths, SDRF documents, migration, semantic round trip
+  keywords: MSC MINiML 2.0, MAGE-TAB, canonical IDF labels, Publication Status Term Source REF, Protocol Term Source REF, legacy aliases, annotations, units, Unit type, factors, protocols, assay paths, SDRF documents, migration, semantic round trip
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
 - id: miniml-package-model
@@ -186,14 +186,14 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Parsed JSON to MAGE-TAB
   anchor: workflow-json2ae
   purpose: Traces native MINiML or canonical Atlas v1 loading, filtering, validation, enrichment, typed semantic MAGE-TAB reconstruction, and writing.
-  keywords: json2ae, JSON, Atlas v1, harmonized, warning, MAGE-TAB, round trip, overlay, IDF, SDRF
+  keywords: json2ae, JSON, Atlas v1, harmonized, warning, MAGE-TAB, canonical IDF labels, publication status, protocol ontology, round trip, overlay, IDF, SDRF
   link: [Open section](codebase.md#workflow-json2ae)
 
 - id: workflow-ae2json
   title: MAGE-TAB to parsed JSON
   anchor: workflow-ae2json
   purpose: Traces bounded local, policy-approved HTTPS, and paginated BioStudies resolution through strict typed JSON output.
-  keywords: ae2json, BioStudies, E-MTAB-6486, pagination, IDF, SDRF, factor normalization, material type, resource profile, egress, AEParser, typed model
+  keywords: ae2json, BioStudies, E-MTAB-6486, pagination, IDF, SDRF, canonical labels, legacy label aliases, factor normalization, material type, resource profile, egress, AEParser, typed model
   link: [Open section](codebase.md#workflow-ae2json)
 
 - id: workflow-json2h5ad
@@ -272,5 +272,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Test plan
   anchor: test-plan
   purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
-  keywords: tests, 572 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  keywords: tests, 575 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

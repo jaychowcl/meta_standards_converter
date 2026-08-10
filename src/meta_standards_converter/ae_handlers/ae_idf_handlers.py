@@ -471,8 +471,8 @@ class IDFConstructor():
                 ["Publication Author List", *[publication.get("author_list") for publication in enriched_publications]],
                 ["Publication Title", *[publication.get("title") for publication in enriched_publications]],
                 ["Publication Status", *[publication.get("status") for publication in enriched_publications]],
-                ["Status Term Source Ref", *[publication.get("status_term_source_ref") for publication in enriched_publications]],
-                ["Status Term Accession Number", *[publication.get("status_term_accession_number") for publication in enriched_publications]],
+                ["Publication Status Term Source REF", *[publication.get("status_term_source_ref") for publication in enriched_publications]],
+                ["Publication Status Term Accession Number", *[publication.get("status_term_accession_number") for publication in enriched_publications]],
             ]
 
         pubmed_ids = [
@@ -501,8 +501,8 @@ class IDFConstructor():
             ["Publication Author List", *author_list],
             ["Publication Title", *title],
             ["Publication Status", *status],
-            ["Status Term Source Ref", *status_term_source_ref],
-            ["Status Term Accession Number", *status_term_accession_number],
+            ["Publication Status Term Source REF", *status_term_source_ref],
+            ["Publication Status Term Accession Number", *status_term_accession_number],
         ]
 
     def _lookup_pubmed_id(self, pubmed_id: str) -> dict:
@@ -596,8 +596,8 @@ class IDFConstructor():
         rows = [
             ["Protocol Name", *name],
             ["Protocol Type", *p_type],
-            ["Protocol Type Term Source REF", *term_source_ref],
-            ["Protocol Type Term Accession Number", *term_accession_number],
+            ["Protocol Term Source REF", *term_source_ref],
+            ["Protocol Term Accession Number", *term_accession_number],
             ["Protocol Description", *description],
             # ["Protocol Parameters", *parameters],
             ["Protocol Hardware", *hardware],
@@ -636,8 +636,8 @@ class IDFConstructor():
         rows = [
             ["Protocol Name", *names],
             ["Protocol Type", *p_type],
-            ["Protocol Type Term Source REF", *term_source_ref],
-            ["Protocol Type Term Accession Number", *term_accession_number],
+            ["Protocol Term Source REF", *term_source_ref],
+            ["Protocol Term Accession Number", *term_accession_number],
             ["Protocol Description", *description],
             # ["Protocol Parameters", *blanks],
             ["Protocol Hardware", *blanks],
@@ -670,8 +670,8 @@ class IDFConstructor():
             next_index = len(protocol_name_row)
             protocol_name_row.append(f"P-{series_accession}-{next_index}")
             protocol_type_row.append(onto_type)
-            self._row(rows=rows, label="Protocol Type Term Source REF").append(onto_source_ref)
-            self._row(rows=rows, label="Protocol Type Term Accession Number").append(onto_accession)
+            self._row(rows=rows, label="Protocol Term Source REF").append(onto_source_ref)
+            self._row(rows=rows, label="Protocol Term Accession Number").append(onto_accession)
             self._row(rows=rows, label="Protocol Description").append(None)
             self._append_if_row_exists(rows=rows, label="Protocol Parameters", value=None)
             self._append_if_row_exists(rows=rows, label="Protocol Hardware", value=None)

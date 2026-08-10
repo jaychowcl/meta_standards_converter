@@ -136,12 +136,12 @@ class TestIDFConstructor(unittest.TestCase):
             self.row(rows, "Protocol Type"),
         )
         self.assertEqual(
-            ["Protocol Type Term Source REF", None, "EFO"],
-            self.row(rows, "Protocol Type Term Source REF"),
+            ["Protocol Term Source REF", None, "EFO"],
+            self.row(rows, "Protocol Term Source REF"),
         )
         self.assertEqual(
-            ["Protocol Type Term Accession Number", None, "EFO_0005518"],
-            self.row(rows, "Protocol Type Term Accession Number"),
+            ["Protocol Term Accession Number", None, "EFO_0005518"],
+            self.row(rows, "Protocol Term Accession Number"),
         )
         self.assertEqual(["Protocol Description", "custom protocol", None], self.row(rows, "Protocol Description"))
         self.assertEqual(["Protocol Hardware", None, None], self.row(rows, "Protocol Hardware"))
@@ -157,10 +157,10 @@ class TestIDFConstructor(unittest.TestCase):
 
         self.assertEqual(["Protocol Name", "P-GSE1-1"], self.row(rows, "Protocol Name"))
         self.assertEqual(["Protocol Type", "sample collection protocol"], self.row(rows, "Protocol Type"))
-        self.assertEqual(["Protocol Type Term Source REF", "EFO"], self.row(rows, "Protocol Type Term Source REF"))
+        self.assertEqual(["Protocol Term Source REF", "EFO"], self.row(rows, "Protocol Term Source REF"))
         self.assertEqual(
-            ["Protocol Type Term Accession Number", "EFO_0005518"],
-            self.row(rows, "Protocol Type Term Accession Number"),
+            ["Protocol Term Accession Number", "EFO_0005518"],
+            self.row(rows, "Protocol Term Accession Number"),
         )
         self.assertEqual(["Protocol Description", None], self.row(rows, "Protocol Description"))
         self.assertEqual(["Protocol Hardware", None], self.row(rows, "Protocol Hardware"))
@@ -183,12 +183,12 @@ class TestIDFConstructor(unittest.TestCase):
             self.row(rows, "Protocol Type"),
         )
         self.assertEqual(
-            ["Protocol Type Term Source REF", "EFO", "EFO"],
-            self.row(rows, "Protocol Type Term Source REF"),
+            ["Protocol Term Source REF", "EFO", "EFO"],
+            self.row(rows, "Protocol Term Source REF"),
         )
         self.assertEqual(
-            ["Protocol Type Term Accession Number", "EFO_0005518", "EFO_0004170"],
-            self.row(rows, "Protocol Type Term Accession Number"),
+            ["Protocol Term Accession Number", "EFO_0005518", "EFO_0004170"],
+            self.row(rows, "Protocol Term Accession Number"),
         )
         self.assertEqual(["Protocol Hardware", None, None], self.row(rows, "Protocol Hardware"))
         self.assertEqual(["Protocol Software", None, None], self.row(rows, "Protocol Software"))
@@ -244,8 +244,8 @@ class TestIDFConstructor(unittest.TestCase):
         rows = [
             ["Protocol Name"],
             ["Protocol Type"],
-            ["Protocol Type Term Source REF"],
-            ["Protocol Type Term Accession Number"],
+            ["Protocol Term Source REF"],
+            ["Protocol Term Accession Number"],
             ["Protocol Description"],
             ["Protocol Hardware"],
             ["Protocol Software"],
@@ -992,10 +992,13 @@ class TestIDFConstructor(unittest.TestCase):
         self.assertEqual(["Publication Author List", "Ada Lovelace"], self.row(rows, "Publication Author List"))
         self.assertEqual(["Publication Title", "Example paper"], self.row(rows, "Publication Title"))
         self.assertEqual(["Publication Status", "published"], self.row(rows, "Publication Status"))
-        self.assertEqual(["Status Term Source Ref", "EFO"], self.row(rows, "Status Term Source Ref"))
         self.assertEqual(
-            ["Status Term Accession Number", "EFO_0001796"],
-            self.row(rows, "Status Term Accession Number"),
+            ["Publication Status Term Source REF", "EFO"],
+            self.row(rows, "Publication Status Term Source REF"),
+        )
+        self.assertEqual(
+            ["Publication Status Term Accession Number", "EFO_0001796"],
+            self.row(rows, "Publication Status Term Accession Number"),
         )
         fetcher.pubmed_summary.assert_not_called()
 

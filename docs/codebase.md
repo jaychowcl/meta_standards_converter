@@ -177,8 +177,12 @@ is a renderer responsibility, while assay-path order and repeated
 characteristic/parameter occurrences remain data. The SDRF renderer reads the
 v2 `name` field (with `tag` only as a migration fallback) and unwraps typed
 ontology values such as channel `source` and `molecule` instead of serializing
-their JSON object representation. Parsing retains characteristic units and
-ontology companions, keeps Protocol Contact distinct from per-application
+their JSON object representation. IDF renderers emit the MAGE-TAB 1.1 labels
+`Publication Status Term Source REF`, `Publication Status Term Accession
+Number`, `Protocol Term Source REF`, and `Protocol Term Accession Number`.
+The parser retains the four former MSC labels as input-only aliases and gives
+the canonical rows precedence when both spellings are present. Parsing retains
+characteristic units and ontology companions, keeps Protocol Contact distinct from per-application
 Protocol Performer, and preserves generic IDF/SDRF comments as named comments.
 Blank and external Protocol REF values and external sample names are retained
 with compatibility diagnostics. Unknown layout remains outside the semantic
@@ -730,7 +734,9 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
 5. Optional enrichment precedes `AEConstructor.miniml2magetab`.
 6. `AEConstructor` renders deterministic IDF/SDRF tables from native protocols,
    assay paths, named characteristics, units, and typed annotations. It does
-   not replay raw source tables or consult a `mage_tab` sidecar.
+   not replay raw source tables or consult a `mage_tab` sidecar, and it emits
+   canonical MAGE-TAB 1.1 publication-status and protocol ontology companion
+   labels rather than the former MSC aliases.
 7. `out` controls writing; construction errors propagate.
 
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
@@ -750,7 +756,7 @@ local/HTTP/accession -> resolve IDF + SDRF(s) --failure--> exception
 1. `AEWebFetcher.resolve` accepts a bounded local IDF, a policy-approved HTTPS IDF, or a BioStudies accession and optional SDRF overrides.
 2. Every API, IDF, and SDRF response is host/public-address checked, manually redirected under the selected profile, streamed under the per-file ceiling, and charged to the aggregate run limit. Local reads stop at the same ceiling.
 3. Resolution requires exactly one IDF and at least one SDRF.
-4. `AEParser.parse` maps core fields and retains typed/source provenance. It registers referenced accession databases, maps non-MINiML source material types to lossless characteristics, keeps extract molecules in the typed molecule field, and maps MAGE-TAB factors such as `compound` to the nearest XSD factor while retaining the original type value.
+4. `AEParser.parse` maps core fields and retains typed/source provenance. It registers referenced accession databases, maps non-MINiML source material types to lossless characteristics, keeps extract molecules in the typed molecule field, and maps MAGE-TAB factors such as `compound` to the nearest XSD factor while retaining the original type value. Canonical publication/protocol ontology companion rows and the four former MSC aliases map to the same typed values; regenerated output is always canonical.
 5. The frozen E-MTAB-6486 IDF/SDRF contract exercises the ENA secondary accession, repeated material columns, and `compound` factor through strict `MINiMLCodec` validation.
 6. `out` writes a sanitized accession filename; otherwise no file is created.
 
@@ -1147,7 +1153,7 @@ ae2json(resource_profile, resource_overrides, source_hosts)
   -> return [package]
 ```
 
-IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project. Its public output is immutable MSC MINiML 2.0: repository source format and document name/URI/media type/SHA-256 live under `source`, while typed protocols, variables, assay paths, samples, platforms, and accessions live in their canonical model fields. Raw IDF/SDRF bodies and the former `mage_tab` runtime sidecar are not retained. `series.iid` prefers the explicit ArrayExpress accession and cannot be displaced by a GEO or ENA secondary accession. Values outside the XSD vocabulary are normalized only where required for strict validation, with the original scientific value retained in the adjacent typed value or characteristic rather than discarded.
+IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project, including MSC's former `Status Term ...` and `Protocol Type Term ...` ontology-companion aliases. Canonical spellings win if both are present. Its public output is immutable MSC MINiML 2.0: repository source format and document name/URI/media type/SHA-256 live under `source`, while typed protocols, variables, assay paths, samples, platforms, and accessions live in their canonical model fields. Raw IDF/SDRF bodies and the former `mage_tab` runtime sidecar are not retained. `series.iid` prefers the explicit ArrayExpress accession and cannot be displaced by a GEO or ENA secondary accession. Values outside the XSD vocabulary are normalized only where required for strict validation, with the original scientific value retained in the adjacent typed value or characteristic rather than discarded.
 
 Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTPS base, and downloads only those metadata files beneath `Files/`. API JSON and MAGE-TAB text are UTF-8/BOM decoded only after streamed declared/actual byte checks. Every URL and redirect is restricted to HTTPS, approved provider or explicit exact hosts, and public DNS answers. Referenced assay data is not downloaded.
 
@@ -1341,7 +1347,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-10 and reported
-`572 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`575 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -2068,7 +2074,7 @@ package's source-document records.
 - `assay_paths` contains one record per original SDRF data row. Ordered steps distinguish material/assay nodes, protocol references, annotated characteristics/factors/parameters, comments, files, and generic fields. This preserves array assay multiplicity and many-to-one sample relationships.
 - Attribute steps keep `Unit`, `Term Source REF`, and `Term Accession Number` as independent fields; barcode/read geometry remains independent comment steps rather than being folded into protocol prose.
 - `render_model(model)` regenerates one SDRF directly or consolidates multiple SDRFs by header plus occurrence. `overlay_core(model_rows, core_rows)` unions eligible core fields into that rendering while retaining model-only protocols, identities, annotations, rows, and structural graph columns.
-- IDF matching uses normalized row labels and inserts only rows in the mapped allowlist. SDRF matching uses `(normalized header, occurrence)` keys, so repeated characteristics remain position-stable. Missing core columns are inserted relative to the nearest core-order neighbor; independent curator fields such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`, and `Characteristics[hz_cell_type_onto]` remain separate rather than being reinterpreted as native ontology companions.
+- IDF matching uses normalized row labels and inserts only rows in the mapped allowlist. Legacy MSC publication/protocol companion labels normalize to the four canonical MAGE-TAB 1.1 rows before rendering. SDRF matching uses `(normalized header, occurrence)` keys, so repeated characteristics remain position-stable. Missing core columns are inserted relative to the nearest core-order neighbor; independent curator fields such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`, and `Characteristics[hz_cell_type_onto]` remain separate rather than being reinterpreted as native ontology companions.
 - SDRF values align through the available `Sample Name`, `Source Name`, and `Comment[ENA_RUN]` identities. A core value replaces or populates a model cell only when all matching core rows agree on exactly one value. An unmatched model row keeps its existing value; an ambiguous newly inserted cell remains blank. Core-only rows are not added or broadcast as new assay paths.
 - `MINiMLV1Migrator` folds this bridge into the canonical v2 package and drops the internal container. `AEConstructor` renders from those canonical protocol and assay-path fields; no raw-table fingerprint or replay sidecar participates.
 
@@ -2603,6 +2609,7 @@ Important test coverage:
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
 - `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
 - `tests/test_miniml_stabilization.py`: deterministic MINiML migration, validation, and captured-index ordering without quadratic equality scans.
+- `tests/test_magetab_miniml_v2.py`: legacy and canonical IDF companion-label parsing, typed ontology alignment, and canonical semantic MAGE-TAB regeneration.
 - `tests/test_metadata_projector.py`: generic sample projector and ignored legacy combined-hook
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,
   warning/error propagation, fail-closed output, invalid-output opt-in, and

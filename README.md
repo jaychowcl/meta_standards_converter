@@ -163,7 +163,12 @@ units, ontology values, and `annotations[]` are native MSC MINiML fields.
 Raw IDF/SDRF layout and the former `mage_tab` sidecar are deliberately absent;
 MAGE-TAB output is regenerated semantically. The per-document renderer preserves
 heterogeneous SDRF layouts; the legacy single-SDRF constructor rejects layouts
-that cannot be consolidated without loss. See the
+that cannot be consolidated without loss. Regenerated IDFs use the MAGE-TAB 1.1
+publication companions `Publication Status Term Source REF` and `Publication
+Status Term Accession Number`, and the protocol companions `Protocol Term
+Source REF` and `Protocol Term Accession Number`. The parser continues to
+accept MSC's former shorter publication labels and `Protocol Type Term ...`
+labels as legacy input aliases, but never emits them. See the
 [enriched-core contract](docs/codebase.md#proposed-enriched-miniml-core).
 
 ## Guide
@@ -890,7 +895,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-10:
-`572 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+`575 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

@@ -83,6 +83,7 @@ class AEParser:
             "Publication Status Term Source REF",
             "Publication Status Term Accession Number",
             "Experiment Description", "Protocol Name", "Protocol Type",
+            "Protocol Term Source REF", "Protocol Term Accession Number",
             "Protocol Type Term Source REF", "Protocol Type Term Accession Number",
             "Protocol Description", "Protocol Hardware", "Protocol Software", "Protocol Parameters",
             "Protocol Contact", "Protocol Performer",

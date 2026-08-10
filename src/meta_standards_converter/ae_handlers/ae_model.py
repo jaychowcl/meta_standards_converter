@@ -74,8 +74,8 @@ def validate_model(model: dict) -> dict:
 PROTOCOL_FIELDS = {
     "Protocol Name": "name",
     "Protocol Type": "type",
-    "Protocol Type Term Source REF": "type_term_source_ref",
-    "Protocol Type Term Accession Number": "type_term_accession_number",
+    "Protocol Term Source REF": "type_term_source_ref",
+    "Protocol Term Accession Number": "type_term_accession_number",
     "Protocol Description": "description",
     "Protocol Hardware": "hardware",
     "Protocol Software": "software",
@@ -86,13 +86,26 @@ PROTOCOL_FIELDS = {
 
 PROTOCOL_FIELD_ALIASES = {
     "type_term_source_ref": (
-        "Protocol Type Term Source REF",
         "Protocol Term Source REF",
+        "Protocol Type Term Source REF",
     ),
     "type_term_accession_number": (
-        "Protocol Type Term Accession Number",
         "Protocol Term Accession Number",
+        "Protocol Type Term Accession Number",
     ),
+}
+
+IDF_LABEL_ALIASES = {
+    "Publication Status Term Source REF": (
+        "Publication Status Term Source REF",
+        "Status Term Source Ref",
+    ),
+    "Publication Status Term Accession Number": (
+        "Publication Status Term Accession Number",
+        "Status Term Accession Number",
+    ),
+    "Protocol Term Source REF": PROTOCOL_FIELD_ALIASES["type_term_source_ref"],
+    "Protocol Term Accession Number": PROTOCOL_FIELD_ALIASES["type_term_accession_number"],
 }
 
 DECLARATION_FIELDS = {
@@ -147,7 +160,7 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
         for label, key in PROTOCOL_FIELDS.items():
             row_values, source_label = _protocol_values(values, label, key)
             if source_label:
-                protocol_labels[key] = source_label
+                protocol_labels[key] = label
                 protocol_widths[key] = len(row_values)
             record[key] = row_values[position] if position < len(row_values) else ""
         if not record.get("name"):
@@ -184,7 +197,7 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
     investigation_fields = [
         {
             "row_index": index,
-            "label": row[0],
+            "label": _canonical_idf_label(row[0]),
             "values": copy.deepcopy(row[1:]),
         }
         for index, row in enumerate(idf_rows)
@@ -205,7 +218,7 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
     return {
         "schema_version": 1,
         "idf_layout": [
-            {"row_index": index, "label": row[0]}
+            {"row_index": index, "label": _canonical_idf_label(row[0])}
             for index, row in enumerate(idf_rows)
             if row
         ],
@@ -271,8 +284,8 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
         fields = (
             ("Protocol Name", lambda item: item.get("name")),
             ("Protocol Type", lambda item: _ontology_text(item.get("type"))),
-            ("Protocol Type Term Source REF", lambda item: _ontology_field(item.get("type"), "term_source_ref")),
-            ("Protocol Type Term Accession Number", lambda item: _ontology_field(item.get("type"), "term_accession_number")),
+            ("Protocol Term Source REF", lambda item: _ontology_field(item.get("type"), "term_source_ref")),
+            ("Protocol Term Accession Number", lambda item: _ontology_field(item.get("type"), "term_accession_number")),
             ("Protocol Description", lambda item: item.get("description")),
             ("Protocol Hardware", lambda item: " | ".join(str(value) for value in item.get("hardware", []))),
             ("Protocol Software", lambda item: " | ".join(str(value) for value in item.get("software", []))),
@@ -439,6 +452,9 @@ def _ontology_columns(header: str, value) -> list[tuple[str, object]]:
 def overlay_core(model_rows: list, core_rows: list) -> list:
     """Union MINiML projections into model tables while preserving model structure."""
     result = copy.deepcopy(model_rows)
+    for row in result:
+        if row:
+            row[0] = _canonical_idf_label(row[0])
     replace_labels = {
         _normalized(label)
         for label in (
@@ -453,11 +469,18 @@ def overlay_core(model_rows: list, core_rows: list) -> list:
             "Date of Experiment", "Public Release Date", "Comment[GEOReleaseDate]",
             "Comment[GEOLastUpdateDate]", "PubMed ID", "Publication DOI",
             "Publication Author List", "Publication Title", "Publication Status",
-            "Status Term Source Ref", "Status Term Accession Number",
+            "Publication Status Term Source REF",
+            "Publication Status Term Accession Number",
             "Experiment Description", "Term Source Name", "Term Source File", "Term Source Version",
         )
     }
-    core_by_label = {_normalized(row[0]): row for row in core_rows if row}
+    core_by_label = {
+        _normalized(_canonical_idf_label(row[0])): [
+            _canonical_idf_label(row[0]), *row[1:]
+        ]
+        for row in core_rows
+        if row
+    }
     _overlay_protocol_rows(result, core_rows)
     for index, row in enumerate(result):
         label = _normalized(row[0]) if row else ""
@@ -896,6 +919,14 @@ def _protocol_values(values: dict, canonical_label: str, key: str) -> tuple[list
         if normalized in values:
             return values[normalized], label
     return [], None
+
+
+def _canonical_idf_label(value: str) -> str:
+    normalized = _normalized(value)
+    for canonical, aliases in IDF_LABEL_ALIASES.items():
+        if any(normalized == _normalized(alias) for alias in aliases):
+            return canonical
+    return value
 
 
 def _edited_width(values: list, original_width: int) -> int:
