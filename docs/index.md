@@ -99,8 +99,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: runtime-behavior
   title: Runtime behavior and packaging
   anchor: runtime-behavior
-  purpose: Defines the standalone 4.0.0 distribution, dependency/runtime requirements, external-service boundaries, commands, and outputs.
-  keywords: version 4.0.0, standalone, JSONDataOutputOrchestrator, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
+  purpose: Defines the standalone 4.0.0 distribution, exact-platform hashed runtime lock, deterministic CycloneDX SBOM, fail-closed release evidence, dependencies, services, commands, and outputs.
+  keywords: version 4.0.0, pylock, SHA-256, CycloneDX, SBOM, advisory snapshot, signed artifact, security SLA, standalone, no ThematicAtlases dependency, Python, dependencies, network, Nextflow, console scripts
   link: [Open section](codebase.md#runtime-behavior)
 
 - id: durable-artifact-publication

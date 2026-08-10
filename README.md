@@ -80,6 +80,13 @@ docker build -t meta-standards-converter .
 - H5AD dependencies have tested major-version bounds: AnnData `>=0.10.8,<1`,
   h5py `>=3.10,<4`, NumPy `>=1.26,<3`, pandas `>=2.1,<4`, Scanpy
   `>=1.10,<2`, and SciPy `>=1.11,<2`; install the `h5ad` extra.
+- `dependency-provenance/` contains the exact Python 3.12/Linux x86_64 PEP 751
+  base/H5AD runtime lock and deterministic CycloneDX 1.6 SBOM. Every selected
+  distribution artifact has its real SHA-256. Release policy requires a
+  verified signed artifact manifest and an approved offline advisory snapshot
+  no older than seven days; until a trusted operator supplies both, the
+  composing release gate fails closed. Critical/high/medium/low security-update
+  SLAs are 2/7/30/90 days.
 - Network access for live GEO, BioStudies, PubMed, NCBI SRA, and ENA lookups.
 - Host-side raw FASTQ processing: Java, Nextflow, and a supported Nextflow runtime/profile such as Docker or Apptainer.
 - GFF/GFF3 annotation conversion: `gffread`.

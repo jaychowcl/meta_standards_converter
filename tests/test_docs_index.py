@@ -503,6 +503,8 @@ class DocsIndexTests(unittest.TestCase):
             "tests/fixtures/arrayexpress/E-MTAB-6486.sdrf.txt",
             "src/meta_standards_converter/miniml/miniml-package-v1.schema.json",
             "src/meta_standards_converter/miniml/miniml-package-v2.schema.json",
+            "dependency-provenance/release-policy.json",
+            "dependency-provenance/runtime.python312-linux-x86_64.cdx.json",
         }
         hash_comment_files = {
             ".dockerignore",
@@ -511,6 +513,7 @@ class DocsIndexTests(unittest.TestCase):
             "compose.yaml",
             "pyproject.toml",
             "requirements.txt",
+            "dependency-provenance/pylock.python312-linux-x86_64.toml",
         }
 
         for tracked_file in tracked_files:

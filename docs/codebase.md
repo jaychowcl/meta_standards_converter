@@ -1006,6 +1006,15 @@ tests/GSE328265_family.xml
   `python-dateutil>=2.8.2,<3`; the `h5ad` extra bounds AnnData `<1`, Scanpy
   `<2`, NumPy `<3`, pandas `<4`, SciPy `<2`, and h5py `<4` while retaining the
   documented minimum versions.
+- `dependency-provenance/pylock.python312-linux-x86_64.toml` locks the complete
+  external base/H5AD Python 3.12/Linux x86_64 resolution by exact version,
+  artifact URL, and SHA-256. `runtime.python312-linux-x86_64.cdx.json` is the
+  deterministic CycloneDX 1.6 inventory derived from that lock.
+  `release-policy.json` requires a verified signed artifact manifest and an
+  approved offline advisory snapshot no older than seven days, with
+  critical/high/medium/low remediation SLAs of 2/7/30/90 days. Those trusted
+  operator artifacts are deliberately absent, leaving the composing release
+  gate blocked instead of fabricating security evidence.
 - The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are derived from the standard resource profile and
