@@ -21,6 +21,9 @@ from meta_standards_converter.miniml import (
     MINiMLPackage,
     PubMedPublication,
     SRARun,
+    Sample,
+    Series,
+    SourceInfo,
 )
 
 
@@ -121,6 +124,28 @@ def test_typed_package_is_immutable_and_preserves_typed_annotations() -> None:
         package.version = "changed"  # type: ignore[misc]
     with pytest.raises(FrozenInstanceError):
         package.samples[0].channels[0].characteristics[0].annotations[0].value = "changed"  # type: ignore[misc]
+
+
+def test_direct_model_construction_deep_freezes_collections_and_extensions() -> None:
+    root_extensions = {"nested": {"values": []}}
+    series_extensions = {"vendor": []}
+    samples = [Sample(iid="GSM1")]
+    package = MINiMLPackage(
+        series=Series(iid="GSE1", extras=series_extensions),
+        source=SourceInfo("test"),
+        samples=samples,
+        extensions=root_extensions,
+    )
+
+    root_extensions["nested"]["values"].append("mutated")
+    series_extensions["vendor"].append("mutated")
+    samples.append(Sample(iid="GSM2"))
+
+    assert package.to_mapping()["extensions"] == {"nested": {"values": []}}
+    assert package.series.to_mapping()["extensions"] == {"vendor": []}
+    assert tuple(item.iid for item in package.samples) == ("GSM1",)
+    with pytest.raises(TypeError):
+        package.extensions["new"] = "value"  # type: ignore[index]
 
 
 def test_codec_dump_is_deterministic_and_replaces_existing_file(tmp_path) -> None:

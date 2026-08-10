@@ -9,11 +9,11 @@
 from __future__ import annotations
 
 import json
-
-from jsonschema import Draft202012Validator
+from pathlib import Path
 
 from meta_standards_converter.cli.miniml_migrate import main
-from meta_standards_converter.miniml import MINiMLCodec, miniml_schema_path
+import meta_standards_converter.miniml as miniml
+from meta_standards_converter.miniml import MINiMLCodec
 from tests.test_msc_miniml_v2 import package_v2
 
 
@@ -25,18 +25,18 @@ def legacy_package() -> dict:
     }
 
 
-def test_v2_schema_accepts_migrated_package() -> None:
-    schema = json.loads(miniml_schema_path().read_text(encoding="utf-8"))
+def test_json_schema_is_not_public_or_packaged() -> None:
+    package_dir = Path(miniml.__file__).resolve().parent
+
+    assert not hasattr(miniml, "miniml_schema_path")
+    assert not list(package_dir.glob("*.schema.json"))
+
+
+def test_python_model_accepts_migrated_and_complete_typed_packages() -> None:
     migrated = MINiMLCodec().migrate_v1(legacy_package()).package.to_mapping()
 
-    Draft202012Validator(schema).validate(migrated)
-    assert miniml_schema_path().name == "miniml-package-v2.schema.json"
-
-
-def test_v2_schema_accepts_complete_typed_package() -> None:
-    schema = json.loads(miniml_schema_path().read_text(encoding="utf-8"))
-
-    Draft202012Validator(schema).validate(package_v2())
+    assert MINiMLCodec().decode(migrated, strict=True).package.to_mapping() == migrated
+    assert MINiMLCodec().decode(package_v2(), strict=True).package.to_mapping() == package_v2()
 
 
 def test_miniml_migrate_cli_writes_v2_and_diagnostics(tmp_path, capsys) -> None:

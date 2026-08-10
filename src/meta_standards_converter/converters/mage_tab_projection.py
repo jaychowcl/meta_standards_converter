@@ -41,6 +41,78 @@ def _parameter_summary(
     return {key: tuple(values) for key, values in result.items()}
 
 
+def _protocols_for_sample(
+    package: Mapping[str, Any], sample: Mapping[str, Any]
+) -> list[Mapping[str, Any]]:
+    """Return declared protocols in sample-path order, or study order if unbound."""
+    series = package.get("series")
+    if not isinstance(series, Mapping):
+        return []
+    protocols = [
+        item
+        for item in _as_list(series.get("protocols"))
+        if isinstance(item, Mapping) and item.get("name")
+    ]
+    if not protocols:
+        return []
+    paths = _bound_assay_paths(series, sample)
+    if not paths:
+        return protocols
+    by_name = {str(item["name"]): item for item in protocols}
+    selected: list[Mapping[str, Any]] = []
+    seen: set[str] = set()
+    for path in paths:
+        for step in _as_list(path.get("steps")):
+            if not isinstance(step, Mapping) or step.get("kind") != "protocol_application":
+                continue
+            reference = str(step.get("protocol_ref") or "")
+            protocol = by_name.get(reference)
+            if protocol is not None and reference not in seen:
+                selected.append(protocol)
+                seen.add(reference)
+    return selected
+
+
+def _material_types_for_sample(
+    package: Mapping[str, Any], sample: Mapping[str, Any]
+) -> list[Any]:
+    """Return material types from assay nodes bound to the selected sample."""
+    series = package.get("series")
+    if not isinstance(series, Mapping):
+        return []
+    values: list[Any] = []
+    for path in _bound_assay_paths(series, sample):
+        for step in _as_list(path.get("steps")):
+            if not isinstance(step, Mapping) or step.get("kind") == "protocol_application":
+                continue
+            value = step.get("material_type")
+            if value not in (None, "") and value not in values:
+                values.append(value)
+    return values
+
+
+def _bound_assay_paths(
+    series: Mapping[str, Any], sample: Mapping[str, Any]
+) -> list[Mapping[str, Any]]:
+    identities = _sample_identities(sample)
+    if not identities:
+        return []
+    result = []
+    for path in _as_list(series.get("assay_paths")):
+        if not isinstance(path, Mapping):
+            continue
+        bound = {
+            str(step.get("sample_ref") or step.get("name"))
+            for step in _as_list(path.get("steps"))
+            if isinstance(step, Mapping)
+            and step.get("kind") == "sample"
+            and (step.get("sample_ref") or step.get("name")) not in (None, "")
+        }
+        if identities.intersection(bound):
+            result.append(path)
+    return result
+
+
 def _parameter_rows(
     package: Mapping[str, Any], sample: Mapping[str, Any] | None = None
 ) -> list[dict[str, Any]]:

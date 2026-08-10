@@ -224,3 +224,30 @@ def test_sources_without_convertible_samples_fail_closed(tmp_path, payload):
         ValueError, match=r"^JSON source contains no convertible samples\.$"
     ):
         JSONPackageSource().load(source)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        package("GSE1", "GSM1") | {"sample": [{"iid": "GSM1"}, "invalid"]},
+        atlas_v1(
+            [
+                dataset(
+                    "GSE1",
+                    "harmonized",
+                    package("GSE1", "GSM1")
+                    | {"sample": [{"iid": "GSM1"}, "invalid"]},
+                )
+            ]
+        ),
+    ],
+)
+def test_malformed_sample_entries_fail_before_deduplication(tmp_path, payload):
+    source = tmp_path / "malformed-samples.json"
+    source.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(
+        ValueError,
+        match=r"Parsed MINiML package 1 sample\[1] must be an object",
+    ):
+        JSONPackageSource().load(source)

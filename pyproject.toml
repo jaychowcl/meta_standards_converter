@@ -61,7 +61,6 @@ test = [
   "pandas>=2.1.0,<4",
   "scanpy>=1.10.0,<2",
   "scipy>=1.11.0,<2",
-  "jsonschema>=4.23,<5",
 ]
 
 [project.urls]
@@ -84,9 +83,6 @@ miniml-migrate = "meta_standards_converter.cli.miniml_migrate:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools.package-data]
-"meta_standards_converter.miniml" = ["*.json"]
 
 [tool.pytest.ini_options]
 markers = [

@@ -9,10 +9,8 @@
 from __future__ import annotations
 
 import hashlib
-import json
 
 import pytest
-from jsonschema import Draft202012Validator
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
 from meta_standards_converter.ae_handlers.ae_parser import AEParser
@@ -25,7 +23,6 @@ from meta_standards_converter.miniml import (
     Series,
     SourceDocument,
     SourceInfo,
-    miniml_schema_path,
 )
 from tests.test_ae2json import IDF, resolved_input
 from tests.test_geo_parser import miniml_body
@@ -54,7 +51,9 @@ def test_schema_and_model_accept_the_same_supported_series_and_assay_fields():
         },
     }
     canonical = MINiMLPackage.from_mapping(payload).to_mapping()
-    Draft202012Validator(json.loads(miniml_schema_path().read_text())).validate(canonical)
+    decoded = MINiMLCodec().decode(canonical)
+    assert decoded.package.to_mapping() == canonical
+    assert [issue.code for issue in decoded.diagnostics] == ["unresolved_reference"]
 
 
 def test_strict_codec_revalidates_public_dataclass_construction():

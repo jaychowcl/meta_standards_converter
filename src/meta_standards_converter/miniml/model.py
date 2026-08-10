@@ -11,8 +11,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, field
-from importlib.resources import files
+from dataclasses import dataclass, field, fields
+from functools import wraps
 import json
 import os
 from pathlib import Path
@@ -57,6 +57,28 @@ def _freeze_json(value: Any) -> Any:
     return deepcopy(value)
 
 
+def _deep_freeze_constructor(cls):
+    """Make direct dataclass construction as immutable as mapping decoding."""
+    original = cls.__init__
+
+    @wraps(original)
+    def immutable_init(self, *args, **kwargs):
+        original(self, *args, **kwargs)
+        for model_field in fields(self):
+            value = getattr(self, model_field.name)
+            if isinstance(value, Mapping):
+                frozen = _FrozenJSONMapping(value)
+            elif isinstance(value, (list, tuple)):
+                frozen = tuple(_freeze_json(item) for item in value)
+            else:
+                continue
+            object.__setattr__(self, model_field.name, frozen)
+
+    cls.__init__ = immutable_init
+    return cls
+
+
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class MINiMLValidationIssue:
     path: str
@@ -72,6 +94,7 @@ def _reject_unknown(data: Mapping[str, Any], known: set[str], path: str) -> None
         raise MINiMLModelError(f"unsupported {label} field: {unknown[0]}")
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class HarmonizedAnnotation:
     field: str
@@ -110,6 +133,7 @@ class HarmonizedAnnotation:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class NamedComment:
     name: str
@@ -142,6 +166,7 @@ def _comments(value: Any) -> tuple[NamedComment, ...]:
     return _objects(value, NamedComment.from_mapping, "comments")
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class OntologyValue:
     value: str
@@ -179,6 +204,7 @@ class OntologyValue:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class NamedValue:
     name: str
@@ -240,6 +266,7 @@ class NamedValue:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class SourceDocument:
     kind: str
@@ -289,6 +316,7 @@ class SourceDocument:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class SourceInfo:
     format: str
@@ -328,6 +356,7 @@ class SourceInfo:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class PubMedPublication:
     pubmed_id: str
@@ -358,6 +387,7 @@ class PubMedPublication:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class FASTQFile:
     uri: str | None = None
@@ -379,6 +409,7 @@ class FASTQFile:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class SRARun:
     run: str | None = None
@@ -410,10 +441,6 @@ class SRARun:
         for key in ("experiment", "sample", "biosample", "geo_sample", "library_layout", "library_selection", "library_source", "library_strategy", "scan_name", "instrument_model", "fastq_files", "submitted_file_name", "md5", "read_lengths"):
             _put(result, key, getattr(self, key))
         return _record(result, self.extras)
-
-
-def miniml_schema_path() -> Path:
-    return Path(str(files("meta_standards_converter.miniml").joinpath("miniml-package-v2.schema.json")))
 
 
 def _mapping(value: Any, path: str) -> Mapping[str, Any]:
@@ -467,6 +494,7 @@ def _objects(value: Any, cls: Callable[[Any], T], path: str) -> tuple[T, ...]:
     return tuple(result)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Accession:
     value: str
@@ -491,6 +519,7 @@ class Accession:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Reference:
     ref: str
@@ -515,6 +544,7 @@ class Reference:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Status:
     submission_date: str | None = None
@@ -544,6 +574,7 @@ class Status:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class SupplementLink:
     value: str
@@ -569,6 +600,7 @@ class SupplementLink:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Organism:
     value: str
@@ -594,6 +626,7 @@ class Organism:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Relation:
     type: str
@@ -612,6 +645,7 @@ class Relation:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Address:
     lines: tuple[Any, ...] = ()
@@ -636,6 +670,7 @@ class Address:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Person:
     first: str | None = None
@@ -655,6 +690,7 @@ class Person:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Characteristics:
     name: str
@@ -696,6 +732,7 @@ class Characteristics:
         ).to_mapping()
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class InstrumentModel:
     predefined: str | None = None
@@ -716,6 +753,7 @@ class InstrumentModel:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class DataColumn:
     name: str | None = None
@@ -741,6 +779,7 @@ class DataColumn:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class TableData:
     value: str
@@ -759,6 +798,7 @@ class TableData:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class DataTable:
     external_file: SupplementLink | None = None
@@ -787,6 +827,7 @@ class DataTable:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Channel:
     source: OntologyValue | None = None
@@ -825,6 +866,7 @@ class Channel:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Variable:
     factor: str | None = None
@@ -846,6 +888,7 @@ class Variable:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Repeat:
     factor: str | None = None
@@ -885,6 +928,7 @@ def _links(value: Any) -> tuple[SupplementLink, ...]:
     return tuple(SupplementLink.from_value(item) for item in _items(value))
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Database:
     iid: str | None = None
@@ -908,6 +952,7 @@ class Database:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Organization:
     iid: str | None = None
@@ -930,6 +975,7 @@ class Organization:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Contributor:
     iid: str | None = None
@@ -966,6 +1012,7 @@ class Contributor:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Platform:
     iid: str | None = None
@@ -1007,6 +1054,7 @@ class Platform:
         return _record(result, self.extras)
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Sample:
     iid: str | None = None
@@ -1065,6 +1113,7 @@ ASSAY_NODE_KINDS = {
 }
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Protocol:
     name: str
@@ -1114,6 +1163,7 @@ class Protocol:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class ProtocolApplication:
     protocol_ref: str
@@ -1150,6 +1200,7 @@ class ProtocolApplication:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class AssayNode:
     kind: str
@@ -1225,6 +1276,7 @@ def _assay_step(value: Any) -> AssayStep:
     )
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class AssayPath:
     steps: tuple[AssayStep, ...]
@@ -1251,6 +1303,7 @@ class AssayPath:
         return result
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class Series:
     iid: str | None = None
@@ -1344,6 +1397,7 @@ MOLECULES = {"genomic DNA", "polyA RNA", "total RNA", "cytoplasmic RNA", "nuclea
 VARIABLE_FACTORS = {"dose", "time", "tissue", "strain", "gender", "cell line", "development stage", "age", "agent", "cell type", "infection", "isolate", "metabolism", "shock", "stress", "temperature", "speciman", "disease state", "protocol", "growth protocol", "other", "genotype/variation", "species", "individual"}
 
 
+@_deep_freeze_constructor
 @dataclass(frozen=True)
 class MINiMLPackage(Mapping[str, Any]):
     series: Series

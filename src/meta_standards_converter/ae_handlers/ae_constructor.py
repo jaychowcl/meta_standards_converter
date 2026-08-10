@@ -17,6 +17,7 @@ from meta_standards_converter.ae_handlers.ae_common import (
     detect_ae_technology,
     has_array_files,
     normalized_extension,
+    series_identity,
 )
 
 import copy
@@ -93,17 +94,7 @@ class AEConstructor:
         return has_array_files(data)
 
     def _series_accession(self, data: dict):
-        series = data.get("series") if isinstance(data, dict) else None
-        series_values = series if isinstance(series, list) else [series]
-        for series_item in series_values:
-            if not isinstance(series_item, dict):
-                continue
-            accessions = series_item.get("accession")
-            accession_values = accessions if isinstance(accessions, list) else [accessions]
-            for accession in accession_values:
-                if isinstance(accession, dict) and accession.get("value"):
-                    return accession.get("value")
-        return "GEO"
+        return series_identity(data) or "GEO"
     
     def magetab2file(self, magetab:list, out:str = None) -> str:
         '''

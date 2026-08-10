@@ -1260,13 +1260,13 @@ json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, 
 
 Converter-owned observation metadata uses only dotted names grouped under `msc.sample`, `msc.series`, `msc.platform`, `msc.archive`, `msc.library`, `msc.instrument`, `msc.protocol`, `msc.database`, `msc.asset`, `msc.expression`, `msc.characteristics`, and `msc.observation`. The converter does not generate underscore aliases. Existing underscore-style columns from an input H5AD remain opaque source columns: normalization preserves but neither interprets nor validates them. Custom projectors retain ownership of their injected names.
 
-Stable observation fields cover sample/study accessions, title/description, organism and taxid, organism part, developmental stage, disease, genotype, biological source, material/provider/molecule, platform, SRA/ENA/BioSample/run accessions, library fields, instrument, modality, asset provenance, and database identity. Organism resolution evaluates each channel independently. Database identity uses `public_id`, then `iid`, then `name`. Every raw characteristic becomes `msc.characteristics.<normalized_name>`; typed annotations become `msc.characteristics.harmonized_<field>` plus identifier and ontology companions. Native assay parameters become `msc.assay.parameter.<name>.*`, with their occurrence ledger in `uns["msc_assay"]`. Missing values are empty in `obs`; repeated values are case-insensitively de-duplicated in source order and displayed with `; ` separators.
+Stable observation fields cover sample/study accessions, title/description, organism and taxid, organism part, developmental stage, disease, genotype, biological source, material/provider/molecule, platform, SRA/ENA/BioSample/run accessions, library fields, instrument, modality, asset provenance, and database identity. Organism resolution evaluates each channel independently. Database identity uses `public_id`, then `iid`, then `name`. Every raw characteristic becomes `msc.characteristics.<normalized_name>`; typed annotations become `msc.characteristics.harmonized_<field>` plus identifier and ontology companions. Sample-bound assay-node material types take precedence over the typed `material_type` characteristic, legacy channel material, normalized molecule, and organism-part fallbacks. Native assay parameters become `msc.assay.parameter.<name>.*`, with their occurrence ledger in `uns["msc_assay"]`. Missing values are empty in `obs`; repeated values are case-insensitively de-duplicated in source order and displayed with `; ` separators.
 
 `uns["msc_metadata"]` declares schema version `1.0` and contains the authoritative normalized `sample_values` DataFrame with `sample_accession`, `field`, `ordinal`, `value`, and `value_type`. It stores one row per non-empty canonical value, so embedded semicolons and list cardinality remain recoverable without parsing the display string. Each sample H5AD contains only its sample rows. `uns["msc_miniml"]` remains the complete typed source ledger at schema 1.0. H5AD provenance and manifests separately declare the H5AD metadata schema version; the catalogue manifest additionally declares `artifact_kind = per_sample_h5ad_catalogue`, `expression_integration = none`, and a non-verified combination state.
 
 Normalization copies each incoming index into `msc.observation.original_id`. An identifier is already sample-qualified when its accession occurs case-insensitively as a token bounded by the start/end or `-`, `_`, `.`, or `:`. Qualified identifiers are preserved; other identifiers receive `-{sample_accession}`. Repeated candidates receive source-order numeric suffixes. A sequential used-ID ledger qualifies any remaining collision before each sample checkpoint is written, so global uniqueness does not require retaining earlier expression matrices.
 
-`uns["msc_miniml"]` contains schema/policy metadata, the source JSON path and SHA-256, and a typed long-form `fields` DataFrame (`package_index`, `entity_type`, `entity_id`, `path`, `value`, `value_type`). GSM files contain the sample plus its series and transitively referenced platform, contributor, and database records without following `sample_ref`; both scalar references and real MINiML `{"ref": "..."}` objects are resolved. GSE files contain all package entities. Protocol descriptions remain in this table, while `msc.protocol.types`, source refs, and accessions reuse `Harmonizer.geoprotocols2efo()` for the established treatment, growth, extraction, labeling, hybridization, scan, and data-processing paths. Publication records are whitelisted to PubMed ID, DOI, title, authors, status, and status ontology fields; abstracts, full text, article bodies, sections, and other publication content are not embedded. GEO series summary and overall design remain experiment metadata.
+`uns["msc_miniml"]` contains schema/policy metadata, the source JSON path and SHA-256, and a typed long-form `fields` DataFrame (`package_index`, `entity_type`, `entity_id`, `path`, `value`, `value_type`). GSM files contain the sample plus its series and transitively referenced platform, contributor, and database records without following `sample_ref`; both scalar references and real MINiML `{"ref": "..."}` objects are resolved. GSE files contain all package entities. Protocol descriptions remain in this table. `msc.protocol.types`, source refs, and accessions preserve exact typed ontology values in sample-bound assay-path order; when no path binds the sample, all declared protocols retain study order. `Harmonizer.geoprotocols2efo()` is only the compatibility fallback when no applicable typed protocol exists. Publication records are whitelisted to PubMed ID, DOI, title, authors, status, and status ontology fields; abstracts, full text, article bodies, sections, and other publication content are not embedded. GEO series summary and overall design remain experiment metadata.
 
 Persisted local provenance paths in the manifest and H5AD metadata are relative to the containing artifact and declare `path_base = artifact_parent`; parallel scope fields distinguish internal, external (`../...`), and remote locations. Remote URLs remain unchanged. Recorded Nextflow command path arguments are also relative, while generated runtime configs retain the absolute paths required by Nextflow resume. `ConversionResult` continues to return absolute paths in memory. ANSI-stripped, de-duplicated Nextflow warnings are stored on each pipeline run and promoted to the manifest's top-level warnings without changing a successful return code.
 
@@ -1347,7 +1347,7 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 ## Rootless json2h5ad Runtime
 
 The deterministic suite was refreshed on 2026-08-10 and reported
-`575 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+`587 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -1456,8 +1456,9 @@ parses as:
 
 MSC owns the unified metadata representation in
 `meta_standards_converter.miniml`. The dependency-free Python model and its
-Draft 2020-12 JSON Schema are derived from the repository's MINiML XSD. They
-cover the package entities (`Database`, `Organization`, `Contributor`,
+codec are derived from the repository's MINiML XSD. The Python model is the
+sole structural authority; MSC does not publish or package a parallel JSON
+Schema. The model covers the package entities (`Database`, `Organization`, `Contributor`,
 `Platform`, `Sample`, and `Series`) and reusable accession, reference, status,
 person, channel, table/data, variable, repeat, organism, relation, and link
 structures. Protocols, protocol applications, assay nodes and paths, ontology
@@ -1476,16 +1477,17 @@ compatibility diagnostics; strict mode promotes them to
 while `load`/`dump` provide deterministic, atomic UTF-8 JSON publication.
 `MINiMLPackage.from_mapping()` and `load()` remain direct model conveniences.
 Construction and codec encode/decode canonicalize and validate nested typed
-objects; duplicate top-level identifiers and malformed entity shapes raise
+objects; direct construction recursively freezes mapping and collection inputs,
+and duplicate top-level identifiers or malformed entity shapes raise
 `MINiMLModelError`.
 
 `MINiMLPackage.validate()` is compatibility-first. XSD vocabulary deviations,
 checksum formats, unresolved references, and channel-count mismatches are
 reported as structured `MINiMLValidationIssue` diagnostics instead of rejecting
 historically accepted data. External protocol/sample references are therefore
-preserved as warnings. The JSON Schema and Python model agree on their canonical
-field shapes; consumers needing strict wire validation can load
-`miniml_schema_path()` with a JSON Schema validator.
+preserved as warnings. Wire validation is performed by `MINiMLCodec` and
+`MINiMLPackage.from_mapping()`; there is no secondary schema contract for
+consumers to reconcile.
 
 Organisms and channel fields support typed annotations. `NamedValue` carries a
 typed ontology value, optional unit ontology, `unit_type`, and qualifier;
@@ -1495,9 +1497,9 @@ source URI, media type, and SHA-256 of the consumed UTF-8 content (never the raw
 body), plus document-scoped order. Series fields retain experiment design ontology,
 experiment date, contacts and roles, and generic IDF comments.
 
-Public symbols are exported from `meta_standards_converter.miniml`. The schema
-ships as package data at `miniml/miniml-package-v2.schema.json`. Contract
-coverage lives in `tests/test_msc_miniml_v2.py`,
+Public symbols are exported from `meta_standards_converter.miniml`; neither a
+schema-path helper nor JSON Schema package data is public. Contract coverage
+lives in `tests/test_msc_miniml_v2.py`,
 `tests/test_miniml_migration_cli.py`, `tests/test_magetab_miniml_v2.py`, and
 `tests/test_geo_parser.py`. Cross-boundary stabilization coverage lives in
 `tests/test_miniml_stabilization.py`.
@@ -1530,8 +1532,7 @@ The complete qualified model API is
 `meta_standards_converter.miniml.model.Status`,
 `meta_standards_converter.miniml.model.SupplementLink`,
 `meta_standards_converter.miniml.model.TableData`,
-`meta_standards_converter.miniml.model.Variable`, and
-`meta_standards_converter.miniml.model.miniml_schema_path`,
+`meta_standards_converter.miniml.model.Variable`,
 `meta_standards_converter.miniml.codec.MINiMLBatchDecodeResult`,
 `meta_standards_converter.miniml.codec.MINiMLCodec`,
 `meta_standards_converter.miniml.codec.MINiMLCompatibilityError`, and
@@ -1561,7 +1562,7 @@ synthetic object id survives. Construction regenerates ordered IDF rows and
 repeated SDRF columns from the model, so the supported round trip is semantic.
 
 **Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
-[`miniml-package-v2.schema.json`](../src/meta_standards_converter/miniml/miniml-package-v2.schema.json),
+[`codec.py`](../src/meta_standards_converter/miniml/codec.py),
 [`geo_parser.py`](../src/meta_standards_converter/geo_handlers/geo_parser.py),
 and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
 
@@ -2608,6 +2609,7 @@ Important test coverage:
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
 - `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
+- `tests/test_miniml_model_authority.py`: sample-bound typed protocol/material projection, exact ontology preservation, fallback ordering, and shared H5AD semantics.
 - `tests/test_miniml_stabilization.py`: deterministic MINiML migration, validation, and captured-index ordering without quadratic equality scans.
 - `tests/test_magetab_miniml_v2.py`: legacy and canonical IDF companion-label parsing, typed ontology alignment, and canonical semantic MAGE-TAB regeneration.
 - `tests/test_metadata_projector.py`: generic sample projector and ignored legacy combined-hook
@@ -2697,7 +2699,11 @@ Importable symbols are
 `meta_standards_converter.ae_handlers.ae_common.ProtocolRegistry`,
 `meta_standards_converter.ae_handlers.ae_common.detect_ae_technology`,
 `meta_standards_converter.ae_handlers.ae_common.has_array_files`, and
-`meta_standards_converter.ae_handlers.ae_common.normalized_extension`.
+`meta_standards_converter.ae_handlers.ae_common.normalized_extension`, and
+`meta_standards_converter.ae_handlers.ae_common.series_identity`. Study
+identity follows the Python model: a usable `series.iid` takes precedence over
+the first usable accession, and generated MAGE-TAB protocol identifiers use the
+same value. GEO-shaped `GSE` identities remain numeric-only.
 
 <a id="operational-events-v1"></a>
 ## Operational events v1

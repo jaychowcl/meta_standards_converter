@@ -105,6 +105,49 @@ def test_default_tsv_emits_stable_msc_metadata_and_characteristics(tmp_path):
     assert rows[0]["msc.characteristics.tissue"] == "brain"
 
 
+def test_tsv_projects_sample_bound_typed_protocol_and_material_semantics(tmp_path):
+    payload = package()
+    payload["series"].update({
+        "protocols": [
+            {
+                "name": "P-collect",
+                "type": {
+                    "value": "bespoke collection protocol",
+                    "term_source_ref": "TEST",
+                    "term_accession_number": "TEST:001",
+                },
+            }
+        ],
+        "assay_paths": [
+            {
+                "steps": [
+                    {
+                        "kind": "sample",
+                        "name": "GSM1",
+                        "sample_ref": "GSM1",
+                        "material_type": {"value": "fresh tissue specimen"},
+                    },
+                    {
+                        "kind": "protocol_application",
+                        "protocol_ref": "P-collect",
+                    },
+                ]
+            }
+        ],
+    })
+    source = tmp_path / "input.json"
+    output = tmp_path / "output.tsv"
+    source.write_text(json.dumps([payload]), encoding="utf-8")
+
+    JSON2TSVConverter().convert_source(source, output)
+    _columns, rows = read_rows(output, "\t")
+
+    assert rows[0]["msc.sample.channel.material_type"] == "fresh tissue specimen"
+    assert rows[0]["msc.protocol.types"] == "bespoke collection protocol"
+    assert rows[0]["msc.protocol.term_source_refs"] == "TEST"
+    assert rows[0]["msc.protocol.term_accession_numbers"] == "TEST:001"
+
+
 def test_tabular_converter_uses_injected_neutral_metadata_service(tmp_path):
     class MetadataService:
         def study_accession(self, packages):

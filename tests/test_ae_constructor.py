@@ -1374,6 +1374,38 @@ class TestAEConstructor(unittest.TestCase):
             if row[index]
         ]
 
+    def test_iid_only_study_names_generated_protocols_with_the_iid(self):
+        data = {
+            "series": {
+                "iid": "E-MTAB-ONLY",
+                "sample_ref": [{"ref": "GSM1"}],
+                "title": "IID-only study",
+            },
+            "platform": [
+                {
+                    "iid": "GPL1",
+                    "technology": "expression array",
+                    "accession": [{"value": "GPL1"}],
+                }
+            ],
+            "contributor": [],
+            "sample": [
+                {
+                    "iid": "GSM1",
+                    "accession": [{"value": "GSM1"}],
+                    "platform_ref": {"ref": "GPL1"},
+                    "channel": [{"source": {"value": "source 1"}}],
+                }
+            ],
+        }
+
+        magetab = AEConstructor().miniml2magetab(data=self.typed(data))
+
+        self.assertEqual(
+            ["Protocol Name", "P-E-MTAB-ONLY-1"],
+            self.row(magetab, "Protocol Name"),
+        )
+
     def detection_data(
         self,
         sample=None,

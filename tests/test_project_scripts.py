@@ -56,7 +56,6 @@ class TestProjectScripts(unittest.TestCase):
                 "pandas>=2.1.0,<4",
                 "scanpy>=1.10.0,<2",
                 "scipy>=1.11.0,<2",
-                "jsonschema>=4.23,<5",
             ],
             pyproject["project"]["optional-dependencies"]["test"],
         )

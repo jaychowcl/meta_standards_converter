@@ -48,7 +48,6 @@ from .model import (
     SupplementLink,
     TableData,
     Variable,
-    miniml_schema_path,
 )
 from .migration import MINiMLMigrationResult, MINiMLV1Migrator
 from .codec import (
@@ -98,7 +97,6 @@ __all__ = [
     "SupplementLink",
     "TableData",
     "Variable",
-    "miniml_schema_path",
     "MINiMLBatchDecodeResult",
     "MINiMLCodec",
     "MINiMLCompatibilityError",

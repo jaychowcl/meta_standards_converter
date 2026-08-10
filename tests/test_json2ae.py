@@ -220,6 +220,24 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         self.assertEqual(["magetab"], result)
 
+    def test_convert_accepts_iid_only_study_and_uses_it_as_constructor_identity(self):
+        constructor = MagicMock()
+        constructor.miniml2magetab.return_value = "magetab"
+        payload = package("E-MTAB-unused")
+        payload["series"] = {"iid": "E-MTAB-ONLY", "title": "IID-only study"}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_json(tmpdir, payload)
+            result = json2ae(ae_constructor=constructor).convert(path, enrich=False)
+
+        decoded = typed(payload)
+        self.assertEqual(["magetab"], result)
+        constructor.miniml2magetab.assert_called_once_with(data=decoded)
+        self.assertEqual(
+            "E-MTAB-ONLY",
+            AEConstructor()._series_accession(decoded.to_mapping()),
+        )
+
     def test_convert_accepts_harmonized_v2_datasets_and_warns_for_skipped_states(self):
         constructor = MagicMock()
         constructor.miniml2magetab.side_effect = ["first", "second"]
@@ -305,6 +323,15 @@ class TestJSON2AEConverter(unittest.TestCase):
     def test_convert_still_rejects_malformed_geo_accession(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, package("GSE-not-numeric"))
+            with self.assertRaisesRegex(ValueError, "no usable study accession"):
+                json2ae().convert(path)
+
+    def test_convert_rejects_malformed_geo_iid(self):
+        payload = package("E-MTAB-unused")
+        payload["series"] = {"iid": "GSE-not-numeric", "title": "Invalid"}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = self.write_json(tmpdir, payload)
             with self.assertRaisesRegex(ValueError, "no usable study accession"):
                 json2ae().convert(path)
 

@@ -372,7 +372,7 @@ class DocsIndexTests(unittest.TestCase):
         for document in (readme_text, codebase_text):
             self.assertIn("Atlas document schema 1.0", document)
             self.assertIn("H5AD metadata schema 1.0", document)
-            self.assertIn("575 passed, 3 skipped", document)
+            self.assertIn("587 passed, 3 skipped", document)
             self.assertIn("2026-08-10", document)
         self.assertIn('<a id="h5ad-metadata-schema-v1"></a>', codebase_text)
         self.assertIn('<a id="h5ad-metadata-schema-v3"></a>', codebase_text)
@@ -501,8 +501,6 @@ class DocsIndexTests(unittest.TestCase):
             "tests/fixtures/contracts/atlas-document-v1.json",
             "tests/fixtures/arrayexpress/E-MTAB-6486.idf.txt",
             "tests/fixtures/arrayexpress/E-MTAB-6486.sdrf.txt",
-            "src/meta_standards_converter/miniml/miniml-package-v1.schema.json",
-            "src/meta_standards_converter/miniml/miniml-package-v2.schema.json",
             "dependency-provenance/release-policy.json",
             "dependency-provenance/runtime.python312-linux-x86_64.cdx.json",
         }

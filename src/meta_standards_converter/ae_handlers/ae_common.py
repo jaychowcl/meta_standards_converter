@@ -108,6 +108,36 @@ def has_array_files(data: dict) -> bool:
     return any(normalized_extension(value) in extensions for value in values)
 
 
+def series_identity(data: dict) -> str | None:
+    """Return the model-authoritative series iid, with accession fallback."""
+    series = data.get("series") if isinstance(data, dict) else None
+    for item in series if isinstance(series, list) else [series]:
+        if not isinstance(item, dict):
+            continue
+        iid = ProtocolRegistry.clean(item.get("iid"))
+        if iid:
+            validated = _validated_study_identity(iid)
+            if validated:
+                return validated
+        accessions = item.get("accession")
+        for accession in accessions if isinstance(accessions, list) else [accessions]:
+            value = accession.get("value") if isinstance(accession, dict) else accession
+            cleaned = ProtocolRegistry.clean(value)
+            if not cleaned:
+                continue
+            validated = _validated_study_identity(cleaned)
+            if validated:
+                return validated
+    return None
+
+
+def _validated_study_identity(value: str) -> str | None:
+    upper = value.upper()
+    if upper.startswith("GSE"):
+        return upper if upper[3:].isdigit() else None
+    return value
+
+
 def _has_tenx_version(text: str, version: str) -> bool:
     if "10x" not in text and "chromium" not in text:
         return False
@@ -155,4 +185,10 @@ def detect_ae_technology(data: dict) -> str:
     return "generic"
 
 
-__all__ = ["ProtocolRegistry", "detect_ae_technology", "has_array_files", "normalized_extension"]
+__all__ = [
+    "ProtocolRegistry",
+    "detect_ae_technology",
+    "has_array_files",
+    "normalized_extension",
+    "series_identity",
+]

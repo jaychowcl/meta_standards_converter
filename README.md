@@ -152,8 +152,9 @@ GEO and MAGE-TAB ingestion both produce MSC MINiML 2.0 packages. MAGE-TAB protoc
 
 Every newly parsed package carries `miniml_schema_version: "2.0"`. MSC owns
 this XSD-derived internal representation through the public
-`meta_standards_converter.miniml.MINiMLPackage` model and a bundled Draft
-2020-12 JSON Schema. Runtime decoding rejects unversioned and 1.x documents;
+`meta_standards_converter.miniml.MINiMLPackage` Python model and its codec; this
+model is the sole structural authority and no parallel JSON Schema is shipped.
+Runtime decoding rejects unversioned and 1.x documents;
 `MINiMLV1Migrator` and `miniml-migrate` provide the explicit one-way upgrade.
 XSD compatibility deviations remain available as structured diagnostics. See the
 [MINiML package model contract](docs/codebase.md#miniml-package-model).
@@ -895,7 +896,7 @@ programmatic converter calls raise errors to their caller.
 ## Testing
 
 The deterministic, network-blocked suite was last verified on 2026-08-10:
-`575 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
+`587 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

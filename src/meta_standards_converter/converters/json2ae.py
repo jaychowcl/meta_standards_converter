@@ -10,6 +10,7 @@
 
 import logging
 
+from meta_standards_converter.ae_handlers.ae_common import series_identity
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
 from meta_standards_converter.converters.json_source import JSONPackageSource
 from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
@@ -101,22 +102,4 @@ class json2ae(JSONHandler):
         return packages
 
     def _usable_study_accession(self, package: MINiMLPackage) -> str | None:
-        series_values = package.get("series")
-        if not isinstance(series_values, list):
-            series_values = [series_values]
-        for series in series_values:
-            if not isinstance(series, dict):
-                continue
-            accessions = series.get("accession")
-            if not isinstance(accessions, list):
-                accessions = [accessions]
-            for accession in accessions:
-                value = accession.get("value") if isinstance(accession, dict) else accession
-                normalized = str(value).strip().upper() if value is not None else ""
-                if normalized.startswith("GSE"):
-                    if normalized[3:].isdigit():
-                        return normalized
-                    continue
-                if normalized:
-                    return normalized
-        return None
+        return series_identity(package.to_mapping())

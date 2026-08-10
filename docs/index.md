@@ -162,8 +162,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: miniml-package-model
   title: MSC MINiML 2.0 package API
   anchor: miniml-package-model
-  purpose: Defines the immutable XSD-derived model, codec, explicit migration, compatibility diagnostics, and stable 2.0 wire schema.
-  keywords: MSC 3, MINiML 2.0, JSON Schema, MINiMLPackage, MINiMLCodec, MINiMLV1Migrator, protocols, assay paths, channel annotations, annotations, source documents
+  purpose: Defines the sole-authority immutable XSD-derived Python model, codec, explicit migration, compatibility diagnostics, and stable 2.0 wire format.
+  keywords: MSC 4, MINiML 2.0, Python data model, sole authority, MINiMLPackage, MINiMLCodec, MINiMLV1Migrator, protocols, assay paths, channel annotations, annotations, source documents
   link: [Open section](codebase.md#miniml-package-model)
 
 ## Workflow routes
@@ -272,5 +272,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Test plan
   anchor: test-plan
   purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
-  keywords: tests, 575 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  keywords: tests, 587 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

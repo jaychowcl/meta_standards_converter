@@ -6,18 +6,16 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-import json
 from pathlib import Path
 
 import pytest
-from jsonschema import Draft202012Validator
 
 from meta_standards_converter.miniml import (
     MINIML_SCHEMA_VERSION,
+    MINiMLCodec,
     MINiMLModelError,
     MINiMLPackage,
     Series,
-    miniml_schema_path,
 )
 
 
@@ -128,7 +126,7 @@ def complete_package() -> dict:
     }
 
 
-def test_complete_xsd_derived_package_round_trips_and_validates_schema() -> None:
+def test_complete_xsd_derived_package_round_trips_through_python_model() -> None:
     model = MINiMLPackage.from_mapping(complete_package())
 
     assert isinstance(model.series, Series)
@@ -139,8 +137,7 @@ def test_complete_xsd_derived_package_round_trips_and_validates_schema() -> None
     canonical = model.to_mapping()
     assert canonical["miniml_schema_version"] == MINIML_SCHEMA_VERSION
     assert canonical["series"]["extensions"]["vendor_note"] == {"value": "preserved"}
-    schema = json.loads(miniml_schema_path().read_text(encoding="utf-8"))
-    Draft202012Validator(schema).validate(canonical)
+    assert MINiMLCodec().decode(canonical, strict=True).package == model
 
 
 def test_v2_singletons_are_normalized_without_dropping_extensions() -> None:

@@ -171,14 +171,21 @@ class JSONPackageSource:
     ) -> tuple[MINiMLPackage, ...]:
         seen: dict[str, Mapping[str, Any]] = {}
         retained: list[dict[str, Any]] = []
-        for package in packages:
+        for package_index, package in enumerate(packages, start=1):
             copied = deepcopy(dict(package))
             raw_samples = copied.get("sample", [])
-            samples = raw_samples if isinstance(raw_samples, list) else [raw_samples]
+            samples = (
+                []
+                if raw_samples is None
+                else raw_samples if isinstance(raw_samples, list) else [raw_samples]
+            )
             unique = []
-            for sample in samples:
+            for sample_index, sample in enumerate(samples):
                 if not isinstance(sample, Mapping):
-                    continue
+                    raise ValueError(
+                        f"Parsed MINiML package {package_index} "
+                        f"sample[{sample_index}] must be an object."
+                    )
                 accession = self._sample_accession(sample)
                 if not accession:
                     unique.append(dict(sample))

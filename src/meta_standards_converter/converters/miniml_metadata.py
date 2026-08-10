@@ -14,6 +14,10 @@ import json
 import re
 from typing import Any, Mapping, Protocol, Sequence
 
+from meta_standards_converter.converters.mage_tab_projection import (
+    _material_types_for_sample,
+    _protocols_for_sample,
+)
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
 
 
@@ -242,7 +246,13 @@ class MINiMLMetadataService:
         metadata["molecule"] = tuple(
             self.values(channel.get("molecule") for channel in channels)
         )
-        explicit_material_types = self.values(
+        assay_material_types = self.values(
+            _material_types_for_sample(package, sample)
+        )
+        characteristic_material_types = self.values(
+            characteristics.get("material_type")
+        )
+        legacy_material_types = self.values(
             channel.get("material_type") for channel in channels
         )
         material_types = [
@@ -252,7 +262,9 @@ class MINiMLMetadataService:
             )
         ]
         metadata["material_type"] = (
-            tuple(explicit_material_types)
+            tuple(assay_material_types)
+            or tuple(characteristic_material_types)
+            or tuple(legacy_material_types)
             or tuple(self.values(material_types))
             or metadata["organism_part"]
         )
@@ -316,18 +328,33 @@ class MINiMLMetadataService:
         protocol_types: list[str] = []
         protocol_sources: list[str] = []
         protocol_accessions: list[str] = []
-        for field, label, scope in self.PROTOCOL_PATHS:
-            containers = channels if scope == "channel" else [sample]
-            if not self.join_values(
-                container.get(field) for container in containers
-            ):
-                continue
-            protocol_type, source_ref, accession = Harmonizer().geoprotocols2efo(
-                label
-            )
-            protocol_types.append(protocol_type)
-            protocol_sources.append(source_ref)
-            protocol_accessions.append(accession)
+        typed_protocols = _protocols_for_sample(package, sample)
+        if typed_protocols:
+            for protocol in typed_protocols:
+                protocol_type = protocol.get("type")
+                if isinstance(protocol_type, Mapping):
+                    protocol_types.extend(self.values(protocol_type.get("value")))
+                    protocol_sources.extend(
+                        self.values(protocol_type.get("term_source_ref"))
+                    )
+                    protocol_accessions.extend(
+                        self.values(protocol_type.get("term_accession_number"))
+                    )
+                else:
+                    protocol_types.extend(self.values(protocol_type))
+        else:
+            for field, label, scope in self.PROTOCOL_PATHS:
+                containers = channels if scope == "channel" else [sample]
+                if not self.join_values(
+                    container.get(field) for container in containers
+                ):
+                    continue
+                protocol_type, source_ref, accession = Harmonizer().geoprotocols2efo(
+                    label
+                )
+                protocol_types.append(protocol_type)
+                protocol_sources.append(source_ref)
+                protocol_accessions.append(accession)
         metadata["protocol_types"] = tuple(self.values(protocol_types))
         metadata["protocol_term_source_refs"] = tuple(
             self.values(protocol_sources)
