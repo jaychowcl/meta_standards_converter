@@ -182,7 +182,7 @@ The package has no mandatory application config file. Configure conversions with
 | --- | --- | --- |
 | Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
 | Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
-| Remote enrichment | `--no-enrich` / `enrich=False` | PubMed and SRA/ENA enrichment enabled |
+| Remote enrichment | `--no-enrich` / `enrich=False` | Guarded parent-publication, PubMed, and SRA/ENA enrichment enabled |
 | MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
 | Resource envelope | `--resource-profile`, `--resource-override` / `resource_profile`, `resource_overrides` | Typed `standard` profile |
 | Additional MAGE-TAB source host | `ae2json --source-host` / `source_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
@@ -279,7 +279,7 @@ geo2json GSE234602 --no-enrich --keep-empty --out output
 | `--related`, `--related-series`, `--get-related-series` | Include transitively related GEO super/subseries; disabled by default. |
 | `--remove-empty` | Remove empty parsed fields; this is the default. |
 | `--keep-empty` | Preserve empty parsed fields; mutually exclusive with `--remove-empty`. |
-| `--no-enrich` | Skip PubMed and SRA/ENA enrichment; enrichment is enabled by default. |
+| `--no-enrich` | Skip guarded parent-publication, PubMed, and SRA/ENA enrichment; enrichment is enabled by default. |
 | `--out` `OUT` | Output directory; default `.`. |
 | `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
 | `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
@@ -613,7 +613,7 @@ packages = geo2json().convert(
 )
 ```
 
-`geo2json.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`.
+`geo2json.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in `series.extensions.publication_inheritance`.
 
 For callers that collect related studies directly,
 `GEOParser.parse_related_series(..., strict=False)` returns a list-compatible

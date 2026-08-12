@@ -697,17 +697,29 @@ Pseudocode: `fetch -> parse -> for package: enrich -> construct -> [write] -> li
 ```text
 GSE -> fetch --failure--> exception
     -> parse --failure--> exception
-    -> [enrich?] yes -> enrich each --failure--> exception
+    -> [enrich?] yes -> [one direct parent publication?]
+                         yes -> bounded parent fetch + reciprocal/unique-PMID guard
+                         no  -> retain child publication state
+                      -> enrich each --failure--> exception
                   no --------------------------> retain parsed packages
     -> [out?] JSON file / else return only
 ```
 
 1. The CLI calls `geo2json.convert` once per accession and continues after failures.
 2. GEO fetch and parsing are shared with `geo2ae`.
-3. `enrich=False` bypasses PubMed/SRA enrichment.
-4. `json2file` creates the output directory and writes `{GSE}.json` when requested.
+3. With enrichment enabled, a child that has no direct publication and exactly one
+   `SubSeries of` parent may inherit exactly one parent PubMed ID. The parent must
+   reciprocally identify the child as a `SuperSeries of` member. Retrieval failure,
+   non-reciprocal linkage, multiple parents, or multiple PubMed IDs leaves the child
+   unchanged. This lookup does not recursively traverse related studies or add the
+   parent as another output package.
+4. Inherited publication provenance is retained under
+   `series.extensions.publication_inheritance`; the ordinary PubMed enricher then
+   resolves title, DOI, authors, and status from the inherited identifier.
+5. `enrich=False` bypasses parent-publication, PubMed, and SRA/ENA enrichment.
+6. `json2file` creates the output directory and writes `{GSE}.json` when requested.
 
-Pseudocode: `packages = parse(fetch(gse)); [enrich packages]; [write]; return`.
+Pseudocode: `packages = parse(fetch(gse)); [inherit guarded parent PMID]; [enrich packages]; [write]; return`.
 
 **Evidence:** [`converters/geo2json.py`](../src/meta_standards_converter/converters/geo2json.py) and [`cli/geo2json.py`](../src/meta_standards_converter/cli/geo2json.py).
 

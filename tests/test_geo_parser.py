@@ -52,6 +52,22 @@ class TestGEOParser(unittest.TestCase):
         self.assertEqual("0.5.4", package.source.version)
         self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))
 
+    def test_parser_preserves_ambiguous_library_kit_protocol_as_authored(self):
+        protocol = "Chromium Single Cell 3' Library &amp; Gel Bead Kit v2 or v3."
+        package = GEOParser().parse(
+            miniml_body(
+                '<Sample iid="GSM1"><Channel-Count>1</Channel-Count><Channel>'
+                f"<Extract-Protocol>{protocol}</Extract-Protocol>"
+                '</Channel></Sample><Series iid="GSE1"><Sample-Ref ref="GSM1" />'
+                "</Series>"
+            )
+        )[0]
+
+        self.assertEqual(
+            "Chromium Single Cell 3' Library & Gel Bead Kit v2 or v3.",
+            package["sample"][0]["channel"][0]["extract_protocol"],
+        )
+
     def test_single_series_resolves_relevant_records(self):
         xml = miniml_body(
             """
