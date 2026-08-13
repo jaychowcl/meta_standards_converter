@@ -33,6 +33,7 @@ from meta_standards_converter.runtime_contracts import (
     SafeErrorEnvelope,
     get_resource_profile,
 )
+from meta_standards_converter.miniml import harmonized_value_mappings
 from .json_source import JSONPackageSource
 from .dataset_combination import (
     DatasetCombinationPolicy,
@@ -2299,32 +2300,35 @@ class JSON2H5ADConverter:
                 for channel in self.planner._as_list(sample.get("channel")):
                     if not isinstance(channel, dict):
                         continue
-                    for annotation in self.planner._as_list(channel.get("annotations")):
+                    for annotation in harmonized_value_mappings(channel):
                         if not isinstance(annotation, dict) or not annotation.get("field"):
                             continue
                         annotation_slug = "harmonized_" + self._metadata_slug(annotation["field"])
                         for candidate in (annotation_slug, f"{annotation_slug}_id", f"{annotation_slug}_onto"):
                             if candidate not in columns:
                                 columns.append(candidate)
-                    for item in self.planner._as_list(channel.get("characteristics")):
+                    characteristic_rows = self.planner._as_list(
+                        channel.get("characteristics")
+                    )
+                    for item in characteristic_rows:
                         if not isinstance(item, dict):
                             continue
                         slug = self._metadata_slug(item.get("name", item.get("tag")))
+                        if str(item.get("name", item.get("tag", ""))).startswith("hz_"):
+                            continue
                         if slug and slug not in columns:
                             columns.append(slug)
-                        for annotation in self.planner._as_list(item.get("annotations")):
-                            if not isinstance(annotation, dict) or not annotation.get("field"):
-                                continue
-                            annotation_slug = "harmonized_" + self._metadata_slug(
-                                annotation["field"]
-                            )
-                            for candidate in (
-                                annotation_slug,
-                                f"{annotation_slug}_id",
-                                f"{annotation_slug}_onto",
-                            ):
-                                if candidate not in columns:
-                                    columns.append(candidate)
+                    for annotation in harmonized_value_mappings(characteristic_rows):
+                        annotation_slug = "harmonized_" + self._metadata_slug(
+                            annotation["field"]
+                        )
+                        for candidate in (
+                            annotation_slug,
+                            f"{annotation_slug}_id",
+                            f"{annotation_slug}_onto",
+                        ):
+                            if candidate not in columns:
+                                columns.append(candidate)
         return columns
 
     def _metadata_slug(self, value) -> str:

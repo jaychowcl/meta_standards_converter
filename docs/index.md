@@ -155,15 +155,15 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: proposed-enriched-miniml-core
   title: Enriched MINiML-compatible core
   anchor: proposed-enriched-miniml-core
-  purpose: Defines MSC MINiML 2.0 protocols, assay paths, typed annotations, units, provenance, document-scoped SDRF ordering, migration, and semantic MAGE-TAB boundaries.
-  keywords: MSC MINiML 2.0, MAGE-TAB, canonical IDF labels, Publication Status Term Source REF, Protocol Term Source REF, legacy aliases, annotations, units, Unit type, factors, protocols, assay paths, SDRF documents, migration, semantic round trip
+  purpose: Defines MSC MINiML 3.0 protocols, assay paths, occurrence-local hz groups, units, provenance, document-scoped SDRF ordering, migration, and semantic MAGE-TAB boundaries.
+  keywords: MSC MINiML 3.0, MAGE-TAB, hz fields, harmonized value, canonical IDF labels, units, factors, protocols, assay paths, v2 migration, semantic round trip
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
 - id: miniml-package-model
-  title: MSC MINiML 2.0 package API
+  title: MSC MINiML 3.0 package API
   anchor: miniml-package-model
-  purpose: Defines the sole-authority immutable XSD-derived Python model, codec, explicit migration, compatibility diagnostics, and stable 2.0 wire format.
-  keywords: MSC 4, MINiML 2.0, Python data model, sole authority, MINiMLPackage, MINiMLCodec, MINiMLV1Migrator, protocols, assay paths, channel annotations, annotations, source documents
+  purpose: Defines the immutable Python model, 3.0 codec, v2 migration, strict hz validation, projector iterators, and compatibility diagnostics.
+  keywords: MSC 5, MINiML 3.0, MINiMLPackage, MINiMLCodec, MINiMLV2Migrator, HarmonizedValue, hz_disease, collision parentheses, raw preservation, source documents
   link: [Open section](codebase.md#miniml-package-model)
 
 ## Workflow routes

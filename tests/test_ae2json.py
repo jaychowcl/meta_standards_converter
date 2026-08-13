@@ -158,10 +158,11 @@ class TestAE2JSONConverter(unittest.TestCase):
             if item.get("kind") == "protocol_application"
         )
         unit = step["parameter_values"][0]["unit"]
-        unit["annotations"] = [{
-            "field": "unit", "value": "minute",
-            "term_source_ref": "uo", "term_accession_number": "UO:0000031",
-        }]
+        unit.update({
+            "hz_unit": "minute",
+            "hz_unit_onto": "uo",
+            "hz_unit_id": "UO:0000031",
+        })
         package = MINiMLCodec().decode(payload).package
 
         rendered = AEConstructor().miniml2magetab(package)
@@ -294,15 +295,17 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual(["assay-1", "assay-2"], [row[assay_index] for row in rendered_sdrf[1:]])
         self.assertEqual("edited-scan-2", rendered_sdrf[2][scan_index])
 
-    def test_typed_annotations_remain_internal_while_paths_preserve_multiplicity(self):
+    def test_harmonized_groups_remain_internal_while_paths_preserve_multiplicity(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
-        payload["sample"][0]["channel"][0]["characteristics"][0]["annotations"] = [{
-            "field": "disease", "value": "disease",
-            "term_source_ref": "mondo", "term_accession_number": "MONDO:0000001",
-        }]
+        characteristics = payload["sample"][0]["channel"][0]["characteristics"]
+        characteristics.extend([
+            {"name": "hz_disease", "value": "disease"},
+            {"name": "hz_disease_onto", "value": "mondo"},
+            {"name": "hz_disease_id", "value": "MONDO:0000001"},
+        ])
         package = MINiMLCodec().decode(payload).package
 
         magetab = AEConstructor().miniml2magetab(package)
@@ -310,7 +313,8 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual(2, len(rendered_sdrf) - 1)
         self.assertNotIn("hz_", "\t".join(rendered_sdrf[0]))
-        self.assertEqual("MONDO:0000001", package["sample"][0]["channel"][0]["characteristics"][0]["annotations"][0]["term_accession_number"])
+        rendered = package["sample"][0]["channel"][0]["characteristics"]
+        self.assertIn({"name": "hz_disease_id", "value": "MONDO:0000001"}, rendered)
 
     def test_ecto_and_pcl_characteristics_parse_and_render_additively(self):
         header = [
@@ -527,7 +531,7 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual(1, len(packages))
         package = packages[0]
-        self.assertEqual("2.0", package["miniml_schema_version"])
+        self.assertEqual("3.0", package["miniml_schema_version"])
         self.assertEqual(
             "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
             package["source"]["schema_location"],
@@ -571,7 +575,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertIsInstance(package, MINiMLPackage)
-        self.assertEqual("2.0", package.miniml_schema_version)
+        self.assertEqual("3.0", package.miniml_schema_version)
         self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))
 
     def test_e_mtab_6486_values_are_losslessly_normalized_for_strict_miniml(self):

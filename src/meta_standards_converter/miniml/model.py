@@ -20,8 +20,16 @@ import re
 from typing import Any, Callable, Mapping, TypeVar
 from uuid import uuid4
 
+from .harmonization import (
+    HarmonizedValue,
+    harmonized_mapping,
+    is_harmonized_key,
+    iter_harmonized_values,
+    parse_harmonized_mapping,
+)
 
-MINIML_SCHEMA_VERSION = "2.0"
+
+MINIML_SCHEMA_VERSION = "3.0"
 
 
 class MINiMLModelError(ValueError):
@@ -96,19 +104,20 @@ def _reject_unknown(data: Mapping[str, Any], known: set[str], path: str) -> None
 
 @_deep_freeze_constructor
 @dataclass(frozen=True)
-class HarmonizedAnnotation:
+class _OccurrenceHarmonizedValue:
     field: str
     value: str
     term_source_ref: str | None = None
     term_accession_number: str | None = None
     hierarchy_depth: int | None = None
+    index: int = 0
 
     @classmethod
-    def from_mapping(cls, value: Any) -> "HarmonizedAnnotation":
+    def from_mapping(cls, value: Any) -> "_OccurrenceHarmonizedValue":
         data = _mapping(value, "annotation")
         known = {
             "field", "value", "term_source_ref", "term_accession_number",
-            "hierarchy_depth",
+            "hierarchy_depth", "index",
         }
         _reject_unknown(data, known, "annotation")
         field_value = str(data.get("field", "")).strip()
@@ -124,12 +133,15 @@ class HarmonizedAnnotation:
             data.get("term_source_ref"),
             data.get("term_accession_number"),
             depth,
+            int(data.get("index", 0)),
         )
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"field": self.field, "value": self.value}
         for key in ("term_source_ref", "term_accession_number", "hierarchy_depth"):
             _put(result, key, getattr(self, key))
+        if self.index:
+            result["index"] = self.index
         return result
 
 
@@ -158,8 +170,45 @@ class NamedComment:
         return {"name": self.name, "value": self.value}
 
 
-def _annotations(value: Any) -> tuple[HarmonizedAnnotation, ...]:
-    return _objects(value, HarmonizedAnnotation.from_mapping, "annotations")
+def _annotations(value: Any) -> tuple[_OccurrenceHarmonizedValue, ...]:
+    return _objects(value, _OccurrenceHarmonizedValue.from_mapping, "annotations")
+
+
+def _harmonized_annotations(
+    data: Mapping[str, Any], known: set[str], path: str
+) -> tuple[_OccurrenceHarmonizedValue, ...]:
+    unknown = {str(key) for key in data if key not in known}
+    unsupported = sorted(key for key in unknown if not is_harmonized_key(key))
+    if unsupported:
+        raise MINiMLModelError(f"unsupported {path} field: {unsupported[0]}")
+    values = parse_harmonized_mapping(data)
+    return tuple(
+        _OccurrenceHarmonizedValue(
+            field=value.field,
+            value=str(value.value),
+            term_source_ref=value.term_source_ref,
+            term_accession_number=value.term_accession_number,
+            hierarchy_depth=value.hierarchy_depth,
+            index=value.index,
+        )
+        for value in values
+    )
+
+
+def _harmonized_wire(
+    values: tuple[_OccurrenceHarmonizedValue, ...],
+) -> dict[str, Any]:
+    return harmonized_mapping(
+        HarmonizedValue(
+            field=value.field,
+            value=value.value,
+            term_source_ref=value.term_source_ref,
+            term_accession_number=value.term_accession_number,
+            hierarchy_depth=value.hierarchy_depth,
+            index=value.index,
+        )
+        for value in values
+    )
 
 
 def _comments(value: Any) -> tuple[NamedComment, ...]:
@@ -172,26 +221,25 @@ class OntologyValue:
     value: str
     term_source_ref: str | None = None
     term_accession_number: str | None = None
-    annotations: tuple[HarmonizedAnnotation, ...] = ()
+    annotations: tuple[_OccurrenceHarmonizedValue, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, str):
             raise MINiMLModelError("ontology value must be a string")
         if not isinstance(self.annotations, tuple) or not all(
-            isinstance(item, HarmonizedAnnotation) for item in self.annotations
+            isinstance(item, _OccurrenceHarmonizedValue) for item in self.annotations
         ):
             raise MINiMLModelError("ontology value annotations must be typed annotations")
 
     @classmethod
     def from_value(cls, value: Any) -> "OntologyValue":
         if isinstance(value, Mapping):
-            known = {"value", "term_source_ref", "term_accession_number", "annotations"}
-            _reject_unknown(value, known, "ontology value")
+            known = {"value", "term_source_ref", "term_accession_number"}
             return cls(
                 str(value.get("value", "")),
                 value.get("term_source_ref"),
                 value.get("term_accession_number"),
-                _annotations(value.get("annotations")),
+                _harmonized_annotations(value, known, "ontology value"),
             )
         if isinstance(value, (str, int, float, bool)):
             return cls(str(value))
@@ -199,8 +247,9 @@ class OntologyValue:
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"value": self.value}
-        for key in ("term_source_ref", "term_accession_number", "annotations"):
+        for key in ("term_source_ref", "term_accession_number"):
             _put(result, key, getattr(self, key))
+        result.update(_harmonized_wire(self.annotations))
         return result
 
 
@@ -208,11 +257,11 @@ class OntologyValue:
 @dataclass(frozen=True)
 class NamedValue:
     name: str
-    value: str
+    value: Any
     term_source_ref: str | None = None
     term_accession_number: str | None = None
     unit: OntologyValue | None = None
-    annotations: tuple[HarmonizedAnnotation, ...] = ()
+    annotations: tuple[_OccurrenceHarmonizedValue, ...] = ()
     comments: tuple[NamedComment, ...] = ()
     qualifier: str | None = None
     unit_type: str | None = None
@@ -220,12 +269,27 @@ class NamedValue:
     def __post_init__(self) -> None:
         if not isinstance(self.name, str) or not self.name.strip():
             raise MINiMLModelError("named value requires a nonblank name")
-        if not isinstance(self.value, str):
+        if is_harmonized_key(self.name):
+            from .harmonization import parse_harmonized_key
+
+            _field, role, _index = parse_harmonized_key(self.name)
+            if role == "hierarchy_depth":
+                if (
+                    isinstance(self.value, bool)
+                    or not isinstance(self.value, int)
+                    or self.value < 0
+                ):
+                    raise MINiMLModelError(
+                        "harmonized hierarchy depth row must contain a non-negative integer"
+                    )
+            elif not isinstance(self.value, str):
+                raise MINiMLModelError("harmonized named values must be strings")
+        elif not isinstance(self.value, str):
             raise MINiMLModelError("named value value must be a string")
         if self.unit is not None and not isinstance(self.unit, OntologyValue):
             raise MINiMLModelError("named value unit must be an ontology value")
         if not isinstance(self.annotations, tuple) or not all(
-            isinstance(item, HarmonizedAnnotation) for item in self.annotations
+            isinstance(item, _OccurrenceHarmonizedValue) for item in self.annotations
         ):
             raise MINiMLModelError("named value annotations must be typed annotations")
         if not isinstance(self.comments, tuple) or not all(
@@ -238,19 +302,19 @@ class NamedValue:
         data = _mapping(value, "named value")
         known = {
             "name", "value", "term_source_ref", "term_accession_number", "unit",
-            "annotations", "comments", "qualifier", "unit_type",
+            "comments", "qualifier", "unit_type",
         }
-        _reject_unknown(data, known, "named value")
         name = str(data.get("name", "")).strip()
         if not name:
             raise MINiMLModelError("named value requires a nonblank name")
+        raw_value = data.get("value", "")
         return cls(
             name,
-            str(data.get("value", "")),
+            raw_value if is_harmonized_key(name) else str(raw_value),
             data.get("term_source_ref"),
             data.get("term_accession_number"),
             None if data.get("unit") is None else OntologyValue.from_value(data["unit"]),
-            _annotations(data.get("annotations")),
+            _harmonized_annotations(data, known, "named value"),
             _comments(data.get("comments")),
             data.get("qualifier"),
             data.get("unit_type"),
@@ -259,10 +323,11 @@ class NamedValue:
     def to_mapping(self) -> dict[str, Any]:
         result = {"name": self.name, "value": self.value}
         for key in (
-            "term_source_ref", "term_accession_number", "unit", "annotations",
+            "term_source_ref", "term_accession_number", "unit",
             "comments", "qualifier", "unit_type",
         ):
             _put(result, key, getattr(self, key))
+        result.update(_harmonized_wire(self.annotations))
         return result
 
 
@@ -605,24 +670,34 @@ class SupplementLink:
 class Organism:
     value: str
     taxid: str | None = None
-    annotations: tuple[HarmonizedAnnotation, ...] = ()
+    term_source_ref: str | None = None
+    term_accession_number: str | None = None
+    annotations: tuple[_OccurrenceHarmonizedValue, ...] = ()
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_value(cls, value: Any) -> "Organism":
         if isinstance(value, Mapping):
+            known = {
+                "value", "taxid", "term_source_ref", "term_accession_number",
+            }
             return cls(
                 str(value.get("value", "")),
                 None if value.get("taxid") is None else str(value["taxid"]),
-                _annotations(value.get("annotations")),
-                _extras(value, {"value", "taxid", "annotations"}),
+                value.get("term_source_ref"),
+                value.get("term_accession_number"),
+                _harmonized_annotations(value, known, "organism"),
+                _extras(value, {
+                    *known, *[key for key in value if is_harmonized_key(key)],
+                }),
             )
         return cls(str(value))
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"value": self.value}
-        _put(result, "taxid", self.taxid)
-        _put(result, "annotations", self.annotations)
+        for key in ("taxid", "term_source_ref", "term_accession_number"):
+            _put(result, key, getattr(self, key))
+        result.update(_harmonized_wire(self.annotations))
         return _record(result, self.extras)
 
 
@@ -694,11 +769,11 @@ class Person:
 @dataclass(frozen=True)
 class Characteristics:
     name: str
-    value: str
+    value: Any
     term_source_ref: str | None = None
     term_accession_number: str | None = None
     unit: OntologyValue | None = None
-    annotations: tuple[HarmonizedAnnotation, ...] = ()
+    annotations: tuple[_OccurrenceHarmonizedValue, ...] = ()
     comments: tuple[NamedComment, ...] = ()
     qualifier: str | None = None
     unit_type: str | None = None
@@ -840,27 +915,33 @@ class Channel:
     extract_protocol: str | None = None
     label: str | None = None
     label_protocol: str | None = None
-    annotations: tuple[HarmonizedAnnotation, ...] = ()
+    annotations: tuple[_OccurrenceHarmonizedValue, ...] = ()
     extras: Mapping[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Channel":
         data = _mapping(value, "channel")
-        known = {"source", "organism", "characteristics", "biomaterial_provider", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "annotations", "extensions"}
-        _reject_unknown(data, known, "channel")
+        known = {"source", "organism", "characteristics", "biomaterial_provider", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "extensions"}
+        characteristic_values = _items(data.get("characteristics"))
+        # Named hz rows form one occurrence-local evidence stream. Validate the
+        # stream as a whole so no ID/ontology/depth companion can be orphaned.
+        iter_harmonized_values(
+            [item for item in characteristic_values if isinstance(item, Mapping)]
+        )
         return cls(
             None if data.get("source") is None else OntologyValue.from_value(data["source"]), tuple(Organism.from_value(item) for item in _items(data.get("organism"))),
-            tuple(Characteristics.from_value(item) for item in _items(data.get("characteristics"))),
+            tuple(Characteristics.from_value(item) for item in characteristic_values),
             tuple(_items(data.get("biomaterial_provider"))), data.get("treatment_protocol"),
             data.get("growth_protocol"), None if data.get("molecule") is None else OntologyValue.from_value(data["molecule"]), data.get("extract_protocol"),
-            data.get("label"), data.get("label_protocol"), _annotations(data.get("annotations")), _FrozenJSONMapping(_mapping(data.get("extensions", {}), "channel.extensions")),
+            data.get("label"), data.get("label_protocol"), _harmonized_annotations(data, known, "channel"), _FrozenJSONMapping(_mapping(data.get("extensions", {}), "channel.extensions")),
         )
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {}
         mapping = {"organisms": "organism", "biomaterial_providers": "biomaterial_provider"}
-        for key in ("source", "organisms", "characteristics", "biomaterial_providers", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol", "annotations"):
+        for key in ("source", "organisms", "characteristics", "biomaterial_providers", "treatment_protocol", "growth_protocol", "molecule", "extract_protocol", "label", "label_protocol"):
             _put(result, mapping.get(key, key), getattr(self, key))
+        result.update(_harmonized_wire(self.annotations))
         if self.extras:
             result["extensions"] = _plain(self.extras)
         return result
@@ -1423,9 +1504,13 @@ class MINiMLPackage(Mapping[str, Any]):
     def from_mapping(cls, value: Mapping[str, Any]) -> "MINiMLPackage":
         data = _mapping(value, "MINiML package")
         version = data.get("miniml_schema_version")
+        if version == "2.0":
+            from .migration import MINiMLV2Migrator
+
+            return MINiMLV2Migrator().migrate(data).package
         if version != MINIML_SCHEMA_VERSION:
             raise MINiMLModelError(
-                "runtime decoding requires MSC MINiML schema version '2.0'"
+                "runtime decoding requires MSC MINiML schema version '3.0'"
             )
         known = {
             "miniml_schema_version", "source", "database", "organization",

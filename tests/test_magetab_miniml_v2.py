@@ -20,7 +20,7 @@ def test_magetab_parser_folds_semantics_into_msc_miniml_v2() -> None:
     package = AEParser().parse(resolved_input())
     payload = package.to_mapping()
 
-    assert payload["miniml_schema_version"] == "2.0"
+    assert payload["miniml_schema_version"] == "3.0"
     assert payload["source"]["format"] == "MAGE-TAB"
     assert {item["kind"] for item in payload["source"]["documents"]} == {"idf", "sdrf"}
     assert [item["name"] for item in payload["series"]["protocols"]] == [

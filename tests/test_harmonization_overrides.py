@@ -130,7 +130,10 @@ def test_resolver_replaces_destinations_from_typed_annotations():
     assert characteristics["disease"]["value"] == "fallback disease"
     assert characteristics["organism part"]["value"] == "lung"
     assert characteristics["organism part"]["term_accession_number"] == "UBERON:0002048"
-    assert any(annotation["field"] == "high_level_tissue" for row in channel["characteristics"] for annotation in row.get("annotations", []))
+    assert any(
+        row.get("name") == "hz_high_level_tissue"
+        for row in channel["characteristics"]
+    )
     assert original["sample"][0]["channel"][0]["organism"][0]["value"] == "human"
     assert result.selections[0].source_field == "species_name"
 

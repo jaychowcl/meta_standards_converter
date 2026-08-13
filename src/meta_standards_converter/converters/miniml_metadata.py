@@ -19,6 +19,7 @@ from meta_standards_converter.converters.mage_tab_projection import (
     _protocols_for_sample,
 )
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+from meta_standards_converter.miniml import harmonized_value_mappings
 
 
 class MINiMLMetadataProvider(Protocol):
@@ -158,7 +159,7 @@ class MINiMLMetadataService:
             for organism in self._as_list(channel.get("organism")):
                 if not isinstance(organism, Mapping):
                     continue
-                for annotation in self._as_list(organism.get("annotations")):
+                for annotation in harmonized_value_mappings(organism):
                     if (
                         isinstance(annotation, Mapping)
                         and annotation.get("field") in {"organism", "species_name"}
@@ -178,7 +179,7 @@ class MINiMLMetadataService:
 
         characteristic_values: dict[str, list[str]] = {}
         for channel in channels:
-            for annotation in self._as_list(channel.get("annotations")):
+            for annotation in harmonized_value_mappings(channel):
                 if not isinstance(annotation, Mapping) or not annotation.get("field"):
                     continue
                 annotation_slug = "harmonized_" + self.metadata_slug(
@@ -195,35 +196,33 @@ class MINiMLMetadataService:
                     characteristic_values.setdefault(
                         f"{annotation_slug}_onto", []
                     ).extend(self.values(annotation["term_source_ref"]))
-            for item in self._as_list(channel.get("characteristics")):
+            characteristic_rows = self._as_list(channel.get("characteristics"))
+            for item in characteristic_rows:
                 if not isinstance(item, Mapping) or not item.get(
                     "name", item.get("tag")
                 ):
+                    continue
+                if str(item.get("name", item.get("tag"))).startswith("hz_"):
                     continue
                 slug = self.metadata_slug(item.get("name", item.get("tag")))
                 item_values = self.values(item.get("value"))
                 if slug and item_values:
                     characteristic_values.setdefault(slug, []).extend(item_values)
-                for annotation in self._as_list(item.get("annotations")):
-                    if (
-                        not isinstance(annotation, Mapping)
-                        or not annotation.get("field")
-                    ):
-                        continue
-                    annotation_slug = "harmonized_" + self.metadata_slug(
-                        annotation["field"]
-                    )
-                    characteristic_values.setdefault(annotation_slug, []).extend(
-                        self.values(annotation.get("value"))
-                    )
-                    if annotation.get("term_accession_number"):
-                        characteristic_values.setdefault(
-                            f"{annotation_slug}_id", []
-                        ).extend(self.values(annotation["term_accession_number"]))
-                    if annotation.get("term_source_ref"):
-                        characteristic_values.setdefault(
-                            f"{annotation_slug}_onto", []
-                        ).extend(self.values(annotation["term_source_ref"]))
+            for annotation in harmonized_value_mappings(characteristic_rows):
+                annotation_slug = "harmonized_" + self.metadata_slug(
+                    annotation["field"]
+                )
+                characteristic_values.setdefault(annotation_slug, []).extend(
+                    self.values(annotation.get("value"))
+                )
+                if annotation.get("term_accession_number"):
+                    characteristic_values.setdefault(
+                        f"{annotation_slug}_id", []
+                    ).extend(self.values(annotation["term_accession_number"]))
+                if annotation.get("term_source_ref"):
+                    characteristic_values.setdefault(
+                        f"{annotation_slug}_onto", []
+                    ).extend(self.values(annotation["term_source_ref"]))
         characteristics = {
             slug: tuple(self.values(items))
             for slug, items in characteristic_values.items()

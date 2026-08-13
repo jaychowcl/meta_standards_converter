@@ -127,7 +127,7 @@ def test_v2_is_typed_source_neutral_and_preserves_semantic_order() -> None:
     result = MINiMLCodec().decode(package_v2())
     package = result.package
 
-    assert MINIML_SCHEMA_VERSION == "2.0"
+    assert MINIML_SCHEMA_VERSION == "3.0"
     assert package.source.format == "MAGE-TAB"
     assert [protocol.name for protocol in package.series.protocols] == [
         "P-extract",
@@ -142,19 +142,19 @@ def test_v2_is_typed_source_neutral_and_preserves_semantic_order() -> None:
     characteristic = package.samples[0].channels[0].characteristics[0]
     assert characteristic.name == "age"
     assert characteristic.unit.term_accession_number == "UO:0000036"
-    assert characteristic.unit.annotations[0].field == "unit"
-    assert MINiMLCodec().encode(package) == package_v2()
+    assert characteristic.unit.to_mapping()["hz_unit"] == "year"
+    assert MINiMLCodec().encode(package)["miniml_schema_version"] == "3.0"
 
 
-@pytest.mark.parametrize("version", [None, "1.0", "3.0"])
-def test_runtime_codec_rejects_every_non_v2_document(version: str | None) -> None:
+@pytest.mark.parametrize("version", [None, "1.0"])
+def test_runtime_codec_rejects_unversioned_and_v1_documents(version: str | None) -> None:
     payload = package_v2()
     if version is None:
         payload.pop("miniml_schema_version")
     else:
         payload["miniml_schema_version"] = version
 
-    with pytest.raises(MINiMLModelError, match="requires MSC MINiML schema version '2.0'"):
+    with pytest.raises(MINiMLModelError, match="requires MSC MINiML schema version '3.0'"):
         MINiMLCodec().decode(payload)
 
 
@@ -179,7 +179,9 @@ def test_v2_validates_protocol_references_and_natural_identity() -> None:
     payload = package_v2()
     payload["series"]["assay_paths"][0]["steps"][1]["protocol_ref"] = "P-missing"
     result = MINiMLCodec().decode(payload)
-    assert [issue.code for issue in result.diagnostics] == ["external_protocol_reference"]
+    assert [issue.code for issue in result.diagnostics] == [
+        "schema_migrated", "external_protocol_reference",
+    ]
 
 
 def test_explicit_v1_migrator_folds_mage_tab_and_hz_fields() -> None:
@@ -252,13 +254,11 @@ def test_explicit_v1_migrator_folds_mage_tab_and_hz_fields() -> None:
     result = MINiMLV1Migrator().migrate(legacy)
     rendered = MINiMLCodec().encode(result.package)
 
-    assert rendered["miniml_schema_version"] == "2.0"
+    assert rendered["miniml_schema_version"] == "3.0"
     assert "mage_tab" not in rendered
     assert "roundtrip" not in str(rendered)
     assert rendered["series"]["protocols"][0]["name"] == "P-extract"
     application = rendered["series"]["assay_paths"][0]["steps"][1]
     assert application["protocol_ref"] == "P-extract"
-    assert application["parameter_values"][0]["unit"]["annotations"][0][
-        "term_accession_number"
-    ] == "UO:0000031"
+    assert application["parameter_values"][0]["unit"]["hz_unit_id"] == "UO:0000031"
     assert any(item.code == "source_layout_dropped" for item in result.diagnostics)

@@ -364,6 +364,8 @@ class _BaseSDRFHandler():
             tag = characteristic.get("name") or characteristic.get("tag")
             if not tag:
                 continue
+            if str(tag).startswith("hz_"):
+                continue
             if tag.lower() == "organism part":
                 value = self.clean(characteristic.get("value"))
                 if not first_organism_part_preserved and value == organism_part_value:
@@ -622,7 +624,10 @@ class _BaseSDRFHandler():
         for characteristic in channel.get("characteristics", []) or []:
             if not isinstance(characteristic, dict):
                 continue
-            if (characteristic.get("name") or characteristic.get("tag") or "").lower() == lower_tag:
+            name = characteristic.get("name") or characteristic.get("tag") or ""
+            if str(name).startswith("hz_"):
+                continue
+            if str(name).lower() == lower_tag:
                 values.append(self.clean(characteristic.get("value")))
         return [x for x in values if x]
 

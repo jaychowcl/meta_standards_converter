@@ -13,6 +13,8 @@ from __future__ import annotations
 import re
 from typing import Any, Mapping
 
+from meta_standards_converter.miniml import harmonized_value_mappings
+
 
 PARAMETER_FIELDS = (
     "value", "unit", "harmonized_value", "harmonized_value_id",
@@ -142,8 +144,8 @@ def _parameter_rows(
                     continue
                 unit = parameter.get("unit")
                 unit = unit if isinstance(unit, Mapping) else {"value": unit}
-                value_annotation = _first_annotation(parameter.get("annotations"))
-                unit_annotation = _first_annotation(unit.get("annotations"), field="unit")
+                value_annotation = _first_annotation(parameter)
+                unit_annotation = _first_annotation(unit, field="unit")
                 rows.append({
                     "sample_accession": next(iter(sorted(identities or bound)), ""),
                     "document": assay.get("document", ""),
@@ -166,7 +168,7 @@ def _parameter_rows(
 
 
 def _first_annotation(value: Any, *, field: str | None = None) -> Mapping[str, Any]:
-    for annotation in _as_list(value):
+    for annotation in harmonized_value_mappings(value):
         if isinstance(annotation, Mapping) and (
             field is None or annotation.get("field") == field
         ):

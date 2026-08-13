@@ -15,6 +15,8 @@ import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
+from meta_standards_converter.miniml import MINiMLCodec, harmonized_value_mappings
+
 
 _FIXED_DESTINATIONS = {
     "organism",
@@ -66,18 +68,20 @@ def resolve_harmonization_overrides(
     enabled: bool,
 ) -> HarmonizationResolution:
     """Return a harmonization-aware deep copy derived from typed annotations."""
-    raw = tuple(copy.deepcopy(dict(package)) for package in packages)
+    original = tuple(copy.deepcopy(dict(package)) for package in packages)
     if not enabled or profile is None:
-        return HarmonizationResolution(raw, profile=profile, enabled=enabled)
+        return HarmonizationResolution(original, profile=profile, enabled=enabled)
     try:
         normalized = validate_harmonization_overrides(profile)
     except ValueError as error:
         return HarmonizationResolution(
-            raw,
+            original,
             profile=copy.deepcopy(dict(profile)),
             warnings=(f"Harmonization overrides disabled: {error}",),
             enabled=True,
         )
+
+    raw = tuple(_canonical_package(package) for package in packages)
 
     selections: list[HarmonizationSelection] = []
     for package in raw:
@@ -121,6 +125,14 @@ def resolve_harmonization_overrides(
     )
 
 
+def _canonical_package(package: Mapping[str, Any]) -> dict[str, Any]:
+    """Give every consumer one canonical 3.0 view, including readable 2.0 input."""
+    version = package.get("miniml_schema_version")
+    if version in {"2.0", "3.0"}:
+        return MINiMLCodec().encode(MINiMLCodec().decode(package).package)
+    return copy.deepcopy(dict(package))
+
+
 def validate_harmonization_overrides(profile: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(profile, Mapping):
         raise ValueError("profile must be an object")
@@ -152,13 +164,8 @@ def _harmonized_values(channel: Mapping[str, Any], source: str) -> list[dict[str
         item = channel.get(field)
         if isinstance(item, Mapping):
             containers.append(item)
-    containers.extend(
-        item
-        for item in _as_list(channel.get("characteristics"))
-        if isinstance(item, Mapping)
-    )
     for container in containers:
-        for annotation in _as_list(container.get("annotations")):
+        for annotation in harmonized_value_mappings(container):
             if not isinstance(annotation, Mapping) or annotation.get("field") != source:
                 continue
             _append_value(values, {
@@ -167,6 +174,21 @@ def _harmonized_values(channel: Mapping[str, Any], source: str) -> list[dict[str
                 "onto": annotation.get("term_source_ref"),
                 "hierarchy_depth": annotation.get("hierarchy_depth"),
             })
+    for annotation in harmonized_value_mappings(
+        [
+            item
+            for item in _as_list(channel.get("characteristics"))
+            if isinstance(item, Mapping)
+        ]
+    ):
+        if annotation.get("field") != source:
+            continue
+        _append_value(values, {
+            "value": annotation.get("value"),
+            "id": annotation.get("term_accession_number"),
+            "onto": annotation.get("term_source_ref"),
+            "hierarchy_depth": annotation.get("hierarchy_depth"),
+        })
     return values
 
 

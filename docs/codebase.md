@@ -83,7 +83,7 @@ credentials, or tokens.
 ### AD-002: Preserve MAGE-TAB round trips beside the mapped core
 
 - **Status:** Observed
-- **Decision:** `ae2json` maps semantic MAGE-TAB content into MSC MINiML 2.0; `json2ae` regenerates ordered IDF/SDRF tables from that typed model.
+- **Decision:** `ae2json` maps semantic MAGE-TAB content into MSC MINiML 3.0; `json2ae` regenerates ordered IDF/SDRF tables from that typed model.
 - **Rationale:** Not documented.
 - **Consequences:** Metadata semantics are editable and format-independent. Raw row layout is not replayed; unsafe consolidation of heterogeneous SDRF document graphs is rejected.
 - **Affected components:** `AEParser`, `ae_model`, `MINiMLV1Migrator`, and `AEConstructor`.
@@ -163,7 +163,7 @@ credentials, or tokens.
 <a id="proposed-enriched-miniml-core"></a>
 ## Enriched MINiML-compatible core
 
-MSC MINiML 2.0 folds semantic MAGE-TAB content into the typed package itself:
+MSC MINiML 3.0 folds semantic MAGE-TAB content into the typed package itself:
 `series.protocols` owns protocol identity and details, `series.assay_paths`
 owns ordered node and protocol-application paths, named values own units and
 typed `annotations`, channel-level `annotations` describe harmonized scalar
@@ -1159,13 +1159,13 @@ ae2json(resource_profile, resource_overrides, source_hosts)
        merge repeated sample/platform records in first-seen order
        keep the first conflicting scalar and record a warning
        set series.iid from the primary ArrayExpress/investigation accession
-       normalize factor/material values into the strict MINiML 2.0 vocabulary
+       normalize factor/material values into the strict MINiML 3.0 vocabulary
        preserve original values in typed fields/characteristics and source digests
   -> if out, write [{package}] to {study_accession}.json
   -> return [package]
 ```
 
-IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project, including MSC's former `Status Term ...` and `Protocol Type Term ...` ontology-companion aliases. Canonical spellings win if both are present. Its public output is immutable MSC MINiML 2.0: repository source format and document name/URI/media type/SHA-256 live under `source`, while typed protocols, variables, assay paths, samples, platforms, and accessions live in their canonical model fields. Raw IDF/SDRF bodies and the former `mage_tab` runtime sidecar are not retained. `series.iid` prefers the explicit ArrayExpress accession and cannot be displaced by a GEO or ENA secondary accession. Values outside the XSD vocabulary are normalized only where required for strict validation, with the original scientific value retained in the adjacent typed value or characteristic rather than discarded.
+IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project, including MSC's former `Status Term ...` and `Protocol Type Term ...` ontology-companion aliases. Canonical spellings win if both are present. Its public output is immutable MSC MINiML 3.0: repository source format and document name/URI/media type/SHA-256 live under `source`, while typed protocols, variables, assay paths, samples, platforms, and accessions live in their canonical model fields. Raw IDF/SDRF bodies and the former `mage_tab` runtime sidecar are not retained. `series.iid` prefers the explicit ArrayExpress accession and cannot be displaced by a GEO or ENA secondary accession. Values outside the XSD vocabulary are normalized only where required for strict validation, with the original scientific value retained in the adjacent typed value or characteristic rather than discarded.
 
 Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTPS base, and downloads only those metadata files beneath `Files/`. API JSON and MAGE-TAB text are UTF-8/BOM decoded only after streamed declared/actual byte checks. Every URL and redirect is restricted to HTTPS, approved provider or explicit exact hosts, and public DNS answers. Referenced assay data is not downloaded.
 
@@ -1190,7 +1190,7 @@ Both converters return a list of package dictionaries using the same MINiML-comp
 | Empty fields | Removed by default or retained with `remove_empty=False`/`--keep-empty` | Omitted unless a mapped source value exists; required extension structure remains present |
 | Assay-row multiplicity | MINiML samples plus optionally enriched `sra_run` lists | Core samples/runs may consolidate rows; every modeled SDRF row remains an independent `series.assay_paths` record |
 | Unsupported metadata | Remains available when it exists as an XML element/attribute | Supported protocol/assay extensions become typed steps; source document names, URIs, media types, and digests remain as provenance, while unmodeled raw layout is deliberately dropped |
-| Lossless MAGE-TAB round trip | Not applicable | Semantic typed content is reconstructable; exact raw row order/layout requires retaining the original IDF/SDRF documents outside MINiML 2.0 |
+| Lossless MAGE-TAB round trip | Not applicable | Semantic typed content is reconstructable; exact raw row order/layout requires retaining the original IDF/SDRF documents outside MINiML 3.0 |
 
 Representative GEO output:
 
@@ -1228,7 +1228,7 @@ Representative AE output:
 
 The shared core makes downstream processing reusable; it does not imply
 field-for-field parity between repositories. Consumers that need exact source
-layout must retain the original MAGE-TAB documents; MINiML 2.0 preserves their
+layout must retain the original MAGE-TAB documents; MINiML 3.0 preserves their
 identity/digests and the supported typed scientific semantics, not raw tables.
 
 <a id="json2h5ad-flow"></a>
@@ -1464,7 +1464,7 @@ parses as:
 - `sample.*.sra_run`: run dicts returned by `INSDCWebfetcher.fetch_sra_runs()`, including study accession, library metadata, run/sample IDs, read lengths, instrument model, and per-FASTQ `filename`/`uri`/`md5`.
 
 <a id="miniml-package-model"></a>
-## MSC MINiML 2.0 package API
+## MSC MINiML 3.0 package API
 
 MSC owns the unified metadata representation in
 `meta_standards_converter.miniml`. The dependency-free Python model and its
@@ -1474,14 +1474,15 @@ Schema. The model covers the package entities (`Database`, `Organization`, `Cont
 `Platform`, `Sample`, and `Series`) and reusable accession, reference, status,
 person, channel, table/data, variable, repeat, organism, relation, and link
 structures. Protocols, protocol applications, assay nodes and paths, ontology
-values, named values, harmonized annotations, comments, and source documents
+values, named values, occurrence-local harmonized values, comments, and source documents
 fold MAGE-TAB semantics into the same immutable representation.
 PubMed publications, SRA/ENA accessions, SRA runs, and FASTQ file records are
 first-class typed enrichments.
 
-The wire discriminator is `miniml_schema_version: "2.0"`. Runtime decoding
-rejects unversioned, 1.x, and unknown versions. `MINiMLV1Migrator` and the
-`miniml-migrate` command provide explicit one-way migration. Canonical
+The wire discriminator is `miniml_schema_version: "3.0"`. Runtime decoding
+rejects unversioned, 1.x, and unknown versions. MINiML 2.0 remains readable and
+is deterministically migrated by `MINiMLV2Migrator`; `MINiMLV1Migrator` and the
+`miniml-migrate` command provide explicit one-way migration to 3.0. Canonical
 collections are always lists, while `series` remains a single object.
 `MINiMLCodec.decode`/`decode_many` return immutable packages plus structured
 compatibility diagnostics; strict mode promotes them to
@@ -1501,7 +1502,15 @@ preserved as warnings. Wire validation is performed by `MINiMLCodec` and
 `MINiMLPackage.from_mapping()`; there is no secondary schema contract for
 consumers to reconcile.
 
-Organisms and channel fields support typed annotations. `NamedValue` carries a
+Harmonized evidence is stored beside the raw occurrence, never in an
+`annotations` array. A group uses `hz_<field>`, optional `hz_<field>_id`,
+`hz_<field>_onto`, and `hz_<field>_hierarchy_depth`; collisions use aligned
+`(1)`, `(2)`, ... suffixes. Named characteristic lists store adjacent named
+rows, while ontology/value objects store the same keys as members. Every
+companion requires a value. `HarmonizedValue`, `iter_harmonized_values`, and
+the mapping helpers are the shared validated projector interface.
+
+`NamedValue` carries a
 typed ontology value, optional unit ontology, `unit_type`, and qualifier;
 `Variable.type` is an ontology value so factor type source/accession companions
 round-trip without string flattening. Source documents retain document role,
@@ -1548,10 +1557,18 @@ The complete qualified model API is
 `meta_standards_converter.miniml.codec.MINiMLBatchDecodeResult`,
 `meta_standards_converter.miniml.codec.MINiMLCodec`,
 `meta_standards_converter.miniml.codec.MINiMLCompatibilityError`, and
-`meta_standards_converter.miniml.codec.MINiMLDecodeResult`.
+`meta_standards_converter.miniml.codec.MINiMLDecodeResult`,
+`meta_standards_converter.miniml.harmonization.HarmonizedValue`,
+`meta_standards_converter.miniml.harmonization.harmonized_mapping`,
+`meta_standards_converter.miniml.harmonization.harmonized_value_mappings`,
+`meta_standards_converter.miniml.harmonization.is_harmonized_key`,
+`meta_standards_converter.miniml.harmonization.iter_harmonized_values`,
+`meta_standards_converter.miniml.harmonization.named_harmonized_rows`,
+`meta_standards_converter.miniml.harmonization.next_harmonized_index`,
+`meta_standards_converter.miniml.harmonization.parse_harmonized_key`, and
+`meta_standards_converter.miniml.harmonization.parse_harmonized_mapping`.
 
-The 2.0 additions are
-`meta_standards_converter.miniml.model.HarmonizedAnnotation`,
+The typed semantic additions are
 `meta_standards_converter.miniml.model.NamedComment`,
 `meta_standards_converter.miniml.model.NamedValue`,
 `meta_standards_converter.miniml.model.OntologyValue`,
@@ -1563,6 +1580,7 @@ The 2.0 additions are
 `meta_standards_converter.miniml.model.AssayPath`,
 `meta_standards_converter.miniml.migration.MINiMLMigrationResult`,
 `meta_standards_converter.miniml.migration.MINiMLV1Migrator`,
+`meta_standards_converter.miniml.migration.MINiMLV2Migrator`,
 `meta_standards_converter.ae_handlers.ae_model.overlay_miniml_semantics`, and
 `meta_standards_converter.ae_handlers.ae_model.render_miniml_assay_documents`, and
 `meta_standards_converter.cli.miniml_migrate.main`.
@@ -2050,7 +2068,7 @@ output is unchanged.
 `class AEParser`
 
 - `parse(source: MAGETabInput) -> dict` parses one IDF plus all SDRFs into the existing MINiML-compatible package shape.
-- Root metadata uses MINiML 2.0 with normalized MAGE-TAB format/version and specification provenance under `source`. `series.iid` prefers `Comment[ArrayExpressAccession]`, then an ArrayExpress-form investigation/classified accession, then the investigation accession.
+- Root metadata uses MINiML 3.0 with normalized MAGE-TAB format/version and specification provenance under `source`. `series.iid` prefers `Comment[ArrayExpressAccession]`, then an ArrayExpress-form investigation/classified accession, then the investigation accession.
 - IDF rows are normalized by case and whitespace. Repeated row values remain ordered and feed investigation, accessions, design/factor, status, publication, contributor, database, and protocol records.
 - SDRF headers map source/sample identities, characteristics, factors, protocol refs, platforms, technology, SRA/ENA runs, FASTQ metadata, and array raw/derived files. Repeated sample rows merge without duplicating list values.
 - Conflicting scalar values keep the first value and append a warning. Unknown IDF rows are diagnosed but not retained as raw layout; supported generic SDRF values become typed assay-path steps.
@@ -2066,7 +2084,7 @@ Raw-table round-trip helpers are retired in MSC 4. The disconnected
 conversion path. Keeping it public would falsely imply exact IDF/SDRF layout
 survives the canonical boundary.
 
-`AEParser` now maps supported scientific content into typed MINiML 2.0
+`AEParser` now maps supported scientific content into typed MINiML 3.0
 protocols, assay paths, values, units, annotations, and source-document
 provenance. `MINiMLV1Migrator` explicitly reports `source_layout_dropped` when
 it encounters an old raw-table sidecar, and `AEConstructor` reconstructs

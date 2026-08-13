@@ -24,6 +24,7 @@ from meta_standards_converter.miniml import (
     Sample,
     Series,
     SourceInfo,
+    iter_harmonized_values,
 )
 
 
@@ -73,7 +74,7 @@ def test_codec_decodes_typed_enrichment_from_v2_input() -> None:
     assert isinstance(result.package.series.pubmed_publications[0], PubMedPublication)
     assert isinstance(result.package.samples[0].sra_runs[0], SRARun)
     assert isinstance(result.package.samples[0].sra_runs[0].fastq_files[0], FASTQFile)
-    assert MINiMLCodec().encode(result.package)["miniml_schema_version"] == "2.0"
+    assert MINiMLCodec().encode(result.package)["miniml_schema_version"] == "3.0"
 
 
 def test_codec_returns_warnings_and_strict_mode_promotes_them() -> None:
@@ -82,7 +83,9 @@ def test_codec_returns_warnings_and_strict_mode_promotes_them() -> None:
 
     compatible = MINiMLCodec().decode(payload)
 
-    assert [issue.code for issue in compatible.diagnostics] == ["unresolved_reference"]
+    assert [issue.code for issue in compatible.diagnostics] == [
+        "schema_migrated", "unresolved_reference",
+    ]
     with pytest.raises(MINiMLCompatibilityError, match="unresolved_reference"):
         MINiMLCodec().decode(payload, strict=True)
 
@@ -96,7 +99,7 @@ def test_codec_decodes_one_or_many_packages() -> None:
     assert len(multiple.packages) == 2
 
 
-def test_typed_package_is_immutable_and_preserves_typed_annotations() -> None:
+def test_typed_package_is_immutable_and_preserves_typed_harmonized_values() -> None:
     payload = package_payload()
     payload["sample"][0]["channel"] = [
         {
@@ -117,13 +120,14 @@ def test_typed_package_is_immutable_and_preserves_typed_annotations() -> None:
     ]
     package = MINiMLCodec().decode(payload).package
 
-    annotation = package.samples[0].channels[0].characteristics[0].annotations[0]
+    rows = package.to_mapping()["sample"][0]["channel"][0]["characteristics"]
+    annotation = iter_harmonized_values(rows)[0]
     assert annotation.value == "Homo sapiens"
     assert annotation.term_accession_number == "NCBITaxon:9606"
     with pytest.raises(FrozenInstanceError):
         package.version = "changed"  # type: ignore[misc]
     with pytest.raises(FrozenInstanceError):
-        package.samples[0].channels[0].characteristics[0].annotations[0].value = "changed"  # type: ignore[misc]
+        annotation.value = "changed"  # type: ignore[misc]
 
 
 def test_direct_model_construction_deep_freezes_collections_and_extensions() -> None:
@@ -162,7 +166,7 @@ def test_codec_dump_is_deterministic_and_replaces_existing_file(tmp_path) -> Non
     assert not list(tmp_path.glob(".*.tmp"))
 
 
-def test_channel_annotations_cover_harmonized_channel_scalars() -> None:
+def test_channel_hz_groups_cover_harmonized_channel_scalars() -> None:
     payload = package_payload()
     payload["sample"][0]["channel"] = [{
         "source": "lung",
@@ -176,7 +180,7 @@ def test_channel_annotations_cover_harmonized_channel_scalars() -> None:
 
     package = MINiMLCodec().decode(payload).package
 
-    assert package.samples[0].channels[0].annotations[0].field == "tissue_name"
-    assert package.to_mapping()["sample"][0]["channel"][0]["annotations"][0][
-        "term_accession_number"
-    ] == "UBERON:0002048"
+    channel = package.to_mapping()["sample"][0]["channel"][0]
+    assert channel["hz_tissue_name"] == "lung"
+    assert channel["hz_tissue_name_id"] == "UBERON:0002048"
+    assert iter_harmonized_values(channel)[0].field == "tissue_name"

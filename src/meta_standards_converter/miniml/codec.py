@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Canonical decoding, encoding, and explicit migration for MSC MINiML 2.0."""
+"""Canonical decoding, encoding, and migration for MSC MINiML 3.0."""
 
 from __future__ import annotations
 
@@ -44,17 +44,34 @@ class MINiMLBatchDecodeResult:
 class MINiMLCodec:
     @staticmethod
     def migrate_v1(value: Mapping[str, Any]):
-        """Migrate a legacy package without weakening the strict v2 decoder."""
+        """Migrate a legacy package without weakening the strict v3 decoder."""
         from .migration import MINiMLV1Migrator
 
         return MINiMLV1Migrator().migrate(value)
 
+    @staticmethod
+    def migrate_v2(value: Mapping[str, Any]):
+        """Migrate an MSC MINiML 2.0 package to canonical 3.0."""
+        from .migration import MINiMLV2Migrator
+
+        return MINiMLV2Migrator().migrate(value)
+
     def decode(self, value: Mapping[str, Any], *, strict: bool = False) -> MINiMLDecodeResult:
-        package = MINiMLPackage.from_mapping(value.to_mapping()) if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
-        diagnostics = package.validate()
+        migration_diagnostics: tuple[MINiMLValidationIssue, ...] = ()
+        if not isinstance(value, MINiMLPackage) and value.get("miniml_schema_version") == "2.0":
+            migrated = self.migrate_v2(value)
+            package = migrated.package
+            migration_diagnostics = migrated.diagnostics
+        else:
+            package = MINiMLPackage.from_mapping(value.to_mapping()) if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
+        diagnostics = (*migration_diagnostics, *package.validate())
         if strict and diagnostics:
-            raise MINiMLCompatibilityError(diagnostics)
-        return MINiMLDecodeResult(package, diagnostics)
+            structural = tuple(
+                item for item in diagnostics if item.code != "schema_migrated"
+            )
+            if structural:
+                raise MINiMLCompatibilityError(structural)
+        return MINiMLDecodeResult(package, tuple(diagnostics))
 
     def decode_many(self, value: Mapping[str, Any] | Sequence[Mapping[str, Any]], *, strict: bool = False) -> MINiMLBatchDecodeResult:
         values = list(value) if isinstance(value, (list, tuple)) else [value]

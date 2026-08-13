@@ -458,7 +458,7 @@ class DocsIndexTests(unittest.TestCase):
         for command in CLI_COMMANDS:
             self.assertIn(f"`{command}`", readme_text)
 
-    def test_docs_define_implemented_msc_miniml_v2_core(self):
+    def test_docs_define_implemented_msc_miniml_v3_core(self):
         readme_text = README.read_text(encoding="utf-8")
         codebase_text = CODEBASE.read_text(encoding="utf-8")
         index_text = INDEX.read_text(encoding="utf-8")
@@ -467,16 +467,17 @@ class DocsIndexTests(unittest.TestCase):
         self.assertIn(f'<a id="{anchor}"></a>', codebase_text)
         self.assertIn(f"codebase.md#{anchor}", index_text)
         for phrase in (
-            "MSC MINiML 2.0",
+            "MSC MINiML 3.0",
             "MINiMLV1Migrator",
+            "MINiMLV2Migrator",
             "protocols",
             "assay paths",
-            "annotations",
+            "hz_<field>",
             "semantic",
         ):
             self.assertIn(phrase, codebase_text)
         self.assertIn("Unified core", readme_text)
-        self.assertIn('miniml_schema_version: "2.0"', readme_text)
+        self.assertIn('miniml_schema_version: "3.0"', readme_text)
 
     def test_readme_documents_all_console_scripts(self):
         readme_text = README.read_text(encoding="utf-8")

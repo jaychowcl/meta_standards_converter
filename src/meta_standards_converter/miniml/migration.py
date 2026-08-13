@@ -15,12 +15,119 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .model import MINiMLModelError, MINiMLPackage, MINiMLValidationIssue
+from .harmonization import HarmonizedValue, named_harmonized_rows
 
 
 @dataclass(frozen=True)
 class MINiMLMigrationResult:
     package: MINiMLPackage
     diagnostics: tuple[MINiMLValidationIssue, ...] = ()
+
+
+class MINiMLV2Migrator:
+    """Translate MINiML 2.0 annotation objects into MINiML 3.0 ``hz_*`` values."""
+
+    def migrate(self, value: Mapping[str, Any]) -> MINiMLMigrationResult:
+        if not isinstance(value, Mapping):
+            raise MINiMLModelError("MINiML 2.0 package must be an object")
+        if value.get("miniml_schema_version") != "2.0":
+            raise MINiMLModelError(
+                "MINiML 2.0 migration requires miniml_schema_version '2.0'"
+            )
+        migrated = deepcopy(dict(value))
+        self._migrate_node(migrated)
+        migrated["miniml_schema_version"] = "3.0"
+        package = MINiMLPackage.from_mapping(migrated)
+        diagnostics = (
+            MINiMLValidationIssue(
+                "/miniml_schema_version",
+                "schema_migrated",
+                "MSC MINiML 2.0 annotations were migrated to 3.0 hz_* values.",
+            ),
+        )
+        return MINiMLMigrationResult(package, diagnostics)
+
+    @classmethod
+    def _migrate_node(cls, value: Any) -> None:
+        if isinstance(value, list):
+            for item in value:
+                cls._migrate_node(item)
+            return
+        if not isinstance(value, dict):
+            return
+
+        characteristics = value.get("characteristics")
+        if isinstance(characteristics, list):
+            migrated_rows: list[Any] = []
+            for row in characteristics:
+                if not isinstance(row, dict):
+                    migrated_rows.append(row)
+                    continue
+                annotations = row.pop("annotations", None)
+                cls._migrate_node(row)
+                migrated_rows.append(row)
+                migrated_rows.extend(
+                    named_harmonized_rows(cls._annotation_values(annotations))
+                )
+            value["characteristics"] = migrated_rows
+
+        annotations = value.pop("annotations", None)
+        for harmonized in cls._annotation_values(annotations):
+            cls._add_flat_value(value, harmonized)
+
+        for key, item in tuple(value.items()):
+            if key == "characteristics":
+                continue
+            cls._migrate_node(item)
+
+    @staticmethod
+    def _annotation_values(value: Any) -> list[HarmonizedValue]:
+        values = value if isinstance(value, list) else []
+        result: list[HarmonizedValue] = []
+        next_indexes: dict[str, int] = {}
+        for item in values:
+            if not isinstance(item, Mapping):
+                continue
+            field = str(item.get("field") or "").strip()
+            label = item.get("value")
+            if not field or label in (None, ""):
+                continue
+            normalized = "_".join(field.casefold().replace("-", "_").split())
+            index = next_indexes.get(normalized, 0)
+            next_indexes[normalized] = index + 1
+            result.append(
+                HarmonizedValue(
+                    field=normalized,
+                    value=str(label),
+                    term_source_ref=(
+                        None
+                        if item.get("term_source_ref") in (None, "")
+                        else str(item["term_source_ref"])
+                    ),
+                    term_accession_number=(
+                        None
+                        if item.get("term_accession_number") in (None, "")
+                        else str(item["term_accession_number"])
+                    ),
+                    hierarchy_depth=item.get("hierarchy_depth"),
+                    index=index,
+                )
+            )
+        return result
+
+    @staticmethod
+    def _add_flat_value(target: dict[str, Any], value: HarmonizedValue) -> None:
+        candidate = value
+        while any(key in target for key in candidate.to_mapping()):
+            candidate = HarmonizedValue(
+                field=value.field,
+                value=value.value,
+                term_source_ref=value.term_source_ref,
+                term_accession_number=value.term_accession_number,
+                hierarchy_depth=value.hierarchy_depth,
+                index=candidate.index + 1,
+            )
+        target.update(candidate.to_mapping())
 
 
 class MINiMLV1Migrator:

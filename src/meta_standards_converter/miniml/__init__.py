@@ -22,7 +22,6 @@ from .model import (
     DataTable,
     FASTQFile,
     InstrumentModel,
-    HarmonizedAnnotation,
     MINiMLModelError,
     MINiMLPackage,
     MINiMLValidationIssue,
@@ -49,7 +48,18 @@ from .model import (
     TableData,
     Variable,
 )
-from .migration import MINiMLMigrationResult, MINiMLV1Migrator
+from .migration import MINiMLMigrationResult, MINiMLV1Migrator, MINiMLV2Migrator
+from .harmonization import (
+    HarmonizedValue,
+    harmonized_mapping,
+    harmonized_value_mappings,
+    is_harmonized_key,
+    iter_harmonized_values,
+    named_harmonized_rows,
+    next_harmonized_index,
+    parse_harmonized_key,
+    parse_harmonized_mapping,
+)
 from .codec import (
     MINiMLBatchDecodeResult,
     MINiMLCodec,
@@ -71,7 +81,7 @@ __all__ = [
     "DataTable",
     "FASTQFile",
     "InstrumentModel",
-    "HarmonizedAnnotation",
+    "HarmonizedValue",
     "MINiMLModelError",
     "MINiMLPackage",
     "MINiMLValidationIssue",
@@ -97,10 +107,19 @@ __all__ = [
     "SupplementLink",
     "TableData",
     "Variable",
+    "harmonized_mapping",
+    "harmonized_value_mappings",
+    "is_harmonized_key",
+    "iter_harmonized_values",
+    "named_harmonized_rows",
+    "next_harmonized_index",
+    "parse_harmonized_key",
+    "parse_harmonized_mapping",
     "MINiMLBatchDecodeResult",
     "MINiMLCodec",
     "MINiMLCompatibilityError",
     "MINiMLDecodeResult",
     "MINiMLMigrationResult",
     "MINiMLV1Migrator",
+    "MINiMLV2Migrator",
 ]

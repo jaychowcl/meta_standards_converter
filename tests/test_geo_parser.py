@@ -47,7 +47,7 @@ class TestGEOParser(unittest.TestCase):
         )[0]
 
         self.assertIsInstance(package, MINiMLPackage)
-        self.assertEqual("2.0", package.miniml_schema_version)
+        self.assertEqual("3.0", package.miniml_schema_version)
         self.assertEqual("GEO MINiML", package.source.format)
         self.assertEqual("0.5.4", package.source.version)
         self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))

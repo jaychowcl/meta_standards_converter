@@ -8,7 +8,7 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 4.0.0 retains MSC MINiML 2.0 as the strict immutable metadata model while consuming
+Version 5.0.0 introduces MSC MINiML 3.0 as the strict immutable metadata model while consuming
 Atlas document schema 1.0, H5AD metadata schema 1.0, and MINiML ledger schema
 1.0. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
@@ -26,7 +26,7 @@ The eight primary workflows are:
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
 - `json2tsv`: parsed JSON to a sample manifest in TSV or CSV format.
 - `json2obs`: parsed JSON plus expression assets to aggregated observation-metadata sidecars without matrix integration.
-- `miniml-migrate`: explicitly upgrade legacy MINiML JSON to MSC MINiML 2.0.
+- `miniml-migrate`: explicitly upgrade MINiML 1.x or 2.0 JSON to MSC MINiML 3.0.
 
 ## Installation
 
@@ -142,20 +142,20 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt`; Python returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
 | `json2ae` | Parsed MINiML object/list or canonical Atlas v1 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
-| `ae2json` | IDF path, policy-approved HTTPS IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 2.0 with typed protocols and assay paths |
+| `ae2json` | IDF path, policy-approved HTTPS IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 3.0 with typed protocols and assay paths |
 | `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5AD catalogue, provenance JSON explicitly declaring no expression integration, optional nf-core results, and single- or multi-dataset result objects |
 | `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v1 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
 | `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Row-aggregated `.obs.csv` without expression integration, optional single-sample `.var.csv` and `.uns.json`, plus a JSON result manifest |
-| `miniml-migrate` | Legacy unversioned or `miniml_schema_version: "1.0"` JSON | Strict MSC MINiML 2.0 JSON plus migration diagnostics |
+| `miniml-migrate` | Legacy 1.x or `miniml_schema_version: "2.0"` JSON | Strict MSC MINiML 3.0 JSON plus migration diagnostics |
 
-GEO and MAGE-TAB ingestion both produce MSC MINiML 2.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, typed factor and organism annotations, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
+GEO and MAGE-TAB ingestion both produce MSC MINiML 3.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, occurrence-local harmonized values, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
 
-Every newly parsed package carries `miniml_schema_version: "2.0"`. MSC owns
+Every newly parsed package carries `miniml_schema_version: "3.0"`. MSC owns
 this XSD-derived internal representation through the public
 `meta_standards_converter.miniml.MINiMLPackage` Python model and its codec; this
 model is the sole structural authority and no parallel JSON Schema is shipped.
 Runtime decoding rejects unversioned and 1.x documents;
-`MINiMLV1Migrator` and `miniml-migrate` provide the explicit one-way upgrade.
+`MINiMLV1Migrator`, `MINiMLV2Migrator`, and `miniml-migrate` provide the explicit one-way upgrade. Canonical 3.0 writes raw values together with validated occurrence-local `hz_*` groups; it never emits `annotations` arrays.
 XSD compatibility deviations remain available as structured diagnostics. See the
 [MINiML package model contract](docs/codebase.md#miniml-package-model).
 
@@ -318,7 +318,7 @@ an Atlas v1 document it converts datasets whose status is `harmonized`, warns
 about other dataset states and their diagnostics, and fails when no convertible
 package groups remain. Legacy unversioned `accessions` envelopes fail with cutover
 guidance instead of being inferred. If the input came from
-`ae2json`, MAGE-TAB is regenerated deterministically from the typed MINiML 2.0
+`ae2json`, MAGE-TAB is regenerated deterministically from the typed MINiML 3.0
 model; raw table bodies and the former `mage_tab` sidecar are not retained.
 During regeneration, mapped core content is
 overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF
@@ -862,7 +862,7 @@ CLI or Python API
   |                         -> normalize AnnData -> per-sample H5AD catalogue + manifest
   |
   `-- IDF path, approved HTTPS URL, or BioStudies accession
-        -> bounded AEWebFetcher -> AEParser -> strict MINiML 2.0 package
+        -> bounded AEWebFetcher -> AEParser -> strict MINiML 3.0 package
 ```
 
 Network requests pass through the

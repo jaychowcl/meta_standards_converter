@@ -830,7 +830,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 converted.obs["msc.sample.channel.organism.taxid"].unique().tolist(),
             )
             fields = converted.uns["msc_miniml"]["fields"]
-            self.assertIn("channel[0].organism[0].annotations[0].value", set(fields["path"]))
+            self.assertIn("channel[0].organism[0].hz_organism", set(fields["path"]))
 
     def test_derives_organism_from_scalar_harmonization_and_preserves_missing_as_empty(self):
         with tempfile.TemporaryDirectory() as tmpdir:
