@@ -59,6 +59,7 @@ class MINiMLV2Migrator:
         characteristics = value.get("characteristics")
         if isinstance(characteristics, list):
             migrated_rows: list[Any] = []
+            next_indexes: dict[str, int] = {}
             for row in characteristics:
                 if not isinstance(row, dict):
                     migrated_rows.append(row)
@@ -66,9 +67,21 @@ class MINiMLV2Migrator:
                 annotations = row.pop("annotations", None)
                 cls._migrate_node(row)
                 migrated_rows.append(row)
-                migrated_rows.extend(
-                    named_harmonized_rows(cls._annotation_values(annotations))
-                )
+                harmonized_values = []
+                for harmonized in cls._annotation_values(annotations):
+                    index = next_indexes.get(harmonized.field, 0)
+                    next_indexes[harmonized.field] = index + 1
+                    harmonized_values.append(
+                        HarmonizedValue(
+                            field=harmonized.field,
+                            value=harmonized.value,
+                            term_source_ref=harmonized.term_source_ref,
+                            term_accession_number=harmonized.term_accession_number,
+                            hierarchy_depth=harmonized.hierarchy_depth,
+                            index=index,
+                        )
+                    )
+                migrated_rows.extend(named_harmonized_rows(harmonized_values))
             value["characteristics"] = migrated_rows
 
         annotations = value.pop("annotations", None)

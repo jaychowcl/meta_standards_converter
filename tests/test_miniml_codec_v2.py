@@ -130,6 +130,48 @@ def test_typed_package_is_immutable_and_preserves_typed_harmonized_values() -> N
         annotation.value = "changed"  # type: ignore[misc]
 
 
+def test_v2_characteristic_annotations_align_duplicate_fields_with_parentheses():
+    payload = package_payload()
+    payload["sample"][0]["channel"] = [{
+        "characteristics": [
+            {
+                "name": "tissue",
+                "value": "kidney",
+                "annotations": [{
+                    "field": "tissue_name",
+                    "value": "kidney",
+                    "term_accession_number": "UBERON:0002113",
+                }],
+            },
+            {
+                "name": "organism part",
+                "value": "lung",
+                "annotations": [{
+                    "field": "tissue_name",
+                    "value": "lung",
+                    "term_accession_number": "UBERON:0002048",
+                }],
+            },
+        ]
+    }]
+
+    migrated = MINiMLCodec().encode(MINiMLCodec().decode(payload).package)
+    rows = migrated["sample"][0]["channel"][0]["characteristics"]
+
+    assert [row["name"] for row in rows] == [
+        "tissue",
+        "hz_tissue_name",
+        "hz_tissue_name_id",
+        "organism part",
+        "hz_tissue_name(1)",
+        "hz_tissue_name_id(1)",
+    ]
+    assert [value.value for value in iter_harmonized_values(rows)] == [
+        "kidney",
+        "lung",
+    ]
+
+
 def test_direct_model_construction_deep_freezes_collections_and_extensions() -> None:
     root_extensions = {"nested": {"values": []}}
     series_extensions = {"vendor": []}
