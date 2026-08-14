@@ -160,7 +160,8 @@ XSD compatibility deviations remain available as structured diagnostics. See the
 [MINiML package model contract](docs/codebase.md#miniml-package-model).
 
 **Unified core:** ordered protocols, assay paths, typed named values, nested
-units, ontology values, and `annotations[]` are native MSC MINiML fields.
+units, ontology values, and occurrence-local `hz_*` groups are native MSC
+MINiML fields. Legacy annotation objects are migration input only.
 Raw IDF/SDRF layout and the former `mage_tab` sidecar are deliberately absent;
 MAGE-TAB output is regenerated semantically. The per-document renderer preserves
 heterogeneous SDRF layouts; the legacy single-SDRF constructor rejects layouts
