@@ -25,6 +25,7 @@ from .json2tabular import (
     TabularMetadataContext,
     TabularMetadataProjection,
     TabularMetadataProjector,
+    TabularProjectionError,
 )
 from .json_outputs import (
     AnnDataMetadataBatchResult,
@@ -55,6 +56,7 @@ __all__ = [
     "TabularMetadataContext",
     "TabularMetadataProjection",
     "TabularMetadataProjector",
+    "TabularProjectionError",
     "AnnDataMetadataBatchResult",
     "AnnDataMetadataExportResult",
     "JSONDataOutputOrchestrator",
