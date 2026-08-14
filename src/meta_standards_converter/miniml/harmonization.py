@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, MutableMapping, MutableSequence, Sequence
 
 
 _HZ_PATTERN = re.compile(
@@ -211,6 +211,67 @@ def next_harmonized_index(
     return index
 
 
+def append_harmonized_value(
+    destination: MutableMapping[str, Any] | MutableSequence[MutableMapping[str, Any]],
+    value: HarmonizedValue,
+    *,
+    name_key: str | None = None,
+) -> HarmonizedValue:
+    """Validate and append one harmonized group without replacing raw evidence.
+
+    Mapping destinations receive flat ``hz_*`` members. Sequence destinations
+    receive named rows and therefore require ``name_key`` to be ``"name"`` or
+    ``"tag"``. Exact semantic duplicates are idempotent; distinct values for
+    the same field receive the next available aligned parenthesized index.
+    """
+
+    if not isinstance(value, HarmonizedValue):
+        raise TypeError("value must be a HarmonizedValue")
+    if isinstance(destination, MutableMapping):
+        if name_key is not None:
+            raise _model_error("name_key is only valid for named-row destinations")
+        existing = iter_harmonized_values(destination)
+    elif isinstance(destination, MutableSequence):
+        if name_key not in {"name", "tag"}:
+            raise _model_error(
+                "name_key must be 'name' or 'tag' for named-row destinations"
+            )
+        existing = iter_harmonized_values(destination)
+    else:
+        raise TypeError("destination must be a mutable mapping or named-row sequence")
+
+    identity = (
+        value.field,
+        value.value,
+        value.term_source_ref,
+        value.term_accession_number,
+        value.hierarchy_depth,
+    )
+    for item in existing:
+        if (
+            item.field,
+            item.value,
+            item.term_source_ref,
+            item.term_accession_number,
+            item.hierarchy_depth,
+        ) == identity:
+            return item
+
+    appended = HarmonizedValue(
+        field=value.field,
+        value=value.value,
+        term_source_ref=value.term_source_ref,
+        term_accession_number=value.term_accession_number,
+        hierarchy_depth=value.hierarchy_depth,
+        index=next_harmonized_index(existing, field=value.field),
+    )
+    if isinstance(destination, MutableMapping):
+        destination.update(appended.to_mapping())
+    else:
+        destination.extend(named_harmonized_rows([appended], name_key=name_key))
+    return appended
+
+
 def harmonized_value_mappings(
     value: Mapping[str, Any] | Sequence[Mapping[str, Any]] | None,
 ) -> tuple[dict[str, Any], ...]:
@@ -219,6 +280,7 @@ def harmonized_value_mappings(
 
 __all__ = [
     "HarmonizedValue",
+    "append_harmonized_value",
     "harmonized_mapping",
     "harmonized_value_mappings",
     "is_harmonized_key",

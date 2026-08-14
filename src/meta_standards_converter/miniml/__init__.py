@@ -51,6 +51,7 @@ from .model import (
 from .migration import MINiMLMigrationResult, MINiMLV1Migrator, MINiMLV2Migrator
 from .harmonization import (
     HarmonizedValue,
+    append_harmonized_value,
     harmonized_mapping,
     harmonized_value_mappings,
     is_harmonized_key,
@@ -82,6 +83,7 @@ __all__ = [
     "FASTQFile",
     "InstrumentModel",
     "HarmonizedValue",
+    "append_harmonized_value",
     "MINiMLModelError",
     "MINiMLPackage",
     "MINiMLValidationIssue",

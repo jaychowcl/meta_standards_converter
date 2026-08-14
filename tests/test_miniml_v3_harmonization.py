@@ -15,6 +15,7 @@ from meta_standards_converter.miniml import (
     MINiMLCodec,
     MINiMLModelError,
     HarmonizedValue,
+    append_harmonized_value,
     iter_harmonized_values,
     parse_harmonized_mapping,
 )
@@ -168,3 +169,83 @@ def test_v3_rejects_annotation_objects() -> None:
 
     with pytest.raises(MINiMLModelError, match="annotations"):
         MINiMLCodec().decode(package)
+
+
+def test_append_harmonized_value_allocates_aligned_mapping_collision() -> None:
+    destination = {
+        "value": "IPF",
+        "hz_disease": "idiopathic pulmonary fibrosis",
+        "hz_disease_id": "MONDO:0002771",
+        "hz_disease_onto": "MONDO",
+        "hz_disease_hierarchy_depth": 0,
+    }
+
+    appended = append_harmonized_value(
+        destination,
+        HarmonizedValue(
+            field="disease",
+            value="pulmonary fibrosis",
+            term_accession_number="MONDO:0003782",
+            term_source_ref="MONDO",
+            hierarchy_depth=1,
+        ),
+    )
+
+    assert appended.index == 1
+    assert destination["hz_disease(1)"] == "pulmonary fibrosis"
+    assert destination["hz_disease_id(1)"] == "MONDO:0003782"
+    assert destination["hz_disease_onto(1)"] == "MONDO"
+    assert destination["hz_disease_hierarchy_depth(1)"] == 1
+
+
+def test_append_harmonized_value_writes_named_rows_and_reuses_exact_identity() -> None:
+    destination = [
+        {"tag": "disease", "value": "IPF"},
+        {"tag": "hz_disease", "value": "idiopathic pulmonary fibrosis"},
+        {"tag": "hz_disease_id", "value": "MONDO:0002771"},
+        {"tag": "hz_disease_onto", "value": "MONDO"},
+        {"tag": "hz_disease_hierarchy_depth", "value": 0},
+    ]
+    candidate = HarmonizedValue(
+        field="disease",
+        value="pulmonary fibrosis",
+        term_accession_number="MONDO:0003782",
+        term_source_ref="MONDO",
+        hierarchy_depth=1,
+    )
+
+    first = append_harmonized_value(destination, candidate, name_key="tag")
+    second = append_harmonized_value(destination, candidate, name_key="tag")
+
+    assert first == second
+    assert first.index == 1
+    assert (
+        destination.count(
+            {"tag": "hz_disease(1)", "value": "pulmonary fibrosis"}
+        )
+        == 1
+    )
+    assert {row["tag"] for row in destination if row["tag"].startswith("hz_disease")} == {
+        "hz_disease",
+        "hz_disease_id",
+        "hz_disease_onto",
+        "hz_disease_hierarchy_depth",
+        "hz_disease(1)",
+        "hz_disease_id(1)",
+        "hz_disease_onto(1)",
+        "hz_disease_hierarchy_depth(1)",
+    }
+
+
+def test_append_harmonized_value_rejects_malformed_existing_groups() -> None:
+    with pytest.raises(MINiMLModelError, match="without a corresponding value"):
+        append_harmonized_value(
+            {"value": "IPF", "hz_disease_id": "MONDO:1"},
+            HarmonizedValue(field="disease", value="fibrosis"),
+        )
+
+    with pytest.raises(MINiMLModelError, match="name_key"):
+        append_harmonized_value(
+            [{"name": "disease", "value": "IPF"}],
+            HarmonizedValue(field="disease", value="fibrosis"),
+        )

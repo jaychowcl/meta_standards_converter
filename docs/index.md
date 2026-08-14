@@ -162,8 +162,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: miniml-package-model
   title: MSC MINiML 3.0 package API
   anchor: miniml-package-model
-  purpose: Defines the immutable Python model, 3.0 codec, v2 migration, strict hz validation, projector iterators, and compatibility diagnostics.
-  keywords: MSC 5, MINiML 3.0, MINiMLPackage, MINiMLCodec, MINiMLV2Migrator, HarmonizedValue, hz_disease, collision parentheses, raw preservation, source documents
+  purpose: Defines the immutable Python model, 3.0 codec, v2 migration, strict hz validation, projector iterators, the shared append writer, and compatibility diagnostics.
+  keywords: MSC 5, MINiML 3.0, MINiMLPackage, MINiMLCodec, MINiMLV2Migrator, HarmonizedValue, append_harmonized_value, hz_disease, collision parentheses, raw preservation, source documents
   link: [Open section](codebase.md#miniml-package-model)
 
 ## Workflow routes

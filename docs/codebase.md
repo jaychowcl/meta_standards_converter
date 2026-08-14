@@ -1010,7 +1010,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `4.0.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `5.1.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 1.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -1509,6 +1509,11 @@ Harmonized evidence is stored beside the raw occurrence, never in an
 rows, while ontology/value objects store the same keys as members. Every
 companion requires a value. `HarmonizedValue`, `iter_harmonized_values`, and
 the mapping helpers are the shared validated projector interface.
+`append_harmonized_value(destination, value, *, name_key=None)` is the shared
+writer: it validates the existing destination, reuses an exact semantic
+identity, allocates the next free collision index for a distinct value, and
+writes aligned mapping members or `name`/`tag` rows without replacing raw
+evidence.
 
 `NamedValue` carries a
 typed ontology value, optional unit ontology, `unit_type`, and qualifier;
@@ -1559,6 +1564,7 @@ The complete qualified model API is
 `meta_standards_converter.miniml.codec.MINiMLCompatibilityError`, and
 `meta_standards_converter.miniml.codec.MINiMLDecodeResult`,
 `meta_standards_converter.miniml.harmonization.HarmonizedValue`,
+`meta_standards_converter.miniml.harmonization.append_harmonized_value`,
 `meta_standards_converter.miniml.harmonization.harmonized_mapping`,
 `meta_standards_converter.miniml.harmonization.harmonized_value_mappings`,
 `meta_standards_converter.miniml.harmonization.is_harmonized_key`,
