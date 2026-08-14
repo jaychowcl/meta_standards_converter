@@ -5,7 +5,7 @@
   "lock_scope": "External base and h5ad runtime dependencies.",
   "project": {
     "name": "meta-standards-converter",
-    "version": "4.0.0"
+    "version": "5.0.0"
   },
   "release_requirements": {
     "current_offline_advisory_snapshot": true,
