@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from __future__ import annotations
 
 from copy import deepcopy
@@ -6,6 +14,7 @@ import pytest
 
 from meta_standards_converter.miniml import (
     HarmonizedValue,
+    MINiMLCodec,
     MINiMLHarmonizationPatch,
     MINiMLModelError,
     apply_miniml_harmonization_patch,
@@ -79,6 +88,29 @@ def test_patch_31_applies_hz_values_and_retains_immutable_provenance() -> None:
     # the biological content now contains the values added by the first pass.
     assert apply_miniml_harmonization_patch(result, patch) == result
     assert source == _package()
+
+
+def test_provenance_index_canonicalizes_a_package_only_once(monkeypatch) -> None:
+    source = _package()
+    patch = MINiMLHarmonizationPatch(
+        base_sha256=miniml_source_fingerprint(source),
+        adds=(_operation(),),
+    )
+    result = apply_miniml_harmonization_patch(source, patch)
+    decode_calls = 0
+    original_decode = MINiMLCodec.decode
+
+    def counted_decode(self, *args, **kwargs):
+        nonlocal decode_calls
+        decode_calls += 1
+        return original_decode(self, *args, **kwargs)
+
+    monkeypatch.setattr(MINiMLCodec, "decode", counted_decode)
+
+    index = harmonization_provenance_index(result)
+
+    assert index["GSE1-S1"]["sample_disease_name"][0]["source_label"] == "ADPKD"
+    assert decode_calls == 1
 
 
 def test_patch_30_is_readable_and_has_no_source_provenance() -> None:

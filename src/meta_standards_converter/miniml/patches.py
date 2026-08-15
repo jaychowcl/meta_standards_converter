@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """MSC-owned harmonization patch and retained provenance contracts.
 
 Patch schema 3.1 adds bounded occurrence provenance to the schema 3.0
@@ -507,6 +515,12 @@ def iter_harmonization_patches(
     package: MINiMLPackage | Mapping[str, Any],
 ) -> tuple[dict[str, Any], ...]:
     mapping = _package_mapping(package)
+    return _harmonization_patches_from_mapping(mapping)
+
+
+def _harmonization_patches_from_mapping(
+    mapping: Mapping[str, Any],
+) -> tuple[dict[str, Any], ...]:
     extensions = mapping.get("extensions", {})
     retained = extensions.get(PATCH_EXTENSION_KEY) if isinstance(extensions, Mapping) else None
     if retained is None:
@@ -522,6 +536,19 @@ def iter_harmonization_operations(
     field: str | None = None,
 ) -> tuple[dict[str, Any], ...]:
     mapping = _package_mapping(package)
+    return _harmonization_operations_from_mapping(
+        mapping,
+        sample=sample,
+        field=field,
+    )
+
+
+def _harmonization_operations_from_mapping(
+    mapping: Mapping[str, Any],
+    *,
+    sample: str | int | None = None,
+    field: str | None = None,
+) -> tuple[dict[str, Any], ...]:
     sample_index: int | None = None
     if isinstance(sample, int):
         sample_index = sample
@@ -531,7 +558,7 @@ def iter_harmonization_operations(
                 sample_index = index
                 break
     result: list[dict[str, Any]] = []
-    for fragment in iter_harmonization_patches(mapping):
+    for fragment in _harmonization_patches_from_mapping(mapping):
         for operation in fragment["operations"]:
             path = str(operation["path"])
             if sample_index is not None and not path.startswith(f"/sample/{sample_index}/"):
@@ -551,7 +578,7 @@ def harmonization_provenance_index(
     mapping = _package_mapping(package)
     samples = mapping.get("sample", [])
     buckets: dict[str, dict[str, list[dict[str, Any]]]] = {}
-    for operation in iter_harmonization_operations(mapping):
+    for operation in _harmonization_operations_from_mapping(mapping):
         match = re.match(r"^/sample/([0-9]+)(?:/|$)", str(operation["path"]))
         if match is None:
             continue

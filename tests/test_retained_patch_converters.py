@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from __future__ import annotations
 
 import csv
@@ -127,4 +135,3 @@ def test_h5ad_and_self_contained_miniml_retain_applied_fragments(tmp_path) -> No
     assert json.loads(retained["patches_json"])[0]["status"] == "applied"
     miniml = json.loads(converted.uns["msc_miniml"]["packages_json"])
     assert miniml[0]["extensions"]["msc_harmonization"]["patches"]
-

@@ -1527,7 +1527,9 @@ application order under `extensions.msc_harmonization`. Fingerprints omit only
 that retained extension, so unrelated extensions remain identity-bearing and
 reapplication is idempotent. `iter_harmonization_patches`,
 `iter_harmonization_operations`, and `harmonization_provenance_index` provide
-one validated downstream view. Canonical package encoding also hoists every
+one validated downstream view after one canonical package decode; internal
+iteration reuses that mapping instead of recursively decoding it. Canonical
+package encoding also hoists every
 legacy `series.extensions` entry to package `extensions`; identical duplicates
 deduplicate, conflicts fail closed, and the reserved `msc_harmonization` key
 cannot enter through the legacy series surface.
