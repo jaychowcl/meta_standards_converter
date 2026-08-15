@@ -170,6 +170,49 @@ def test_interpreted_evidence_is_auditable_but_not_an_exact_claim() -> None:
     assert index["GSE1-S1"]["sample_disease_name"][0]["match_kind"] == "interpreted"
 
 
+def test_named_row_additions_do_not_shift_later_patch_paths() -> None:
+    document = _package()
+    document["sample"][0]["channel"][0]["characteristics"] = [
+        {"name": "disease", "value": "ADPKD"},
+        {"name": "tissue", "value": "kidney"},
+    ]
+    disease = _operation(
+        path="/sample/0/channel/0/characteristics/0", label="ADPKD"
+    )
+    tissue = _operation(
+        path="/sample/0/channel/0/characteristics/1", label="kidney"
+    )
+    tissue["harmonized_value"] = {
+        "field": "tissue_name",
+        "value": "kidney",
+        "term_source_ref": "UBERON",
+        "term_accession_number": "UBERON:0002113",
+        "hierarchy_depth": 0,
+    }
+    patch = MINiMLHarmonizationPatch(
+        base_sha256=miniml_source_fingerprint(document),
+        adds=(disease, tissue),
+    )
+
+    result = apply_miniml_harmonization_patch(document, patch)
+
+    rows = result["sample"][0]["channel"][0]["characteristics"]
+    assert rows[0] == {"name": "disease", "value": "ADPKD"}
+    assert rows[1]["name"] == "hz_sample_disease_name"
+    assert next(row for row in rows if row.get("name") == "tissue") == {
+        "name": "tissue",
+        "value": "kidney",
+    }
+    assert next(row for row in rows if row.get("name") == "hz_tissue_name")[
+        "value"
+    ] == "kidney"
+    fragment = iter_harmonization_patches(result)[0]
+    assert [operation["path"] for operation in fragment["operations"]] == [
+        "/sample/0/channel/0/characteristics/0",
+        "/sample/0/channel/0/characteristics/1",
+    ]
+
+
 def test_multi_package_patch_partitions_and_rebases_paths() -> None:
     document = [_package("GSE1"), _package("GSE2", "Human control kidney")]
     operation_one = _operation(path="/0/sample/0/channel/0/source")
@@ -201,6 +244,33 @@ def test_multi_package_patch_partitions_and_rebases_paths() -> None:
         assert len(fragment["operations"]) == 1
         assert fragment["operations"][0]["path"] == "/sample/0/channel/0/source"
     assert result[1]["sample"][0]["channel"][0]["source"]["hz_sample_disease_status"] == "normal"
+
+
+def test_one_package_list_patch_rebases_its_explicit_package_index() -> None:
+    document = [_package("GSE1")]
+    operation = _operation(path="/0/sample/0/channel/0/source")
+    operation["source_evidence"]["source_field_path"] = (
+        "/0/sample/0/channel/0/source"
+    )
+    operation["source_evidence"]["source_value_path"] = (
+        "/0/sample/0/channel/0/source/value"
+    )
+    patch = MINiMLHarmonizationPatch(
+        base_sha256=miniml_source_fingerprint(document), adds=(operation,)
+    )
+
+    result = apply_miniml_harmonization_patch(document, patch)
+
+    occurrence = result[0]["sample"][0]["channel"][0]["source"]
+    assert occurrence["hz_sample_disease_name"] == (
+        "autosomal dominant polycystic kidney disease"
+    )
+    fragment = iter_harmonization_patches(result[0])[0]
+    assert fragment["package_index"] == 0
+    assert fragment["operations"][0]["path"] == "/sample/0/channel/0/source"
+    assert fragment["operations"][0]["source_evidence"]["source_value_path"] == (
+        "/sample/0/channel/0/source/value"
+    )
 
 
 def test_fingerprint_ignores_only_retained_harmonization_fragments() -> None:

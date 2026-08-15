@@ -1525,7 +1525,10 @@ deduplicates the occurrence-local `hz_*` group, partitions document patches
 into package-local fragments, rebases their pointers, and attaches them in
 application order under `extensions.msc_harmonization`. Fingerprints omit only
 that retained extension, so unrelated extensions remain identity-bearing and
-reapplication is idempotent. `iter_harmonization_patches`,
+reapplication is idempotent. Package-list paths always carry a leading package index, including lists with
+exactly one package; partitioning therefore follows the document shape rather
+than treating a one-package list as a package mapping.
+`iter_harmonization_patches`,
 `iter_harmonization_operations`, and `harmonization_provenance_index` provide
 one validated downstream view after one canonical package decode; internal
 iteration reuses that mapping instead of recursively decoding it. Canonical

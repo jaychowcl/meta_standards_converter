@@ -357,8 +357,8 @@ def _apply_add(document: Any, operation: Mapping[str, Any]) -> None:
     append_harmonized_value(destination, value)
 
 
-def _rebase_pointer(pointer: str, package_index: int, *, multi: bool) -> str:
-    if not multi:
+def _rebase_pointer(pointer: str, package_index: int, *, indexed: bool) -> str:
+    if not indexed:
         return pointer
     prefix = f"/{package_index}"
     if pointer == prefix:
@@ -371,28 +371,32 @@ def _rebase_pointer(pointer: str, package_index: int, *, multi: bool) -> str:
 
 
 def _partition_operations(
-    operations: Iterable[Mapping[str, Any]], *, package_count: int
+    operations: Iterable[Mapping[str, Any]],
+    *,
+    package_count: int,
+    indexed_document: bool,
 ) -> dict[int, list[dict[str, Any]]]:
-    multi = package_count > 1
     result: dict[int, list[dict[str, Any]]] = {}
     for operation in operations:
         path = str(operation["path"])
-        if multi:
+        if indexed_document:
             first = path.split("/", 2)[1] if path.startswith("/") else ""
             if not first.isdecimal() or int(first) >= package_count:
                 raise MINiMLModelError(
-                    "multi-package harmonization paths require a package index"
+                    "package-list harmonization paths require a package index"
                 )
             package_index = int(first)
         else:
             package_index = 0
         local = _plain(operation)
-        local["path"] = _rebase_pointer(path, package_index, multi=multi)
+        local["path"] = _rebase_pointer(
+            path, package_index, indexed=indexed_document
+        )
         evidence = local.get("source_evidence")
         if isinstance(evidence, dict):
             for key in ("source_field_path", "source_value_path"):
                 evidence[key] = _rebase_pointer(
-                    evidence[key], package_index, multi=multi
+                    evidence[key], package_index, indexed=indexed_document
                 )
         result.setdefault(package_index, []).append(local)
     return result
@@ -419,7 +423,11 @@ def apply_miniml_harmonization_patch(
     )
     canonical = canonical_miniml_document(document)
     packages = canonical if isinstance(canonical, list) else [canonical]
-    partitions = _partition_operations(typed.adds, package_count=len(packages))
+    partitions = _partition_operations(
+        typed.adds,
+        package_count=len(packages),
+        indexed_document=isinstance(canonical, list),
+    )
     if partitions and all(
         typed.patch_id in _package_patch_ids(packages[index]) for index in partitions
     ):
