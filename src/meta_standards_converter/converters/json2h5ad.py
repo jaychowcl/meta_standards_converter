@@ -33,13 +33,18 @@ from meta_standards_converter.runtime_contracts import (
     SafeErrorEnvelope,
     get_resource_profile,
 )
-from meta_standards_converter.miniml import harmonized_value_mappings
+from meta_standards_converter.miniml import (
+    harmonized_value_mappings,
+    iter_harmonization_operations,
+    iter_harmonization_patches,
+)
 from .json_source import JSONPackageSource
 from .dataset_combination import (
     DatasetCombinationPolicy,
     DatasetCompatibilityError as _DatasetCompatibilityError,
 )
 from .mage_tab_projection import _parameter_rows, _parameter_summary
+from .harmonization_provenance import patch_provenance_columns
 from .miniml_metadata import MINiMLMetadataProvider, MINiMLMetadataService
 
 
@@ -1595,7 +1600,12 @@ class JSON2H5ADConverter:
                 sample_id=sample_id,
                 artifact_parent=out_path,
             )
-            self._attach_harmonization(adata, harmonization_resolution)
+            self._attach_harmonization(
+                adata,
+                harmonization_resolution,
+                packages=source_packages or packages,
+                sample_id=sample_id,
+            )
             self._ensure_incremental_observation_ids(
                 adata, sample_id, used_observation_ids
             )
@@ -2000,6 +2010,12 @@ class JSON2H5ADConverter:
                     (item.hierarchy_depth,) if item.hierarchy_depth is not None else ()
                 ),
             })
+        for key, value in patch_provenance_columns(
+            package,
+            sample,
+            occupied=set(canonical_values),
+        ).items():
+            canonical_values[key] = () if value is None else (value,)
         for key, values in canonical_values.items():
             adata.obs[key] = self._join_values(values)
         self._attach_sample_values(
@@ -2443,8 +2459,24 @@ class JSON2H5ADConverter:
                 "parameters": parameters,
             }
 
-    def _attach_harmonization(self, adata, resolution) -> None:
-        if resolution is None or not resolution.enabled:
+    def _attach_harmonization(
+        self,
+        adata,
+        resolution,
+        *,
+        packages: list[dict] | tuple[dict, ...] = (),
+        sample_id: str | None = None,
+    ) -> None:
+        fragments = []
+        operations = []
+        for package in packages:
+            if sample_id is not None and not self._package_has_sample(package, sample_id):
+                continue
+            fragments.extend(iter_harmonization_patches(package))
+            operations.extend(
+                iter_harmonization_operations(package, sample=sample_id)
+            )
+        if not fragments and (resolution is None or not resolution.enabled):
             return
         _anndata, _numpy, pandas, _sparse = self._scientific_modules()
         rows = [
@@ -2460,20 +2492,53 @@ class JSON2H5ADConverter:
                 ),
                 "status": item.status,
             }
-            for item in resolution.selections
+            for item in getattr(resolution, "selections", ())
         ]
         selections = pandas.DataFrame(rows, columns=(
             "sample_accession", "destination", "value", "id", "ontology",
             "source_field", "hierarchy_depth", "status",
         ))
         selections.index = [f"selection_{index:06d}" for index in range(len(selections))]
+        operation_rows = []
+        for item in operations:
+            value = item["harmonized_value"]
+            evidence = item.get("source_evidence") or {}
+            operation_rows.append({
+                "path": item["path"],
+                "field": value["field"],
+                "value": value["value"],
+                "id": value.get("term_accession_number") or "",
+                "ontology": value.get("term_source_ref") or "",
+                "hierarchy_depth": (
+                    value.get("hierarchy_depth")
+                    if value.get("hierarchy_depth") is not None
+                    else -1
+                ),
+                "source_field": evidence.get("source_field") or "",
+                "source_label": evidence.get("source_label") or "",
+                "source_path": evidence.get("source_value_path") or "",
+                "match_kind": evidence.get("match_kind") or "",
+                "patch_id": item["patch_id"],
+            })
+        operation_table = pandas.DataFrame(operation_rows, columns=(
+            "path", "field", "value", "id", "ontology", "hierarchy_depth",
+            "source_field", "source_label", "source_path", "match_kind",
+            "patch_id",
+        ))
+        operation_table.index = [
+            f"operation_{index:06d}" for index in range(len(operation_table))
+        ]
         adata.uns["msc_harmonization"] = {
             "schema_version": "1.0",
-            "enabled": True,
-            "applied": bool(resolution.applied),
-            "profile": dict(resolution.profile or {}),
+            "enabled": bool(resolution is not None and resolution.enabled),
+            "applied": bool(getattr(resolution, "applied", False)),
+            "profile": dict(getattr(resolution, "profile", None) or {}),
             "selections": selections,
-            "warnings": list(resolution.warnings),
+            "warnings": list(getattr(resolution, "warnings", ())),
+            "patches_json": json.dumps(
+                fragments, sort_keys=True, ensure_ascii=False
+            ),
+            "operations": operation_table,
         }
 
     def _package_has_sample(self, package: dict, sample_id: str) -> bool:

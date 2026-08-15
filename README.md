@@ -8,7 +8,7 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 5.1.0 retains MSC MINiML 3.0 as the strict immutable metadata model and
+Version 5.2.0 retains MSC MINiML 3.0 as the strict immutable metadata model and
 adds the shared `append_harmonized_value(...)` writer for idempotent,
 validated, aligned `hz_*` collision groups while consuming
 Atlas document schema 1.0, H5AD metadata schema 1.0, and MINiML ledger schema
@@ -150,7 +150,7 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Row-aggregated `.obs.csv` without expression integration, optional single-sample `.var.csv` and `.uns.json`, plus a JSON result manifest |
 | `miniml-migrate` | Legacy 1.x or `miniml_schema_version: "2.0"` JSON | Strict MSC MINiML 3.0 JSON plus migration diagnostics |
 
-GEO and MAGE-TAB ingestion both produce MSC MINiML 3.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, occurrence-local harmonized values, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
+GEO and MAGE-TAB ingestion both produce MSC MINiML 3.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, occurrence-local harmonized values, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. Applied harmonization patch 3.1 fragments are retained under package `extensions.msc_harmonization` so exact authored spans and their occurrence paths survive conversion without becoming biological `hz_raw_*` fields. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
 
 Every newly parsed package carries `miniml_schema_version: "3.0"`. MSC owns
 this XSD-derived internal representation through the public
@@ -616,7 +616,7 @@ packages = geo2json().convert(
 )
 ```
 
-`geo2json.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in `series.extensions.publication_inheritance`.
+`geo2json.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in package `extensions.publication_inheritance`. Legacy nested `series.extensions` inputs remain readable, but canonical encoding hoists all entries to package scope and rejects conflicts.
 
 For callers that collect related studies directly,
 `GEOParser.parse_related_series(..., strict=False)` returns a list-compatible

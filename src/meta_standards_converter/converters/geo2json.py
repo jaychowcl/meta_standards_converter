@@ -243,7 +243,7 @@ class geo2json(JSONHandler):
             for accession, relation_type in parent_relations
             if accession == parent_accession
          )
-         extensions = series.get("extensions")
+         extensions = package.get("extensions")
          if extensions is None:
             extensions = {}
          if not isinstance(extensions, Mapping):
@@ -256,7 +256,7 @@ class geo2json(JSONHandler):
             "pubmed_ids": pubmed_ids,
          }
          series["pubmed_id"] = pubmed_ids
-         series["extensions"] = extensions
+         package["extensions"] = extensions
          hydrated.append(codec.decode(package).package)
       return hydrated
 

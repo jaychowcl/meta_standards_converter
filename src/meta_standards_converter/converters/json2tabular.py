@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
 from .json_source import JSONPackageSource
+from .harmonization_provenance import patch_provenance_columns
 from .mage_tab_projection import _parameter_summary
 from .miniml_metadata import MINiMLMetadataProvider, MINiMLMetadataService
 
@@ -186,6 +187,13 @@ class MSCMetadataProjector:
                 f"{prefix}.source_field": item.get("source_field"),
                 f"{prefix}.hierarchy_depth": item.get("hierarchy_depth"),
             })
+        values.update(
+            patch_provenance_columns(
+                context.package,
+                context.sample,
+                occupied=set(values),
+            )
+        )
         values.update({
             key: "; ".join(str(item) for item in items)
             for key, items in _parameter_summary(context.package, context.sample).items()

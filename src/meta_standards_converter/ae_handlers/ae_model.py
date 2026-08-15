@@ -13,6 +13,10 @@ from __future__ import annotations
 import copy
 import re
 
+from meta_standards_converter.converters.harmonization_provenance import (
+    patch_provenance_columns,
+)
+
 
 class MAGETabModelError(ValueError):
     """Raised when the enriched MAGE-TAB model contract is invalid."""
@@ -311,7 +315,59 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
     assay_table = _render_miniml_assay_paths(series.get("assay_paths"))
     if assay_table:
         _replace_row(rows, "SDRF File", [assay_table])
+    _insert_retained_patch_comments(package, rows)
     return rows
+
+
+def _insert_retained_patch_comments(package: dict, rows: list) -> None:
+    """Add applied-patch evidence comments without manufacturing attributes."""
+
+    sdrf_row = next(
+        (
+            row
+            for row in rows
+            if row and _normalized(row[0]) == _normalized("SDRF File")
+        ),
+        None,
+    )
+    if not sdrf_row or len(sdrf_row) < 2 or not isinstance(sdrf_row[1], list):
+        return
+    table = sdrf_row[1]
+    if not table or not isinstance(table[0], list):
+        return
+    samples = [item for item in package.get("sample", []) if isinstance(item, dict)]
+    row_columns = [patch_provenance_columns(package, sample) for sample in samples]
+    union: list[str] = []
+    for columns in row_columns:
+        for key in columns:
+            if key not in union:
+                union.append(key)
+    if not union:
+        return
+
+    header = table[0]
+    characteristic_anchors = [
+        index
+        for index, label in enumerate(header)
+        if str(label).startswith("Characteristics[")
+    ]
+    anchor = characteristic_anchors[-1] if characteristic_anchors else len(header) - 1
+    while anchor + 1 < len(header) and header[anchor + 1] in {
+        "Term Source REF",
+        "Term Accession Number",
+    }:
+        anchor += 1
+    offset = anchor + 1
+    labels = [
+        "Comment[msc_harmonization_"
+        + key.removeprefix("msc.harmonization.").replace(".", "_")
+        + "]"
+        for key in union
+    ]
+    header[offset:offset] = labels
+    for row_index, row in enumerate(table[1:]):
+        columns = row_columns[row_index] if row_index < len(row_columns) else {}
+        row[offset:offset] = [columns.get(key, "") or "" for key in union]
 
 
 def _replace_row(rows: list, label: str, values: list) -> None:

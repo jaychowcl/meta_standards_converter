@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from functools import wraps
 import json
 import os
@@ -1491,6 +1491,23 @@ class MINiMLPackage(Mapping[str, Any]):
     extensions: Mapping[str, Any] = field(default_factory=dict)
     miniml_schema_version: str = MINIML_SCHEMA_VERSION
 
+    def __post_init__(self) -> None:
+        extensions = _plain(self.extensions)
+        for key, item in self.series.extras.items():
+            if key == "msc_harmonization":
+                raise MINiMLModelError(
+                    "msc_harmonization is reserved for package extensions"
+                )
+            plain_item = _plain(item)
+            if key in extensions and extensions[key] != plain_item:
+                raise MINiMLModelError(
+                    f"conflicting package and series extension {key!r}"
+                )
+            extensions[key] = plain_item
+        object.__setattr__(self, "extensions", _FrozenJSONMapping(extensions))
+        if self.series.extras:
+            object.__setattr__(self, "series", replace(self.series, extras={}))
+
     def __getitem__(self, key: str) -> Any:
         return self.to_mapping()[key]
 
@@ -1520,6 +1537,25 @@ class MINiMLPackage(Mapping[str, Any]):
         series = Series.from_mapping(data.get("series"))
         if not (isinstance(series.iid, str) and series.iid.strip()) and not any(item.value.strip() for item in series.accessions):
             raise MINiMLModelError("series requires iid or accession")
+        root_extensions = _plain(
+            _mapping(data.get("extensions", {}), "extensions")
+        )
+        for key, item in series.extras.items():
+            if key == "msc_harmonization":
+                raise MINiMLModelError(
+                    "msc_harmonization is reserved for package extensions"
+                )
+            plain_item = _plain(item)
+            if key in root_extensions and root_extensions[key] != plain_item:
+                raise MINiMLModelError(
+                    f"conflicting package and series extension {key!r}"
+                )
+            root_extensions[key] = plain_item
+        retained = root_extensions.get("msc_harmonization")
+        if retained is not None:
+            from .patches import validate_harmonization_extension_mapping
+
+            validate_harmonization_extension_mapping(retained)
         package = cls(
             series=series,
             source=SourceInfo.from_mapping(data.get("source")),
@@ -1528,7 +1564,7 @@ class MINiMLPackage(Mapping[str, Any]):
             contributors=_objects(data.get("contributor"), Contributor.from_mapping, "contributor"),
             platforms=_objects(data.get("platform"), Platform.from_mapping, "platform"),
             samples=_objects(data.get("sample"), Sample.from_mapping, "sample"),
-            extensions=_FrozenJSONMapping(_mapping(data.get("extensions", {}), "extensions")),
+            extensions=_FrozenJSONMapping(root_extensions),
         )
         package._raise_structural_errors()
         return package
@@ -1539,6 +1575,20 @@ class MINiMLPackage(Mapping[str, Any]):
             return cls.from_mapping(json.load(handle))
 
     def to_mapping(self) -> dict[str, Any]:
+        extensions = _plain(self.extensions)
+        for key, item in self.series.extras.items():
+            if key == "msc_harmonization":
+                raise MINiMLModelError(
+                    "msc_harmonization is reserved for package extensions"
+                )
+            plain_item = _plain(item)
+            if key in extensions and extensions[key] != plain_item:
+                raise MINiMLModelError(
+                    f"conflicting package and series extension {key!r}"
+                )
+            extensions[key] = plain_item
+        series = self.series.to_mapping()
+        series.pop("extensions", None)
         result: dict[str, Any] = {
             "miniml_schema_version": self.miniml_schema_version,
             "source": self.source.to_mapping(),
@@ -1547,10 +1597,10 @@ class MINiMLPackage(Mapping[str, Any]):
             "contributor": [_plain(item) for item in self.contributors],
             "platform": [_plain(item) for item in self.platforms],
             "sample": [_plain(item) for item in self.samples],
-            "series": self.series.to_mapping(),
+            "series": series,
         }
-        if self.extensions:
-            result["extensions"] = _plain(self.extensions)
+        if extensions:
+            result["extensions"] = extensions
         return result
 
     def dump(self, path: str | Path) -> None:

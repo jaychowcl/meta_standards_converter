@@ -714,7 +714,7 @@ GSE -> fetch --failure--> exception
    unchanged. This lookup does not recursively traverse related studies or add the
    parent as another output package.
 4. Inherited publication provenance is retained under
-   `series.extensions.publication_inheritance`; the ordinary PubMed enricher then
+   package `extensions.publication_inheritance`; the ordinary PubMed enricher then
    resolves title, DOI, authors, and status from the inherited identifier.
 5. `enrich=False` bypasses parent-publication, PubMed, and SRA/ENA enrichment.
 6. `json2file` creates the output directory and writes `{GSE}.json` when requested.
@@ -1010,7 +1010,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `5.1.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `5.2.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 1.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -1515,6 +1515,32 @@ identity, allocates the next free collision index for a distinct value, and
 writes aligned mapping members or `name`/`tag` rows without replacing raw
 evidence.
 
+MSC 5.2 adds the generic `MINiMLHarmonizationPatch` 3.1 contract without
+changing the MINiML 3.0 discriminator. An operation contains an occurrence
+path, a typed harmonized value and optional bounded source evidence. The
+`exact_value` and `exact_span` claims are Unicode-normalized and revalidated at
+their source value pointer; `interpreted` evidence remains auditable but does
+not claim literal authorship. `apply_miniml_harmonization_patch` writes or
+deduplicates the occurrence-local `hz_*` group, partitions document patches
+into package-local fragments, rebases their pointers, and attaches them in
+application order under `extensions.msc_harmonization`. Fingerprints omit only
+that retained extension, so unrelated extensions remain identity-bearing and
+reapplication is idempotent. `iter_harmonization_patches`,
+`iter_harmonization_operations`, and `harmonization_provenance_index` provide
+one validated downstream view. Canonical package encoding also hoists every
+legacy `series.extensions` entry to package `extensions`; identical duplicates
+deduplicate, conflicts fail closed, and the reserved `msc_harmonization` key
+cannot enter through the legacy series surface.
+
+Generic converters expose this evidence rather than using it as an implicit
+replacement policy. TSV/CSV emits deterministic indexed
+`msc.harmonization.<field>.*` columns, MAGE-TAB adds machine-readable adjacent
+`Comment[msc_harmonization_*]` columns without synthesizing a new
+`Characteristics[...]`, and H5AD/obs carries the fragment ledger in
+`uns["msc_harmonization"]` while the self-contained package remains in
+`uns["msc_miniml"]`. The opt-in `harmonization_overrides` policy remains a
+separate contract.
+
 `NamedValue` carries a
 typed ontology value, optional unit ontology, `unit_type`, and qualifier;
 `Variable.type` is an ontology value so factor type source/accession companions
@@ -1572,7 +1598,16 @@ The complete qualified model API is
 `meta_standards_converter.miniml.harmonization.named_harmonized_rows`,
 `meta_standards_converter.miniml.harmonization.next_harmonized_index`,
 `meta_standards_converter.miniml.harmonization.parse_harmonized_key`, and
-`meta_standards_converter.miniml.harmonization.parse_harmonized_mapping`.
+`meta_standards_converter.miniml.harmonization.parse_harmonized_mapping`,
+`meta_standards_converter.miniml.patches.MINiMLHarmonizationPatch`,
+`meta_standards_converter.miniml.patches.canonical_miniml_document`,
+`meta_standards_converter.miniml.patches.miniml_source_fingerprint`,
+`meta_standards_converter.miniml.patches.apply_miniml_harmonization_patch`,
+`meta_standards_converter.miniml.patches.validate_harmonization_extension_mapping`,
+`meta_standards_converter.miniml.patches.iter_harmonization_patches`,
+`meta_standards_converter.miniml.patches.iter_harmonization_operations`,
+`meta_standards_converter.miniml.patches.harmonization_provenance_index`, and
+`meta_standards_converter.converters.harmonization_provenance.patch_provenance_columns`.
 
 The typed semantic additions are
 `meta_standards_converter.miniml.model.NamedComment`,

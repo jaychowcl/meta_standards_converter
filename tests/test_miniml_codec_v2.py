@@ -187,8 +187,11 @@ def test_direct_model_construction_deep_freezes_collections_and_extensions() -> 
     series_extensions["vendor"].append("mutated")
     samples.append(Sample(iid="GSM2"))
 
-    assert package.to_mapping()["extensions"] == {"nested": {"values": []}}
-    assert package.series.to_mapping()["extensions"] == {"vendor": []}
+    assert not package.series.extras
+    assert package.to_mapping()["extensions"] == {
+        "nested": {"values": []},
+        "vendor": [],
+    }
     assert tuple(item.iid for item in package.samples) == ("GSM1",)
     with pytest.raises(TypeError):
         package.extensions["new"] = "value"  # type: ignore[index]

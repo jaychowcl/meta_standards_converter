@@ -132,11 +132,13 @@ def test_complete_xsd_derived_package_round_trips_through_python_model() -> None
     assert isinstance(model.series, Series)
     assert model.series.sample_ref[0].ref == "GSM1"
     assert model.samples[0].channels[0].characteristics[0].name == "disease state"
-    assert model.series.extras["vendor_note"] == {"value": "preserved"}
+    assert not model.series.extras
+    assert model.extensions["vendor_note"] == {"value": "preserved"}
 
     canonical = model.to_mapping()
     assert canonical["miniml_schema_version"] == MINIML_SCHEMA_VERSION
-    assert canonical["series"]["extensions"]["vendor_note"] == {"value": "preserved"}
+    assert "extensions" not in canonical["series"]
+    assert canonical["extensions"]["vendor_note"] == {"value": "preserved"}
     assert MINiMLCodec().decode(canonical, strict=True).package == model
 
 

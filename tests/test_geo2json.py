@@ -148,7 +148,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
                 "source_series": "GSE2",
                 "pubmed_ids": ["12345"],
             },
-            result[0]["series"]["extensions"]["publication_inheritance"],
+            result[0]["extensions"]["publication_inheritance"],
         )
         self.assertEqual(
             [call(gse="GSE1"), call(gse="GSE2")],

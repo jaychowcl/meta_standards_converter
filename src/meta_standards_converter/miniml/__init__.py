@@ -67,6 +67,18 @@ from .codec import (
     MINiMLCompatibilityError,
     MINiMLDecodeResult,
 )
+from .patches import (
+    MINiMLHarmonizationPatch,
+    PATCH_EXTENSION_KEY,
+    PATCH_EXTENSION_SCHEMA_VERSION,
+    PATCH_SCHEMA_VERSION,
+    apply_miniml_harmonization_patch,
+    canonical_miniml_document,
+    harmonization_provenance_index,
+    iter_harmonization_operations,
+    iter_harmonization_patches,
+    miniml_source_fingerprint,
+)
 
 __all__ = [
     "MINIML_SCHEMA_VERSION",
@@ -83,6 +95,16 @@ __all__ = [
     "FASTQFile",
     "InstrumentModel",
     "HarmonizedValue",
+    "MINiMLHarmonizationPatch",
+    "PATCH_EXTENSION_KEY",
+    "PATCH_EXTENSION_SCHEMA_VERSION",
+    "PATCH_SCHEMA_VERSION",
+    "apply_miniml_harmonization_patch",
+    "canonical_miniml_document",
+    "harmonization_provenance_index",
+    "iter_harmonization_operations",
+    "iter_harmonization_patches",
+    "miniml_source_fingerprint",
     "append_harmonized_value",
     "MINiMLModelError",
     "MINiMLPackage",
