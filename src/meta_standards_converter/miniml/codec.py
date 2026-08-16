@@ -20,6 +20,9 @@ from uuid import uuid4
 from .model import MINiMLPackage, MINiMLValidationIssue
 
 
+MINIML_STRICT_COMPATIBILITY_POLICY_VERSION = "miniml-3.0-source-compat-v1"
+
+
 class MINiMLCompatibilityError(ValueError):
     """Compatibility diagnostics were promoted to a decoding failure."""
 
@@ -42,6 +45,43 @@ class MINiMLBatchDecodeResult:
 
 
 class MINiMLCodec:
+    @staticmethod
+    def _is_source_compatible_sample_title_warning(
+        issue: MINiMLValidationIssue,
+        package: MINiMLPackage,
+    ) -> bool:
+        if (
+            issue.code != "xsd_uniqueness"
+            or issue.severity != "warning"
+            or not issue.path.startswith("/sample/")
+            or not issue.path.endswith("/title")
+        ):
+            return False
+        path_parts = issue.path.strip("/").split("/")
+        if len(path_parts) != 3 or path_parts[0] != "sample":
+            return False
+        try:
+            sample_index = int(path_parts[1])
+        except ValueError:
+            return False
+        if sample_index < 0 or sample_index >= len(package.samples):
+            return False
+        duplicate_title = package.samples[sample_index].title
+        if not duplicate_title:
+            return False
+        matching_samples = tuple(
+            sample for sample in package.samples if sample.title == duplicate_title
+        )
+        identifiers = tuple(sample.iid for sample in matching_samples)
+        return (
+            len(matching_samples) > 1
+            and all(
+                isinstance(identifier, str) and bool(identifier.strip())
+                for identifier in identifiers
+            )
+            and len(set(identifiers)) == len(identifiers)
+        )
+
     @staticmethod
     def migrate_v1(value: Mapping[str, Any]):
         """Migrate a legacy package without weakening the strict v3 decoder."""
@@ -67,7 +107,10 @@ class MINiMLCodec:
         diagnostics = (*migration_diagnostics, *package.validate())
         if strict and diagnostics:
             structural = tuple(
-                item for item in diagnostics if item.code != "schema_migrated"
+                item
+                for item in diagnostics
+                if item.code != "schema_migrated"
+                and not self._is_source_compatible_sample_title_warning(item, package)
             )
             if structural:
                 raise MINiMLCompatibilityError(structural)

@@ -6,13 +6,16 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
 
 from meta_standards_converter.miniml import (
+    MINIML_STRICT_COMPATIBILITY_POLICY_VERSION,
     MINIML_SCHEMA_VERSION,
     MINiMLCodec,
+    MINiMLCompatibilityError,
     MINiMLModelError,
     MINiMLPackage,
     Series,
@@ -124,6 +127,75 @@ def complete_package() -> dict:
             "extensions": {"vendor_note": {"value": "preserved"}},
         },
     }
+
+
+def duplicate_sample_title_package(*, second_iid: str | None = "GSM2") -> dict:
+    payload = complete_package()
+    second = deepcopy(payload["sample"][0])
+    if second_iid is None:
+        second.pop("iid", None)
+        second["accession"] = [{"database": "GEO", "value": "GSM2"}]
+    else:
+        second["iid"] = second_iid
+        second["accession"] = [{"database": "GEO", "value": second_iid}]
+    payload["sample"].append(second)
+    payload["series"]["sample_ref"].append({"ref": second_iid or "GSM2"})
+    return MINiMLPackage.from_mapping(payload).to_mapping()
+
+
+def test_strict_codec_accepts_source_duplicate_sample_titles_with_unique_iids() -> None:
+    canonical = duplicate_sample_title_package()
+
+    result = MINiMLCodec().decode(canonical, strict=True)
+
+    assert MINIML_STRICT_COMPATIBILITY_POLICY_VERSION == "miniml-3.0-source-compat-v1"
+    assert [(issue.code, issue.path, issue.severity) for issue in result.diagnostics] == [
+        ("xsd_uniqueness", "/sample/1/title", "warning")
+    ]
+    assert [sample.title for sample in result.package.samples] == [
+        "Sample one",
+        "Sample one",
+    ]
+    assert MINiMLCodec().encode(result.package) == canonical
+
+
+def test_strict_codec_rejects_duplicate_sample_titles_without_unique_iids() -> None:
+    canonical = duplicate_sample_title_package(second_iid=None)
+
+    with pytest.raises(MINiMLCompatibilityError) as caught:
+        MINiMLCodec().decode(canonical, strict=True)
+
+    assert {issue.code for issue in caught.value.diagnostics} == {
+        "unresolved_reference",
+        "xsd_uniqueness",
+    }
+
+
+def test_strict_codec_keeps_non_sample_title_diagnostics_fatal() -> None:
+    payload = complete_package()
+    duplicate_platform = deepcopy(payload["platform"][0])
+    duplicate_platform["iid"] = "GPL2"
+    duplicate_platform["accession"] = [{"database": "GEO", "value": "GPL2"}]
+    payload["platform"].append(duplicate_platform)
+    canonical = MINiMLPackage.from_mapping(payload).to_mapping()
+
+    with pytest.raises(MINiMLCompatibilityError) as caught:
+        MINiMLCodec().decode(canonical, strict=True)
+
+    assert [(issue.code, issue.path) for issue in caught.value.diagnostics] == [
+        ("xsd_uniqueness", "/platform/1/title")
+    ]
+
+
+def test_strict_codec_keeps_non_uniqueness_diagnostics_fatal() -> None:
+    payload = complete_package()
+    payload["platform"][0]["technology"] = "single-cell spatial sequencing"
+    canonical = MINiMLPackage.from_mapping(payload).to_mapping()
+
+    with pytest.raises(MINiMLCompatibilityError) as caught:
+        MINiMLCodec().decode(canonical, strict=True)
+
+    assert [issue.code for issue in caught.value.diagnostics] == ["xsd_enumeration"]
 
 
 def test_complete_xsd_derived_package_round_trips_through_python_model() -> None:

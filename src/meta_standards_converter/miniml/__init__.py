@@ -62,6 +62,7 @@ from .harmonization import (
     parse_harmonized_mapping,
 )
 from .codec import (
+    MINIML_STRICT_COMPATIBILITY_POLICY_VERSION,
     MINiMLBatchDecodeResult,
     MINiMLCodec,
     MINiMLCompatibilityError,
@@ -82,6 +83,7 @@ from .patches import (
 
 __all__ = [
     "MINIML_SCHEMA_VERSION",
+    "MINIML_STRICT_COMPATIBILITY_POLICY_VERSION",
     "AssayNode",
     "AssayPath",
     "Accession",

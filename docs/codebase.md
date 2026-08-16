@@ -1010,7 +1010,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `5.2.0` makes typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `5.2.1` makes typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 1.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -1485,8 +1485,14 @@ is deterministically migrated by `MINiMLV2Migrator`; `MINiMLV1Migrator` and the
 `miniml-migrate` command provide explicit one-way migration to 3.0. Canonical
 collections are always lists, while `series` remains a single object.
 `MINiMLCodec.decode`/`decode_many` return immutable packages plus structured
-compatibility diagnostics; strict mode promotes them to
-`MINiMLCompatibilityError`. `encode`/`encode_many` are the serializer boundary,
+compatibility diagnostics. Strict mode promotes blocking diagnostics to
+`MINiMLCompatibilityError`; policy `miniml-3.0-source-compat-v1` accepts only
+sample-title `xsd_uniqueness` warnings when every sample sharing that title has
+a non-empty unique iid. Accepted warnings remain in the decode result, titles
+remain byte-for-byte source faithful, and duplicate/missing identities plus all
+other diagnostics remain blocking. The public
+`MINIML_STRICT_COMPATIBILITY_POLICY_VERSION` constant identifies this policy
+for cache and runtime provenance. `encode`/`encode_many` are the serializer boundary,
 while `load`/`dump` provide deterministic, atomic UTF-8 JSON publication.
 `MINiMLPackage.from_mapping()` and `load()` remain direct model conveniences.
 Construction and codec encode/decode canonicalize and validate nested typed
