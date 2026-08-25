@@ -112,6 +112,9 @@ and does not automatically raise the conservative request rate.
 The same gate exposes a bounded one-at-a-time lease for model-provider keys, so
 composing libraries can serialize identical model calls without a service
 dependency or sharing credentials.
+Each requester exposes cumulative `provider_attempts`, `retry_count`, and
+`rate_wait_seconds` counters so composing one-shot workers can publish accurate
+rate-control summaries without logging request parameters.
 
 ## Quickstart
 

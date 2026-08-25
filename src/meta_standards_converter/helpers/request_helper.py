@@ -517,6 +517,9 @@ class RateLimitedRequester:
         self._event_emitter = event_emitter
         self._host_gate = host_gate or HostRequestGate.default()
         self._random_value = random_value
+        self.provider_attempts = 0
+        self.retry_count = 0
+        self.rate_wait_seconds = 0.0
 
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         """GET one URL under the process-wide host policy and bounded retries."""
@@ -537,13 +540,15 @@ class RateLimitedRequester:
             )
             try:
                 try:
-                    self._host_gate.wait(
+                    waited = self._host_gate.wait(
                         host,
                         min_interval_seconds=self.settings.request_delay,
                         max_wait_seconds=self.settings.max_inline_wait,
                         sleep=self._sleep,
                         clock=self._wall_clock,
                     )
+                    self.rate_wait_seconds += float(waited or 0)
+                    self.provider_attempts += 1
                     response = self._get(url, **kwargs)
                 finally:
                     self._release_host_slot(state)
@@ -567,6 +572,7 @@ class RateLimitedRequester:
                     delay_seconds=delay,
                     clock=self._wall_clock,
                 )
+                self.retry_count += 1
                 logger.info(
                     "HTTP retry service=%s host=%s exception=%s "
                     "next_attempt=%s delay_seconds=%.3f",
@@ -605,6 +611,7 @@ class RateLimitedRequester:
                 delay_seconds=delay,
                 clock=self._wall_clock,
             )
+            self.retry_count += 1
             logger.info(
                 "HTTP retry service=%s host=%s status=%s next_attempt=%s delay_seconds=%.3f",
                 self.service,

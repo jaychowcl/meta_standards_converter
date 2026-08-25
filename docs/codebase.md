@@ -2589,6 +2589,10 @@ Other helpers:
 - Retries `ConnectionError`, `Timeout`, and `ChunkedEncodingError` with the same
   bounded full-jitter policy and exact configured attempt count.
 - Raises the exhausted retry response through `response.raise_for_status()`.
+- Exposes cumulative `provider_attempts`, `retry_count`, and
+  `rate_wait_seconds` counters for the lifetime of the requester. Gate waits are
+  counted once at the actual provider-attempt boundary; cached work never
+  changes them.
 
 <a id="pubmed-fetcher"></a>
 ### `pubmed_handlers/pubmed_webfetcher.py`
@@ -2757,7 +2761,8 @@ Important test coverage:
 - `tests/test_miniml_enricher.py`: additive PubMed/SRA enrichment fields, deduplication, and fetch error tolerance.
 - `tests/test_request_helper.py`: timeout forwarding, cross-process host pacing
   and model-slot serialization, persisted cooldowns, retry statuses,
-  `Retry-After`, exponential full jitter, and exhausted retry errors.
+  `Retry-After`, exponential full jitter, exhausted retry errors, and request,
+  retry, and rate-wait counters.
 - `tests/test_geo_webfetcher.py`: GEO URL handling, requester delegation, and MINiML tarball extraction.
 - `tests/test_insdc_webfetcher.py`: SRA accession extraction, NCBI/ENA requester delegation, parsed SRA run records, and ENA fallback behavior.
 - `tests/test_pubmed_webfetcher.py`: PubMed ESummary requester delegation, parsing, publication status mapping, and IDF constructor delegation.

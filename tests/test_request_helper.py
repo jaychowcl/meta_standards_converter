@@ -441,6 +441,9 @@ class TestRateLimitedRequester(unittest.TestCase):
         self.assertEqual(200, result.status_code)
         self.assertEqual([2.0], fake_time.sleeps)
         self.assertEqual(2, get.call_count)
+        self.assertEqual(2, requester.provider_attempts)
+        self.assertEqual(1, requester.retry_count)
+        self.assertEqual(2.0, requester.rate_wait_seconds)
 
     def test_get_retries_transient_status_using_exponential_backoff(self):
         fake_time = FakeTime()
