@@ -99,6 +99,17 @@ docker build -t meta-standards-converter .
 
 The Python metadata converters do not require Docker. The project image supplies the scientific and workflow dependencies needed by `json2h5ad`, but raw Docker-profile processing also requires access to a Docker daemon.
 
+### Provider rate control
+
+All MSC HTTP attempts use one per-user, cross-process host gate. NCBI starts are
+spaced by 0.5 seconds; GEO FTP, BioStudies, and ENA starts are spaced by one
+second. Provider `Retry-After` cooldowns survive process exit, and a cooldown
+longer than the caller's inline wait budget is returned as deferred work rather
+than hidden by a long sleep. State contains only versioned timing values in an
+owner-only runtime directory; `SCIENTIFIC_PROVIDER_GATE_DIR` may select an
+explicit directory. `NCBI_API_KEY` is passed when present but is never logged
+and does not automatically raise the conservative request rate.
+
 ## Quickstart
 
 ### CLI quickstart

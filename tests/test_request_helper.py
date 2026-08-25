@@ -8,10 +8,14 @@
 # =============================================================================
 import os
 import inspect
+import multiprocessing
+from pathlib import Path
 import sys
+import tempfile
 import threading
+import time
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import requests
 
@@ -22,10 +26,19 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.helpers.request_helper import (  # noqa: E402
+    HostRequestCooldownDeferred,
+    HostRequestGate,
     NCBIApplicationIdentity,
     RateLimitedRequester,
     RequestSettings,
 )
+
+
+def _take_host_gate_slot(directory, barrier, output):
+    gate = HostRequestGate(directory=directory)
+    barrier.wait(timeout=5)
+    gate.wait("eutils.ncbi.nlm.nih.gov", min_interval_seconds=0.05)
+    output.put(time.time())
 
 
 class FakeTime:
@@ -62,11 +75,165 @@ class TestRateLimitedRequester(unittest.TestCase):
             {"tool": "fibrosis_atlas", "email": "atlas@example.org"},
             identity.params(),
         )
+        secret_identity = NCBIApplicationIdentity(
+            tool="fibrosis_atlas",
+            email="atlas@example.org",
+            api_key="do-not-render",
+        )
+        self.assertEqual(
+            {
+                "tool": "fibrosis_atlas",
+                "email": "atlas@example.org",
+                "api_key": "do-not-render",
+            },
+            secret_identity.params(),
+        )
+        self.assertNotIn("do-not-render", repr(secret_identity))
+        with self.assertLogs(
+            "meta_standards_converter.helpers.request_helper",
+            level="WARNING",
+        ) as logs:
+            unidentified = NCBIApplicationIdentity(
+                tool="fibrosis_atlas",
+                email=None,
+            )
+            self.assertEqual({"tool": "fibrosis_atlas"}, unidentified.params())
+            unidentified.params()
+        self.assertEqual(1, sum("contact email" in line for line in logs.output))
         with self.assertRaisesRegex(ValueError, "email"):
             NCBIApplicationIdentity(tool="fibrosis_atlas", email="not-an-email")
 
     def setUp(self):
+        self._gate_directory = tempfile.TemporaryDirectory()
+        self._old_gate_directory = os.environ.get("SCIENTIFIC_PROVIDER_GATE_DIR")
+        os.environ["SCIENTIFIC_PROVIDER_GATE_DIR"] = self._gate_directory.name
+        HostRequestGate.reset_default()
         RateLimitedRequester.reset_service_state()
+
+    def tearDown(self):
+        HostRequestGate.reset_default()
+        if self._old_gate_directory is None:
+            os.environ.pop("SCIENTIFIC_PROVIDER_GATE_DIR", None)
+        else:
+            os.environ["SCIENTIFIC_PROVIDER_GATE_DIR"] = self._old_gate_directory
+        self._gate_directory.cleanup()
+
+    def test_host_gate_paces_separate_processes(self):
+        context = multiprocessing.get_context("fork")
+        barrier = context.Barrier(2)
+        output = context.Queue()
+        processes = [
+            context.Process(
+                target=_take_host_gate_slot,
+                args=(self._gate_directory.name, barrier, output),
+            )
+            for _ in range(2)
+        ]
+
+        for process in processes:
+            process.start()
+        timestamps = sorted(output.get(timeout=5) for _ in processes)
+        for process in processes:
+            process.join(timeout=5)
+            self.assertEqual(0, process.exitcode)
+
+        self.assertGreaterEqual(timestamps[1] - timestamps[0], 0.04)
+
+    def test_host_gate_persists_cooldown_across_instances(self):
+        fake_time = FakeTime()
+        first = HostRequestGate(directory=self._gate_directory.name)
+        second = HostRequestGate(directory=self._gate_directory.name)
+
+        first.defer(
+            "api.example.org",
+            delay_seconds=12,
+            clock=fake_time.clock,
+        )
+        waited = second.wait(
+            "api.example.org",
+            min_interval_seconds=0.5,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+
+        self.assertEqual(12, waited)
+        self.assertEqual([12], fake_time.sleeps)
+
+    def test_host_gate_falls_back_when_implicit_runtime_directory_is_read_only(self):
+        fallback = Path(self._gate_directory.name)
+        with (
+            patch.object(
+                HostRequestGate,
+                "default_directory",
+                return_value=Path("/read-only/runtime/gates"),
+            ),
+            patch.object(HostRequestGate, "fallback_directory", return_value=fallback),
+            patch.object(
+                HostRequestGate,
+                "_validated_directory",
+                side_effect=[OSError("read only"), fallback],
+            ) as validate,
+        ):
+            gate = HostRequestGate()
+
+        self.assertEqual(fallback, gate.directory)
+        self.assertEqual(2, validate.call_count)
+
+    def test_host_gate_does_not_fall_back_from_an_explicit_directory(self):
+        explicit = Path(self._gate_directory.name)
+        with patch.object(
+            HostRequestGate,
+            "_validated_directory",
+            side_effect=OSError("read only"),
+        ) as validate:
+            with self.assertRaisesRegex(OSError, "read only"):
+                HostRequestGate(directory=explicit)
+
+        validate.assert_called_once_with(explicit)
+
+    def test_retry_after_http_date_is_honoured_without_eight_second_cap(self):
+        fake_time = FakeTime()
+        get = Mock(side_effect=[
+            response(
+                429,
+                headers={"Retry-After": "Thu, 01 Jan 1970 00:00:20 GMT"},
+            ),
+            response(200),
+        ])
+        requester = RateLimitedRequester(
+            service="retry_after_date_service",
+            settings=RequestSettings(request_delay=0, max_retries=1),
+            get=get,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+
+        result = requester.get("https://example.org/data")
+
+        self.assertEqual(200, result.status_code)
+        self.assertEqual([20.0], fake_time.sleeps)
+
+    def test_retry_after_beyond_inline_budget_defers_without_second_request(self):
+        fake_time = FakeTime()
+        get = Mock(return_value=response(429, headers={"Retry-After": "60"}))
+        requester = RateLimitedRequester(
+            service="retry_after_deferred_service",
+            settings=RequestSettings(
+                request_delay=0,
+                max_retries=1,
+                max_inline_wait=30,
+            ),
+            get=get,
+            sleep=fake_time.sleep,
+            clock=fake_time.clock,
+        )
+
+        with self.assertRaises(HostRequestCooldownDeferred) as raised:
+            requester.get("https://deferred.example.org/data")
+
+        self.assertEqual(60, raised.exception.retry_at)
+        self.assertEqual(1, get.call_count)
+        self.assertEqual([], fake_time.sleeps)
 
     def test_public_request_boundary_has_explicit_return_types(self):
         self.assertEqual(
@@ -77,6 +244,13 @@ class TestRateLimitedRequester(unittest.TestCase):
             inspect.signature(RateLimitedRequester.reset_service_state).return_annotation,
             "None",
         )
+
+    def test_default_retry_statuses_include_provider_throttling_not_plain_4xx(self):
+        statuses = RequestSettings().retry_statuses
+
+        self.assertTrue({403, 408, 425, 429, 500, 502, 503, 504} <= statuses)
+        self.assertNotIn(400, statuses)
+        self.assertNotIn(404, statuses)
 
     def test_get_applies_default_timeout(self):
         get = Mock(return_value=response())
@@ -242,6 +416,7 @@ class TestRateLimitedRequester(unittest.TestCase):
             get=get,
             sleep=fake_time.sleep,
             clock=fake_time.clock,
+            random_value=lambda: 1.0,
         )
 
         result = requester.get("https://example.org/data")
@@ -262,6 +437,7 @@ class TestRateLimitedRequester(unittest.TestCase):
             get=get,
             sleep=fake_time.sleep,
             clock=fake_time.clock,
+            random_value=lambda: 1.0,
         )
 
         with self.assertRaises(requests.HTTPError):
@@ -288,9 +464,11 @@ class TestRateLimitedRequester(unittest.TestCase):
                     get=get,
                     sleep=fake_time.sleep,
                     clock=fake_time.clock,
+                    random_value=lambda: 1.0,
                 )
 
-                result = requester.get("https://example.org/data")
+                host = exception_type.__name__.lower()
+                result = requester.get(f"https://{host}.example.org/data")
 
                 self.assertEqual(200, result.status_code)
                 self.assertEqual(3, get.call_count)
@@ -305,6 +483,7 @@ class TestRateLimitedRequester(unittest.TestCase):
             get=get,
             sleep=fake_time.sleep,
             clock=fake_time.clock,
+            random_value=lambda: 1.0,
         )
 
         with self.assertRaisesRegex(requests.Timeout, "still unavailable"):

@@ -287,9 +287,15 @@ database service, or plugin discovery mechanism is exposed.
 - `RateLimitedRequester` is the shared external-call boundary.
   `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
   apply repository-specific URL and response semantics.
+- `HostRequestGate` persists per-host request-start timestamps and provider
+  cooldowns under an owner-only per-user runtime directory. Its `flock`
+  boundary coordinates unrelated local processes as well as MSC instances;
+  an unavailable implicit XDG runtime path falls back to an owner-only `/tmp`
+  directory, while an explicit unsafe path still fails closed.
 - `NCBIApplicationIdentity` supplies validated application tool/contact
-  parameters to every PubMed/SRA E-utilities request without exposing the
-  contact value in logs.
+  parameters and an optional secret API key to every PubMed/SRA E-utilities
+  request without exposing their values in logs. A missing email warns once
+  and retains conservative pacing.
 - `OperationStatusV2`, `SafeErrorEnvelope`, and `ResourceProfile` are the
   shared status, persistence-safe error, and resource-policy vocabulary.
   `RetrievalService` consumes the resource profile behind the supported
@@ -661,6 +667,8 @@ follow this canonical overview.
   `meta_standards_converter.harmonizers.harmonizers.Harmonizer`,
   `meta_standards_converter.harmonizers.pubmed2ols.Pubmed2OLS`,
   `meta_standards_converter.helpers.json_helper.JSONHandler`,
+  `meta_standards_converter.helpers.request_helper.HostRequestCooldownDeferred`,
+  `meta_standards_converter.helpers.request_helper.HostRequestGate`,
   `meta_standards_converter.helpers.request_helper.NCBIApplicationIdentity`,
   `meta_standards_converter.helpers.request_helper.RequestSettings`,
   `meta_standards_converter.helpers.request_helper.RateLimitedRequester`,
@@ -2514,19 +2522,44 @@ Other helpers:
 
 `class NCBIApplicationIdentity`
 
-- Validates a 1-64 character NCBI tool identifier and a nonblank contact email.
-- `params() -> dict[str, str]` returns the exact `tool`/`email` parameters used
+- Validates a 1-64 character NCBI tool identifier, optional contact email, and
+  optional nonblank API-key token. The secret is excluded from `repr`.
+- `params() -> dict[str, str]` returns configured `tool`/`email`/`api_key`
+  parameters used
   by both NCBI fetchers. Defaults identify the released MSC application and its
-  public maintainer contact; callers may inject an approved replacement.
+  public maintainer contact; callers may inject an approved replacement. A
+  missing email emits one warning and does not relax conservative pacing.
 - Request telemetry contains service/host/attempt/status only and never logs
   these parameters.
+
+`class HostRequestCooldownDeferred`
+
+- Signals that a persisted provider cooldown exceeds the caller's inline wait
+  budget. `retry_at` is an absolute Unix timestamp suitable for a retryable
+  checkpoint; it is not a request URL or provider payload.
+
+`class HostRequestGate`
+
+- Normalizes a provider/model key and stores only versioned request-start and
+  cooldown timestamps in an owner-only state file selected by SHA-256.
+- Uses `flock` across processes and keeps the lock through the bounded wait and
+  timestamp update, so unrelated traces under the same Unix user share one
+  conservative start schedule.
+- Honors numeric and HTTP-date `Retry-After` values. A cooldown beyond
+  `max_wait_seconds` raises `HostRequestCooldownDeferred` instead of sleeping
+  past a worker's budget.
+- Uses `SCIENTIFIC_PROVIDER_GATE_DIR` when explicitly configured, otherwise an
+  XDG runtime directory when writable, with an owner-only per-user `/tmp`
+  fallback. Explicit invalid, unowned, or symbolic-link paths fail closed.
 
 `class RequestSettings`
 
 - Stores request behavior: `timeout`, `request_delay`, `max_in_flight`,
   `max_retries`, retry HTTP statuses, exponential backoff base, and maximum
-  backoff. Invalid time, delay, concurrency, or retry values fail at construction.
-- Defaults retry HTTP statuses to `{429, 500, 502, 503, 504}`.
+  backoff plus `max_inline_wait`. Invalid time, delay, concurrency, retry, or
+  wait values fail at construction.
+- Defaults retry HTTP statuses to `{403, 408, 425, 429, 500, 502, 503, 504}`;
+  ordinary non-throttling 4xx responses are not retried.
 
 `DEFAULT_REQUEST_SETTINGS`
 
@@ -2542,11 +2575,15 @@ Other helpers:
   or raises the exhausted HTTP/transport error.
 - `reset_service_state()` is a class-level test/operations hook that clears
   shared limiter timestamps; it mutates process-global requester state.
-- Maintains shared per-host limiter state, so separate fetcher instances and
-  different service labels targeting the same host respect the most conservative
-  registered delay and concurrency ceiling. Different hosts do not block one another.
-- Retries transient HTTP statuses. Numeric `Retry-After` headers control retry sleep; otherwise fallback delay is `min(0.5 * (2 ** attempt), 8.0)`.
-- Retries `ConnectionError`, `Timeout`, and `ChunkedEncodingError` with the same deterministic exponential schedule and exact configured attempt count.
+- Maintains process-local in-flight limits and delegates every actual request
+  attempt to `HostRequestGate`, so separate processes and libraries targeting
+  the same host share start pacing and cooldowns. Different hosts remain
+  independent.
+- Retries transient HTTP statuses. Numeric or HTTP-date `Retry-After` controls
+  the persisted cooldown; otherwise full jitter selects a value from zero to
+  `min(0.5 * (2 ** attempt), 8.0)`.
+- Retries `ConnectionError`, `Timeout`, and `ChunkedEncodingError` with the same
+  bounded full-jitter policy and exact configured attempt count.
 - Raises the exhausted retry response through `response.raise_for_status()`.
 
 <a id="pubmed-fetcher"></a>

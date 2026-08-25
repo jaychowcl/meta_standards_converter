@@ -120,8 +120,8 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: request-helper
   title: Host-aware request policy
   anchor: request-helper
-  purpose: Defines conservative provider defaults, process-wide hostname scheduling, in-flight limits, retries, and safe telemetry.
-  keywords: RateLimitedRequester, RequestSettings, NCBIApplicationIdentity, tool, email, contact, hostname, max_in_flight, request_delay, retry, 429
+  purpose: Defines conservative provider defaults, cross-process hostname scheduling and cooldowns, in-flight limits, bounded retries, and safe telemetry.
+  keywords: RateLimitedRequester, HostRequestGate, HostRequestCooldownDeferred, RequestSettings, NCBIApplicationIdentity, tool, email, api_key, hostname, flock, Retry-After, max_inline_wait, jitter, 403, 429
   link: [Open section](codebase.md#request-helper)
 
 - id: neutral-ae-construction-state
