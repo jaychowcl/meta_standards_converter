@@ -41,6 +41,19 @@ def _take_host_gate_slot(directory, barrier, output):
     output.put(time.time())
 
 
+def _hold_host_gate_lease(directory, barrier, output):
+    gate = HostRequestGate(directory=directory)
+    barrier.wait(timeout=5)
+    with gate.slot(
+        "model:vertex:project:location:model",
+        min_interval_seconds=0,
+        max_wait_seconds=2,
+    ):
+        output.put(("entered", os.getpid(), time.time()))
+        time.sleep(0.1)
+        output.put(("exited", os.getpid(), time.time()))
+
+
 class FakeTime:
     def __init__(self):
         self.now = 0
@@ -138,6 +151,32 @@ class TestRateLimitedRequester(unittest.TestCase):
             self.assertEqual(0, process.exitcode)
 
         self.assertGreaterEqual(timestamps[1] - timestamps[0], 0.04)
+
+    def test_host_gate_slot_serializes_cross_process_model_calls(self):
+        context = multiprocessing.get_context("fork")
+        barrier = context.Barrier(2)
+        output = context.Queue()
+        processes = [
+            context.Process(
+                target=_hold_host_gate_lease,
+                args=(self._gate_directory.name, barrier, output),
+            )
+            for _ in range(2)
+        ]
+
+        for process in processes:
+            process.start()
+        events = [output.get(timeout=5) for _ in range(4)]
+        for process in processes:
+            process.join(timeout=5)
+            self.assertEqual(0, process.exitcode)
+
+        intervals = {}
+        for kind, pid, timestamp in events:
+            intervals.setdefault(pid, {})[kind] = timestamp
+        self.assertEqual(2, len(intervals))
+        ordered = sorted(intervals.values(), key=lambda item: item["entered"])
+        self.assertGreaterEqual(ordered[1]["entered"], ordered[0]["exited"])
 
     def test_host_gate_persists_cooldown_across_instances(self):
         fake_time = FakeTime()

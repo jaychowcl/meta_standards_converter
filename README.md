@@ -109,6 +109,9 @@ than hidden by a long sleep. State contains only versioned timing values in an
 owner-only runtime directory; `SCIENTIFIC_PROVIDER_GATE_DIR` may select an
 explicit directory. `NCBI_API_KEY` is passed when present but is never logged
 and does not automatically raise the conservative request rate.
+The same gate exposes a bounded one-at-a-time lease for model-provider keys, so
+composing libraries can serialize identical model calls without a service
+dependency or sharing credentials.
 
 ## Quickstart
 

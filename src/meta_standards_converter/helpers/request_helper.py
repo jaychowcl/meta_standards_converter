@@ -201,6 +201,38 @@ class HostRequestGate:
             self._write_state(handle, state)
             return float(state["cooldown_until"])
 
+    def slot(
+        self,
+        key: str,
+        *,
+        min_interval_seconds: int | float,
+        max_wait_seconds: int | float | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+        monotonic_clock: Callable[[], float] = time.monotonic,
+        wall_clock: Callable[[], float] = time.time,
+        cancelled: Callable[[], bool] | None = None,
+    ):
+        """Return a one-at-a-time lease that also applies start pacing."""
+
+        return _HostRequestSlot(
+            self,
+            self._normalized_key(key),
+            min_interval_seconds=self._nonnegative_seconds(
+                min_interval_seconds, name="minimum request interval"
+            ),
+            max_wait_seconds=(
+                None
+                if max_wait_seconds is None
+                else self._nonnegative_seconds(
+                    max_wait_seconds, name="maximum gate wait"
+                )
+            ),
+            sleep=sleep,
+            monotonic_clock=monotonic_clock,
+            wall_clock=wall_clock,
+            cancelled=cancelled,
+        )
+
     @staticmethod
     def retry_after_seconds(
         value: Any,
@@ -250,6 +282,10 @@ class HostRequestGate:
     def _state_path(self, key: str) -> Path:
         digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
         return self.directory / f"host-{digest}.json"
+
+    def _slot_path(self, key: str) -> Path:
+        digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+        return self.directory / f"slot-{digest}.lock"
 
     @staticmethod
     def _read_state(handle) -> dict[str, Any]:
@@ -306,6 +342,96 @@ class _LockedGateState:
         if self.handle is not None:
             fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
             self.handle.close()
+
+
+class _HostRequestSlot:
+    POLL_SECONDS = 0.05
+
+    def __init__(
+        self,
+        gate: HostRequestGate,
+        key: str,
+        *,
+        min_interval_seconds: float,
+        max_wait_seconds: float | None,
+        sleep: Callable[[float], None],
+        monotonic_clock: Callable[[], float],
+        wall_clock: Callable[[], float],
+        cancelled: Callable[[], bool] | None,
+    ) -> None:
+        self.gate = gate
+        self.key = key
+        self.min_interval_seconds = min_interval_seconds
+        self.max_wait_seconds = max_wait_seconds
+        self.sleep = sleep
+        self.monotonic_clock = monotonic_clock
+        self.wall_clock = wall_clock
+        self.cancelled = cancelled
+        self.handle = None
+
+    def __enter__(self) -> float:
+        started = float(self.monotonic_clock())
+        flags = os.O_CREAT | os.O_RDWR
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        descriptor = os.open(self.gate._slot_path(self.key), flags, 0o600)
+        self.handle = os.fdopen(descriptor, "r+b")
+        try:
+            while True:
+                if self.cancelled is not None and self.cancelled():
+                    raise InterruptedError("provider request cancelled before start")
+                try:
+                    fcntl.flock(
+                        self.handle.fileno(),
+                        fcntl.LOCK_EX | fcntl.LOCK_NB,
+                    )
+                    break
+                except BlockingIOError:
+                    elapsed = float(self.monotonic_clock()) - started
+                    if (
+                        self.max_wait_seconds is not None
+                        and elapsed >= self.max_wait_seconds
+                    ):
+                        raise HostRequestCooldownDeferred(
+                            self.key,
+                            float(self.wall_clock()),
+                        )
+                    remaining = (
+                        self.POLL_SECONDS
+                        if self.max_wait_seconds is None
+                        else min(
+                            self.POLL_SECONDS,
+                            max(self.max_wait_seconds - elapsed, 0.0),
+                        )
+                    )
+                    self.sleep(remaining)
+
+            lease_wait = float(self.monotonic_clock()) - started
+            remaining_wait = (
+                None
+                if self.max_wait_seconds is None
+                else max(self.max_wait_seconds - lease_wait, 0.0)
+            )
+            rate_wait = self.gate.wait(
+                self.key,
+                min_interval_seconds=self.min_interval_seconds,
+                max_wait_seconds=remaining_wait,
+                sleep=self.sleep,
+                clock=self.wall_clock,
+            )
+            return lease_wait + rate_wait
+        except BaseException:
+            self._release()
+            raise
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        self._release()
+
+    def _release(self) -> None:
+        if self.handle is not None:
+            fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
+            self.handle.close()
+            self.handle = None
 
 
 @dataclass(frozen=True)

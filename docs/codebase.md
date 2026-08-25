@@ -2545,6 +2545,10 @@ Other helpers:
 - Uses `flock` across processes and keeps the lock through the bounded wait and
   timestamp update, so unrelated traces under the same Unix user share one
   conservative start schedule.
+- `slot(...)` adds a distinct one-at-a-time cross-process lease around a caller's
+  provider operation and applies the same start pacing after acquisition. It is
+  intended for model keys that must not overlap; cancellation while waiting
+  raises `InterruptedError`, and the lease always releases on context exit.
 - Honors numeric and HTTP-date `Retry-After` values. A cooldown beyond
   `max_wait_seconds` raises `HostRequestCooldownDeferred` instead of sleeping
   past a worker's budget.
@@ -2751,7 +2755,9 @@ Important test coverage:
 - `tests/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.
 - `tests/test_ae_sdrf_handlers.py`: SDRF graph rendering, source/comment/characteristic behavior, file classification, sequencing/array/single-cell/spatial handlers, SRA precedence warnings, and disabled greedy fallback comments.
 - `tests/test_miniml_enricher.py`: additive PubMed/SRA enrichment fields, deduplication, and fetch error tolerance.
-- `tests/test_request_helper.py`: timeout forwarding, shared service delays, retry statuses, `Retry-After`, exponential backoff, and exhausted retry errors.
+- `tests/test_request_helper.py`: timeout forwarding, cross-process host pacing
+  and model-slot serialization, persisted cooldowns, retry statuses,
+  `Retry-After`, exponential full jitter, and exhausted retry errors.
 - `tests/test_geo_webfetcher.py`: GEO URL handling, requester delegation, and MINiML tarball extraction.
 - `tests/test_insdc_webfetcher.py`: SRA accession extraction, NCBI/ENA requester delegation, parsed SRA run records, and ENA fallback behavior.
 - `tests/test_pubmed_webfetcher.py`: PubMed ESummary requester delegation, parsing, publication status mapping, and IDF constructor delegation.
