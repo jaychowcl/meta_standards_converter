@@ -9,7 +9,13 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 
 # ENA converter reference snapshot
 
-This directory is a source-faithful, offline reference bundle for designing a future `ena2json` converter. It documents provider capabilities and examples; it does not implement retrieval or conversion. Provider bytes are unchanged. [manifest.json](manifest.json) records URLs, the 2026-09-01 retrieval timestamp, content types, available HTTP validators, SHA-256 digests, local paths, and fixture accessions.
+This directory is the source-faithful, offline provider reference bundle used
+by the implemented `ena2json` converter and its tests. It documents provider
+capabilities and examples; runtime retrieval/conversion lives under
+`src/meta_standards_converter`, and provider bytes here remain unchanged.
+[manifest.json](manifest.json) records URLs, the 2026-09-01 retrieval timestamp,
+content types, available HTTP validators, SHA-256 digests, local paths, and
+fixture accessions.
 
 ## Contents
 

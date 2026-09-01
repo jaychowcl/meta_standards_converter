@@ -507,10 +507,12 @@ class RateLimitedRequester:
         event_emitter=None,
         host_gate: HostRequestGate | None = None,
         random_value: Callable[[], float] = random.random,
+        post: Callable | None = None,
     ):
         self.service = service
         self.settings = settings or DEFAULT_REQUEST_SETTINGS.get(service, RequestSettings())
         self._get = get or requests.get
+        self._post = post or requests.post
         self._sleep = sleep or time.sleep
         self._clock = clock or time.monotonic
         self._wall_clock = clock or time.time
@@ -523,6 +525,19 @@ class RateLimitedRequester:
 
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         """GET one URL under the process-wide host policy and bounded retries."""
+        return self._request("GET", self._get, url, **kwargs)
+
+    def post(self, url: str, **kwargs: Any) -> requests.Response:
+        """POST one URL under the same host policy and bounded retries."""
+        return self._request("POST", self._post, url, **kwargs)
+
+    def _request(
+        self,
+        method: str,
+        transport: Callable,
+        url: str,
+        **kwargs: Any,
+    ) -> requests.Response:
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.settings.timeout
 
@@ -532,11 +547,12 @@ class RateLimitedRequester:
             state = self._acquire_host_slot(host)
             started = self._clock()
             logger.debug(
-                "HTTP request service=%s host=%s attempt=%s timeout=%s",
+                "HTTP request service=%s host=%s attempt=%s timeout=%s method=%s",
                 self.service,
                 host,
                 attempt + 1,
                 kwargs.get("timeout"),
+                method,
             )
             try:
                 try:
@@ -549,7 +565,7 @@ class RateLimitedRequester:
                     )
                     self.rate_wait_seconds += float(waited or 0)
                     self.provider_attempts += 1
-                    response = self._get(url, **kwargs)
+                    response = transport(url, **kwargs)
                 finally:
                     self._release_host_slot(state)
             except (

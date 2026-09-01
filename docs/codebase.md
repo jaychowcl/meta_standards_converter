@@ -9,24 +9,24 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 # meta_standards_converter Codebase Handoff
 
 This is the canonical handoff for the live package under
-`src/meta_standards_converter`. It covers all seven conversion paths, their
+`src/meta_standards_converter`. It covers all nine conversion paths, their
 runtime boundaries, extension contracts, and the evidence needed to change them
 safely.
 
 <a id="architecture"></a>
 ## Architecture
 
-`meta_standards_converter` is a Python library and seven-command toolkit for
-moving study metadata and expression assets among GEO MINiML, the package's
-parsed JSON model, ArrayExpress MAGE-TAB, delimited sample tables, and AnnData
-H5AD. CLI modules are thin batch adapters. Converter classes own use-case
+`meta_standards_converter` is a Python library and conversion toolkit for
+moving study metadata and expression assets among GEO MINiML, complete INSDC
+SRA/ENA study graphs, the package's parsed JSON model, ArrayExpress MAGE-TAB,
+delimited sample tables, and AnnData H5AD. CLI modules are thin batch adapters. Converter classes own use-case
 orchestration; fetchers and parsers own repository-specific I/O; MAGE-TAB
 constructors and H5AD/tabular projectors own output models.
 
 ```text
 Users: CLI / Python / Docker / rootless Compose
                          |
-                  seven converters
+                  nine converters
        +-----------------+--------------------+
        |                 |                    |
  GEO/BioStudies      local JSON/files    explicit/discovered assets
@@ -119,11 +119,23 @@ credentials, or tokens.
 - **Affected components:** `Dockerfile`, `compose.yaml`, `provision-rootless-json2h5ad.sh`, and `json2h5ad-compose.sh`.
 - **Evidence:** [`compose.yaml`](../compose.yaml), [`provision-rootless-json2h5ad.sh`](../scripts/provision-rootless-json2h5ad.sh), and [`test_docker_artifacts.py`](../tests/test_docker_artifacts.py).
 
+<a id="decision-source-faithful-insdc"></a>
+### AD-006: Preserve provider evidence in study-scoped INSDC conversion
+
+- **Status:** Documented
+- **Decision:** `sra2json` and `ena2json` expand supported accessions to complete studies, copy provider values without biological inference, and retain every consumed response plus conflicts, warnings, and unmapped values. GEO/AE precedence is available only through explicit, mutually exclusive enrichment.
+- **Rationale:** SRA and ENA expose overlapping INSDC records but different retrieval documents and auxiliary metadata; conversion must remain auditable rather than silently choosing or harmonizing values.
+- **Consequences:** Base output can be structurally valid yet scientifically incomplete. Missing-value terms, duplicate attributes, mixed experiment values, and provider-exclusive files remain visible. Large studies are batched without a user-facing size limit and are protected by cycle/no-progress and high runaway guards.
+- **Affected components:** `study_fetchers`, `study_parser`, `insdc2json`, `sra2json`, `ena2json`, and their CLIs.
+- **Evidence:** [`study_fetchers.py`](../src/meta_standards_converter/insdc_handlers/study_fetchers.py), [`study_parser.py`](../src/meta_standards_converter/insdc_handlers/study_parser.py), and [`test_insdc_roundtrip.py`](../tests/test_insdc_roundtrip.py).
+
 <a id="design-invariants-and-expectations"></a>
 ## Design invariants and expectations
 
-- A parsed source contains at least one package group and at least one
-  convertible sample; packages remain scoped to their Series.
+- A parsed source contains at least one package group; packages remain scoped
+  to their Series. Ordinary output workflows require convertible samples, but
+  INSDC accepts a valid provider study with no hierarchy as metadata-only
+  MINiML carrying a degradation warning.
 - JSON consumers accept native parsed MINiML or `schema_version = "1.0"` Atlas
   documents. Atlas v1 `accessions` envelopes fail with explicit pinned-v1
   guidance; MSC has no runtime/build dependency on ThematicAtlases.
@@ -217,6 +229,8 @@ and [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constru
 | CLI module | converter | `convert(...)` control call | One converter instance per command; inputs processed in order | Logs per-input exception and records non-zero status |
 | GEO converters | `GEOWebFetcher` → `GEOParser` | internal calls around HTTP/XML | GSE becomes Series-scoped package dictionaries | Fetch/parse errors propagate |
 | GEO/JSON converters | `MINiMLEnricher` | optional internal mutation | Adds PubMed and SRA/ENA evidence to a package | Enricher records service-specific misses where implemented |
+| INSDC converters | `SRAStudyFetcher` / `ENAStudyFetcher` → `INSDCStudyParser` | provider graph retrieval and typed projection | Any supported accession expands to ordered complete study packages with source-document hashes | Core resolution/hierarchy failures fail the study; optional linked-record misses become diagnostics |
+| INSDC converters | `geo2json` / `ae2json` | explicit origin enrichment | Unambiguous accession-aligned origin biology overrides mapped provider biology while archive/run evidence stays additive | Missing/incompatible origin or retrieval failure fails requested enrichment; ambiguity is retained without guessing |
 | GEO/JSON converters | `AEConstructor` | `miniml2magetab` then optional `magetab2file` | Package becomes IDF/SDRF row collections and files | Validation/handler/write errors propagate |
 | `ae2json` | `AEWebFetcher` → `AEParser` | resolve and parse | IDF/SDRF text becomes package + typed sidecar | Invalid source cardinality or MAGE-TAB fails |
 | tabular converters | `JSONPackageSource` → `MINiMLMetadataProvider` → projectors | load/group, obtain format-neutral sample metadata, then `project_sample` | Dataset groups become ordered row maps | Collisions/invalid output fail closed by default |
@@ -237,8 +251,9 @@ top-level conversion.
 The supported public entrypoints are:
 
 <a id="interface-cli"></a>
-- seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
-  `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs`;
+- nine converter console scripts registered in `pyproject.toml`: `geo2ae`,
+  `geo2json`, `sra2json`, `ena2json`, `json2ae`, `ae2json`, `json2h5ad`,
+  `json2tsv`, and `json2obs`, plus the `miniml-migrate` utility;
 <a id="interface-python"></a>
 - direct Python converter classes, the twenty-four formal exports from
   `meta_standards_converter.converters`, and the four-name
@@ -263,9 +278,14 @@ database service, or plugin discovery mechanism is exposed.
   owns the subsequent MINiML package grouping/deduplication contract.
 
 <a id="orchestrator-metadata-converters"></a>
-- `geo2ae`, `geo2json`, `json2ae`, and `ae2json` coordinate metadata-only
+- `geo2ae`, `geo2json`, `json2ae`, and `ae2json` coordinate GEO/MAGE-TAB metadata-only
   conversions. `AEConstructor` owns MAGE-TAB handler selection and writing;
   `AEParser` owns reverse mapping and round-trip extensions.
+- `sra2json` and `ena2json` share `INSDC2JSONConverter`. Provider fetchers own
+  resolution, batching, joins, response limits and documents;
+  `INSDCStudyParser` owns the ordered graph-to-MINiML projection; the shared
+  converter owns stable study ordering, output naming, diagnostics and
+  optional GEO/AE merging.
 <a id="orchestrator-json2h5ad-converter"></a>
 - `JSONDataOutputOrchestrator` is the public JSON-origin facade. Its manifest,
   H5AD, and AnnData-metadata methods back the three thin CLI wrappers.
@@ -784,6 +804,51 @@ Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved
 
 **Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/ae_handlers/ae_webfetcher.py), and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
 
+<a id="workflow-insdc2json"></a>
+### `sra2json` / `ena2json`: INSDC accession to study JSON
+
+```text
+PRJ*/study/sample/experiment/run
+  -> resolve containing studies --not found/core failure--> failed study
+  -> paginate/batch complete provider graph --cycle/guard--> failed study
+  -> join optional linked records --miss---------------> retained warning
+  -> project source-faithful MINiML + documents/provenance
+  -> [broker link but enrichment off?] warn and retain link
+  -> [explicit GEO or AE?] retrieve + accession-align + merge
+       | incompatible/retrieval failure ----------------> failed study
+       ` ambiguous sample -----------------------------> retain both + diagnostic
+  -> [out?] one provider/enrichment-qualified JSON file per study
+```
+
+1. Both providers accept `PRJ*`, `[SED]RP`, `SAM*`, `[SED]RS`, `[SED]RX`, and
+   `[SED]RR`. A non-study input expands to its complete containing study;
+   projects may resolve to multiple studies sorted by secondary accession.
+2. SRA uses `ACCN`, `GPRJ`, or `BSPL` ESearch, history-backed 10,000-record
+   enumeration pages, 100-package EFetch batches, then unique BioSample,
+   BioProject and PubMed batches. ENA uses untruncated Portal resolution,
+   1,000-record `/links/study` pages, 500-accession Browser POST batches,
+   complete file reports, and optional Xref/Taxonomy/PubMed joins.
+3. The parsers retain exact attribute ordering/duplicates/missing terms,
+   aligned file columns, explicit protocol text and conflicting alternatives.
+   Library/instrument fields are promoted to sample scope only when every
+   linked experiment agrees. No title-based factor or biology inference occurs.
+4. Each consumed response becomes a deterministic `source.documents` entry
+   with URI, media type and SHA-256. `extensions.insdc` version 1.0 records
+   request/resolution, provider/origin, enrichment, warnings, provenance,
+   conflicts and ordered unmapped source paths.
+5. GEO and AE enrichment are mutually exclusive and off by default. Explicit
+   cross-references are the only sample alignment keys. Origin-submitted
+   biology wins after an unambiguous match; INSDC status/accessions and
+   sequencing/run/file provenance stay additive.
+6. CLI inputs are independent: failures do not stop later inputs, duplicate
+   studies are written once, and any failure produces exit code 1. A valid
+   zero-run provider study is emitted as metadata-only MINiML with a warning.
+
+Pseudocode: `studies = fetcher.fetch(accession); for sorted(unique(studies)):
+parse -> [explicit origin merge] -> [write]; aggregate failures`.
+
+**Evidence:** [`converters/insdc2json.py`](../src/meta_standards_converter/converters/insdc2json.py), [`study_fetchers.py`](../src/meta_standards_converter/insdc_handlers/study_fetchers.py), [`study_parser.py`](../src/meta_standards_converter/insdc_handlers/study_parser.py), and [`test_insdc2json.py`](../tests/test_insdc2json.py).
+
 <a id="workflow-json2h5ad"></a>
 ### `json2h5ad`: MINiML/Atlas v1 JSON to H5AD
 
@@ -936,15 +1001,17 @@ Pseudocode: `catalogue -> backed-read each sample metadata -> concatenate obs ro
 <a id="insdc-provider-reference-material"></a>
 ## INSDC provider reference material
 
-The repository vendors offline, source-faithful provider evidence for designing
-future SRA- and ENA-native conversions. This reference material does not implement `sra2json` or `ena2json`; no new CLI, converter, or runtime endpoint is registered.
+The repository vendors offline, source-faithful provider evidence used to
+implement and test the SRA- and ENA-native converters. Provider snapshots are
+design/reference evidence; runtime behavior is owned by the converter,
+fetcher, parser and tests linked below.
 
 | Route | Contents and contract |
 |---|---|
 | [SRA snapshot](sra/README.md) | All eight `SRA.*.xsd` files from INSDC SRA 1.5; NCBI BioSample/BioProject schemas; SRA EInfo and BioSample catalogues; NCBI composite SRA, BioSample, BioProject, and available PubMed fixtures; integrity manifest |
-| [SRA expected fields](sra/expected-fields.md) | Study/sample/experiment/run hierarchy, XPath/cardinality/value classes, linked-record joins, strict-validation limits, current MSC subset, precedence, and future MAGE-TAB coverage |
+| [SRA expected fields](sra/expected-fields.md) | Study/sample/experiment/run hierarchy, XPath/cardinality/value classes, linked-record joins, strict-validation limits, implemented mapping, precedence, and MAGE-TAB coverage |
 | [ENA snapshot](ena/README.md) | All eight in-scope `ENA.*.xsd` files, four OpenAPI documents, nine result-type field catalogues, 18 controlled vocabularies, checklist evidence, Browser/Portal/file-report/Xref/Taxonomy fixtures, integrity manifest |
-| [ENA expected fields](ena/expected-fields.md) | Endpoint/column and XML contracts, accession classes, semicolon-aligned files, missing-value semantics, current MSC subset, precedence, and future MAGE-TAB coverage |
+| [ENA expected fields](ena/expected-fields.md) | Endpoint/column and XML contracts, accession classes, semicolon-aligned files, missing-value semantics, implemented mapping, precedence, and MAGE-TAB coverage |
 | [Checklist availability](ena/checklist-availability.md) | Snapshot reconciliation: Portal declared 47 checklist IDs, while the documented Browser route supplied 31 XML records and returned HTTP 404 for 16 |
 
 Two fixture chains cover complementary conditions: `SRX017289` links
@@ -956,21 +1023,22 @@ remain byte-for-byte snapshots. Each provider manifest records URL, retrieval
 timestamp, content type, available HTTP validators, SHA-256, local path, and
 fixture accession; offline tests recalculate every digest.
 
-The active implementation boundary remains deliberately narrow.
-`MINiMLEnricher` discovers SRA accessions from GEO sample relations and uses
-NCBI SRA EFetch for accessions, library values, instrument model, runs, file
-fallbacks, and read lengths. It uses ENA only for a four-column read-run file
-report, preferring a non-empty ENA FASTQ list over NCBI file entries. PubMed
-ESummary is driven by PubMed IDs already present in GEO MINiML. It does not
-currently fetch the separate BioSample/BioProject fixtures or consume ENA
-Browser, search, Xref, Taxonomy, analysis, assembly, or checklist records.
+`SRAStudyFetcher` and `ENAStudyFetcher` now retrieve complete study graphs for
+`sra2json` and `ena2json`; `INSDCStudyParser` projects them into typed MINiML
+3.0. SRA joins BioSample/BioProject/PubMed. ENA combines Portal resolution and
+links with Browser XML, complete file reports, and optional Xref/Taxonomy/
+PubMed; analysis and assembly are extension-only in this initial mapping. All
+responses used by the parser are represented by digest-bearing source
+documents. The provider fixtures feed offline typed-field, provenance and
+round-trip tests.
 
-SRA/ENA enrichment does not overwrite GEO geographic or biological fields.
-The sequencing SDRF handler explicitly chooses GEO sample-level library values
-and instrument model over conflicting SRA values, logs the disagreement, and
-keeps the GEO accession when the SRA `geo_sample` differs. ENA precedence is
-limited to file metadata for the same run. These observed rules inform future
-converter design but do not define precedence for an SRA- or ENA-native input.
+Base conversion never overwrites from GEO or ArrayExpress. Compatible broker
+links warn when optional enrichment is off. Explicit `--enrich-geo` or
+`--enrich-ae` aligns only by submitted cross-references and lets origin biology
+take precedence while INSDC sequencing/status/provenance stays additive.
+Ambiguity preserves both records and a diagnostic. The legacy GEO
+`MINiMLEnricher` remains narrower and unchanged: it uses NCBI SRA run metadata
+plus the four-column ENA file report and does not adopt the new graph fetchers.
 
 The ENA schemas retain their provider `schemaLocation` values. Resolve local
 SRA imports through `docs/sra/schemas/` rather than rewriting XSD bytes;
@@ -981,14 +1049,16 @@ verification asserts well-formedness and field contracts rather than claiming
 strict whole-document XSD validity.
 
 **Evidence:** [`tests/test_provider_reference_material.py`](../tests/test_provider_reference_material.py),
-[`insdc_handlers/insdc_webfetcher.py`](../src/meta_standards_converter/insdc_handlers/insdc_webfetcher.py),
-[`enrichers/miniml_enricher.py`](../src/meta_standards_converter/enrichers/miniml_enricher.py),
-and [`ae_handlers/ae_sdrf_handlers.py`](../src/meta_standards_converter/ae_handlers/ae_sdrf_handlers.py).
+[`tests/test_insdc_study_fetchers.py`](../tests/test_insdc_study_fetchers.py),
+[`tests/test_insdc_study_parser.py`](../tests/test_insdc_study_parser.py), and
+[`tests/test_insdc_roundtrip.py`](../tests/test_insdc_roundtrip.py).
 
 <a id="project-purpose-and-layout"></a>
 ## Project Purpose And Layout
 
-`meta_standards_converter` converts biological study metadata between repository standards. The current package focuses on GEO MINiML to ArrayExpress/MAGE-TAB-style output.
+`meta_standards_converter` converts biological study metadata among GEO,
+INSDC archives, typed MINiML JSON, ArrayExpress/MAGE-TAB, tabular metadata and
+AnnData outputs.
 
 ```text
 src/meta_standards_converter/
@@ -996,6 +1066,8 @@ src/meta_standards_converter/
 │   ├── common.py                 # shared CLI logging helpers
 │   ├── geo2ae.py                 # geo2ae command-line entrypoint
 │   ├── geo2json.py               # geo2json command-line entrypoint
+│   ├── sra2json.py               # NCBI SRA study-to-JSON entrypoint
+│   ├── ena2json.py               # ENA study-to-JSON entrypoint
 │   ├── json2ae.py                 # parsed JSON-to-MAGE-TAB command-line entrypoint
 │   ├── ae2json.py                 # MAGE-TAB-to-JSON command-line entrypoint
 │   ├── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
@@ -1006,6 +1078,9 @@ src/meta_standards_converter/
 │   ├── geo2json.py               # top-level GEO to JSON orchestration
 │   ├── json2ae.py                 # parsed JSON validation and AE orchestration
 │   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
+│   ├── insdc2json.py              # shared study conversion and origin merge policy
+│   ├── sra2json.py                # SRA provider converter facade
+│   ├── ena2json.py                # ENA provider converter facade
 │   ├── dataset_combination.py     # scientific compatibility evidence; implicit joins disabled
 │   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
 │   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
@@ -1019,6 +1094,11 @@ src/meta_standards_converter/
 │   └── geo_parser.py             # MINiML XML to JSON-ready per-Series packages
 ├── pubmed_handlers/
 │   └── pubmed_webfetcher.py      # PubMed ESummary lookup and parsed publication metadata
+├── insdc_handlers/
+│   ├── insdc_webfetcher.py       # compact legacy GEO sequencing enrichment
+│   ├── study_fetchers.py         # study resolution, batching and linked records
+│   ├── study_models.py           # immutable provider documents/results
+│   └── study_parser.py           # provider graph to typed MINiML projection
 ├── enrichers/
 │   └── miniml_enricher.py        # Adds PubMed/SRA records to parsed MINiML JSON
 ├── ae_handlers/
@@ -1093,8 +1173,8 @@ tests/GSE328265_family.xml
   critical/high/medium/low remediation SLAs of 2/7/30/90 days. Those trusted
   operator artifacts are deliberately absent, leaving the composing release
   gate blocked instead of fabricating security evidence.
-- The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
-- Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
+- The `geo2ae`, `geo2json`, `sra2json`, `ena2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
+- Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` retains compact GEO enrichment, `SRAStudyFetcher` and `ENAStudyFetcher` retrieve provider-native study graphs, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata. The shared requester now applies the same host gates, retries, byte limits and telemetry to GET and POST requests.
 - Default request settings are derived from the standard resource profile and
   enforced across the process by normalized hostname: 10-second connect and
   60-second read timeouts with at most four network workers. Service-specific
@@ -1108,6 +1188,7 @@ tests/GSE328265_family.xml
   never logged.
 - `geo2ae.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
 - `geo2json.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
+- `sra2json.convert()` and `ena2json.convert()` return typed complete-study MINiML packages, with explicit GEO/AE enrichment disabled by default, and write provider-qualified filenames.
 - `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes a per-sample H5AD catalogue without matrix integration.
@@ -1418,8 +1499,8 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 <a id="rootless-json2h5ad-runtime"></a>
 ## Rootless json2h5ad Runtime
 
-The deterministic suite was refreshed on 2026-08-10 and reported
-`587 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
+The deterministic suite was refreshed on 2026-09-02 and reported
+`691 passed, 16 skipped` (plus 93 unittest subtests). The public wire contract is Atlas document schema 1.0
 and converter output uses H5AD metadata schema 1.0.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
@@ -1956,7 +2037,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 This section lists public and semi-public callables used by tests or by package orchestration. Many helper methods are intentionally private but documented here because this project currently relies on direct helper behavior in tests and internal composition.
 
 <a id="cli"></a>
-### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, `cli/ae2json.py`, `cli/json2h5ad.py`, `cli/json2tsv.py`, and `cli/json2obs.py`
+### Converter CLI modules
 
 `_parser() -> argparse.ArgumentParser`
 
@@ -1969,6 +2050,10 @@ This section lists public and semi-public callables used by tests or by package 
 - `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
 - `json2ae` accepts one or more parsed MINiML or canonical Atlas v1 JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
 - `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
+- `sra2json` and `ena2json` accept supported INSDC accessions, add mutually
+  exclusive `--enrich-geo`/`--enrich-ae`, and share resource/logging options.
+  The converter may return multiple study packages for a project; duplicate
+  studies are written once across the invocation.
 - `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--processed-checkpoint-dir`, `--overwrite`, and `--allow-invalid`. Resume covers both Nextflow work and fingerprint-valid processed-sample checkpoints.
 - `json2tsv` accepts parsed MINiML or Atlas JSON and writes the sample manifest as TSV by default or CSV with `--format csv`; `--out` selects an exact file and `--outdir` derives a filename.
 - `json2obs` accepts the same metadata and raw/processed data inputs and processed-checkpoint controls as `json2h5ad`, writes a required row-aggregated `obs.csv` with an explicit `cell_id` column without combining expression matrices, and can add typed `uns.json` or single-sample `var.csv` sidecars.
@@ -1982,7 +2067,37 @@ This section lists public and semi-public callables used by tests or by package 
 - Returns `1` if any accession failed, otherwise `0`.
 
 <a id="converter"></a>
-### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, `converters/ae2json.py`, `converters/json2h5ad.py`, and `converters/json2tabular.py`
+### Converter modules
+
+`class sra2json(INSDC2JSONConverter)` and `class ena2json(INSDC2JSONConverter)`
+
+- `convert(accession, *, enrich_geo=False, enrich_ae=False, out=None) -> list[MINiMLPackage]`
+  resolves and sorts complete studies, parses each graph, optionally merges one
+  compatible origin source, writes one package list per study, and aggregates
+  independent study failures in `StudyConversionFailures`.
+- Constructors accept injected fetcher/parser/GEO/AE collaborators plus
+  resource profile and typed overrides. SRA and ENA differ only in provider
+  fetcher and output tag at the shared orchestration layer.
+- `_output_name()` yields `.sra.json`/`.ena.json` or the corresponding
+  `.geo.json`/`.ae.json`; already written studies are retained by the converter
+  instance so repeated inputs cannot overwrite duplicate results.
+
+`merge_origin_package(base, origin, source) -> MINiMLPackage`
+
+- Matches samples using explicit GSM, `[SED]RS`, `SAM*`, experiment or run
+  accessions. A one-to-one origin match replaces mapped submitted biology;
+  ambiguous/unmatched samples are preserved with enrichment diagnostics.
+- Merges databases, organizations, contributors, protocols and distinct
+  publications while retaining provider structure and the INSDC extension.
+
+Qualified public-named symbols are
+`meta_standards_converter.cli.sra2json.main`,
+`meta_standards_converter.cli.ena2json.main`,
+`meta_standards_converter.converters.insdc2json.StudyConversionFailures`,
+`meta_standards_converter.converters.insdc2json.merge_origin_package`,
+`meta_standards_converter.converters.insdc2json.INSDC2JSONConverter`,
+`meta_standards_converter.converters.sra2json.sra2json`, and
+`meta_standards_converter.converters.ena2json.ena2json`.
 
 `class geo2ae(JSONHandler)`
 
@@ -2711,6 +2826,42 @@ SRA XML helper methods:
 
 - `_parse_sra_library()`, `_parse_sra_sample_ids()`, `_parse_sra_instrument_model()`, `_parse_sra_fastqs()`, `_element_accession()`, `_find_text()`, `_strip_ns()`, and `_clean_sdrf_text()` support SRA parsing.
 
+### `insdc_handlers/study_fetchers.py` and `study_parser.py`
+
+`SRAStudyFetcher.fetch(accession)` and `ENAStudyFetcher.fetch(accession)` return
+ordered `StudyFetchResult` values containing immutable `ProviderDocument`
+snapshots. `collect_accession_pages` rejects repeated signatures, no-progress
+pages, over 100,000 pages/requests and over 1,000,000 unique runs. The limits
+are internal circuit breakers, not CLI study-size controls.
+
+SRA selects exact ESearch fields by accession class, uses history-backed
+enumeration and batched XML EFetch, and joins unique BioSample, BioProject and
+PubMed documents. ENA resolves through Portal, partitions project-linked
+experiments/runs by explicit study references, batches Browser POST XML and
+recursively splits oversized batches, then adds full file reports and optional
+Xref/Taxonomy/PubMed records. Optional linked-record errors become warnings;
+resolution, hierarchy, join and primary parse failures fail the study.
+
+`INSDCStudyParser.parse(result, enrichment="none") -> MINiMLPackage` maps both
+provider document families into the same typed study/sample/experiment/run
+model. It preserves source order, duplicates, literal missing terms, file
+column alignment, consensus conflicts and analysis/assembly leaves. Every
+consumed document is represented in `source.documents`; the versioned
+`extensions.insdc` audit record contains provenance, warnings and unmapped
+values.
+
+Qualified public-named symbols are
+`meta_standards_converter.insdc_handlers.study_fetchers.StudyRetrievalError`,
+`meta_standards_converter.insdc_handlers.study_fetchers.StudyNotFoundError`,
+`meta_standards_converter.insdc_handlers.study_fetchers.PaginationSafetyError`,
+`meta_standards_converter.insdc_handlers.study_fetchers.ProviderEmergencyLimitError`,
+`meta_standards_converter.insdc_handlers.study_fetchers.collect_accession_pages`,
+`meta_standards_converter.insdc_handlers.study_fetchers.SRAStudyFetcher`,
+`meta_standards_converter.insdc_handlers.study_fetchers.ENAStudyFetcher`,
+`meta_standards_converter.insdc_handlers.study_models.ProviderDocument`,
+`meta_standards_converter.insdc_handlers.study_models.StudyFetchResult`, and
+`meta_standards_converter.insdc_handlers.study_parser.INSDCStudyParser`.
+
 - Because it returns `None`, normal validation currently raises `AssertionError`.
 
 <a id="maintenance-notes"></a>
@@ -2817,15 +2968,31 @@ Important test coverage:
   retry, and rate-wait counters.
 - `tests/test_geo_webfetcher.py`: GEO URL handling, requester delegation, and MINiML tarball extraction.
 - `tests/test_insdc_webfetcher.py`: SRA accession extraction, NCBI/ENA requester delegation, parsed SRA run records, and ENA fallback behavior.
+- `tests/test_insdc_study_fetchers.py`: accession-class resolution, stable
+  multi-study projects, provider batching, Browser splitting, pagination-cycle/
+  no-progress/emergency guards, linked-record failure degradation, and
+  analysis/assembly preservation.
+- `tests/test_insdc_study_parser.py`: common typed SRA/ENA fields, ordered
+  duplicate/missing attributes, semicolon file alignment, PubMed presence/
+  absence, consensus promotion, zero-run degradation, provenance, conflicts,
+  broker warnings, organizations and contacts.
+- `tests/test_insdc2json.py` and `tests/test_cli_insdc2json.py`: output naming,
+  deduplication, stable ordering, independent failure continuation, enrichment
+  compatibility/precedence and ambiguous sample alignment.
+- `tests/test_insdc_roundtrip.py`: both vendored providers through MINiML,
+  `json2ae --no-enrich`, and local `ae2json` reparsing.
 - `tests/test_pubmed_webfetcher.py`: PubMed ESummary requester delegation, parsing, publication status mapping, and IDF constructor delegation.
 
 <a id="live-api-provider-contracts"></a>
 ### Live API provider contracts
 
-`tests/live_api/test_public_provider_contracts.py` owns PubMed ESummary, NCBI
-SRA EFetch plus ENA file-report, and paginated BioStudies IDF/SDRF contracts.
-It uses 10-second timeouts, no retries/delays, a 12-send ceiling, and declared
-NCBI/EBI hosts. Run it with
+`tests/live_api/test_public_provider_contracts.py` owns PubMed ESummary, compact
+NCBI SRA plus ENA file-report, and paginated BioStudies IDF/SDRF contracts.
+`tests/live_api/test_insdc_study_converters.py` checks both provider graphs for
+the five evaluation studies, the two-study `PRJDA43743` resolution, and ENA
+metadata-only versus SRA not-found behavior for `DRP000158`. Live tests use
+per-test request ceilings declared by their marker and only approved NCBI/EBI
+hosts. Run them with
 `RUN_LIVE_API_TESTS=1 python -m pytest tests/live_api -m live_api -vv`.
 
 After documentation edits, also check:
@@ -2948,7 +3115,8 @@ available host/cgroup RAM, whichever is lower, and resume-only force admission
 is hard-bounded at 90%. Both profiles require 10% disk headroom.
 `--resource-profile`, repeated `--resource-override`, and the
 Python constructors expose explicit selection/overrides. `geo2ae`, `geo2json`,
-`ae2json`, and `json2h5ad` expose the shared CLI options; default network
+`sra2json`, `ena2json`, `ae2json`, and `json2h5ad` expose the shared CLI
+options; default network
 collaborators receive the same immutable configured profile. Passing an
 already-configured `ResourceProfile` preserves all existing overrides unless
 new explicit overrides replace named fields.

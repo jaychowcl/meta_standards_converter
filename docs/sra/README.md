@@ -9,7 +9,12 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 
 # SRA converter reference snapshot
 
-This directory is a source-faithful, offline reference bundle for designing a future `sra2json` converter. It is not a converter and is not a promise that every field will be mapped into MAGE-TAB. Provider artifacts are stored byte-for-byte; interpretation lives in this README and in [expected-fields.md](expected-fields.md).
+This directory is the source-faithful, offline provider reference bundle used
+by the implemented `sra2json` converter and its tests. The directory itself is
+reference evidence, not runtime code or a promise that every provider field can
+be mapped into scientifically complete MAGE-TAB. Provider artifacts are stored
+byte-for-byte; mapping and limitations are documented in
+[expected-fields.md](expected-fields.md).
 
 The snapshot was taken on 2026-09-01. [manifest.json](manifest.json) records each source URL, retrieval time, content type, available HTTP validators, SHA-256 digest, local path, and fixture accession. A JSON `null` ETag or Last-Modified value means the response did not supply a value retained by the snapshot process.
 
@@ -46,7 +51,7 @@ These are public, unrestricted records. No credentials, API keys, or protected d
 | `SRX017289` | `SRP002056` → `SRS011830` → `SRX017289` → `SRR037073` | `PRJNA123835`, `SAMN00009557`, GEO `GSE18729`/`GSM465245`, PMID `20133686`; RNA-Seq, transcriptomic, size fractionation, single-end, Illumina Genome Analyzer II |
 | `SRX7812918` | `SRP250911` → `SRS6225446` → `SRX7812918` → `SRR11192680` | `PRJNA609050`, `SAMN14218700`; amplicon, genomic, PCR, paired-end, MiSeq; BioSample collection date, `Canada: London`, and `43.01 N 81.27 W`; no PubMed response because no PMID is linked |
 
-The fixture directory intentionally stores separate BioSample and BioProject responses even though the composite SRA XML also carries their accessions. A future converter must join records by accession; physical nesting in an API response is not ownership.
+The fixture directory intentionally stores separate BioSample and BioProject responses even though the composite SRA XML also carries their accessions. `sra2json` joins these records by accession; physical nesting in an API response is not ownership.
 
 ## Schema use and validation limits
 

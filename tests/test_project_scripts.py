@@ -31,6 +31,8 @@ class TestProjectScripts(unittest.TestCase):
             "ae2json",
             "geo2ae",
             "geo2json",
+            "sra2json",
+            "ena2json",
             "json2ae",
             "json2h5ad",
             "json2tsv",

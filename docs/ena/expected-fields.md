@@ -9,7 +9,7 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 
 # Expected ENA endpoint fields
 
-This inventory describes information available for future `ena2json` and MAGE-TAB conversion. It is not a final JSON schema. Portal field catalogues are exhaustive for the snapshot; this document highlights structural and conversion-critical contracts.
+This inventory documents the provider contract consumed by `ena2json`; it is not a parallel JSON schema. Portal field catalogues are exhaustive for the snapshot, while this document highlights structural and conversion-critical contracts.
 
 ## Record hierarchy and accession classes
 
@@ -75,14 +75,24 @@ Portal primary/secondary accession columns and Browser XML references establish 
 
 ## Fields MSC consumes today
 
-MSC currently calls only ENA Portal `/filereport` with `result=read_run` and fields `run_accession,fastq_ftp,fastq_md5,fastq_bytes`. It groups non-empty files by run and prefers that ENA file list over NCBI `SRAFile` entries. MSC does not currently call ENA Portal search/catalogue endpoints, Browser XML, Xref, Taxonomy, analysis, assembly, or checklist endpoints during conversion.
+The study-scoped `ena2json` converter uses Portal search for resolution,
+paginated `/links/study` calls for the hierarchy, batched Browser POST XML as
+the primary record source, and full file reports. Xref, Taxonomy, and PubMed
+are optional joins. Analysis and assembly records are preserved as unmapped
+provider extension values in this initial parser.
 
-The rest of the current enrichment comes from NCBI SRA EFetch. Current sequencing SDRF rendering uses accessions, BioSample/GEO links, library values, instrument model, run alias, FASTQ URI/hash, and read length. PubMed ESummary is driven by PubMed IDs already parsed from GEO MINiML, not discovered through ENA.
+It maps study identity, descriptor, links, contacts, organizations and publications to `series`; sample taxonomy, description and ordered attributes to samples/channels; explicit design descriptions to protocols; and experiment/run library, instrument, aliases, statistics and aligned files to `sra_run`, platforms and assay paths. Every consumed response is recorded in `source.documents`, and `extensions.insdc` retains provider/origin, warnings, provenance, conflicts and ordered unmapped paths.
 
-## Precedence and GEO overwrite behavior
+The older GEO `MINiMLEnricher` path remains unchanged: it calls only ENA
+`/filereport` for four FASTQ columns and may prefer that non-empty file list
+over NCBI run files. It does not use the broader `ena2json` graph.
 
-No ENA response writes GEO country, latitude/longitude, organism, source characteristics, title, or protocols. GEO sample-level library fields and instrument model win over conflicting SRA-derived values and produce audit warnings. A differing SRA `geo_sample` link also leaves the GEO accession in place. The sole active ENA precedence rule is a non-empty ENA FASTQ report replacing the NCBI-derived file list for the same run.
+## Precedence and optional origin enrichment
 
-## Future `ena2json`/MAGE-TAB coverage
+Base `ena2json` copies submitted/archive values without ontology harmonization or biological inference. Browser XML is primary; Portal and linked records fill gaps, and conflicting alternatives remain available with diagnostics. Semicolon-delimited file columns are aligned by index, so a shorter checksum or byte column yields an unknown cell without shifting later files. Literal missing-value terms and duplicate attributes are preserved.
 
-Browser XML plus Portal file reports, taxonomy, optional cross-references, and PubMed lookup can supply the structural content for sequencing MAGE-TAB: study/publication IDF rows, sample SDRF characteristics, experiment/library protocols, assay hardware, and run/files. Portal search alone is insufficient because only indexed fields are returned. Even full XML may omit publication, factors, ontology IDs, or detailed wet-lab protocols, so a future converter needs explicit absent-value handling, lossless extension storage, provenance, and conflict rules rather than assuming every MAGE-TAB field is derivable.
+`--enrich-geo` and `--enrich-ae` are mutually exclusive and disabled by default. `E-GEOD-*` is classified as a GEO mirror and normalized to `GSE*`. Compatible broker links trigger a warning when enrichment is off; explicit enrichment requires a compatible, retrievable source. Origin values take precedence only for submitted biology after explicit one-to-one accession alignment. INSDC status, accessions, library/run/file fields and provenance stay additive; ambiguous/unmatched records are retained with diagnostics.
+
+## MAGE-TAB coverage and limitations
+
+`ena2json` output is structurally valid input to `json2ae --no-enrich`: study/publication fields supply IDF rows; sample attributes supply SDRF characteristics; explicit design text supplies protocols; library/platform/run/files supply assay and data-file columns. Portal search alone is insufficient, which is why Browser XML is primary. Even complete provider XML can omit factors, ontology IDs, publications, or detailed wet-lab protocols, so structurally valid MAGE-TAB may remain scientifically incomplete. A valid study without experiments/runs becomes metadata-only MINiML with a degradation warning rather than a not-found result.

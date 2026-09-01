@@ -24,7 +24,10 @@ _LIVE_HOSTS = {"eutils.ncbi.nlm.nih.gov", "ftp.ebi.ac.uk", "www.ebi.ac.uk", "www
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "live_api: opt-in public provider contract")
+    config.addinivalue_line(
+        "markers",
+        "live_api(max_requests=12): opt-in public provider contract",
+    )
 
 
 def pytest_collection_modifyitems(items):
@@ -49,6 +52,8 @@ def _blocked(kind):
 def block_external_side_effects(monkeypatch, request):
     live = request.node.get_closest_marker("live_api") is not None and os.environ.get(_LIVE_ENV) == "1"
     if live:
+        live_marker = request.node.get_closest_marker("live_api")
+        max_requests = int(live_marker.kwargs.get("max_requests", 12))
         original_request = requests.sessions.Session.request
         original_send = requests.sessions.Session.send
         sends = [0]
@@ -65,8 +70,8 @@ def block_external_side_effects(monkeypatch, request):
         def guarded_send(session, prepared, *args, **kwargs):
             validate(prepared.url)
             sends[0] += 1
-            if sends[0] > 12:
-                pytest.fail("live API request budget exceeded")
+            if sends[0] > max_requests:
+                pytest.fail(f"live API request budget exceeded ({max_requests})")
             return original_send(session, prepared, *args, **kwargs)
 
         monkeypatch.setattr(requests.sessions.Session, "request", guarded_request)
