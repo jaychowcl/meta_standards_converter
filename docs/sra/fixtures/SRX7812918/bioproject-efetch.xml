@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<RecordSet><DocumentSummary uid="609050">
+    <Project>
+        <ProjectID>
+            <ArchiveID accession="PRJNA609050" archive="NCBI" id="609050"/>
+            <LocalID>bp0</LocalID>
+            <LocalID>bp0</LocalID>
+        </ProjectID>
+        <ProjectDescr>
+            <Title>Microbiota analysis of prostate cancer patients</Title>
+            <Description>The goal of this study was to identify how the oral prostate cancer drug, abiraterone acetate, influences the gut microbiota and vice versa.</Description>
+            <Relevance>
+                <Medical>yes</Medical>
+            </Relevance>
+        </ProjectDescr>
+        <ProjectType>
+            <ProjectTypeSubmission>
+                <Target capture="eWhole" material="eGenome" sample_scope="eMultispecies"/>
+                <Method method_type="eSequencing"/>
+                <Objectives>
+                    <Data data_type="eRawSequenceReads"/>
+                </Objectives>
+                <IntendedDataTypeSet>
+                    <DataType>raw sequence reads</DataType>
+                </IntendedDataTypeSet>
+                <ProjectDataTypeSet>
+                    <DataType>raw sequence reads</DataType>
+                </ProjectDataTypeSet>
+            </ProjectTypeSubmission>
+        </ProjectType>
+    </Project>
+    <Submission last_update="2020-02-27" submission_id="SUB7041173" submitted="2020-02-27">
+        <Description>
+            <!-- Submitter information has been removed -->
+            <Organization role="owner" type="institute" url="http://www.uwo.ca">
+                <Name>University of Western Ontario</Name>
+                <!-- Contact information has been removed -->
+            </Organization>
+            <Access>public</Access>
+        </Description>
+        <Action action_id="SUB7041173-bp0"/>
+    </Submission>
+</DocumentSummary>
+
+</RecordSet>

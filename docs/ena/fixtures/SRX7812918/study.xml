@@ -1,0 +1,49 @@
+<STUDY_SET>
+<STUDY accession="SRP250911" alias="PRJNA609050" center_name="BioProject" broker_name="NCBI">
+  <IDENTIFIERS>
+    <PRIMARY_ID>SRP250911</PRIMARY_ID>
+    <SECONDARY_ID>PRJNA609050</SECONDARY_ID>
+    <EXTERNAL_ID label="primary" namespace="BioProject">PRJNA609050</EXTERNAL_ID>
+    <SUBMITTER_ID namespace="BioProject">PRJNA609050</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <DESCRIPTOR>
+    <STUDY_TITLE>Microbiota analysis of prostate cancer patients</STUDY_TITLE>
+    <STUDY_TYPE existing_study_type="Other"/>
+    <STUDY_ABSTRACT>The goal of this study was to identify how the oral prostate cancer drug, abiraterone acetate, influences the gut microbiota and vice versa.</STUDY_ABSTRACT>
+  </DESCRIPTOR>
+  <STUDY_LINKS>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMISSION</DB>
+        <ID>SRA1048657</ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-FASTQ-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP250911&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMITTED-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP250911&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+  </STUDY_LINKS>
+  <STUDY_ATTRIBUTES>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-STATUS</TAG>
+      <VALUE>PUBLIC</VALUE>
+    </STUDY_ATTRIBUTE>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-FIRST-PUBLIC</TAG>
+      <VALUE>2020-02-28</VALUE>
+    </STUDY_ATTRIBUTE>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-LAST-UPDATE</TAG>
+      <VALUE>2020-02-28</VALUE>
+    </STUDY_ATTRIBUTE>
+  </STUDY_ATTRIBUTES>
+</STUDY>
+</STUDY_SET>

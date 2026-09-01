@@ -1,0 +1,65 @@
+[
+{"value":"5-methylcytidine antibody","description":""}
+,
+{"value":"CAGE","description":""}
+,
+{"value":"ChIP","description":""}
+,
+{"value":"ChIP-Seq","description":""}
+,
+{"value":"DNase","description":""}
+,
+{"value":"HMPR","description":""}
+,
+{"value":"Hybrid Selection","description":""}
+,
+{"value":"Inverse rRNA","description":""}
+,
+{"value":"Inverse rRNA selection","description":""}
+,
+{"value":"MBD2 protein methyl-CpG binding domain","description":""}
+,
+{"value":"MDA","description":""}
+,
+{"value":"MF","description":""}
+,
+{"value":"MNase","description":""}
+,
+{"value":"MSLL","description":""}
+,
+{"value":"Oligo-dT","description":""}
+,
+{"value":"PCR","description":""}
+,
+{"value":"PolyA","description":""}
+,
+{"value":"RACE","description":""}
+,
+{"value":"RANDOM","description":""}
+,
+{"value":"RANDOM PCR","description":""}
+,
+{"value":"RT-PCR","description":""}
+,
+{"value":"Reduced Representation","description":""}
+,
+{"value":"Restriction Digest","description":""}
+,
+{"value":"cDNA","description":""}
+,
+{"value":"cDNA_oligo_dT","description":""}
+,
+{"value":"cDNA_randomPriming","description":""}
+,
+{"value":"cDNA_randomPriming","description":""}
+,
+{"value":"other","description":""}
+,
+{"value":"padlock probes capture method","description":""}
+,
+{"value":"repeat fractionation","description":""}
+,
+{"value":"size fractionation","description":""}
+,
+{"value":"unspecified","description":""}
+]

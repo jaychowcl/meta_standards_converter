@@ -1,0 +1,16 @@
+resultId	description	primaryAccessionType	recordCount	lastUpdated
+analysis	Analyses	analysis_accession	25827699	2026-08-31 18:00
+assembly	Genome assemblies	accession	5892766	2026-09-01 00:00
+coding	Coding sequences	accession	9468014835	2026-08-06 04:00
+noncoding	Non-coding sequences	accession	333237048	2026-08-31 20:40
+sequence	Nucleotide sequences	accession	316244449	2026-08-31 19:37
+read_experiment	Experiments	experiment_accession,run_accession	44326634	2026-09-01 06:00
+read_run	Raw reads	run_accession	44326634	2026-09-01 06:00
+sample	Samples	sample_accession	59361975	2026-09-01 04:00
+analysis_study	Studies used for sequence analyses	study_accession,analysis_accession	25827699	2026-08-31 18:00
+read_study	Studies used for raw reads	study_accession,run_accession	44326634	2026-09-01 06:00
+study	Studies	study_accession	1090967	2026-09-01 04:01
+taxon	Taxonomic classification	tax_id	3438137	2026-09-01 00:15
+tls_set	Targeted locus study contig sets (TLS)	accession	4591	2026-08-31 22:28
+tsa_set	Transcriptome assembly contig sets (TSA)	accession	10697	2026-08-31 20:29
+wgs_set	Genome assembly contig set (WGS)	accession	5434420	2026-09-01 01:50

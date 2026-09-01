@@ -1,0 +1,19 @@
+[
+{"value":"GENOMIC","description":""}
+,
+{"value":"GENOMIC SINGLE CELL","description":""}
+,
+{"value":"METAGENOMIC","description":""}
+,
+{"value":"METATRANSCRIPTOMIC","description":""}
+,
+{"value":"OTHER","description":""}
+,
+{"value":"SYNTHETIC","description":""}
+,
+{"value":"TRANSCRIPTOMIC","description":""}
+,
+{"value":"TRANSCRIPTOMIC SINGLE CELL","description":""}
+,
+{"value":"VIRAL RNA","description":""}
+]

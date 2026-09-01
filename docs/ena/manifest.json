@@ -1,0 +1,925 @@
+{
+  "snapshot_schema_version": "1.0",
+  "provider": "ena",
+  "retrieved_at": "2026-09-01T16:44:14.681285Z",
+  "artifacts": [
+    {
+      "path": "catalogues/checklists/ERC000011.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000011",
+      "sha256": "0752981b72f29d0a6c130a317e7f5be7e432b08c059f0338eb46e99bad7a8eba",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000012.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000012",
+      "sha256": "280f1c97f212866113bdcfad3f334aa9dd76b77ffabbe3dbab9bf98b788c8c4d",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000013.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000013",
+      "sha256": "7924763254a28522ea50443cc1744c0f0f6b9454b160cb9d52047c812e8528f7",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000014.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000014",
+      "sha256": "2cbeacbce94b8dcb121a6f42f457fecd79567df31a27f0a629bc088b792f1251",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000015.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000015",
+      "sha256": "1b4d47a27ef40777d3ab7f0ce6fed7d105c115293920086e900879b7f2cba25b",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000016.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000016",
+      "sha256": "149fd977d63474ee2ff73254ef818676e54a15f99d5d70a2da50be3a9dbe1173",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000017.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000017",
+      "sha256": "6dedf4c10500e067becfaaa0bc77108fd1153ba26a7a742104cf9563cc77631a",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000018.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000018",
+      "sha256": "a759055d987b84c217682559c396fdd8a5f4c47fd2339b937cc828473f7f4864",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000019.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000019",
+      "sha256": "f4e82971a425c57c3a01f745e99f3fa7bbc1eabd274f915e6854ad8f1d4f30a8",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000020.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000020",
+      "sha256": "d4290bffe0f614e6cfa06897972cb78373632800cf7387505bdc8bb4ade0a6b9",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000021.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000021",
+      "sha256": "97eab1670f727f253ffbb0b009b4c4a96309c93c602d3ebfd8ac3915284f3a81",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000022.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000022",
+      "sha256": "0c6f1b232118f4f3d61c74b2ed3cdcf8ab06dd566ba8eec74e800a320909dff2",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000023.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000023",
+      "sha256": "5b6a0e2eb4266a682a69f4cc28ba54117c4c0c2bed4edc16fe21fe2e1e371288",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000024.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000024",
+      "sha256": "d9c640ba996108ea90b910cc1a1cad5332d5e64dc4b4c12b05422c86ec648f8f",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000025.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000025",
+      "sha256": "5c3540d06ff18268e20fb9ba70011f245001e21e15d71e2302953f010142166f",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000026.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000026",
+      "sha256": "c71c5fee490b8677bb0cb6c50ac367507389b33a958262d9e6a3dbe35d668b00",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000027.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000027",
+      "sha256": "af798ba6bb36a1ef1fd839b1d11e5e6e96e8cdfcf40e388b7b9abe326aab8e7e",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000028.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000028",
+      "sha256": "35f6ae7db2caaa31c0adb263181048be6dad06425eb95fd50457ae60d90a5688",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000029.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000029",
+      "sha256": "cbd61023997e8cd7a7be374d0355a678a3e78dc84f97af20b76c044186dc71e3",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000030.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000030",
+      "sha256": "0cd49b2d617347ec39b18df325b11c7d71a758cd76f6fe8951214843d300b3c1",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000031.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000031",
+      "sha256": "5c77d526d46d5ed4ca86668ff3fdf5fcb5872e2af841826a64832efcd7d20da3",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000032.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000032",
+      "sha256": "99b8068dd71f65bb2fb2473287fa94a34ef690c9cb5c8c975eb04a1d694e44f7",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000033.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000033",
+      "sha256": "99c2f86511131a711a34434ea818ed49ce3877978f6cf820bb57190a82537bfd",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000034.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000034",
+      "sha256": "3eaa3d7847c4b5b6116ce01176918c81ff05e8d0e9ca6e4dc08f387fa43943fb",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000035.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000035",
+      "sha256": "4f772fa36b1fde0204267e474d6ed761b422dd434c9e88850fbee59a7a1bdfb4",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000036.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000036",
+      "sha256": "36597b676e56e0e912415b7f760f9efd292d947eb7d1a8f273c9d3fef53f309f",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000037.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000037",
+      "sha256": "1122b0ca1b856b4399e2fbc6bcdb7dd917db4347e2ad0194470c883d8fae0352",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000038.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000038",
+      "sha256": "966640a62c1a36b1c163703f4ba690bdc74ca72b8b9a793479361c2377c5e779",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000039.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000039",
+      "sha256": "ae067970a1136c69bce2c93a04657a5bed8a1f64ad3c46a07048ba6df3ee9366",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000040.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000040",
+      "sha256": "2f2cec48ba9a2e391ee1736ac50d903db918ca0e362fc5b5e3856b7f780d420c",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/checklists/ERC000041.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERC000041",
+      "sha256": "c16da4921581d4e169b53ab6c77056558a78c323f1c6f915e113e7483e35dc99",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/analysis_type.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=analysis_type",
+      "sha256": "3ecbf06861af6e0266d752ce36a3429dec79b16f65c07175d1779cbdedb1230c",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/assembly_level.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=assembly_level",
+      "sha256": "68236549845f8bcbf68af125a02351f88bdabcd97aab41f9108ebe4a5f38c059",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/broker_name.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=broker_name",
+      "sha256": "2ba33ca0557f1bb5b7ba88d67f9d0093c7185a36ec51fe2b7bd9372d3e001d6d",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/category.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=category",
+      "sha256": "be1e57c0b09d4fb7a282926d5d352b0a57c990b7e35e90e2ac4e48534851917b",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/checklist.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=checklist",
+      "sha256": "9f2d6a9bea28b3c32f5de48e5dde922560a322b87352d8b11975fbc7384a80a4",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/datahub.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=datahub",
+      "sha256": "996964ea4abd9604c20e5c93ab2bbbbc8049f8c7be56b624918b48845476e7f0",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/genome_representation.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=genome_representation",
+      "sha256": "416df87c41ee9ae8c9b789eb67a7fca7f7e90c61fbf05addb2c5875f04912f73",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/host_sex.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=host_sex",
+      "sha256": "b9148569ed4f71a1e84469fd3dc962032f6668135f5f0680675ab20d033d1c01",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/instrument_model.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=instrument_model",
+      "sha256": "cd7a2e9c122a9c27b569e3398bba427c937731c4312f5ce1201559ba9d50ae70",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/instrument_platform.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=instrument_platform",
+      "sha256": "6445cf165b40ff50e5c5a5c8f7ac8236d85717295db5a656c85a3ec8a3244262",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/library_layout.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=library_layout",
+      "sha256": "45354ed80a3055e6c674ec325582475e3a4d953a884b49da4f7e512ce8251a53",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/library_selection.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=library_selection",
+      "sha256": "ee00601900f53ce6e6ff3bf500da63d4899abd3cf25ed9d2735d8c1eb09819b5",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/library_source.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=library_source",
+      "sha256": "5add814f23b273eb9dfd7ada026088e5674afa4f371c8d7e8df17edfdfc1fc8c",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/library_strategy.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=library_strategy",
+      "sha256": "3aeaf120e62b3a75e4681b60446e81a758e9130158a784fcd3f7139a1de1c397",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/ncbi_reporting_standard.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=ncbi_reporting_standard",
+      "sha256": "cf298226de58aee877828c5960729532d2faa8e60b397886e484bf2489721309",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/sex.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=sex",
+      "sha256": "54b10ce66dff6f06a4ff5f2234951b90fcdb7be3de7de171d93193c06fe275d7",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/tag.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=tag",
+      "sha256": "8ca09c3f2fbc937b1b863865b10666692873928df18b682e8a780c140cdb1704",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/controlled-vocab/tax_division.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/controlledVocab?field=tax_division",
+      "sha256": "81e09180a2e8c907d44b2df3592c05e46b7135d69c2281e27bd3f3ecb1743505",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/results.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/results?dataPortal=ena&format=tsv",
+      "sha256": "9af53c5b449ff87614ff8dbec258560a4730d5f6e6be04e6064b83954c216503",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/analysis.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=analysis&format=tsv",
+      "sha256": "2336a20e8c070f44dfa358de45f8e9fda5633f47065b8b7b27fe88cb830b6099",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/analysis_study.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=analysis_study&format=tsv",
+      "sha256": "2336a20e8c070f44dfa358de45f8e9fda5633f47065b8b7b27fe88cb830b6099",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/assembly.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=assembly&format=tsv",
+      "sha256": "4ff8a1cccd7ade6ae5b3b667445ee648839628e4d8e24318c70754596d8f32d8",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/read_experiment.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=read_experiment&format=tsv",
+      "sha256": "0af650cb8eb31f1e760a3c187c8df1019f8e4c038ae3592d1554c4a3f48a02e1",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/read_run.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=read_run&format=tsv",
+      "sha256": "0af650cb8eb31f1e760a3c187c8df1019f8e4c038ae3592d1554c4a3f48a02e1",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/read_study.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=read_study&format=tsv",
+      "sha256": "0af650cb8eb31f1e760a3c187c8df1019f8e4c038ae3592d1554c4a3f48a02e1",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/sample.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=sample&format=tsv",
+      "sha256": "8ae5e487230fd3149288519e940c467de82e976abe9c239ced9ad5964e59dfec",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/study.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=study&format=tsv",
+      "sha256": "df124873dfbec0c7998aae1dd436df38473c7e0df221e2fc9e037f7d1be7cc4a",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/return-fields/taxon.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/returnFields?dataPortal=ena&result=taxon&format=tsv",
+      "sha256": "f71829f85d6331b0529171e42dc488610e428b7f82b066cd822745e176d6a205",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/analysis.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=analysis&format=tsv",
+      "sha256": "412267107b787f23817f3c668e98f4755c23026ba5adfdd5349aa7d279033b24",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/analysis_study.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=analysis_study&format=tsv",
+      "sha256": "412267107b787f23817f3c668e98f4755c23026ba5adfdd5349aa7d279033b24",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/assembly.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=assembly&format=tsv",
+      "sha256": "c314f738989170bf77c66e006b930f948110b140bf829384731e7b7f1740b90c",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/read_experiment.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=read_experiment&format=tsv",
+      "sha256": "18f789fbf81af00184556a965e0419159051cc1ec5b4a2d2e9a719041f54d6ab",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/read_run.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=read_run&format=tsv",
+      "sha256": "18f789fbf81af00184556a965e0419159051cc1ec5b4a2d2e9a719041f54d6ab",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/read_study.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=read_study&format=tsv",
+      "sha256": "18f789fbf81af00184556a965e0419159051cc1ec5b4a2d2e9a719041f54d6ab",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/sample.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=sample&format=tsv",
+      "sha256": "300210c66af8a91ccbee0504d4da2430a2b349c0ff4458b4626b52c58f083dab",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/study.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=study&format=tsv",
+      "sha256": "638bfb1aac906fa9c3261ae97eccfb1f85a4f581715f41899f613d11f8d79cb1",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/search-fields/taxon.tsv",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/searchFields?dataPortal=ena&result=taxon&format=tsv",
+      "sha256": "7483bdf8136c535234c2d3b2719ac5a9c1e2e39d65258f406b349360ba544dc0",
+      "content_type": "text/tab-separated-values",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "fixtures/SRX017289/experiment.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRX017289",
+      "sha256": "61510a1332774dbeb0c8e456cd795ba7be87342c81c61c2683ae902c7e22cffa",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/file-report.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRX017289&result=read_run&format=json",
+      "sha256": "5ecface63238d7b73796979e5dc1e44f4546d5f642738c1eedadb60cce37be5f",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/portal-read_experiment.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_experiment&query=experiment_accession%3D%22SRX017289%22&format=json&limit=0",
+      "sha256": "e434c0165209b15bb330e25eec8e02b19ca8260ec340d29ebe7d0924eca2776c",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/portal-read_run.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_run&query=run_accession%3D%22SRR037073%22&format=json&limit=0",
+      "sha256": "cc5443968ea3366eaca9dbdfb58d4f0fb45ed4f521f1ccb90e6ef17945c24f27",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/portal-sample.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=secondary_sample_accession%3D%22SRS011830%22&format=json&limit=0",
+      "sha256": "5d8b104fe28ff78398943d3b26053beaa2386194971a0e0eb52f74a64109552a",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/portal-study.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=study&query=secondary_study_accession%3D%22SRP002056%22&format=json&limit=0",
+      "sha256": "fe1e39fbc9e5b10862a5bcee839090aa961b328ce504f637981280bf718b1e27",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/run.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRR037073",
+      "sha256": "9c57adce1ab6d4292ea8dc492fe857569cad53e02c118fc75dc2466d1aee6876",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/sample.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRS011830",
+      "sha256": "67128faaefcc999114ee3a4c14cec9a24f881e6536f10378faf54250b7bdcfeb",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/study.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRP002056",
+      "sha256": "db11cfd257d4d3cbe2b8fa76de7dd6d8fbe6316fe4ed8629592c09284f0378b2",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/taxonomy.json",
+      "url": "https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/6239",
+      "sha256": "aa5d9386597c493c4520f5befbe17901bc10239c21fb6fc5fcf0367f8d26b935",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/xref.json",
+      "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=SRX017289",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX7812918/experiment.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRX7812918",
+      "sha256": "94a09777a5d5cc4fff6cac4b15b6d26efd04c744aa91582c6d5305b3d7894a5b",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/file-report.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRX7812918&result=read_run&format=json",
+      "sha256": "325c7dc8e8c1492686d8320dbde9e0a3322a4ea907bfaab9144c2879f532c675",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/portal-read_experiment.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_experiment&query=experiment_accession%3D%22SRX7812918%22&format=json&limit=0",
+      "sha256": "a5d183fdde8f7c765af4ca603744bf67320af02c7eb746ec95a4754a273ce6a8",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/portal-read_run.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_run&query=run_accession%3D%22SRR11192680%22&format=json&limit=0",
+      "sha256": "c66dc199746e6b6ecb4670994865b9933fbaf8fb96558b7b1b12d0ffd24a1e90",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/portal-sample.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=secondary_sample_accession%3D%22SRS6225446%22&format=json&limit=0",
+      "sha256": "3e482680632b083b43ab9a8ec7a11c2f5ba85d29dcc8e48f1c4d76a644762ba8",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/portal-study.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=study&query=secondary_study_accession%3D%22SRP250911%22&format=json&limit=0",
+      "sha256": "29050c783ad6040eed3e86c58c671859dcd298a6c61ac8d5442e133b510538cf",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/run.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRR11192680",
+      "sha256": "23b81bd639b6bb33008d4f50d615046ab69b65114fe546f7fb70309d051ff9dc",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/sample.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRS6225446",
+      "sha256": "185e7502ea2e2f842845d4f6d85538a80535a0e4f9310b2abc8fe5d325475a19",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/study.xml",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SRP250911",
+      "sha256": "b7e0c066699ba18386875aeef2c3fd3f26951f0ebee831fcbf9785b0d71d8431",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/taxonomy.json",
+      "url": "https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/408170",
+      "sha256": "f5e043bd04b2a2cf9d88c55effcf5cb7224d2a58da75097fb02c42e973dee9a0",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/xref.json",
+      "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=SRX7812918",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "openapi/browser-api.openapi.json",
+      "url": "https://www.ebi.ac.uk/ena/browser/api/v3/api-docs",
+      "sha256": "aab6b94b261506c0d32e706a2d1a8c92dabc050829999ec4c2a987168680a5d7",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "openapi/portal-api.openapi.json",
+      "url": "https://www.ebi.ac.uk/ena/portal/api/api-docs",
+      "sha256": "d3d8844031780723779415dcd0f7b4d004262858a4a431f37ced30a9034009cf",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "openapi/taxonomy-api.openapi.json",
+      "url": "https://www.ebi.ac.uk/ena/taxonomy/rest/v3/api-docs",
+      "sha256": "58ee3c4135ab6a16bb1695ef5c998f78f2a42c86e8618bed8ff91dc3330da673",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "openapi/xref-api.openapi.json",
+      "url": "https://www.ebi.ac.uk/ena/xref/rest/v3/api-docs",
+      "sha256": "3555fd269211742ffad382923c558896e4fd63d86340f31728d46edf452e11d8",
+      "content_type": "application/json",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.assembly.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.assembly.xsd",
+      "sha256": "3a757cf9144aa9e09ec3192b9e1f75c2ba6c7222eda0c7687b74ef5683ff6c58",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.checklist.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.checklist.xsd",
+      "sha256": "4974231638475525e314c71f4013aece32c5d8e2c7ad3c73d66fc2fea83323d2",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.embl.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.embl.xsd",
+      "sha256": "2c8d7da62db674998235aef6bac276f8073f87e68df8e7417f0507c6cb56c32f",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.project.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.project.xsd",
+      "sha256": "8af1f0ee563d9e1fdd31d58a9df0f582f4085e961952d10cf2fa88280e1c6df5",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.root.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.root.xsd",
+      "sha256": "3181622342a59b3a12b67488518b79de60885cf2fac52cf1455c4af058f405e4",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.sample_group.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.sample_group.xsd",
+      "sha256": "f98f9682cb6f8ee1f4bf403c43bd36c35346b9d8ecb891a1cb89564d0adc40bd",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.taxonomy.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.taxonomy.xsd",
+      "sha256": "2fa24ffc48ad67cb14a0f975c6288e8ebd36153629733b5a3f9a8e387a7cd995",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ENA.webin.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.webin.xsd",
+      "sha256": "17a8995c8be4903ad09de71e7f1b763b8b28f2d45006aaf9af56945deb07b0ae",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    }
+  ]
+}

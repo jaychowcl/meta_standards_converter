@@ -1,0 +1,47 @@
+[
+{"value":"covid19","description":""}
+,
+{"value":"covid19_host","description":""}
+,
+{"value":"env_geo:coastal","description":"coastal environment by geolocation"}
+,
+{"value":"env_geo:freshwater","description":"freshwater environment by geolocation"}
+,
+{"value":"env_geo:marine","description":"marine environment by geolocation"}
+,
+{"value":"env_geo:terrestrial","description":"terrestrial environment by geolocation"}
+,
+{"value":"env_tax:brackish","description":"brackish environment by taxonomy"}
+,
+{"value":"env_tax:freshwater","description":"freshwater environment by taxonomy"}
+,
+{"value":"env_tax:marine","description":"marine environment by taxonomy"}
+,
+{"value":"env_tax:terrestrial","description":"terrestrial environment by taxonomy"}
+,
+{"value":"pathogen:bacterium","description":"bacterium"}
+,
+{"value":"pathogen:fungus","description":"fungus"}
+,
+{"value":"pathogen:helminth","description":"helminth"}
+,
+{"value":"pathogen:priority","description":"pathogen posing a serious threat to humans"}
+,
+{"value":"pathogen:protozoan","description":"protozoan"}
+,
+{"value":"pathogen:virus","description":"virus"}
+,
+{"value":"structured_data:amr","description":"Antimicrobial Resistance Phenotypic Data"}
+,
+{"value":"structured_data:amr_curated_data_cabbage","description":"Antimicrobial Resistance Phenotypic Data - CABBAGE curated"}
+,
+{"value":"xref:ArrayExpress","description":"xref to ArrayExpress"}
+,
+{"value":"xref:EuropePMC","description":"xref to Europe PMC"}
+,
+{"value":"xref:PubMed","description":"xref to PubMed"}
+,
+{"value":"xref:UniEuk","description":"xref to UniEuk"}
+,
+{"value":"xref:WoRMS","description":"xref to WoRMS (marine species)"}
+]

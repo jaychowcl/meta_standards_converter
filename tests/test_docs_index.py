@@ -514,9 +514,15 @@ class DocsIndexTests(unittest.TestCase):
             "requirements.txt",
             "dependency-provenance/pylock.python312-linux-x86_64.toml",
         }
+        provider_reference_prefixes = ("docs/sra/", "docs/ena/")
 
         for tracked_file in tracked_files:
             if tracked_file in external_or_noncommentable or tracked_file == "README.md":
+                continue
+            if (
+                tracked_file.startswith(provider_reference_prefixes)
+                and not tracked_file.endswith(".md")
+            ):
                 continue
 
             path = ROOT / tracked_file

@@ -1,0 +1,15 @@
+{
+  "taxId" : "408170",
+  "scientificName" : "human gut metagenome",
+  "formalName" : "false",
+  "rank" : "species",
+  "division" : "UNC",
+  "lineage" : "unclassified sequences; metagenomes; organismal metagenomes; ",
+  "geneticCode" : "11",
+  "mitochondrialGeneticCode" : "2",
+  "plastIdGeneticCode" : "11",
+  "submittable" : "true",
+  "binomial" : "false",
+  "otherNames" : [ "human gut microbiota:includes" ],
+  "metagenome" : "true"
+}

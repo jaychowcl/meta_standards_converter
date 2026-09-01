@@ -1,0 +1,61 @@
+<STUDY_SET>
+<STUDY accession="SRP002056" alias="GSE18729" center_name="GEO" broker_name="NCBI">
+  <IDENTIFIERS>
+    <PRIMARY_ID>SRP002056</PRIMARY_ID>
+    <SECONDARY_ID>PRJNA123835</SECONDARY_ID>
+    <EXTERNAL_ID label="primary" namespace="BioProject">PRJNA123835</EXTERNAL_ID>
+    <EXTERNAL_ID namespace="GEO">GSE18729</EXTERNAL_ID>
+    <SUBMITTER_ID namespace="GEO">GSE18729</SUBMITTER_ID>
+  </IDENTIFIERS>
+  <DESCRIPTOR>
+    <STUDY_TITLE>High throughput sequencing of endogenous small RNAs from AGO pathway mutants</STUDY_TITLE>
+    <STUDY_TYPE existing_study_type="Transcriptome Analysis"/>
+    <STUDY_ABSTRACT>High-throughput pyrosequencing of endogenous small RNAs from >95% male enriched populations of alg-3(tm1155);alg-4(ok1041);fog-2(q71) and fog-2(q71) worms as well as purified spermatids from fem-3(q20) adult worms. Gametogenesis is thermosensitive in numerous metazoa ranging from worms to man.  In C. elegans a variety of germ-line nuage- (P-granule) -associated RNA-binding proteins including the Piwi-clade Argonaute, PRG-1, have been implicated in temperature-dependent fertility.  Here, we describe the role of two AGO-class paralogs, alg-3 (T22B3.2) and alg-4 (ZK757.3) in promoting male fertility at elevated temperatures.  A rescuing GFP::alg-3 transgene is localized in P-granules beginning at the late pachytene stage of male gametogenesis. alg-3/4 double mutants lack a subgroup of small RNAs, named 26G-RNAs, which target and appear to down-regulate numerous spermatogenesis-expressed mRNAs. These findings add to a growing number of AGO pathways required for temperature-dependent fertility in C. elegans and support a model in which AGOs and their small RNA co-factors function to promote robustness in gene-expression networks. Overall design: 3 samples examined. Small RNAs from alg-3(tm1155);alg-4(ok1041);fog-2(q71) males and fog-2(q71) males.   Small RNAs from spermatids isolated from ferm-3(q20) worms.</STUDY_ABSTRACT>
+    <CENTER_PROJECT_NAME>GSE18729</CENTER_PROJECT_NAME>
+  </DESCRIPTOR>
+  <STUDY_LINKS>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>pubmed</DB>
+        <ID>20133686</ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMISSION</DB>
+        <ID>SRA012156</ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-FASTQ-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP002056&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes]]></ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+    <STUDY_LINK>
+      <XREF_LINK>
+        <DB>ENA-SUBMITTED-FILES</DB>
+        <ID><![CDATA[https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP002056&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format]]></ID>
+      </XREF_LINK>
+    </STUDY_LINK>
+  </STUDY_LINKS>
+  <STUDY_ATTRIBUTES>
+    <STUDY_ATTRIBUTE>
+      <TAG>parent_bioproject</TAG>
+      <VALUE>PRJNA121635</VALUE>
+    </STUDY_ATTRIBUTE>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-STATUS</TAG>
+      <VALUE>PUBLIC</VALUE>
+    </STUDY_ATTRIBUTE>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-FIRST-PUBLIC</TAG>
+      <VALUE>2010-04-09</VALUE>
+    </STUDY_ATTRIBUTE>
+    <STUDY_ATTRIBUTE>
+      <TAG>ENA-LAST-UPDATE</TAG>
+      <VALUE>2017-11-30</VALUE>
+    </STUDY_ATTRIBUTE>
+  </STUDY_ATTRIBUTES>
+</STUDY>
+</STUDY_SET>

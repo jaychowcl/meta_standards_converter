@@ -1,0 +1,29 @@
+columnId	description	type
+breed	breed	text
+broker_name	broker name	controlled value
+center_name	Submitting center	text
+cultivar	cultivar (cultivated variety) of plant from which sample was obtained	text
+datahub	DCC datahub name	controlled value
+description	brief sequence description	text
+first_public	date when made public	date
+geo_accession	GEO accession	text
+isolate	individual isolate from which sample was obtained	text
+keywords	keywords associated with sequence	text
+last_updated	date when last updated	date
+parent_study_accession	parent study accession	text
+project_name	name of the project within which the sequencing was organized	text
+scientific_name	scientific name of an organism	text
+secondary_study_accession	secondary study accession number	text
+secondary_study_alias	Submitting center	text
+secondary_study_center_name	Submitting center	text
+status	Status	number
+strain	strain from which sample was obtained	text
+study_accession	study accession number	text
+study_alias	submitter's name for the study	text
+study_description	detailed sequencing study description	text
+study_name	sequencing study name	text
+study_title	brief sequencing study description	text
+submission_tool	Submission tool	text
+tag	Classification Tags	controlled value
+tax_division	taxonomic division	controlled value
+tax_id	NCBI taxonomic classification	taxonomy

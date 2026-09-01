@@ -96,6 +96,13 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: extension, projector, platform handler, asset, service, round trip, tests
   link: [Open section](codebase.md#extension-and-change-guidance)
 
+- id: insdc-provider-reference-material
+  title: INSDC provider reference material
+  anchor: insdc-provider-reference-material
+  purpose: Routes the vendored SRA/ENA schemas, endpoint contracts, catalogues, fixture chains, integrity manifests, MSC field-consumption boundary, and checklist availability evidence for future converter design.
+  keywords: SRA, ENA, INSDC, XSD, OpenAPI, EInfo, BioSample, BioProject, PubMed, Portal, Browser, Xref, taxonomy, checklist, expected fields, manifest, sra2json, ena2json, MAGE-TAB
+  link: [Open section](codebase.md#insdc-provider-reference-material)
+
 - id: runtime-behavior
   title: Runtime behavior and packaging
   anchor: runtime-behavior

@@ -1,0 +1,187 @@
+{
+  "snapshot_schema_version": "1.0",
+  "provider": "sra",
+  "retrieved_at": "2026-09-01T16:44:14.681285Z",
+  "artifacts": [
+    {
+      "path": "catalogues/biosample-attributes.xml",
+      "url": "https://www.ncbi.nlm.nih.gov/biosample/docs/attributes/?format=xml",
+      "sha256": "0855b2f8ccb44bfcb231699531dfa108bed82772ca857ddce5e51e38ae7a2770",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/biosample-packages.xml",
+      "url": "https://www.ncbi.nlm.nih.gov/biosample/docs/packages/?format=xml",
+      "sha256": "d701c1ab5ab262376fdfb67e82cc0a076171168f0b9b1d7b198cab05cd08d513",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "catalogues/einfo-sra.xml",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?db=sra&tool=meta_standards_converter",
+      "sha256": "91358c2ed3b396135e0a62eb1bd931ba7ccf876697a847ac43bb384aecf55565",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "fixtures/SRX017289/bioproject-efetch.xml",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=bioproject&id=PRJNA123835&retmode=xml&tool=meta_standards_converter",
+      "sha256": "00f4bb91757ea97c5ae1163be3c1d9b12471b0b2f694b4a840a0d6d89eaf6eeb",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/biosample-efetch.xml",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=biosample&id=SAMN00009557&retmode=xml&tool=meta_standards_converter",
+      "sha256": "9114ffacc32cabe5b8cd15f3ee346208f84872e5231238720374f70a707126e8",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/pubmed-esummary.xml",
+      "url": "https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=20133686&tool=meta_standards_converter",
+      "sha256": "2bd5cb4200639418e7be46a3f69e070ddafdbf9778c5711d100efe9109be0ddb",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX017289/sra-efetch.xml",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id=SRX017289&retmode=xml&tool=meta_standards_converter",
+      "sha256": "bc4df35183fb71906031ba1042ea59976cac283f602b55b642e7ca0cde4aeabe",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX017289"
+    },
+    {
+      "path": "fixtures/SRX7812918/bioproject-efetch.xml",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=bioproject&id=PRJNA609050&retmode=xml&tool=meta_standards_converter",
+      "sha256": "2f7d7c41b16513266bdbd414f6e91b65ad38651a01636c4dd9dd9d0a7f815e33",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/biosample-efetch.xml",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=biosample&id=SAMN14218700&retmode=xml&tool=meta_standards_converter",
+      "sha256": "41a378326404d59d3e4c6efb5c19502c19ad1b2fb91b0a228e8bcd4b6e12ffec",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "fixtures/SRX7812918/sra-efetch.xml",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id=SRX7812918&retmode=xml&tool=meta_standards_converter",
+      "sha256": "2c22b2aae786bd43541a4549154776ba07028d1acc963c89cc8ef7ff32c93714",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": "SRX7812918"
+    },
+    {
+      "path": "schemas/SRA.analysis.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.analysis.xsd",
+      "sha256": "57489bd32c7ca56f27d8542de3b6980ec523f7c9c5d14a6324424c3c8e872975",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/SRA.common.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.common.xsd",
+      "sha256": "e03a89cc6499ce40344fe8b5bea6f69b6f92fef9bdfe0d7bea14576fddf74021",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/SRA.experiment.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.experiment.xsd",
+      "sha256": "efa2dd8f408abe4ab24ccfad313f0ac689ebe8ef4a993ddb1a8e266b0805e531",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/SRA.receipt.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.receipt.xsd",
+      "sha256": "2e92650ada0d94fd064a4ffb4ac0faade55b05dfae48ec1e1429b82035da703d",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/SRA.run.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.run.xsd",
+      "sha256": "6eb42b2738a16eba76e482ebe2d0f4b9736de42f080e8c329e8d01e59392e316",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/SRA.sample.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.sample.xsd",
+      "sha256": "25a63ee070ff7be7d568bc7bae71696284ea898ec5318bcbd648dad119e88a2c",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/SRA.study.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.study.xsd",
+      "sha256": "e5fff8115f77b91aef01425acd48e55975f4e19cc1769abed2d87fcf7d0492ad",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/SRA.submission.xsd",
+      "url": "https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/SRA.submission.xsd",
+      "sha256": "a3baddfa70809023548b15ab71002ff41f05d498e138c23929057a8b885aa535",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ncbi/bioproject.xsd",
+      "url": "https://raw.githubusercontent.com/ncbi/submission-schema/master/bioproject/bioproject.xsd",
+      "sha256": "4b3438bec50351ca0abef2c3922ae69c9211ff996de2a063726ee391ab9c59f8",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    },
+    {
+      "path": "schemas/ncbi/biosample.xsd",
+      "url": "https://raw.githubusercontent.com/ncbi/submission-schema/master/biosample/biosample.xsd",
+      "sha256": "a603275586ed94608ece8e3ab628c4929d6dd4219b2171d83bcf2a6625c0d7af",
+      "content_type": "application/xml",
+      "etag": null,
+      "last_modified": null,
+      "fixture_accession": null
+    }
+  ]
+}

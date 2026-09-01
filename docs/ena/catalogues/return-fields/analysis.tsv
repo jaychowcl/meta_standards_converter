@@ -1,0 +1,138 @@
+columnId	description	type
+age	Age when the sample was taken	text
+altitude	Altitude (m)	number
+analysis_accession	accession number	text
+analysis_alias	submitter's name for the analysis	text
+analysis_code_repository	Link to repository that contains the code used in the analysis.	text
+analysis_date	Date of analysis	text
+analysis_description	Describes the analysis in detail	text
+analysis_protocol	Link to analysis protocol description, an overview of the full analysis including names, references and versions of any software employed. 	text
+analysis_title	brief sequence analysis description	text
+analysis_type	type of sequence analysis	controlled value
+assembly_quality	Quality of assembly	text
+assembly_software	Assembly software	text
+assembly_type	analysis Assembly type	text
+binning_software	Binning software	text
+bio_material	identifier for biological material including institute and collection code	text
+broad_scale_environmental_context	Report the major environmental system the sample or specimen came from. The system(s) identified should have a coarse spatial grain, to provide the general environmental context of where the sampling was done (e.g. in the desert or a rainforest). We recommend using subclasses of EnvO’s biome class: http://purl.obolibrary.org/obo/ENVO_00000428. EnvO documentation about how to use the field: https://github.com/EnvironmentOntology/envo/wiki/Using-ENVO-with-MIxS.	text
+broker_name	broker name	controlled value
+cell_line	cell line from which the sample was obtained	text
+cell_type	cell type from which the sample was obtained	text
+center_name	Submitting center	text
+checklist	ENA metadata reporting standard used to register the biosample (Checklist used)	controlled value
+collected_by	name of the person who collected the specimen	text
+collection_date	Time when specimen was collected	date
+collection_date_end	Time when specimen was collected	date
+collection_date_start	Time when specimen was collected	date
+completeness_score	Completeness score (%)	number
+contamination_score	Contamination score (%)	number
+country	locality of sample isolation: country names, oceans or seas, followed by regions and localities	text
+cultivar	cultivar (cultivated variety) of plant from which sample was obtained	text
+culture_collection	identifier for the sample culture including institute and collection code	text
+datahub	DCC datahub name	controlled value
+depth	Depth (m)	number
+description	brief sequence description	text
+dev_stage	sample obtained from an organism in a specific developmental stage	text
+disease	Disease associated with the sample	text
+ecotype	a population within a given species displaying traits that reflect adaptation to a local habitat	text
+elevation	Elevation (m)	number
+environment_biome	Environment (Biome)	text
+environment_feature	Environment (Feature)	text
+environment_material	Environment (Material)	text
+environmental_medium	Report the environmental material(s) immediately surrounding the sample or specimen at the time of sampling. We recommend using subclasses of 'environmental material' (http://purl.obolibrary.org/obo/ENVO_00010483). EnvO documentation about how to use the field: https://github.com/EnvironmentOntology/envo/wiki/Using-ENVO-with-MIxS . Terms from other OBO ontologies are permissible as long as they reference mass/volume nouns (e.g. air, water, blood) and not discrete, countable entities (e.g. a tree, a leaf, a table top).	text
+environmental_sample	identifies sequences derived by direct molecular isolation from an environmental DNA sample	boolean
+experiment_accession	experiment accession number	text
+experimental_factor	variable aspects of the experimental design	text
+first_created	date when first created	date
+first_public	date when made public	date
+generated_aspera	Aspera links for generated files. Use era-fasp or datahub name as username.	text
+generated_bytes	size (in bytes) of generated files	text
+generated_file_role	File role for generated file	text
+generated_format	Format for generated reads	text
+generated_ftp	FTP links for generated files	text
+generated_galaxy	Galaxy links for generated files	text
+generated_md5	MD5 checksum of generated files	text
+germline	the sample is an unrearranged molecule that was inherited from the parental germline	boolean
+host	natural (as opposed to laboratory) host to the organism from which sample was obtained	text
+host_body_site	name of body site from where the sample was obtained	text
+host_genotype	genotype of host	text
+host_gravidity	whether or not subject is gravid, including date due or date post-conception where applicable	text
+host_growth_conditions	literature reference giving growth conditions of the host	text
+host_phenotype	phenotype of host	text
+host_scientific_name	Scientific name of the natural (as opposed to laboratory) host to the organism from which sample was obtained	text
+host_sex	physical sex of the host	controlled value
+host_status	condition of host (eg. diseased or healthy)	text
+host_tax_id	NCBI taxon id of the host	number
+identified_by	name of the taxonomist who identified the specimen	text
+investigation_type	the study type targeted by the sequencing	text
+isolate	individual isolate from which sample was obtained	text
+isolation_source	describes the physical, environmental and/or local geographical source of the sample	text
+last_updated	date when last updated	date
+lat	Latitude	number
+local_environmental_context	Report the entity or entities which are in the sample or specimen’s local vicinity and which you believe have significant causal influences on your sample or specimen. We recommend using EnvO terms which are of smaller spatial grain than your entry for "broad-scale environmental context". Terms, such as anatomical sites, from other OBO Library ontologies which interoperate with EnvO (e.g. UBERON) are accepted in this field. EnvO documentation about how to use the field: https://github.com/EnvironmentOntology/envo/wiki/Using-ENVO-with-MIxS.	text
+location	geographic location of isolation of the sample	latlon
+location_end	latlon
+location_start	latlon
+lon	Longitude	number
+marine_region	geographical origin of the sample as defined by the marine region	text
+mating_type	mating type of the organism from which the sequence was obtained	text
+ncbi_reporting_standard	NCBI metadata reporting standard used to register the biosample (Package used)	controlled value
+ph	pH	number
+pipeline_name	analysis pipeline name	text
+pipeline_version	analysis pipeline version	text
+project_name	name of the project within which the sequencing was organized	text
+protocol_label	the protocol used to produce the sample	text
+pubmed_id	PubMed ID	text
+reference_data_set_name	Taxonomic reference library analysis set name	text
+reference_data_set_version	Taxonomic reference library analysis set version	text
+reference_genome	The reference genome used in the analysis. Use 'not applicable' if a reference genome was not required for this analysis type.	text
+related_analysis_accession	related analysis accession number	text
+run_accession	run accession number	text
+salinity	Salinity (PSU)	number
+sample_accession	sample accession number	text
+sample_alias	submitter's name for the sample	text
+sample_capture_status	Sample capture status	text
+sample_collection	the method or device employed for collecting the sample	text
+sample_description	detailed sample description	text
+sample_material	sample material label	text
+sample_title	brief sample title	text
+sampling_campaign	the activity within which this sample was collected	text
+sampling_platform	the large infrastructure from which this sample was collected	text
+sampling_site	the site/station where this sample was collection	text
+scientific_name	scientific name of an organism	text
+secondary_project	Secondary project	text
+secondary_sample_accession	secondary sample accession number	text
+secondary_study_accession	secondary study accession number	text
+sequencing_method	sequencing method used	text
+serotype	serological variety of a species characterized by its antigenic properties	text
+serovar	serological variety of a species (usually a prokaryote) characterized by its antigenic properties	text
+sex	sex of the organism from which the sample was obtained	controlled value
+specimen_voucher	identifier for the sample culture including institute and collection code	text
+status	Status	number
+strain	strain from which sample was obtained	text
+study_accession	study accession number	text
+study_alias	submitter's name for the study	text
+study_title	brief sequencing study description	text
+sub_species	name of sub-species of organism from which sample was obtained	text
+sub_strain	name or identifier of a genetically or otherwise modified strain from which sample was obtained	text
+submission_accession	submission accession number	text
+submission_tool	Submission tool	text
+submitted_aspera	Aspera links for submitted files. Use era-fasp or datahub name as username.	text
+submitted_bytes	size (in bytes) of submitted files	text
+submitted_file_role	File role for submitted file	text
+submitted_format	format of submitted reads	text
+submitted_ftp	FTP links for submitted files	text
+submitted_galaxy	Galaxy links for submitted files	text
+submitted_host_sex	physical sex of the host	text
+submitted_md5	MD5 checksum of submitted files	text
+surveillance_target	Surveillance target	number
+tag	Classification Tags	controlled value
+target_gene	targeted gene or locus name for marker gene studies	text
+tax_id	NCBI taxonomic classification	taxonomy
+tax_lineage	Complete taxonomic lineage for an organism	text
+taxonomic_classification	Taxonomic classification	text
+taxonomic_identity_marker	Taxonomic identity marker	text
+temperature	Temperature (C)	number
+tissue_lib	tissue library from which sample was obtained	text
+tissue_type	tissue type from which the sample was obtained	text
+variety	variety (varietas, a formal Linnaean rank) of organism from which sample was derived	text

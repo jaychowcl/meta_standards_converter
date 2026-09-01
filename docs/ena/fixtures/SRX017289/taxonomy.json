@@ -1,0 +1,15 @@
+{
+  "taxId" : "6239",
+  "scientificName" : "Caenorhabditis elegans",
+  "formalName" : "true",
+  "rank" : "species",
+  "division" : "INV",
+  "lineage" : "Eukaryota; Metazoa; Ecdysozoa; Nematoda; Chromadorea; Rhabditida; Rhabditina; Rhabditomorpha; Rhabditoidea; Rhabditidae; Peloderinae; Caenorhabditis; ",
+  "geneticCode" : "1",
+  "mitochondrialGeneticCode" : "5",
+  "submittable" : "true",
+  "binomial" : "true",
+  "authority" : "(Maupas, 1900)",
+  "otherNames" : [ "Caenorhabditis elegans (Maupas, 1900):authority", "Rhabditis elegans Maupas, 1899:authority", "Rhabditis elegans:synonym" ],
+  "metagenome" : "false"
+}

@@ -1,0 +1,16 @@
+columnId	description	type
+authority	taxonomic authority	text
+common_name	Everyday name for an organism	text
+description	brief sequence description	text
+genbank_common_name	Everyday name for an organism in GenBank	text
+genetic_code	Set of rules that determine sequence translation	number
+lineage	names representing hierarchical classification of an organism 	text
+merged_tax_id	Old tax ids merged to this tax id	number
+rank	Relative level of a group of organisms in an ancestral hierarchy.	text
+scientific_name	scientific name of an organism	text
+status	Status	number
+synonym	Synonyms for taxon	text
+tag	Classification Tags	controlled value
+tax_division	taxonomic division	controlled value
+tax_id	NCBI taxonomic classification	taxonomy
+tax_lineage	Complete taxonomic lineage for an organism	text

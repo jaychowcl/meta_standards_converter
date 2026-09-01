@@ -1,0 +1,3 @@
+[
+{"run_accession":"SRR11192680","fastq_ftp":"ftp.sra.ebi.ac.uk/vol1/fastq/SRR111/080/SRR11192680/SRR11192680_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/SRR111/080/SRR11192680/SRR11192680_2.fastq.gz","fastq_bytes":"4216429;4680355","fastq_md5":"f40efb28347863582d89a59ec24256c7;46cce499d455427a1f2ae486ba0c5b81","bam_ftp":"","bam_bytes":"","bam_md5":"","submitted_ftp":"","submitted_bytes":"","submitted_md5":"","sra_ftp":"","sra_bytes":"","sra_md5":""}
+]

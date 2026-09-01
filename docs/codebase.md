@@ -933,6 +933,58 @@ Pseudocode: `catalogue -> backed-read each sample metadata -> concatenate obs ro
 - Any raw-runner change requires Docker artifact tests, rootless-daemon
   rejection, mount/ACL review, and corresponding README/codebase updates.
 
+<a id="insdc-provider-reference-material"></a>
+## INSDC provider reference material
+
+The repository vendors offline, source-faithful provider evidence for designing
+future SRA- and ENA-native conversions. This reference material does not implement `sra2json` or `ena2json`; no new CLI, converter, or runtime endpoint is registered.
+
+| Route | Contents and contract |
+|---|---|
+| [SRA snapshot](sra/README.md) | All eight `SRA.*.xsd` files from INSDC SRA 1.5; NCBI BioSample/BioProject schemas; SRA EInfo and BioSample catalogues; NCBI composite SRA, BioSample, BioProject, and available PubMed fixtures; integrity manifest |
+| [SRA expected fields](sra/expected-fields.md) | Study/sample/experiment/run hierarchy, XPath/cardinality/value classes, linked-record joins, strict-validation limits, current MSC subset, precedence, and future MAGE-TAB coverage |
+| [ENA snapshot](ena/README.md) | All eight in-scope `ENA.*.xsd` files, four OpenAPI documents, nine result-type field catalogues, 18 controlled vocabularies, checklist evidence, Browser/Portal/file-report/Xref/Taxonomy fixtures, integrity manifest |
+| [ENA expected fields](ena/expected-fields.md) | Endpoint/column and XML contracts, accession classes, semicolon-aligned files, missing-value semantics, current MSC subset, precedence, and future MAGE-TAB coverage |
+| [Checklist availability](ena/checklist-availability.md) | Snapshot reconciliation: Portal declared 47 checklist IDs, while the documented Browser route supplied 31 XML records and returned HTTP 404 for 16 |
+
+Two fixture chains cover complementary conditions: `SRX017289` links
+`SRP002056` → `SRS011830` → `SRX017289` → `SRR037073` with BioProject,
+BioSample, GEO, and PMID `20133686`; `SRX7812918` links `SRP250911` →
+`SRS6225446` → `SRX7812918` → `SRR11192680` with BioProject/BioSample,
+paired files, geographic sample attributes, and no publication. Provider files
+remain byte-for-byte snapshots. Each provider manifest records URL, retrieval
+timestamp, content type, available HTTP validators, SHA-256, local path, and
+fixture accession; offline tests recalculate every digest.
+
+The active implementation boundary remains deliberately narrow.
+`MINiMLEnricher` discovers SRA accessions from GEO sample relations and uses
+NCBI SRA EFetch for accessions, library values, instrument model, runs, file
+fallbacks, and read lengths. It uses ENA only for a four-column read-run file
+report, preferring a non-empty ENA FASTQ list over NCBI file entries. PubMed
+ESummary is driven by PubMed IDs already present in GEO MINiML. It does not
+currently fetch the separate BioSample/BioProject fixtures or consume ENA
+Browser, search, Xref, Taxonomy, analysis, assembly, or checklist records.
+
+SRA/ENA enrichment does not overwrite GEO geographic or biological fields.
+The sequencing SDRF handler explicitly chooses GEO sample-level library values
+and instrument model over conflicting SRA values, logs the disagreement, and
+keeps the GEO accession when the SRA `geo_sample` differs. ENA precedence is
+limited to file metadata for the same run. These observed rules inform future
+converter design but do not define precedence for an SRA- or ENA-native input.
+
+The ENA schemas retain their provider `schemaLocation` values. Resolve local
+SRA imports through `docs/sra/schemas/` rather than rewriting XSD bytes;
+complete `ENA.webin.xsd` compilation additionally needs excluded `EGA.*.xsd`
+dependencies. Likewise, NCBI's archive-oriented `EXPERIMENT_PACKAGE_SET`
+contains extensions beyond submission-oriented SRA 1.5 schemas, so fixture
+verification asserts well-formedness and field contracts rather than claiming
+strict whole-document XSD validity.
+
+**Evidence:** [`tests/test_provider_reference_material.py`](../tests/test_provider_reference_material.py),
+[`insdc_handlers/insdc_webfetcher.py`](../src/meta_standards_converter/insdc_handlers/insdc_webfetcher.py),
+[`enrichers/miniml_enricher.py`](../src/meta_standards_converter/enrichers/miniml_enricher.py),
+and [`ae_handlers/ae_sdrf_handlers.py`](../src/meta_standards_converter/ae_handlers/ae_sdrf_handlers.py).
+
 <a id="project-purpose-and-layout"></a>
 ## Project Purpose And Layout
 

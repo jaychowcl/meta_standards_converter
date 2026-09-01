@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE eSummaryResult PUBLIC "-//NLM//DTD esummary v1 20041029//EN" "https://eutils.ncbi.nlm.nih.gov/eutils/dtd/20041029/esummary-v1.dtd">
+<eSummaryResult>
+<DocSum>
+	<Id>20133686</Id>
+	<Item Name="PubDate" Type="Date">2010 Feb 23</Item>
+	<Item Name="EPubDate" Type="Date">2010 Feb 4</Item>
+	<Item Name="Source" Type="String">Proc Natl Acad Sci U S A</Item>
+	<Item Name="AuthorList" Type="List">
+		<Item Name="Author" Type="String">Conine CC</Item>
+		<Item Name="Author" Type="String">Batista PJ</Item>
+		<Item Name="Author" Type="String">Gu W</Item>
+		<Item Name="Author" Type="String">Claycomb JM</Item>
+		<Item Name="Author" Type="String">Chaves DA</Item>
+		<Item Name="Author" Type="String">Shirayama M</Item>
+		<Item Name="Author" Type="String">Mello CC</Item>
+	</Item>
+	<Item Name="LastAuthor" Type="String">Mello CC</Item>
+	<Item Name="Title" Type="String">Argonautes ALG-3 and ALG-4 are required for spermatogenesis-specific 26G-RNAs and thermotolerant sperm in Caenorhabditis elegans.</Item>
+	<Item Name="Volume" Type="String">107</Item>
+	<Item Name="Issue" Type="String">8</Item>
+	<Item Name="Pages" Type="String">3588-93</Item>
+	<Item Name="LangList" Type="List">
+		<Item Name="Lang" Type="String">English</Item>
+	</Item>
+	<Item Name="NlmUniqueID" Type="String">7505876</Item>
+	<Item Name="ISSN" Type="String">0027-8424</Item>
+	<Item Name="ESSN" Type="String">1091-6490</Item>
+	<Item Name="PubTypeList" Type="List">
+		<Item Name="PubType" Type="String">Journal Article</Item>
+		<Item Name="PubType" Type="String">Research Support, N.I.H., Extramural</Item>
+		<Item Name="PubType" Type="String">Research Support, Non-U.S. Gov't</Item>
+	</Item>
+	<Item Name="RecordStatus" Type="String">PubMed - indexed for MEDLINE</Item>
+	<Item Name="PubStatus" Type="String">ppublish+epublish</Item>
+	<Item Name="ArticleIds" Type="List">
+		<Item Name="pubmed" Type="String">20133686</Item>
+		<Item Name="pmc" Type="String">PMC2840486</Item>
+		<Item Name="pmcid" Type="String">pmc-id: PMC2840486;</Item>
+		<Item Name="doi" Type="String">10.1073/pnas.0911685107</Item>
+		<Item Name="pii" Type="String">0911685107</Item>
+	</Item>
+	<Item Name="DOI" Type="String">10.1073/pnas.0911685107</Item>
+	<Item Name="History" Type="List">
+		<Item Name="entrez" Type="Date">2010/02/06 06:00</Item>
+		<Item Name="pubmed" Type="Date">2010/02/06 06:00</Item>
+		<Item Name="medline" Type="Date">2010/04/07 06:00</Item>
+		<Item Name="pmc-release" Type="Date">2010/02/04 00:00</Item>
+	</Item>
+	<Item Name="References" Type="List"></Item>
+	<Item Name="HasAbstract" Type="Integer">1</Item>
+	<Item Name="PmcRefCount" Type="Integer">33</Item>
+	<Item Name="FullJournalName" Type="String">Proceedings of the National Academy of Sciences of the United States of America</Item>
+	<Item Name="ELocationID" Type="String">doi: 10.1073/pnas.0911685107</Item>
+	<Item Name="SO" Type="String">2010 Feb 23;107(8):3588-93</Item>
+</DocSum>
+
+</eSummaryResult>
