@@ -321,7 +321,7 @@ def test_fixture_chains_preserve_expected_ena_metadata_and_reports():
             json.loads((fixture_root / name).read_text(encoding="utf-8"))
 
 
-def test_provider_reference_docs_are_routed_to_implemented_converters():
+def test_provider_reference_docs_are_routed_without_advertising_a_converter():
     for provider in ("sra", "ena"):
         assert (DOCS / provider / "README.md").is_file()
         assert (DOCS / provider / "expected-fields.md").is_file()
@@ -330,5 +330,4 @@ def test_provider_reference_docs_are_routed_to_implemented_converters():
     index = (DOCS / "index.md").read_text(encoding="utf-8")
     assert '<a id="insdc-provider-reference-material"></a>' in codebase
     assert "codebase.md#insdc-provider-reference-material" in index
-    assert "`SRAStudyFetcher` and `ENAStudyFetcher` now retrieve complete study graphs" in codebase
-    assert "codebase.md#workflow-insdc2json" in index
+    assert "does not implement `sra2json` or `ena2json`" in codebase

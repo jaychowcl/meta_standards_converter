@@ -9,7 +9,7 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 
 # Expected SRA and linked-record fields
 
-This inventory documents the provider contract consumed by `sra2json`; it is not a parallel JSON schema. Cardinalities describe the provider model: `1`, `0..1`, `0..*`, and `1..*`. Archive-generated fields may be present in retrieval responses even when they are absent from submission XSDs.
+This is a converter-design inventory, not a final JSON schema. Cardinalities describe the provider model: `1`, `0..1`, `0..*`, and `1..*`. Archive-generated fields may be present in retrieval responses even when they are absent from submission XSDs.
 
 ## Object hierarchy and core contracts
 
@@ -47,33 +47,28 @@ Publication is optional. `SRX017289` demonstrates a PubMed link on the study and
 
 ## Fields MSC consumes today
 
-The study-scoped `sra2json` converter resolves projects, studies, samples,
-experiments, and runs through SRA ESearch history and batched EFetch. It joins
-unique BioSample, BioProject, and PubMed records, then emits one typed MSC
-MINiML 3.0 package per resolved study. The mapping consumes:
+MSC does not currently accept SRA as a top-level converter input. During GEO conversion, `MINiMLEnricher` extracts SRA accessions only from GEO sample relations of type `SRA`, then calls NCBI EFetch. It consumes the following subset:
 
-| MSC value | Provider source | Use |
+| Current MSC value | Provider source | Use |
 |---|---|---|
-| series identity and biology | study accession, identifiers, descriptor, type, links, contacts and organization | `series`, accession databases, contributors and publication discovery |
-| sample identity and biology | sample identifiers/name/attributes plus linked BioSample | sample/channel taxonomy, descriptions, and ordered duplicate-preserving characteristics |
-| explicit design | experiment design descriptions | typed protocols without inferring biology from titles |
-| library and platform | library descriptor and platform instrument model | each `sra_run`; promoted to sample fields only under unanimous experiment agreement |
-| assay/run hierarchy | study/sample/experiment/run references, aliases and statistics | structural assay paths, scan names, read statistics and accessions |
-| files | run `SRAFiles/SRAFile` and alternatives | ordered file metadata with URI, size, checksum and provider semantics |
-| publication | study PMID followed by PubMed ESummary | IDF publication identifiers, descriptions, DOI and authors when available |
-| audit evidence | every consumed response | `source.documents` URI/media type/SHA-256 and `extensions.insdc` provenance, conflicts, warnings and unmapped values |
+| `study` | `STUDY/@accession`, primary ID, `STUDY_REF`, then study external ID fallback | Stored in each `sample.sra_run`; also collected into the historically named `sample.ena_accession` list |
+| `experiment`, `run`, `sample` | object accession or primary ID | `Comment[ENA_EXPERIMENT]`, `Comment[ENA_RUN]`, and `Comment[ENA_SAMPLE]` in sequencing SDRF |
+| `biosample`, `geo_sample` | sample `EXTERNAL_ID` namespaces | BioSample export/provenance; `geo_sample` is comparison evidence only |
+| `library_layout`, `library_selection`, `library_source`, `library_strategy` | experiment library descriptor | Sequencing library comments and protocol text |
+| `instrument_model` | platform-specific `INSTRUMENT_MODEL` | Sequencing assay comment |
+| `scan_name` | run alias, otherwise run accession | SDRF scan name |
+| `fastq_files` | ENA file report first, otherwise NCBI `SRAFile` records | Read filenames, URI, MD5, and file selection |
+| `read_lengths` | run `Statistics/Read/@average` | Preserved in enriched JSON; not a core GEO characteristic |
+| PubMed publication tuple | GEO `series.pubmed_id` followed by PubMed ESummary | IDF publication ID, DOI, authors, title and harmonized publication status |
 
-The older GEO `MINiMLEnricher` path remains intentionally compact and keeps its
-existing subset: GEO-linked SRA accessions, experiment/run/library/instrument
-fields, read lengths, and ENA file reports. `sra2json` does not change that
-behavior.
+MSC does **not** currently fetch the separate BioSample or BioProject responses, parse sample attributes such as `geo_loc_name`/`lat_lon`, consume study abstract/type, or discover PubMed IDs from the SRA study link. Those records are vendored for future converter work.
 
-## Precedence and optional origin enrichment
+## Precedence and GEO overwrite behavior
 
-Base `sra2json` is source-faithful and does not harmonize or infer fields. Composite SRA XML is primary; linked records fill gaps, while conflicting alternatives remain in `extensions.insdc.conflicts`. Literal missing-value terms and duplicate attributes remain values rather than becoming null or being deduplicated.
+SRA/ENA enrichment does not overwrite GEO biological, geographic, or characteristic fields. It writes only `sample.sra_accession`, `sample.sra_run`, and `sample.ena_accession`; invoking enrichment on a package already containing those three enrichment slots replaces those slots, but it does not rewrite the GEO sample object.
 
-`--enrich-geo` and `--enrich-ae` are mutually exclusive and disabled by default. When a compatible broker link is present but enrichment is off, the converter warns visibly and records the warning. Explicit enrichment requires a compatible link and successful retrieval. Origin values win only for submitted study/sample biology, factors, protocols, contacts, and publication descriptions after an explicit one-to-one accession match. INSDC identifiers, status, library/run/file metadata and provider provenance remain additive. Ambiguous or unmatched samples are retained with diagnostics rather than guessed.
+For MAGE-TAB rendering, existing GEO sample-level library fields and instrument model explicitly win over differing SRA run values, with an audit warning. A differing SRA `geo_sample` accession also produces a warning and the GEO sample accession remains the assay name. ENA can replace the NCBI-derived FASTQ list for the same run when ENA supplies a non-empty file report; that is file provenance precedence, not GEO metadata precedence.
 
-## MAGE-TAB coverage and limitations
+## Future `sra2json`/MAGE-TAB coverage
 
-The emitted package is structurally valid input to `json2ae --no-enrich`: study descriptions/publications become IDF content; sample organism/attributes become SDRF sources and characteristics; explicit experiment descriptions become protocols; library/platform/run/files become assays and data-file columns. Provider metadata does not guarantee experimental factors, ontology identifiers, detailed wet-lab protocols, publications, or even a sequencing hierarchy. The output is therefore a source-faithful representation and can yield structurally valid but scientifically incomplete MAGE-TAB. A valid zero-run study is retained as metadata-only MINiML with a degradation warning.
+Together, the SRA composite, BioSample, BioProject, and optional PubMed response contain enough information to construct a useful sequencing MAGE-TAB package: study description/publications for IDF; sample organism and attributes for SDRF source characteristics; library/platform information for protocols and assays; and run/file information for scans and data files. They do not guarantee complete experimental protocols, ontology identifiers, factors, or publication links. A converter must preserve free-form attributes and provenance, apply package/checklist rules, model missing publications, and define conflict resolution before claiming a lossless mapping.

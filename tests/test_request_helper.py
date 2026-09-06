@@ -280,10 +280,6 @@ class TestRateLimitedRequester(unittest.TestCase):
             "requests.Response",
         )
         self.assertEqual(
-            inspect.signature(RateLimitedRequester.post).return_annotation,
-            "requests.Response",
-        )
-        self.assertEqual(
             inspect.signature(RateLimitedRequester.reset_service_state).return_annotation,
             "None",
         )
@@ -308,26 +304,6 @@ class TestRateLimitedRequester(unittest.TestCase):
         get.assert_called_once_with(
             "https://example.org/data",
             params={"id": "1"},
-            timeout=12,
-        )
-
-    def test_post_uses_the_same_bounded_request_contract(self):
-        post = Mock(return_value=response())
-        requester = RateLimitedRequester(
-            service="test_post",
-            settings=RequestSettings(timeout=12, request_delay=0),
-            post=post,
-        )
-
-        result = requester.post(
-            "https://example.org/data",
-            json={"accessions": ["SRP1"]},
-        )
-
-        self.assertEqual(200, result.status_code)
-        post.assert_called_once_with(
-            "https://example.org/data",
-            json={"accessions": ["SRP1"]},
             timeout=12,
         )
 

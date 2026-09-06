@@ -2,11 +2,11 @@
 
 # meta_standards_converter
 
-Convert biological study metadata among GEO MINiML, INSDC SRA/ENA, parsed JSON, ArrayExpress MAGE-TAB, and AnnData/H5AD.
+Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MAGE-TAB, and AnnData/H5AD.
 
 ## Description
 
-`meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO, INSDC SRA/ENA, and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML or complete SRA/ENA study hierarchies, join PubMed and linked archive records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
+`meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
 Version 5.2.1 retains MSC MINiML 3.0 as the strict immutable metadata model,
 accepts source-authored duplicate sample titles only when non-empty unique
@@ -22,12 +22,10 @@ Organization-specific H5AD adapters compose through the public `Asset`,
 `SourcePlanner`, `DatasetCombinationPolicy`, projector protocols, and the
 `JSON2H5ADConverter` facade.
 
-The ten primary workflows are:
+The eight primary workflows are:
 
 - `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF.
 - `geo2json`: GEO Series accession to parsed MINiML-compatible JSON.
-- `sra2json`: any supported INSDC accession to complete NCBI SRA study JSON.
-- `ena2json`: any supported INSDC accession to complete ENA study JSON.
 - `json2ae`: parsed MINiML or canonical Atlas v1 JSON to MAGE-TAB IDF and SDRF.
 - `ae2json`: local, policy-approved HTTPS, or BioStudies MAGE-TAB to parsed JSON.
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
@@ -122,11 +120,10 @@ rate-control summaries without logging request parameters.
 
 ### CLI quickstart
 
-Install the package, then run a conversion command. These examples create parsed JSON from GEO or ENA and then normalize the GEO package to H5AD. See the [CLI guide](#cli).
+Install the package, then run any of its seven commands. This example creates parsed JSON and then normalized H5AD. See the [CLI guide](#cli).
 
 ```bash
 geo2json GSE234602 --out output
-ena2json SRP250911 --out output
 json2h5ad output/GSE234602.json --out output
 ```
 
@@ -166,8 +163,6 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | --- | --- | --- |
 | `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt`; Python returns MAGE-TAB row payloads |
 | `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
-| `sra2json` | One or more INSDC project, study, sample, experiment, or run accessions | One `{study}.sra.json` MSC MINiML 3.0 package list per resolved study; optional `.sra.geo.json` or `.sra.ae.json` enrichment output |
-| `ena2json` | The same INSDC accession classes resolved through ENA | One `{study}.ena.json` MSC MINiML 3.0 package list per resolved study; optional `.ena.geo.json` or `.ena.ae.json` enrichment output |
 | `json2ae` | Parsed MINiML object/list or canonical Atlas v1 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
 | `ae2json` | IDF path, policy-approved HTTPS IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 3.0 with typed protocols and assay paths |
 | `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5AD catalogue, provenance JSON explicitly declaring no expression integration, optional nf-core results, and single- or multi-dataset result objects |
@@ -211,7 +206,6 @@ The package has no mandatory application config file. Configure conversions with
 | Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
 | Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
 | Remote enrichment | `--no-enrich` / `enrich=False` | Guarded parent-publication, PubMed, and SRA/ENA enrichment enabled |
-| INSDC origin enrichment | `sra2json`/`ena2json --enrich-geo` or `--enrich-ae` / corresponding keywords | Disabled; linked origins produce a retained warning |
 | MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
 | Resource envelope | `--resource-profile`, `--resource-override` / `resource_profile`, `resource_overrides` | Typed `standard` profile |
 | Additional MAGE-TAB source host | `ae2json --source-host` / `source_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
@@ -261,7 +255,7 @@ The rootless Compose helper derives `DOCKER_HOST` and its runtime paths. `ROOTLE
 
 ### CLI
 
-The package installs `geo2ae`, `geo2json`, `sra2json`, `ena2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`, and `miniml-migrate`. Run `<command> --help` for generated usage text.
+The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`, and `miniml-migrate`. Run `<command> --help` for generated usage text.
 
 All commands process multiple positional inputs in order. A failed input is logged, later inputs continue, and the final exit status is `1`; a fully successful invocation returns `0`. Logging defaults to `WARNING`. `-v` selects `INFO`, `-vv` selects `DEBUG`, and `-q` selects `ERROR`.
 
@@ -396,41 +390,6 @@ exactly one IDF and at least one SDRF; assay data files are not downloaded.
 Remote URLs are HTTPS-only, revalidate bounded redirects and public DNS answers,
 and accept provider hosts by default. Use `--source-host` for an additional
 exact host. Local IDF/SDRF reads stop at the same configured file ceiling.
-
-#### `sra2json` and `ena2json`
-
-Resolve each INSDC accession to its containing study or studies and write
-source-faithful MSC MINiML 3.0 JSON.
-
-```bash
-sra2json SRX017289 --out output
-ena2json PRJDA43743 SRR11192680 --out output
-sra2json SRP002056 --enrich-geo --out output
-ena2json ERP106767 --enrich-ae --out output
-```
-
-| Argument | Behavior |
-| --- | --- |
-| `accession` | One or more `PRJ*`, `[SED]RP`, `SAM*`, `[SED]RS`, `[SED]RX`, or `[SED]RR` accessions. Non-study inputs expand to complete containing studies; a project may emit multiple studies in stable order. |
-| `--enrich-geo` | Merge a compatible GEO source through explicit sample cross-references; disabled by default and mutually exclusive with `--enrich-ae`. |
-| `--enrich-ae` | Merge a compatible ArrayExpress/BioStudies source; disabled by default and mutually exclusive with `--enrich-geo`. `E-GEOD-*` is a GEO mirror, not AE enrichment. |
-| `--out` `OUT` | Output directory; default `.`. Base names are `{study}.{sra|ena}.json`, with `.geo` or `.ae` before `.json` when enriched. |
-| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
-| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
-
-Base conversion always performs a bounded PubMed summary lookup when the
-provider study supplies a PMID. GEO/AE enrichment is explicit and off by
-default; a compatible link with enrichment off produces a visible and retained
-warning. Requested enrichment without a compatible link, or a retrieval
-failure, fails that study. Independent CLI inputs continue after failures and
-the command returns status 1 when any input failed; duplicate resolved studies
-are written once. There is no public record-count limit: hierarchy retrieval is
-batched/paginated and protected by cycle/no-progress detection plus high
-internal runaway guards. A valid zero-run study is emitted as metadata-only
-MINiML with a degradation warning.
 
 #### `json2h5ad`
 
@@ -722,26 +681,6 @@ packages = ae2json().convert(
 
 `ae2json.convert(source, out=None, sdrf_sources=None)` returns a one-package list. Configure the constructor with `resource_profile`, `resource_overrides`, and additional exact `source_hosts`. `sdrf_sources` is a list of explicit local paths or policy-approved HTTPS URLs and follows the same constraints as repeated CLI `--sdrf` values.
 
-Convert an INSDC accession through either provider:
-
-```python
-from meta_standards_converter.converters.ena2json import ena2json
-from meta_standards_converter.converters.sra2json import sra2json
-
-sra_packages = sra2json().convert("SRX017289", out="output")
-ena_packages = ena2json().convert(
-    "ERP106767",
-    enrich_ae=True,
-    out="output",
-)
-```
-
-Both `convert(accession, *, enrich_geo=False, enrich_ae=False, out=None)`
-methods return `list[MINiMLPackage]`. Provider-native XML is primary. Linked
-records fill gaps; conflicting alternatives, literal missing terms, duplicate
-attributes, provenance, source-document hashes, and unmapped provider values
-are retained under the package source and `extensions.insdc` structures.
-
 Convert parsed JSON and expression assets to H5AD:
 
 ```python
@@ -932,12 +871,6 @@ The helper refuses non-rootless daemons. Compose drops all capabilities, enables
 ```text
 CLI or Python API
   |
-  +-- INSDC project/study/sample/experiment/run
-  |     +-> SRA ESearch/history + batched EFetch + BioSample/BioProject/PubMed
-  |     `-> ENA Portal resolution/links + Browser XML + file/Xref/taxonomy/PubMed
-  |             -> ordered study graph -> source-faithful MINiML 3.0
-  |             -> [explicit GEO or AE merge] -> study-scoped JSON
-  |
   +-- GEO accession
   |     -> GEOWebFetcher -> GEOParser -> [MINiMLEnricher]
   |          |                                  |
@@ -985,8 +918,8 @@ programmatic converter calls raise errors to their caller.
 
 ## Testing
 
-The deterministic, network-blocked suite was last verified on 2026-09-02:
-`691 passed, 16 skipped` (plus 93 unittest subtests). The skipped cases are the explicitly opt-in live API
+The deterministic, network-blocked suite was last verified on 2026-08-10:
+`587 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do
 not launch nf-core.
 

@@ -77,8 +77,6 @@ json2h5ad = "meta_standards_converter.cli.json2h5ad:main"
 json2tsv = "meta_standards_converter.cli.json2tsv:main"
 json2obs = "meta_standards_converter.cli.json2obs:main"
 miniml-migrate = "meta_standards_converter.cli.miniml_migrate:main"
-sra2json = "meta_standards_converter.cli.sra2json:main"
-ena2json = "meta_standards_converter.cli.ena2json:main"
 
 [tool.setuptools.package-dir]
 "" = "src"

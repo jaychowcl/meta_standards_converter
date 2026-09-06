@@ -58,7 +58,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Entrypoints and interfaces
   anchor: entrypoints-and-interfaces
   purpose: Inventories supported CLI, Python, Docker, Compose, and operational interfaces.
-  keywords: entrypoint, CLI, Python, Docker, Compose, geo2ae, geo2json, sra2json, ena2json, json2ae, ae2json, json2h5ad, json2tsv, json2obs
+  keywords: entrypoint, CLI, Python, Docker, Compose, geo2ae, geo2json, json2ae, ae2json, json2h5ad, json2tsv, json2obs
   link: [Open section](codebase.md#entrypoints-and-interfaces)
 
 - id: orchestrators-and-core-types
@@ -85,7 +85,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: principal-workflows
   title: Principal workflows
   anchor: principal-workflows
-  purpose: Introduces the nine conversion flows and their important terminal outcomes.
+  purpose: Introduces the seven conversion flows and their important terminal outcomes.
   keywords: workflow, branch, stages, pseudocode, terminal, partial result
   link: [Open section](codebase.md#principal-workflows)
 
@@ -99,7 +99,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: insdc-provider-reference-material
   title: INSDC provider reference material
   anchor: insdc-provider-reference-material
-  purpose: Routes the vendored SRA/ENA schemas, endpoint contracts, catalogues, fixture chains, integrity manifests, implemented converter field mapping, and checklist availability evidence.
+  purpose: Routes the vendored SRA/ENA schemas, endpoint contracts, catalogues, fixture chains, integrity manifests, MSC field-consumption boundary, and checklist availability evidence for future converter design.
   keywords: SRA, ENA, INSDC, XSD, OpenAPI, EInfo, BioSample, BioProject, PubMed, Portal, Browser, Xref, taxonomy, checklist, expected fields, manifest, sra2json, ena2json, MAGE-TAB
   link: [Open section](codebase.md#insdc-provider-reference-material)
 
@@ -203,13 +203,6 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   keywords: ae2json, BioStudies, E-MTAB-6486, pagination, IDF, SDRF, canonical labels, legacy label aliases, factor normalization, material type, resource profile, egress, AEParser, typed model
   link: [Open section](codebase.md#workflow-ae2json)
 
-- id: workflow-insdc2json
-  title: SRA/ENA accession to study JSON
-  anchor: workflow-insdc2json
-  purpose: Traces provider-specific resolution, complete-study retrieval, source-faithful projection, diagnostics, optional origin enrichment, and study-scoped output.
-  keywords: sra2json, ena2json, INSDC, SRA, ENA, ESearch, Browser XML, Portal links, BioSample, BioProject, PubMed, GEO, ArrayExpress, provenance, metadata-only
-  link: [Open section](codebase.md#workflow-insdc2json)
-
 - id: workflow-json2h5ad
   title: MINiML or Atlas JSON to H5AD
   anchor: workflow-json2h5ad
@@ -285,6 +278,6 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - id: test-plan
   title: Test plan
   anchor: test-plan
-  purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-09-02 deterministic result.
-  keywords: tests, 691 passed, 16 skipped, 93 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
+  purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
+  keywords: tests, 587 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)

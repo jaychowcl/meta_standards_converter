@@ -37,7 +37,6 @@ CLAUDE.md
 
 .pytest_cache/
 .pytest_cache/*
-.venv/
 
 .out/
 .out/*
