@@ -1,0 +1,1 @@
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML" version="0.5.4"><Sample iid="GSM1"><Title>Constructed child sample</Title></Sample><Series iid="GSE1"><Accession database="GEO">GSE1</Accession><Sample-Ref ref="GSM1"/><Relation type="SubSeries of" target="GSE2"/></Series></MINiML>

@@ -506,6 +506,7 @@ class DocsIndexTests(unittest.TestCase):
             "dependency-provenance/runtime.python312-linux-x86_64.cdx.json",
         }
         hash_comment_files = {
+            ".gitattributes",
             ".dockerignore",
             ".gitignore",
             "Dockerfile",
@@ -524,6 +525,9 @@ class DocsIndexTests(unittest.TestCase):
                 and not tracked_file.endswith(".md")
             ):
                 continue
+
+            if tracked_file.startswith("tests/fixtures/") and Path(tracked_file).suffix in {".json", ".xml", ".txt", ".tsv", ".csv"}:
+                continue  # Source evidence and exact output fixtures must not gain comment headers.
 
             path = ROOT / tracked_file
             text = path.read_text(encoding="utf-8")

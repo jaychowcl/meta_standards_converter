@@ -1,0 +1,13 @@
+{
+  "kind": "reduced public GEO example",
+  "original_fixture": "tests/GSE328265_family.xml",
+  "original_sha256": "de0ff60d5180a6619faea2631fcf56dd50c5580a19a86575327b05f742484b35",
+  "original_capture_date": "unknown; inherited repository fixture",
+  "reduction": "Keep first sample GSM9651991 and its Series Sample-Ref; retain all other study/platform/database evidence unchanged. XML reserialized with ElementTree.",
+  "response_capture_date": "2026-09-10",
+  "response_urls": {
+    "sra.xml": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=sra&id=SRX32831930&retmode=xml",
+    "ena.json": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRX32831930&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes&format=json",
+    "pubmed.xml": "https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=42129775"
+  }
+}

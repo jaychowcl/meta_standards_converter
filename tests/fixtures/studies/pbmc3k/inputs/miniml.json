@@ -1,0 +1,39 @@
+{
+  "miniml_schema_version": "3.0",
+  "source": {
+    "format": "test"
+  },
+  "series": {
+    "iid": "PBMC3K",
+    "accession": [
+      {
+        "value": "PBMC3K"
+      }
+    ],
+    "title": "PBMC3k four-cell six-gene contract"
+  },
+  "sample": [
+    {
+      "iid": "PBMC3K_SAMPLE",
+      "accession": [
+        {
+          "value": "PBMC3K_SAMPLE"
+        }
+      ],
+      "title": "PBMCs",
+      "channel": [
+        {
+          "source": {
+            "value": "peripheral blood mononuclear cells"
+          },
+          "organism": [
+            {
+              "value": "Homo sapiens",
+              "taxid": "9606"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

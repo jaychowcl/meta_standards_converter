@@ -1,0 +1,266 @@
+{
+  "schema_version": "1.0",
+  "values": {
+    "meta_standards_converter": {
+      "converter_version": "6.0.0",
+      "metadata_schema_version": "1.0",
+      "modality": "unknown",
+      "path_base": "artifact_parent",
+      "sample_accession": "PBMC3K_SAMPLE",
+      "source_origin": "cli",
+      "source_sha256": "f456d273a47e3586c81a8cb692e4b1c9ef3d52b94f509cc50255129a216ba7c4",
+      "source_tier": "matrix",
+      "source_uri": "../../counts.tsv",
+      "source_uri_scope": "external",
+      "study_accession": "PBMC3K"
+    },
+    "msc_metadata": {
+      "sample_values": {
+        "columns": [
+          "sample_accession",
+          "field",
+          "ordinal",
+          "value",
+          "value_type"
+        ],
+        "index": [
+          "value_000000",
+          "value_000001",
+          "value_000002",
+          "value_000003",
+          "value_000004",
+          "value_000005",
+          "value_000006",
+          "value_000007",
+          "value_000008",
+          "value_000009",
+          "value_000010",
+          "value_000011"
+        ],
+        "records": [
+          {
+            "field": "msc.sample.accession",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "PBMC3K_SAMPLE",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.series.accession",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "PBMC3K",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.sample.title",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "PBMCs",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.sample.channel.organism.value",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "Homo sapiens",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.sample.channel.organism.taxid",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "9606",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.sample.channel.organism_part",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "peripheral blood mononuclear cells",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.sample.channel.source",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "peripheral blood mononuclear cells",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.sample.channel.material_type",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "peripheral blood mononuclear cells",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.asset.tier",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "matrix",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.asset.uri",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "../../counts.tsv",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.asset.uri_scope",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "external",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.expression.modality",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "unknown",
+            "value_type": "string"
+          }
+        ],
+        "type": "dataframe"
+      },
+      "schema_version": "1.0"
+    },
+    "msc_miniml": {
+      "fields": {
+        "columns": [
+          "package_index",
+          "entity_type",
+          "entity_id",
+          "path",
+          "value",
+          "value_type"
+        ],
+        "index": [
+          "field_000000",
+          "field_000001",
+          "field_000002",
+          "field_000003",
+          "field_000004",
+          "field_000005",
+          "field_000006",
+          "field_000007",
+          "field_000008",
+          "field_000009",
+          "field_000010",
+          "field_000011"
+        ],
+        "records": [
+          {
+            "entity_id": "package",
+            "entity_type": "package",
+            "package_index": 0,
+            "path": "miniml_schema_version",
+            "value": "3.0",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "package",
+            "entity_type": "package",
+            "package_index": 0,
+            "path": "source.format",
+            "value": "test",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "package",
+            "entity_type": "package",
+            "package_index": 0,
+            "path": "organization",
+            "value": "",
+            "value_type": "empty_list"
+          },
+          {
+            "entity_id": "PBMC3K",
+            "entity_type": "series",
+            "package_index": 0,
+            "path": "iid",
+            "value": "PBMC3K",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K",
+            "entity_type": "series",
+            "package_index": 0,
+            "path": "accession[0].value",
+            "value": "PBMC3K",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K",
+            "entity_type": "series",
+            "package_index": 0,
+            "path": "title",
+            "value": "PBMC3k four-cell six-gene contract",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K_SAMPLE",
+            "entity_type": "sample",
+            "package_index": 0,
+            "path": "iid",
+            "value": "PBMC3K_SAMPLE",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K_SAMPLE",
+            "entity_type": "sample",
+            "package_index": 0,
+            "path": "accession[0].value",
+            "value": "PBMC3K_SAMPLE",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K_SAMPLE",
+            "entity_type": "sample",
+            "package_index": 0,
+            "path": "title",
+            "value": "PBMCs",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K_SAMPLE",
+            "entity_type": "sample",
+            "package_index": 0,
+            "path": "channel[0].source.value",
+            "value": "peripheral blood mononuclear cells",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K_SAMPLE",
+            "entity_type": "sample",
+            "package_index": 0,
+            "path": "channel[0].organism[0].value",
+            "value": "Homo sapiens",
+            "value_type": "string"
+          },
+          {
+            "entity_id": "PBMC3K_SAMPLE",
+            "entity_type": "sample",
+            "package_index": 0,
+            "path": "channel[0].organism[0].taxid",
+            "value": "9606",
+            "value_type": "string"
+          }
+        ],
+        "type": "dataframe"
+      },
+      "metadata_source": "",
+      "metadata_source_name": "",
+      "metadata_source_uri": "",
+      "packages_json": "[{\"contributor\": [], \"database\": [], \"miniml_schema_version\": \"3.0\", \"organization\": [], \"platform\": [], \"sample\": [{\"accession\": [{\"value\": \"PBMC3K_SAMPLE\"}], \"channel\": [{\"organism\": [{\"taxid\": \"9606\", \"value\": \"Homo sapiens\"}], \"source\": {\"value\": \"peripheral blood mononuclear cells\"}}], \"iid\": \"PBMC3K_SAMPLE\", \"title\": \"PBMCs\"}], \"series\": {\"accession\": [{\"value\": \"PBMC3K\"}], \"iid\": \"PBMC3K\", \"title\": \"PBMC3k four-cell six-gene contract\"}, \"source\": {\"format\": \"test\"}}]",
+      "path_base": "artifact_parent",
+      "publication_policy": "citation_metadata_only",
+      "schema_version": "1.0",
+      "source_json": "../../miniml.json",
+      "source_json_scope": "external",
+      "source_sha256": "d3e0ec19c48d89329a583b3aa2cccd5f87fe305c23ab300afae627163ad87ec5"
+    }
+  }
+}

@@ -1,0 +1,254 @@
+[
+  {
+    "miniml_schema_version": "3.0",
+    "source": {
+      "format": "GEO MINiML",
+      "version": "0.5.0",
+      "schema_location": "http://www.ncbi.nlm.nih.gov/geo/info/MINiML http://www.ncbi.nlm.nih.gov/geo/info/MINiML.xsd"
+    },
+    "database": [
+      {
+        "iid": "GEO",
+        "name": "Gene Expression Omnibus (GEO)",
+        "public_id": "GEO",
+        "organization": "NCBI NLM NIH",
+        "web_link": "http://www.ncbi.nlm.nih.gov/geo",
+        "email": "geo@ncbi.nlm.nih.gov"
+      }
+    ],
+    "organization": [],
+    "contributor": [
+      {
+        "iid": "contrib1",
+        "person": {
+          "first": "Anna-Lena",
+          "last": "Börsch"
+        },
+        "organization": "University Hospital Münster",
+        "email": "a_boer11@uni-muenster.de",
+        "address": {
+          "line": [
+            "Domagkstraße 24"
+          ],
+          "city": "Münster",
+          "zip_code": "48149",
+          "country": "Germany"
+        }
+      },
+      {
+        "iid": "contrib2",
+        "organization": "GEO",
+        "address": {
+          "country": "USA"
+        }
+      }
+    ],
+    "platform": [
+      {
+        "iid": "GPL30173",
+        "accession": [
+          {
+            "value": "GPL30173",
+            "database": "GEO"
+          }
+        ],
+        "status": [
+          {
+            "submission_date": "2021-05-20",
+            "release_date": "2021-05-20",
+            "last_update_date": "2021-05-20",
+            "database": "GEO"
+          }
+        ],
+        "title": "NextSeq 2000 (Homo sapiens)",
+        "technology": "high-throughput sequencing",
+        "distribution": "virtual",
+        "organism": [
+          {
+            "value": "Homo sapiens",
+            "taxid": "9606"
+          }
+        ],
+        "contact_ref": [
+          {
+            "ref": "contrib2"
+          }
+        ]
+      }
+    ],
+    "sample": [
+      {
+        "iid": "GSM9651991",
+        "accession": [
+          {
+            "value": "GSM9651991",
+            "database": "GEO"
+          }
+        ],
+        "status": [
+          {
+            "submission_date": "2026-04-07",
+            "release_date": "2026-05-17",
+            "last_update_date": "2026-05-18",
+            "database": "GEO"
+          }
+        ],
+        "title": "human_CSF_Ctrl_1",
+        "type": "SRA",
+        "channel_count": "1",
+        "channel": [
+          {
+            "source": {
+              "value": "CSF"
+            },
+            "organism": [
+              {
+                "value": "Homo sapiens",
+                "taxid": "9606"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "tissue",
+                "value": "CSF"
+              }
+            ],
+            "molecule": {
+              "value": "total RNA"
+            },
+            "extract_protocol": "Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines. Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics"
+          }
+        ],
+        "description": "Library name: Ctrl_1",
+        "data_processing": "Seurat v5.1.0 in R v4.5.1 Assembly: GRCh38 Supplementary files format and content: h5 files for each sample",
+        "platform_ref": {
+          "ref": "GPL30173"
+        },
+        "library_strategy": "RNA-Seq",
+        "library_source": "transcriptomic",
+        "library_selection": "cDNA",
+        "instrument_model": {
+          "predefined": "NextSeq 2000"
+        },
+        "contact_ref": [
+          {
+            "ref": "contrib1"
+          }
+        ],
+        "supplementary_data": [
+          {
+            "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5",
+            "type": "H5"
+          }
+        ],
+        "relation": [
+          {
+            "type": "BioSample",
+            "target": "https://www.ncbi.nlm.nih.gov/biosample/SAMN57140712"
+          },
+          {
+            "type": "SRA",
+            "target": "https://www.ncbi.nlm.nih.gov/sra?term=SRX32831930"
+          }
+        ],
+        "sra_accession": [
+          "SRX32831930"
+        ],
+        "ena_accession": [
+          "SRP689887"
+        ],
+        "sra_run": [
+          {
+            "run": "SRR37976431",
+            "study": "SRP689887",
+            "experiment": "SRX32831930",
+            "sample": "SRS28687296",
+            "biosample": "SAMN57140712",
+            "geo_sample": "GSM9651991",
+            "library_layout": "PAIRED",
+            "library_selection": "cDNA",
+            "library_source": "TRANSCRIPTOMIC",
+            "library_strategy": "RNA-Seq",
+            "scan_name": "GSM9651991_r1",
+            "instrument_model": "NextSeq 2000",
+            "read_lengths": [
+              "90"
+            ]
+          }
+        ]
+      }
+    ],
+    "series": {
+      "iid": "GSE328265",
+      "accession": [
+        {
+          "value": "GSE328265",
+          "database": "GEO"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2026-04-16",
+          "release_date": "2026-05-17",
+          "last_update_date": "2026-05-18",
+          "database": "GEO"
+        }
+      ],
+      "title": "A CSF Disease-Associated Macrophage Signature defines Progressive Multiple Sclerosis",
+      "pubmed_id": [
+        "42129775"
+      ],
+      "web_link": [
+        "https://link.springer.com/article/10.1186/s12974-026-03861-9#"
+      ],
+      "summary": "This SuperSeries is composed of the SubSeries listed below.",
+      "overall_design": "Refer to individual Series",
+      "type": [
+        {
+          "value": "Expression profiling by high throughput sequencing"
+        }
+      ],
+      "contact_ref": [
+        {
+          "ref": "contrib1"
+        }
+      ],
+      "sample_ref": [
+        {
+          "ref": "GSM9651991"
+        }
+      ],
+      "supplementary_data": [
+        {
+          "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE328nnn/GSE328265/suppl/GSE328265_RAW.tar",
+          "type": "TAR"
+        }
+      ],
+      "relation": [
+        {
+          "type": "SuperSeries of",
+          "target": "GSE327243"
+        },
+        {
+          "type": "SuperSeries of",
+          "target": "GSE328264"
+        },
+        {
+          "type": "BioProject",
+          "target": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1454431"
+        }
+      ],
+      "pubmed_publication": [
+        {
+          "pubmed_id": "42129775",
+          "doi": "10.1186/s12974-026-03861-9",
+          "author_list": "Börsch AL, Riethues F, Schulte-Mecklenbeck A, Wang X, Heming M, Lu IN, Müller-Miny L, Wiendl H, Gross CC, Bernard-Valnet R, Meyer Zu Hörste G",
+          "title": "A CSF disease-associated macrophage signature defines progressive multiple sclerosis.",
+          "status": "published",
+          "status_term_source_ref": "EFO",
+          "status_term_accession_number": "EFO_0001796"
+        }
+      ]
+    }
+  }
+]

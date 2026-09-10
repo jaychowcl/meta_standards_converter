@@ -1,0 +1,995 @@
+{
+  "X": {
+    "kind": "csr",
+    "dtype": "float64",
+    "shape": [
+      4,
+      6
+    ],
+    "values": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        2.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      [
+        1.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        9.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        3.0
+      ]
+    ]
+  },
+  "obs": {
+    "kind": "dataframe",
+    "index": {
+      "values": [
+        "AAACATACAACCAC-1-PBMC3K_SAMPLE",
+        "AAACATTGAGCTAC-1-PBMC3K_SAMPLE",
+        "AAACATTGATCAGC-1-PBMC3K_SAMPLE",
+        "AAACCGTGCTTCCG-1-PBMC3K_SAMPLE"
+      ],
+      "name": null,
+      "dtype": "str"
+    },
+    "columns": {
+      "values": [
+        "msc.observation.original_id",
+        "msc.sample.accession",
+        "msc.series.accession",
+        "msc.sample.title",
+        "msc.sample.description",
+        "msc.sample.channel.organism.value",
+        "msc.sample.channel.organism.taxid",
+        "msc.sample.channel.organism_part",
+        "msc.sample.channel.developmental_stage",
+        "msc.sample.channel.disease",
+        "msc.sample.channel.genotype",
+        "msc.sample.channel.source",
+        "msc.sample.channel.biomaterial_provider",
+        "msc.sample.channel.material_type",
+        "msc.sample.channel.molecule",
+        "msc.platform.accession",
+        "msc.archive.sra_accession",
+        "msc.archive.ena_accession",
+        "msc.archive.biosample_accession",
+        "msc.archive.sra_run_accessions",
+        "msc.library.strategy",
+        "msc.library.source",
+        "msc.library.selection",
+        "msc.library.layout",
+        "msc.instrument.model",
+        "msc.protocol.types",
+        "msc.protocol.term_source_refs",
+        "msc.protocol.term_accession_numbers",
+        "msc.database.identifier",
+        "msc.database.name",
+        "msc.database.uri",
+        "msc.asset.tier",
+        "msc.asset.uri",
+        "msc.asset.uri_scope",
+        "msc.expression.modality"
+      ],
+      "name": null,
+      "dtype": "str"
+    },
+    "dtypes": [
+      "str",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category",
+      "category"
+    ],
+    "data": [
+      [
+        "AAACATACAACCAC-1",
+        "PBMC3K_SAMPLE",
+        "PBMC3K",
+        "PBMCs",
+        "",
+        "Homo sapiens",
+        "9606",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "matrix",
+        "../counts.tsv",
+        "external",
+        "unknown"
+      ],
+      [
+        "AAACATTGAGCTAC-1",
+        "PBMC3K_SAMPLE",
+        "PBMC3K",
+        "PBMCs",
+        "",
+        "Homo sapiens",
+        "9606",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "matrix",
+        "../counts.tsv",
+        "external",
+        "unknown"
+      ],
+      [
+        "AAACATTGATCAGC-1",
+        "PBMC3K_SAMPLE",
+        "PBMC3K",
+        "PBMCs",
+        "",
+        "Homo sapiens",
+        "9606",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "matrix",
+        "../counts.tsv",
+        "external",
+        "unknown"
+      ],
+      [
+        "AAACCGTGCTTCCG-1",
+        "PBMC3K_SAMPLE",
+        "PBMC3K",
+        "PBMCs",
+        "",
+        "Homo sapiens",
+        "9606",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "peripheral blood mononuclear cells",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "matrix",
+        "../counts.tsv",
+        "external",
+        "unknown"
+      ]
+    ],
+    "categories": {
+      "msc.sample.accession": {
+        "values": {
+          "values": [
+            "PBMC3K_SAMPLE"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.series.accession": {
+        "values": {
+          "values": [
+            "PBMC3K"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.title": {
+        "values": {
+          "values": [
+            "PBMCs"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.description": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.organism.value": {
+        "values": {
+          "values": [
+            "Homo sapiens"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.organism.taxid": {
+        "values": {
+          "values": [
+            "9606"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.organism_part": {
+        "values": {
+          "values": [
+            "peripheral blood mononuclear cells"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.developmental_stage": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.disease": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.genotype": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.source": {
+        "values": {
+          "values": [
+            "peripheral blood mononuclear cells"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.biomaterial_provider": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.material_type": {
+        "values": {
+          "values": [
+            "peripheral blood mononuclear cells"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.sample.channel.molecule": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.platform.accession": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.archive.sra_accession": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.archive.ena_accession": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.archive.biosample_accession": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.archive.sra_run_accessions": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.library.strategy": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.library.source": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.library.selection": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.library.layout": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.instrument.model": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.protocol.types": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.protocol.term_source_refs": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.protocol.term_accession_numbers": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.database.identifier": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.database.name": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.database.uri": {
+        "values": {
+          "values": [
+            ""
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.asset.tier": {
+        "values": {
+          "values": [
+            "matrix"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.asset.uri": {
+        "values": {
+          "values": [
+            "../counts.tsv"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.asset.uri_scope": {
+        "values": {
+          "values": [
+            "external"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.expression.modality": {
+        "values": {
+          "values": [
+            "unknown"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      }
+    }
+  },
+  "var": {
+    "kind": "dataframe",
+    "index": {
+      "values": [
+        "ISG15",
+        "TNFRSF18",
+        "SDF4",
+        "AURKAIP1",
+        "MRPL20",
+        "SSU72"
+      ],
+      "name": "gene",
+      "dtype": "str"
+    },
+    "columns": {
+      "values": [],
+      "name": null,
+      "dtype": "str"
+    },
+    "dtypes": [],
+    "data": [],
+    "categories": {}
+  },
+  "uns": {
+    "meta_standards_converter": {
+      "converter_version": "6.0.0",
+      "metadata_schema_version": "1.0",
+      "modality": "unknown",
+      "path_base": "artifact_parent",
+      "sample_accession": "PBMC3K_SAMPLE",
+      "source_origin": "cli",
+      "source_sha256": "f456d273a47e3586c81a8cb692e4b1c9ef3d52b94f509cc50255129a216ba7c4",
+      "source_tier": "matrix",
+      "source_uri": "../counts.tsv",
+      "source_uri_scope": "external",
+      "study_accession": "PBMC3K"
+    },
+    "msc_metadata": {
+      "sample_values": {
+        "kind": "dataframe",
+        "index": {
+          "values": [
+            "value_000000",
+            "value_000001",
+            "value_000002",
+            "value_000003",
+            "value_000004",
+            "value_000005",
+            "value_000006",
+            "value_000007",
+            "value_000008",
+            "value_000009",
+            "value_000010",
+            "value_000011"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "columns": {
+          "values": [
+            "sample_accession",
+            "field",
+            "ordinal",
+            "value",
+            "value_type"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "dtypes": [
+          "str",
+          "str",
+          "int64",
+          "str",
+          "str"
+        ],
+        "data": [
+          [
+            "PBMC3K_SAMPLE",
+            "msc.sample.accession",
+            0,
+            "PBMC3K_SAMPLE",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.series.accession",
+            0,
+            "PBMC3K",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.sample.title",
+            0,
+            "PBMCs",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.sample.channel.organism.value",
+            0,
+            "Homo sapiens",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.sample.channel.organism.taxid",
+            0,
+            "9606",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.sample.channel.organism_part",
+            0,
+            "peripheral blood mononuclear cells",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.sample.channel.source",
+            0,
+            "peripheral blood mononuclear cells",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.sample.channel.material_type",
+            0,
+            "peripheral blood mononuclear cells",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.asset.tier",
+            0,
+            "matrix",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.asset.uri",
+            0,
+            "../counts.tsv",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.asset.uri_scope",
+            0,
+            "external",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.expression.modality",
+            0,
+            "unknown",
+            "string"
+          ]
+        ],
+        "categories": {}
+      },
+      "schema_version": "1.0"
+    },
+    "msc_miniml": {
+      "fields": {
+        "kind": "dataframe",
+        "index": {
+          "values": [
+            "field_000000",
+            "field_000001",
+            "field_000002",
+            "field_000003",
+            "field_000004",
+            "field_000005",
+            "field_000006",
+            "field_000007",
+            "field_000008",
+            "field_000009",
+            "field_000010",
+            "field_000011"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "columns": {
+          "values": [
+            "package_index",
+            "entity_type",
+            "entity_id",
+            "path",
+            "value",
+            "value_type"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "dtypes": [
+          "int64",
+          "str",
+          "str",
+          "str",
+          "str",
+          "str"
+        ],
+        "data": [
+          [
+            0,
+            "package",
+            "package",
+            "miniml_schema_version",
+            "3.0",
+            "string"
+          ],
+          [
+            0,
+            "package",
+            "package",
+            "source.format",
+            "test",
+            "string"
+          ],
+          [
+            0,
+            "package",
+            "package",
+            "organization",
+            "",
+            "empty_list"
+          ],
+          [
+            0,
+            "series",
+            "PBMC3K",
+            "iid",
+            "PBMC3K",
+            "string"
+          ],
+          [
+            0,
+            "series",
+            "PBMC3K",
+            "accession[0].value",
+            "PBMC3K",
+            "string"
+          ],
+          [
+            0,
+            "series",
+            "PBMC3K",
+            "title",
+            "PBMC3k four-cell six-gene contract",
+            "string"
+          ],
+          [
+            0,
+            "sample",
+            "PBMC3K_SAMPLE",
+            "iid",
+            "PBMC3K_SAMPLE",
+            "string"
+          ],
+          [
+            0,
+            "sample",
+            "PBMC3K_SAMPLE",
+            "accession[0].value",
+            "PBMC3K_SAMPLE",
+            "string"
+          ],
+          [
+            0,
+            "sample",
+            "PBMC3K_SAMPLE",
+            "title",
+            "PBMCs",
+            "string"
+          ],
+          [
+            0,
+            "sample",
+            "PBMC3K_SAMPLE",
+            "channel[0].source.value",
+            "peripheral blood mononuclear cells",
+            "string"
+          ],
+          [
+            0,
+            "sample",
+            "PBMC3K_SAMPLE",
+            "channel[0].organism[0].value",
+            "Homo sapiens",
+            "string"
+          ],
+          [
+            0,
+            "sample",
+            "PBMC3K_SAMPLE",
+            "channel[0].organism[0].taxid",
+            "9606",
+            "string"
+          ]
+        ],
+        "categories": {}
+      },
+      "metadata_source": "",
+      "metadata_source_name": "",
+      "metadata_source_uri": "",
+      "packages_json": "[{\"contributor\": [], \"database\": [], \"miniml_schema_version\": \"3.0\", \"organization\": [], \"platform\": [], \"sample\": [{\"accession\": [{\"value\": \"PBMC3K_SAMPLE\"}], \"channel\": [{\"organism\": [{\"taxid\": \"9606\", \"value\": \"Homo sapiens\"}], \"source\": {\"value\": \"peripheral blood mononuclear cells\"}}], \"iid\": \"PBMC3K_SAMPLE\", \"title\": \"PBMCs\"}], \"series\": {\"accession\": [{\"value\": \"PBMC3K\"}], \"iid\": \"PBMC3K\", \"title\": \"PBMC3k four-cell six-gene contract\"}, \"source\": {\"format\": \"test\"}}]",
+      "path_base": "artifact_parent",
+      "publication_policy": "citation_metadata_only",
+      "schema_version": "1.0",
+      "source_json": "../miniml.json",
+      "source_json_scope": "external",
+      "source_sha256": "d3e0ec19c48d89329a583b3aa2cccd5f87fe305c23ab300afae627163ad87ec5"
+    }
+  },
+  "layers": {
+    "None": {
+      "kind": "csr",
+      "dtype": "float64",
+      "shape": [
+        4,
+        6
+      ],
+      "values": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          2.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0
+        ],
+        [
+          1.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          9.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          3.0
+        ]
+      ]
+    }
+  },
+  "obsm": {},
+  "varm": {},
+  "obsp": {},
+  "varp": {},
+  "raw": null
+}

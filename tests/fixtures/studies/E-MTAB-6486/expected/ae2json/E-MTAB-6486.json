@@ -1,0 +1,2638 @@
+[
+  {
+    "miniml_schema_version": "3.0",
+    "source": {
+      "format": "MAGE-TAB",
+      "version": "magetabv1.1",
+      "schema_location": "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
+      "documents": [
+        {
+          "kind": "idf",
+          "name": "E-MTAB-6486.idf.txt",
+          "uri": "<WORK>/E-MTAB-6486.idf.txt",
+          "sha256": "ccd865ba301d9abc29925d9389c275063f4acdc63a2970c5aaa3c3ec8ecd12a5",
+          "media_type": "text/tab-separated-values"
+        },
+        {
+          "kind": "sdrf",
+          "name": "E-MTAB-6486.sdrf.txt",
+          "uri": "<WORK>/E-MTAB-6486.sdrf.txt",
+          "sha256": "c9d368a6f38b034ed74ee2ce14148fbf6ec18cc9b9069589075a6ea3eab5c3c0",
+          "media_type": "text/tab-separated-values"
+        }
+      ]
+    },
+    "database": [
+      {
+        "url": "http://www.ebi.ac.uk/efo/",
+        "version": "2.38",
+        "iid": "EFO",
+        "name": "EFO"
+      },
+      {
+        "url": "http://www.ebi.ac.uk/arrayexpress/",
+        "iid": "ArrayExpress",
+        "name": "ArrayExpress"
+      },
+      {
+        "iid": "ENA",
+        "name": "ENA"
+      }
+    ],
+    "organization": [],
+    "contributor": [
+      {
+        "iid": "contributor-1",
+        "person": {
+          "first": "Daniel",
+          "middle": "J",
+          "last": "Murphy"
+        },
+        "organization": "University of Glasgow",
+        "email": "daniel.murphy@glasgow.ac.uk",
+        "address": "CRUK Beatson Institute Garscube Estate Glasgow G61 1BD, UK",
+        "roles": [
+          {
+            "value": "submitter"
+          }
+        ]
+      }
+    ],
+    "platform": [],
+    "sample": [
+      {
+        "library_layout": "PAIRED",
+        "iid": "Sample 1",
+        "channel": [
+          {
+            "organism": [
+              {
+                "value": "Homo sapiens"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "material type",
+                "value": "cell"
+              },
+              {
+                "name": "organism part",
+                "value": "lung"
+              },
+              {
+                "name": "metastatic site",
+                "value": "lymph node"
+              },
+              {
+                "name": "cell type",
+                "value": "epithelial cell"
+              },
+              {
+                "name": "cell line",
+                "value": "NCI-H2009"
+              },
+              {
+                "name": "disease",
+                "value": "lung adenocarcinoma"
+              },
+              {
+                "name": "compound",
+                "value": "none"
+              }
+            ],
+            "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
+            "growth_protocol": "Cells were maintained in RPMI1640 media supplemented with 10% FBS & penn/strep.  Cells were passaged every 2-3 days and discarded after no more than 20 passages",
+            "extract_protocol": "Total RNA was isolated using the RNEasy Mini Kit (Qiagen) according to manufacturer’s instructions and DNA was depleted with the RNase-Free DNase Set"
+          }
+        ],
+        "library_strategy": "RNA-Seq",
+        "library_source": "TRANSCRIPTOMIC",
+        "library_selection": "PolyA",
+        "sra_run": [
+          {
+            "run": "ERR2287664",
+            "study": null,
+            "experiment": "ERX2339190",
+            "sample": "ERS2196195",
+            "fastq_files": [
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/004/ERR2287664/ERR2287664_1.fastq.gz",
+                "filename": "ERR2287664_1.fastq.gz"
+              },
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/004/ERR2287664/ERR2287664_2.fastq.gz",
+                "filename": "ERR2287664_2.fastq.gz"
+              }
+            ],
+            "submitted_file_name": "BKM10160511_S13_R1_fastq.gz"
+          }
+        ]
+      },
+      {
+        "library_layout": "PAIRED",
+        "iid": "Sample 2",
+        "channel": [
+          {
+            "organism": [
+              {
+                "value": "Homo sapiens"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "material type",
+                "value": "cell"
+              },
+              {
+                "name": "organism part",
+                "value": "lung"
+              },
+              {
+                "name": "metastatic site",
+                "value": "lymph node"
+              },
+              {
+                "name": "cell type",
+                "value": "epithelial cell"
+              },
+              {
+                "name": "cell line",
+                "value": "NCI-H2009"
+              },
+              {
+                "name": "disease",
+                "value": "lung adenocarcinoma"
+              },
+              {
+                "name": "compound",
+                "value": "none"
+              }
+            ],
+            "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
+            "growth_protocol": "Cells were maintained in RPMI1640 media supplemented with 10% FBS & penn/strep.  Cells were passaged every 2-3 days and discarded after no more than 20 passages",
+            "extract_protocol": "Total RNA was isolated using the RNEasy Mini Kit (Qiagen) according to manufacturer’s instructions and DNA was depleted with the RNase-Free DNase Set"
+          }
+        ],
+        "library_strategy": "RNA-Seq",
+        "library_source": "TRANSCRIPTOMIC",
+        "library_selection": "PolyA",
+        "sra_run": [
+          {
+            "run": "ERR2287665",
+            "study": null,
+            "experiment": "ERX2339191",
+            "sample": "ERS2196196",
+            "fastq_files": [
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/005/ERR2287665/ERR2287665_1.fastq.gz",
+                "filename": "ERR2287665_1.fastq.gz"
+              },
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/005/ERR2287665/ERR2287665_2.fastq.gz",
+                "filename": "ERR2287665_2.fastq.gz"
+              }
+            ],
+            "submitted_file_name": "BKM10160511_S14_R1_fastq.gz"
+          }
+        ]
+      },
+      {
+        "library_layout": "PAIRED",
+        "iid": "Sample 3",
+        "channel": [
+          {
+            "organism": [
+              {
+                "value": "Homo sapiens"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "material type",
+                "value": "cell"
+              },
+              {
+                "name": "organism part",
+                "value": "lung"
+              },
+              {
+                "name": "metastatic site",
+                "value": "lymph node"
+              },
+              {
+                "name": "cell type",
+                "value": "epithelial cell"
+              },
+              {
+                "name": "cell line",
+                "value": "NCI-H2009"
+              },
+              {
+                "name": "disease",
+                "value": "lung adenocarcinoma"
+              },
+              {
+                "name": "compound",
+                "value": "none"
+              }
+            ],
+            "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
+            "growth_protocol": "Cells were maintained in RPMI1640 media supplemented with 10% FBS & penn/strep.  Cells were passaged every 2-3 days and discarded after no more than 20 passages",
+            "extract_protocol": "Total RNA was isolated using the RNEasy Mini Kit (Qiagen) according to manufacturer’s instructions and DNA was depleted with the RNase-Free DNase Set"
+          }
+        ],
+        "library_strategy": "RNA-Seq",
+        "library_source": "TRANSCRIPTOMIC",
+        "library_selection": "PolyA",
+        "sra_run": [
+          {
+            "run": "ERR2287666",
+            "study": null,
+            "experiment": "ERX2339192",
+            "sample": "ERS2196197",
+            "fastq_files": [
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/006/ERR2287666/ERR2287666_1.fastq.gz",
+                "filename": "ERR2287666_1.fastq.gz"
+              },
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/006/ERR2287666/ERR2287666_2.fastq.gz",
+                "filename": "ERR2287666_2.fastq.gz"
+              }
+            ],
+            "submitted_file_name": "BKM10160511_S15_R1_fastq.gz"
+          }
+        ]
+      },
+      {
+        "library_layout": "PAIRED",
+        "iid": "Sample 4",
+        "channel": [
+          {
+            "organism": [
+              {
+                "value": "Homo sapiens"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "material type",
+                "value": "cell"
+              },
+              {
+                "name": "organism part",
+                "value": "lung"
+              },
+              {
+                "name": "metastatic site",
+                "value": "lymph node"
+              },
+              {
+                "name": "cell type",
+                "value": "epithelial cell"
+              },
+              {
+                "name": "cell line",
+                "value": "NCI-H2009"
+              },
+              {
+                "name": "disease",
+                "value": "lung adenocarcinoma"
+              },
+              {
+                "name": "compound",
+                "value": "neratinib"
+              },
+              {
+                "name": "dose",
+                "value": "500"
+              }
+            ],
+            "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
+            "growth_protocol": "Cells were maintained in RPMI1640 media supplemented with 10% FBS & penn/strep.  Cells were passaged every 2-3 days and discarded after no more than 20 passages",
+            "extract_protocol": "Total RNA was isolated using the RNEasy Mini Kit (Qiagen) according to manufacturer’s instructions and DNA was depleted with the RNase-Free DNase Set"
+          }
+        ],
+        "library_strategy": "RNA-Seq",
+        "library_source": "TRANSCRIPTOMIC",
+        "library_selection": "PolyA",
+        "sra_run": [
+          {
+            "run": "ERR2287667",
+            "study": null,
+            "experiment": "ERX2339193",
+            "sample": "ERS2196198",
+            "fastq_files": [
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/007/ERR2287667/ERR2287667_1.fastq.gz",
+                "filename": "ERR2287667_1.fastq.gz"
+              },
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/007/ERR2287667/ERR2287667_2.fastq.gz",
+                "filename": "ERR2287667_2.fastq.gz"
+              }
+            ],
+            "submitted_file_name": "BKM10160511_S16_R1_fastq.gz"
+          }
+        ]
+      },
+      {
+        "library_layout": "PAIRED",
+        "iid": "Sample 5",
+        "channel": [
+          {
+            "organism": [
+              {
+                "value": "Homo sapiens"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "material type",
+                "value": "cell"
+              },
+              {
+                "name": "organism part",
+                "value": "lung"
+              },
+              {
+                "name": "metastatic site",
+                "value": "lymph node"
+              },
+              {
+                "name": "cell type",
+                "value": "epithelial cell"
+              },
+              {
+                "name": "cell line",
+                "value": "NCI-H2009"
+              },
+              {
+                "name": "disease",
+                "value": "lung adenocarcinoma"
+              },
+              {
+                "name": "compound",
+                "value": "neratinib"
+              },
+              {
+                "name": "dose",
+                "value": "500"
+              }
+            ],
+            "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
+            "growth_protocol": "Cells were maintained in RPMI1640 media supplemented with 10% FBS & penn/strep.  Cells were passaged every 2-3 days and discarded after no more than 20 passages",
+            "extract_protocol": "Total RNA was isolated using the RNEasy Mini Kit (Qiagen) according to manufacturer’s instructions and DNA was depleted with the RNase-Free DNase Set"
+          }
+        ],
+        "library_strategy": "RNA-Seq",
+        "library_source": "TRANSCRIPTOMIC",
+        "library_selection": "PolyA",
+        "sra_run": [
+          {
+            "run": "ERR2287668",
+            "study": null,
+            "experiment": "ERX2339194",
+            "sample": "ERS2196199",
+            "fastq_files": [
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/008/ERR2287668/ERR2287668_1.fastq.gz",
+                "filename": "ERR2287668_1.fastq.gz"
+              },
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/008/ERR2287668/ERR2287668_2.fastq.gz",
+                "filename": "ERR2287668_2.fastq.gz"
+              }
+            ],
+            "submitted_file_name": "BKM10160511_S17_R1_fastq.gz"
+          }
+        ]
+      },
+      {
+        "library_layout": "PAIRED",
+        "iid": "Sample 6",
+        "channel": [
+          {
+            "organism": [
+              {
+                "value": "Homo sapiens"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "material type",
+                "value": "cell"
+              },
+              {
+                "name": "organism part",
+                "value": "lung"
+              },
+              {
+                "name": "metastatic site",
+                "value": "lymph node"
+              },
+              {
+                "name": "cell type",
+                "value": "epithelial cell"
+              },
+              {
+                "name": "cell line",
+                "value": "NCI-H2009"
+              },
+              {
+                "name": "disease",
+                "value": "lung adenocarcinoma"
+              },
+              {
+                "name": "compound",
+                "value": "neratinib"
+              },
+              {
+                "name": "dose",
+                "value": "500"
+              }
+            ],
+            "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
+            "growth_protocol": "Cells were maintained in RPMI1640 media supplemented with 10% FBS & penn/strep.  Cells were passaged every 2-3 days and discarded after no more than 20 passages",
+            "extract_protocol": "Total RNA was isolated using the RNEasy Mini Kit (Qiagen) according to manufacturer’s instructions and DNA was depleted with the RNase-Free DNase Set"
+          }
+        ],
+        "library_strategy": "RNA-Seq",
+        "library_source": "TRANSCRIPTOMIC",
+        "library_selection": "PolyA",
+        "sra_run": [
+          {
+            "run": "ERR2287669",
+            "study": null,
+            "experiment": "ERX2339195",
+            "sample": "ERS2196200",
+            "fastq_files": [
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/009/ERR2287669/ERR2287669_1.fastq.gz",
+                "filename": "ERR2287669_1.fastq.gz"
+              },
+              {
+                "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/009/ERR2287669/ERR2287669_2.fastq.gz",
+                "filename": "ERR2287669_2.fastq.gz"
+              }
+            ],
+            "submitted_file_name": "BKM10160511_S18_R1_fastq.gz"
+          }
+        ]
+      }
+    ],
+    "series": {
+      "iid": "E-MTAB-6486",
+      "accession": [
+        {
+          "value": "E-MTAB-6486",
+          "database": "ArrayExpress"
+        },
+        {
+          "value": "ERP106767",
+          "database": "ENA"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2016-06-01",
+          "release_date": "2018-06-01"
+        }
+      ],
+      "title": "RNA-seq to investigate impact of treatment of KRAS mutant NCI-H2009 lung adenocarcinoma cells with the multi-ERBB inhibitor Neratinib",
+      "pubmed_id": [
+        "29925636"
+      ],
+      "summary": "KRAS mutation is widely presumed to confer independence from upstream RTK signalling, however emerging evidence from mouse models of lung cancer suggests that ERBB RTKs may amplify signalling through RAS isoforms and participate in mutant RAS-driven lung cancer.  This is one of 3 datasets where we examined the transcriptional impact of treatment of KRAS mutant human lung cancer cell lines with the multi-ERBB inhibitor Neratinib",
+      "type": [
+        {
+          "value": "compound treatment design",
+          "term_source_ref": "EFO",
+          "term_accession_number": "EFO:0001755"
+        }
+      ],
+      "sample_ref": [
+        {
+          "ref": "Sample 1"
+        },
+        {
+          "ref": "Sample 2"
+        },
+        {
+          "ref": "Sample 3"
+        },
+        {
+          "ref": "Sample 4"
+        },
+        {
+          "ref": "Sample 5"
+        },
+        {
+          "ref": "Sample 6"
+        }
+      ],
+      "variable": [
+        {
+          "factor": "agent",
+          "type": {
+            "value": "compound"
+          }
+        },
+        {
+          "factor": "dose",
+          "type": {
+            "value": "dose",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0000428"
+          }
+        }
+      ],
+      "relation": [
+        {
+          "type": "related experiment",
+          "target": "E-MTAB-6485"
+        }
+      ],
+      "pubmed_publication": [
+        {
+          "pubmed_id": "29925636",
+          "doi": "UNKNOWN_1625850_E-MTAB-6483",
+          "author_list": "Kruspig B, Monteverde T, Neidler S, Hock A, Kerr E, Nixon C, Clark W, Hedley A, Laing S, Coffelt SB, Le Quesne J, Dick C, Vousden KH, Martins CP, Murphy DJ.",
+          "title": "The ERBB network facilitates KRAS-driven lung tumorigenesis.",
+          "status": null,
+          "status_term_source_ref": null,
+          "status_term_accession_number": null
+        }
+      ],
+      "experiment_date": "2016-06-01",
+      "protocols": [
+        {
+          "name": "P-MTAB-71904",
+          "type": {
+            "value": "growth protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0003789"
+          },
+          "description": "Cells were maintained in RPMI1640 media supplemented with 10% FBS & penn/strep.  Cells were passaged every 2-3 days and discarded after no more than 20 passages"
+        },
+        {
+          "name": "P-MTAB-71905",
+          "type": {
+            "value": "treatment protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0003969"
+          },
+          "description": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media"
+        },
+        {
+          "name": "P-MTAB-71906",
+          "type": {
+            "value": "sample collection protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0005518"
+          },
+          "description": "Clles were washed 2x in PBS and lysd directly on growth plates using Qiagen RNEassy lysis buffer"
+        },
+        {
+          "name": "P-MTAB-71908",
+          "type": {
+            "value": "nucleic acid library construction protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0004184"
+          },
+          "description": "cDNA was synthesized with the TruSeq Stranded mRNA Library Prep Kit (Illumina)"
+        },
+        {
+          "name": "P-MTAB-71907",
+          "type": {
+            "value": "nucleic acid extraction protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0002944"
+          },
+          "description": "Total RNA was isolated using the RNEasy Mini Kit (Qiagen) according to manufacturer’s instructions and DNA was depleted with the RNase-Free DNase Set"
+        },
+        {
+          "name": "P-MTAB-71909",
+          "type": {
+            "value": "nucleic acid sequencing protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0004170"
+          },
+          "description": "libraries were standardized to 10nM, denatured, diluted to 10pM and analyzed by paired-end sequencing using an Illumina NextSeq500 platform",
+          "hardware": [
+            "NextSeq 500"
+          ]
+        },
+        {
+          "name": "P-MTAB-71910",
+          "type": {
+            "value": "high throughput sequence alignment protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0004917"
+          },
+          "description": "RNA-Sequencing reads were aligned to the GRCh37 version of the human genome and differential expression determined using DESeq2",
+          "software": [
+            "Tophat2 version 2.0.10 & Bowtie version 2.1.0"
+          ]
+        }
+      ],
+      "assay_paths": [
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 1",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196195"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584913"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 1",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 1",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339190"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S13_R1_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "none"
+                },
+                {
+                  "name": "dose",
+                  "value": "  ",
+                  "unit": {
+                    "value": "        "
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S13_R1_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287664"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/004/ERR2287664/ERR2287664_1.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "72"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "37"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 1",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196195"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584913"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 1",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 1",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339190"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S13_R2_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "none"
+                },
+                {
+                  "name": "dose",
+                  "value": "  ",
+                  "unit": {
+                    "value": "        "
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S13_R2_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287664"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/004/ERR2287664/ERR2287664_2.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "64"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "33"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 2",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196196"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584914"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 2",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 2",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339191"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S14_R1_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "none"
+                },
+                {
+                  "name": "dose",
+                  "value": "  ",
+                  "unit": {
+                    "value": "        "
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S14_R1_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287665"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/005/ERR2287665/ERR2287665_1.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "68"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "35"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 2",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196196"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584914"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 2",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 2",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339191"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S14_R2_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "none"
+                },
+                {
+                  "name": "dose",
+                  "value": "  ",
+                  "unit": {
+                    "value": "        "
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S14_R2_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287665"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/005/ERR2287665/ERR2287665_2.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "64"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "33"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 3",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196197"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584915"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 3",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 3",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339192"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S15_R1_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "none"
+                },
+                {
+                  "name": "dose",
+                  "value": "  ",
+                  "unit": {
+                    "value": "        "
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S15_R1_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287666"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/006/ERR2287666/ERR2287666_1.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "70"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "36"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 3",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196197"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584915"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 3",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 3",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339192"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S15_R2_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "none"
+                },
+                {
+                  "name": "dose",
+                  "value": "  ",
+                  "unit": {
+                    "value": "        "
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S15_R2_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287666"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/006/ERR2287666/ERR2287666_2.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "72"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "37"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 4",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196198"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584916"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 4",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 4",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339193"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S16_R1_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "neratinib"
+                },
+                {
+                  "name": "dose",
+                  "value": "500",
+                  "unit": {
+                    "value": "nanomolar"
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S16_R1_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287667"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/007/ERR2287667/ERR2287667_1.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "72"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "37"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 4",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196198"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584916"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 4",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 4",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339193"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S16_R2_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "neratinib"
+                },
+                {
+                  "name": "dose",
+                  "value": "500",
+                  "unit": {
+                    "value": "nanomolar"
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S16_R2_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287667"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/007/ERR2287667/ERR2287667_2.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "72"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "37"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 5",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196199"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584917"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 5",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 5",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339194"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S17_R1_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "neratinib"
+                },
+                {
+                  "name": "dose",
+                  "value": "500",
+                  "unit": {
+                    "value": "nanomolar"
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S17_R1_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287668"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/008/ERR2287668/ERR2287668_1.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "70"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "36"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 5",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196199"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584917"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 5",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 5",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339194"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S17_R2_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "neratinib"
+                },
+                {
+                  "name": "dose",
+                  "value": "500",
+                  "unit": {
+                    "value": "nanomolar"
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S17_R2_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287668"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/008/ERR2287668/ERR2287668_2.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "72"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "37"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 6",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196200"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584918"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 6",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 6",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339195"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S18_R1_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "neratinib"
+                },
+                {
+                  "name": "dose",
+                  "value": "500",
+                  "unit": {
+                    "value": "nanomolar"
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S18_R1_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287669"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/009/ERR2287669/ERR2287669_1.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "72"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "37"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 6",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": "lung"
+                },
+                {
+                  "name": "metastatic site",
+                  "value": "lymph node"
+                },
+                {
+                  "name": "cell type",
+                  "value": "epithelial cell"
+                },
+                {
+                  "name": "cell line",
+                  "value": "NCI-H2009"
+                },
+                {
+                  "name": "disease",
+                  "value": "lung adenocarcinoma"
+                }
+              ],
+              "material_type": {
+                "value": "cell"
+              },
+              "comments": [
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "ERS2196200"
+                },
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMEA104584918"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71906",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71904",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71905",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71907",
+              "performer": "Bjorn Kruspig"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71908",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "extract",
+              "name": "Sample 6",
+              "comments": [
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PolyA"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "TRANSCRIPTOMIC"
+                },
+                {
+                  "name": "LIBRARY_STRAND",
+                  "value": "first strand"
+                },
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "RNA-Seq"
+                },
+                {
+                  "name": "NOMINAL_LENGTH",
+                  "value": "36"
+                },
+                {
+                  "name": "NOMINAL_SDEV",
+                  "value": "2"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-MTAB-71909",
+              "performer": "Billy Clark"
+            },
+            {
+              "kind": "assay",
+              "name": "Sample 6",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "ERX2339195"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "BKM10160511_S18_R2_fastq.gz",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "neratinib"
+                },
+                {
+                  "name": "dose",
+                  "value": "500",
+                  "unit": {
+                    "value": "nanomolar"
+                  },
+                  "unit_type": "dose unit"
+                }
+              ],
+              "comments": [
+                {
+                  "name": "SUBMITTED_FILE_NAME",
+                  "value": "BKM10160511_S18_R2_fastq.gz"
+                },
+                {
+                  "name": "ENA_RUN",
+                  "value": "ERR2287669"
+                },
+                {
+                  "name": "FASTQ_URI",
+                  "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR228/009/ERR2287669/ERR2287669_2.fastq.gz"
+                },
+                {
+                  "name": "SPOT_LENGTH",
+                  "value": "72"
+                },
+                {
+                  "name": "READ_INDEX_1_BASE_COORD",
+                  "value": "37"
+                }
+              ]
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        }
+      ],
+      "quality_controls": [
+        {
+          "value": ""
+        }
+      ],
+      "replicate_types": [
+        {
+          "value": ""
+        }
+      ],
+      "normalization_types": [
+        {
+          "value": ""
+        }
+      ]
+    }
+  }
+]

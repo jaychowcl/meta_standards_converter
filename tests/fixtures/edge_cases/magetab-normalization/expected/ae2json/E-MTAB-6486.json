@@ -1,0 +1,145 @@
+[
+  {
+    "miniml_schema_version": "3.0",
+    "source": {
+      "format": "MAGE-TAB",
+      "version": "magetabv1.1",
+      "schema_location": "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
+      "documents": [
+        {
+          "kind": "idf",
+          "name": "E-MTAB-6486.idf.txt",
+          "uri": "<WORK>/E-MTAB-6486.idf.txt",
+          "sha256": "d8e5517dbf181b3eda27203a41607b85a2ef8fa9037406d3a71f5fae172ee77a",
+          "media_type": "text/tab-separated-values"
+        },
+        {
+          "kind": "sdrf",
+          "name": "E-MTAB-6486.sdrf.txt",
+          "uri": "<WORK>/E-MTAB-6486.sdrf.txt",
+          "sha256": "9d0bfaed2220b187a067d7d86de7d29fd361d4a358c81d4f2ed922cf992358b5",
+          "media_type": "text/tab-separated-values"
+        }
+      ]
+    },
+    "database": [
+      {
+        "url": "https://www.ebi.ac.uk/efo/",
+        "iid": "EFO",
+        "name": "EFO"
+      },
+      {
+        "iid": "ArrayExpress",
+        "name": "ArrayExpress"
+      },
+      {
+        "iid": "ENA",
+        "name": "ENA"
+      }
+    ],
+    "organization": [],
+    "contributor": [],
+    "platform": [],
+    "sample": [
+      {
+        "iid": "Sample 1",
+        "channel": [
+          {
+            "characteristics": [
+              {
+                "name": "material type",
+                "value": "cell"
+              },
+              {
+                "name": "compound",
+                "value": "none"
+              }
+            ],
+            "molecule": {
+              "value": "total RNA"
+            }
+          }
+        ]
+      }
+    ],
+    "series": {
+      "iid": "E-MTAB-6486",
+      "accession": [
+        {
+          "value": "E-MTAB-6486",
+          "database": "ArrayExpress"
+        },
+        {
+          "value": "ERP106767",
+          "database": "ENA"
+        }
+      ],
+      "title": "Frozen E-MTAB-6486 normalization contract",
+      "type": [
+        {
+          "value": "single-cell RNA sequencing"
+        }
+      ],
+      "sample_ref": [
+        {
+          "ref": "Sample 1"
+        }
+      ],
+      "variable": [
+        {
+          "factor": "agent",
+          "type": {
+            "value": "compound"
+          }
+        }
+      ],
+      "protocols": [
+        {
+          "name": "P-collect",
+          "type": {
+            "value": "sample collection protocol"
+          },
+          "description": "Collect cells"
+        },
+        {
+          "name": "P-extract",
+          "type": {
+            "value": "nucleic acid extraction protocol"
+          },
+          "description": "Extract total RNA"
+        }
+      ],
+      "assay_paths": [
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "Sample 1",
+              "material_type": {
+                "value": "cell"
+              }
+            },
+            {
+              "kind": "extract",
+              "name": "Extract 1",
+              "factor_values": [
+                {
+                  "name": "compound",
+                  "value": "none"
+                }
+              ],
+              "material_type": {
+                "value": "total RNA"
+              }
+            },
+            {
+              "kind": "assay",
+              "name": "Assay 1"
+            }
+          ],
+          "document": "E-MTAB-6486.sdrf.txt"
+        }
+      ]
+    }
+  }
+]

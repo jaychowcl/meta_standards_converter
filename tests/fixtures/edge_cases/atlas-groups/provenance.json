@@ -1,0 +1,6 @@
+{
+  "kind": "synthetic Atlas 1.0 contract",
+  "origin": "tests/fixtures/contracts/atlas-document-v1.json",
+  "purpose": "Completed dataset table output, failed dataset diagnostic, grouping and order.",
+  "transformation": "Replace legacy metadata-only example with explicitly constructed native MINiML 3.0 metadata for GSE100/GSM100; retain Atlas envelope."
+}

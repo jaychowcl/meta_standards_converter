@@ -1,0 +1,58 @@
+{
+  "artifact_kind": "per_sample_h5ad_catalogue",
+  "assets": {
+    "PBMC3K_SAMPLE": {
+      "annotation_format": null,
+      "annotation_sha256": null,
+      "annotation_source": null,
+      "annotation_source_scope": null,
+      "effective_annotation": null,
+      "effective_annotation_scope": null,
+      "kind": "matrix",
+      "path": "../counts.tsv",
+      "path_scope": "external",
+      "reference": null,
+      "role": "primary",
+      "source": "cli"
+    }
+  },
+  "combination_compatibility": {
+    "assessed": false,
+    "reason": "catalogue_only_no_expression_matrix_combination",
+    "verified": false
+  },
+  "combined_h5ad": null,
+  "combined_h5ad_scope": null,
+  "errors": [],
+  "expression_integration": "none",
+  "failures": [],
+  "h5ad_metadata_schema_version": "1.0",
+  "memory_report": [
+    {
+      "available_memory_bytes": 1073741824,
+      "decision": "admitted",
+      "estimated_peak_bytes": 1266,
+      "fixed_profile_bytes": 8589934592,
+      "force_memory": false,
+      "limit_bytes": 751619276,
+      "reason": "within_memory_limit",
+      "sample_id": "PBMC3K_SAMPLE"
+    }
+  ],
+  "partial": false,
+  "path_base": "artifact_parent",
+  "pipeline_runs": [],
+  "retained_h5ad_scopes": [],
+  "retained_h5ads": [],
+  "sample_count": 1,
+  "sample_h5ad_scopes": {
+    "PBMC3K_SAMPLE": "internal"
+  },
+  "sample_h5ads": {
+    "PBMC3K_SAMPLE": "PBMC3K_SAMPLE.h5ad"
+  },
+  "source_json": "../miniml.json",
+  "source_json_scope": "external",
+  "study_accession": "PBMC3K",
+  "warnings": []
+}

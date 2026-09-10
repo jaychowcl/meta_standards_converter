@@ -1,0 +1,2 @@
+Source Name	Material Type	Extract Name	Material Type	Factor Value[compound]	Assay Name
+Sample 1	cell	Extract 1	total RNA	none	Assay 1

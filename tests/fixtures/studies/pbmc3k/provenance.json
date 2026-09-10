@@ -1,0 +1,60 @@
+{
+  "kind": "real public counts with constructed MINiML wrapper",
+  "url": "https://falexwolf.de/data/pbmc3k_raw.h5ad",
+  "capture_date": "2026-09-10",
+  "download_sha256": "89a96f1beaa2dd83a687666d3f19a4513ac27a2a2d12581fcd77afed7ea653a1",
+  "original_shape": [
+    2700,
+    32738
+  ],
+  "selection": "First four observations, first six source-order genes with a nonzero sum in these observations; no count transformation. Transposed to gene-by-observation TSV.",
+  "observations": [
+    "AAACATACAACCAC-1",
+    "AAACATTGAGCTAC-1",
+    "AAACATTGATCAGC-1",
+    "AAACCGTGCTTCCG-1"
+  ],
+  "genes": [
+    "ISG15",
+    "TNFRSF18",
+    "SDF4",
+    "AURKAIP1",
+    "MRPL20",
+    "SSU72"
+  ],
+  "source_dtype": "float32",
+  "expected_counts_observations_by_genes": [
+    [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      2.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0
+    ],
+    [
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      9.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      3.0
+    ]
+  ]
+}

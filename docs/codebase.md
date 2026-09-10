@@ -3082,3 +3082,10 @@ Processed checkpoint fingerprints retain the existing payload and SHA-256 algori
 `meta_standards_converter.metadata.enrichment.MAGETabEvidenceResolver` accepts injected PubMed and INSDC clients. `AEConstructor` creates an operation-local SDRF handler, resolves its ordered sequencing run evidence, renders protocols and paths, validates IDF prefix rows, resolves missing publication details, and constructs the remaining IDF rows. Enriched run/publication evidence suppresses retrieval; array and generic handlers do not trigger SRA retrieval. The SRA fallback still catches only request and XML parsing errors. IDF and SDRF builders no longer create network clients. [Evidence resolver](../src/meta_standards_converter/metadata/enrichment.py), [orchestration](../src/meta_standards_converter/magetab/constructor.py).
 
 Converter-focused tests mirror `sources`, `miniml`, `magetab`, `metadata`, `expression`, `converters`, and `cli` boundaries under `tests/`. Cross-service observable contracts remain in `tests/test_public_e2e.py` and `tests/test_service_boundaries.py`.
+
+<a id="converter-test-contracts"></a>
+## Converter end-to-end test contracts
+
+`tests/e2e/` independently exercises all seven converters and their CLI entrypoints against stored inputs and complete reviewed outputs. The corpus uses reduced public GEO evidence, an unmodified public MAGE-TAB study, and a four-cell six-gene public PBMC count slice, plus explicitly synthetic edge cases. [Fixture provenance and review](../tests/fixtures/README.md) explains exact comparisons, source checks, permitted execution normalization, offline boundaries and the known 5-prime/3-prime auto-detection discrepancy (strict xfail MSC-TEST-001).
+
+Run `.venv/bin/python -m pytest tests/e2e -q`; run `.venv/bin/python -m pytest -q` for the complete offline suite. Tests compare full artifacts, exercise injected collaborators, verify old checkpoint bytes survive a version change, and deliberately corrupt outputs to prove scientific drift is rejected. The project-local installed MSC version must match the checkout. No production code or consumer APIs are changed by the test audit.

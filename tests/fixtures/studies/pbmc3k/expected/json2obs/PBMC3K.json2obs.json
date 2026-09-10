@@ -1,0 +1,70 @@
+{
+  "artifacts": {
+    "manifest": "out/PBMC3K.json2obs.json",
+    "obs": "out/PBMC3K.obs.csv",
+    "uns": "out/PBMC3K.uns.json",
+    "var": "out/PBMC3K.var.csv"
+  },
+  "errors": [],
+  "expression_integration": "none",
+  "failures": [],
+  "metadata_aggregation": "observation_rows",
+  "obs": {
+    "columns": [
+      "cell_id",
+      "msc.observation.original_id",
+      "msc.sample.accession",
+      "msc.series.accession",
+      "msc.sample.title",
+      "msc.sample.description",
+      "msc.sample.channel.organism.value",
+      "msc.sample.channel.organism.taxid",
+      "msc.sample.channel.organism_part",
+      "msc.sample.channel.developmental_stage",
+      "msc.sample.channel.disease",
+      "msc.sample.channel.genotype",
+      "msc.sample.channel.source",
+      "msc.sample.channel.biomaterial_provider",
+      "msc.sample.channel.material_type",
+      "msc.sample.channel.molecule",
+      "msc.platform.accession",
+      "msc.archive.sra_accession",
+      "msc.archive.ena_accession",
+      "msc.archive.biosample_accession",
+      "msc.archive.sra_run_accessions",
+      "msc.library.strategy",
+      "msc.library.source",
+      "msc.library.selection",
+      "msc.library.layout",
+      "msc.instrument.model",
+      "msc.protocol.types",
+      "msc.protocol.term_source_refs",
+      "msc.protocol.term_accession_numbers",
+      "msc.database.identifier",
+      "msc.database.name",
+      "msc.database.uri",
+      "msc.asset.tier",
+      "msc.asset.uri",
+      "msc.asset.uri_scope",
+      "msc.expression.modality"
+    ],
+    "rows": 4
+  },
+  "operation": "anndata_metadata",
+  "status": "complete",
+  "study_accession": "PBMC3K",
+  "uns": {
+    "keys": [
+      "meta_standards_converter",
+      "msc_metadata",
+      "msc_miniml"
+    ]
+  },
+  "var": {
+    "columns": [
+      "feature_id"
+    ],
+    "rows": 6
+  },
+  "warnings": []
+}

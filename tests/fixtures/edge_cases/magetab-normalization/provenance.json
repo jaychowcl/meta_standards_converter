@@ -1,0 +1,5 @@
+{
+  "kind": "constructed normalization contract",
+  "origin": "Existing tests/fixtures/arrayexpress example; not an unmodified E-MTAB-6486 provider download",
+  "purpose": "Repeated Material Type headers must remain sample-bound and preserve total RNA versus cell."
+}

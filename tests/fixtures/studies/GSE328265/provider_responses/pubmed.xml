@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE eSummaryResult PUBLIC "-//NLM//DTD esummary v1 20041029//EN" "https://eutils.ncbi.nlm.nih.gov/eutils/dtd/20041029/esummary-v1.dtd">
+<eSummaryResult>
+<DocSum>
+	<Id>42129775</Id>
+	<Item Name="PubDate" Type="Date">2026 May 13</Item>
+	<Item Name="EPubDate" Type="Date">2026 May 13</Item>
+	<Item Name="Source" Type="String">J Neuroinflammation</Item>
+	<Item Name="AuthorList" Type="List">
+		<Item Name="Author" Type="String">Börsch AL</Item>
+		<Item Name="Author" Type="String">Riethues F</Item>
+		<Item Name="Author" Type="String">Schulte-Mecklenbeck A</Item>
+		<Item Name="Author" Type="String">Wang X</Item>
+		<Item Name="Author" Type="String">Heming M</Item>
+		<Item Name="Author" Type="String">Lu IN</Item>
+		<Item Name="Author" Type="String">Müller-Miny L</Item>
+		<Item Name="Author" Type="String">Wiendl H</Item>
+		<Item Name="Author" Type="String">Gross CC</Item>
+		<Item Name="Author" Type="String">Bernard-Valnet R</Item>
+		<Item Name="Author" Type="String">Meyer Zu Hörste G</Item>
+	</Item>
+	<Item Name="LastAuthor" Type="String">Meyer Zu Hörste G</Item>
+	<Item Name="Title" Type="String">A CSF disease-associated macrophage signature defines progressive multiple sclerosis.</Item>
+	<Item Name="Volume" Type="String">23</Item>
+	<Item Name="Issue" Type="String">1</Item>
+	<Item Name="Pages" Type="String"></Item>
+	<Item Name="LangList" Type="List">
+		<Item Name="Lang" Type="String">English</Item>
+	</Item>
+	<Item Name="NlmUniqueID" Type="String">101222974</Item>
+	<Item Name="ISSN" Type="String"></Item>
+	<Item Name="ESSN" Type="String">1742-2094</Item>
+	<Item Name="PubTypeList" Type="List">
+		<Item Name="PubType" Type="String">Journal Article</Item>
+	</Item>
+	<Item Name="RecordStatus" Type="String">PubMed - indexed for MEDLINE</Item>
+	<Item Name="PubStatus" Type="String">epublish</Item>
+	<Item Name="ArticleIds" Type="List">
+		<Item Name="pubmed" Type="String">42129775</Item>
+		<Item Name="pmc" Type="String">PMC13179637</Item>
+		<Item Name="pmcid" Type="String">pmc-id: PMC13179637;</Item>
+		<Item Name="doi" Type="String">10.1186/s12974-026-03861-9</Item>
+		<Item Name="pii" Type="String">10.1186/s12974-026-03861-9</Item>
+	</Item>
+	<Item Name="DOI" Type="String">10.1186/s12974-026-03861-9</Item>
+	<Item Name="History" Type="List">
+		<Item Name="received" Type="Date">2025/11/18 00:00</Item>
+		<Item Name="accepted" Type="Date">2026/05/06 00:00</Item>
+		<Item Name="medline" Type="Date">2026/05/16 06:36</Item>
+		<Item Name="pubmed" Type="Date">2026/05/14 06:51</Item>
+		<Item Name="entrez" Type="Date">2026/05/14 00:41</Item>
+		<Item Name="pmc-release" Type="Date">2026/05/13 00:00</Item>
+	</Item>
+	<Item Name="References" Type="List"></Item>
+	<Item Name="HasAbstract" Type="Integer">1</Item>
+	<Item Name="PmcRefCount" Type="Integer">58</Item>
+	<Item Name="FullJournalName" Type="String">Journal of neuroinflammation</Item>
+	<Item Name="ELocationID" Type="String">doi: 10.1186/s12974-026-03861-9</Item>
+	<Item Name="SO" Type="String">2026 May 13;23(1)</Item>
+</DocSum>
+
+</eSummaryResult>

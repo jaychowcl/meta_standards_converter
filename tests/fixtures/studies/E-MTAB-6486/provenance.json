@@ -1,0 +1,9 @@
+{
+  "kind": "unmodified public MAGE-TAB resources",
+  "capture_date": "2026-09-10",
+  "urls": [
+    "https://www.ebi.ac.uk/biostudies/files/E-MTAB-6486/E-MTAB-6486.idf.txt",
+    "https://www.ebi.ac.uk/biostudies/files/E-MTAB-6486/E-MTAB-6486.sdrf.txt"
+  ],
+  "transformations": []
+}
