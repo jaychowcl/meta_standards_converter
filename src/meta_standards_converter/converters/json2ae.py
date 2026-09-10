@@ -10,6 +10,7 @@ from meta_standards_converter.magetab.writer import MAGETabWriter
 """Converter for parsed MINiML JSON to ArrayExpress MAGE-TAB format."""
 
 import logging
+from typing import Any, Mapping
 
 from meta_standards_converter.magetab.technology import series_identity
 from meta_standards_converter.magetab.constructor import AEConstructor
@@ -36,12 +37,13 @@ class JSON2AEConverter(JSONHandler):
         out: str = None,
         enrich: bool = True,
         platform_handler: str | None = None,
-        use_harmonization_overrides: bool = False,
+        *,
+        replacement_profile: Mapping[str, Any] | None = None,
     ) -> list[list]:
         """Load parsed MINiML JSON and optionally write IDF/SDRF files."""
         packages = self._load_packages(
             json_path=json_path,
-            use_harmonization_overrides=use_harmonization_overrides,
+            replacement_profile=replacement_profile,
         )
         logger.debug("%s: loaded %d parsed package(s)", json_path, len(packages))
 
@@ -75,7 +77,7 @@ class JSON2AEConverter(JSONHandler):
         return magetabs
 
     def _load_packages(
-        self, json_path: str, *, use_harmonization_overrides: bool = False
+        self, json_path: str, *, replacement_profile: Mapping[str, Any] | None = None
     ) -> list[MINiMLPackage]:
         try:
             loaded = self.package_source.load(json_path)
@@ -90,7 +92,7 @@ class JSON2AEConverter(JSONHandler):
             raise ValueError("JSON source contains no convertible package groups.")
         packages = []
         for original_group in loaded.groups:
-            group = original_group.resolved(enabled=use_harmonization_overrides)
+            group = original_group.resolved(replacement_profile=replacement_profile)
             for warning in getattr(group.harmonization_resolution, "warnings", ()):
                 logger.warning("%s", warning)
             packages.extend(group.packages)

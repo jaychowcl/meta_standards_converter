@@ -56,7 +56,7 @@ class JSON2DelimitedConverter:
         *,
         allow_invalid: bool = False,
         overwrite: bool = False,
-        use_harmonization_overrides: bool = False,
+        replacement_profile: Mapping[str, Any] | None = None,
     ) -> TabularConversionResult:
         loaded = self.package_source.load(source)
         records: list[dict[str, Any]] = []
@@ -64,7 +64,7 @@ class JSON2DelimitedConverter:
         warnings = list(loaded.warnings)
         errors: list[str] = []
         for original_group in loaded.groups:
-            group = original_group.resolved(enabled=use_harmonization_overrides)
+            group = original_group.resolved(replacement_profile=replacement_profile)
             resolution = group.harmonization_resolution
             warnings.extend(getattr(resolution, "warnings", ()))
             for package in group.packages:
@@ -185,7 +185,7 @@ class JSON2TSVConverter(JSON2DelimitedConverter):
         output_format: str = "tsv",
         allow_invalid: bool = False,
         overwrite: bool = False,
-        use_harmonization_overrides: bool = False,
+        replacement_profile: Mapping[str, Any] | None = None,
     ):
         output_dir = Path(outdir)
         output_dir.parent.mkdir(parents=True, exist_ok=True)
@@ -211,7 +211,7 @@ class JSON2TSVConverter(JSON2DelimitedConverter):
                 staged_table,
                 allow_invalid=allow_invalid,
                 overwrite=True,
-                use_harmonization_overrides=use_harmonization_overrides,
+                replacement_profile=replacement_profile,
             )
             result = replace(
                 converted,

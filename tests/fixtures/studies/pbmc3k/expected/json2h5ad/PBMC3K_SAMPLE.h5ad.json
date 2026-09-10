@@ -649,8 +649,8 @@
   },
   "uns": {
     "meta_standards_converter": {
-      "converter_version": "6.0.0",
-      "metadata_schema_version": "1.0",
+      "converter_version": "7.0.0",
+      "metadata_schema_version": "2.0",
       "modality": "unknown",
       "path_base": "artifact_parent",
       "sample_accession": "PBMC3K_SAMPLE",
@@ -788,7 +788,7 @@
         ],
         "categories": {}
       },
-      "schema_version": "1.0"
+      "schema_version": "2.0"
     },
     "msc_miniml": {
       "fields": {

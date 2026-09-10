@@ -85,7 +85,7 @@ def test_pbmc_expectation_preserves_actual_counts_and_identity():
     retained = expected["uns"]["msc_miniml"]["packages_json"]
     source_package = json.loads((PBMC / "inputs/miniml.json").read_text())
     assert json.loads(retained) == [{**source_package, "database": [], "organization": [], "contributor": [], "platform": []}]
-    assert expected["uns"]["meta_standards_converter"]["converter_version"] == version("meta-standards-converter") == "6.0.0"
+    assert expected["uns"]["meta_standards_converter"]["converter_version"] == version("meta-standards-converter") == "7.0.0"
 
 
 def test_fixture_checksum_inventory():

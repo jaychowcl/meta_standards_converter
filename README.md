@@ -8,13 +8,13 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 6.0.0 retains MSC MINiML 3.0 as the strict immutable metadata model,
+Version 7.0.0 retains MSC MINiML 3.0 as the strict immutable metadata model,
 accepts source-authored duplicate sample titles only when non-empty unique
 sample iids preserve identity, and returns those accepted `xsd_uniqueness`
 warnings under the versioned `miniml-3.0-source-compat-v1` policy. It also
 provides the shared `append_harmonized_value(...)` writer for idempotent,
 validated, aligned `hz_*` collision groups while consuming
-Atlas document schema 1.0, H5AD metadata schema 1.0, and MINiML ledger schema
+Atlas document schema 1.0, H5AD metadata schema 2.0, and MINiML ledger schema
 1.0. MSC remains
 standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
 import or depend on ThematicAtlases.
@@ -328,7 +328,7 @@ json2ae --list-platform-handlers
 | `json_path` | One or more paths containing a parsed MINiML object/list or canonical Atlas v1 document. |
 | `-h`, `--help` | Display generated help and exit. |
 | `--no-enrich` | Convert supplied metadata without PubMed/SRA enrichment; enrichment is enabled by default. |
-| `--use-harmonization-overrides` | Apply the validated profile from an Agentic Curator result envelope while retaining every `hz_*` characteristic. |
+| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
 | `--out` `OUT` | Output directory; default `.`. |
 | `--platform-handler` `KEY` | Force both IDF and SDRF generation through a listed platform handler. |
 | `--list-platform-handlers` | Print valid handler keys, one per line, and exit without converting. |
@@ -346,19 +346,13 @@ model; raw table bodies and the former `mage_tab` sidecar are not retained.
 During regeneration, mapped core content is
 overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF
 columns are inserted while model-only rows, assay paths, node columns, and
-`Protocol REF` columns remain authoritative. This lets curator-added fields
-such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`,
-and `Characteristics[hz_cell_type_onto]` survive as separate columns. The same
-ontology-agnostic rule preserves ECTO exposure and PCL provisional-state
-annotations such as `hz_exposure_name_id` and `hz_cell_state_name_id`.
-Duplicate SDRF headers are matched by normalized label and occurrence, and
-values are copied only when source/sample/run identity gives one unambiguous
-value; otherwise existing model content is retained and newly inserted cells
-stay blank.
-Enriched harmonization annotations regenerate as adjacent reserved
-`Comment[hz_*]` columns. They never replace original Parameter Value, Unit, or
-term-companion cells, and `ae2json` reattaches them to the preceding typed
-attribute on a later parse.
+`Protocol REF` columns remain authoritative. Harmonized characteristics are exported as `Characteristics[hz_cell_type]`
+with adjacent `Term Source REF`, `Term Accession Number`, and optional
+`Comment[hz_cell_type_hierarchy_depth]`. Indexed groups retain `(1)`, `(2)`, etc.
+Factors and parameters use `Factor Value[hz_*]` and `Parameter Value[hz_*]`;
+units use local `Comment[hz_unit]` groups. The parser restores those groups.
+Explicit assay paths bind sample additions through sample/channel identity
+before column planning; ambiguous associations warn and retain local evidence.
 
 #### `ae2json`
 
@@ -430,7 +424,7 @@ json2h5ad output/GSE234602.json \
 | `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
 | `--allow-unverified-combination` | Deprecated compatibility option; ignored with a warning because catalogue outputs never combine expression matrices. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
-| `--use-harmonization-overrides` | Replace canonical metadata destinations from the envelope profile and publish `msc_harmonization` provenance. |
+| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
 | `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
 | `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
 | `--asset-host` `HOST` | Explicitly allow one additional exact remote asset hostname; repeat as needed. |
@@ -470,7 +464,7 @@ written immediately to `{OUTDIR}/.processed/{study}/`, and released before the
 next sample. A later `--resume --force-memory` run may bypass the fixed ceiling,
 but never the hard 90% current-availability limit.
 
-##### H5AD metadata schema 1.0
+##### H5AD metadata schema 2.0
 
 Converter-owned observation columns use only canonical dotted names such as
 `msc.sample.accession`, `msc.archive.sra_run_accessions`,
@@ -522,7 +516,7 @@ json2tsv atlas.json --outdir output --format csv
 | `--format` `{tsv,csv}` | Manifest serialization; default `tsv`. |
 | `--allow-invalid` | Write projected rows despite projector-reported errors and return a partial result; default behavior raises before writing. |
 | `--overwrite` | Replace an existing destination; existing files are protected by default. |
-| `--use-harmonization-overrides` | Apply the envelope profile to canonical columns and retain all `msc.characteristics.hz_*` columns. |
+| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
 | `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
 | `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
@@ -569,7 +563,7 @@ json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
 | `--overwrite` | Replace the complete component bundle. |
 | `--allow-invalid` | Publish projector-reported validation errors as a partial result. |
 | `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Generic delimited-matrix orientation. |
-| `--use-harmonization-overrides` | Use the same harmonization-aware AnnData assembly as `json2h5ad`. |
+| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
 | `-v`, `--verbose` | Increase verbosity; repeat for DEBUG. |
 | `-q`, `--quiet` | Emit ERROR logs only. |
 | `--log-file` `LOG_FILE` | Write detailed logs to a file. |

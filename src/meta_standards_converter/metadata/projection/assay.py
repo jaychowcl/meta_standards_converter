@@ -14,9 +14,9 @@ from meta_standards_converter.miniml import harmonized_value_mappings
 
 
 PARAMETER_FIELDS = (
-    "value", "unit", "harmonized_value", "harmonized_value_id",
-    "harmonized_value_ontology", "harmonized_unit", "harmonized_unit_id",
-    "harmonized_unit_ontology",
+    "value", "unit", "hz_value", "hz_value_id",
+    "hz_value_onto", "hz_unit", "hz_unit_id",
+    "hz_unit_onto",
 )
 
 
@@ -154,12 +154,12 @@ def _parameter_rows(
                     "unit": unit.get("value", ""),
                     "term_source_ref": parameter.get("term_source_ref", ""),
                     "term_accession_number": parameter.get("term_accession_number", ""),
-                    "harmonized_value": value_annotation.get("value", ""),
-                    "harmonized_value_id": value_annotation.get("term_accession_number", ""),
-                    "harmonized_value_ontology": value_annotation.get("term_source_ref", ""),
-                    "harmonized_unit": unit_annotation.get("value", ""),
-                    "harmonized_unit_id": unit_annotation.get("term_accession_number", ""),
-                    "harmonized_unit_ontology": unit_annotation.get("term_source_ref", ""),
+                    "hz_value": value_annotation.get("value", ""),
+                    "hz_value_id": value_annotation.get("term_accession_number", ""),
+                    "hz_value_onto": value_annotation.get("term_source_ref", ""),
+                    "hz_unit": unit_annotation.get("value", ""),
+                    "hz_unit_id": unit_annotation.get("term_accession_number", ""),
+                    "hz_unit_onto": unit_annotation.get("term_source_ref", ""),
                 })
     return rows
 

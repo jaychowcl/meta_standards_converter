@@ -434,6 +434,20 @@ class MINiMLV1Migrator:
                 last_named = None
                 last_ontology = None
                 continue
+            if kind == "harmonized":
+                from .harmonization import HarmonizedValue, named_harmonized_rows
+                item = dict(step["harmonized"])
+                prefix = step["prefix"]
+                if prefix == "comment" and last_named is not None and item["field"] == "unit":
+                    unit = last_named.setdefault("unit", {"value": ""})
+                    unit.update(HarmonizedValue(**item).to_mapping())
+                elif prefix in {"parameter value", "factor value"} and last_named is not None:
+                    last_named.update(HarmonizedValue(**item).to_mapping())
+                elif prefix == "comment" and last_ontology is not None:
+                    last_ontology.update(HarmonizedValue(**item).to_mapping())
+                elif result and result[-1].get("kind") != "protocol_application":
+                    result[-1].setdefault("characteristics", []).extend(named_harmonized_rows([HarmonizedValue(**item)]))
+                continue
             if kind == "attribute":
                 attribute = cls._legacy_attribute(step)
                 if step.get("attribute_type") == "parameter value" and current_application is not None:
@@ -449,7 +463,7 @@ class MINiMLV1Migrator:
                     "name": str(step.get("name") or step.get("header") or "comment"),
                     "value": str(step.get("value", "")),
                 }
-                target = last_named or current_application or result[-1]
+                target = result[-1] if comment["name"] == "msc_channel" else last_named or current_application or result[-1]
                 target.setdefault("comments", []).append(comment)
                 continue
             if kind == "field" and result:

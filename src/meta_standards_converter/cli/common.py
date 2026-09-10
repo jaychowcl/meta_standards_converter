@@ -165,3 +165,28 @@ def record_safe_cli_error(
         envelope.correlation_id,
     )
     return envelope
+
+
+def add_replacement_profile_arguments(parser):
+    """Add explicit, mutually exclusive export replacement policy inputs."""
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--replacement-profile", help="Replacement profile as inline JSON; supplying it activates replacements.")
+    group.add_argument("--replacement-profile-file", help="Path to a replacement profile JSON object.")
+
+
+def replacement_profile_from_args(args, parser):
+    """Parse once before conversion; malformed policy input must not publish files."""
+    import json
+    from pathlib import Path
+    try:
+        value = args.replacement_profile
+        if args.replacement_profile_file is not None:
+            value = Path(args.replacement_profile_file).read_text(encoding="utf-8")
+        if value is None:
+            return None
+        profile = json.loads(value)
+        if not isinstance(profile, dict):
+            raise ValueError("replacement profile must be a JSON object")
+        return profile
+    except (OSError, UnicodeError, ValueError) as error:
+        parser.error(str(error))

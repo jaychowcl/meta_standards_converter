@@ -708,6 +708,21 @@ class IDFConstructor():
             if row and "source ref" in str(row[0]).lower():
                 sources.update(x for x in row[1:] if x)
 
+        from meta_standards_converter.miniml import iter_harmonized_values
+
+        def collect_harmonized_sources(value):
+            if isinstance(value, dict):
+                groups = list(iter_harmonized_values(value))
+                for field in ("characteristics", "factor_values", "parameter_values"):
+                    groups.extend(iter_harmonized_values(value.get(field)))
+                sources.update(item.term_source_ref for item in groups if item.term_source_ref)
+                for child in value.values():
+                    collect_harmonized_sources(child)
+            elif isinstance(value, list):
+                for child in value:
+                    collect_harmonized_sources(child)
+
+        collect_harmonized_sources(data or {})
         raw_databases = (data or {}).get("database", [])
         if isinstance(raw_databases, dict):
             raw_databases = [raw_databases]

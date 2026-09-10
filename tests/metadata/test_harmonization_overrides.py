@@ -6,6 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+import pytest
 import json
 import csv
 import inspect
@@ -111,10 +112,8 @@ def test_agentic_envelope_is_loaded_with_profile_per_group(tmp_path):
         "harmonization_targets": [],
     }), encoding="utf-8")
 
-    loaded = JSONPackageSource().load(source)
-
-    assert loaded.groups[0].harmonization_overrides == PROFILE
-    assert loaded.groups[0].packages[0]["sample"][0]["iid"] == "GSM1"
+    with pytest.raises(ValueError, match="replacement.profile"):
+        JSONPackageSource().load(source)
 
 
 def test_resolver_replaces_destinations_from_typed_annotations():
@@ -158,26 +157,26 @@ def test_resolved_view_drives_canonical_metadata_and_preserves_typed_annotations
     assert metadata["organism"] == ("Homo sapiens",)
     assert metadata["disease"] == ("fallback disease",)
     assert metadata["organism_part"] == ("lung",)
-    assert metadata["characteristics"]["harmonized_tissue_name"] == ("lung",)
-    assert metadata["characteristics"]["harmonized_species_name"] == ("Homo sapiens",)
+    assert metadata["characteristics"]["hz_tissue_name"] == ("lung",)
+    assert metadata["characteristics"]["hz_species_name"] == ("Homo sapiens",)
 
 
 def test_tabular_opt_in_uses_resolved_destinations_and_typed_annotation_columns(tmp_path):
     source = tmp_path / "agentic.json"
     destination = tmp_path / "manifest.tsv"
     source.write_text(json.dumps({
-        "miniml_json": package(), "harmonization_overrides": PROFILE
+        "miniml_json": package()
     }), encoding="utf-8")
 
     JSON2TSVConverter().convert_source(
-        source, destination, use_harmonization_overrides=True
+        source, destination, replacement_profile=PROFILE
     )
     with destination.open(encoding="utf-8", newline="") as stream:
         row = next(csv.DictReader(stream, delimiter="\t"))
 
     assert row["msc.sample.channel.organism.value"] == "Homo sapiens"
     assert row["msc.sample.channel.disease"] == "fallback disease"
-    assert row["msc.characteristics.harmonized_tissue_name"] == "lung"
+    assert row["msc.characteristics.hz_tissue_name"] == "lung"
     assert row["msc.harmonization.organism.source_field"] == "species_name"
 
 
@@ -192,8 +191,8 @@ def test_tabular_projects_native_assay_parameter_columns(tmp_path):
 
     assert row["msc.assay.parameter.duration.value"] == "30"
     assert row["msc.assay.parameter.duration.unit"] == "minutes"
-    assert row["msc.assay.parameter.duration.harmonized_unit"] == "minute"
-    assert row["msc.assay.parameter.duration.harmonized_unit_id"] == "UO:0000031"
+    assert row["msc.assay.parameter.duration.hz_unit"] == "minute"
+    assert row["msc.assay.parameter.duration.hz_unit_id"] == "UO:0000031"
 
 
 def test_tabular_retains_ecto_and_pcl_harmonization_columns(tmp_path):
@@ -207,18 +206,18 @@ def test_tabular_retains_ecto_and_pcl_harmonization_columns(tmp_path):
     with destination.open(encoding="utf-8", newline="") as stream:
         row = next(csv.DictReader(stream, delimiter="\t"))
 
-    assert row["msc.characteristics.harmonized_exposure_name_id"] == "ECTO:0900222"
-    assert row["msc.characteristics.harmonized_cell_state_name_id"] == "PCL:0015251"
+    assert row["msc.characteristics.hz_exposure_name_id"] == "ECTO:0900222"
+    assert row["msc.characteristics.hz_cell_state_name_id"] == "PCL:0015251"
 
 
-def test_magetab_opt_in_replaces_destinations_and_keeps_typed_annotations_internal(tmp_path):
+def test_magetab_opt_in_replaces_destinations_and_keeps_hz_evidence_visible(tmp_path):
     source = tmp_path / "agentic.json"
     source.write_text(json.dumps({
-        "miniml_json": package(), "harmonization_overrides": PROFILE
+        "miniml_json": package()
     }), encoding="utf-8")
 
     magetab = JSON2AEConverter().convert(
-        str(source), enrich=False, use_harmonization_overrides=True
+        str(source), enrich=False, replacement_profile=PROFILE
     )[0]
     sdrf = next(row[1] for row in magetab if row and row[0] == "SDRF File")
     header, values = sdrf[0], sdrf[1]
@@ -227,16 +226,16 @@ def test_magetab_opt_in_replaces_destinations_and_keeps_typed_annotations_intern
     assert values[disease] == "fallback disease"
     assert header[disease + 1:disease + 3] == ["Term Source REF", "Term Accession Number"]
     assert values[disease + 1:disease + 3] == ["mondo", "MONDO:9"]
-    assert not any("hz_" in str(label) for label in header)
+    assert "Characteristics[hz_disease_category]" in header
 
 
 def test_all_json_consumers_expose_explicit_opt_in():
-    assert "use_harmonization_overrides" in inspect.signature(JSON2AEConverter.convert).parameters
-    assert "use_harmonization_overrides" in inspect.signature(JSON2H5ADConverter.convert).parameters
-    assert "use_harmonization_overrides" in inspect.signature(JSON2TSVConverter.convert_source).parameters
+    assert "replacement_profile" in inspect.signature(JSON2AEConverter.convert).parameters
+    assert "replacement_profile" in inspect.signature(JSON2H5ADConverter.convert).parameters
+    assert "replacement_profile" in inspect.signature(JSON2TSVConverter.convert_source).parameters
     for cli in (json2ae_cli, json2h5ad_cli, json2obs_cli, json2tsv_cli):
         assert any(
-            action.dest == "use_harmonization_overrides"
+            action.dest == "replacement_profile"
             for action in cli._parser()._actions
         )
 
@@ -244,7 +243,7 @@ def test_all_json_consumers_expose_explicit_opt_in():
 def test_h5ad_publishes_resolved_columns_and_raw_and_harmonization_ledgers(tmp_path):
     source = tmp_path / "agentic.json"
     source.write_text(json.dumps({
-        "miniml_json": package(), "harmonization_overrides": PROFILE
+        "miniml_json": package()
     }), encoding="utf-8")
     expression = tmp_path / "GSM1.h5ad"
     anndata.AnnData(
@@ -257,7 +256,7 @@ def test_h5ad_publishes_resolved_columns_and_raw_and_harmonization_ledgers(tmp_p
         str(source),
         out=str(tmp_path / "out"),
         asset_specs=[f"GSM1={expression}"],
-        use_harmonization_overrides=True,
+        replacement_profile=PROFILE,
     )
     converted = anndata.read_h5ad(result.sample_h5ads["GSM1"])
 
@@ -285,10 +284,10 @@ def test_h5ad_publishes_native_assay_parameter_obs_and_occurrence_ledger(tmp_pat
     converted = anndata.read_h5ad(result.sample_h5ads["GSM1"])
 
     assert converted.obs["msc.assay.parameter.duration.value"].iat[0] == "30"
-    assert converted.obs["msc.assay.parameter.duration.harmonized_unit"].iat[0] == "minute"
+    assert converted.obs["msc.assay.parameter.duration.hz_unit"].iat[0] == "minute"
     ledger = converted.uns["msc_assay"]["parameters"]
     assert ledger["document"].tolist() == ["study.sdrf.txt"]
-    assert ledger["harmonized_unit_id"].tolist() == ["UO:0000031"]
+    assert ledger["hz_unit_id"].tolist() == ["UO:0000031"]
 
 
 def test_h5ad_and_json2obs_retain_ecto_and_pcl_columns(tmp_path):
@@ -309,9 +308,9 @@ def test_h5ad_and_json2obs_retain_ecto_and_pcl_columns(tmp_path):
         asset_specs=[f"GSM1={expression}"],
     )
 
-    assert result.obs["msc.characteristics.harmonized_exposure_name_id"].iat[0] == (
+    assert result.obs["msc.characteristics.hz_exposure_name_id"].iat[0] == (
         "ECTO:0900222"
     )
-    assert result.obs["msc.characteristics.harmonized_cell_state_name_id"].iat[0] == (
+    assert result.obs["msc.characteristics.hz_cell_state_name_id"].iat[0] == (
         "PCL:0015251"
     )

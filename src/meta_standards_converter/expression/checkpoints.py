@@ -29,6 +29,7 @@ class ProcessedCheckpointStore:
         sample: Mapping[str, Any],
         asset: Asset,
         orientation: str,
+        replacement_profile: Mapping[str, Any] | None = None,
     ) -> tuple[Path, Path, str] | None:
         if root is None:
             return None
@@ -40,12 +41,13 @@ class ProcessedCheckpointStore:
             "sample": sample,
             "asset": vars(asset),
             "orientation": orientation,
+            "replacement_profile": replacement_profile,
         }
         fingerprint = hashlib.sha256(
             json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
         ).hexdigest()
         # Version-specific destinations preserve historical processed checkpoints.
-        # The fingerprint payload and algorithm remain unchanged.
+        # Normalized replacement policy participates in checkpoint identity.
         version_key = hashlib.sha256(self._package_version().encode("utf-8")).hexdigest()[:20]
         root = root / f"msc-{version_key}"
         key = hashlib.sha256(sample_id.encode("utf-8")).hexdigest()[:20]

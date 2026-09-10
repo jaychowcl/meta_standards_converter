@@ -116,6 +116,13 @@ class _BaseSDRFHandler(SDRFRenderer):
         attrs.extend(SDRFAttr(label="Comment[BioSD_SAMPLE]", value=x) for x in self.biosample_accessions(sample=sample))
         attrs.extend(self.sample_comment_attrs(sample=sample, channel=channel))
         attrs.extend(self.characteristic_attrs(channel=channel))
+        from meta_standards_converter.magetab.harmonized import channel_columns, sdrf_attrs
+        attrs.extend(sdrf_attrs(channel_columns(channel)))
+        channels = self._channel_records(sample)
+        if len(channels) > 1 and any(channel_columns(item) for item in channels):
+            ordinal = next(index for index, item in enumerate(channels) if item is channel)
+            marker = channel.get("extensions", {}).get("msc_channel", str(ordinal))
+            attrs.append(SDRFAttr("Comment[msc_channel]", marker))
         provider = self.provider(channel=channel)
         if provider:
             attrs.append(SDRFAttr(label="Provider", value=provider))
@@ -202,6 +209,10 @@ class _BaseSDRFHandler(SDRFRenderer):
             companions.append(SDRFAttr(label="Term Source REF", value=self.clean(item["term_source_ref"])))
         if item.get("term_accession_number"):
             companions.append(SDRFAttr(label="Term Accession Number", value=self.clean(item["term_accession_number"])))
+        unit = item.get("unit")
+        if isinstance(unit, dict):
+            from ...harmonized import columns, sdrf_attrs
+            companions.append(SDRFAttr("Unit", unit.get("value"), attrs=self.ontology_companions(unit) + sdrf_attrs(columns(unit, "Comment"))))
         return companions
 
     def organism_part_value(self, channel: dict):

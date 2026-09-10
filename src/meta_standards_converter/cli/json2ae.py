@@ -12,6 +12,7 @@ import argparse
 import logging
 
 from meta_standards_converter.cli.common import (
+    add_replacement_profile_arguments, replacement_profile_from_args,
     add_logging_arguments,
     add_platform_handler_arguments,
     configure_logging,
@@ -51,11 +52,7 @@ def _parser() -> argparse.ArgumentParser:
         default=".",
         help="Directory for generated IDF and SDRF files. Defaults to the current directory.",
     )
-    parser.add_argument(
-        "--use-harmonization-overrides",
-        action="store_true",
-        help="Apply an Agentic Curator harmonization override profile.",
-    )
+    add_replacement_profile_arguments(parser)
     add_platform_handler_arguments(parser)
     add_logging_arguments(parser)
     return parser
@@ -64,6 +61,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
+    replacement_profile = replacement_profile_from_args(args, parser)
     if args.list_platform_handlers:
         print_platform_handlers()
         return 0
@@ -89,8 +87,8 @@ def main(argv=None) -> int:
             )
             if args.platform_handler:
                 convert_options["platform_handler"] = args.platform_handler
-            if args.use_harmonization_overrides:
-                convert_options["use_harmonization_overrides"] = True
+            if replacement_profile is not None:
+                convert_options["replacement_profile"] = replacement_profile
             magetabs = converter.convert(**convert_options)
         except Exception as error:
             failed = True

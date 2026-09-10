@@ -643,7 +643,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["cell1", "cell2"], list(original.obs_names))
             self.assertEqual("h5ad", normalized.uns["meta_standards_converter"]["source_tier"])
             self.assertEqual(
-                "1.0",
+                "2.0",
                 normalized.uns["meta_standards_converter"]["metadata_schema_version"],
             )
             self.assertEqual("artifact_parent", normalized.uns["meta_standards_converter"]["path_base"])
@@ -651,7 +651,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["../source.h5ad"] * 2, list(normalized.obs["msc.asset.uri"]))
 
             sample_values = normalized.uns["msc_metadata"]["sample_values"]
-            self.assertEqual("1.0", normalized.uns["msc_metadata"]["schema_version"])
+            self.assertEqual("2.0", normalized.uns["msc_metadata"]["schema_version"])
             self.assertEqual(
                 ["sample_accession", "field", "ordinal", "value", "value_type"],
                 list(sample_values.columns),
@@ -669,7 +669,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertIsNone(manifest["combined_h5ad"])
             self.assertEqual("per_sample_h5ad_catalogue", manifest["artifact_kind"])
             self.assertEqual("none", manifest["expression_integration"])
-            self.assertEqual("1.0", manifest["h5ad_metadata_schema_version"])
+            self.assertEqual("2.0", manifest["h5ad_metadata_schema_version"])
             self.assertEqual({"GSM1": "GSM1.h5ad"}, manifest["sample_h5ads"])
             self.assertEqual("../source.h5ad", manifest["assets"]["GSM1"]["path"])
             self.assertEqual("external", manifest["assets"]["GSM1"]["path_scope"])
@@ -1184,19 +1184,19 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual(["CPI-703"], first.obs["msc.characteristics.treatment"].unique().tolist())
             self.assertEqual(
                 ["regulatory T cell"],
-                first.obs["msc.characteristics.harmonized_cell_type"].unique().tolist(),
+                first.obs["msc.characteristics.hz_cell_type"].unique().tolist(),
             )
             self.assertEqual(
                 ["CL:0000815"],
-                first.obs["msc.characteristics.harmonized_cell_type_id"].unique().tolist(),
+                first.obs["msc.characteristics.hz_cell_type_id"].unique().tolist(),
             )
             self.assertEqual(
                 ["cl"],
-                first.obs["msc.characteristics.harmonized_cell_type_onto"].unique().tolist(),
+                first.obs["msc.characteristics.hz_cell_type_onto"].unique().tolist(),
             )
             self.assertEqual([""], first.obs["msc.characteristics.dose"].unique().tolist())
             self.assertEqual([""], second.obs["msc.characteristics.cell_type"].unique().tolist())
-            self.assertEqual([""], second.obs["msc.characteristics.harmonized_cell_type"].unique().tolist())
+            self.assertEqual([""], second.obs["msc.characteristics.hz_cell_type"].unique().tolist())
             self.assertIsNone(result.combined_h5ad)
 
             values = first.uns["msc_metadata"]["sample_values"]

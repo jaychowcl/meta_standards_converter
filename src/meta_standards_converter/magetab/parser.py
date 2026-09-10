@@ -224,7 +224,17 @@ class AEParser:
         package["mage_tab"]["model"] = validate_model(
             build_model(idf_rows=idf_rows, sdrfs=source_sdrfs)
         )
-        return MINiMLV1Migrator().migrate(package).package
+        retained_hz = {
+            (sample["iid"], i): channel.pop("_msc_hz", [])
+            for sample in sample_values for i, channel in enumerate(sample.get("channel", []))
+        }
+        typed = MINiMLV1Migrator().migrate(package).package
+        mapping = typed.to_mapping()
+        from meta_standards_converter.miniml import MINiMLCodec
+        for sample in mapping.get("sample", []):
+            for i, channel in enumerate(sample.get("channel", [])):
+                channel.setdefault("characteristics", []).extend(retained_hz.get((sample["iid"], i), []))
+        return MINiMLCodec().decode(mapping).package
 
     def _table(self, text: str, name: str, rectangular: bool) -> list[list[str]]:
         rows = [row for row in csv.reader(io.StringIO(text), delimiter="\t") if row]
@@ -534,10 +544,13 @@ class AEParser:
             sample = state["sample"]
             source_name = self._cell(header, row, "Source Name") or identity
             label = self._cell(header, row, "Label") or ""
-            channel_key = (source_name, label)
+            channel_marker = self._cell(header, row, "Comment[msc_channel]")
+            channel_key = (source_name, label, channel_marker)
             channel = state["channels"].setdefault(channel_key, {"characteristics": []})
             if channel not in sample["channel"]:
                 sample["channel"].append(channel)
+            if channel_marker:
+                channel.setdefault("extensions", {})["msc_channel"] = channel_marker
             self._map_sample_scalars(filename, header, row, sample, channel)
             self._map_characteristics(header, row, channel)
             self._map_protocols(header, row, sample, channel, protocols)
@@ -565,6 +578,7 @@ class AEParser:
             ("Comment[Sample_source_name]", channel, "source"),
             ("Description", sample, "description"),
             ("Provider", channel, "biomaterial_provider"),
+            ("Label", channel, "label"),
             ("Comment[LIBRARY_LAYOUT]", sample, "library_layout"),
             ("Comment[LIBRARY_SELECTION]", sample, "library_selection"),
             ("Comment[LIBRARY_SOURCE]", sample, "library_source"),
@@ -613,7 +627,24 @@ class AEParser:
             (str(item.get("tag", "")).casefold(), str(item.get("value", "")))
             for item in channel["characteristics"]
         }
+        from .harmonized import read_group
+        from .semantics import NODE_HEADERS
+        from meta_standards_converter.miniml.harmonization import named_harmonized_rows
+        biological = True
         for index, label in enumerate(header):
+            if label in {"Source Name", "Sample Name"}:
+                biological = True
+            elif label in NODE_HEADERS or label == "Protocol REF":
+                biological = False
+            group = read_group(header, row, index)
+            if group is not None:
+                prefix, value, _ = group
+                if biological and prefix == "characteristics" and value is not None:
+                    retained = channel.setdefault("_msc_hz", [])
+                    for item in named_harmonized_rows([value]):
+                        if item not in retained:
+                            retained.append(item)
+                continue
             match = re.fullmatch(r"\s*(Characteristics|Factor\s+Value)\s*\[(.*)]\s*", label, re.I)
             if not match or not row[index].strip():
                 continue
@@ -750,6 +781,8 @@ class AEParser:
             )
 
     def _known_sdrf_header(self, label):
+        if label == "Comment[msc_channel]" or re.fullmatch(r"Comment\[hz_[^]]+\]", label):
+            return True
         normalized = normalized_label(label)
         if normalized in self.EXACT_SDRF_HEADERS:
             return True

@@ -68,6 +68,8 @@ def resolve_harmonization_overrides(
     enabled: bool,
 ) -> HarmonizationResolution:
     """Return a harmonization-aware deep copy derived from typed annotations."""
+    if profile is not None and not isinstance(profile, Mapping):
+        raise ValueError("replacement_profile must be an object")
     original = tuple(copy.deepcopy(dict(package)) for package in packages)
     if not enabled or profile is None:
         return HarmonizationResolution(original, profile=profile, enabled=enabled)
@@ -76,7 +78,7 @@ def resolve_harmonization_overrides(
     except ValueError as error:
         return HarmonizationResolution(
             original,
-            profile=copy.deepcopy(dict(profile)),
+            profile=copy.deepcopy(profile),
             warnings=(f"Harmonization overrides disabled: {error}",),
             enabled=True,
         )
@@ -116,6 +118,20 @@ def resolve_harmonization_overrides(
                         )
                         for item in selected_values
                     )
+        # Apply the same policy to explicitly bound path-local source evidence.
+        # Resolving each occurrence independently preserves differing path metadata.
+        from meta_standards_converter.magetab.harmonized import _path_binding
+        for path in package.get("series", {}).get("assay_paths", []):
+            binding = _path_binding(package, path)
+            if binding is None:
+                continue
+            node, channel = binding
+            for destination, sources in normalized["replacements"].items():
+                for source in sources:
+                    values = _harmonized_values(node, source) or _harmonized_values(channel, source)
+                    if values:
+                        _apply_path_destination(node, destination, values)
+                        break
     return HarmonizationResolution(
         raw,
         profile=normalized,
@@ -123,6 +139,24 @@ def resolve_harmonization_overrides(
         enabled=True,
         applied=True,
     )
+
+
+def _apply_path_destination(node, destination, values):
+    if destination == "organism":
+        # Assay nodes express organisms as characteristics, not Channel.organism.
+        _apply_destination(node, "characteristics.organism", values)
+    elif destination == "source":
+        comments = node.setdefault("comments", [])
+        comments[:] = [c for c in comments if c.get("name") != "Sample_source_name"]
+        comments.extend({"name": "Sample_source_name", "value": item["value"]} for item in values)
+    elif destination in {"molecule", "material_type"}:
+        node["material_type"] = _ontology_container(values[0])
+        if len(values) > 1:
+            node["material_type"]["value"] = " | ".join(str(item["value"]) for item in values)
+    elif destination == "biomaterial_provider":
+        node["provider"] = " | ".join(str(item["value"]) for item in values)
+    else:
+        _apply_destination(node, destination, values)
 
 
 def _canonical_package(package: Mapping[str, Any]) -> dict[str, Any]:
@@ -160,10 +194,12 @@ def validate_harmonization_overrides(profile: Mapping[str, Any]) -> dict[str, An
 def _harmonized_values(channel: Mapping[str, Any], source: str) -> list[dict[str, Any]]:
     values: list[dict[str, Any]] = []
     containers = [channel]
-    for field in ("source", "molecule"):
+    for field in ("source", "molecule", "material_type"):
         item = channel.get(field)
         if isinstance(item, Mapping):
             containers.append(item)
+    containers.extend(item for item in _as_list(channel.get("organism")) if isinstance(item, Mapping))
+    containers.extend(item for item in _as_list(channel.get("characteristics")) if isinstance(item, Mapping))
     for container in containers:
         for annotation in harmonized_value_mappings(container):
             if not isinstance(annotation, Mapping) or annotation.get("field") != source:
@@ -208,6 +244,19 @@ def _append_value(values: list[dict[str, Any]], item: Mapping[str, Any]) -> None
 
 
 def _apply_destination(channel: dict[str, Any], destination: str, values: list[dict[str, Any]]) -> None:
+    if destination in {"organism", "source", "molecule", "material_type"}:
+        from meta_standards_converter.miniml.harmonization import iter_harmonized_values, named_harmonized_rows
+        from dataclasses import replace
+        rows = channel.setdefault("characteristics", [])
+        used = {(v.field, v.index) for v in iter_harmonized_values(rows)}
+        for container in _as_list(channel.get(destination)):
+            if not isinstance(container, Mapping):
+                continue
+            for value in iter_harmonized_values(container):
+                while (value.field, value.index) in used:
+                    value = replace(value, index=value.index + 1)
+                used.add((value.field, value.index))
+                rows.extend(named_harmonized_rows([value]))
     if destination == "organism":
         channel["organism"] = [_ontology_container(item, taxon=True) for item in values]
         return

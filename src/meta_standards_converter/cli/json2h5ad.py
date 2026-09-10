@@ -16,6 +16,7 @@ import logging
 import sys
 
 from meta_standards_converter.cli.common import (
+    add_replacement_profile_arguments, replacement_profile_from_args,
     add_logging_arguments,
     add_resource_profile_arguments,
     configured_resource_profile,
@@ -120,11 +121,7 @@ def _parser() -> argparse.ArgumentParser:
         default="auto",
         help="Orientation for generic delimited matrices.",
     )
-    parser.add_argument(
-        "--use-harmonization-overrides",
-        action="store_true",
-        help="Apply an Agentic Curator harmonization override profile.",
-    )
+    add_replacement_profile_arguments(parser)
     resources = parser.add_argument_group("resource and retrieval policy")
     add_resource_profile_arguments(resources)
     resources.add_argument(
@@ -140,6 +137,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
+    replacement_profile = replacement_profile_from_args(args, parser)
     configure_logging(args, stream=sys.stderr)
     if (
         args.resource_profile != "standard"
@@ -195,8 +193,8 @@ def main(argv=None) -> int:
             ):
                 if value != default:
                     convert_options[name] = value
-            if args.use_harmonization_overrides:
-                convert_options["use_harmonization_overrides"] = True
+            if replacement_profile is not None:
+                convert_options["replacement_profile"] = replacement_profile
             conversion = orchestrator.convert(
                 json_path, out=args.outdir, **convert_options
             )

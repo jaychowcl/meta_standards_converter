@@ -46,7 +46,7 @@ def test_output_exports_combined_obs_and_optional_metadata_sidecars(tmp_path):
     assert manifest["status"] == "complete"
     assert result.obs.shape[0] == 2
     assert result.var.shape[0] == 2
-    assert result.uns["msc_metadata"]["schema_version"] == "1.0"
+    assert result.uns["msc_metadata"]["schema_version"] == "2.0"
 
 
 def test_output_obs_export_omits_unrequested_sidecars(tmp_path):

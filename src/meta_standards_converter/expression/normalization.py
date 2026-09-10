@@ -29,7 +29,7 @@ from meta_standards_converter.expression.readers import scientific_modules
 class AnnDataNormalizer:
     MINIML_SCHEMA_VERSION = "1.0"
 
-    H5AD_METADATA_SCHEMA_VERSION = "1.0"
+    H5AD_METADATA_SCHEMA_VERSION = "2.0"
 
     PUBLICATION_POLICY = "citation_metadata_only"
 
@@ -327,7 +327,7 @@ class AnnDataNormalizer:
                     for annotation in harmonized_value_mappings(channel):
                         if not isinstance(annotation, dict) or not annotation.get("field"):
                             continue
-                        annotation_slug = "harmonized_" + self._metadata_slug(annotation["field"])
+                        annotation_slug = "hz_" + self._metadata_slug(annotation["field"])
                         for candidate in (annotation_slug, f"{annotation_slug}_id", f"{annotation_slug}_onto"):
                             if candidate not in columns:
                                 columns.append(candidate)
@@ -343,7 +343,7 @@ class AnnDataNormalizer:
                         if slug and slug not in columns:
                             columns.append(slug)
                     for annotation in harmonized_value_mappings(characteristic_rows):
-                        annotation_slug = "harmonized_" + self._metadata_slug(
+                        annotation_slug = "hz_" + self._metadata_slug(
                             annotation["field"]
                         )
                         for candidate in (
@@ -463,7 +463,7 @@ class AnnDataNormalizer:
                 f"parameter_{index:06d}" for index in range(len(parameters))
             ]
             adata.uns["msc_assay"] = {
-                "schema_version": "2.0",
+                "schema_version": "3.0",
                 "parameters": parameters,
             }
 

@@ -309,7 +309,8 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
     for comment in series.get("comments", []) or []:
         if isinstance(comment, dict) and comment.get("name"):
             _replace_row(rows, f"Comment[{comment['name']}]", [comment.get("value", "")])
-    assay_table = _render_miniml_assay_paths(series.get("assay_paths"))
+    from .harmonized import bind_sample_groups
+    assay_table = _render_miniml_assay_paths(bind_sample_groups(package, series.get("assay_paths")))
     if assay_table:
         _replace_row(rows, "SDRF File", [assay_table])
     _insert_retained_patch_comments(package, rows)
@@ -406,25 +407,40 @@ def render_miniml_assay_documents(paths) -> dict[str, list[list]]:
 
 
 def _render_assay_path_group(paths) -> list[list]:
-    path_columns = []
-    union = []
+    from .sdrf.model import SDRFPath, SDRFNode, SDRFEdge, SDRFAttr
+    from .sdrf.renderer import SDRFRenderer
+    rendered = []
     for path in paths:
-        if not isinstance(path, dict):
-            continue
-        columns = _miniml_path_columns(path.get("steps"))
-        seen = {}
-        identified = []
-        for header, value in columns:
-            seen[header] = seen.get(header, 0) + 1
-            key = (header, seen[header])
-            identified.append((key, value))
-            if key not in union:
-                union.append(key)
-        path_columns.append(dict(identified))
-    return [
-        [header for header, _occurrence in union],
-        *[[values.get(key, "") for key in union] for values in path_columns],
-    ]
+        parts = []
+        for step in path.get("steps", []):
+            pairs = _miniml_path_columns([step])
+            if not pairs:
+                continue
+            label, value = pairs[0]
+            part = SDRFEdge(value) if label == "Protocol REF" else SDRFNode(label, label, value)
+            last = named = unit = None
+            for label, value in pairs[1:]:
+                attr = SDRFAttr(label, value, required=True)
+                if last is not None and (label in {"Term Source REF", "Term Accession Number"} or "_hierarchy_depth" in label):
+                    last.attrs.append(attr)
+                    continue
+                if label.startswith("Unit") and named is not None:
+                    named.attrs.append(attr)
+                    unit = attr
+                elif label.startswith("Comment[hz_unit") and unit is not None:
+                    unit.attrs.append(attr)
+                elif label.startswith(("Parameter Value[hz_", "Factor Value[hz_")) and named is not None:
+                    named.attrs.append(attr)
+                else:
+                    part.attrs.append(attr)
+                    if label.startswith(("Characteristics[", "Parameter Value[", "Factor Value[")):
+                        named = attr
+                        unit = None
+                last = attr
+            parts.append(part)
+        rendered.append(SDRFPath(parts))
+    renderer = SDRFRenderer()
+    return renderer.render_paths(renderer.plan_columns(rendered), rendered)
 
 
 def _miniml_path_columns(steps) -> list[tuple[str, object]]:
@@ -446,8 +462,7 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
                 result.append(("Performer", step["performer"]))
             if step.get("date") not in (None, ""):
                 result.append(("Date", step["date"]))
-            for value in step.get("parameter_values", []) or []:
-                result.extend(_named_value_columns("Parameter Value", value))
+            result.extend(_named_values_columns("Parameter Value", step.get("parameter_values", [])))
             for comment in step.get("comments", []) or []:
                 result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
             continue
@@ -455,10 +470,8 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
         if not header:
             continue
         result.append((header, step.get("name", "")))
-        for value in step.get("characteristics", []) or []:
-            result.extend(_named_value_columns("Characteristics", value))
-        for value in step.get("factor_values", []) or []:
-            result.extend(_named_value_columns("Factor Value", value))
+        result.extend(_named_values_columns("Characteristics", step.get("characteristics", [])))
+        result.extend(_named_values_columns("Factor Value", step.get("factor_values", [])))
         for field, field_header in (
             ("provider", "Provider"), ("material_type", "Material Type"),
             ("description", "Description"), ("label", "Label"),
@@ -471,6 +484,18 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
             result.append(("Array Design REF", reference["ref"]))
         for comment in step.get("comments", []) or []:
             result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
+    return result
+
+
+def _named_values_columns(prefix, values):
+    from .harmonized import columns
+    used, result = set(), []
+    for value in values or []:
+        if str(value.get("name", "")).startswith("hz_"):
+            continue
+        result.extend(_named_value_columns(prefix, value))
+        result.extend(columns(value, prefix, used))
+    result.extend(columns(values or [], prefix, used))
     return result
 
 
@@ -499,6 +524,9 @@ def _ontology_columns(header: str, value) -> list[tuple[str, object]]:
         result.append(("Term Source REF", source))
     if accession:
         result.append(("Term Accession Number", accession))
+    from .harmonized import columns
+    if isinstance(value, dict):
+        result.extend(columns(value, "Comment"))
     return result
 
 
@@ -600,6 +628,15 @@ def _assay_path(sdrf_name: str, row_index: int, header: list[str], row: list[str
             "occurrence": occurrences[key],
             "value": value,
         }
+        from .harmonized import read_group
+        group = read_group(header, row, index)
+        if group is not None:
+            prefix, harmonized, end = group
+            consumed.update(range(index + 1, end))
+            if harmonized is not None:
+                base.update(kind="harmonized", prefix=prefix, harmonized=harmonized.to_annotation_mapping())
+                steps.append(base)
+            continue
         annotation = re.fullmatch(r"\s*(Characteristics|Factor\s+Value|Parameter\s+Value)\s*\[([^]]*)]\s*(?:\(([^)]*)\))?\s*", label, re.I)
         if annotation:
             base.update({
@@ -633,6 +670,13 @@ def _assay_path(sdrf_name: str, row_index: int, header: list[str], row: list[str
                 base["companion_columns"] = companions
             annotation_index = max([index, *companions.values()]) + 1
             while annotation_index < len(header):
+                candidate = read_group(header, row, annotation_index)
+                if candidate is not None:
+                    # Old flat Comment companions are accepted only when actually
+                    # present; new ontology/depth groups are parsed independently.
+                    next_label = header[annotation_index + 1] if annotation_index + 1 < len(header) else ""
+                    if not re.fullmatch(r"Comment\[hz_(?:value|unit)_(?:id|onto)\]", next_label):
+                        break
                 harmonized = re.fullmatch(
                     r"\s*Comment\[(hz_(?:value|unit)(?:_id|_onto|_hierarchy_depth)?|hz_field)]\s*",
                     header[annotation_index],

@@ -27,24 +27,22 @@ class DatasetPackageGroup:
     dataset_id: str
     packages: tuple[MINiMLPackage, ...]
     source_accession: str | None = None
-    harmonization_overrides: Mapping[str, Any] | None = None
     source_packages: tuple[MINiMLPackage, ...] | None = None
     harmonization_resolution: Any | None = None
 
-    def resolved(self, *, enabled: bool) -> "DatasetPackageGroup":
+    def resolved(self, *, replacement_profile: Mapping[str, Any] | None = None) -> "DatasetPackageGroup":
         from meta_standards_converter.metadata.harmonization_overrides import resolve_harmonization_overrides
 
         codec = MINiMLCodec()
         resolution = resolve_harmonization_overrides(
             tuple(codec.encode(package) for package in self.packages),
-            self.harmonization_overrides,
-            enabled=enabled,
+            replacement_profile,
+            enabled=replacement_profile is not None,
         )
         return DatasetPackageGroup(
             self.dataset_id,
             codec.decode_many(resolution.packages).packages,
             source_accession=self.source_accession,
-            harmonization_overrides=self.harmonization_overrides,
             source_packages=self.packages,
             harmonization_resolution=resolution,
         )
@@ -69,6 +67,8 @@ class JSONPackageSource:
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
         payload = json.loads(source.read_text(encoding="utf-8"))
+        if isinstance(payload, Mapping) and "harmonization_overrides" in payload:
+            raise ValueError("Embedded harmonization_overrides are no longer supported; pass replacement_profile or --replacement-profile-file to the converter.")
         if isinstance(payload, Mapping) and "miniml_json" in payload:
             return self._validate_result(self._agentic_envelope(payload, source.stem))
         if isinstance(payload, Mapping) and (
@@ -94,17 +94,7 @@ class JSONPackageSource:
         packages = document if isinstance(document, list) else [document]
         if not packages or any(not isinstance(package, Mapping) for package in packages):
             raise ValueError("Agentic Curator miniml_json must be an object or non-empty object list.")
-        profile = payload.get("harmonization_overrides")
-        groups = self._group_packages(packages, fallback)
-        return self._source_result(tuple(
-            DatasetPackageGroup(
-                group.dataset_id,
-                group.packages,
-                source_accession=group.source_accession,
-                harmonization_overrides=deepcopy(profile) if isinstance(profile, Mapping) else profile,
-            )
-            for group in groups
-        ))
+        return self._source_result(self._group_packages(packages, fallback))
 
     def _validate_result(self, result: SourceLoadResult) -> SourceLoadResult:
         if not result.groups:

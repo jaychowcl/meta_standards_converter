@@ -16,6 +16,7 @@ import logging
 import sys
 
 from meta_standards_converter.cli.common import (
+    add_replacement_profile_arguments, replacement_profile_from_args,
     add_logging_arguments,
     configure_logging,
     record_safe_cli_error,
@@ -56,11 +57,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--processed-checkpoint-dir")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--allow-invalid", action="store_true")
-    parser.add_argument(
-        "--use-harmonization-overrides",
-        action="store_true",
-        help="Apply an Agentic Curator harmonization override profile.",
-    )
+    add_replacement_profile_arguments(parser)
     parser.add_argument(
         "--matrix-orientation",
         choices=("auto", "genes-by-observations", "observations-by-genes"),
@@ -71,7 +68,9 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
+    replacement_profile = replacement_profile_from_args(args, parser)
     configure_logging(args, stream=sys.stderr)
     orchestrator = JSON2OBSConverter()
     summaries = []
@@ -103,8 +102,8 @@ def main(argv=None) -> int:
                 allow_invalid=args.allow_invalid,
                 matrix_orientation=args.matrix_orientation,
             )
-            if args.use_harmonization_overrides:
-                convert_options["use_harmonization_overrides"] = True
+            if replacement_profile is not None:
+                convert_options["replacement_profile"] = replacement_profile
             result = orchestrator.convert(source, **convert_options)
         except Exception as error:
             failed = True

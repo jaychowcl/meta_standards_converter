@@ -170,7 +170,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         parameter = table[0].index("Parameter Value[duration]")
         self.assertEqual("30", table[1][parameter])
         self.assertEqual("minutes", table[1][parameter + 1])
-        self.assertNotIn("hz_", "\t".join(table[0]))
+        self.assertIn("Comment[hz_unit]", table[0])
 
         idf_rows = []
         for row in rendered:
@@ -295,7 +295,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         self.assertEqual(["assay-1", "assay-2"], [row[assay_index] for row in rendered_sdrf[1:]])
         self.assertEqual("edited-scan-2", rendered_sdrf[2][scan_index])
 
-    def test_harmonized_groups_remain_internal_while_paths_preserve_multiplicity(self):
+    def test_harmonized_groups_export_while_paths_preserve_multiplicity(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
         package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
@@ -312,7 +312,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         rendered_sdrf = next(row[1] for row in magetab if row[0] == "SDRF File")
 
         self.assertEqual(2, len(rendered_sdrf) - 1)
-        self.assertNotIn("hz_", "\t".join(rendered_sdrf[0]))
+        self.assertIn("Characteristics[hz_disease]", rendered_sdrf[0])
         rendered = package["sample"][0]["channel"][0]["characteristics"]
         self.assertIn({"name": "hz_disease_id", "value": "MONDO:0000001"}, rendered)
 

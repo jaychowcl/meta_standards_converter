@@ -43,6 +43,7 @@ class JSON2OBSConverter:
         include_var: bool = False,
         include_uns: bool = False,
         overwrite: bool = False,
+        replacement_profile: Mapping[str, Any] | None = None,
         **options,
     ) -> AnnDataMetadataExportResult | AnnDataMetadataBatchResult:
         destination = Path(outdir)
@@ -56,6 +57,7 @@ class JSON2OBSConverter:
                 str(source),
                 out=str(assembly_root),
                 overwrite=True,
+                replacement_profile=replacement_profile,
                 **options,
             )
             if isinstance(converted, BatchConversionResult):

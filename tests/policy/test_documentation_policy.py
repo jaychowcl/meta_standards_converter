@@ -371,7 +371,7 @@ class DocsIndexTests(unittest.TestCase):
         report_text = report.read_text(encoding="utf-8")
         for document in (readme_text, codebase_text):
             self.assertIn("Atlas document schema 1.0", document)
-            self.assertIn("H5AD metadata schema 1.0", document)
+            self.assertIn("H5AD metadata schema 2.0", document)
             self.assertIn("587 passed, 3 skipped", document)
             self.assertIn("2026-08-10", document)
         self.assertIn('<a id="h5ad-metadata-schema-v1"></a>', codebase_text)

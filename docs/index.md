@@ -248,10 +248,10 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   link: [Open section](codebase.md#h5ad-metadata-schema-v1)
 
 - id: harmonization-overrides
-  title: Harmonization overrides
+  title: Converter replacement profiles
   anchor: harmonization-overrides
   purpose: Defines Agentic Curator envelope recognition, opt-in destination replacement, hz retention, fallback, and provenance.
-  keywords: harmonization overrides, Agentic Curator, typed annotations, ECTO, PCL, exposure, cell state, profile, destination, provenance
+  keywords: replacement_profile, MSC 7, hz_, harmonization overrides, Agentic Curator, typed annotations, ECTO, PCL, exposure, cell state, profile, destination, provenance
   link: [Open section](codebase.md#harmonization-overrides)
 
 - id: rootless-json2h5ad-runtime
@@ -296,3 +296,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   purpose: Explains structured chemistry identifiers, sample-specific scRNA/Visium decisions, mixed handler construction and complete output regressions.
   keywords: GEO array categories, spotted DNA/cDNA, GSE100, preset preservation, SC3Pv2, singlecell_type, GSM5388031, GSM9254695, Visium, scRNA, TechnologyDecision, protocol registry, mixed libraries
   link: [Open section](codebase.md#sample-library-routing)
+
+- [MSC 7 export migration](codebase.md#harmonization-overrides): direct converter profiles, hz columns, ontology companions, occurrence binding, H5AD 2.0, assay 3.0, checkpoint separation and breaking Curator envelope removal.

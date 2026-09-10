@@ -123,7 +123,7 @@ _TENX_MEMBER = re.compile(
 
 class JSON2H5ADConverter:
     MINIML_SCHEMA_VERSION = "1.0"
-    H5AD_METADATA_SCHEMA_VERSION = "1.0"
+    H5AD_METADATA_SCHEMA_VERSION = "2.0"
     PUBLICATION_POLICY = "citation_metadata_only"
     OBS_METADATA_FIELDS = {
         "msc.sample.title": "title",
@@ -242,9 +242,12 @@ class JSON2H5ADConverter:
         processed_checkpoint_dir: str | None = None,
         allow_invalid: bool = False,
         allow_unverified_combination: bool = False,
-        use_harmonization_overrides: bool = False,
+        *,
+        replacement_profile: Mapping[str, Any] | None = None,
         **options,
     ) -> ConversionResult | BatchConversionResult:
+        if "use_harmonization_overrides" in options:
+            raise TypeError("use_harmonization_overrides was removed; supply replacement_profile")
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"MINiML JSON file not found: {json_path}")
         if force_memory and not resume:
@@ -253,7 +256,7 @@ class JSON2H5ADConverter:
         loaded = replace(
             loaded,
             groups=tuple(
-                group.resolved(enabled=use_harmonization_overrides)
+                group.resolved(replacement_profile=replacement_profile)
                 for group in loaded.groups
             ),
         )
@@ -313,16 +316,19 @@ class JSON2H5ADConverter:
         json_path: str,
         out: str | None = None,
         allow_invalid: bool = False,
-        use_harmonization_overrides: bool = False,
+        *,
+        replacement_profile: Mapping[str, Any] | None = None,
         **options,
     ) -> BatchConversionResult:
+        if "use_harmonization_overrides" in options:
+            raise TypeError("use_harmonization_overrides was removed; supply replacement_profile")
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"JSON file not found: {json_path}")
         loaded = self.package_source.load(json_path)
         loaded = replace(
             loaded,
             groups=tuple(
-                group.resolved(enabled=use_harmonization_overrides)
+                group.resolved(replacement_profile=replacement_profile)
                 for group in loaded.groups
             ),
         )
@@ -477,6 +483,7 @@ class JSON2H5ADConverter:
                 sample=sample_context[sample_id][0],
                 asset=asset,
                 orientation=orientation,
+                replacement_profile=getattr(harmonization_resolution, "profile", None) if getattr(harmonization_resolution, "applied", False) else None,
             )
             checkpoint_metadata = (
                 self.checkpoints.metadata(checkpoint) if resume else None

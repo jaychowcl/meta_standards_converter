@@ -182,7 +182,7 @@ class MINiMLMetadataService:
             for annotation in harmonized_value_mappings(channel):
                 if not isinstance(annotation, Mapping) or not annotation.get("field"):
                     continue
-                annotation_slug = "harmonized_" + self.metadata_slug(
+                annotation_slug = "hz_" + self.metadata_slug(
                     annotation["field"]
                 )
                 characteristic_values.setdefault(annotation_slug, []).extend(
@@ -209,7 +209,7 @@ class MINiMLMetadataService:
                 if slug and item_values:
                     characteristic_values.setdefault(slug, []).extend(item_values)
             for annotation in harmonized_value_mappings(characteristic_rows):
-                annotation_slug = "harmonized_" + self.metadata_slug(
+                annotation_slug = "hz_" + self.metadata_slug(
                     annotation["field"]
                 )
                 characteristic_values.setdefault(annotation_slug, []).extend(
