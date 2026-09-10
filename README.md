@@ -132,9 +132,9 @@ json2h5ad output/GSE234602.json --out output
 Import a converter and call `convert()`. See the [Python API guide](#python-api).
 
 ```python
-from meta_standards_converter.converters.geo2json import geo2json
+from meta_standards_converter.converters.geo2json import GEO2JSONConverter
 
-packages = geo2json().convert("GSE234602", out="output")
+packages = GEO2JSONConverter().convert("GSE234602", out="output")
 ```
 
 ### Docker quickstart
@@ -609,9 +609,9 @@ series packages without treating them as separate Atlas datasets.
 Convert GEO to MAGE-TAB:
 
 ```python
-from meta_standards_converter.converters.geo2ae import geo2ae
+from meta_standards_converter.converters.geo2ae import GEO2AEConverter
 
-magetabs = geo2ae().convert(
+magetabs = GEO2AEConverter().convert(
     gse="GSE234602",
     related_series=False,
     remove_empty=True,
@@ -620,14 +620,14 @@ magetabs = geo2ae().convert(
 )
 ```
 
-`geo2ae.convert(gse, related_series=False, remove_empty=True, out=None, platform_handler=None)` returns a list of in-memory MAGE-TAB payloads. `out=None` suppresses file writes; `platform_handler=None` keeps automatic detection.
+`GEO2AEConverter.convert(gse, related_series=False, remove_empty=True, out=None, platform_handler=None)` returns a list of in-memory MAGE-TAB payloads. `out=None` suppresses file writes; `platform_handler=None` keeps automatic detection.
 
 Convert GEO to JSON:
 
 ```python
-from meta_standards_converter.converters.geo2json import geo2json
+from meta_standards_converter.converters.geo2json import GEO2JSONConverter
 
-packages = geo2json().convert(
+packages = GEO2JSONConverter().convert(
     gse="GSE234602",
     related_series=False,
     remove_empty=True,
@@ -636,7 +636,7 @@ packages = geo2json().convert(
 )
 ```
 
-`geo2json.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in package `extensions.publication_inheritance`. Legacy nested `series.extensions` inputs remain readable, but canonical encoding hoists all entries to package scope and rejects conflicts.
+`GEO2JSONConverter.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in package `extensions.publication_inheritance`. Legacy nested `series.extensions` inputs remain readable, but canonical encoding hoists all entries to package scope and rejects conflicts.
 
 For callers that collect related studies directly,
 `GEOParser.parse_related_series(..., strict=False)` returns a list-compatible
@@ -647,9 +647,9 @@ exception messages are neither returned nor logged.
 Convert parsed JSON to MAGE-TAB:
 
 ```python
-from meta_standards_converter.converters.json2ae import json2ae
+from meta_standards_converter.converters.json2ae import JSON2AEConverter
 
-magetabs = json2ae().convert(
+magetabs = JSON2AEConverter().convert(
     json_path="output/GSE234602.json",
     out="output",
     enrich=True,
@@ -657,7 +657,7 @@ magetabs = json2ae().convert(
 )
 ```
 
-`json2ae.convert(json_path, out=None, enrich=True, platform_handler=None)`
+`JSON2AEConverter.convert(json_path, out=None, enrich=True, platform_handler=None)`
 accepts a parsed MINiML object/list or canonical Atlas v1 document and
 returns ordered MAGE-TAB payloads. `json2ae(..., package_source=...)` permits
 injection of a compatible source loader. Forcing a handler regenerates
@@ -670,23 +670,24 @@ present.
 Convert MAGE-TAB to parsed JSON:
 
 ```python
-from meta_standards_converter.converters.ae2json import ae2json
+from meta_standards_converter.converters.ae2json import AE2JSONConverter
 
-packages = ae2json().convert(
+packages = AE2JSONConverter().convert(
     source="E-MTAB-1990",
     out="output",
     sdrf_sources=None,
 )
 ```
 
-`ae2json.convert(source, out=None, sdrf_sources=None)` returns a one-package list. Configure the constructor with `resource_profile`, `resource_overrides`, and additional exact `source_hosts`. `sdrf_sources` is a list of explicit local paths or policy-approved HTTPS URLs and follows the same constraints as repeated CLI `--sdrf` values.
+`AE2JSONConverter.convert(source, out=None, sdrf_sources=None)` returns a one-package list. Configure the constructor with `resource_profile`, `resource_overrides`, and additional exact `source_hosts`. `sdrf_sources` is a list of explicit local paths or policy-approved HTTPS URLs and follows the same constraints as repeated CLI `--sdrf` values.
 
 Convert parsed JSON and expression assets to H5AD:
 
 ```python
-from meta_standards_converter.converters.json2h5ad import Asset, json2h5ad
+from meta_standards_converter.expression.assets import Asset
+from meta_standards_converter.converters import JSON2H5ADConverter
 
-result = json2h5ad().convert(
+result = JSON2H5ADConverter().convert(
     json_path="output/GSE234602.json",
     out="output",
     explicit_assets=[Asset("GSM9651991", "local.h5ad", "h5ad")],

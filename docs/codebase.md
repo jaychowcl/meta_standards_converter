@@ -1085,13 +1085,13 @@ tests/GSE328265_family.xml
   MINiML structural counts, related-series progress, and enrichment hit/failure
   totals. XML, parsed metadata, publication content, tokens, and credentials are
   never logged.
-- `geo2ae.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
-- `geo2json.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
-- `json2ae.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
-- `ae2json.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
-- `json2h5ad.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes a per-sample H5AD catalogue without matrix integration.
+- `GEO2AEConverter.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
+- `GEO2JSONConverter.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
+- `JSON2AEConverter.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
+- `AE2JSONConverter.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
+- `JSON2H5ADConverter.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes a per-sample H5AD catalogue without matrix integration.
 - `json2tsv --format {tsv,csv}` emits the neutral MSC sample projection; `json2obs` row-aggregates only sample observation metadata. Both are orchestrator methods with CLI wrappers, and both share the public `MINiMLMetadataProvider` interpretation boundary with `json2h5ad`.
-- When `out` is supplied, `geo2ae.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
+- When `out` is supplied, `GEO2AEConverter.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
 
@@ -1101,13 +1101,13 @@ tests/GSE328265_family.xml
 ```text
 main(argv)
   -> parse CLI args
-  -> instantiate geo2ae()
+  -> instantiate GEO2AEConverter()
   -> for each GSE accession:
-       geo2ae.convert(gse, related_series, remove_empty, out, platform_handler)
+       GEO2AEConverter.convert(gse, related_series, remove_empty, out, platform_handler)
        continue to the next accession if a conversion fails
   -> return 1 if any accession failed, else 0
 
-geo2ae.convert(gse, related_series, remove_empty, out, platform_handler=None)
+GEO2AEConverter.convert(gse, related_series, remove_empty, out, platform_handler=None)
   -> GEOWebFetcher.fetch_gse_miniml(gse)
   -> GEOParser.parse(miniml, remove_empty=remove_empty, related_series=related_series)
   -> MINiMLEnricher.enrich(data) for each parsed package
@@ -1119,7 +1119,7 @@ geo2ae.convert(gse, related_series, remove_empty, out, platform_handler=None)
   -> return list of MAGE-TAB payloads
 ```
 
-`geo2json.convert(gse, related_series, remove_empty, enrich, out)` follows the same GEO fetch and parse stages, optionally enriches each parsed package through `MINiMLEnricher`, writes `{gse}.json` when `out` is truthy, and returns the list of JSON packages without invoking AE/MAGE-TAB construction.
+`GEO2JSONConverter.convert(gse, related_series, remove_empty, enrich, out)` follows the same GEO fetch and parse stages, optionally enriches each parsed package through `MINiMLEnricher`, writes `{gse}.json` when `out` is truthy, and returns the list of JSON packages without invoking AE/MAGE-TAB construction.
 
 The persisted JSON and H5AD workflows are documented separately under End-To-End json2ae Flow and End-To-End json2h5ad Flow.
 
@@ -1146,13 +1146,13 @@ CLI behavior:
 ```text
 main(argv)
   -> parse JSON paths, --out, --no-enrich, platform-handler, and logging flags
-  -> instantiate json2ae()
+  -> instantiate JSON2AEConverter()
   -> for each JSON path:
-       json2ae.convert(json_path, enrich, out, platform_handler)
+       JSON2AEConverter.convert(json_path, enrich, out, platform_handler)
        continue to the next path if conversion fails
   -> return 1 if any path failed, else 0
 
-json2ae.convert(json_path, out, enrich=True, platform_handler=None)
+JSON2AEConverter.convert(json_path, out, enrich=True, platform_handler=None)
   -> fail if the path does not exist or JSON decoding fails
   -> normalize one package object to a one-element list
   -> require a non-empty list of package objects
@@ -1180,7 +1180,7 @@ main(argv)
      --resource-profile/--resource-override, --source-host, and logging flags
   -> require exactly one source when --sdrf is present
   -> for each source:
-       ae2json.convert(source, out, sdrf_sources)
+       AE2JSONConverter.convert(source, out, sdrf_sources)
        continue to the next source if conversion fails
   -> return 1 if any source failed, else 0
 
@@ -1921,7 +1921,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 <a id="sra-pubmed-and-ontology-enrichment"></a>
 ### SRA, PubMed, And Ontology Enrichment
 
-- Normal `geo2ae.convert()` enrichment happens after `GEOParser.parse()` and before `AEConstructor.miniml2magetab()`.
+- Normal `GEO2AEConverter.convert()` enrichment happens after `GEOParser.parse()` and before `AEConstructor.miniml2magetab()`.
 - `MINiMLEnricher` writes PubMed metadata to `series.pubmed_publication` and SRA metadata to `sample.sra_accession`/`sample.sra_run`.
 - IDF construction prefers `series.pubmed_publication`; `_lookup_pubmed_id()` remains as a compatibility fallback.
 - SDRF construction prefers `sample.sra_run`; relation-based `_lookup_sra()` remains as a compatibility fallback.
