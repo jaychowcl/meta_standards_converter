@@ -97,7 +97,7 @@ credentials, or tokens.
 - **Rationale:** Not documented.
 - **Consequences:** Source precedence is centralized; incompatible samples remain as per-sample H5ADs and make the aggregate result partial.
 - **Affected components:** `AssetManifest`, `SourcePlanner`, `NFCoreRunner`, and `JSON2H5ADConverter`.
-- **Evidence:** [`json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py) and [`test_h5ad_pipeline.py`](../tests/test_h5ad_pipeline.py).
+- **Evidence:** [`json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py) and [`test_h5ad_pipeline.py`](../tests/expression/test_h5ad_pipeline.py).
 
 <a id="decision-fail-closed-projectors"></a>
 ### AD-004: Extend emitted metadata through fail-closed projector protocols
@@ -992,75 +992,54 @@ and [`magetab/sdrf/constructor.py`](../src/meta_standards_converter/magetab/sdrf
 
 ```text
 src/meta_standards_converter/
-├── cli/
-│   ├── common.py                 # shared CLI logging helpers
-│   ├── geo2ae.py                 # geo2ae command-line entrypoint
-│   ├── geo2json.py               # geo2json command-line entrypoint
-│   ├── json2ae.py                 # parsed JSON-to-MAGE-TAB command-line entrypoint
-│   ├── ae2json.py                 # MAGE-TAB-to-JSON command-line entrypoint
-│   ├── json2h5ad.py              # multi-source JSON-to-H5AD command-line entrypoint
-│   ├── json2tsv.py               # JSON/Atlas-to-TSV-or-CSV manifest entrypoint
-│   └── json2obs.py               # JSON/Atlas plus data assets to obs/var/uns entrypoint
-├── converters/
-│   ├── geo2ae.py                 # top-level GEO to AE orchestration
-│   ├── geo2json.py               # top-level GEO to JSON orchestration
-│   ├── json2ae.py                 # parsed JSON validation and AE orchestration
-│   ├── ae2json.py                 # MAGE-TAB resolution and JSON orchestration
-│   ├── dataset_combination.py     # scientific compatibility evidence; implicit joins disabled
-│   ├── json2h5ad.py              # asset planning, AnnData conversion, and nf-core orchestration
-│   ├── json2tabular.py           # injectable TSV/CSV projection orchestration
-│   ├── miniml_metadata.py        # format-neutral sample metadata service
-│   ├── json_outputs.py           # shared manifest/H5AD/obs output orchestration
-│   └── json_source.py            # MINiML and Atlas v1 package grouping
-├── atlas_v1/
-│   └── reader.py                 # standalone Atlas v1 validation and adaptation
-├── geo_handlers/
-│   ├── geo_webfetcher.py         # GEO MINiML URL building and download
-│   └── geo_parser.py             # MINiML XML to JSON-ready per-Series packages
-├── pubmed_handlers/
-│   └── pubmed_webfetcher.py      # PubMed ESummary lookup and parsed publication metadata
-├── enrichers/
-│   └── miniml_enricher.py        # Adds PubMed/SRA records to parsed MINiML JSON
-├── ae_handlers/
-│   ├── ae_idf_handlers.py        # IDF row construction
-│   ├── ae_constructor.py         # MAGE-TAB coordination, protocol registry, file writing
-│   ├── ae_parser.py              # IDF/SDRF to MINiML-compatible package mapping
-│   ├── ae_webfetcher.py          # local, HTTP, and BioStudies MAGE-TAB resolution
-│   └── ae_sdrf_handlers.py       # SDRF graph model and technology handlers
-├── harmonizers/
-│   ├── geo2ols.py                # GEO protocol type ontology mapping
-│   ├── pubmed2ols.py             # PubMed status ontology mapping
-│   └── harmonizers.py            # combined harmonizer
-├── helpers/
-│   ├── json_helper.py            # dotted-path JSON helpers
-│   └── request_helper.py         # service-specific rate limiting and retries
-└── insdc_handlers/
-    └── insdc_webfetcher.py       # SRA accession extraction, NCBI lookup, and run parsing
+├── cli/                       # unchanged command names and option contracts
+├── converters/                # GEO2JSON, GEO2AE, AE2JSON, JSON2AE/TSV/H5AD/OBS
+├── sources/                   # GEO, MAGE-TAB/BioStudies, PubMed, INSDC, JSON groups
+├── miniml/                    # typed models, codec, patches, pure GEO XML parser
+├── magetab/
+│   ├── parser.py              # IDF/SDRF decoding
+│   ├── constructor.py         # ordered evidence and build orchestration
+│   ├── writer.py              # IDF/SDRF file publication
+│   ├── semantics.py           # semantic overlay and round-trip contracts
+│   ├── protocols.py           # operation-local registry
+│   ├── technology.py          # technology selection
+│   ├── idf.py                 # network-free IDF row construction
+│   └── sdrf/                  # model, constructor, renderer, technology handlers
+├── metadata/                  # enrichment, interpretation, overrides, provenance
+│   └── projection/            # tabular, AnnData, assay semantics
+├── expression/                # assets, planning, readers, normalization, memory
+│                              # references, nfcore, checkpoints, catalogue, components
+├── atlas_v1/                  # unchanged standalone Atlas input contract
+├── helpers/                   # shared JSON, requests and host gates
+├── retrieval.py               # shared source and asset policy
+├── runtime_contracts.py       # resource and failure contracts
+└── artifact_bundle.py         # durable publication and recovery
+
 ```
 
 Tests cover parser packaging, converter orchestration, CLI flags, AE constructor composition, IDF behavior, and SDRF rendering:
 
 ```text
-tests/test_geo_parser.py
-tests/test_geo2ae.py
-tests/test_geo2json.py
-tests/test_json2ae.py
-tests/test_ae2json.py
-tests/test_ae_webfetcher.py
-tests/test_json2h5ad.py
-tests/test_cli_geo2ae.py
-tests/test_cli_geo2json.py
-tests/test_cli_json2ae.py
-tests/test_cli_ae2json.py
-tests/test_cli_json2h5ad.py
+tests/miniml/test_geo_parser.py
+tests/converters/test_geo2ae.py
+tests/converters/test_geo2json.py
+tests/converters/test_json2ae.py
+tests/converters/test_ae2json.py
+tests/sources/test_ae_webfetcher.py
+tests/expression/test_json2h5ad.py
+tests/cli/test_cli_geo2ae.py
+tests/cli/test_cli_geo2json.py
+tests/cli/test_cli_json2ae.py
+tests/cli/test_cli_ae2json.py
+tests/cli/test_cli_json2h5ad.py
 tests/test_project_scripts.py
-tests/test_ae_constructor.py
-tests/test_ae_sdrf_handlers.py
-tests/test_miniml_enricher.py
+tests/magetab/test_ae_constructor.py
+tests/magetab/test_ae_sdrf_handlers.py
+tests/metadata/test_miniml_enricher.py
 tests/test_request_helper.py
-tests/test_geo_webfetcher.py
-tests/test_insdc_webfetcher.py
-tests/test_pubmed_webfetcher.py
+tests/sources/test_geo_webfetcher.py
+tests/sources/test_insdc_webfetcher.py
+tests/sources/test_pubmed_webfetcher.py
 tests/test_retrieval.py
 tests/test_runtime_contracts.py
 tests/test_xml_safety.py
@@ -1070,7 +1049,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `5.2.1` makes typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `6.0.0` keeps typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 1.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -1295,13 +1274,13 @@ identity/digests and the supported typed scientific semantics, not raw tables.
 ## End-To-End json2h5ad Flow
 
 ```text
-json2h5ad.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, ...)
+JSON2H5ADConverter.convert(json_path, out, asset_manifest, asset_specs, force_reprocess, ...)
   -> load ordinary parsed MINiML JSON or validate a canonical Atlas v1 document
   -> group packages by dataset; fail if no convertible groups
   -> one group: convert directly
   -> multiple groups: convert each below out/{dataset_id}, recording group exceptions
   -> AssetManifest loads explicit CSV/TSV and CLI mappings
-  -> SourcePlanner discovers sample/study assets and selects per sample:
+  -> SourcePlanner invokes injected AssetDiscovery and selects per sample:
        explicit H5AD > explicit matrix > JSON H5AD > JSON matrix > raw FASTQ
   -> if force_reprocess: require raw FASTQ for every sample
   -> NFCoreRunner groups raw samples by detected modality
@@ -1623,8 +1602,8 @@ experiment date, contacts and roles, and generic IDF comments.
 Public symbols are exported from `meta_standards_converter.miniml`; neither a
 schema-path helper nor JSON Schema package data is public. Contract coverage
 lives in `tests/test_msc_miniml_v2.py`,
-`tests/test_miniml_migration_cli.py`, `tests/test_magetab_miniml_v2.py`, and
-`tests/test_geo_parser.py`. Cross-boundary stabilization coverage lives in
+`tests/test_miniml_migration_cli.py`, `tests/magetab/test_magetab_miniml_v2.py`, and
+`tests/miniml/test_geo_parser.py`. Cross-boundary stabilization coverage lives in
 `tests/test_miniml_stabilization.py`.
 
 The complete qualified model API is
@@ -2776,48 +2755,48 @@ reviewed bounded-PATH shell tests carry the `fake_process` marker.
 
 Important test coverage:
 
-- `tests/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
-- `tests/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
-- `tests/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
-- `tests/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
-- `tests/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
-- `tests/test_ae_webfetcher.py`: bounded local and streamed HTTPS resolution, typed profile propagation, explicit host policy, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
-- `tests/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 1 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, catalogue-only output, fail-closed compatibility evidence, Entrez/symbol separation, canonical/generic study splitting, correlation-safe partial-failure summaries, partial results, and raw-output reintegration.
+- `tests/miniml/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
+- `tests/converters/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
+- `tests/converters/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
+- `tests/converters/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
+- `tests/converters/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
+- `tests/sources/test_ae_webfetcher.py`: bounded local and streamed HTTPS resolution, typed profile propagation, explicit host policy, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
+- `tests/expression/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 1 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, catalogue-only output, fail-closed compatibility evidence, Entrez/symbol separation, canonical/generic study splitting, correlation-safe partial-failure summaries, partial results, and raw-output reintegration.
 - `tests/test_retrieval.py`: host/address/redirect policy, cache integrity,
   byte/disk/aggregate ceilings, and bounded NCBI range fallback behavior.
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
-- `tests/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
+- `tests/converters/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
 - `tests/test_miniml_model_authority.py`: sample-bound typed protocol/material projection, exact ontology preservation, fallback ordering, and shared H5AD semantics.
 - `tests/test_miniml_stabilization.py`: deterministic MINiML migration, validation, and captured-index ordering without quadratic equality scans.
-- `tests/test_magetab_miniml_v2.py`: legacy and canonical IDF companion-label parsing, typed ontology alignment, and canonical semantic MAGE-TAB regeneration.
-- `tests/test_metadata_projector.py`: generic sample projector and ignored legacy combined-hook
+- `tests/magetab/test_magetab_miniml_v2.py`: legacy and canonical IDF companion-label parsing, typed ontology alignment, and canonical semantic MAGE-TAB regeneration.
+- `tests/metadata/test_metadata_projector.py`: generic sample projector and ignored legacy combined-hook
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,
   warning/error propagation, fail-closed output, invalid-output opt-in, and
   bundle rollback fault injection.
 - `tests/test_external_guard.py`: fail-closed network/process guard self-tests and bounded fake-process opt-in.
 - `tests/test_public_e2e.py`: offline public GEO/JSON/MAGE-TAB round trips and processed-H5AD bundle conversion without nf-core.
-- `tests/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, warning extraction, output discovery, and workflow failure logs.
-- `tests/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
+- `tests/expression/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, warning extraction, output discovery, and workflow failure logs.
+- `tests/expression/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
 - `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.
-- `tests/test_cli_geo2ae.py`: CLI defaults, multiple accession order, aliases, keep-empty behavior, out directory forwarding, logging controls, file logging, and failure continuation.
-- `tests/test_cli_geo2json.py`: JSON CLI defaults, enrichment toggle, aliases, logging controls, file logging, and failure continuation.
-- `tests/test_cli_json2ae.py`: JSON-to-MAGE-TAB CLI defaults, enrichment toggle, multiple input ordering, output forwarding, logging, and failure continuation.
-- `tests/test_cli_ae2json.py`: MAGE-TAB-to-JSON CLI defaults, repeated SDRF overrides, source validation, multiple input ordering, logging, and failure continuation.
-- `tests/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
-- `tests/test_cli_json2tabular.py`: TSV/CSV input order and partial exit status.
+- `tests/cli/test_cli_geo2ae.py`: CLI defaults, multiple accession order, aliases, keep-empty behavior, out directory forwarding, logging controls, file logging, and failure continuation.
+- `tests/cli/test_cli_geo2json.py`: JSON CLI defaults, enrichment toggle, aliases, logging controls, file logging, and failure continuation.
+- `tests/cli/test_cli_json2ae.py`: JSON-to-MAGE-TAB CLI defaults, enrichment toggle, multiple input ordering, output forwarding, logging, and failure continuation.
+- `tests/cli/test_cli_ae2json.py`: MAGE-TAB-to-JSON CLI defaults, repeated SDRF overrides, source validation, multiple input ordering, logging, and failure continuation.
+- `tests/cli/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
+- `tests/cli/test_cli_json2tabular.py`: TSV/CSV input order and partial exit status.
 - `tests/test_project_scripts.py`: console script registration.
 - `tests/test_docs_index.py`: stable documentation anchors, required README Guide structure including configuration, complete Mermaid platform-handler hierarchy coverage, interface-specific quickstart links, live-parser coverage for every documented CLI argument and alias, console-script mentions, docs links, and author-header policy.
-- `tests/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.
-- `tests/test_ae_sdrf_handlers.py`: SDRF graph rendering, source/comment/characteristic behavior, file classification, sequencing/array/single-cell/spatial handlers, SRA precedence warnings, and disabled greedy fallback comments.
-- `tests/test_miniml_enricher.py`: additive PubMed/SRA enrichment fields, deduplication, and fetch error tolerance.
+- `tests/magetab/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.
+- `tests/magetab/test_ae_sdrf_handlers.py`: SDRF graph rendering, source/comment/characteristic behavior, file classification, sequencing/array/single-cell/spatial handlers, SRA precedence warnings, and disabled greedy fallback comments.
+- `tests/metadata/test_miniml_enricher.py`: additive PubMed/SRA enrichment fields, deduplication, and fetch error tolerance.
 - `tests/test_request_helper.py`: timeout forwarding, cross-process host pacing
   and model-slot serialization, persisted cooldowns, retry statuses,
   `Retry-After`, exponential full jitter, exhausted retry errors, and request,
   retry, and rate-wait counters.
-- `tests/test_geo_webfetcher.py`: GEO URL handling, requester delegation, and MINiML tarball extraction.
-- `tests/test_insdc_webfetcher.py`: SRA accession extraction, NCBI/ENA requester delegation, parsed SRA run records, and ENA fallback behavior.
-- `tests/test_pubmed_webfetcher.py`: PubMed ESummary requester delegation, parsing, publication status mapping, and IDF constructor delegation.
+- `tests/sources/test_geo_webfetcher.py`: GEO URL handling, requester delegation, and MINiML tarball extraction.
+- `tests/sources/test_insdc_webfetcher.py`: SRA accession extraction, NCBI/ENA requester delegation, parsed SRA run records, and ENA fallback behavior.
+- `tests/sources/test_pubmed_webfetcher.py`: PubMed ESummary requester delegation, parsing, publication status mapping, and IDF constructor delegation.
 
 <a id="live-api-provider-contracts"></a>
 ### Live API provider contracts
@@ -2839,7 +2818,7 @@ Then retrieve representative anchors with the commands in `docs/index.md` to con
 <a id="durable-artifact-publication"></a>
 ## Durable artifact publication
 
-`JSON2OBSConverter` publishes related tabular and AnnData metadata
+`JSON2TSVConverter` and `JSON2OBSConverter` publish related tabular and AnnData metadata
 artifacts with `DurableArtifactBundlePublisher`. Each commit copies staged files
 into a new immutable generation, records size and SHA-256 values in a schema-1.0
 generation manifest, fsyncs every file and directory, refreshes direct-file
@@ -3095,3 +3074,9 @@ Processed checkpoint fingerprints retain the existing payload and SHA-256 algori
 - `meta_standards_converter.expression.components.scientific_modules`: `scientific_modules()`; [source](../src/meta_standards_converter/expression/components.py).
 - `meta_standards_converter.expression.readers.scientific_modules`: `scientific_modules()`; [source](../src/meta_standards_converter/expression/readers.py).
 - `meta_standards_converter.expression.readers.underlying_suffix`: `underlying_suffix(path: str)`; [source](../src/meta_standards_converter/expression/readers.py).
+
+### Explicit MAGE-TAB evidence orchestration
+
+`meta_standards_converter.metadata.enrichment.MAGETabEvidenceResolver` accepts injected PubMed and INSDC clients. `AEConstructor` creates an operation-local SDRF handler, resolves its ordered sequencing run evidence, renders protocols and paths, validates IDF prefix rows, resolves missing publication details, and constructs the remaining IDF rows. Enriched run/publication evidence suppresses retrieval; array and generic handlers do not trigger SRA retrieval. The SRA fallback still catches only request and XML parsing errors. IDF and SDRF builders no longer create network clients. [Evidence resolver](../src/meta_standards_converter/metadata/enrichment.py), [orchestration](../src/meta_standards_converter/magetab/constructor.py).
+
+Converter-focused tests mirror `sources`, `miniml`, `magetab`, `metadata`, `expression`, `converters`, and `cli` boundaries under `tests/`. Cross-service observable contracts remain in `tests/test_public_e2e.py` and `tests/test_service_boundaries.py`.

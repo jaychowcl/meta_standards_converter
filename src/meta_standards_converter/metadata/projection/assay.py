@@ -7,12 +7,9 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Project native MSC MINiML assay parameters without replacing raw values."""
-
 from __future__ import annotations
-
 import re
 from typing import Any, Mapping
-
 from meta_standards_converter.miniml import harmonized_value_mappings
 
 

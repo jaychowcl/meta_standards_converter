@@ -7,17 +7,9 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
-
 import logging
-
-
 from dataclasses import dataclass, field
-
-
 from typing import Any, Mapping, Protocol, Sequence
-
-
 from meta_standards_converter.expression.assets import Asset
 
 logger = logging.getLogger(__name__)

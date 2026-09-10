@@ -7,13 +7,8 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
-
 import logging
-
 import os
-
-
 from pathlib import Path
 
 

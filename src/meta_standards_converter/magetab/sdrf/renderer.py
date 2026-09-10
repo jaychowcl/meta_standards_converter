@@ -8,7 +8,7 @@
 # =============================================================================
 from __future__ import annotations
 from collections import OrderedDict
-from .model import SDRFPath, ColumnGroup, SDRFNode, SDRFEdge, SDRFAttr
+from .model import SDRFPath, ColumnGroup, SDRFEdge, SDRFAttr
 
 class SDRFRenderer:
     def plan_columns(self, paths: list[SDRFPath]) -> list[ColumnGroup]:

@@ -7,25 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-from dataclasses import dataclass, field
-
-from collections import OrderedDict
-
-import requests
-
-import xml.etree.ElementTree as ET
-
-from meta_standards_converter.magetab.protocols import ProtocolRegistry
-from meta_standards_converter.magetab.technology import (
-    detect_ae_technology,
-    has_array_files,
-    normalized_extension,
-)
-
-from meta_standards_converter.sources.insdc import INSDCWebfetcher
-
-from meta_standards_converter.helpers.json_helper import JSONHandler
-
+from meta_standards_converter.magetab.technology import detect_ae_technology, has_array_files
 from meta_standards_converter.magetab.sdrf.handlers.sequencing import _SequencingSDRFHandler
 from meta_standards_converter.magetab.sdrf.handlers.sequencing import _BulkSequencingSDRFHandler
 from meta_standards_converter.magetab.sdrf.handlers.single_cell import _SingleCellSequencingSDRFHandler
@@ -38,9 +20,6 @@ from meta_standards_converter.magetab.sdrf.handlers.array import _ArraySDRFHandl
 from meta_standards_converter.magetab.sdrf.handlers.generic import _GenericSDRFHandler
 
 class SDRFConstructor():
-    def __init__(self, insdc_fetcher=None):
-        self.insdc_fetcher = insdc_fetcher or INSDCWebfetcher()
-
     def _add_sdrf_to_idf(self, idf: list, data: dict) -> list:
         """
         Appends the generated SDRF payload to an IDF row list.
@@ -52,6 +31,10 @@ class SDRFConstructor():
         """
         converts miniml json to magetab sdrf.
         """
+        handler = self.create_handler(data, protocol_registry, technology_type)
+        return self.build(handler)
+
+    def create_handler(self, data, protocol_registry=None, technology_type=None):
         tech_type = technology_type or self._detect_sdrf_technology(data=data)
         handler_class = {
             "plate_single_cell_sequencing": _PlateSingleCellSequencingSDRFHandler,
@@ -66,6 +49,9 @@ class SDRFConstructor():
         }.get(tech_type, _GenericSDRFHandler)
 
         handler = handler_class(parent=self, data=data, protocol_registry=protocol_registry)
+        return handler
+
+    def build(self, handler):
         sdrf = handler.build()
         self.last_sdrf_audit = handler.audit
         return sdrf
@@ -75,12 +61,3 @@ class SDRFConstructor():
 
     def _has_array_files(self, data: dict) -> bool:
         return has_array_files(data)
-
-    def _lookup_sra(self, sra: str) -> list:
-        '''
-        take sra accession to return srr info
-        '''
-        try:
-            return self.insdc_fetcher.fetch_sra_runs(accession=sra)
-        except (requests.RequestException, ET.ParseError):
-            return []

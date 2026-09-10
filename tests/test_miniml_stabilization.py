@@ -24,8 +24,8 @@ from meta_standards_converter.miniml import (
     SourceDocument,
     SourceInfo,
 )
-from tests.test_ae2json import IDF, resolved_input
-from tests.test_geo_parser import miniml_body
+from tests.converters.test_ae2json import IDF, resolved_input
+from tests.miniml.test_geo_parser import miniml_body
 from meta_standards_converter.miniml.geo_parser import GEOParser
 
 

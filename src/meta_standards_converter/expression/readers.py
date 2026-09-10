@@ -7,30 +7,15 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
-
 import gzip
-
-
 import os
-
 import re
-
 import shutil
-
-
 import tempfile
-
 from dataclasses import replace
-
-
 from pathlib import Path
 from typing import Protocol, Callable, Any
-
-
 from urllib.parse import urlparse
-
-
 from .assets import Asset
 
 _TENX_MEMBER = re.compile(

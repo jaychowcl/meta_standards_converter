@@ -892,7 +892,7 @@
     "component": {
       "name": "meta-standards-converter",
       "type": "application",
-      "version": "5.1.0"
+      "version": "6.0.0"
     },
     "properties": [
       {

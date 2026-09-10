@@ -14,7 +14,7 @@ from meta_standards_converter.magetab.writer import MAGETabWriter
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.magetab.parser import AEParser
 
-from tests.test_ae2json import resolved_input
+from tests.converters.test_ae2json import resolved_input
 
 
 def test_magetab_parser_folds_semantics_into_msc_miniml_v2() -> None:

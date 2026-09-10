@@ -284,4 +284,4 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 
 - [MSC 6 source services](codebase.md#msc6-source-services): retrieval, pure parsing, client injection, metrics and preserved checkpoints.
 
-- [MSC 6 service architecture](codebase.md#msc6-service-architecture): converter ownership, direct consumer injection, source evidence, version-specific checkpoints, and breaking API migration. Keywords: MSC6, reader, discovery, metrics, checkpoint, package structure.
+- [MSC 6 service architecture](codebase.md#msc6-service-architecture): converter ownership, direct consumer injection, source evidence, version-specific checkpoints, and breaking API migration. Keywords: MSC6, reader, discovery, metrics, checkpoint, package structure, MAGETabEvidenceResolver, lookup ordering.

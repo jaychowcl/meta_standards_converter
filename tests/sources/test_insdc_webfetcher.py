@@ -15,12 +15,12 @@ from unittest.mock import Mock
 import requests
 
 
-ROOT = os.path.dirname(os.path.dirname(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
+from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
 from meta_standards_converter.sources.insdc import INSDCWebfetcher  # noqa: E402
 
 
@@ -261,7 +261,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
         fetcher = Mock()
         fetcher.fetch_sra_runs.return_value = [{"run": "SRR1"}]
 
-        result = SDRFConstructor(insdc_fetcher=fetcher)._lookup_sra("SRX1")
+        result = MAGETabEvidenceResolver(insdc_client=fetcher).fetch_runs("SRX1")
 
         fetcher.fetch_sra_runs.assert_called_once_with(accession="SRX1")
         self.assertEqual([{"run": "SRR1"}], result)
@@ -270,7 +270,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
         fetcher = Mock()
         fetcher.fetch_sra_runs.side_effect = requests.RequestException("network unavailable")
 
-        self.assertEqual([], SDRFConstructor(insdc_fetcher=fetcher)._lookup_sra("SRX1"))
+        self.assertEqual([], MAGETabEvidenceResolver(insdc_client=fetcher).fetch_runs("SRX1"))
 
 
 if __name__ == "__main__":

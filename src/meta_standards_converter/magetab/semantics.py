@@ -7,12 +7,9 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Typed, editable MAGE-TAB extension for MINiML-compatible JSON packages."""
-
 from __future__ import annotations
-
 import copy
 import re
-
 from meta_standards_converter.metadata.provenance import (
     patch_provenance_columns,
 )

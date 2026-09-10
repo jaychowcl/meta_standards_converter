@@ -7,9 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Parse MAGE-TAB IDF/SDRF tables into a MINiML-compatible package."""
-
 from __future__ import annotations
-
 import csv
 import hashlib
 import io
@@ -17,10 +15,9 @@ import logging
 import os
 import re
 from urllib.parse import urlparse
-
 from meta_standards_converter.magetab.semantics import build_model, validate_model
 from meta_standards_converter.sources.magetab import MAGETabInput
-from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator
+from meta_standards_converter.miniml import MINiMLV1Migrator
 
 
 logger = logging.getLogger(__name__)

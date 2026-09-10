@@ -7,27 +7,13 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
 import json
-
-
 import hashlib
-
-
 import os
-
-
 import tempfile
-
-
 from pathlib import Path
-
 from typing import Any, Mapping, Sequence
-
-
 from meta_standards_converter.expression.assets import Asset
-
-
 from meta_standards_converter.expression.readers import scientific_modules
 
 class ProcessedCheckpointStore:

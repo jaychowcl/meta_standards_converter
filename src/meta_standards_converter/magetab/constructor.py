@@ -10,19 +10,10 @@
 Constructor class for ae MAGETAB idf and sdrf
 '''
 from meta_standards_converter.magetab.idf import IDFConstructor
+from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
 from meta_standards_converter.magetab.semantics import overlay_miniml_semantics
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
-from meta_standards_converter.magetab.technology import (
-    _has_tenx_version,
-    detect_ae_technology,
-    has_array_files,
-    normalized_extension,
-    series_identity,
-)
-
-import copy
-import csv
-import os
+from meta_standards_converter.magetab.technology import _has_tenx_version, detect_ae_technology, has_array_files, series_identity
 
 
 PLATFORM_HANDLER_KEYS = (
@@ -46,14 +37,13 @@ def validate_platform_handler(value: str) -> str:
             f"Choose one of: {', '.join(PLATFORM_HANDLER_KEYS)}"
         )
     return value
-
-
 from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
 
 class AEConstructor:
-    def __init__(self, idf_constructor=None, sdrf_constructor=None):
+    def __init__(self, idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None):
+        self.evidence = evidence_resolver or MAGETabEvidenceResolver(pubmed_client, insdc_client)
         self.idf_constructor = idf_constructor or IDFConstructor()
         self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
 
@@ -68,13 +58,16 @@ class AEConstructor:
         else:
             technology_type = self._detect_ae_technology(data=data)
         protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
-        sdrf = self.sdrf_constructor._miniml2sdrf(
-            data=data,
-            protocol_registry=protocol_registry,
-            technology_type=technology_type,
+        handler = self.sdrf_constructor.create_handler(
+            data=data, protocol_registry=protocol_registry, technology_type=technology_type,
         )
+        handler.run_evidence = self.evidence.sample_runs(handler, technology_type)
+        sdrf = self.sdrf_constructor.build(handler)
+        # Keep IDF validation before its publication lookup, as in the old flow.
+        prefix_rows = self.idf_constructor.prefix_rows(data)
+        publication_details = self.evidence.publications(data)
         idf = self.idf_constructor.miniml2idf(
-            data=data,
+            data=data, prefix_rows=prefix_rows, publication_details=publication_details,
             protocol_registry=protocol_registry,
             technology_type=technology_type,
         )
@@ -95,7 +88,6 @@ class AEConstructor:
 
     def _series_accession(self, data: dict):
         return series_identity(data) or "GEO"
-
 
 
     def _sdrf_row_index(self, rows: list):

@@ -7,16 +7,10 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
 import os
-
 import re
-
 from urllib.parse import urlparse
-
-from meta_standards_converter.metadata.ontology_mappings import Harmonizer
-
 from meta_standards_converter.helpers.json_helper import JSONHandler
 
 

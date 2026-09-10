@@ -15,7 +15,7 @@ import unittest
 from unittest.mock import MagicMock
 
 
-ROOT = os.path.dirname(os.path.dirname(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
@@ -733,8 +733,8 @@ class TestAE2JSONConverter(unittest.TestCase):
         pubmed = MagicMock()
         insdc = MagicMock()
         constructor = AEConstructor(
-            idf_constructor=IDFConstructor(pubmed_fetcher=pubmed),
-            sdrf_constructor=SDRFConstructor(insdc_fetcher=insdc),
+            pubmed_client=pubmed,
+            insdc_client=insdc,
         )
 
         magetab = constructor.miniml2magetab(package)

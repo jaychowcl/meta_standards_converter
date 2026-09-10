@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 
-ROOT = os.path.dirname(os.path.dirname(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
@@ -38,7 +38,7 @@ class EmptyINSDCFetcher(INSDCWebfetcher):
 
 class Parent(SDRFConstructor):
     def __init__(self):
-        super().__init__(insdc_fetcher=EmptyINSDCFetcher())
+        super().__init__()
 
 
 class FixedTechParent(Parent):
@@ -513,7 +513,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
             ],
         }
 
-        sdrf = SDRFConstructor(insdc_fetcher=fetcher)._miniml2sdrf(base_data(sample))
+        sdrf = SDRFConstructor()._miniml2sdrf(base_data(sample))
 
         self.assertEqual("SRR1", self.cell(sdrf, 1, "Comment[ENA_RUN]"))
         self.assertEqual("ftp://example/r1.fastq.gz", self.cell(sdrf, 1, "Comment[FASTQ_URI]"))

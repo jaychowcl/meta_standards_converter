@@ -7,22 +7,15 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
 import json
-
 import tempfile
-
 from dataclasses import dataclass, replace
-
 from pathlib import Path
-
 from typing import Any, Mapping
-
 from meta_standards_converter.artifact_bundle import (
     DurableArtifactBundlePublisher,
     PublishedArtifactBundle,
 )
-
 from meta_standards_converter.expression.catalogue import ConversionResult
 
 

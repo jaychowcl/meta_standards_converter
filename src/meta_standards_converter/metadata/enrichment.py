@@ -168,3 +168,49 @@ class MINiMLEnricher:
             if value and value not in deduped:
                 deduped.append(value)
         return deduped
+
+
+class MAGETabEvidenceResolver:
+    """Resolve only evidence requested by MAGE-TAB construction, per operation."""
+
+    def __init__(self, pubmed_client=None, insdc_client=None):
+        self.pubmed = pubmed_client if pubmed_client is not None else PubmedWebFetcher()
+        self.insdc = insdc_client if insdc_client is not None else INSDCWebfetcher()
+
+    def publications(self, data):
+        from meta_standards_converter.helpers.json_helper import JSONHandler
+        handler = JSONHandler()
+        if any(isinstance(p, dict) for p in handler._from_path(data, "series.pubmed_publication.*")):
+            return []
+        return [self.pubmed.pubmed_summary(pubmed_id=value)
+                for value in handler._from_path(data, "series.pubmed_id.*") if value]
+
+    def sample_runs(self, handler, technology_type):
+        import requests
+        import xml.etree.ElementTree as ET
+        sequencing = technology_type not in {"array", "generic"}
+        if not sequencing:
+            return {}
+        cache, result = {}, {}
+        for sample in handler.ordered_samples():
+            if "sra_run" in sample:
+                continue
+            accessions = []
+            for relation in handler._as_list(sample.get("relation")):
+                if isinstance(relation, dict) and (relation.get("type") or "").lower() == "sra":
+                    accessions.extend(self.insdc.extract_sra_accessions(relation.get("target") or ""))
+            runs = []
+            for accession in dict.fromkeys(accessions):
+                if accession not in cache:
+                    cache[accession] = self.fetch_runs(accession)
+                runs.extend(cache[accession])
+            result[id(sample)] = runs
+        return result
+
+    def fetch_runs(self, accession):
+        import requests
+        import xml.etree.ElementTree as ET
+        try:
+            return self.insdc.fetch_sra_runs(accession=accession)
+        except (requests.RequestException, ET.ParseError):
+            return []

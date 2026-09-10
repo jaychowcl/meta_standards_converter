@@ -7,27 +7,13 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
-
 import hashlib
-
-
 import logging
-
 import os
-
-
 import shutil
-
 import subprocess
-
-
 from pathlib import Path
-
-
 from urllib.parse import urlparse
-
-
 from meta_standards_converter.expression.planning import SourcePlanner
 
 logger = logging.getLogger(__name__)

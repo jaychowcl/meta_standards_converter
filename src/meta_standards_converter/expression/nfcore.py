@@ -7,29 +7,15 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
 import json
-
 import csv
-
-
 import logging
-
 import os
-
 import re
-
 import shutil
-
 import subprocess
-
-
 from pathlib import Path
-
-
 from urllib.parse import urlparse
-
-
 from meta_standards_converter.expression.assets import Asset
 from meta_standards_converter.expression.planning import SourcePlanner
 from meta_standards_converter.expression.references import ReferenceResolver

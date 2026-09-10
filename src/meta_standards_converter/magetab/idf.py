@@ -11,8 +11,6 @@ Constructor class for ae MAGETAB idf
 '''
 from meta_standards_converter.metadata.ontology_mappings import Harmonizer
 from meta_standards_converter.helpers.json_helper import JSONHandler
-from meta_standards_converter.sources.pubmed import PubmedWebFetcher
-
 import logging
 import re
 from datetime import date
@@ -24,9 +22,6 @@ logger.addHandler(logging.NullHandler())
 
 
 class IDFConstructor():
-    def __init__(self, pubmed_fetcher=None):
-        self.pubmed_fetcher = pubmed_fetcher or PubmedWebFetcher()
-
     def _as_list(self, value):
         if value is None:
             return []
@@ -34,19 +29,12 @@ class IDFConstructor():
             return value
         return [value]
 
-    def miniml2idf(self, data: dict, protocol_registry=None, technology_type=None) -> list:
+    def miniml2idf(self, data: dict, protocol_registry=None, technology_type=None, *, prefix_rows=None, publication_details=()) -> list:
         """
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
-        idf = []
-
-        idf.append(["MAGE-TAB Version", "1.1"])
-        idf.extend(self._idf_investigations(data=data))
-        idf.extend(self._idf_experimental(data=data))
-        idf.extend(self._idf_persons(data=data))
-        # idf.extend(self._idf_qc_rep_norm(data=data))
-        idf.extend(self._idf_dates(data=data))
-        idf.extend(self._idf_publications(data=data))
+        idf = self.prefix_rows(data) if prefix_rows is None else prefix_rows
+        idf.extend(self._idf_publications(data=data, publication_details=publication_details))
         idf.extend(self._idf_experiments(data=data))
         idf.extend(self._idf_protocols(
             data=data,
@@ -59,6 +47,17 @@ class IDFConstructor():
 
         idf = self._move_experiment_description_after_title(rows=idf)
         return self._move_comment_rows_to_bottom(rows=idf)
+
+    def prefix_rows(self, data):
+        idf = []
+
+        idf.append(["MAGE-TAB Version", "1.1"])
+        idf.extend(self._idf_investigations(data=data))
+        idf.extend(self._idf_experimental(data=data))
+        idf.extend(self._idf_persons(data=data))
+        # idf.extend(self._idf_qc_rep_norm(data=data))
+        idf.extend(self._idf_dates(data=data))
+        return idf
 
     def _move_experiment_description_after_title(self, rows: list) -> list:
         title_index = self._row_index(rows=rows, label="Investigation Title")
@@ -454,7 +453,7 @@ class IDFConstructor():
             return value
         return parsed.date().isoformat()
 
-    def _idf_publications(self, data: dict) -> list:
+    def _idf_publications(self, data: dict, publication_details=()) -> list:
         """
         Extracts publication information from MINiML JSON using JSONHandler.
         """
@@ -483,10 +482,8 @@ class IDFConstructor():
         if not pubmed_ids:
             logger.warning("PubMed lookup skipped: no PubMed ID found in series metadata.")
 
-        publication_details = [
-            self._lookup_pubmed_id(pubmed_id)
-            for pubmed_id in pubmed_ids
-        ]
+        if not publication_details:
+            publication_details = [(None,) * 6 for _ in pubmed_ids]
 
         doi = [d[0] for d in publication_details]
         author_list = [d[1] for d in publication_details]
@@ -504,12 +501,6 @@ class IDFConstructor():
             ["Publication Status Term Source REF", *status_term_source_ref],
             ["Publication Status Term Accession Number", *status_term_accession_number],
         ]
-
-    def _lookup_pubmed_id(self, pubmed_id: str) -> dict:
-        '''
-        lookup pubmed id to get doi, authorlist, title
-        '''
-        return self.pubmed_fetcher.pubmed_summary(pubmed_id=pubmed_id)
 
     def _idf_experiments(self, data: dict) -> list:
         """

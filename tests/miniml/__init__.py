@@ -6,8 +6,3 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-from __future__ import annotations
-from meta_standards_converter.magetab.sdrf.handlers.base import _BaseSDRFHandler
-
-class _GenericSDRFHandler(_BaseSDRFHandler):
-    pass

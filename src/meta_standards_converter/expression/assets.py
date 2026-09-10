@@ -7,22 +7,11 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
-
 import csv
-
-
 import logging
-
 import os
-
-
 from dataclasses import dataclass
-
-
 from pathlib import Path
-
-
 from urllib.parse import urlparse
 
 

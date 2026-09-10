@@ -49,8 +49,8 @@ def offline_constructor():
     insdc.extract_sra_accessions.return_value = []
     insdc.fetch_sra_runs.return_value = []
     return AEConstructor(
-        idf_constructor=IDFConstructor(pubmed_fetcher=pubmed),
-        sdrf_constructor=SDRFConstructor(insdc_fetcher=insdc),
+        pubmed_client=pubmed,
+        insdc_client=insdc,
     )
 
 

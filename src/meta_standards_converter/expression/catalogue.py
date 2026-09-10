@@ -7,31 +7,16 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
 from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
 import json
-
-
 import os
-
-
 import shutil
-
-
 import tempfile
-
 from dataclasses import dataclass, field
-
-
 from pathlib import Path
-
 from typing import Any, Mapping, Sequence
-
 from urllib.parse import urlparse
-
 from uuid import uuid4
-
-
 from meta_standards_converter.expression.assets import Asset
 
 

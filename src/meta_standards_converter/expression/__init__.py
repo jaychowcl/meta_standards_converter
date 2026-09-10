@@ -6,7 +6,6 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-
 from importlib import import_module
 
 _EXPORTS = {'Asset': 'assets', 'AssetManifest': 'assets', 'AssetDiscovery': 'planning', 'SourcePlanner': 'planning', 'DefaultAssetDiscovery': 'planning', 'AssetReader': 'readers', 'ProcessedAssetReader': 'readers', 'ConversionResult': 'catalogue', 'BatchConversionResult': 'catalogue', 'DatasetBundleRecoveryError': 'catalogue'}

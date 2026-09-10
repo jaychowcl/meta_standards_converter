@@ -12,12 +12,12 @@ import unittest
 from unittest.mock import Mock
 
 
-ROOT = os.path.dirname(os.path.dirname(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.magetab.idf import IDFConstructor  # noqa: E402
+from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver  # noqa: E402
 from meta_standards_converter.metadata.ontology_mappings import Harmonizer  # noqa: E402
 from meta_standards_converter.sources.pubmed import PubmedWebFetcher  # noqa: E402
 
@@ -144,7 +144,7 @@ class TestPubmedWebFetcher(unittest.TestCase):
             "EFO_0001796",
         )
 
-        result = IDFConstructor(pubmed_fetcher=fetcher)._lookup_pubmed_id("123")
+        result = MAGETabEvidenceResolver(pubmed_client=fetcher).publications({"series": {"pubmed_id": ["123"]}})[0]
 
         fetcher.pubmed_summary.assert_called_once_with(pubmed_id="123")
         self.assertEqual(fetcher.pubmed_summary.return_value, result)

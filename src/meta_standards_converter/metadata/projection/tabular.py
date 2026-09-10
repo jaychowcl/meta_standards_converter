@@ -7,22 +7,10 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
-import csv
-
 from dataclasses import dataclass
-
-from pathlib import Path
-
 from typing import Any, Mapping, Protocol, Sequence
-
-from meta_standards_converter.sources.json import JSONPackageSource
-
 from meta_standards_converter.metadata.provenance import patch_provenance_columns
-
 from meta_standards_converter.metadata.projection.assay import _parameter_summary
-
-from meta_standards_converter.metadata.interpretation import MINiMLMetadataProvider, MINiMLMetadataService
 
 
 @dataclass(frozen=True)

@@ -15,7 +15,7 @@ import unittest
 from unittest.mock import ANY, Mock, patch
 
 
-ROOT = os.path.dirname(os.path.dirname(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
@@ -969,7 +969,7 @@ class TestIDFConstructor(unittest.TestCase):
 
     def test_idf_publications_prefers_enriched_pubmed_records(self):
         fetcher = Mock()
-        rows = IDFConstructor(pubmed_fetcher=fetcher)._idf_publications(
+        rows = IDFConstructor()._idf_publications(
             {
                 "series": {
                     "pubmed_id": ["123"],
@@ -1446,21 +1446,22 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = idf
         sdrf_constructor = Mock()
-        sdrf_constructor._miniml2sdrf.return_value = sdrf
+        sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.build.return_value = sdrf
 
         result = AEConstructor(
             idf_constructor=idf_constructor,
             sdrf_constructor=sdrf_constructor,
         ).miniml2magetab(data=data)
 
-        sdrf_constructor._miniml2sdrf.assert_called_once_with(
+        sdrf_constructor.create_handler.assert_called_once_with(
             data=canonical,
             protocol_registry=ANY,
             technology_type="generic",
         )
-        protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
+        protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical,
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
             protocol_registry=protocol_registry,
             technology_type="generic",
         )
@@ -1485,21 +1486,22 @@ class TestAEConstructor(unittest.TestCase):
             ["SDRF File", "old.sdrf.txt", "curator note"],
         ]
         sdrf_constructor = Mock()
-        sdrf_constructor._miniml2sdrf.return_value = sdrf
+        sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.build.return_value = sdrf
 
         result = AEConstructor(
             idf_constructor=idf_constructor,
             sdrf_constructor=sdrf_constructor,
         ).miniml2magetab(data=data)
 
-        sdrf_constructor._miniml2sdrf.assert_called_once_with(
+        sdrf_constructor.create_handler.assert_called_once_with(
             data=canonical,
             protocol_registry=ANY,
             technology_type="generic",
         )
-        protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
+        protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical,
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
             protocol_registry=protocol_registry,
             technology_type="generic",
         )
@@ -1520,21 +1522,22 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
-        sdrf_constructor._miniml2sdrf.return_value = [["Source Name"], ["GSM1"]]
+        sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.build.return_value = [["Source Name"], ["GSM1"]]
 
         AEConstructor(
             idf_constructor=idf_constructor,
             sdrf_constructor=sdrf_constructor,
         ).miniml2magetab(data=typed_data)
 
-        sdrf_constructor._miniml2sdrf.assert_called_once_with(
+        sdrf_constructor.create_handler.assert_called_once_with(
             data=canonical,
             protocol_registry=ANY,
             technology_type="bulk_sequencing",
         )
-        protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
+        protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical,
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
             protocol_registry=protocol_registry,
             technology_type="bulk_sequencing",
         )
@@ -1546,21 +1549,22 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
-        sdrf_constructor._miniml2sdrf.return_value = [["Source Name"], ["GSM1"]]
+        sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.build.return_value = [["Source Name"], ["GSM1"]]
 
         AEConstructor(
             idf_constructor=idf_constructor,
             sdrf_constructor=sdrf_constructor,
         ).miniml2magetab(data=typed_data, platform_handler="bulk_sequencing")
 
-        sdrf_constructor._miniml2sdrf.assert_called_once_with(
+        sdrf_constructor.create_handler.assert_called_once_with(
             data=canonical,
             protocol_registry=ANY,
             technology_type="bulk_sequencing",
         )
-        protocol_registry = sdrf_constructor._miniml2sdrf.call_args.kwargs["protocol_registry"]
+        protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical,
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
             protocol_registry=protocol_registry,
             technology_type="bulk_sequencing",
         )
@@ -1577,8 +1581,9 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
+        sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
         generated = [["Source Name"], ["generated"]]
-        sdrf_constructor._miniml2sdrf.return_value = generated
+        sdrf_constructor.build.return_value = generated
 
         result = AEConstructor(
             idf_constructor=idf_constructor,
@@ -1711,7 +1716,8 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor = Mock()
         idf_constructor.miniml2idf.return_value = [["Investigation Title", "Example"]]
         sdrf_constructor = Mock()
-        sdrf_constructor._miniml2sdrf.return_value = [["Source Name"], ["sample 1"]]
+        sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.build.return_value = [["Source Name"], ["sample 1"]]
 
         with self.assertRaisesRegex(ValueError, "IDF does not contain an SDRF File row"):
             AEConstructor(
@@ -1981,7 +1987,7 @@ class TestAEConstructor(unittest.TestCase):
         }
 
         magetab = AEConstructor(
-            sdrf_constructor=SDRFConstructor(insdc_fetcher=sra_fetcher)
+            insdc_client=sra_fetcher
         ).miniml2magetab(data=self.typed(data))
         sdrf = self.row(magetab, "SDRF File")[1]
         protocol_names = set(self.row(magetab, "Protocol Name")[1:])

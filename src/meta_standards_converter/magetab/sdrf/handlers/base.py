@@ -8,30 +8,13 @@
 # =============================================================================
 from __future__ import annotations
 from meta_standards_converter.magetab.sdrf.renderer import SDRFRenderer
-from dataclasses import dataclass, field
-
 from collections import OrderedDict
-
-import requests
-
-import xml.etree.ElementTree as ET
-
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
-from meta_standards_converter.magetab.technology import (
-    detect_ae_technology,
-    has_array_files,
-    normalized_extension,
-)
-
-from meta_standards_converter.sources.insdc import INSDCWebfetcher
-
-from meta_standards_converter.helpers.json_helper import JSONHandler
-
+from meta_standards_converter.magetab.technology import normalized_extension
 from meta_standards_converter.magetab.sdrf.model import SDRFAttr
 from meta_standards_converter.magetab.sdrf.model import SDRFNode
 from meta_standards_converter.magetab.sdrf.model import SDRFEdge
 from meta_standards_converter.magetab.sdrf.model import SDRFPath
-from meta_standards_converter.magetab.sdrf.model import ColumnGroup
 from meta_standards_converter.magetab.sdrf.model import SDRFAudit
 
 def classify_file(path: str) -> str:
@@ -49,8 +32,7 @@ class _BaseSDRFHandler(SDRFRenderer):
     def __init__(self, parent, data: dict, protocol_registry=None):
         self.parent = parent
         self.data = data
-        self.insdc_handler = getattr(parent, "insdc_fetcher", None) or INSDCWebfetcher()
-        self.sra_cache = {}
+        self.run_evidence = {}
         self.samples = [x for x in self._as_list(data.get("sample")) if isinstance(x, dict)]
         self.platforms = {
             platform.get("iid"): platform
@@ -416,20 +398,7 @@ class _BaseSDRFHandler(SDRFRenderer):
                 if isinstance(run, dict)
             ]
 
-        accessions = []
-        for relation in self._as_list(sample.get("relation")):
-            if not isinstance(relation, dict):
-                continue
-            if (relation.get("type") or "").lower() != "sra":
-                continue
-            accessions.extend(self.insdc_handler.extract_sra_accessions(relation.get("target") or ""))
-
-        runs = []
-        for accession in dict.fromkeys(accessions):
-            if accession not in self.sra_cache:
-                self.sra_cache[accession] = self.parent._lookup_sra(sra=accession)
-            runs.extend(self.sra_cache[accession])
-        return runs
+        return self.run_evidence.get(id(sample), [])
 
     def characteristic_values(self, channel: dict, tag: str) -> list:
         values = []

@@ -7,25 +7,13 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-
-
 import heapq
-
 import logging
-
 import os
-
-
 from dataclasses import replace
-
-
 from typing import Mapping, Protocol
-
 from urllib.parse import urlparse
-
-
 from meta_standards_converter.expression.assets import Asset
-
 from .readers import _tenx_member
 logger = logging.getLogger(__name__)
 

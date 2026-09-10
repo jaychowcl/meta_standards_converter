@@ -14,7 +14,7 @@ import unittest
 from unittest.mock import MagicMock, call
 
 
-ROOT = os.path.dirname(os.path.dirname(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
@@ -374,8 +374,8 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, packages)
             converter_constructor = AEConstructor(
-                idf_constructor=IDFConstructor(pubmed_fetcher=pubmed_fetcher),
-                sdrf_constructor=SDRFConstructor(insdc_fetcher=insdc_fetcher)
+                pubmed_client=pubmed_fetcher,
+                insdc_client=insdc_fetcher
             )
             actual = JSON2AEConverter(ae_constructor=converter_constructor).convert(path, enrich=False)
 
