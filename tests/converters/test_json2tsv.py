@@ -265,3 +265,63 @@ def test_projection_errors_fail_closed_unless_allowed(tmp_path):
         source, tmp_path / "inspection.tsv", allow_invalid=True
     )
     assert result.errors == ("GSM1: required value missing",)
+
+
+@pytest.mark.parametrize('output_format,delimiter', [('tsv', '\t'), ('csv', ',')])
+@pytest.mark.parametrize('virtual', [True, False])
+def test_manifest_preserves_injected_source_and_metadata(tmp_path, output_format, delimiter, virtual):
+    from meta_standards_converter.sources.json import JSONPackageSource
+    from meta_standards_converter.metadata.interpretation import MINiMLMetadataService
+
+    real = tmp_path / 'real.json'
+    real.write_text(json.dumps(package()))
+    source = tmp_path / 'virtual.json' if virtual else real
+    calls = []
+
+    class Source:
+        def load(self, path):
+            calls.append(path)
+            return JSONPackageSource().load(real)
+
+    class Metadata(MINiMLMetadataService):
+        def sample_metadata(self, sample, package):
+            return {**super().sample_metadata(sample, package), 'title': 'injected\t"title",\nsecond line'}
+
+    converter = JSON2TSVConverter(package_source=Source(), metadata_service=Metadata(), output_format=output_format)
+    direct = tmp_path / ('direct.' + output_format)
+    converter.convert_source(source, direct)
+    result = converter.export_manifest(source, outdir=tmp_path / 'bundle', output_format=output_format)
+    from pathlib import Path
+    table = Path(result.output_path)
+    assert table.read_bytes() == direct.read_bytes()
+    assert read_rows(table, delimiter)[1][0]['msc.sample.title'] == 'injected\t"title",\nsecond line'
+    assert calls == [source, source]
+    manifest = json.loads(Path(result.manifest_path).read_text())
+    assert manifest['row_count'] == 1
+    assert tuple(manifest['columns']) == read_rows(table, delimiter)[0]
+    with pytest.raises(FileExistsError):
+        converter.export_manifest(source, outdir=tmp_path / 'bundle', output_format=output_format)
+    converter.export_manifest(source, outdir=tmp_path / 'bundle', output_format=output_format, overwrite=True)
+    assert table.read_bytes() == direct.read_bytes()
+
+
+def test_manifest_injected_projector_validation_is_atomic(tmp_path):
+    class Projector:
+        def project_sample(self, *, context):
+            return TabularMetadataProjection(values={'private.sample': context.sample_accession},
+                                             columns=('private.sample',), errors=('review required',))
+    source = tmp_path / 'input.json'
+    source.write_text(json.dumps(package()))
+    converter = JSON2TSVConverter(metadata_projectors=[Projector()])
+    out = tmp_path / 'bundle'
+    with pytest.raises(TabularProjectionError, match='review required'):
+        converter.export_manifest(source, outdir=out)
+    assert not out.exists()
+    result = converter.export_manifest(source, outdir=out, allow_invalid=True)
+    from pathlib import Path
+    assert read_rows(Path(result.output_path), '\t') == (('private.sample',), [{'private.sample': 'GSM1'}])
+    assert json.loads(Path(result.manifest_path).read_text())['errors'] == list(result.errors)
+    original = Path(result.output_path).read_bytes()
+    with pytest.raises(TabularProjectionError):
+        converter.export_manifest(source, outdir=out, overwrite=True)
+    assert Path(result.output_path).read_bytes() == original

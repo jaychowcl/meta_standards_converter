@@ -877,7 +877,7 @@ source -> load/group --failure--> exception
 2. The converter builds base metadata and invokes every projector per sample.
 3. Preferred columns precede sorted extras; diagnostics are deduplicated.
 4. Validation is fail-closed unless `allow_invalid=True`.
-5. The selected table and result JSON are staged and published as one bundle.
+5. The selected table and result JSON are staged and published as one bundle. Manifest export reuses the injected package source, metadata service and projectors, including virtual sources; it does not fall back to default services.
 
 Pseudocode: `load -> project -> validate -> order -> protect -> write selected delimiter + result JSON`.
 

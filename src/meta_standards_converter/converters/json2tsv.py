@@ -197,6 +197,8 @@ class JSON2TSVConverter(JSON2DelimitedConverter):
             raise FileExistsError(f"Output already exists: {existing[0]}")
         converter = JSON2TSVConverter(
             metadata_projectors=self.metadata_projectors,
+            package_source=self.package_source,
+            metadata_service=self.metadata_service,
             output_format=output_format,
         )
         with tempfile.TemporaryDirectory(

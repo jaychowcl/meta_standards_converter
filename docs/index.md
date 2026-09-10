@@ -214,7 +214,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: MINiML or Atlas JSON to TSV
   anchor: workflow-json2tsv
   purpose: Traces grouping, projection, fail-closed validation, ordering, and TSV output.
-  keywords: json2tsv, Atlas, projector, TabularConversionResult, allow_invalid
+  keywords: json2tsv, Atlas, projector, package_source, metadata_service, manifest injection, TabularConversionResult, allow_invalid
   link: [Open section](codebase.md#workflow-json2tsv)
 
 - id: workflow-json2obs
