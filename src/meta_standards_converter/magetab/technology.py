@@ -76,7 +76,13 @@ def _detect_base_technology(data: dict) -> str:
     if ("high-throughput sequencing" in platform_tech or has_sra
             or any(values("sample.*.library_strategy")) or 'sra' in values("sample.*.type")):
         return "bulk_sequencing"
-    if "array" in platform_tech or has_array_files(data):
+    geo_array_categories = {
+        "in situ oligonucleotide", "spotted oligonucleotide",
+        "mixed spotted oligonucleotide", "spotted dna/cdna",
+        "spotted peptide or protein", "antibody", "tissue", "oligonucleotide beads",
+    }
+    platform_categories = {" ".join(value.split()) for value in values("platform.*.technology")}
+    if platform_categories & geo_array_categories or "array" in platform_tech or has_array_files(data):
         return "array"
     return "generic"
 

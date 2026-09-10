@@ -294,5 +294,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Sample and library technology routing
   anchor: sample-library-routing
   purpose: Explains structured chemistry identifiers, sample-specific scRNA/Visium decisions, mixed handler construction and complete output regressions.
-  keywords: SC3Pv2, singlecell_type, GSM5388031, GSM9254695, Visium, scRNA, TechnologyDecision, protocol registry, mixed libraries
+  keywords: GEO array categories, spotted DNA/cDNA, GSE100, preset preservation, SC3Pv2, singlecell_type, GSM5388031, GSM9254695, Visium, scRNA, TechnologyDecision, protocol registry, mixed libraries
   link: [Open section](codebase.md#sample-library-routing)

@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<MINiML
+   xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.ncbi.nlm.nih.gov/geo/info/MINiML http://www.ncbi.nlm.nih.gov/geo/info/MINiML.xsd"
+   version="0.5.0" >
+
+  <Contributor iid="contrib1">
+    <Person><First>Haley</First><Last>Hieronymus</Last></Person>
+    <Email>hierony@fas.harvard.edu</Email>
+    <Phone>617-632-5105</Phone>
+    <Laboratory>Pamela A. Silver</Laboratory>
+    <Organization>Harvard Medical School and Dana-Farber Cancer Institute</Organization>
+    <Address>
+      <Line>1 Jimmy Fund Way SM922</Line>
+      <City>Boston</City>
+      <State>MA</State>
+      <Zip-Code>02445</Zip-Code>
+      <Country>USA</Country>
+    </Address>
+  </Contributor>
+
+  <Contributor iid="contrib2">
+    <Person><First>Pamela</First><Middle>A</Middle><Last>Silver</Last></Person>
+  </Contributor>
+
+  <Database iid="GEO">
+    <Name>Gene Expression Omnibus (GEO)</Name>
+    <Public-ID>GEO</Public-ID>
+    <Organization>NCBI NLM NIH</Organization>
+    <Web-Link>http://www.ncbi.nlm.nih.gov/geo</Web-Link>
+    <Email>geo@ncbi.nlm.nih.gov</Email>
+  </Database>
+
+  <Platform iid="GPL221">
+    <Status database="GEO">
+      <Submission-Date>2002-11-22</Submission-Date>
+      <Release-Date>2002-11-25</Release-Date>
+      <Last-Update-Date>2005-12-05</Last-Update-Date>
+    </Status>
+    <Title>Ontario Cancer Institute full-genome S. cerevisiae ORF array</Title>
+    <Accession database="GEO">GPL221</Accession>
+    <Technology>spotted DNA/cDNA</Technology>
+    <Distribution>non-commercial</Distribution>
+    <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+    <Manufacturer></Manufacturer>
+    <Manufacture-Protocol>
+    </Manufacture-Protocol>
+    <Description>
+Full-genome S. cerevisiae ORF microarray spotted with all 6240 ORFs plus control spots totals to 6.4k by the Microarray Centre at the Ontario Cancer Institute, University Health Network of the University of Toronto.
+    </Description>
+    <Web-Link>http://www.microarrays.ca/</Web-Link>
+    <Contact-Ref ref="contrib1" />
+    <Data-Table>
+      <Column position="1">
+        <Name>ID</Name>
+      </Column>
+      <Column position="2">
+        <Name>ORF</Name>
+        <Description>open reading frame </Description>
+        <Link-Prefix>http://www.ncbi.nlm.nih.gov/gene/?term=</Link-Prefix>
+      </Column>
+      <Column position="3">
+        <Name>Name</Name>
+      </Column>
+      <Column position="4">
+        <Name>SPOT_ID</Name>
+        <Description>spot identifier</Description>
+      </Column>
+    <External-Data rows="12800">
+GPL221-tbl-1.txt
+    </External-Data>
+    </Data-Table>
+  </Platform>
+
+  <Sample iid="GSM3004">
+    <Status database="GEO">
+      <Submission-Date>2002-11-25</Submission-Date>
+      <Release-Date>2002-11-25</Release-Date>
+      <Last-Update-Date>2005-05-27</Last-Update-Date>
+    </Status>
+    <Title>zzMex67IP_v_TotalRNA 061601 slide 2b scan 3</Title>
+    <Accession database="GEO">GSM3004</Accession>
+    <Type>RNA</Type>
+    <Channel-Count>2</Channel-Count>
+    <Channel position="1">
+      <Source>Total RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Channel position="2">
+      <Source>zzMex67 co-IPed RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Description>
+Mex67 binding level: Comparison of cDNA from RNA IPed with zzMex67
+IP to cDNA from total RNA
+    </Description>
+    <Data-Processing>
+    </Data-Processing>
+    <Platform-Ref ref="GPL221" />
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Data-Table>
+      <Column position="1">
+        <Name>ID_REF</Name>
+      </Column>
+      <Column position="2">
+        <Name>CH1_MEAN</Name>
+        <Description>Sample 1 Mean Intensity</Description>
+      </Column>
+      <Column position="3">
+        <Name>CH1_BKD_MEDIAN</Name>
+        <Description>Sample 1 Median Background Level; used as CH1 background for ratio calculation</Description>
+      </Column>
+      <Column position="4">
+        <Name>CH1_BKD_MEAN</Name>
+        <Description>Sample 1 Mean Background Level</Description>
+      </Column>
+      <Column position="5">
+        <Name>CH2_MEAN</Name>
+        <Description>Sample 2 Mean Intensity</Description>
+      </Column>
+      <Column position="6">
+        <Name>CH2_BKD_MEDIAN</Name>
+        <Description>Sample 2 Median Background Level; used as CH2 background for ratio calculation</Description>
+      </Column>
+      <Column position="7">
+        <Name>CH2_BKD_MEAN</Name>
+        <Description>Sample 2 Mean Background Level</Description>
+      </Column>
+      <Column position="8">
+        <Name>CH1_AREA</Name>
+        <Description>Sample 1 area</Description>
+      </Column>
+      <Column position="9">
+        <Name>CH1_BKD_AREA</Name>
+        <Description>Sample 1 background area</Description>
+      </Column>
+      <Column position="10">
+        <Name>CH2_AREA</Name>
+        <Description>Sample 2 area</Description>
+      </Column>
+      <Column position="11">
+        <Name>CH2_BKD_AREA</Name>
+        <Description>Sample 2 background area</Description>
+      </Column>
+      <Column position="12">
+        <Name>VALUE</Name>
+        <Description>intermediate log ratio before taking the mean of duplicate ORFS, etc.; see methods and website for full treatment</Description>
+      </Column>
+    <External-Data rows="12800">
+GSM3004-tbl-1.txt
+    </External-Data>
+    </Data-Table>
+  </Sample>
+
+  <Sample iid="GSM3005">
+    <Status database="GEO">
+      <Submission-Date>2002-11-25</Submission-Date>
+      <Release-Date>2002-11-25</Release-Date>
+      <Last-Update-Date>2005-05-27</Last-Update-Date>
+    </Status>
+    <Title>zzMex67IP_v_TotalRNA 062101 slide 2a scan 3</Title>
+    <Accession database="GEO">GSM3005</Accession>
+    <Type>RNA</Type>
+    <Channel-Count>2</Channel-Count>
+    <Channel position="1">
+      <Source>Total RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Channel position="2">
+      <Source>zzMex67 co-IPed RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Description>
+Mex67 binding level: Comparison of cDNA from RNA IPed with zzMex67
+IP to cDNA from total RNA
+    </Description>
+    <Data-Processing>
+    </Data-Processing>
+    <Platform-Ref ref="GPL221" />
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Data-Table>
+      <Column position="1">
+        <Name>ID_REF</Name>
+      </Column>
+      <Column position="2">
+        <Name>CH1_MEAN</Name>
+        <Description>Sample 1 Mean Intensity</Description>
+      </Column>
+      <Column position="3">
+        <Name>CH1_BKD_MEDIAN</Name>
+        <Description>Sample 1 Median Background Level; used as CH1 background for ratio calculation</Description>
+      </Column>
+      <Column position="4">
+        <Name>CH1_BKD_MEAN</Name>
+        <Description>Sample 1 Mean Background Level</Description>
+      </Column>
+      <Column position="5">
+        <Name>CH2_MEAN</Name>
+        <Description>Sample 2 Mean Intensity</Description>
+      </Column>
+      <Column position="6">
+        <Name>CH2_BKD_MEDIAN</Name>
+        <Description>Sample 2 Median Background Level; used as CH2 background for ratio calculation</Description>
+      </Column>
+      <Column position="7">
+        <Name>CH2_BKD_MEAN</Name>
+        <Description>Sample 2 Mean Background Level</Description>
+      </Column>
+      <Column position="8">
+        <Name>CH1_AREA</Name>
+        <Description>Sample 1 area</Description>
+      </Column>
+      <Column position="9">
+        <Name>CH1_BKD_AREA</Name>
+        <Description>Sample 1 background area</Description>
+      </Column>
+      <Column position="10">
+        <Name>CH2_AREA</Name>
+        <Description>Sample 2 area</Description>
+      </Column>
+      <Column position="11">
+        <Name>CH2_BKD_AREA</Name>
+        <Description>Sample 2 background area</Description>
+      </Column>
+      <Column position="12">
+        <Name>VALUE</Name>
+        <Description>intermediate log ratio before taking the mean of duplicate ORFS, etc.; see methods and website for full treatment</Description>
+      </Column>
+    <External-Data rows="12800">
+GSM3005-tbl-1.txt
+    </External-Data>
+    </Data-Table>
+  </Sample>
+
+  <Sample iid="GSM3006">
+    <Status database="GEO">
+      <Submission-Date>2002-11-25</Submission-Date>
+      <Release-Date>2002-11-25</Release-Date>
+      <Last-Update-Date>2005-05-27</Last-Update-Date>
+    </Status>
+    <Title>zzMex67IP_v_TotalRNA 061601 slide 2a scan 1</Title>
+    <Accession database="GEO">GSM3006</Accession>
+    <Type>RNA</Type>
+    <Channel-Count>2</Channel-Count>
+    <Channel position="1">
+      <Source>zzMex67 co-IPed RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Channel position="2">
+      <Source>Total RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Description>
+Mex67 binding level: Comparison of cDNA from RNA IPed with zzMex67
+IP to cDNA from total RNA
+    </Description>
+    <Data-Processing>
+    </Data-Processing>
+    <Platform-Ref ref="GPL221" />
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Data-Table>
+      <Column position="1">
+        <Name>ID_REF</Name>
+      </Column>
+      <Column position="2">
+        <Name>CH1_MEAN</Name>
+        <Description>Sample 1 Mean Intensity</Description>
+      </Column>
+      <Column position="3">
+        <Name>CH1_BKD_MEDIAN</Name>
+        <Description>Sample 1 Median Background Level; used as CH1 background for ratio calculation</Description>
+      </Column>
+      <Column position="4">
+        <Name>CH1_BKD_MEAN</Name>
+        <Description>Sample 1 Mean Background Level</Description>
+      </Column>
+      <Column position="5">
+        <Name>CH2_MEAN</Name>
+        <Description>Sample 2 Mean Intensity</Description>
+      </Column>
+      <Column position="6">
+        <Name>CH2_BKD_MEDIAN</Name>
+        <Description>Sample 2 Median Background Level; used as CH2 background for ratio calculation</Description>
+      </Column>
+      <Column position="7">
+        <Name>CH2_BKD_MEAN</Name>
+        <Description>Sample 2 Mean Background Level</Description>
+      </Column>
+      <Column position="8">
+        <Name>CH1_AREA</Name>
+        <Description>Sample 1 area</Description>
+      </Column>
+      <Column position="9">
+        <Name>CH1_BKD_AREA</Name>
+        <Description>Sample 1 background area</Description>
+      </Column>
+      <Column position="10">
+        <Name>CH2_AREA</Name>
+        <Description>Sample 2 area</Description>
+      </Column>
+      <Column position="11">
+        <Name>CH2_BKD_AREA</Name>
+        <Description>Sample 2 background area</Description>
+      </Column>
+      <Column position="12">
+        <Name>VALUE</Name>
+        <Description>intermediate log ratio before taking the mean of duplicate ORFS, etc.; see methods and website for full treatment</Description>
+      </Column>
+    <External-Data rows="12801">
+GSM3006-tbl-1.txt
+    </External-Data>
+    </Data-Table>
+  </Sample>
+
+  <Sample iid="GSM3007">
+    <Status database="GEO">
+      <Submission-Date>2002-11-25</Submission-Date>
+      <Release-Date>2002-11-25</Release-Date>
+      <Last-Update-Date>2005-05-27</Last-Update-Date>
+    </Status>
+    <Title>zzMex67IP_v_TotalRNA 062101 slide 3b scan 4</Title>
+    <Accession database="GEO">GSM3007</Accession>
+    <Type>RNA</Type>
+    <Channel-Count>2</Channel-Count>
+    <Channel position="1">
+      <Source>zzMex67 co-IPed RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Channel position="2">
+      <Source>Total RNA</Source>
+      <Organism taxid="4932">Saccharomyces cerevisiae</Organism>
+      <Characteristics>
+none      </Characteristics>
+      <Molecule>total RNA</Molecule>
+    </Channel>
+    <Description>
+Mex67 binding level: Comparison of cDNA from RNA IPed with zzMex67
+IP to cDNA from total RNA
+    </Description>
+    <Data-Processing>
+    </Data-Processing>
+    <Platform-Ref ref="GPL221" />
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Data-Table>
+      <Column position="1">
+        <Name>ID_REF</Name>
+      </Column>
+      <Column position="2">
+        <Name>CH1_MEAN</Name>
+        <Description>Sample 1 Mean Intensity</Description>
+      </Column>
+      <Column position="3">
+        <Name>CH1_BKD_MEDIAN</Name>
+        <Description>Sample 1 Median Background Level; used as CH1 background for ratio calculation</Description>
+      </Column>
+      <Column position="4">
+        <Name>CH1_BKD_MEAN</Name>
+        <Description>Sample 1 Mean Background Level</Description>
+      </Column>
+      <Column position="5">
+        <Name>CH2_MEAN</Name>
+        <Description>Sample 2 Mean Intensity</Description>
+      </Column>
+      <Column position="6">
+        <Name>CH2_BKD_MEDIAN</Name>
+        <Description>Sample 2 Median Background Level; used as CH2 background for ratio calculation</Description>
+      </Column>
+      <Column position="7">
+        <Name>CH2_BKD_MEAN</Name>
+        <Description>Sample 2 Mean Background Level</Description>
+      </Column>
+      <Column position="8">
+        <Name>CH1_AREA</Name>
+        <Description>Sample 1 area</Description>
+      </Column>
+      <Column position="9">
+        <Name>CH1_BKD_AREA</Name>
+        <Description>Sample 1 background area</Description>
+      </Column>
+      <Column position="10">
+        <Name>CH2_AREA</Name>
+        <Description>Sample 2 area</Description>
+      </Column>
+      <Column position="11">
+        <Name>CH2_BKD_AREA</Name>
+        <Description>Sample 2 background area</Description>
+      </Column>
+      <Column position="12">
+        <Name>VALUE</Name>
+        <Description>intermediate log ratio before taking the mean of duplicate ORFS, etc.; see methods and website for full treatment</Description>
+      </Column>
+    <External-Data rows="12801">
+GSM3007-tbl-1.txt
+    </External-Data>
+    </Data-Table>
+  </Sample>
+
+  <Series iid="GSE100">
+    <Status database="GEO">
+      <Submission-Date>2002-11-25</Submission-Date>
+      <Release-Date>2002-11-25</Release-Date>
+      <Last-Update-Date>2014-09-24</Last-Update-Date>
+    </Status>
+    <Title>zzMex67 co-IPed RNA vs. Total RNA  (zzMex67IP_v_TotalRNA)</Title>
+    <Accession database="GEO">GSE100</Accession>
+    <Pubmed-ID>12524544</Pubmed-ID>
+    <Summary>
+Comparison of cDNA from RNA IPed with zzMex67 to that from total RNA; resulting analysis gives Mex67 binding level relative to total abundance for each mRNA
+Keywords: repeat sample
+    </Summary>
+    <Overall-Design>
+    </Overall-Design>
+    <Type>Expression profiling by array</Type>
+    <Contributor-Ref ref="contrib1" position="1" />
+    <Contributor-Ref ref="contrib2" position="2" />
+    <Contact-Ref ref="contrib1" />
+    <Sample-Ref ref="GSM3004" />
+    <Sample-Ref ref="GSM3005" />
+    <Sample-Ref ref="GSM3006" />
+    <Sample-Ref ref="GSM3007" />
+    <Relation type="BioProject" target="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA84467" />
+  </Series>
+
+</MINiML>
