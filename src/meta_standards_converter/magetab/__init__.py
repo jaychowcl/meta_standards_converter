@@ -8,3 +8,5 @@
 # =============================================================================
 
 from .chemistry import ChemistryDiagnostic, ChemistryEvidence, ChemistryResult, resolve_chemistry
+
+from .technology import TechnologyDecision, TechnologyEvidence, TechnologyDiagnostic, resolve_technology

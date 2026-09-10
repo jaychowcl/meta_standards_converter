@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
+  <Sample iid="GSM5388031">
+    <Title>Single cell expression of human CRC samples from patient C126_N [C126_N_1_1_1_c1_v2]</Title>
+    <Accession database="GEO">GSM5388031</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>Human colon tissue</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="specimen_type">
+N
+      </Characteristics>
+      <Characteristics tag="processing_type">
+CD45pMACS
+      </Characteristics>
+      <Characteristics tag="singlecell_type">
+SC3Pv2
+      </Characteristics>
+      <Characteristics tag="patienttypeid">
+C126_N
+      </Characteristics>
+      <Characteristics tag="histologictypesimple">
+Normal colon
+      </Characteristics>
+      <Characteristics tag="mmr_ihc">
+NA
+      </Characteristics>
+      <Characteristics tag="mmrstatus">
+NA
+      </Characteristics>
+      <Characteristics tag="mlh1status">
+NA
+      </Characteristics>
+      <Characteristics tag="mmrmlh1tumor">
+NA
+      </Characteristics>
+      <Characteristics tag="tissuesite_detailed">
+RIGHT colon (cecum)
+      </Characteristics>
+      <Characteristics tag="tissuesitesimple">
+right
+      </Characteristics>
+      <Characteristics tag="histologicgrade_detailed">
+NA
+      </Characteristics>
+      <Characteristics tag="histologicgradesimple">
+NA
+      </Characteristics>
+      <Characteristics tag="tumorstage">
+NA
+      </Characteristics>
+      <Characteristics tag="nodestatus_detailed">
+NA
+      </Characteristics>
+      <Characteristics tag="nodestatussimple">
+NA
+      </Characteristics>
+      <Characteristics tag="metastasisstatus">
+NA
+      </Characteristics>
+      <Characteristics tag="tumorsize">
+NA
+      </Characteristics>
+      <Characteristics tag="sizequantile">
+NA
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Samples were cut by pathology assistants at MGH and BWH hospitals. To preserve the invasive border for clinical pathological evaluation, the pathology assistants did not sample tumor down to the invasive border. The tissue was transported in ice cold RPMI with 5% human serum prior to processing. Tissue was transferred into a petri dish on ice. Fat, necrotic, and fibrous areas were removed. Residual blood and stool were washed off the tissue with cold RPMI. Tissue allocated for dissociation was minced into small pieces (~1 mm^3) using a scalpel prior to enzymatic dissociation. Thereafter tissue was transferred into 1.5 ml Eppendorf tubes, each containing 1 ml of enzymatic digestion mix (Miltenyi, Human Tumor Dissociation kit). 1 ml of digestion mix was used per 50 mg of tissue. The Eppendorf tubes were then transferred to a rotation shaker set to 37 ̊C and 550 rpm and shaken for 20 min. The digestion mix was subsequently filtered through a 70um cell strainer sitting on a 50 ml falcon tube on ice and mechanically dissociated once more with the plunger of a 1ml syringe against the screen. The filter and enzymatic mixture were washed with RPMI containing 2% human serum as needed until the suspension passed through the filter. The cell suspension was spun at 500 g for 7 min in 4 ̊C pre-cooled centrifuge to pellet the cells. The pellet was lysed in 4ml ammonium-chloride-potassium (ACK) buffer for 2 minutes and then stopped with RPMI containing 2% human serum. The cell suspension was then centrifuged at 500 g for 7 min at 4 ̊C. The resulting cell pellet was resuspended in loading buffer (PBS containing 0.04% m/v BSA) and filtered through the cell strainer snap cap (Corning 352235) into a 1.5 ml Eppendorf tube. The cell suspension was centrifuged at 500 g for 2 min at 4 ̊C. The pellet was resuspended in cold loading buffer (PBS containing 0.04% m/w BSA) and counted by trypan exclusion. The suspension was then diluted to 1000 cells / ul. 8000 cells were loaded into each channel of the 10x Chromium controller, following the manufacturer-supplied protocol for the 3’ kit. Additionally, a CD45-enriched sample was run for each specimen. To this end, dissociated and ACK-lysed cells were resuspended in cold PBS with 2 mM EDTA and 0.5% FCS and CD45+ cells were enriched using CD45 MicroBeads, human (Miltenyi) following the manufacturer’s instructions. Cells were resuspended in loading buffer and loaded with 8000 cells per channel as described above.
+10x libraries were constructed using the 10x supplied protocol and sequenced at the Broad Institute Genomics Platform.
+3' RNAseq (10x kit V2 or V3 chemistry)
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Single cell RNA-Seq (10x)
+    </Description>
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Series iid="GSE900011">
+    <Title>Constructed routing envelope: GSM5388031</Title>
+    <Accession database="GEO">GSE900011</Accession>
+    <Summary>Reduced sample evidence with synthetic study context.</Summary>
+    <Overall-Design>One library</Overall-Design>
+    <Sample-Ref ref="GSM5388031" />
+  </Series>
+</MINiML>

@@ -13,7 +13,7 @@ from meta_standards_converter.magetab.idf import IDFConstructor
 from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
 from meta_standards_converter.magetab.semantics import overlay_miniml_semantics
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
-from meta_standards_converter.magetab.technology import detect_ae_technology, has_array_files, series_identity
+from meta_standards_converter.magetab.technology import detect_ae_technology, has_array_files, series_identity, resolve_technology
 
 
 PLATFORM_HANDLER_KEYS = (
@@ -61,7 +61,18 @@ class AEConstructor:
         handler = self.sdrf_constructor.create_handler(
             data=data, protocol_registry=protocol_registry, technology_type=technology_type,
         )
-        handler.run_evidence = self.evidence.sample_runs(handler, technology_type)
+        evidence_type = technology_type
+        if not forced and technology_type == 'generic' and any(
+            resolve_technology(sample, data=data).handler not in {'array', 'generic'}
+            for sample in handler.ordered_samples()
+        ):
+            # A mixed IDF summary must not suppress sequencing source evidence.
+            evidence_type = 'sequencing'
+        handler.run_evidence = self.evidence.sample_runs(handler, evidence_type)
+        if not forced:
+            handler, technology_type = self.sdrf_constructor.create_operation_handler(
+                data, protocol_registry, handler.run_evidence,
+            )
         sdrf = self.sdrf_constructor.build(handler)
         # Keep IDF validation before its publication lookup, as in the old flow.
         prefix_rows = self.idf_constructor.prefix_rows(data)

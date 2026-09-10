@@ -61,3 +61,12 @@ samples, forced handler selections, explicit offsets and library-name scope
 also have constructed unit cases. This bounded grammar is not a general text
 understanding system, and a passing corpus is not an estimated population-wide
 accuracy rate.
+
+
+## Structured identifiers and sample routing
+
+The additional [routing corpus](routing/README.md) retains reduced real
+GSM5388031/GSM9254695 sample records and an explicitly constructed mixed study.
+It adds complete IDF/SDRF/audit expectations without replacing this seven-case
+corpus. Source hashes, reduction details and reviewed scientific deltas are
+recorded alongside those fixtures.

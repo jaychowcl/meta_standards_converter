@@ -62,6 +62,40 @@ _NON_PREP = re.compile(r'\b(?:not|without|compatible|compatibility|fixation|soft
 _ROLES = {'gene expression': r'gene expression|\bgex\b|\bcdna\b', 'vdj': r'v\(d\)j|\bvdj\b', 'feature barcode': r'feature barcod|antibody capture|cell surface protein|crispr'}
 
 
+# Exact identifiers, reviewed against Cell Ranger's documented chemistry options.
+# These identify chemistry only, never a sequencing recipe.
+_IDENTIFIERS = {
+    **{f'sc3pv{v}': ('3 prime', (str(v),)) for v in range(1, 5)},
+    'sc3pv3ht': ('3 prime', ('3.1',)),
+    'sc5p-pe': ('5 prime', ()), 'sc5p-r2': ('5 prime', ()),
+    'sc5p-pe-v3': ('5 prime', ('3',)), 'sc5p-r2-v3': ('5 prime', ('3',)),
+    'sc5pht': ('5 prime', ('2',)),
+}
+
+
+@dataclass(frozen=True)
+class _ChemistryCandidate:
+    family: str
+    versions: tuple[str, ...]
+    path: str
+    structured: bool = False
+
+
+def _structured_sources(sample, channel):
+    channels = [channel] if channel is not None else _list(sample.get('channel'))
+    for i, item in enumerate(channels):
+        if not isinstance(item, dict):
+            continue
+        index = next((j for j, c in enumerate(_list(sample.get('channel'))) if c is item), i)
+        for j, characteristic in enumerate(_list(item.get('characteristics'))):
+            if not isinstance(characteristic, dict):
+                continue
+            tag = re.sub(r'[\s_-]+', '_', str(characteristic.get('name') or characteristic.get('tag', '')).strip().casefold())
+            if tag in {'singlecell_type', 'chemistry', 'library_chemistry'}:
+                path = f"sample[{sample.get('iid') or 'unknown'}].channel[{index}].characteristics[{j}].value"
+                yield path, str(characteristic.get('value') or '')
+
+
 def _roles(text):
     return {role for role, pattern in _ROLES.items() if re.search(pattern, text)}
 
@@ -112,6 +146,22 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
         if fact not in facts:
             facts.append(fact)
 
+    candidates: list[_ChemistryCandidate] = []
+    for path, original in _structured_sources(sample, channel):
+        identifier = original.strip().casefold()
+        add('identifier', identifier, path, original)
+        identity = _IDENTIFIERS.get(identifier)
+        if identity is None:
+            if identifier and identifier != 'auto':
+                diagnostics.append(ChemistryDiagnostic('unknown_identifier', 'identifier', (path,)))
+            continue
+        family, versions = identity
+        candidates.append(_ChemistryCandidate(family, versions, path, structured=True))
+        add('manufacturer', '10x Genomics', path, original)
+        add('family', family, path, original)
+        for version in versions:
+            add('version', version, path, original)
+
     # A library label supplies scope, never a kit version or read recipe.
     selected_roles = _roles(_normalize(str((run or {}).get('library_name') or sample.get('library_name') or sample.get('title') or '')))
     selected_role = next(iter(selected_roles)) if len(selected_roles) == 1 else None
@@ -145,7 +195,9 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
                 family = f'{match[1]} prime' if match[1] else ('flex' if 'flex' in match[0] else 'multiome')
                 add('manufacturer', '10x Genomics', path, original)
                 add('family', family, path, original)
-                for version in _VERSION.findall(phrase):
+                phrase_versions = tuple(sorted(set(_VERSION.findall(phrase))))
+                candidates.append(_ChemistryCandidate(family, phrase_versions, path))
+                for version in phrase_versions:
                     add('version', version, path, original)
                 for role in sorted(roles):
                     add('library_role', role, path, original)
@@ -155,7 +207,25 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
                     add('index_configuration', 'single', path, original)
             recipe_segments.append((path, original, clause, active_roles.copy()))
 
+    # Narrow a compatible alternative within one preparation phrase, not the
+    # union of independent, potentially contradictory preparation statements.
+    identifiers = [c for c in candidates if c.structured]
+    applicable = []
+    for candidate in candidates:
+        matches = [c for c in identifiers if c.family == candidate.family
+                   and c.versions and set(c.versions) <= set(candidate.versions)
+                   and ('.channel[' not in candidate.path
+                        or c.path.split('.characteristics[')[0] == candidate.path.rsplit('.', 1)[0])]
+        if not candidate.structured and len(candidate.versions) > 1 and matches:
+            applicable.extend(matches)
+        else:
+            applicable.append(candidate)
+
     def values(field):
+        if field == 'family':
+            return sorted({c.family for c in applicable})
+        if field == 'version':
+            return sorted({v for c in applicable for v in c.versions})
         return sorted({f.value for f in facts if f.field == field})
 
     def unique(field):

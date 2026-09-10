@@ -7,6 +7,9 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from dataclasses import dataclass
+import re
+from .chemistry import resolve_chemistry
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
 import os
 from urllib.parse import urlparse
@@ -63,38 +66,155 @@ def _validated_study_identity(value: str) -> str | None:
         return upper if upper[3:].isdigit() else None
     return value
 
-def detect_ae_technology(data: dict) -> str:
-    """Select the shared platform-handler key without importing either constructor."""
-
+def _detect_base_technology(data: dict) -> str:
+    """Identify sequencing/array evidence without interpreting free-text methods."""
     handler = JSONHandler()
-    values = lambda path: (str(x).lower() for x in handler._from_path(data, path) if x)
+    values = lambda path: (str(x).casefold() for x in handler._from_path(data, path) if x)
     platform_tech = " ".join(values("platform.*.technology"))
-    library_source = " ".join(values("sample.*.library_source"))
-    library_strategy = " ".join(values("sample.*.library_strategy"))
-    sample_type = " ".join(values("sample.*.type"))
-    text_paths = (
-        "series.title", "series.summary", "series.overall_design", "series.type.*",
-        "sample.*.description", "sample.*.data_processing",
-        "sample.*.channel.*.extract_protocol", "sample.*.channel.*.growth_protocol",
-        "sample.*.channel.*.treatment_protocol", "sample.*.channel.*.molecule",
-        "sample.*.channel.*.characteristics.*.tag",
-        "sample.*.channel.*.characteristics.*.value",
-        "sample.*.supplementary_data.*.value", "sample.*.raw_data.*.value",
-        "series.supplementary_data.*.value",
-    )
-    text = " ".join(value for path in text_paths for value in values(path))
-    relations = [
-        x for x in handler._from_path(data, "sample.*.relation.*") if isinstance(x, dict)
-    ]
-    has_sra = any((relation.get("type") or "").lower() == "sra" for relation in relations)
-    if "high-throughput sequencing" in platform_tech or has_sra or library_strategy or sample_type == "sra":
-        if "single cell" in library_source or "single-cell" in text or "single cell" in text or "10x" in text:
-            if "visium" in text or "spatial" in text:
-                return "spatial_sequencing"
-            if "10x" not in text and "droplet" not in text and "chromium" not in text:
-                return "plate_single_cell_sequencing"
-            return "droplet_single_cell_sequencing"
+    relations = handler._from_path(data, "sample.*.relation.*")
+    has_sra = any(isinstance(r, dict) and str(r.get('type', '')).casefold() == 'sra' for r in relations)
+    if ("high-throughput sequencing" in platform_tech or has_sra
+            or any(values("sample.*.library_strategy")) or 'sra' in values("sample.*.type")):
         return "bulk_sequencing"
     if "array" in platform_tech or has_array_files(data):
         return "array"
     return "generic"
+
+
+# Routing is separate from chemistry: a technology decision never supplies a
+# library version or a sequencing recipe.
+@dataclass(frozen=True)
+class TechnologyEvidence:
+    path: str
+    text: str
+    candidates: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class TechnologyDiagnostic:
+    code: str
+    paths: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class TechnologyDecision:
+    handler: str
+    evidence: tuple[TechnologyEvidence, ...] = ()
+    diagnostics: tuple[TechnologyDiagnostic, ...] = ()
+
+
+def _items(value):
+    return value if isinstance(value, list) else [value] if value else []
+
+
+_SINGLE = re.compile(r'(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|single[- ](?:cell|nucleus)|single[- ]nuclei', re.I)
+_SPATIAL = re.compile(r'\bvisium\b|\bspatial\b', re.I)
+_DROPLET = re.compile(r'\b(?:10x|chromium|droplet)\b', re.I)
+
+
+def _signals(text):
+    signals = set()
+    for clause in re.split(r'[.;\n]', text):
+        if re.search(r'\b(?:not|without|compatible|compatibility)\b', clause, re.I):
+            continue
+        spatial = bool(_SPATIAL.search(clause))
+        if spatial:
+            signals.add('spatial')
+        explicit_rna = re.search(r"(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|single[- ]cell\s+(?:rna|[35]['′’])", clause, re.I)
+        if explicit_rna or (not spatial and (_SINGLE.search(clause) or _DROPLET.search(clause))):
+            signals.add('single_cell')
+    return tuple(sorted(signals))
+
+
+def resolve_technology(sample: dict, channel: dict | None = None,
+                       run: dict | None = None, *, data: dict | None = None) -> TechnologyDecision:
+    """Route one sample/library using identity before shared method descriptions.
+
+    Input dictionaries and source objects are never modified. Equally applicable
+    conflicting identities produce generic sequencing and an auditable warning.
+    """
+    data = data or {}
+    # Preserve array/platform routing before interpreting sequencing methods.
+    scoped = dict(data, sample=[sample], series={})
+    if sample.get('platform_ref'):
+        refs = {x.get('ref') for x in _items(sample['platform_ref']) if isinstance(x, dict)}
+        scoped['platform'] = [p for p in _items(data.get('platform')) if isinstance(p, dict) and p.get('iid') in refs]
+    base_technology = _detect_base_technology(scoped)
+    if base_technology == 'array':
+        return TechnologyDecision('array')
+    prefix = f"sample[{sample.get('iid') or 'unknown'}]"
+    channels = [channel] if channel is not None else _items(sample.get('channel'))
+    levels = [[], [], [], [], []]  # library/channel identity, sample identity, preparation, source, shared fallback
+
+    def add(level, path, text):
+        if text:
+            levels[level].append(TechnologyEvidence(path, str(text), _signals(str(text))))
+
+    for key in ('library_name', 'description'):
+        add(0, prefix+'.run.'+key, (run or {}).get(key))
+    for key in ('title', 'description', 'library_name'):
+        add(1, prefix+'.'+key, sample.get(key))
+    add(3, prefix+'.library_source', sample.get('library_source'))
+    for i, item in enumerate(channels):
+        if not isinstance(item, dict):
+            continue
+        index = next((j for j,c in enumerate(_items(sample.get('channel'))) if c is item), i)
+        path = f'{prefix}.channel[{index}]'
+        for j, characteristic in enumerate(_items(item.get('characteristics'))):
+            if not isinstance(characteristic, dict):
+                continue
+            tag = re.sub(r'[\s_-]+', '_', str(characteristic.get('name') or characteristic.get('tag', '')).strip().casefold())
+            if tag in {'assay', 'assay_type', 'library_type', 'library_name', 'technology'}:
+                add(0, f'{path}.characteristics[{j}].value', characteristic.get('value'))
+        add(2, path+'.extract_protocol', item.get('extract_protocol'))
+    chemistry = resolve_chemistry(sample, channel=channel, run=run)
+    for fact in chemistry.evidence:
+        if fact.field == 'identifier' and any(f.path == fact.path and f.field == 'manufacturer' for f in chemistry.evidence):
+            levels[0].append(TechnologyEvidence(fact.path, fact.text, ('single_cell',)))
+    for key in ('library_construction_protocol', 'library_protocol'):
+        add(2, prefix+'.run.'+key, (run or {}).get(key))
+    for i, series in enumerate(_items(data.get('series'))):
+        if isinstance(series, dict):
+            for key in ('title','summary','overall_design'):
+                text = str(series.get(key) or '')
+                # Explicitly assigned or subset protocols cannot become a
+                # universal fallback simply because they mention one method.
+                for sentence in re.split(r'(?<!\d)\.(?!\d)|\n', text):
+                    accessions = set(re.findall(r'\bGSM\d+\b', sentence, re.I))
+                    if accessions and str(sample.get('iid', '')).upper() not in {a.upper() for a in accessions}:
+                        continue
+                    if re.search(r'\b(?:other|some|subset of) (?:samples|libraries)\b', sentence, re.I):
+                        continue
+                    add(4, f'series[{i}].{key}', sentence)
+
+    for level, evidence in enumerate(levels):
+        candidates = {c for e in evidence for c in e.candidates}
+        if not candidates:
+            continue
+        if len(candidates) > 1:
+            relevant = tuple(e for e in evidence if e.candidates)
+            return TechnologyDecision('sequencing', relevant,
+                (TechnologyDiagnostic('ambiguous_technology', tuple(e.path for e in relevant)),))
+        selected = next(iter(candidates))
+        # Lower-level text supports identity only if it does not describe a
+        # competing method. Keep full original evidence for auditability.
+        supporting = tuple(e for group in levels[level:] for e in group if e.candidates == (selected,))
+        if selected == 'spatial':
+            return TechnologyDecision('spatial_sequencing', supporting)
+        preparation = ' '.join(e.text for e in levels[2])
+        droplet = chemistry.manufacturer == '10x Genomics' or any(_DROPLET.search(e.text) for e in supporting)
+        # Mixed shared methods may still explicitly identify a Chromium library.
+        droplet = droplet or bool(re.search(r'\bchromium\b', preparation, re.I))
+        return TechnologyDecision('droplet_single_cell_sequencing' if droplet else 'plate_single_cell_sequencing', supporting)
+
+    return TechnologyDecision(base_technology)
+
+
+def detect_ae_technology(data: dict) -> str:
+    """Return an IDF summary key; SDRF dispatch resolves each sample/library."""
+    decisions = {resolve_technology(sample, data=data).handler for sample in _items(data.get('sample')) if isinstance(sample, dict)}
+    if len(decisions) == 1:
+        return next(iter(decisions))
+    if decisions and decisions.isdisjoint({'array','generic'}):
+        return 'sequencing'
+    return _detect_base_technology(data) if not decisions else 'generic'

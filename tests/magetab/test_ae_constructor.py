@@ -1447,6 +1447,10 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = idf
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
+            sdrf_constructor.create_handler.return_value,
+            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        )
         sdrf_constructor.build.return_value = sdrf
 
         result = AEConstructor(
@@ -1487,6 +1491,10 @@ class TestAEConstructor(unittest.TestCase):
         ]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
+            sdrf_constructor.create_handler.return_value,
+            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        )
         sdrf_constructor.build.return_value = sdrf
 
         result = AEConstructor(
@@ -1523,6 +1531,10 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
+            sdrf_constructor.create_handler.return_value,
+            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        )
         sdrf_constructor.build.return_value = [["Source Name"], ["GSM1"]]
 
         AEConstructor(
@@ -1550,6 +1562,10 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
+            sdrf_constructor.create_handler.return_value,
+            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        )
         sdrf_constructor.build.return_value = [["Source Name"], ["GSM1"]]
 
         AEConstructor(
@@ -1582,6 +1598,10 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
+            sdrf_constructor.create_handler.return_value,
+            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        )
         generated = [["Source Name"], ["generated"]]
         sdrf_constructor.build.return_value = generated
 
@@ -1717,6 +1737,10 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["Investigation Title", "Example"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
+        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
+            sdrf_constructor.create_handler.return_value,
+            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        )
         sdrf_constructor.build.return_value = [["Source Name"], ["sample 1"]]
 
         with self.assertRaisesRegex(ValueError, "IDF does not contain an SDRF File row"):

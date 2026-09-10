@@ -1,0 +1,41 @@
+[
+  {
+    "id": "GSM5388031",
+    "gse": "GSE900011",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5388031&targ=self&form=xml&view=full",
+    "acquired": "2026-09-10",
+    "source_sha256": "a831ac7b4464fc68257f78e545e64a0d179f78e41fedffc52e514272ffb73768",
+    "sha256": "412deb0a82605109c8804a3022aeadea84537d6c100a2e98ec968b9ecab1ad58",
+    "reduction": "Retained sample identity, channels including complete protocols and characteristics, description and library fields. Removed relations, processing and files. Added synthetic Series only.",
+    "audit": {
+      "warnings": [],
+      "dropped_values": [],
+      "validation_errors": []
+    }
+  },
+  {
+    "id": "GSM9254695",
+    "gse": "GSE900012",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM9254695&targ=self&form=xml&view=full",
+    "acquired": "2026-09-10",
+    "source_sha256": "77359d88136b34d362cb926bbae74b38b89978ecc73c6c39d22e6ecc02ad346b",
+    "sha256": "b7c7d3922f25989a74b67ba520a4bd594a1b4fab8a9638419b485662051ab64a",
+    "reduction": "Retained sample identity, channels including complete protocols and characteristics, description and library fields. Removed relations, processing and files. Added synthetic Series only.",
+    "audit": {
+      "warnings": [],
+      "dropped_values": [],
+      "validation_errors": []
+    }
+  },
+  {
+    "id": "mixed",
+    "gse": "GSE900021",
+    "sha256": "bd5c5350f92050517b8f3e717e02d1b73943a898f97c777418cfc366669fcb5f",
+    "constructed": "Entirely synthetic mixed study. Distinct library identities, shared protocols and explicitly specified dual indices on the scRNA library.",
+    "audit": {
+      "warnings": [],
+      "dropped_values": [],
+      "validation_errors": []
+    }
+  }
+]

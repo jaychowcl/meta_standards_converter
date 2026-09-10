@@ -289,3 +289,10 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 - [Converter test contracts](codebase.md#converter-test-contracts): seven converter and CLI end-to-end examples, stored expected outputs, fixture provenance, corruption checks, [test audit dispositions](../tests/AUDIT.md), and source-backed chemistry regression coverage. Keywords: golden, tests/e2e, PBMC3k, offline, MSC-TEST-001.
 
 - [Scoped library chemistry](codebase.md#scoped-library-chemistry): pure per-library evidence parser, 3-prime/5-prime/Flex, version ambiguity, reported read recipes, legacy handler selections and converter fixtures. Keywords: chemistry, end bias, Unicode prime, MSC-TEST-001, dual index.
+
+- id: sample-library-routing
+  title: Sample and library technology routing
+  anchor: sample-library-routing
+  purpose: Explains structured chemistry identifiers, sample-specific scRNA/Visium decisions, mixed handler construction and complete output regressions.
+  keywords: SC3Pv2, singlecell_type, GSM5388031, GSM9254695, Visium, scRNA, TechnologyDecision, protocol registry, mixed libraries
+  link: [Open section](codebase.md#sample-library-routing)

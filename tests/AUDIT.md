@@ -510,3 +510,23 @@ Source fixtures and expected tables are excluded from comment-header insertion. 
 | `tests/test_service_boundaries.py::test_owning_packages_export_injectable_interfaces` | consolidate | Owning-package imports are checked once in test_public_api.py. |
 | `tests/test_service_boundaries.py::test_magetab_explicit_evidence_clients_preserve_sra_then_publication_order` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
 | `tests/test_service_boundaries.py::test_magetab_retained_evidence_suppresses_lookup_without_mutation` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
+
+
+## Structured chemistry and scoped routing (2026-09-10)
+
+- Added `magetab/test_scoped_routing.py`: exact documented identifier behavior,
+  compatible alternatives versus conflicting preparations, channel boundaries,
+  scoped method decisions, mixed rows and protocol references, executed injected
+  SRA retrieval with one fetch per accession per operation, and audit preservation.
+- Added `e2e/test_scoped_routing.py`: reduced real GSM5388031/GSM9254695 evidence
+  and a constructed mixed study; complete IDF/SDRF/audit contracts through both
+  converters, retained original protocols and repeated comments on reparsing.
+- Retained constructor orchestration tests; updated their injected constructor
+  doubles for the operation-planning interface. Existing insertion/validation and
+  explicit override assertions remain intact.
+- Retained handler dispatch/file inheritance tests; `FixedTechParent` now uses
+  the explicit `technology_type` selection, rather than overriding an automatic
+  detection hook which no longer controls every sample in a mixed study.
+- All earlier scientific fixtures remain unchanged. New expectations and deltas
+  from isolated `6170907` are reviewed in `fixtures/chemistry/routing/README.md`.
+  No unrelated detector/recipe gaps were fixed to satisfy tests.

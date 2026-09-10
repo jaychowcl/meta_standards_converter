@@ -14,7 +14,7 @@ class _SpatialSequencingSDRFHandler(_SingleCellSequencingSDRFHandler):
     def extra_library_attrs(self, sample: dict, channel: dict, run: dict | None) -> list[SDRFAttr]:
         # Spatial presets are outside the scoped single-cell chemistry change.
         attrs = []
-        construction = self.library_construction(sample)
+        construction = self.library_construction(sample, channel, run)
         if construction:
             attrs.append(SDRFAttr(label="Comment[library construction]", value=construction))
         values = {
@@ -31,9 +31,12 @@ class _SpatialSequencingSDRFHandler(_SingleCellSequencingSDRFHandler):
             attrs.append(SDRFAttr(label=label, value=value))
         return attrs
 
-    def library_construction(self, sample: dict):
-        text = self.study_text(sample=sample)
-        if "visium" in text:
+    def library_construction(self, sample: dict, channel=None, run=None):
+        from meta_standards_converter.magetab.technology import resolve_technology
+        decision = resolve_technology(sample, channel, run, data=self.data)
+        # General study summaries cannot name a particular spatial library.
+        text = ' '.join(e.text.casefold() for e in decision.evidence if e.path.startswith('sample['))
+        if decision.handler == 'spatial_sequencing' and "visium" in text:
             return "10x Visium"
         return None
 

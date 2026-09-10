@@ -1,0 +1,51 @@
+MAGE-TAB Version	1.1
+Investigation Title	Constructed mixed routing study
+Experiment Description	Synthetic mixed scRNA-seq and spatial metadata.. Two libraries with distinct identities.
+Experimental Design
+Experimental Design Term Source REF
+Experimental Design Term Accession Number
+Experimental Factor Name
+Experimental Factor Type
+Experimental Factor Term Source REF
+Experimental Factor Term Accession Number
+Person Last Name
+Person First Name
+Person Mid Initials
+Person Email
+Person Phone
+Person Fax
+Person Address
+Person Affiliation
+Person Roles
+Person Roles Term Source Ref
+Person Roles Term Accession Number
+Date of Experiment	
+Public Release Date	
+PubMed ID
+Publication DOI
+Publication Author List
+Publication Title
+Publication Status
+Publication Status Term Source REF
+Publication Status Term Accession Number
+Protocol Name	P-GSE900021-1	P-GSE900021-2	P-GSE900021-3	P-GSE900021-4	P-GSE900021-5	P-GSE900021-6
+Protocol Type	normalization data transformation protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid extraction protocol	sample collection protocol	nucleic acid sequencing protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0003816	EFO_0002944	EFO_0004184	EFO_0002944	EFO_0005518	EFO_0004170
+Protocol Description	Constructed shared processing	Library preparation for snRNA-seq: Chromium Single Cell 3' Kit v3.1. Spatial libraries were prepared with Visium Spatial Gene Expression Reagent Kits. i7=10 cycles i5=10 cycles	RNA-Seq | cDNA	Library preparation for snRNA-seq: Chromium Single Cell 3' Kit v3.1. Spatial libraries were prepared with Visium Spatial Gene Expression Reagent Kits.		
+Protocol Hardware						
+Protocol Software						
+SDRF File	E-GEOD-900021.sdrf.txt
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/efo.owl
+Term Source Version	3.90.0
+Comment[SecondaryAccession]	GSE900021
+Comment[SecondaryAccessionTermSourceRef]	GEO
+Comment[ArrayExpressAccession]	E-GEOD-900021
+Comment[GEOReleaseDate]	
+Comment[GEOLastUpdateDate]	
+Comment[ArrayExpressSubmissionDate]	2026-09-10
+Comment[AEExperiment]
+Comment[AEExperimentType]
+Comment[AECurator]
+Investigation Accession	GSE900021

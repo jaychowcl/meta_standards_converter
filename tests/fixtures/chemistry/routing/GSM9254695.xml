@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
+  <Sample iid="GSM9254695">
+    <Title>Heart, scRNA-seq, Sham</Title>
+    <Accession database="GEO">GSM9254695</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>heart</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="tissue">
+heart
+      </Characteristics>
+      <Characteristics tag="strain">
+C57BL/6J
+      </Characteristics>
+      <Characteristics tag="cell type">
+cardiac cells (mixed cell populations)
+      </Characteristics>
+      <Characteristics tag="Sex">
+male
+      </Characteristics>
+      <Characteristics tag="genotype">
+wild type
+      </Characteristics>
+      <Characteristics tag="treatment">
+sham surgery
+      </Characteristics>
+      <Characteristics tag="batch">
+batch 3
+      </Characteristics>
+      <Treatment-Protocol>
+Mice underwent transverse aortic constriction (TAC) surgery to induce pressure overload. Following anesthesia with isoflurane (2% isoflurane at 0.41 mL/min mixed with air at 4 L/min), the thoracic area was prepared as described above. A midline cervical incision was made, and the sternum was cut to the level of the second rib to expose the aortic arch and carotid artery. A 6-0 silk suture was passed under the aortic arch using a curved needle, and the ligature was tied firmly around a blunted needle or pad placed adjacent to the aorta to achieve a defined constriction. The pad was then gently removed, leaving a reproducible stenosis. The chest wall and skin were closed with 6-0 silk sutures. Sham-operated mice underwent the identical procedure without ligation of the aorta.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Eight-week-old male C57BL/6J mice weighing 25–27 g were used in this study. Animals were maintained under specific pathogen-free (SPF) conditions in a temperature- and humidity-controlled facility, with a 12 h light/dark cycle and free access to standard chow and water. Prior to surgery, mice were anesthetized with isoflurane (2% isoflurane at 0.41 mL/min mixed with air at 4 L/min). The thoracic area was depilated with depilatory cream for 2–3 minutes, and the residual cream was removed using a cotton swab dipped in warm water. The animals were placed on a heating pad in the supine position, and their body temperature was continuously monitored. Limbs were fixed with medical tape to minimize movement. The surgical site was disinfected three times with povidone-iodine solution before thoracic surgery was performed.
+      </Growth-Protocol>
+      <Molecule>polyA RNA</Molecule>
+      <Extract-Protocol>
+To isolate single nuclei from adult mouse hearts, tissues were dissected and placed in 2mL Hibernate A®/B27®/GlutaMAX™ (HEB) medium in a 5mL tube on ice.The HEB medium was removed to a 15mL conical and kept on ice. 2mL of chilled lysis buffer (10 mM Tris-HCl, 10 mM NaCl, 3 mM MgCl2, and 0.1% Nonidet™ P40 Substitute in Nuclease-Free Water) were added to the tissue, and the tissues were homogenized 10 times through a tissue grinder.After homogenization, the tissue was lysed on ice for 15min, swirling 2–3 times during this incubation period. The reserved chilled HEB media was then returned to the lysed tissue solution, and the tissue was further triturated with 5–7 passes through a 1mL pipette. A 30µm cell strainer (MACS SmartStrainer; Miltenyi Biotech 130-110-915) was washed with 1mL of PBS, and the lysed tissue solution was filtered through the strainer to remove debris and clumps. Filtered nuclei were centrifuged at 500 rcf for 5min at 4°C. The supernatant was removed, and nuclei were washed in 1mL of Nuclei Wash and Resuspension Buffer (1X PBS with 1.0% BSA and 0.2U/µl RNase Inhibitor). Nuclei were manually counted by Trypan blue and AO-PI after each centrifugation (400g, 10 min, 4℃) and resuspended. Single nuclei were processed using Chromium Controller (10X Genomics) according to the manufacturer’s protocol.  The heart tissue samples from the TAC mouse model were collected and embedded in OCT. The samples were then sectioned into 10-20 μm thick slices. RNA was extracted from 10 of these sections using a nucleic acid kit, and the quality of the prepared samples was assessed. Sections that passed the RNA quality inspection were then permeabilized and subjected to a capture labeling experiment.
+Library preparation for snRNA-seq: The prepared single nuclei suspension was loaded on the Chromium Controller (10X Genomics). We prepared 3' gene expression libraries using Chromium Next GEM Single Cell 3' GEM, Library &amp; Gel Bead Kit v3.1 according to the manufacturer’s protocol. The libraries were sequenced on an Illumina NovaSeq 6000 system.  The libraries were prepared by Visium Spatial Gene Expression Reagent Kits (PN-1000184, 10x Genomics) according to the manufacturer’s protocol. Libraries were loaded at 300 pM and sequenced on a NovaSeq 6000 System (Illumina, San Diego, CA, USA) . Sequencing was performed using the following read protocol (read 1, 28 cycles; i7 index read, 10 cycles; i5 index read, 10 cycles; read 2, 90 cycles) and analyzed at Shanghai Biochip Co., Ltd., Shanghai, China.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Library name: Sham_scRNA
+    </Description>
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic single cell</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Series iid="GSE900012">
+    <Title>Constructed routing envelope: GSM9254695</Title>
+    <Accession database="GEO">GSE900012</Accession>
+    <Summary>Reduced sample evidence with synthetic study context.</Summary>
+    <Overall-Design>One library</Overall-Design>
+    <Sample-Ref ref="GSM9254695" />
+  </Series>
+</MINiML>

@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
+  <Sample iid="GSM900021">
+    <Title>scRNA-seq</Title>
+    <Accession database="GEO">GSM900021</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>Constructed source</Source>
+      <Organism>Homo sapiens</Organism>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>Library preparation for snRNA-seq: Chromium Single Cell 3' Kit v3.1. Spatial libraries were prepared with Visium Spatial Gene Expression Reagent Kits.
+i7=10 cycles
+i5=10 cycles</Extract-Protocol>
+    </Channel>
+    <Data-Processing>Constructed shared processing</Data-Processing>
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Sample iid="GSM900022">
+    <Title>Visium spatial</Title>
+    <Accession database="GEO">GSM900022</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>Constructed source</Source>
+      <Organism>Homo sapiens</Organism>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>Library preparation for snRNA-seq: Chromium Single Cell 3' Kit v3.1. Spatial libraries were prepared with Visium Spatial Gene Expression Reagent Kits.</Extract-Protocol>
+    </Channel>
+    <Data-Processing>Constructed shared processing</Data-Processing>
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Series iid="GSE900021">
+    <Title>Constructed mixed routing study</Title>
+    <Accession database="GEO">GSE900021</Accession>
+    <Summary>Synthetic mixed scRNA-seq and spatial metadata.</Summary>
+    <Overall-Design>Two libraries with distinct identities.</Overall-Design>
+    <Sample-Ref ref="GSM900021" />
+    <Sample-Ref ref="GSM900022" />
+  </Series>
+</MINiML>

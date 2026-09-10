@@ -7,6 +7,9 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from dataclasses import dataclass
+from meta_standards_converter.magetab.technology import resolve_technology
+from meta_standards_converter.magetab.sdrf.handlers.base import _BaseSDRFHandler
 from meta_standards_converter.magetab.technology import detect_ae_technology, has_array_files
 from meta_standards_converter.magetab.sdrf.handlers.sequencing import _SequencingSDRFHandler
 from meta_standards_converter.magetab.sdrf.handlers.sequencing import _BulkSequencingSDRFHandler
@@ -31,7 +34,10 @@ class SDRFConstructor():
         """
         converts miniml json to magetab sdrf.
         """
-        handler = self.create_handler(data, protocol_registry, technology_type)
+        if technology_type is None:
+            handler, _ = self.create_operation_handler(data, protocol_registry)
+        else:
+            handler = self.create_handler(data, protocol_registry, technology_type)
         return self.build(handler)
 
     def create_handler(self, data, protocol_registry=None, technology_type=None):
@@ -51,6 +57,42 @@ class SDRFConstructor():
         handler = handler_class(parent=self, data=data, protocol_registry=protocol_registry)
         return handler
 
+    def create_operation_handler(self, data, protocol_registry=None, run_evidence=None):
+        """Plan scoped dispatch, sharing source identities, registry and audit."""
+        operation = _RoutedSDRFHandler(self, data, protocol_registry)
+        operation.run_evidence = run_evidence or {}
+        scopes = []
+        for sample in operation.ordered_samples():
+            runs = operation.sra_runs(sample) or [None]
+            for channel in operation._channel_records(sample):
+                for run in runs:
+                    decision = resolve_technology(sample, channel, run, data=data)
+                    scopes.append((_PathScope(sample, channel, run), decision))
+                    for diagnostic in decision.diagnostics:
+                        message = f"Sample {operation.sample_accession(sample)} technology {diagnostic.code}: {', '.join(diagnostic.paths)}"
+                        if message not in operation.audit.warnings:
+                            operation.audit.warnings.append(message)
+        keys = {decision.handler for _, decision in scopes}
+        if not keys:
+            summary = detect_ae_technology(data)
+        elif len(keys) == 1:
+            summary = next(iter(keys))
+        else:
+            summary = 'sequencing' if keys.isdisjoint({'array', 'generic'}) else 'generic'
+        # Preserve homogeneous registration/rendering, including array handlers.
+        if len(keys) <= 1:
+            handler = self.create_handler(data, operation.protocol_registry, summary)
+            handler.run_evidence = operation.run_evidence
+            handler.audit = operation.audit
+            return handler, summary
+        for scope, decision in scopes:
+            child = self.create_handler(data, operation.protocol_registry, decision.handler)
+            child.path_scope = scope
+            child.run_evidence = operation.run_evidence
+            child.audit = operation.audit
+            operation.children.append(child)
+        return operation, summary
+
     def build(self, handler):
         sdrf = handler.build()
         self.last_sdrf_audit = handler.audit
@@ -61,3 +103,24 @@ class SDRFConstructor():
 
     def _has_array_files(self, data: dict) -> bool:
         return has_array_files(data)
+
+
+@dataclass(frozen=True)
+class _PathScope:
+    sample: dict
+    channel: dict
+    run: dict | None
+
+
+class _RoutedSDRFHandler(_BaseSDRFHandler):
+    """Collect scoped assay paths before one column plan and one table render."""
+    def __init__(self, parent, data, protocol_registry=None):
+        super().__init__(parent, data, protocol_registry)
+        self.children = []
+
+    def preregister_protocols(self):
+        for child in self.children:
+            child.preregister_protocols()
+
+    def build_paths(self):
+        return [path for child in self.children for path in child.build_paths()]

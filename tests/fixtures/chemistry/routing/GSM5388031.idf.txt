@@ -1,0 +1,54 @@
+MAGE-TAB Version	1.1
+Investigation Title	Constructed routing envelope: GSM5388031
+Experiment Description	Reduced sample evidence with synthetic study context.. One library
+Experimental Design
+Experimental Design Term Source REF
+Experimental Design Term Accession Number
+Experimental Factor Name
+Experimental Factor Type
+Experimental Factor Term Source REF
+Experimental Factor Term Accession Number
+Person Last Name
+Person First Name
+Person Mid Initials
+Person Email
+Person Phone
+Person Fax
+Person Address
+Person Affiliation
+Person Roles
+Person Roles Term Source Ref
+Person Roles Term Accession Number
+Date of Experiment	
+Public Release Date	
+PubMed ID
+Publication DOI
+Publication Author List
+Publication Title
+Publication Status
+Publication Status Term Source REF
+Publication Status Term Accession Number
+Protocol Name	P-GSE900011-1	P-GSE900011-2	P-GSE900011-3	P-GSE900011-4
+Protocol Type	nucleic acid extraction protocol	nucleic acid library construction protocol	sample collection protocol	nucleic acid sequencing protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0002944	EFO_0004184	EFO_0005518	EFO_0004170
+Protocol Description	Samples were cut by pathology assistants at MGH and BWH hospitals. To preserve the invasive border for clinical pathological evaluation, the pathology assistants did not sample tumor down to the invasive border. The tissue was transported in ice cold RPMI with 5% human serum prior to processing. Tissue was transferred into a petri dish on ice. Fat, necrotic, and fibrous areas were removed. Residual blood and stool were washed off the tissue with cold RPMI. Tissue allocated for dissociation was minced into small pieces (~1 mm^3) using a scalpel prior to enzymatic dissociation. Thereafter tissue was transferred into 1.5 ml Eppendorf tubes, each containing 1 ml of enzymatic digestion mix (Miltenyi, Human Tumor Dissociation kit). 1 ml of digestion mix was used per 50 mg of tissue. The Eppendorf tubes were then transferred to a rotation shaker set to 37 ̊C and 550 rpm and shaken for 20 min. The digestion mix was subsequently filtered through a 70um cell strainer sitting on a 50 ml falcon tube on ice and mechanically dissociated once more with the plunger of a 1ml syringe against the screen. The filter and enzymatic mixture were washed with RPMI containing 2% human serum as needed until the suspension passed through the filter. The cell suspension was spun at 500 g for 7 min in 4 ̊C pre-cooled centrifuge to pellet the cells. The pellet was lysed in 4ml ammonium-chloride-potassium (ACK) buffer for 2 minutes and then stopped with RPMI containing 2% human serum. The cell suspension was then centrifuged at 500 g for 7 min at 4 ̊C. The resulting cell pellet was resuspended in loading buffer (PBS containing 0.04% m/v BSA) and filtered through the cell strainer snap cap (Corning 352235) into a 1.5 ml Eppendorf tube. The cell suspension was centrifuged at 500 g for 2 min at 4 ̊C. The pellet was resuspended in cold loading buffer (PBS containing 0.04% m/w BSA) and counted by trypan exclusion. The suspension was then diluted to 1000 cells / ul. 8000 cells were loaded into each channel of the 10x Chromium controller, following the manufacturer-supplied protocol for the 3’ kit. Additionally, a CD45-enriched sample was run for each specimen. To this end, dissociated and ACK-lysed cells were resuspended in cold PBS with 2 mM EDTA and 0.5% FCS and CD45+ cells were enriched using CD45 MicroBeads, human (Miltenyi) following the manufacturer’s instructions. Cells were resuspended in loading buffer and loaded with 8000 cells per channel as described above. 10x libraries were constructed using the 10x supplied protocol and sequenced at the Broad Institute Genomics Platform. 3' RNAseq (10x kit V2 or V3 chemistry)	RNA-Seq | transcriptomic | cDNA		
+Protocol Hardware				
+Protocol Software				
+SDRF File	E-GEOD-900011.sdrf.txt
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/efo.owl
+Term Source Version	3.90.0
+Comment[SecondaryAccession]	GSE900011
+Comment[SecondaryAccessionTermSourceRef]	GEO
+Comment[ArrayExpressAccession]	E-GEOD-900011
+Comment[GEOReleaseDate]	
+Comment[GEOLastUpdateDate]	
+Comment[ArrayExpressSubmissionDate]	2026-09-10
+Comment[AEExperiment]
+Comment[AEExperimentType]	RNA-seq of coding RNA from single cells
+Comment[AECurator]
+Comment[AEExpectedClusters]
+Comment[AEAdditionalAttributes]
+Comment[AEBatchEffect]
+Investigation Accession	GSE900011

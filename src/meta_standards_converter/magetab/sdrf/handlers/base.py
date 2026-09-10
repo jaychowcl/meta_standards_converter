@@ -33,6 +33,7 @@ class _BaseSDRFHandler(SDRFRenderer):
         self.parent = parent
         self.data = data
         self.run_evidence = {}
+        self.path_scope = None
         self.samples = [x for x in self._as_list(data.get("sample")) if isinstance(x, dict)]
         self.platforms = {
             platform.get("iid"): platform
@@ -83,6 +84,8 @@ class _BaseSDRFHandler(SDRFRenderer):
 
 
     def ordered_samples(self) -> list:
+        if self.path_scope is not None:
+            return [self.path_scope.sample]
         refs = [
             ref.get("ref")
             for series in self._as_list(self.data.get("series"))
@@ -95,8 +98,13 @@ class _BaseSDRFHandler(SDRFRenderer):
         ordered.extend(sample for sample in self.samples if sample.get("iid") not in seen)
         return ordered
 
+    def _channel_records(self, sample: dict) -> list[dict]:
+        return [channel for channel in self._as_list(sample.get("channel")) if isinstance(channel, dict)] or [{}]
+
     def channels(self, sample: dict) -> list[dict]:
-        channels = [channel for channel in self._as_list(sample.get("channel")) if isinstance(channel, dict)]
+        if self.path_scope is not None:
+            return [self.path_scope.channel]
+        channels = self._channel_records(sample)
         if len(channels) > 1:
             self.audit.warnings.append(f"Sample {self.sample_accession(sample=sample)} has {len(channels)} channels; emitted {len(channels)} channel paths.")
         return channels or [{}]
@@ -391,6 +399,8 @@ class _BaseSDRFHandler(SDRFRenderer):
         return SDRFNode(kind=kind, key=f"file:{kind}:{value}", value=value, attrs=attrs)
 
     def sra_runs(self, sample: dict) -> list:
+        if self.path_scope is not None:
+            return [self.path_scope.run] if self.path_scope.run is not None else []
         if "sra_run" in sample:
             return [
                 run

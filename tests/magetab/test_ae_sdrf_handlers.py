@@ -46,8 +46,8 @@ class FixedTechParent(Parent):
         super().__init__()
         self.tech_type = tech_type
 
-    def _detect_sdrf_technology(self, data: dict) -> str:
-        return self.tech_type
+    def _miniml2sdrf(self, data, **kwargs):
+        return super()._miniml2sdrf(data, technology_type=self.tech_type, **kwargs)
 
 
 def base_data(sample, platform_technology="high-throughput sequencing"):
