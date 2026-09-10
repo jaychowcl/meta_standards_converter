@@ -919,6 +919,8 @@ programmatic converter calls raise errors to their caller.
 
 ## Testing
 
+Run the seven offline converter and CLI contracts with `.venv/bin/python -m pytest tests/e2e -q`. [Fixture inputs, reviewed outputs, and provenance](tests/fixtures/README.md) are stored in the repository. [The test audit](tests/AUDIT.md) records coverage decisions and a strict expected failure for the known automatic 5-prime/3-prime chemistry mismatch. Documentation policy checks are separate under `tests/policy/`.
+
 The deterministic, network-blocked suite was last verified on 2026-08-10:
 `587 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
 provider contracts. Normal tests fake HTTP and subprocess boundaries and do

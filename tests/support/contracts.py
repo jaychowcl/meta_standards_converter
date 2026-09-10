@@ -155,4 +155,19 @@ def assert_expected(case, converter, out, workspace):
     for path in sorted(expected_root.iterdir()):
         name = path.name.removesuffix(".json") if path.name.endswith(".h5ad.json") else path.name
         expected[name] = json.loads(path.read_text()) if path.suffix == ".json" else path.read_text()
-    assert artifacts(out, workspace) == expected
+    assert_contract_equal(artifacts(out, workspace), expected)
+
+
+def assert_contract_equal(actual, expected, path="output"):
+    """Reject value and JSON type drift, with ordered sequences and useful paths."""
+    assert type(actual) is type(expected), f"{path}: {type(actual).__name__} != {type(expected).__name__}"
+    if isinstance(expected, dict):
+        assert actual.keys() == expected.keys(), f"{path}: keys differ"
+        for key in expected:
+            assert_contract_equal(actual[key], expected[key], f"{path}.{key}")
+    elif isinstance(expected, list):
+        assert len(actual) == len(expected), f"{path}: lengths differ"
+        for index, (value, reference) in enumerate(zip(actual, expected)):
+            assert_contract_equal(value, reference, f"{path}[{index}]")
+    else:
+        assert actual == expected, f"{path}: {actual!r} != {expected!r}"

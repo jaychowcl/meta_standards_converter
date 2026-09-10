@@ -83,7 +83,8 @@ def test_pbmc_expectation_preserves_actual_counts_and_identity():
     assert expected["obs"]["index"]["values"] == [x + "-PBMC3K_SAMPLE" for x in source.columns]
     assert expected["var"]["index"]["values"] == list(source.index)
     retained = expected["uns"]["msc_miniml"]["packages_json"]
-    assert "PBMC3K_SAMPLE" in str(retained)
+    source_package = json.loads((PBMC / "inputs/miniml.json").read_text())
+    assert json.loads(retained) == [{**source_package, "database": [], "organization": [], "contributor": [], "platform": []}]
     assert expected["uns"]["meta_standards_converter"]["converter_version"] == version("meta-standards-converter") == "6.0.0"
 
 

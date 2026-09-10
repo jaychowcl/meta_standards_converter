@@ -23,7 +23,7 @@ except ModuleNotFoundError:
     import tomli as tomllib
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 INDEX = ROOT / "docs" / "index.md"
 CODEBASE = ROOT / "docs" / "codebase.md"
 README = ROOT / "README.md"

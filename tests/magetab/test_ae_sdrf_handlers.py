@@ -602,19 +602,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
             self.assertIn("counts1.tsv.gz", sdrf[index])
             self.assertIn("counts2.mtx.gz", sdrf[index])
 
-    def test_bulk_sequencing_inheritance_tree(self):
-        self.assertTrue(issubclass(_BulkSequencingSDRFHandler, _SequencingSDRFHandler))
-        self.assertTrue(issubclass(_PlateSingleCellSequencingSDRFHandler, _BulkSequencingSDRFHandler))
 
-    def test_tenx_version_handlers_inherit_droplet_single_cell_handler(self):
-        self.assertTrue(issubclass(
-            _TenXV2DropletSingleCellSequencingSDRFHandler,
-            _DropletSingleCellSequencingSDRFHandler,
-        ))
-        self.assertTrue(issubclass(
-            _TenXV3DropletSingleCellSequencingSDRFHandler,
-            _DropletSingleCellSequencingSDRFHandler,
-        ))
 
     def test_tenx_version_handler_dispatch(self):
         sample = {

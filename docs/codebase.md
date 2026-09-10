@@ -2766,7 +2766,7 @@ Important test coverage:
   byte/disk/aggregate ceilings, and bounded NCBI range fallback behavior.
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
 - `tests/test_json_source.py`: native MINiML and Atlas v1 grouping, harmonized-status filtering, source diagnostics, and duplicate conflict handling.
-- `tests/converters/test_json2tabular.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
+- `tests/converters/test_json2tsv.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
 - `tests/test_miniml_model_authority.py`: sample-bound typed protocol/material projection, exact ontology preservation, fallback ordering, and shared H5AD semantics.
 - `tests/test_miniml_stabilization.py`: deterministic MINiML migration, validation, and captured-index ordering without quadratic equality scans.
 - `tests/magetab/test_magetab_miniml_v2.py`: legacy and canonical IDF companion-label parsing, typed ontology alignment, and canonical semantic MAGE-TAB regeneration.
@@ -2775,7 +2775,7 @@ Important test coverage:
   warning/error propagation, fail-closed output, invalid-output opt-in, and
   bundle rollback fault injection.
 - `tests/test_external_guard.py`: fail-closed network/process guard self-tests and bounded fake-process opt-in.
-- `tests/test_public_e2e.py`: offline public GEO/JSON/MAGE-TAB round trips and processed-H5AD bundle conversion without nf-core.
+- `tests/e2e/`: independent public converter and CLI workflows against reviewed fixtures; `tests/expression/test_lazy_scientific_imports.py` checks processed H5AD conversion without importing Scanpy.
 - `tests/expression/test_h5ad_pipeline.py`: reference/annotation combinations, GFF3 conversion and reuse, FASTQ samplesheets, mixed modality grouping, pinned commands, warning extraction, output discovery, and workflow failure logs.
 - `tests/expression/test_h5ad_pipeline.py`: rootless enforcement also covers accepted, rootful, and unreachable Docker daemons.
 - `tests/test_docker_artifacts.py`: pinned runtime tooling, rootless-only Compose mounts, hardening, and provisioning/runner script syntax.
@@ -2784,9 +2784,9 @@ Important test coverage:
 - `tests/cli/test_cli_json2ae.py`: JSON-to-MAGE-TAB CLI defaults, enrichment toggle, multiple input ordering, output forwarding, logging, and failure continuation.
 - `tests/cli/test_cli_ae2json.py`: MAGE-TAB-to-JSON CLI defaults, repeated SDRF overrides, source validation, multiple input ordering, logging, and failure continuation.
 - `tests/cli/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
-- `tests/cli/test_cli_json2tabular.py`: TSV/CSV input order and partial exit status.
+- `tests/cli/test_cli_json2tsv.py`: TSV/CSV input order and partial exit status.
 - `tests/test_project_scripts.py`: console script registration.
-- `tests/test_docs_index.py`: stable documentation anchors, required README Guide structure including configuration, complete Mermaid platform-handler hierarchy coverage, interface-specific quickstart links, live-parser coverage for every documented CLI argument and alias, console-script mentions, docs links, and author-header policy.
+- `tests/policy/test_documentation_policy.py`: stable documentation anchors, required README Guide structure including configuration, complete Mermaid platform-handler hierarchy coverage, interface-specific quickstart links, live-parser coverage for every documented CLI argument and alias, console-script mentions, docs links, and author-header policy.
 - `tests/magetab/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.
 - `tests/magetab/test_ae_sdrf_handlers.py`: SDRF graph rendering, source/comment/characteristic behavior, file classification, sequencing/array/single-cell/spatial handlers, SRA precedence warnings, and disabled greedy fallback comments.
 - `tests/metadata/test_miniml_enricher.py`: additive PubMed/SRA enrichment fields, deduplication, and fetch error tolerance.
@@ -3081,7 +3081,7 @@ Processed checkpoint fingerprints retain the existing payload and SHA-256 algori
 
 `meta_standards_converter.metadata.enrichment.MAGETabEvidenceResolver` accepts injected PubMed and INSDC clients. `AEConstructor` creates an operation-local SDRF handler, resolves its ordered sequencing run evidence, renders protocols and paths, validates IDF prefix rows, resolves missing publication details, and constructs the remaining IDF rows. Enriched run/publication evidence suppresses retrieval; array and generic handlers do not trigger SRA retrieval. The SRA fallback still catches only request and XML parsing errors. IDF and SDRF builders no longer create network clients. [Evidence resolver](../src/meta_standards_converter/metadata/enrichment.py), [orchestration](../src/meta_standards_converter/magetab/constructor.py).
 
-Converter-focused tests mirror `sources`, `miniml`, `magetab`, `metadata`, `expression`, `converters`, and `cli` boundaries under `tests/`. Cross-service observable contracts remain in `tests/test_public_e2e.py` and `tests/test_service_boundaries.py`.
+Converter-focused tests mirror `sources`, `miniml`, `magetab`, `metadata`, `expression`, `converters`, and `cli` boundaries under `tests/`. Cross-service observable contracts live in `tests/e2e/` and `tests/test_service_boundaries.py`; public import smoke checks live in `tests/test_public_api.py`.
 
 <a id="converter-test-contracts"></a>
 ## Converter end-to-end test contracts
@@ -3089,3 +3089,5 @@ Converter-focused tests mirror `sources`, `miniml`, `magetab`, `metadata`, `expr
 `tests/e2e/` independently exercises all seven converters and their CLI entrypoints against stored inputs and complete reviewed outputs. The corpus uses reduced public GEO evidence, an unmodified public MAGE-TAB study, and a four-cell six-gene public PBMC count slice, plus explicitly synthetic edge cases. [Fixture provenance and review](../tests/fixtures/README.md) explains exact comparisons, source checks, permitted execution normalization, offline boundaries and the known 5-prime/3-prime auto-detection discrepancy (strict xfail MSC-TEST-001).
 
 Run `.venv/bin/python -m pytest tests/e2e -q`; run `.venv/bin/python -m pytest -q` for the complete offline suite. Tests compare full artifacts, exercise injected collaborators, verify old checkpoint bytes survive a version change, and deliberately corrupt outputs to prove scientific drift is rejected. The project-local installed MSC version must match the checkout. No production code or consumer APIs are changed by the test audit.
+
+[Test audit and dispositions](../tests/AUDIT.md) records retained, strengthened, consolidated, relocated and removed checks. Documentation policy lives under `tests/policy/`, separately from workflow correctness. `tests/test_documented_imports.py` verifies executable MSC imports in Python examples.

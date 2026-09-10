@@ -286,4 +286,4 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
 
 - [MSC 6 service architecture](codebase.md#msc6-service-architecture): converter ownership, direct consumer injection, source evidence, version-specific checkpoints, and breaking Python API migration and current import examples. Keywords: MSC6, reader, discovery, metrics, checkpoint, package structure, MAGETabEvidenceResolver, lookup ordering, metadata.projection, custom projector imports.
 
-- [Converter test contracts](codebase.md#converter-test-contracts): seven converter and CLI end-to-end examples, stored expected outputs, fixture provenance, corruption checks, and known scientific defects. Keywords: golden, tests/e2e, PBMC3k, offline, MSC-TEST-001.
+- [Converter test contracts](codebase.md#converter-test-contracts): seven converter and CLI end-to-end examples, stored expected outputs, fixture provenance, corruption checks, [test audit dispositions](../tests/AUDIT.md), and known scientific defects. Keywords: golden, tests/e2e, PBMC3k, offline, MSC-TEST-001.

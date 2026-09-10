@@ -34,3 +34,10 @@ def test_comparison_rejects_scientific_and_contract_drift(change, workspace):
     if change != "diagnostic": a.write_h5ad(path)
     with pytest.raises(AssertionError):
         assert_expected(PBMC, "json2h5ad", workspace / "out", workspace)
+
+
+@pytest.mark.parametrize("actual,expected", [(True, 1), (1, 1.0), ("", None)])
+def test_comparison_preserves_json_scalar_type_and_missing_value_distinctions(actual, expected):
+    from tests.support.contracts import assert_contract_equal
+    with pytest.raises(AssertionError):
+        assert_contract_equal({"field": actual}, {"field": expected})

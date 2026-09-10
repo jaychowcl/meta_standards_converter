@@ -77,3 +77,10 @@ def block_external_side_effects(monkeypatch, request):
     if request.node.get_closest_marker("fake_process") is None:
         for name in ("Popen", "run", "call", "check_call", "check_output"):
             monkeypatch.setattr(subprocess, name, _blocked("child-process"))
+
+
+@pytest.fixture(autouse=True)
+def isolate_package_logging():
+    from tests.support.logging_state import preserve_package_logging
+    with preserve_package_logging():
+        yield

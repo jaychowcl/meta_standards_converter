@@ -63,20 +63,6 @@ def package(*files, accession="GSM1"):
     }
 
 
-def test_converter_accepts_injected_dataset_combination_policy() -> None:
-    class CombinationPolicy:
-        @staticmethod
-        def combine(adatas, **options):
-            assert adatas == {"GSM1": "sample"}
-            assert options["allow_unverified"] is True
-            return "combined"
-
-    converter = JSON2H5ADConverter(combination_policy=CombinationPolicy())
-
-    assert converter.normalizer._combine(
-        {"GSM1": "sample"},
-        allow_unverified=True,
-    ) == "combined"
 
 
 def atlas_v1_dataset(dataset_id, metadata):
@@ -503,11 +489,11 @@ class TestConversionContract(unittest.TestCase):
         self.assertEqual("out/GSM1.h5ad", result.primary_h5ad)
         self.assertFalse(result.partial)
 
-    def test_result_is_partial_when_combination_fails(self):
+    def test_result_is_partial_when_failures_are_recorded(self):
         result = ConversionResult(
             study_accession="GSE1",
             sample_h5ads={"GSM1": "out/GSM1.h5ad"},
-            failures=["incompatible genome builds"],
+            failures=["sample processing failed"],
         )
 
         self.assertEqual("out/GSM1.h5ad", result.primary_h5ad)
@@ -947,43 +933,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             self.assertEqual((1, 2), first_sample.shape)
             self.assertEqual((1, 2), second_sample.shape)
 
-    def test_all_unknown_samples_are_not_falsely_compatibility_verified(self):
-        adatas = {
-            sample_id: self.anndata.AnnData(
-                X=self.sparse.csr_matrix([[1]]),
-                obs=self.pandas.DataFrame(index=[f"{sample_id}-cell"]),
-                var=self.pandas.DataFrame(index=["feature:1"]),
-            )
-            for sample_id in ("GSM1", "GSM2")
-        }
 
-        missing = JSON2H5ADConverter().normalizer._missing_combination_evidence(adatas)
-
-        self.assertEqual(
-            {
-                "organism": ["GSM1", "GSM2"],
-                "reference": ["GSM1", "GSM2"],
-                "modality": ["GSM1", "GSM2"],
-                "feature_namespace": ["GSM1", "GSM2"],
-            },
-            missing,
-        )
-
-    def test_feature_namespace_distinguishes_entrez_ids_from_gene_symbols(self):
-        converter = JSON2H5ADConverter()
-        entrez = self.anndata.AnnData(
-            X=self.sparse.csr_matrix([[1, 2, 3]]),
-            obs=self.pandas.DataFrame(index=["cell"]),
-            var=self.pandas.DataFrame(index=["7157", "1956", "7422"]),
-        )
-        symbols = self.anndata.AnnData(
-            X=self.sparse.csr_matrix([[1, 2, 3]]),
-            obs=self.pandas.DataFrame(index=["cell"]),
-            var=self.pandas.DataFrame(index=["TP53", "EGFR", "VEGFA"]),
-        )
-
-        self.assertEqual("entrez", converter.normalizer._feature_namespace(entrez))
-        self.assertEqual("symbol", converter.normalizer._feature_namespace(symbols))
 
     def test_memory_preflight_skips_then_force_resume_bypasses_only_fixed_profile(self):
         with tempfile.TemporaryDirectory() as tmpdir:

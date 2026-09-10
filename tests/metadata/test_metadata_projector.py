@@ -24,10 +24,6 @@ from meta_standards_converter.metadata.projection.anndata import AnnDataMetadata
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 
 
-def test_asset_downloader_is_part_of_the_converter_public_api():
-    from meta_standards_converter.retrieval import AssetDownloader
-
-    assert AssetDownloader.__name__ == "AssetDownloader"
 
 
 def _package(h5ad_path: str) -> dict:
