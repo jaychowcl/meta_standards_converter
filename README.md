@@ -733,7 +733,7 @@ Applications can add organization-neutral metadata without subclassing the
 converter by passing metadata projectors:
 
 ```python
-from meta_standards_converter.converters import AnnDataMetadataProjection
+from meta_standards_converter.metadata.projection import AnnDataMetadataProjection
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 
 
@@ -774,8 +774,8 @@ projectors preserves the standard output.
 Create a private or organization-specific table without modifying MSC:
 
 ```python
-from meta_standards_converter.converters import TabularMetadataProjection
-from meta_standards_converter.converters.json2tabular import JSON2TSVConverter
+from meta_standards_converter.metadata.projection import TabularMetadataProjection
+from meta_standards_converter.converters import JSON2TSVConverter
 
 
 class Projector:

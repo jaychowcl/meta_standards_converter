@@ -3022,6 +3022,8 @@ evidence and checkpoint serialization remain unchanged.
 
 The converter API is a coordinated breaking release. CLI commands and serialized scientific contracts remain unchanged. Consumers import types from their owning packages; retired converter modules and lowercase classes are removed.
 
+Import converter classes from `meta_standards_converter.converters` and projection types such as `AnnDataMetadataProjection` and `TabularMetadataProjection` from `meta_standards_converter.metadata.projection`. The README's custom-projector examples use these public exports.
+
 ```text
 cli -> converters (one workflow per module)
           |-> sources -> request policy / retrieval -> providers
