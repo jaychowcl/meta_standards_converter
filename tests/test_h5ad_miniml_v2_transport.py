@@ -29,7 +29,7 @@ def test_h5ad_miniml_envelope_losslessly_transports_typed_packages(tmp_path) -> 
     package = _package()
     adata = anndata.AnnData(shape=(1, 1))
 
-    JSON2H5ADConverter()._attach_miniml(
+    JSON2H5ADConverter().normalizer.attach_miniml(
         adata,
         [package],
         source_json=str(tmp_path / "input.json"),

@@ -6,6 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from meta_standards_converter.magetab.writer import MAGETabWriter
 import os
 import re
 import sys
@@ -19,9 +20,9 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor, ProtocolRegistry  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_common import detect_ae_technology  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_idf_handlers import (  # noqa: E402
+from meta_standards_converter.magetab.constructor import AEConstructor, ProtocolRegistry  # noqa: E402
+from meta_standards_converter.magetab.technology import detect_ae_technology  # noqa: E402
+from meta_standards_converter.magetab.idf import (  # noqa: E402
     IDFConstructor,
     _ArrayPlatformIDFHandler,
     _BasePlatformIDFHandler,
@@ -33,26 +34,26 @@ from meta_standards_converter.ae_handlers.ae_idf_handlers import (  # noqa: E402
     _SingleCellSequencingPlatformIDFHandler,
     _SpatialSequencingPlatformIDFHandler,
 )
-from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
-from meta_standards_converter.harmonizers.harmonizers import Harmonizer  # noqa: E402
+from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
+from meta_standards_converter.metadata.ontology_mappings import Harmonizer  # noqa: E402
 from meta_standards_converter.miniml.geo_parser import GEOParser  # noqa: E402
 from meta_standards_converter.miniml import MINiMLCodec  # noqa: E402
 
 
 class TestAESharedConstructionState(unittest.TestCase):
     def test_constructor_reexports_neutral_protocol_registry(self):
-        from meta_standards_converter.ae_handlers.ae_common import ProtocolRegistry as SharedRegistry
+        from meta_standards_converter.magetab.technology import ProtocolRegistry as SharedRegistry
 
         self.assertIs(ProtocolRegistry, SharedRegistry)
 
     def test_sdrf_module_has_no_late_constructor_import(self):
         path = os.path.join(
-            SRC, "meta_standards_converter", "ae_handlers", "ae_sdrf_handlers.py"
+            SRC, "meta_standards_converter", "magetab", "sdrf", "constructor.py"
         )
         with open(path, encoding="utf-8") as handle:
             source = handle.read()
 
-        self.assertNotIn("ae_handlers.ae_constructor import", source)
+        self.assertNotIn("magetab.constructor import", source)
 
     def test_neutral_detector_remains_the_constructor_result(self):
         data = {"platform": [{"technology": "expression array"}]}
@@ -783,7 +784,7 @@ class TestIDFConstructor(unittest.TestCase):
         )
 
     def test_sequencing_platform_idf_handler_ignores_missing_and_malformed_runs(self):
-        with self.assertLogs("meta_standards_converter.ae_handlers.ae_idf_handlers", level="WARNING") as logs:
+        with self.assertLogs("meta_standards_converter.magetab.idf", level="WARNING") as logs:
             rows = IDFConstructor()._idf_platform_specific(
                 data={
                     "sample": [
@@ -814,7 +815,7 @@ class TestIDFConstructor(unittest.TestCase):
         self.assertTrue(any("NOT A RUN" in message for message in logs.output))
 
     def test_sequencing_platform_idf_handler_returns_empty_comment_rows_without_valid_runs(self):
-        with self.assertLogs("meta_standards_converter.ae_handlers.ae_idf_handlers", level="WARNING") as logs:
+        with self.assertLogs("meta_standards_converter.magetab.idf", level="WARNING") as logs:
             rows = IDFConstructor()._idf_platform_specific(
                 data={"sample": [{"sra_run": [{"run": None}, {"run": "ERRABC"}]}]},
                 technology_type="sequencing",
@@ -833,7 +834,7 @@ class TestIDFConstructor(unittest.TestCase):
         self.assertTrue(any("SequenceDataURI row skipped" in message for message in logs.output))
 
     def test_sequencing_platform_idf_handler_emits_empty_comment_rows_without_sra_runs(self):
-        with self.assertLogs("meta_standards_converter.ae_handlers.ae_idf_handlers", level="WARNING") as logs:
+        with self.assertLogs("meta_standards_converter.magetab.idf", level="WARNING") as logs:
             rows = IDFConstructor()._idf_platform_specific(
                 data={"sample": []},
                 technology_type="sequencing",
@@ -1003,7 +1004,7 @@ class TestIDFConstructor(unittest.TestCase):
         fetcher.pubmed_summary.assert_not_called()
 
     def test_idf_publications_warns_when_pubmed_lookup_has_no_pubmed_id(self):
-        with self.assertLogs("meta_standards_converter.ae_handlers.ae_idf_handlers", level="WARNING") as logs:
+        with self.assertLogs("meta_standards_converter.magetab.idf", level="WARNING") as logs:
             rows = IDFConstructor()._idf_publications({"series": {}})
 
         self.assertEqual(["PubMed ID"], self.row(rows, "PubMed ID"))
@@ -1721,7 +1722,7 @@ class TestAEConstructor(unittest.TestCase):
     def test_normalize_magetab_rows_still_accepts_legacy_mixed_payloads(self):
         sdrf = [["Source Name"], ["sample 1"]]
 
-        rows = AEConstructor()._normalize_magetab_rows(
+        rows = MAGETabWriter()._normalize_magetab_rows(
             ["MAGE-TAB Version, 1.1", "SDRF file", sdrf]
         )
 
@@ -1840,7 +1841,7 @@ class TestAEConstructor(unittest.TestCase):
         ]
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            idf_path = AEConstructor().magetab2file(magetab=magetab, out=tmpdir)
+            idf_path = MAGETabWriter().write(magetab=magetab, out=tmpdir)
             sdrf_path = os.path.join(tmpdir, "E-GEOD-1.sdrf.txt")
 
             with open(idf_path, encoding="utf-8") as handle:

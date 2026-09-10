@@ -17,8 +17,8 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
-from meta_standards_converter.harmonizers.harmonizers import Harmonizer  # noqa: E402
+from meta_standards_converter.magetab.idf import IDFConstructor  # noqa: E402
+from meta_standards_converter.metadata.ontology_mappings import Harmonizer  # noqa: E402
 from meta_standards_converter.sources.pubmed import PubmedWebFetcher  # noqa: E402
 
 

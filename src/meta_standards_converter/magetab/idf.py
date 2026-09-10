@@ -9,7 +9,7 @@
 '''
 Constructor class for ae MAGETAB idf
 '''
-from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+from meta_standards_converter.metadata.ontology_mappings import Harmonizer
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.sources.pubmed import PubmedWebFetcher
 

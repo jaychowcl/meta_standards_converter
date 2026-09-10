@@ -87,7 +87,7 @@ credentials, or tokens.
 - **Rationale:** Not documented.
 - **Consequences:** Metadata semantics are editable and format-independent. Raw row layout is not replayed; unsafe consolidation of heterogeneous SDRF document graphs is rejected.
 - **Affected components:** `AEParser`, `ae_model`, `MINiMLV1Migrator`, and `AEConstructor`.
-- **Evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py), [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py), and [`migration.py`](../src/meta_standards_converter/miniml/migration.py).
+- **Evidence:** [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py), [`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py), and [`migration.py`](../src/meta_standards_converter/miniml/migration.py).
 
 <a id="decision-expression-source-planning"></a>
 ### AD-003: Select expression assets before normalizing AnnData
@@ -107,7 +107,7 @@ credentials, or tokens.
 - **Rationale:** Not documented.
 - **Consequences:** Downstream adapters can add organization-specific fields without coupling them into MSC, while collisions, invalid vector lengths, and projector errors stop unsafe output unless tabular invalid-output mode is explicit.
 - **Affected components:** `AnnDataMetadataProjector`, `TabularMetadataProjector`, H5AD normalization, and delimited converters.
-- **Evidence:** [`json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py), [`json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py), and their projector tests.
+- **Evidence:** [`json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py), [`json2tabular.py`](../src/meta_standards_converter/converters/json2tsv.py), and their projector tests.
 
 <a id="decision-rootless-runner"></a>
 ### AD-005: Isolate raw processing behind a restricted rootless runner
@@ -189,7 +189,7 @@ with compatibility diagnostics. Unknown layout remains outside the semantic
 model and is reported rather than replayed.
 
 SDRF row order is scoped to each `SourceDocument`. The public
-`meta_standards_converter.ae_handlers.ae_model.render_miniml_assay_documents`
+`meta_standards_converter.magetab.semantics.render_miniml_assay_documents`
 returns one rendered table per document, preserving repeated Sample Name paths,
 protocol-application performer/date/comments, ontology companion columns,
 `Unit[type]`, factor qualifiers, and repeated headers. The legacy AE constructor
@@ -204,10 +204,10 @@ and `pre_hz_label` into typed characteristic annotations, and reports dropped
 source-layout evidence. No runtime workflow emits or consumes `hz_*` fields;
 harmonized values live only in typed annotation records.
 
-**Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py),
-[`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py),
+**Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py),
+[`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py),
 [`migration.py`](../src/meta_standards_converter/miniml/migration.py),
-and [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constructor.py).
+and [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py).
 
 <a id="component-relationships-and-data-flow"></a>
 ## Component relationships and data flow
@@ -267,7 +267,7 @@ database service, or plugin discovery mechanism is exposed.
   conversions. `AEConstructor` owns MAGE-TAB handler selection and writing;
   `AEParser` owns reverse mapping and round-trip extensions.
 <a id="orchestrator-json2h5ad-converter"></a>
-- `JSONDataOutputOrchestrator` is the public JSON-origin facade. Its manifest,
+- `JSON2TSVConverter`, `JSON2H5ADConverter`, and `JSON2OBSConverter` own the respective JSON-origin workflows. Its manifest,
   H5AD, and AnnData-metadata methods back the three thin CLI wrappers.
   `JSON2H5ADConverter` owns the expression conversion lifecycle beneath it.
   `SourcePlanner`, `AssetManifest`, and `AssetDownloader` resolve inputs;
@@ -462,15 +462,15 @@ They are documented implementation seams rather than additions to
 - **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
 
 <a id="api-json-data-output-orchestrator"></a>
-### `JSONDataOutputOrchestrator`
+### `JSON2OBSConverter`
 
-- **Signature:** `JSONDataOutputOrchestrator(tabular_projectors=None, h5ad_converter=None)` with `export_manifest`, `export_h5ad`, and `export_anndata_metadata`.
-- **Inputs:** parsed MINiML/Atlas JSON, output directory, format/component controls, and the H5AD asset/reference/pipeline options.
-- **Outputs:** `TabularConversionResult`, H5AD results, or `AnnDataMetadataExportResult`/`AnnDataMetadataBatchResult`.
-- **Failures:** source, validation, asset, pipeline, serialization, collision, and atomic-publication failures propagate or enter batch failures.
-- **Side effects:** publishes operation-owned artifact bundles and JSON result manifests.
-- **Support:** formal export and preferred Python interface for JSON-origin outputs.
-- **Source:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py).
+- **Signature:** `JSON2OBSConverter(h5ad_converter=None, components=None).convert(...)`.
+- **Inputs:** JSON source, output destination, optional per-sample sidecars, and H5AD conversion options.
+- **Outputs:** `AnnDataMetadataBatchResult` with aggregated observation tables and optional sample components.
+- **Failures:** Preserves group errors, overwrite refusal, and atomic publication/recovery errors.
+- **Side effects:** Converts selected assets, then publishes tables through the artifact bundle service.
+- **Support:** Public MSC 6 API. TSV manifest publication is owned by `JSON2TSVConverter.export_manifest`; H5AD publication by `JSON2H5ADConverter.convert`.
+- **Source:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py).
 
 <a id="api-anndata-metadata-export-result"></a>
 ### `AnnDataMetadataExportResult`
@@ -481,7 +481,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** construction performs no custom validation; the orchestrator validates and serializes its data.
 - **Side effects:** none.
 - **Support:** formal export and successful per-dataset result for `json2obs`.
-- **Source:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py).
+- **Source:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py).
 
 <a id="api-anndata-metadata-batch-result"></a>
 ### `AnnDataMetadataBatchResult`
@@ -492,7 +492,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** construction performs no custom validation; conversion failures are retained in `failures`.
 - **Side effects:** none.
 - **Support:** formal export and multi-dataset result for `json2obs`.
-- **Source:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py).
+- **Source:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py).
 
 <a id="api-json2tsv-converter"></a>
 ### `JSON2TSVConverter`
@@ -503,7 +503,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** invalid formats, source, projector, collision, fail-closed diagnostic, and protected-output errors propagate.
 - **Side effects:** creates the destination parent and writes TSV or CSV.
 - **Support:** formal export.
-- **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
 
 <a id="api-miniml-metadata-service"></a>
 ### `MINiMLMetadataProvider` and `MINiMLMetadataService`
@@ -519,7 +519,7 @@ They are documented implementation seams rather than additions to
   execute processes, or publish artifacts.
 - **Support:** both names are formal exports and the supported injection seam
   shared by tabular and AnnData output adapters.
-- **Source:** [`converters/miniml_metadata.py`](../src/meta_standards_converter/converters/miniml_metadata.py).
+- **Source:** [`metadata/interpretation.py`](../src/meta_standards_converter/metadata/interpretation.py).
 
 <a id="api-msc-metadata-projector"></a>
 ### `MSCMetadataProjector`
@@ -530,7 +530,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** converter validation applies to the returned projection.
 - **Side effects:** none.
 - **Support:** formal export and default projector when no explicit projectors are supplied.
-- **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
 
 <a id="api-tabular-conversion-result"></a>
 ### `TabularConversionResult`
@@ -541,7 +541,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** no custom validation.
 - **Side effects:** none.
 - **Support:** formal export; `partial` is its public property.
-- **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
 
 <a id="api-tabular-metadata-context"></a>
 ### `TabularMetadataContext`
@@ -552,7 +552,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** no custom validation.
 - **Side effects:** none.
 - **Support:** formal export; these are all current fields.
-- **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
 
 <a id="api-tabular-metadata-projection"></a>
 ### `TabularMetadataProjection`
@@ -563,7 +563,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** converter rejects wrong types/collisions; errors raise `TabularProjectionError` unless `allow_invalid=True`.
 - **Side effects:** none.
 - **Support:** formal export.
-- **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
 
 <a id="api-tabular-metadata-projector"></a>
 ### `TabularMetadataProjector`
@@ -574,7 +574,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** projector exceptions propagate; converter validates type and collisions.
 - **Side effects:** none required.
 - **Support:** formal export/injection extension point; not runtime-checkable.
-- **Source:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py).
+- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
 
 Supported production symbols are inventoried below by qualified name. Their
 signatures, inputs, outputs, exceptions, side effects, and decisive internal or
@@ -582,26 +582,26 @@ external calls are documented in the linked legacy callable sections that
 follow this canonical overview.
 
 - MAGE-TAB:
-  `meta_standards_converter.ae_handlers.ae_constructor.validate_platform_handler`,
-  `meta_standards_converter.ae_handlers.ae_constructor.ProtocolRegistry`,
-  `meta_standards_converter.ae_handlers.ae_constructor.AEConstructor`,
-  `meta_standards_converter.ae_handlers.ae_idf_handlers.IDFConstructor`,
-  `meta_standards_converter.ae_handlers.ae_model.MAGETabModelError`,
-  `meta_standards_converter.ae_handlers.ae_model.build_model`,
-  `meta_standards_converter.ae_handlers.ae_model.validate_model`,
-  `meta_standards_converter.ae_handlers.ae_model.render_model`,
-  `meta_standards_converter.ae_handlers.ae_model.overlay_core`,
-  `meta_standards_converter.ae_handlers.ae_parser.normalized_label`,
-  `meta_standards_converter.ae_handlers.ae_parser.AEParser`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFAttr`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFNode`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFEdge`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFPath`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.ColumnGroup`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFAudit`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFConstructor`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.normalized_extension`,
-  `meta_standards_converter.ae_handlers.ae_sdrf_handlers.classify_file`,
+  `meta_standards_converter.magetab.constructor.validate_platform_handler`,
+  `meta_standards_converter.magetab.constructor.ProtocolRegistry`,
+  `meta_standards_converter.magetab.constructor.AEConstructor`,
+  `meta_standards_converter.magetab.idf.IDFConstructor`,
+  `meta_standards_converter.magetab.semantics.MAGETabModelError`,
+  `meta_standards_converter.magetab.semantics.build_model`,
+  `meta_standards_converter.magetab.semantics.validate_model`,
+  `meta_standards_converter.magetab.semantics.render_model`,
+  `meta_standards_converter.magetab.semantics.overlay_core`,
+  `meta_standards_converter.magetab.parser.normalized_label`,
+  `meta_standards_converter.magetab.parser.AEParser`,
+  `meta_standards_converter.magetab.sdrf.constructor.SDRFAttr`,
+  `meta_standards_converter.magetab.sdrf.constructor.SDRFNode`,
+  `meta_standards_converter.magetab.sdrf.constructor.SDRFEdge`,
+  `meta_standards_converter.magetab.sdrf.constructor.SDRFPath`,
+  `meta_standards_converter.magetab.sdrf.constructor.ColumnGroup`,
+  `meta_standards_converter.magetab.sdrf.constructor.SDRFAudit`,
+  `meta_standards_converter.magetab.sdrf.constructor.SDRFConstructor`,
+  `meta_standards_converter.magetab.sdrf.constructor.normalized_extension`,
+  `meta_standards_converter.magetab.sdrf.constructor.classify_file`,
   `meta_standards_converter.sources.magetab.TextResource`,
   `meta_standards_converter.sources.magetab.MAGETabInput`, and
   `meta_standards_converter.sources.magetab.AEWebFetcher`.
@@ -623,49 +623,49 @@ follow this canonical overview.
   `meta_standards_converter.converters.geo2ae.GEO2AEConverter`,
   `meta_standards_converter.converters.geo2json.GEO2JSONConverter`,
   `meta_standards_converter.converters.json2ae.JSON2AEConverter`,
-  `meta_standards_converter.converters.json2h5ad.Asset`,
-  `meta_standards_converter.converters.json2h5ad.MetadataProjectionContext`,
-  `meta_standards_converter.converters.json2h5ad.AnnDataMetadataProjection`,
-  `meta_standards_converter.converters.json2h5ad.AnnDataProjectionError`,
-  `meta_standards_converter.converters.json2h5ad.AnnDataMetadataProjector`,
-  `meta_standards_converter.converters.json2h5ad.AssetManifest`,
-  `meta_standards_converter.converters.json2h5ad.AssetDownloader`,
-  `meta_standards_converter.converters.json2h5ad.PipelineRun`,
-  `meta_standards_converter.converters.json2h5ad.ConversionResult`,
-  `meta_standards_converter.converters.json2h5ad.BatchConversionResult`,
-  `meta_standards_converter.converters.json2h5ad.RawProcessingResult`,
-  `meta_standards_converter.converters.json2h5ad.ReferenceResolver`,
-  `meta_standards_converter.converters.json2h5ad.AnnotationConverter`,
-  `meta_standards_converter.converters.json2h5ad.NFCoreRunner`,
-  `meta_standards_converter.converters.json2h5ad.SourcePlanner`,
+  `meta_standards_converter.expression.assets.Asset`,
+  `meta_standards_converter.metadata.projection.anndata.MetadataProjectionContext`,
+  `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjection`,
+  `meta_standards_converter.metadata.projection.anndata.AnnDataProjectionError`,
+  `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjector`,
+  `meta_standards_converter.expression.assets.AssetManifest`,
+  `meta_standards_converter.expression.assets.AssetDownloader`,
+  `meta_standards_converter.expression.catalogue.PipelineRun`,
+  `meta_standards_converter.expression.catalogue.ConversionResult`,
+  `meta_standards_converter.expression.catalogue.BatchConversionResult`,
+  `meta_standards_converter.expression.catalogue.RawProcessingResult`,
+  `meta_standards_converter.expression.references.ReferenceResolver`,
+  `meta_standards_converter.expression.references.AnnotationConverter`,
+  `meta_standards_converter.expression.nfcore.NFCoreRunner`,
+  `meta_standards_converter.expression.planning.SourcePlanner`,
   `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter`, and
-  `meta_standards_converter.converters.json2h5ad.json2h5ad`.
+  `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter`.
 - Tabular and JSON source:
-  `meta_standards_converter.converters.json2tabular.TabularMetadataContext`,
-  `meta_standards_converter.converters.json2tabular.TabularMetadataProjection`,
-  `meta_standards_converter.converters.json2tabular.TabularMetadataProjector`,
-  `meta_standards_converter.converters.json2tabular.TabularConversionResult`,
-  `meta_standards_converter.converters.json2tabular.TabularProjectionError`,
-  `meta_standards_converter.converters.json2tabular.MSCMetadataProjector`,
-  `meta_standards_converter.converters.json2tabular.JSON2DelimitedConverter`,
-  `meta_standards_converter.converters.json2tabular.JSON2TSVConverter`,
-  `meta_standards_converter.converters.json2tabular.json2tsv`,
-  `meta_standards_converter.converters.json_outputs.JSONDataOutputOrchestrator`,
-  `meta_standards_converter.converters.json_outputs.AnnDataMetadataExportResult`,
-  `meta_standards_converter.converters.json_outputs.AnnDataMetadataBatchResult`,
+  `meta_standards_converter.metadata.projection.tabular.TabularMetadataContext`,
+  `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjection`,
+  `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjector`,
+  `meta_standards_converter.metadata.projection.tabular.TabularConversionResult`,
+  `meta_standards_converter.metadata.projection.tabular.TabularProjectionError`,
+  `meta_standards_converter.metadata.projection.tabular.MSCMetadataProjector`,
+  `meta_standards_converter.converters.json2tsv.JSON2DelimitedConverter`,
+  `meta_standards_converter.converters.json2tsv.JSON2TSVConverter`,
+  `meta_standards_converter.converters.json2tsv.JSON2TSVConverter`,
+  `meta_standards_converter.converters.json2obs.JSON2OBSConverter`,
+  `meta_standards_converter.expression.components.AnnDataMetadataExportResult`,
+  `meta_standards_converter.expression.components.AnnDataMetadataBatchResult`,
   `meta_standards_converter.sources.json.DatasetPackageGroup`,
   `meta_standards_converter.sources.json.SourceLoadResult`, and
   `meta_standards_converter.sources.json.JSONPackageSource`,
-  `meta_standards_converter.converters.miniml_metadata.MINiMLMetadataProvider`,
-  and `meta_standards_converter.converters.miniml_metadata.MINiMLMetadataService`.
+  `meta_standards_converter.metadata.interpretation.MINiMLMetadataProvider`,
+  and `meta_standards_converter.metadata.interpretation.MINiMLMetadataService`.
 - Fetch, parse, enrich, harmonize, and helpers:
   `meta_standards_converter.metadata.enrichment.MINiMLEnricher`,
   `meta_standards_converter.miniml.geo_parser.GEOParser`,
   `meta_standards_converter.miniml.geo_parser.RelatedSeriesParseResult`,
   `meta_standards_converter.sources.geo.GEOWebFetcher`,
-  `meta_standards_converter.harmonizers.geo2ols.GEO2OLS`,
-  `meta_standards_converter.harmonizers.harmonizers.Harmonizer`,
-  `meta_standards_converter.harmonizers.pubmed2ols.Pubmed2OLS`,
+  `meta_standards_converter.metadata.ontology_mappings.GEO2OLS`,
+  `meta_standards_converter.metadata.ontology_mappings.Harmonizer`,
+  `meta_standards_converter.metadata.ontology_mappings.Pubmed2OLS`,
   `meta_standards_converter.helpers.json_helper.JSONHandler`,
   `meta_standards_converter.helpers.request_helper.HostRequestCooldownDeferred`,
   `meta_standards_converter.helpers.request_helper.HostRequestGate`,
@@ -762,7 +762,7 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
 [enrich] -> construct -> [write]; return`.
 
-**Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/ae_handlers/ae_constructor.py), and [`ae_model.py`](../src/meta_standards_converter/ae_handlers/ae_model.py).
+**Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py), and [`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py).
 
 <a id="workflow-ae2json"></a>
 ### `ae2json`: MAGE-TAB to parsed JSON
@@ -782,7 +782,7 @@ local/HTTP/accession -> resolve IDF + SDRF(s) --failure--> exception
 
 Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved); [write]; return [package]`.
 
-**Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/sources/magetab.py), and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
+**Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/sources/magetab.py), and [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py).
 
 <a id="workflow-json2h5ad"></a>
 ### `json2h5ad`: MINiML/Atlas v1 JSON to H5AD
@@ -881,7 +881,7 @@ source -> load/group --failure--> exception
 
 Pseudocode: `load -> project -> validate -> order -> protect -> write selected delimiter + result JSON`.
 
-**Evidence:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py), [`sources/json.py`](../src/meta_standards_converter/sources/json.py), and [`cli/json2tsv.py`](../src/meta_standards_converter/cli/json2tsv.py).
+**Evidence:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py), [`sources/json.py`](../src/meta_standards_converter/sources/json.py), and [`cli/json2tsv.py`](../src/meta_standards_converter/cli/json2tsv.py).
 
 <a id="workflow-json2obs"></a>
 ### `json2obs`: MINiML/Atlas JSON to AnnData metadata
@@ -909,7 +909,7 @@ JSON + expression assets -> per-sample H5AD catalogue
 
 Pseudocode: `catalogue -> backed-read each sample metadata -> concatenate obs rows -> serialize selected components -> atomic publish -> result`.
 
-**Evidence:** [`converters/json_outputs.py`](../src/meta_standards_converter/converters/json_outputs.py) and [`cli/json2obs.py`](../src/meta_standards_converter/cli/json2obs.py).
+**Evidence:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py) and [`cli/json2obs.py`](../src/meta_standards_converter/cli/json2obs.py).
 
 <a id="extension-and-change-guidance"></a>
 ## Extension and change guidance
@@ -983,7 +983,7 @@ strict whole-document XSD validity.
 **Evidence:** [`tests/test_provider_reference_material.py`](../tests/test_provider_reference_material.py),
 [`sources/insdc.py`](../src/meta_standards_converter/sources/insdc.py),
 [`metadata/enrichment.py`](../src/meta_standards_converter/metadata/enrichment.py),
-and [`ae_handlers/ae_sdrf_handlers.py`](../src/meta_standards_converter/ae_handlers/ae_sdrf_handlers.py).
+and [`magetab/sdrf/constructor.py`](../src/meta_standards_converter/magetab/sdrf/constructor.py).
 
 <a id="project-purpose-and-layout"></a>
 ## Project Purpose And Layout
@@ -1378,7 +1378,7 @@ gzip-compressed genes trios.
 ## End-To-End json2tsv Manifest Flow
 
 ```text
-JSONDataOutputOrchestrator.export_manifest(source, outdir, output_format)
+JSON2TSVConverter.export_manifest(source, outdir, output_format)
   -> AtlasV1Reader/JSONPackageSource loads MINiML or harmonized Atlas v1 metadata
   -> group packages by study and visit every sample in source order
   -> build TabularMetadataContext with normalized MINiML sample metadata
@@ -1678,7 +1678,7 @@ The complete qualified model API is
 `meta_standards_converter.miniml.patches.iter_harmonization_patches`,
 `meta_standards_converter.miniml.patches.iter_harmonization_operations`,
 `meta_standards_converter.miniml.patches.harmonization_provenance_index`, and
-`meta_standards_converter.converters.harmonization_provenance.patch_provenance_columns`.
+`meta_standards_converter.metadata.provenance.patch_provenance_columns`.
 
 The typed semantic additions are
 `meta_standards_converter.miniml.model.NamedComment`,
@@ -1693,8 +1693,8 @@ The typed semantic additions are
 `meta_standards_converter.miniml.migration.MINiMLMigrationResult`,
 `meta_standards_converter.miniml.migration.MINiMLV1Migrator`,
 `meta_standards_converter.miniml.migration.MINiMLV2Migrator`,
-`meta_standards_converter.ae_handlers.ae_model.overlay_miniml_semantics`, and
-`meta_standards_converter.ae_handlers.ae_model.render_miniml_assay_documents`, and
+`meta_standards_converter.magetab.semantics.overlay_miniml_semantics`, and
+`meta_standards_converter.magetab.semantics.render_miniml_assay_documents`, and
 `meta_standards_converter.cli.miniml_migrate.main`.
 
 MAGE-TAB parsing folds its parser state immediately into native protocols,
@@ -1706,7 +1706,7 @@ repeated SDRF columns from the model, so the supported round trip is semantic.
 **Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
 [`codec.py`](../src/meta_standards_converter/miniml/codec.py),
 [`geo_parser.py`](../src/meta_standards_converter/miniml/geo_parser.py),
-and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
+and [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py).
 
 <a id="workflow-details"></a>
 ## Workflow Details
@@ -1982,7 +1982,7 @@ This section lists public and semi-public callables used by tests or by package 
 - Returns `1` if any accession failed, otherwise `0`.
 
 <a id="converter"></a>
-### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, `converters/ae2json.py`, `converters/json2h5ad.py`, and `converters/json2tabular.py`
+### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, `converters/ae2json.py`, `converters/json2h5ad.py`, and `converters/json2tsv.py`
 
 `class geo2ae(JSONHandler)`
 
@@ -2175,7 +2175,7 @@ output is unchanged.
 - Remote metadata is fetched as text and never persisted by the fetcher.
 
 <a id="ae-parser"></a>
-### `ae_handlers/ae_parser.py`
+### `magetab/parser.py`
 
 `class AEParser`
 
@@ -2205,7 +2205,7 @@ round trips must retain the original IDF/SDRF source files identified by the
 package's source-document records.
 
 <a id="typed-mage-tab-model"></a>
-### `ae_handlers/ae_model.py`
+### `magetab/semantics.py`
 
 - `MAGETabModelError` is the public validation failure and
   `validate_model(model)` enforces schema version 1 collections, unique SDRF
@@ -2297,7 +2297,7 @@ package's source-document records.
 - `_attach_namespaced_root_attributes(root, package)` copies non-version root attributes into packages.
 
 <a id="ae-idf-handlers"></a>
-### `ae_handlers/ae_idf_handlers.py`
+### `magetab/idf.py`
 
 `class IDFConstructor`
 
@@ -2372,7 +2372,7 @@ Current caveats:
 - `_idf_term_source()` runs before comment rows are moved, so current term-source inference is based on the pre-normalized IDF rows.
 
 <a id="ae-constructor"></a>
-### `ae_handlers/ae_constructor.py`
+### `magetab/constructor.py`
 
 `class ProtocolRegistry`
 
@@ -2426,7 +2426,7 @@ Other helpers:
 - `_write_tsv()` writes `None` as blank cells.
 
 <a id="sdrf-handlers"></a>
-### `ae_handlers/ae_sdrf_handlers.py`
+### `magetab/sdrf/constructor.py`
 
 <a id="sdrf-dataclasses"></a>
 #### SDRF dataclasses
@@ -2517,7 +2517,7 @@ Other helpers:
 - No greedy fallback comments are emitted at runtime.
 
 <a id="harmonizers"></a>
-### `harmonizers/geo2ols.py`
+### `metadata/ontology_mappings.py`
 
 `class GEO2OLS`
 
@@ -2531,7 +2531,7 @@ Other helpers:
 - Raises `ValueError` for blank protocol type.
 - Returns `[protocol_type, None, None]` for unknown non-blank protocol labels, allowing custom protocol labels to survive in IDF output.
 
-### `harmonizers/pubmed2ols.py`
+### `metadata/ontology_mappings.py`
 
 `class Pubmed2OLS`
 
@@ -2545,7 +2545,7 @@ Other helpers:
 - Maps common PubMed statuses such as `ppublish`, `epublish`, `pubmed`, `medline`, and `retracted`.
 - Returns `[original_status_label, None, None]` for unknown non-blank statuses.
 
-### `harmonizers/harmonizers.py`
+### `metadata/ontology_mappings.py`
 
 `class Harmonizer(Pubmed2OLS, GEO2OLS)`
 
@@ -2753,11 +2753,11 @@ annotations pass through json2ae/ae2json, json2tsv, json2h5ad, and json2obs as
 typed annotations without format-specific ontology code.
 
 Importable implementation symbols are
-`meta_standards_converter.converters.harmonization_overrides.HarmonizationSelection`,
-`meta_standards_converter.converters.harmonization_overrides.HarmonizationResolution`,
-`meta_standards_converter.converters.harmonization_overrides.resolve_harmonization_overrides`,
+`meta_standards_converter.metadata.harmonization_overrides.HarmonizationSelection`,
+`meta_standards_converter.metadata.harmonization_overrides.HarmonizationResolution`,
+`meta_standards_converter.metadata.harmonization_overrides.resolve_harmonization_overrides`,
 and
-`meta_standards_converter.converters.harmonization_overrides.validate_harmonization_overrides`.
+`meta_standards_converter.metadata.harmonization_overrides.validate_harmonization_overrides`.
 
 <a id="test-plan"></a>
 ## Test Plan
@@ -2839,7 +2839,7 @@ Then retrieve representative anchors with the commands in `docs/index.md` to con
 <a id="durable-artifact-publication"></a>
 ## Durable artifact publication
 
-`JSONDataOutputOrchestrator` publishes related tabular and AnnData metadata
+`JSON2OBSConverter` publishes related tabular and AnnData metadata
 artifacts with `DurableArtifactBundlePublisher`. Each commit copies staged files
 into a new immutable generation, records size and SHA-256 values in a schema-1.0
 generation manifest, fsyncs every file and directory, refreshes direct-file
@@ -2856,7 +2856,7 @@ deliberately retained. The public surface also exports
 the additive `bundle_pointer_path` field without changing H5AD metadata schema
 1.0 or Atlas v1 inputs. Qualified public symbols are
 `meta_standards_converter.converters.DatasetBundleRecoveryError` and
-`meta_standards_converter.converters.json2h5ad.DatasetBundleRecoveryError`,
+`meta_standards_converter.expression.catalogue.DatasetBundleRecoveryError`,
 `meta_standards_converter.artifact_bundle.ArtifactRecoveryError`,
 `meta_standards_converter.artifact_bundle.DurableArtifactBundlePublisher`,
 `meta_standards_converter.artifact_bundle.PublishedArtifactBundle`, and
@@ -2871,18 +2871,18 @@ two interfaces.
 <a id="neutral-ae-construction-state"></a>
 ## Neutral AE construction state
 
-`ae_handlers/ae_common.py` owns `ProtocolRegistry`, normalized file-extension
+`magetab/technology.py` owns `ProtocolRegistry`, normalized file-extension
 classification, array-file detection, and platform technology selection. Both
 `AEConstructor` and `SDRFConstructor` import these contracts in one direction.
 This removes their prior mutual import and method-local constructor imports
 without changing handler keys, protocol references, technology decisions, or
 the public `ae_constructor.ProtocolRegistry` import path.
 Importable symbols are
-`meta_standards_converter.ae_handlers.ae_common.ProtocolRegistry`,
-`meta_standards_converter.ae_handlers.ae_common.detect_ae_technology`,
-`meta_standards_converter.ae_handlers.ae_common.has_array_files`, and
-`meta_standards_converter.ae_handlers.ae_common.normalized_extension`, and
-`meta_standards_converter.ae_handlers.ae_common.series_identity`. Study
+`meta_standards_converter.magetab.technology.ProtocolRegistry`,
+`meta_standards_converter.magetab.technology.detect_ae_technology`,
+`meta_standards_converter.magetab.technology.has_array_files`, and
+`meta_standards_converter.magetab.technology.normalized_extension`, and
+`meta_standards_converter.magetab.technology.series_identity`. Study
 identity follows the Python model: a usable `series.iid` takes precedence over
 the first usable accession, and generated MAGE-TAB protocol identifiers use the
 same value. GEO-shaped `GSE` identities remain numeric-only.
@@ -3037,3 +3037,61 @@ evidence and checkpoint serialization remain unchanged.
 - `meta_standards_converter.sources.contracts.request_metrics`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L29).
 - `meta_standards_converter.sources.geo.RelatedSeriesParseResult`: [geo.py](../src/meta_standards_converter/sources/geo.py#L210).
 - `meta_standards_converter.sources.geo.GEOSource`: [geo.py](../src/meta_standards_converter/sources/geo.py#L235).
+
+<a id="msc6-service-architecture"></a>
+## MSC 6 service architecture and migration
+
+The converter API is a coordinated breaking release. CLI commands and serialized scientific contracts remain unchanged. Consumers import types from their owning packages; retired converter modules and lowercase classes are removed.
+
+```text
+cli -> converters (one workflow per module)
+          |-> sources -> request policy / retrieval -> providers
+          |-> miniml.geo_parser -> typed MINiML packages
+          |-> metadata.enrichment -> injected PubMed / INSDC clients
+          |-> magetab.constructor -> SDRF handlers / IDF -> writer
+          |-> sources.json -> dataset groups -> metadata.projection.tabular
+          `-> expression.planning -> selected assets
+                -> injected reader / nfcore -> normalization -> projection
+                -> version-specific checkpoints -> catalogue publication
+json2obs -> JSON2H5ADConverter -> AnnDataComponentExporter -> artifact bundle
+```
+
+`SourcePlanner` retains precedence and selection policy; inject `AssetDiscovery` to supply candidates. `ProcessedAssetReader.read(asset, orientation=..., localize=...)` owns selected-asset reading, with scientific imports delayed until use. `JSON2H5ADConverter` injects readers and projectors, delegates metadata normalization to `AnnDataNormalizer`, projection execution to `AnnDataProjectorRunner`, processed state to `ProcessedCheckpointStore`, and sample catalogue publication to `CataloguePublisher`. Observation export aggregates rows without integrating sample matrices.
+
+`GEOParser` is network-free. `GEOSource` separately retrieves original XML and collects related studies. `INSDCClient.fetch_sra_xml` and `fetch_ena_file_report` permit checkpoint-aware interception. Public cumulative `RequestMetrics` snapshots replace nested requester traversal. ThematicAtlases saves original source evidence before parsing and retains incremental enrichment checkpoints; its checkpoint path does not gain ordinary converter parent-publication inheritance.
+
+Protocol registries, SDRF handler audits and caches remain scoped to each build. Shared request gates and retrieval caches retain their existing ownership. Technology inheritance remains intact. MINiML models, ontology policy, Atlas lifecycle, runtime contracts, XML safety, and artifact publication retain their existing responsibilities.
+
+Processed checkpoint fingerprints retain the existing payload and SHA-256 algorithm. Destinations now include a hash of the MSC package version. A different version cannot reuse or overwrite historical processed checkpoints. Stored Atlas envelopes are unchanged; production resume still requires a supported, validated transition or a new run. No live cutover is performed by this refactor.
+
+### Owning service symbol reference
+
+- `meta_standards_converter.expression.components.AnnDataComponentExporter`: `AnnDataComponentExporter()`; [source](../src/meta_standards_converter/expression/components.py).
+- `meta_standards_converter.expression.normalization.AnnDataNormalizer`: `AnnDataNormalizer(self, *, metadata_service, planner, localize, package_version, combination_policy=None)`; [source](../src/meta_standards_converter/expression/normalization.py).
+- `meta_standards_converter.metadata.projection.anndata.AnnDataProjectorRunner`: `AnnDataProjectorRunner(self, projectors=())`; [source](../src/meta_standards_converter/metadata/projection/anndata.py).
+- `meta_standards_converter.expression.planning.AssetDiscovery`: `AssetDiscovery()`; [source](../src/meta_standards_converter/expression/planning.py).
+- `meta_standards_converter.expression.readers.AssetReader`: `AssetReader()`; [source](../src/meta_standards_converter/expression/readers.py).
+- `meta_standards_converter.expression.catalogue.CataloguePublisher`: `CataloguePublisher()`; [source](../src/meta_standards_converter/expression/catalogue.py).
+- `meta_standards_converter.magetab.sdrf.model.ColumnGroup`: `ColumnGroup()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
+- `meta_standards_converter.expression.planning.DefaultAssetDiscovery`: `DefaultAssetDiscovery()`; [source](../src/meta_standards_converter/expression/planning.py).
+- `meta_standards_converter.sources.contracts.GEOXMLParser`: `GEOXMLParser()`; [source](../src/meta_standards_converter/sources/contracts.py).
+- `meta_standards_converter.sources.contracts.MAGETabSourceResolver`: `MAGETabSourceResolver()`; [source](../src/meta_standards_converter/sources/contracts.py).
+- `meta_standards_converter.magetab.writer.MAGETabWriter`: `MAGETabWriter()`; [source](../src/meta_standards_converter/magetab/writer.py).
+- `meta_standards_converter.metadata.enrichment.MetadataEnrichment`: `MetadataEnrichment()`; [source](../src/meta_standards_converter/metadata/enrichment.py).
+- `meta_standards_converter.sources.contracts.PackageLoader`: `PackageLoader()`; [source](../src/meta_standards_converter/sources/contracts.py).
+- `meta_standards_converter.expression.readers.ProcessedAssetReader`: `ProcessedAssetReader()`; [source](../src/meta_standards_converter/expression/readers.py).
+- `meta_standards_converter.expression.checkpoints.ProcessedCheckpointStore`: `ProcessedCheckpointStore(self, package_version)`; [source](../src/meta_standards_converter/expression/checkpoints.py).
+- `meta_standards_converter.magetab.protocols.ProtocolRegistry`: `ProtocolRegistry(self, series_accession: str)`; [source](../src/meta_standards_converter/magetab/protocols.py).
+- `meta_standards_converter.magetab.sdrf.model.SDRFAttr`: `SDRFAttr()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
+- `meta_standards_converter.magetab.sdrf.model.SDRFAudit`: `SDRFAudit()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
+- `meta_standards_converter.magetab.sdrf.model.SDRFEdge`: `SDRFEdge()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
+- `meta_standards_converter.magetab.sdrf.model.SDRFNode`: `SDRFNode()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
+- `meta_standards_converter.magetab.sdrf.model.SDRFPath`: `SDRFPath()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
+- `meta_standards_converter.magetab.sdrf.renderer.SDRFRenderer`: `SDRFRenderer()`; [source](../src/meta_standards_converter/magetab/sdrf/renderer.py).
+- `meta_standards_converter.expression.assets.classify_asset`: `classify_asset(path: str | None)`; [source](../src/meta_standards_converter/expression/assets.py).
+- `meta_standards_converter.magetab.sdrf.handlers.base.classify_file`: `classify_file(path: str)`; [source](../src/meta_standards_converter/magetab/sdrf/handlers/base.py).
+- `meta_standards_converter.expression.readers.read_h5ad`: `read_h5ad(anndata, path: str)`; [source](../src/meta_standards_converter/expression/readers.py).
+- `meta_standards_converter.expression.readers.scanpy_module`: `scanpy_module()`; [source](../src/meta_standards_converter/expression/readers.py).
+- `meta_standards_converter.expression.components.scientific_modules`: `scientific_modules()`; [source](../src/meta_standards_converter/expression/components.py).
+- `meta_standards_converter.expression.readers.scientific_modules`: `scientific_modules()`; [source](../src/meta_standards_converter/expression/readers.py).
+- `meta_standards_converter.expression.readers.underlying_suffix`: `underlying_suffix(path: str)`; [source](../src/meta_standards_converter/expression/readers.py).

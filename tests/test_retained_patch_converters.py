@@ -17,7 +17,7 @@ from scipy import sparse
 
 from meta_standards_converter.converters.json2ae import JSON2AEConverter
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
-from meta_standards_converter.converters.json2tabular import JSON2TSVConverter
+from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
 from meta_standards_converter.miniml import (
     MINiMLHarmonizationPatch,
     apply_miniml_harmonization_patch,

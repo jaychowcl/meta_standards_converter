@@ -14,11 +14,11 @@ import json
 import re
 from typing import Any, Mapping, Protocol, Sequence
 
-from meta_standards_converter.converters.mage_tab_projection import (
+from meta_standards_converter.metadata.projection.assay import (
     _material_types_for_sample,
     _protocols_for_sample,
 )
-from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+from meta_standards_converter.metadata.ontology_mappings import Harmonizer
 from meta_standards_converter.miniml import harmonized_value_mappings
 
 

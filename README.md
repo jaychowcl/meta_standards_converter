@@ -574,7 +574,7 @@ json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
 | `-q`, `--quiet` | Emit ERROR logs only. |
 | `--log-file` `LOG_FILE` | Write detailed logs to a file. |
 
-Programmatic callers use `JSONDataOutputOrchestrator`; its manifest, H5AD, and
+Programmatic callers use `JSON2OBSConverter`; its manifest, H5AD, and
 AnnData-metadata methods return typed result objects. Injected
 `TabularMetadataProjector` objects can replace the default manifest columns.
 Related manifest and AnnData-metadata files are published into immutable,

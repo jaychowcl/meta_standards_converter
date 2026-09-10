@@ -18,17 +18,15 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.ae_handlers.ae_constructor import ProtocolRegistry  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_sdrf_handlers import (  # noqa: E402
-    SDRFConstructor,
-    _BulkSequencingSDRFHandler,
-    _DropletSingleCellSequencingSDRFHandler,
-    _PlateSingleCellSequencingSDRFHandler,
-    _SequencingSDRFHandler,
-    _TenXV2DropletSingleCellSequencingSDRFHandler,
-    _TenXV3DropletSingleCellSequencingSDRFHandler,
-    classify_file,
-)
+from meta_standards_converter.magetab.constructor import ProtocolRegistry  # noqa: E402
+from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
+from meta_standards_converter.magetab.sdrf.handlers.sequencing import _BulkSequencingSDRFHandler
+from meta_standards_converter.magetab.sdrf.handlers.single_cell import _DropletSingleCellSequencingSDRFHandler
+from meta_standards_converter.magetab.sdrf.handlers.single_cell import _PlateSingleCellSequencingSDRFHandler
+from meta_standards_converter.magetab.sdrf.handlers.sequencing import _SequencingSDRFHandler
+from meta_standards_converter.magetab.sdrf.handlers.single_cell import _TenXV2DropletSingleCellSequencingSDRFHandler
+from meta_standards_converter.magetab.sdrf.handlers.single_cell import _TenXV3DropletSingleCellSequencingSDRFHandler
+from meta_standards_converter.magetab.sdrf.handlers.base import classify_file
 from meta_standards_converter.miniml.geo_parser import GEOParser  # noqa: E402
 from meta_standards_converter.sources.insdc import INSDCWebfetcher  # noqa: E402
 

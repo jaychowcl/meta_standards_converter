@@ -6,6 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from meta_standards_converter.magetab.writer import MAGETabWriter
 """
 Converter for GEO XML to ArrayExpress MAGETAB format.
 """
@@ -15,7 +16,7 @@ import logging
 from meta_standards_converter.sources.geo import GEOWebFetcher, GEOSource
 from meta_standards_converter.miniml.geo_parser import GEOParser
 
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
+from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.runtime_contracts import (
@@ -92,11 +93,11 @@ class GEO2AEConverter(JSONHandler):
             )
          magetab_dfs.append(magetab)
 
-      #write to outfile if given 
+      #write to outfile if given
       if out:
          for index, magetab in enumerate(magetab_dfs, start=1):
             logger.info("%s: writing MAGE-TAB package %d to %s", gse, index, out)
-            constructor.magetab2file(magetab=magetab, out = out)
-         
+            MAGETabWriter().write(magetab=magetab, out = out)
+
       logger.info("%s: conversion produced %d MAGE-TAB package(s)", gse, len(magetab_dfs))
       return magetab_dfs

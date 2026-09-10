@@ -20,7 +20,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
+from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 from meta_standards_converter.sources.insdc import INSDCWebfetcher  # noqa: E402
 
 

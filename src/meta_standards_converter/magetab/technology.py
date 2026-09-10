@@ -6,82 +6,18 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Neutral protocol state and technology detection shared by AE constructors."""
-
 from __future__ import annotations
 
+from meta_standards_converter.magetab.protocols import ProtocolRegistry
 import os
+
 import re
+
 from urllib.parse import urlparse
 
-from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+from meta_standards_converter.metadata.ontology_mappings import Harmonizer
+
 from meta_standards_converter.helpers.json_helper import JSONHandler
-
-
-class ProtocolRegistry:
-    """Allocate stable protocol references shared by IDF and SDRF construction."""
-
-    LABEL_BY_KIND = {
-        "manufacture": "Manufacture-Protocol",
-        "treatment": "Treatment-Protocol",
-        "growth": "Growth-Protocol",
-        "extraction": "Extract-Protocol",
-        "extract": "Extract-Protocol",
-        "library construction": "Library-Construction-Protocol",
-        "labeling": "Label-Protocol",
-        "label": "Label-Protocol",
-        "hybridization": "Hybridization-Protocol",
-        "scan": "Scan-Protocol",
-        "data processing": "Data-Processing",
-        "sample collection": "Sample-Collection-Protocol",
-        "nucleic acid sequencing": "Nucleic-Acid-Sequencing-Protocol",
-    }
-
-    def __init__(self, series_accession: str):
-        self.series_accession = series_accession
-        self.by_key: dict[tuple[str, str], dict] = {}
-
-    def get_ref(self, kind: str, text: str | None, label: str | None = None) -> str | None:
-        text = self.clean(text)
-        if not text:
-            return None
-        label = label or self.LABEL_BY_KIND.get(kind, kind)
-        key = (kind, text)
-        if key not in self.by_key:
-            self.by_key[key] = {
-                "ref": f"P-{self.series_accession}-{len(self.by_key) + 1}",
-                "kind": kind,
-                "label": label,
-                "text": text,
-            }
-        return self.by_key[key]["ref"]
-
-    def ensure_required(self, kind: str, label: str | None = None) -> str:
-        label = label or self.LABEL_BY_KIND.get(kind, kind)
-        required_type = Harmonizer().geoprotocols2efo(protocol_type=label)[0]
-        for record in self.records():
-            record_type = Harmonizer().geoprotocols2efo(protocol_type=record["label"])[0]
-            if record_type == required_type:
-                return record["ref"]
-        key = (kind, "")
-        if key not in self.by_key:
-            self.by_key[key] = {
-                "ref": f"P-{self.series_accession}-{len(self.by_key) + 1}",
-                "kind": kind,
-                "label": label,
-                "text": "",
-                "required": True,
-            }
-        return self.by_key[key]["ref"]
-
-    def records(self) -> list[dict]:
-        return list(self.by_key.values())
-
-    @staticmethod
-    def clean(value):
-        if value is None:
-            return None
-        return " ".join(str(value).replace("\t", " ").replace("\n", " ").split())
 
 
 def normalized_extension(path: str) -> str:
@@ -92,7 +28,6 @@ def normalized_extension(path: str) -> str:
             basename = basename[: -len(suffix)]
             break
     return os.path.splitext(basename)[1]
-
 
 def has_array_files(data: dict) -> bool:
     handler = JSONHandler()
@@ -106,7 +41,6 @@ def has_array_files(data: dict) -> bool:
         values.extend(x for x in handler._from_path(data, path) if x)
     extensions = (".cel", ".gpr", ".idat", ".chp", ".txt", ".tif", ".tiff", ".exp", ".rpt", ".cab")
     return any(normalized_extension(value) in extensions for value in values)
-
 
 def series_identity(data: dict) -> str | None:
     """Return the model-authoritative series iid, with accession fallback."""
@@ -130,19 +64,16 @@ def series_identity(data: dict) -> str | None:
                 return validated
     return None
 
-
 def _validated_study_identity(value: str) -> str | None:
     upper = value.upper()
     if upper.startswith("GSE"):
         return upper if upper[3:].isdigit() else None
     return value
 
-
 def _has_tenx_version(text: str, version: str) -> bool:
     if "10x" not in text and "chromium" not in text:
         return False
     return re.search(rf"(?<![a-z0-9])v{version}(?![a-z0-9])", text) is not None
-
 
 def detect_ae_technology(data: dict) -> str:
     """Select the shared platform-handler key without importing either constructor."""
@@ -183,12 +114,3 @@ def detect_ae_technology(data: dict) -> str:
     if "array" in platform_tech or has_array_files(data):
         return "array"
     return "generic"
-
-
-__all__ = [
-    "ProtocolRegistry",
-    "detect_ae_technology",
-    "has_array_files",
-    "normalized_extension",
-    "series_identity",
-]

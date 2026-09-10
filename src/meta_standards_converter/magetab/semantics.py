@@ -13,7 +13,7 @@ from __future__ import annotations
 import copy
 import re
 
-from meta_standards_converter.converters.harmonization_provenance import (
+from meta_standards_converter.metadata.provenance import (
     patch_provenance_columns,
 )
 

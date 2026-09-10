@@ -12,7 +12,7 @@ Fetches and parses PubMed summary metadata.
 
 import xml.etree.ElementTree as ET
 
-from meta_standards_converter.harmonizers.harmonizers import Harmonizer
+from meta_standards_converter.metadata.ontology_mappings import Harmonizer
 from meta_standards_converter.helpers.request_helper import (
     NCBIApplicationIdentity,
     RateLimitedRequester,

@@ -6,23 +6,24 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Public orchestration for JSON-origin manifest and AnnData outputs."""
-
 from __future__ import annotations
 
 import json
+
 import tempfile
+
 from dataclasses import dataclass, replace
+
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+
+from typing import Any, Mapping
 
 from meta_standards_converter.artifact_bundle import (
     DurableArtifactBundlePublisher,
     PublishedArtifactBundle,
 )
 
-from .json2h5ad import BatchConversionResult, ConversionResult, JSON2H5ADConverter
-from .json2tabular import JSON2TSVConverter, TabularMetadataProjector
+from meta_standards_converter.expression.catalogue import ConversionResult
 
 
 @dataclass
@@ -77,7 +78,6 @@ class AnnDataMetadataExportResult:
             "failures": list(self.failures),
         }
 
-
 @dataclass
 class AnnDataMetadataBatchResult:
     conversions: dict[str, AnnDataMetadataExportResult]
@@ -100,120 +100,15 @@ class AnnDataMetadataBatchResult:
         }
 
 
-class JSONDataOutputOrchestrator:
-    """Coordinate manifest, H5AD, and AnnData-component JSON workflows."""
+def scientific_modules():
+    import anndata
+    import numpy
+    import pandas
+    from scipy import sparse
+    return anndata, numpy, pandas, sparse
 
-    def __init__(
-        self,
-        *,
-        tabular_projectors: Sequence[TabularMetadataProjector] | None = None,
-        h5ad_converter: JSON2H5ADConverter | None = None,
-    ) -> None:
-        self.tabular_projectors = tabular_projectors
-        self.h5ad_converter = h5ad_converter or JSON2H5ADConverter()
-
-    def export_manifest(
-        self,
-        source: str | Path,
-        *,
-        outdir: str | Path,
-        output_format: str = "tsv",
-        allow_invalid: bool = False,
-        overwrite: bool = False,
-        use_harmonization_overrides: bool = False,
-    ):
-        output_dir = Path(outdir)
-        output_dir.parent.mkdir(parents=True, exist_ok=True)
-        suffix = ".tsv" if output_format == "tsv" else ".csv"
-        table = output_dir / f"{Path(source).stem}{suffix}"
-        manifest = output_dir / f"{Path(source).stem}.json2tsv.json"
-        existing = [path for path in (table, manifest) if path.exists()]
-        if existing and not overwrite:
-            raise FileExistsError(f"Output already exists: {existing[0]}")
-        converter = JSON2TSVConverter(
-            metadata_projectors=self.tabular_projectors,
-            output_format=output_format,
-        )
-        with tempfile.TemporaryDirectory(
-            prefix=f".{output_dir.name}.manifest-", dir=output_dir.parent
-        ) as temporary:
-            staged_table = Path(temporary) / table.name
-            staged_manifest = Path(temporary) / manifest.name
-            converted = converter.convert_source(
-                source,
-                staged_table,
-                allow_invalid=allow_invalid,
-                overwrite=True,
-                use_harmonization_overrides=use_harmonization_overrides,
-            )
-            result = replace(
-                converted,
-                output_path=str(table),
-                manifest_path=str(manifest),
-            )
-            staged_manifest.write_text(
-                json.dumps(result.to_dict(), indent=2, ensure_ascii=False, sort_keys=True)
-                + "\n",
-                encoding="utf-8",
-            )
-            published = _publish_bundle(
-                {"table": staged_table, "manifest": staged_manifest},
-                {"table": table, "manifest": manifest},
-                overwrite=overwrite,
-            )
-        return replace(result, bundle_pointer_path=str(published.pointer_path))
-
-    def export_h5ad(self, source: str | Path, *, outdir: str | Path, **options):
-        return self.h5ad_converter.convert(str(source), out=str(outdir), **options)
-
-    def export_anndata_metadata(
-        self,
-        source: str | Path,
-        *,
-        outdir: str | Path,
-        include_var: bool = False,
-        include_uns: bool = False,
-        overwrite: bool = False,
-        **options,
-    ) -> AnnDataMetadataExportResult | AnnDataMetadataBatchResult:
-        destination = Path(outdir)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(
-            prefix=f".{destination.name}.json2obs-",
-            dir=destination.parent,
-        ) as temporary:
-            assembly_root = Path(temporary) / "assembly"
-            converted = self.h5ad_converter.convert(
-                str(source),
-                out=str(assembly_root),
-                overwrite=True,
-                **options,
-            )
-            if isinstance(converted, BatchConversionResult):
-                results: dict[str, AnnDataMetadataExportResult] = {}
-                for dataset_id, conversion in converted.conversions.items():
-                    target = destination / dataset_id
-                    results[dataset_id] = self._export_components(
-                        conversion,
-                        target,
-                        include_var=include_var,
-                        include_uns=include_uns,
-                        overwrite=overwrite,
-                    )
-                return AnnDataMetadataBatchResult(
-                    conversions=results,
-                    failures=tuple(converted.failures),
-                    warnings=tuple(converted.warnings),
-                )
-            return self._export_components(
-                converted,
-                destination,
-                include_var=include_var,
-                include_uns=include_uns,
-                overwrite=overwrite,
-            )
-
-    def _export_components(
+class AnnDataComponentExporter:
+    def export(
         self,
         conversion: ConversionResult,
         destination: Path,
@@ -227,7 +122,7 @@ class JSONDataOutputOrchestrator:
                 "Cannot export observations because no sample H5AD was produced: "
                 + "; ".join(conversion.failures)
             )
-        anndata, _numpy, pandas, _sparse = self.h5ad_converter._scientific_modules()
+        anndata, _numpy, pandas, _sparse = scientific_modules()
         if include_var and len(conversion.sample_h5ads) != 1:
             raise ValueError(
                 "A combined var table is not available for a multi-sample "
@@ -342,7 +237,6 @@ def _json_value(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [_json_value(item) for item in value]
     raise TypeError(f"Unsupported AnnData uns value: {type(value).__name__}")
-
 
 def _publish_bundle(
     staged: Mapping[str, Path],

@@ -20,7 +20,7 @@ from meta_standards_converter.cli.common import (
     configure_logging,
     record_safe_cli_error,
 )
-from meta_standards_converter.converters import JSONDataOutputOrchestrator
+from meta_standards_converter.converters import JSON2OBSConverter
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     args = _parser().parse_args(argv)
     configure_logging(args, stream=sys.stderr)
-    orchestrator = JSONDataOutputOrchestrator()
+    orchestrator = JSON2OBSConverter()
     summaries = []
     failed = False
     for source in args.json_path:
@@ -105,7 +105,7 @@ def main(argv=None) -> int:
             )
             if args.use_harmonization_overrides:
                 convert_options["use_harmonization_overrides"] = True
-            result = orchestrator.export_anndata_metadata(source, **convert_options)
+            result = orchestrator.convert(source, **convert_options)
         except Exception as error:
             failed = True
             safe_error = record_safe_cli_error(

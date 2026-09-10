@@ -24,18 +24,12 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
-    Asset,
-    AssetDownloader,
-    AssetManifest,
-    ConversionResult,
-    DatasetBundleRecoveryError,
-    JSON2H5ADConverter,
-    PipelineRun,
-    RawProcessingResult,
-    SourcePlanner,
-    json2h5ad,
-)
+from meta_standards_converter.expression.readers import ProcessedAssetReader
+from meta_standards_converter.expression.assets import Asset, AssetManifest
+from meta_standards_converter.retrieval import AssetDownloader
+from meta_standards_converter.expression.catalogue import ConversionResult, DatasetBundleRecoveryError, PipelineRun, RawProcessingResult
+from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
+from meta_standards_converter.expression.planning import SourcePlanner
 from meta_standards_converter.sources.json import (
     DatasetPackageGroup,
     SourceLoadResult,
@@ -79,7 +73,7 @@ def test_converter_accepts_injected_dataset_combination_policy() -> None:
 
     converter = JSON2H5ADConverter(combination_policy=CombinationPolicy())
 
-    assert converter._combine(
+    assert converter.normalizer._combine(
         {"GSM1": "sample"},
         allow_unverified=True,
     ) == "combined"
@@ -137,9 +131,11 @@ class TestSourcePlanner(unittest.TestCase):
         study = Asset("GSE1", "study.h5ad", "h5ad", source="json")
         sample = Asset("GSM1", "sample.h5ad", "h5ad", source="json")
 
-        class FixedPlanner(SourcePlanner):
+        class FixedDiscovery:
             def discover(self, packages):
                 return [study, sample]
+
+        class FixedPlanner(SourcePlanner):
 
             def samples(self, packages):
                 return ["GSM1"]
@@ -147,7 +143,7 @@ class TestSourcePlanner(unittest.TestCase):
             def _study_by_sample(self, packages):
                 return {"GSM1": "GSE1"}
 
-        planned = FixedPlanner().plan([{}])
+        planned = FixedPlanner(discovery=FixedDiscovery()).plan([{}])
 
         self.assertEqual("study.h5ad", planned["GSM1"].path)
         self.assertEqual("GSE1", planned["GSM1"].study_scope)
@@ -394,12 +390,12 @@ def test_dataset_bundle_restoration_failure_preserves_recovery_paths(
         return real_replace(source, destination)
 
     monkeypatch.setattr(
-        "meta_standards_converter.converters.json2h5ad.os.replace",
+        "meta_standards_converter.expression.catalogue.os.replace",
         fail_publish_and_restore,
     )
 
     with pytest.raises(DatasetBundleRecoveryError) as raised:
-        JSON2H5ADConverter()._commit_dataset_bundle(
+        JSON2H5ADConverter().publisher._commit_dataset_bundle(
             [(new, old)], overwrite=True, staging=staging
         )
 
@@ -490,7 +486,7 @@ class TestConversionContract(unittest.TestCase):
     def test_portable_locations_preserve_remote_urls(self):
         converter = JSON2H5ADConverter()
 
-        value, scope = converter._portable_location(
+        value, scope = converter.publisher._portable_location(
             "https://example.org/data/source.h5ad", Path("/tmp/output")
         )
 
@@ -519,7 +515,7 @@ class TestConversionContract(unittest.TestCase):
 
     def test_missing_json_path_raises_file_not_found(self):
         with self.assertRaises(FileNotFoundError):
-            json2h5ad().convert(json_path="/missing/GSE1.json", out=".")
+            JSON2H5ADConverter().convert(json_path="/missing/GSE1.json", out=".")
 
     def test_empty_package_list_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -530,7 +526,7 @@ class TestConversionContract(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError, "JSON source contains no convertible package groups"
             ):
-                json2h5ad().convert(json_path=json_path, out=tmpdir)
+                JSON2H5ADConverter().convert(json_path=json_path, out=tmpdir)
 
 
 class TestProcessedAssetConversion(unittest.TestCase):
@@ -569,17 +565,17 @@ class TestProcessedAssetConversion(unittest.TestCase):
             json_path = self._write_json(tmpdir, data)
             checkpoint_dir = os.path.join(tmpdir, "checkpoints")
 
-            class InterruptingConverter(JSON2H5ADConverter):
+            class InterruptingReader(ProcessedAssetReader):
                 calls = []
 
-                def _read_processed_asset(self, asset, orientation="auto"):
+                def read(self, asset, *, orientation="auto", localize):
                     self.calls.append(asset.scope_id)
                     if asset.scope_id == "GSM2":
                         raise RuntimeError("interrupted")
-                    return super()._read_processed_asset(asset, orientation)
+                    return super().read(asset, orientation=orientation, localize=localize)
 
             with self.assertRaisesRegex(RuntimeError, "interrupted"):
-                InterruptingConverter().convert(
+                JSON2H5ADConverter(reader=InterruptingReader()).convert(
                     json_path,
                     out=os.path.join(tmpdir, "first-out"),
                     resume=True,
@@ -587,21 +583,21 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 )
             self.assertEqual(1, len(list(Path(checkpoint_dir).rglob("*.h5ad"))))
 
-            class CountingConverter(JSON2H5ADConverter):
+            class CountingReader(ProcessedAssetReader):
                 calls = []
 
-                def _read_processed_asset(self, asset, orientation="auto"):
+                def read(self, asset, *, orientation="auto", localize):
                     self.calls.append(asset.scope_id)
-                    return super()._read_processed_asset(asset, orientation)
+                    return super().read(asset, orientation=orientation, localize=localize)
 
-            result = CountingConverter().convert(
+            result = JSON2H5ADConverter(reader=CountingReader()).convert(
                 json_path,
                 out=os.path.join(tmpdir, "second-out"),
                 resume=True,
                 processed_checkpoint_dir=checkpoint_dir,
             )
 
-            self.assertEqual(["GSM2"], CountingConverter.calls)
+            self.assertEqual(["GSM2"], CountingReader.calls)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
             self.assertIsNone(result.combined_h5ad)
             self.assertTrue(
@@ -635,7 +631,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             json_path = self._write_json(tmpdir, data)
             out = os.path.join(tmpdir, "out")
 
-            result = json2h5ad().convert(json_path=json_path, out=out)
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=out)
 
             normalized = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             original = self.anndata.read_h5ad(source_path)
@@ -702,7 +698,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             ).write_h5ad(source_path)
             json_path = self._write_json(tmpdir, package(source_path))
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             sample = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             self.assertEqual(["GSM1"], list(sample.obs_names))
@@ -720,7 +716,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             ).write_h5ad(source_path)
             json_path = self._write_json(tmpdir, package(source_path))
 
-            result = json2h5ad().convert(
+            result = JSON2H5ADConverter().convert(
                 json_path=json_path, out=os.path.join(tmpdir, "out")
             )
 
@@ -753,7 +749,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             data["sample"].append(package(paths[1], accession="GSM2")["sample"][0])
             json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(
+            result = JSON2H5ADConverter().convert(
                 json_path=json_path, out=os.path.join(tmpdir, "out")
             )
 
@@ -779,7 +775,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             ).write_h5ad(source_path)
             json_path = self._write_json(tmpdir, package(source_path))
 
-            result = json2h5ad().convert(
+            result = JSON2H5ADConverter().convert(
                 json_path=json_path, out=os.path.join(tmpdir, "out")
             )
 
@@ -814,7 +810,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             ]
             json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             converted = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             self.assertEqual(
@@ -862,7 +858,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                     data["sample"][0]["channel"] = [channel]
                     json_path = self._write_json(tmpdir, data)
 
-                    result = json2h5ad().convert(
+                    result = JSON2H5ADConverter().convert(
                         json_path=json_path,
                         out=os.path.join(tmpdir, f"out-{case}"),
                     )
@@ -891,7 +887,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             os.unlink(source_path)
             json_path = self._write_json(tmpdir, package(compressed_path))
 
-            result = json2h5ad().convert(
+            result = JSON2H5ADConverter().convert(
                 json_path=json_path,
                 out=os.path.join(tmpdir, "out"),
             )
@@ -908,7 +904,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 handle.write("gene\tcell1\tcell2\nGene1\t1\t0\nGene2\t2\t3\n")
             json_path = self._write_json(tmpdir, package(matrix_path))
 
-            result = json2h5ad().convert(
+            result = JSON2H5ADConverter().convert(
                 json_path=json_path,
                 out=os.path.join(tmpdir, "out"),
                 matrix_orientation="genes-by-observations",
@@ -937,7 +933,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             first["sample"].append(second)
             json_path = self._write_json(tmpdir, first)
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
@@ -961,7 +957,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             for sample_id in ("GSM1", "GSM2")
         }
 
-        missing = JSON2H5ADConverter()._missing_combination_evidence(adatas)
+        missing = JSON2H5ADConverter().normalizer._missing_combination_evidence(adatas)
 
         self.assertEqual(
             {
@@ -986,8 +982,8 @@ class TestProcessedAssetConversion(unittest.TestCase):
             var=self.pandas.DataFrame(index=["TP53", "EGFR", "VEGFA"]),
         )
 
-        self.assertEqual("entrez", converter._feature_namespace(entrez))
-        self.assertEqual("symbol", converter._feature_namespace(symbols))
+        self.assertEqual("entrez", converter.normalizer._feature_namespace(entrez))
+        self.assertEqual("symbol", converter.normalizer._feature_namespace(symbols))
 
     def test_memory_preflight_skips_then_force_resume_bypasses_only_fixed_profile(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1204,7 +1200,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             }
             json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             first = self.anndata.read_h5ad(result.sample_h5ads["GSM1"])
             second = self.anndata.read_h5ad(result.sample_h5ads["GSM2"])
@@ -1315,7 +1311,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             data["sample"] = samples
             json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
@@ -1350,7 +1346,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             data["sample"] = samples
             json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual([], result.failures)
@@ -1380,7 +1376,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             data["sample"] = samples
             json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual({"GSM1", "GSM2"}, set(result.sample_h5ads))
@@ -1411,11 +1407,11 @@ class TestProcessedAssetConversion(unittest.TestCase):
             data["sample"] = samples
             json_path = self._write_json(tmpdir, data)
 
-            strict = json2h5ad().convert(
+            strict = JSON2H5ADConverter().convert(
                 json_path=json_path,
                 out=os.path.join(tmpdir, "strict"),
             )
-            acknowledged = json2h5ad().convert(
+            acknowledged = JSON2H5ADConverter().convert(
                 json_path=json_path,
                 out=os.path.join(tmpdir, "acknowledged"),
                 allow_unverified_combination=True,
@@ -1448,7 +1444,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             data["sample"] = samples
             json_path = self._write_json(tmpdir, data)
 
-            result = json2h5ad().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
+            result = JSON2H5ADConverter().convert(json_path=json_path, out=os.path.join(tmpdir, "out"))
 
             self.assertIsNone(result.combined_h5ad)
             self.assertEqual([], result.failures)
@@ -1480,7 +1476,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 orientation="genes-by-observations",
             )
 
-            result = json2h5ad().convert(
+            result = JSON2H5ADConverter().convert(
                 json_path=json_path,
                 out=os.path.join(tmpdir, "out"),
                 explicit_assets=[asset],
@@ -1511,7 +1507,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 annotation_sha256=digest, effective_annotation=annotation,
             )
 
-            result = json2h5ad().convert(
+            result = JSON2H5ADConverter().convert(
                 json_path=json_path, out=os.path.join(tmpdir, "out"), explicit_assets=[asset]
             )
 
@@ -1568,7 +1564,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
             json_path = self._write_json(tmpdir, data)
             runner = FakeRunner(pipeline_h5ad)
 
-            result = json2h5ad(pipeline_runner=runner).convert(
+            result = JSON2H5ADConverter(pipeline_runner=runner).convert(
                 json_path=json_path,
                 out=os.path.join(tmpdir, "out"),
                 force_reprocess=True,
@@ -1608,7 +1604,7 @@ class TestProcessedAssetConversion(unittest.TestCase):
                     data["sample"].append(package(accession="GSM2")["sample"][0])
                     json_path = self._write_json(tmpdir, data)
 
-                    result = json2h5ad().convert(
+                    result = JSON2H5ADConverter().convert(
                         json_path=json_path,
                         out=os.path.join(tmpdir, f"out-{accession_column}"),
                         explicit_assets=[Asset("GSE1", source_path, "h5ad", source="manifest")],

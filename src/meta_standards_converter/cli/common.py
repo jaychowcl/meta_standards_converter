@@ -14,7 +14,7 @@ import argparse
 import logging
 import sys
 
-from meta_standards_converter.ae_handlers.ae_constructor import PLATFORM_HANDLER_KEYS
+from meta_standards_converter.magetab.constructor import PLATFORM_HANDLER_KEYS
 from meta_standards_converter.runtime_contracts import (
     ResourceProfile,
     SafeErrorEnvelope,

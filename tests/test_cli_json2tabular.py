@@ -16,7 +16,7 @@ def test_json2tsv_cli_converts_inputs_in_order():
     summary = {"operation": "manifest", "status": "complete", "datasets": []}
     result = Mock(partial=False)
     result.to_dict.return_value = summary
-    with patch.object(json2tsv, "JSONDataOutputOrchestrator") as factory:
+    with patch.object(json2tsv, "JSON2TSVConverter") as factory:
         factory.return_value.export_manifest.return_value = result
 
         with patch("builtins.print") as emit:
@@ -38,7 +38,7 @@ def test_json2tsv_cli_converts_inputs_in_order():
 
 def test_json2tsv_failure_is_sanitized_and_reported(capsys):
     canary = "private-manifest-detail"
-    with patch.object(json2tsv, "JSONDataOutputOrchestrator") as factory:
+    with patch.object(json2tsv, "JSON2TSVConverter") as factory:
         factory.return_value.export_manifest.side_effect = RuntimeError(
             f"manifest failed: {canary}"
         )

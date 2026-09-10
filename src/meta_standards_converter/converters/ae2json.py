@@ -12,7 +12,7 @@ import json
 import logging
 import os
 
-from meta_standards_converter.ae_handlers.ae_parser import AEParser
+from meta_standards_converter.magetab.parser import AEParser
 from meta_standards_converter.sources.magetab import AEWebFetcher
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 from meta_standards_converter.retrieval import RetrievalPolicy

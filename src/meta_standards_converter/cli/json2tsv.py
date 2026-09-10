@@ -20,7 +20,7 @@ from meta_standards_converter.cli.common import (
     configure_logging,
     record_safe_cli_error,
 )
-from meta_standards_converter.converters import JSONDataOutputOrchestrator
+from meta_standards_converter.converters import JSON2TSVConverter
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     args = _parser().parse_args(argv)
     configure_logging(args, stream=sys.stderr)
-    orchestrator = JSONDataOutputOrchestrator()
+    orchestrator = JSON2TSVConverter()
     failed = False
     summaries = []
     for value in args.json_path:

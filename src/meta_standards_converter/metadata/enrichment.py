@@ -28,6 +28,13 @@ from meta_standards_converter.runtime_contracts import (
 logger = logging.getLogger(__name__)
 
 
+from typing import Protocol
+
+
+class MetadataEnrichment(Protocol):
+    def enrich(self, data: MINiMLPackage) -> MINiMLPackage: ...
+
+
 class MINiMLEnricher:
 
     def metrics(self):

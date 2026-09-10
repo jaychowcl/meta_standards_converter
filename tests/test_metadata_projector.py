@@ -20,15 +20,12 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
-    AnnDataMetadataProjection,
-    AnnDataProjectionError,
-    JSON2H5ADConverter,
-)
+from meta_standards_converter.metadata.projection.anndata import AnnDataMetadataProjection, AnnDataProjectionError
+from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 
 
 def test_asset_downloader_is_part_of_the_converter_public_api():
-    from meta_standards_converter.converters import AssetDownloader
+    from meta_standards_converter.retrieval import AssetDownloader
 
     assert AssetDownloader.__name__ == "AssetDownloader"
 
@@ -314,7 +311,7 @@ class TestMetadataProjectorHook(unittest.TestCase):
                 return real_replace(source, destination)
 
             with patch(
-                "meta_standards_converter.converters.json2h5ad.os.replace",
+                "meta_standards_converter.expression.catalogue.os.replace",
                 side_effect=fail_manifest_once,
             ):
                 with self.assertRaisesRegex(OSError, "injected bundle commit failure"):

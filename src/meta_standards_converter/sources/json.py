@@ -32,7 +32,7 @@ class DatasetPackageGroup:
     harmonization_resolution: Any | None = None
 
     def resolved(self, *, enabled: bool) -> "DatasetPackageGroup":
-        from meta_standards_converter.converters.harmonization_overrides import resolve_harmonization_overrides
+        from meta_standards_converter.metadata.harmonization_overrides import resolve_harmonization_overrides
 
         codec = MINiMLCodec()
         resolution = resolve_harmonization_overrides(

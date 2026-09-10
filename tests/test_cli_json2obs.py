@@ -24,8 +24,8 @@ def test_json2obs_forwards_asset_and_component_options(capsys):
         "operation": "anndata_metadata",
         "status": "complete",
     }
-    with patch.object(json2obs, "JSONDataOutputOrchestrator") as factory:
-        factory.return_value.export_anndata_metadata.return_value = result
+    with patch.object(json2obs, "JSON2OBSConverter") as factory:
+        factory.return_value.convert.return_value = result
         status = json2obs.main(
             [
                 "input.json",
@@ -45,7 +45,7 @@ def test_json2obs_forwards_asset_and_component_options(capsys):
         )
 
     assert status == 0
-    factory.return_value.export_anndata_metadata.assert_called_once_with(
+    factory.return_value.convert.assert_called_once_with(
         "input.json",
         outdir="metadata",
         include_var=True,
@@ -76,8 +76,8 @@ def test_json2obs_forwards_asset_and_component_options(capsys):
 
 def test_json2obs_failure_is_sanitized_and_reported(capsys):
     canary = "private-observation-detail"
-    with patch.object(json2obs, "JSONDataOutputOrchestrator") as factory:
-        factory.return_value.export_anndata_metadata.side_effect = RuntimeError(
+    with patch.object(json2obs, "JSON2OBSConverter") as factory:
+        factory.return_value.convert.side_effect = RuntimeError(
             f"export failed: {canary}"
         )
         status = json2obs.main(["private/input.json", "--outdir", "metadata"])

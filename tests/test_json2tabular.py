@@ -11,13 +11,9 @@ import json
 
 import pytest
 
-from meta_standards_converter.converters import (
-    TabularMetadataProjection,
-)
-from meta_standards_converter.converters.json2tabular import (
-    JSON2TSVConverter,
-    TabularProjectionError,
-)
+from meta_standards_converter.metadata.projection.tabular import TabularMetadataProjection
+from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
+from meta_standards_converter.metadata.projection.tabular import TabularProjectionError
 
 
 def package(study: str = "GSE1", sample: str = "GSM1") -> dict:

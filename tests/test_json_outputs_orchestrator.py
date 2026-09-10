@@ -13,11 +13,8 @@ import anndata
 import pandas
 from scipy import sparse
 
-from meta_standards_converter.converters import JSONDataOutputOrchestrator
-from meta_standards_converter.converters.json2h5ad import (
-    BatchConversionResult,
-    ConversionResult,
-)
+from meta_standards_converter.converters import JSON2OBSConverter, JSON2TSVConverter
+from meta_standards_converter.expression.catalogue import BatchConversionResult, ConversionResult
 
 
 def _source(tmp_path: Path) -> tuple[Path, Path]:
@@ -55,7 +52,7 @@ def test_orchestrator_exports_combined_obs_and_optional_metadata_sidecars(tmp_pa
     source, h5ad = _source(tmp_path)
     outdir = tmp_path / "components"
 
-    result = JSONDataOutputOrchestrator().export_anndata_metadata(
+    result = JSON2OBSConverter().convert(
         str(source),
         outdir=str(outdir),
         asset_specs=[f"GSM1={h5ad}"],
@@ -83,7 +80,7 @@ def test_orchestrator_exports_combined_obs_and_optional_metadata_sidecars(tmp_pa
 def test_orchestrator_obs_export_omits_unrequested_sidecars(tmp_path):
     source, h5ad = _source(tmp_path)
 
-    result = JSONDataOutputOrchestrator().export_anndata_metadata(
+    result = JSON2OBSConverter().convert(
         str(source),
         outdir=str(tmp_path / "obs-only"),
         asset_specs=[f"GSM1={h5ad}"],
@@ -125,7 +122,7 @@ def test_orchestrator_aggregates_obs_metadata_without_combining_expression(tmp_p
         encoding="utf-8",
     )
 
-    result = JSONDataOutputOrchestrator().export_anndata_metadata(
+    result = JSON2OBSConverter().convert(
         source,
         outdir=tmp_path / "obs-catalogue",
         asset_specs=sources,
@@ -139,7 +136,7 @@ def test_orchestrator_aggregates_obs_metadata_without_combining_expression(tmp_p
 def test_orchestrator_manifest_writes_selected_format_and_json_summary(tmp_path):
     source, _h5ad = _source(tmp_path)
 
-    result = JSONDataOutputOrchestrator().export_manifest(
+    result = JSON2TSVConverter().export_manifest(
         source,
         outdir=tmp_path / "manifest",
         output_format="csv",
@@ -162,16 +159,16 @@ def test_batch_obs_keeps_dataset_directory_when_other_group_fails(
                 failures=["GSE2: conversion failed"],
             )
 
-    orchestrator = JSONDataOutputOrchestrator(h5ad_converter=FakeH5ADConverter())
+    orchestrator = JSON2OBSConverter(h5ad_converter=FakeH5ADConverter())
     targets = []
 
     def export_components(_conversion, destination, **_options):
         targets.append(destination)
         return object()
 
-    monkeypatch.setattr(orchestrator, "_export_components", export_components)
+    monkeypatch.setattr(orchestrator.components, "export", export_components)
 
-    result = orchestrator.export_anndata_metadata(
+    result = orchestrator.convert(
         tmp_path / "atlas.json", outdir=tmp_path / "outputs"
     )
 

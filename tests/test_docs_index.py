@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from meta_standards_converter.ae_handlers.ae_constructor import PLATFORM_HANDLER_KEYS
+from meta_standards_converter.magetab.constructor import PLATFORM_HANDLER_KEYS
 
 try:
     import tomllib
@@ -198,7 +198,7 @@ class DocsIndexTests(unittest.TestCase):
             self.assertRegex(codebase_text, rf"`(?:[^`]*\.)?{re.escape(symbol)}`")
 
         self.assertTrue(
-            {"Asset", "JSON2H5ADConverter", "SourcePlanner"} <= set(exports)
+            {"GEO2JSONConverter", "JSON2H5ADConverter", "JSON2OBSConverter"} <= set(exports)
         )
 
         source_root = ROOT / "src" / "meta_standards_converter"

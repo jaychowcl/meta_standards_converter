@@ -19,9 +19,9 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
+from meta_standards_converter.magetab.constructor import AEConstructor  # noqa: E402
+from meta_standards_converter.magetab.idf import IDFConstructor  # noqa: E402
+from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 from meta_standards_converter.converters.json2ae import JSON2AEConverter  # noqa: E402
 from meta_standards_converter.sources.json import (  # noqa: E402
     DatasetPackageGroup,
@@ -88,6 +88,12 @@ def atlas_dataset(dataset_id, status, metadata, diagnostics=None):
 
 
 class TestJSON2AEConverter(unittest.TestCase):
+    def setUp(self):
+        from unittest.mock import patch
+        patcher = patch("meta_standards_converter.converters.json2ae.MAGETabWriter")
+        self.writer = patcher.start().return_value
+        self.addCleanup(patcher.stop)
+
     def write_json(self, directory, payload, name="input.json"):
         path = os.path.join(directory, name)
         if isinstance(payload, MINiMLPackage):
@@ -120,7 +126,7 @@ class TestJSON2AEConverter(unittest.TestCase):
             [call(data=enriched_first), call(data=enriched_second)],
             constructor.miniml2magetab.call_args_list,
         )
-        constructor.magetab2file.assert_not_called()
+        self.writer.write.assert_not_called()
 
     def test_convert_accepts_one_package_object_and_can_skip_enrichment(self):
         enricher = MagicMock()
@@ -172,7 +178,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         self.assertEqual(["first", "second"], result)
         self.assertEqual(
             [call(magetab="first", out=tmpdir), call(magetab="second", out=tmpdir)],
-            constructor.magetab2file.call_args_list,
+            self.writer.write.call_args_list,
         )
 
     def test_convert_rejects_missing_file(self):

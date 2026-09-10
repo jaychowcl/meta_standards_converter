@@ -13,9 +13,9 @@ import builtins
 from pathlib import Path
 from unittest.mock import Mock
 
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
-from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor
-from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor
+from meta_standards_converter.magetab.constructor import AEConstructor
+from meta_standards_converter.magetab.idf import IDFConstructor
+from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 from meta_standards_converter.converters.ae2json import AE2JSONConverter
 from meta_standards_converter.converters.geo2ae import GEO2AEConverter
 from meta_standards_converter.converters.geo2json import GEO2JSONConverter

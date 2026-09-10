@@ -37,3 +37,16 @@ def request_metrics(*requesters) -> RequestMetrics:
             if isinstance(value, (int, float)):
                 totals[i] += value
     return RequestMetrics(int(totals[0]), int(totals[1]), float(totals[2]))
+
+
+class GEOXMLParser(Protocol):
+    """Parse supplied XML without performing retrieval."""
+    def parse(self, miniml: str, remove_empty: bool = False) -> Any: ...
+
+
+class MAGETabSourceResolver(Protocol):
+    def resolve(self, source: str, sdrf_sources: list[str] | None = None) -> Any: ...
+
+
+class PackageLoader(Protocol):
+    def load(self, json_path: str) -> Any: ...

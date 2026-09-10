@@ -12,8 +12,8 @@ import hashlib
 
 import pytest
 
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
-from meta_standards_converter.ae_handlers.ae_parser import AEParser
+from meta_standards_converter.magetab.constructor import AEConstructor
+from meta_standards_converter.magetab.parser import AEParser
 from meta_standards_converter.miniml import (
     AssayNode,
     MINiMLCodec,
@@ -151,7 +151,7 @@ def test_multiple_documents_render_without_cross_document_reordering():
         {"document": "a.sdrf", "steps": [{"kind": "source", "name": "s1"}, {"kind": "protocol_application", "protocol_ref": "P"}, {"kind": "sample", "name": "x1"}]},
         {"document": "b.sdrf", "steps": [{"kind": "source", "name": "s2"}, {"kind": "sample", "name": "x2"}, {"kind": "protocol_application", "protocol_ref": "P"}, {"kind": "assay", "name": "a2"}]},
     ]
-    from meta_standards_converter.ae_handlers.ae_model import render_miniml_assay_documents
+    from meta_standards_converter.magetab.semantics import render_miniml_assay_documents
     documents = render_miniml_assay_documents(paths)
     assert documents["a.sdrf"][0] == ["Source Name", "Protocol REF", "Sample Name"]
     assert documents["b.sdrf"][0] == ["Source Name", "Sample Name", "Protocol REF", "Assay Name"]

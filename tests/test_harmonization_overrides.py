@@ -13,13 +13,13 @@ import anndata
 import pandas
 from scipy import sparse
 
-from meta_standards_converter.converters.harmonization_overrides import (
+from meta_standards_converter.metadata.harmonization_overrides import (
     resolve_harmonization_overrides,
 )
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 from meta_standards_converter.converters.json2ae import JSON2AEConverter
-from meta_standards_converter.converters.json2tabular import JSON2TSVConverter
-from meta_standards_converter.converters.json_outputs import JSONDataOutputOrchestrator
+from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
+from meta_standards_converter.converters.json2obs import JSON2OBSConverter
 from meta_standards_converter.sources.json import JSONPackageSource
 from meta_standards_converter.cli import json2ae as json2ae_cli
 from meta_standards_converter.cli import json2h5ad as json2h5ad_cli
@@ -153,7 +153,7 @@ def test_resolved_view_drives_canonical_metadata_and_preserves_typed_annotations
     package_view = result.packages[0]
     sample = package_view["sample"][0]
 
-    metadata = JSON2H5ADConverter()._sample_metadata_values(sample, package_view)
+    metadata = JSON2H5ADConverter().normalizer._sample_metadata_values(sample, package_view)
 
     assert metadata["organism"] == ("Homo sapiens",)
     assert metadata["disease"] == ("fallback disease",)
@@ -303,7 +303,7 @@ def test_h5ad_and_json2obs_retain_ecto_and_pcl_columns(tmp_path):
         var=pandas.DataFrame(index=["gene-1"]),
     ).write_h5ad(expression)
 
-    result = JSONDataOutputOrchestrator().export_anndata_metadata(
+    result = JSON2OBSConverter().convert(
         source,
         outdir=tmp_path / "obs",
         asset_specs=[f"GSM1={expression}"],

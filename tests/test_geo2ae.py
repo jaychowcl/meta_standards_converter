@@ -22,6 +22,12 @@ from meta_standards_converter.runtime_contracts import get_resource_profile  # n
 
 
 class TestGeo2AEConverter(unittest.TestCase):
+    def setUp(self):
+        from unittest.mock import patch
+        patcher = patch("meta_standards_converter.converters.geo2ae.MAGETabWriter")
+        self.writer = patcher.start().return_value
+        self.addCleanup(patcher.stop)
+
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
     @patch("meta_standards_converter.converters.geo2ae.GEOSource")
@@ -86,7 +92,7 @@ class TestGeo2AEConverter(unittest.TestCase):
             [call(data=primary_json), call(data=related_json)],
             constructor_mock.return_value.miniml2magetab.call_args_list,
         )
-        constructor_mock.return_value.magetab2file.assert_not_called()
+        self.writer.write.assert_not_called()
 
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")

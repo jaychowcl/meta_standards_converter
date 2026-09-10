@@ -24,7 +24,6 @@ from meta_standards_converter.cli.common import (
 )
 from meta_standards_converter.converters import (
     JSON2H5ADConverter,
-    JSONDataOutputOrchestrator,
 )
 from meta_standards_converter.retrieval import RetrievalPolicy
 
@@ -152,13 +151,9 @@ def main(argv=None) -> int:
             resource_profile=resource_profile,
             allowed_hosts=frozenset(args.asset_host),
         )
-        orchestrator = JSONDataOutputOrchestrator(
-            h5ad_converter=JSON2H5ADConverter(
-                retrieval_policy=retrieval_policy,
-            )
-        )
+        orchestrator = JSON2H5ADConverter(retrieval_policy=retrieval_policy)
     else:
-        orchestrator = JSONDataOutputOrchestrator()
+        orchestrator = JSON2H5ADConverter()
     failed = False
     summaries = []
     logger.debug(
@@ -202,8 +197,8 @@ def main(argv=None) -> int:
                     convert_options[name] = value
             if args.use_harmonization_overrides:
                 convert_options["use_harmonization_overrides"] = True
-            conversion = orchestrator.export_h5ad(
-                json_path, outdir=args.outdir, **convert_options
+            conversion = orchestrator.convert(
+                json_path, out=args.outdir, **convert_options
             )
         except Exception as error:
             failed = True

@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
-from meta_standards_converter.converters.miniml_metadata import MINiMLMetadataService
+from meta_standards_converter.metadata.interpretation import MINiMLMetadataService
 
 
 def _sample(iid: str) -> dict:
@@ -167,7 +167,7 @@ def test_h5ad_projection_uses_the_shared_typed_protocol_and_material_semantics()
         "database": [],
     }
 
-    metadata = JSON2H5ADConverter()._sample_metadata_values(sample, package)
+    metadata = JSON2H5ADConverter().normalizer._sample_metadata_values(sample, package)
 
     assert metadata["material_type"] == ("fresh specimen",)
     assert metadata["protocol_types"] == ("bespoke protocol",)

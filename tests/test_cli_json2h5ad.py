@@ -21,18 +21,16 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.cli.json2h5ad import main  # noqa: E402
-from meta_standards_converter.converters.json2h5ad import ConversionResult  # noqa: E402
+from meta_standards_converter.expression.catalogue import ConversionResult
 
 
 class TestJSON2H5ADCLI(unittest.TestCase):
     @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
     def test_resource_profile_and_explicit_overrides_configure_retrieval(
         self,
         orchestrator_mock,
-        converter_mock,
     ):
-        orchestrator_mock.return_value.export_h5ad.return_value = ConversionResult(
+        orchestrator_mock.return_value.convert.return_value = ConversionResult(
             "GSE1", combined_h5ad="GSE1.h5ad"
         )
 
@@ -50,18 +48,16 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             )
 
         self.assertEqual(0, exit_code)
-        policy = converter_mock.call_args.kwargs["retrieval_policy"]
+        policy = orchestrator_mock.call_args.kwargs["retrieval_policy"]
         self.assertEqual("large", policy.resource_profile.name)
         self.assertEqual(123, policy.resource_profile.max_matrix_bytes)
         self.assertIn("data.example.org", policy.allowed_hosts)
-        orchestrator_mock.assert_called_once_with(
-            h5ad_converter=converter_mock.return_value
-        )
+        orchestrator_mock.assert_called_once_with(retrieval_policy=policy)
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_workflow_and_asset_options_are_forwarded(self, orchestrator_mock):
         orchestrator = orchestrator_mock.return_value
-        orchestrator.export_h5ad.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
+        orchestrator.convert.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
 
         with redirect_stdout(StringIO()):
             exit_code = main([
@@ -87,9 +83,9 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             ])
 
         self.assertEqual(0, exit_code)
-        orchestrator.export_h5ad.assert_called_once_with(
+        orchestrator.convert.assert_called_once_with(
             "GSE1.json",
-            outdir=".",
+            out=".",
             asset_manifest="assets.csv",
             asset_specs=["GSM1=local.h5ad"],
             force_reprocess=True,
@@ -110,9 +106,9 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             matrix_orientation="genes-by-observations",
         )
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_partial_conversion_returns_one(self, orchestrator_mock):
-        orchestrator_mock.return_value.export_h5ad.return_value = ConversionResult(
+        orchestrator_mock.return_value.convert.return_value = ConversionResult(
             study_accession="GSE1",
             sample_h5ads={"GSM1": "GSM1.h5ad"},
             failures=["combined output incompatible"],
@@ -123,23 +119,23 @@ class TestJSON2H5ADCLI(unittest.TestCase):
 
         self.assertEqual(1, exit_code)
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_one_json_uses_defaults(self, orchestrator_mock):
         orchestrator = orchestrator_mock.return_value
-        orchestrator.export_h5ad.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
+        orchestrator.convert.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
 
         stdout = StringIO()
         with redirect_stdout(stdout):
             exit_code = main(["GSE1.json"])
 
         self.assertEqual(0, exit_code)
-        orchestrator.export_h5ad.assert_called_once_with("GSE1.json", outdir=".")
+        orchestrator.convert.assert_called_once_with("GSE1.json", out=".")
         self.assertEqual("complete", __import__("json").loads(stdout.getvalue())["status"])
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_multiple_json_files_are_converted_in_order(self, orchestrator_mock):
         orchestrator = orchestrator_mock.return_value
-        orchestrator.export_h5ad.return_value = ConversionResult("GSE1", combined_h5ad="out.h5ad")
+        orchestrator.convert.return_value = ConversionResult("GSE1", combined_h5ad="out.h5ad")
 
         with redirect_stdout(StringIO()):
             exit_code = main(["GSE1.json", "GSE2.json"])
@@ -147,28 +143,28 @@ class TestJSON2H5ADCLI(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertEqual(
             [
-                call("GSE1.json", outdir="."),
-                call("GSE2.json", outdir="."),
+                call("GSE1.json", out="."),
+                call("GSE2.json", out="."),
             ],
-            orchestrator.export_h5ad.call_args_list,
+            orchestrator.convert.call_args_list,
         )
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_out_is_passed_to_converter(self, orchestrator_mock):
         orchestrator = orchestrator_mock.return_value
-        orchestrator.export_h5ad.return_value = ConversionResult("GSE1", combined_h5ad="out/GSE1.h5ad")
+        orchestrator.convert.return_value = ConversionResult("GSE1", combined_h5ad="out/GSE1.h5ad")
 
         with redirect_stdout(StringIO()):
             exit_code = main(["GSE1.json", "--out", "out"])
 
         self.assertEqual(0, exit_code)
-        orchestrator.export_h5ad.assert_called_once_with("GSE1.json", outdir="out")
+        orchestrator.convert.assert_called_once_with("GSE1.json", out="out")
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_failed_json_returns_one_and_continues(self, orchestrator_mock):
         orchestrator = orchestrator_mock.return_value
         canary = "canary-super-secret"
-        orchestrator.export_h5ad.side_effect = [
+        orchestrator.convert.side_effect = [
             NotImplementedError(f"request failed?token={canary}"),
             ConversionResult("GSE2", combined_h5ad="GSE2.h5ad"),
         ]
@@ -181,10 +177,10 @@ class TestJSON2H5ADCLI(unittest.TestCase):
         self.assertEqual(1, exit_code)
         self.assertEqual(
             [
-                call("GSE1.json", outdir="."),
-                call("GSE2.json", outdir="."),
+                call("GSE1.json", out="."),
+                call("GSE2.json", out="."),
             ],
-            orchestrator.export_h5ad.call_args_list,
+            orchestrator.convert.call_args_list,
         )
         self.assertIn(
             "ERROR meta_standards_converter.cli.json2h5ad: GSE1.json: h5ad_conversion failed error_type=NotImplementedError",
@@ -200,9 +196,9 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             payload["datasets"][0]["error"]["error_type"],
         )
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_verbose_emits_success_logs_to_stderr(self, orchestrator_mock):
-        orchestrator_mock.return_value.export_h5ad.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
+        orchestrator_mock.return_value.convert.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
 
         stdout = StringIO()
         stderr = StringIO()
@@ -217,9 +213,9 @@ class TestJSON2H5ADCLI(unittest.TestCase):
         )
         self.assertEqual("complete", __import__("json").loads(stdout.getvalue())["status"])
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_quiet_emits_only_errors(self, orchestrator_mock):
-        orchestrator_mock.return_value.export_h5ad.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
+        orchestrator_mock.return_value.convert.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
 
         stdout = StringIO()
         with redirect_stdout(stdout):
@@ -228,9 +224,9 @@ class TestJSON2H5ADCLI(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertEqual("complete", __import__("json").loads(stdout.getvalue())["status"])
 
-    @patch("meta_standards_converter.cli.json2h5ad.JSONDataOutputOrchestrator")
+    @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_log_file_writes_configured_logs(self, orchestrator_mock):
-        orchestrator_mock.return_value.export_h5ad.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
+        orchestrator_mock.return_value.convert.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             log_path = os.path.join(tmpdir, "json2h5ad.log")

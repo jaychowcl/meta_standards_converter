@@ -20,16 +20,16 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_model import (  # noqa: E402
+from meta_standards_converter.magetab.constructor import AEConstructor  # noqa: E402
+from meta_standards_converter.magetab.idf import IDFConstructor  # noqa: E402
+from meta_standards_converter.magetab.semantics import (  # noqa: E402
     MAGETabModelError,
     overlay_core,
     render_model,
     validate_model,
 )
-from meta_standards_converter.ae_handlers.ae_parser import AEParser  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
+from meta_standards_converter.magetab.parser import AEParser  # noqa: E402
+from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 from meta_standards_converter.sources.magetab import (  # noqa: E402
     MAGETabInput,
     TextResource,

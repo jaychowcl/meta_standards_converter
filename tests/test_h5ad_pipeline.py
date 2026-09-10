@@ -23,12 +23,9 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
-    AnnotationConverter,
-    Asset,
-    NFCoreRunner,
-    ReferenceResolver,
-)
+from meta_standards_converter.expression.references import AnnotationConverter, ReferenceResolver
+from meta_standards_converter.expression.assets import Asset
+from meta_standards_converter.expression.nfcore import NFCoreRunner
 
 
 def package(sample_ids=("GSM1",), organism="Homo sapiens", taxid="9606"):

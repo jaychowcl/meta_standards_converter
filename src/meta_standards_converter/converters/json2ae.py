@@ -6,12 +6,13 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from meta_standards_converter.magetab.writer import MAGETabWriter
 """Converter for parsed MINiML JSON to ArrayExpress MAGE-TAB format."""
 
 import logging
 
-from meta_standards_converter.ae_handlers.ae_common import series_identity
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
+from meta_standards_converter.magetab.technology import series_identity
+from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.sources.json import JSONPackageSource
 from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
@@ -68,7 +69,7 @@ class JSON2AEConverter(JSONHandler):
         if out:
             for index, magetab in enumerate(magetabs, start=1):
                 logger.info("%s: writing MAGE-TAB package %d to %s", json_path, index, out)
-                self.ae_constructor.magetab2file(magetab=magetab, out=out)
+                MAGETabWriter().write(magetab=magetab, out=out)
 
         logger.info("%s: conversion produced %d MAGE-TAB package(s)", json_path, len(magetabs))
         return magetabs

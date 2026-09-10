@@ -10,8 +10,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
-from meta_standards_converter.ae_handlers.ae_parser import AEParser
+from meta_standards_converter.magetab.writer import MAGETabWriter
+from meta_standards_converter.magetab.constructor import AEConstructor
+from meta_standards_converter.magetab.parser import AEParser
 
 from tests.test_ae2json import resolved_input
 
@@ -124,7 +125,7 @@ def test_semantic_magetab_writer_publishes_only_canonical_idf_labels(tmp_path) -
     constructor = AEConstructor()
     rows = constructor.miniml2magetab(AEParser().parse(resolved_input()))
 
-    idf_path = Path(constructor.magetab2file(rows, out=str(tmp_path)))
+    idf_path = Path(MAGETabWriter().write(rows, out=str(tmp_path)))
     idf_text = idf_path.read_text(encoding="utf-8")
     idf_labels = {line.split("\t", 1)[0] for line in idf_text.splitlines()}
 
