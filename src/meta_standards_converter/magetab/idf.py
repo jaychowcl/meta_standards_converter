@@ -708,36 +708,49 @@ class IDFConstructor():
             if row and "source ref" in str(row[0]).lower():
                 sources.update(x for x in row[1:] if x)
 
-        databases = {}
         raw_databases = (data or {}).get("database", [])
         if isinstance(raw_databases, dict):
             raw_databases = [raw_databases]
+        raw_databases = [d for d in raw_databases if isinstance(d, dict)]
+        by_name = {}
         for database in raw_databases:
-            if not isinstance(database, dict):
+            if database.get("name"):
+                by_name.setdefault(database["name"], []).append(database)
+        # Conflicting declarations retain their original MAGE-TAB names; their
+        # unique MINiML ids must not silently disambiguate bare-name references.
+        declared = {}
+        aliases = {}
+        for database in raw_databases:
+            name = database.get("name")
+            declared_name = name if len(by_name.get(name, ())) > 1 else database.get("iid") or name
+            if not declared_name:
                 continue
-            declared_name = database.get("iid") or database.get("name")
-            if declared_name:
-                sources.add(declared_name)
-            for key in (database.get("iid"), database.get("name"), declared_name):
-                if key:
-                    databases[str(key).casefold()] = database
+            sources.add(declared_name)
+            declared.setdefault(declared_name, []).append(database)
+            keys = {str(key).casefold() for key in (database.get("iid"), name, declared_name) if key}
+            for key in keys:
+                aliases.setdefault(key, []).append(database)
 
-        sources = sorted(sources)
         harmonized = Harmonizer().ontologies
-        files = []
-        versions = []
-        for source in sources:
-            supplied = databases.get(str(source).casefold())
-            if supplied is not None:
-                files.append(supplied.get("url") or supplied.get("web_link"))
-                versions.append(supplied.get("version"))
-                continue
-            fallback = harmonized.get(source, {})
-            files.append(fallback.get("Term Source File"))
-            versions.append(fallback.get("Term Source Version"))
+        names, files, versions = [], [], []
+        for source in sorted(sources):
+            supplied = declared.get(source)
+            if supplied is None:
+                candidates = aliases.get(str(source).casefold(), [])
+                supplied = candidates if len(candidates) == 1 else []
+            if supplied:
+                for database in supplied:
+                    names.append(source)
+                    files.append(database.get("url") or database.get("web_link"))
+                    versions.append(database.get("version"))
+            else:
+                fallback = harmonized.get(source, {})
+                names.append(source)
+                files.append(fallback.get("Term Source File"))
+                versions.append(fallback.get("Term Source Version"))
 
         return [
-            ["Term Source Name", *sources],
+            ["Term Source Name", *names],
             ["Term Source File", *files],
             ["Term Source Version", *versions],
         ]

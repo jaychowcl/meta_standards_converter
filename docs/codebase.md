@@ -782,6 +782,8 @@ local/HTTP/accession -> resolve IDF + SDRF(s) --failure--> exception
 5. The frozen E-MTAB-6486 IDF/SDRF contract exercises the ENA secondary accession, repeated material columns, and `compound` factor through strict `MINiMLCodec` validation.
 6. `out` writes a sanitized accession filename; otherwise no file is created.
 
+Term-source declarations merge only when trimmed name, file/URL and version agree (blank optional values equal omission). Conflicting same-name declarations retain unique, deterministic collision-checked internal IDs and their original names/metadata. Bare-name references remain unresolved with parser diagnostics identifying their locations; no arbitrary alias is created. IDF reconstruction retains every conflicting declaration and original reference text. MINiML uniqueness validation remains strict. The full E-MTAB-1 regression retains 45 sample identities and 176 assay paths.
+
 Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved); [write]; return [package]`.
 
 **Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/sources/magetab.py), and [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py).

@@ -138,9 +138,13 @@ class AEParser:
         contributors = self._contributors(idf)
         databases = self._databases(idf)
         database_ids = {item["iid"] for item in databases}
+        ambiguous_sources = {
+            item["name"] for item in databases
+            if sum(other["name"] == item["name"] for other in databases) > 1
+        }
         for accession in series.get("accession", []):
             database = accession.get("database")
-            if database and database not in database_ids:
+            if database and database not in database_ids and database not in ambiguous_sources:
                 databases.append({"iid": database, "name": database})
                 database_ids.add(database)
         samples = {}
@@ -165,6 +169,7 @@ class AEParser:
 
         if not samples:
             raise ValueError("MAGE-TAB SDRF contains no usable Source, Sample, or Assay identity.")
+        self._warn_ambiguous_term_refs(idf_rows, source_sdrfs, ambiguous_sources)
         sample_values = [state["sample"] for state in samples.values()]
         series["sample_ref"] = [{"ref": sample["iid"]} for sample in sample_values]
         unmapped_rows = [
@@ -438,7 +443,7 @@ class AEParser:
         names = self._values(idf, "Term Source Name")
         files = self._values(idf, "Term Source File")
         versions = self._values(idf, "Term Source Version")
-        result = []
+        declarations = {}
         for index, name in enumerate(names):
             if not name.strip():
                 continue
@@ -447,8 +452,42 @@ class AEParser:
                 item["url"] = files[index].strip()
             if index < len(versions) and versions[index].strip():
                 item["version"] = versions[index].strip()
-            result.append(item)
-        return result
+            identity = (item["name"], item.get("url"), item.get("version"))
+            declarations.setdefault(identity, item)
+        groups = {}
+        for item in declarations.values():
+            groups.setdefault(item["name"], []).append(item)
+        reserved = set(groups)
+        for name, variants in groups.items():
+            if len(variants) == 1:
+                continue
+            suffix = 1
+            for item in variants:
+                while f"{name}__msc_{suffix}" in reserved:
+                    suffix += 1
+                item["iid"] = f"{name}__msc_{suffix}"
+                reserved.add(item["iid"])
+                suffix += 1
+            self._warn(
+                f"Conflicting term source {name!r}: "
+                f"{[(item['iid'], item.get('url'), item.get('version')) for item in variants]!r}; "
+                "bare-name references remain unresolved."
+            )
+        return list(declarations.values())
+
+    def _warn_ambiguous_term_refs(self, idf_rows, source_sdrfs, ambiguous_sources):
+        for index, row in enumerate(idf_rows, start=1):
+            if row and "termsourceref" in normalized_label(row[0]):
+                for column, value in enumerate(row[1:], start=2):
+                    if value.strip() in ambiguous_sources:
+                        self._warn(f"Unresolved term source reference {value.strip()!r} at IDF row {index}, column {column} ({row[0]}).")
+        for name, table in source_sdrfs:
+            for column, label in enumerate(table[0]):
+                if "termsourceref" not in normalized_label(label):
+                    continue
+                for index, row in enumerate(table[1:], start=2):
+                    if row[column].strip() in ambiguous_sources:
+                        self._warn(f"Unresolved term source reference {row[column].strip()!r} at {name} row {index}, column {column + 1} ({label}).")
 
     def _protocols(self, idf: dict) -> dict[str, dict]:
         names = self._values(idf, "Protocol Name")
