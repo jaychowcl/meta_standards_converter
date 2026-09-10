@@ -18,10 +18,10 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.geo_handlers.geo_parser import (  # noqa: E402
+from meta_standards_converter.miniml.geo_parser import (  # noqa: E402
     GEOParser,
-    RelatedSeriesParseResult,
 )
+from meta_standards_converter.sources.geo import GEOSource, RelatedSeriesParseResult
 from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
 
 
@@ -184,7 +184,7 @@ class TestGEOParser(unittest.TestCase):
         )
 
         with self.assertLogs(
-            "meta_standards_converter.geo_handlers.geo_parser", level="INFO"
+            "meta_standards_converter.miniml.geo_parser", level="INFO"
         ) as logs:
             GEOParser().parse(xml)
 
@@ -192,7 +192,7 @@ class TestGEOParser(unittest.TestCase):
         self.assertIn("MINiML parse stats packages=1 series=1 samples=1 platforms=1", output)
         self.assertNotIn("secret-title", output)
 
-    @patch("meta_standards_converter.geo_handlers.geo_parser.GEOWebFetcher")
+    @patch("meta_standards_converter.sources.geo.GEOWebFetcher")
     def test_related_series_are_fetched_recursively_and_deduplicated(self, fetcher_mock):
         root_xml = miniml_body(
             """
@@ -206,7 +206,7 @@ class TestGEOParser(unittest.TestCase):
         )
         fetcher_mock.return_value.fetch_gse_miniml.return_value = related_xml
 
-        parsed = GEOParser().parse(root_xml, related_series=True)
+        parsed = GEOSource().parse(root_xml, related_series=True)
 
         self.assertEqual(["GSE1", "GSE2"], [package["series"]["iid"] for package in parsed])
         fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE2")
@@ -230,9 +230,9 @@ class TestGEOParser(unittest.TestCase):
                 return related_xml
 
         with self.assertLogs(
-            "meta_standards_converter.geo_handlers.geo_parser", level="WARNING"
+            "meta_standards_converter.sources.geo", level="WARNING"
         ) as logs:
-            result = GEOParser(geo_fetcher=PartialFetcher()).parse_related_series(
+            result = GEOSource(fetcher=PartialFetcher()).parse_related_series(
                 root_xml,
                 strict=False,
             )

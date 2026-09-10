@@ -19,7 +19,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.ae_handlers.ae_webfetcher import AEWebFetcher  # noqa: E402
+from meta_standards_converter.sources.magetab import AEWebFetcher  # noqa: E402
 from meta_standards_converter.retrieval import (  # noqa: E402
     RetrievalPolicy,
     RetrievalSecurityError,

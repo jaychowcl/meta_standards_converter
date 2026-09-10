@@ -18,7 +18,7 @@ from meta_standards_converter.cli.common import (
     configure_logging,
     record_safe_cli_error,
 )
-from meta_standards_converter.converters.ae2json import ae2json
+from meta_standards_converter.converters.ae2json import AE2JSONConverter
 
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def main(argv=None):
     if args.sdrf and len(args.source) != 1:
         parser.error("--sdrf overrides require exactly one source")
     configure_logging(args)
-    converter = ae2json(
+    converter = AE2JSONConverter(
         resource_profile=configured_resource_profile(args, parser),
         source_hosts=tuple(args.source_host),
     )

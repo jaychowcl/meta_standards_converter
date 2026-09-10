@@ -17,14 +17,14 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.converters.geo2ae import geo2ae  # noqa: E402
+from meta_standards_converter.converters.geo2ae import GEO2AEConverter  # noqa: E402
 from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
 
 class TestGeo2AEConverter(unittest.TestCase):
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2ae.GEOParser")
+    @patch("meta_standards_converter.converters.geo2ae.GEOSource")
     @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
     def test_typed_resource_profile_is_shared_by_default_network_collaborators(
         self, fetcher_mock, parser_mock, enricher_mock, constructor_mock
@@ -33,7 +33,7 @@ class TestGeo2AEConverter(unittest.TestCase):
             "standard", overrides={"max_xml_bytes": 4096}
         )
 
-        converter = geo2ae(resource_profile=profile)
+        converter = GEO2AEConverter(resource_profile=profile)
 
         fetcher_mock.assert_called_once_with(
             resource_profile=profile, resource_overrides=None
@@ -41,11 +41,11 @@ class TestGeo2AEConverter(unittest.TestCase):
         enricher_mock.assert_called_once_with(
             resource_profile=profile, resource_overrides=None
         )
-        parser_mock.assert_called_once_with(geo_fetcher=converter.geo_fetcher)
+        parser_mock.assert_called_once_with(fetcher=converter.geo_fetcher, resource_profile=profile)
         constructor_mock.assert_called_once_with()
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2ae.GEOParser")
+    @patch("meta_standards_converter.converters.geo2ae.GEOSource")
     @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
     def test_convert_uses_parser_related_series_option(
         self,
@@ -64,7 +64,7 @@ class TestGeo2AEConverter(unittest.TestCase):
         ]
         enricher_mock.return_value.enrich.side_effect = lambda data: data
 
-        converter = geo2ae()
+        converter = GEO2AEConverter()
         result = converter.convert(
             gse="GSE1",
             related_series=True,
@@ -90,7 +90,7 @@ class TestGeo2AEConverter(unittest.TestCase):
 
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2ae.GEOParser")
+    @patch("meta_standards_converter.converters.geo2ae.GEOSource")
     @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
     def test_convert_forwards_remove_empty_false(
         self,
@@ -106,7 +106,7 @@ class TestGeo2AEConverter(unittest.TestCase):
         enricher_mock.return_value.enrich.return_value = enriched_json
         constructor_mock.return_value.miniml2magetab.return_value = "magetab"
 
-        converter = geo2ae()
+        converter = GEO2AEConverter()
         result = converter.convert(
             gse="GSE1",
             related_series=False,
@@ -126,7 +126,7 @@ class TestGeo2AEConverter(unittest.TestCase):
 
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2ae.GEOParser")
+    @patch("meta_standards_converter.converters.geo2ae.GEOSource")
     @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
     def test_convert_forwards_forced_platform_handler(
         self,
@@ -141,7 +141,7 @@ class TestGeo2AEConverter(unittest.TestCase):
         enricher_mock.return_value.enrich.return_value = package
         constructor_mock.return_value.miniml2magetab.return_value = "magetab"
 
-        result = geo2ae().convert(gse="GSE1", platform_handler="array")
+        result = GEO2AEConverter().convert(gse="GSE1", platform_handler="array")
 
         self.assertEqual(["magetab"], result)
         constructor_mock.return_value.miniml2magetab.assert_called_once_with(
@@ -151,7 +151,7 @@ class TestGeo2AEConverter(unittest.TestCase):
 
     @patch("meta_standards_converter.converters.geo2ae.AEConstructor")
     @patch("meta_standards_converter.converters.geo2ae.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2ae.GEOParser")
+    @patch("meta_standards_converter.converters.geo2ae.GEOSource")
     @patch("meta_standards_converter.converters.geo2ae.GEOWebFetcher")
     def test_convert_emits_stage_logs_without_payload_dump(
         self,
@@ -168,7 +168,7 @@ class TestGeo2AEConverter(unittest.TestCase):
         constructor_mock.return_value.miniml2magetab.return_value = "magetab"
 
         with self.assertLogs("meta_standards_converter.converters.geo2ae", level="DEBUG") as logs:
-            result = geo2ae().convert(gse="GSE1", related_series=True, out=".dev")
+            result = GEO2AEConverter().convert(gse="GSE1", related_series=True, out=".dev")
 
         log_output = "\n".join(logs.output)
         self.assertEqual(["magetab"], result)

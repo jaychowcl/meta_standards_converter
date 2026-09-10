@@ -23,6 +23,11 @@ from meta_standards_converter.xml_safety import parse_xml, read_limited_response
 
 
 class PubmedWebFetcher:
+
+    def metrics(self):
+        from meta_standards_converter.sources.contracts import request_metrics
+        return request_metrics(self.requester)
+
     def __init__(
         self,
         requester=None,

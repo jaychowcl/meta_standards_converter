@@ -16,9 +16,9 @@ import time
 
 import requests
 
-from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher
+from meta_standards_converter.sources.insdc import INSDCWebfetcher
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
-from meta_standards_converter.pubmed_handlers.pubmed_webfetcher import PubmedWebFetcher
+from meta_standards_converter.sources.pubmed import PubmedWebFetcher
 from meta_standards_converter.runtime_contracts import (
     ResourceProfile,
     get_resource_profile,
@@ -29,6 +29,11 @@ logger = logging.getLogger(__name__)
 
 
 class MINiMLEnricher:
+
+    def metrics(self):
+        from meta_standards_converter.sources.contracts import request_metrics
+        return request_metrics(self.pubmed_fetcher, self.insdc_fetcher)
+
     def __init__(
         self,
         pubmed_fetcher=None,
@@ -99,7 +104,7 @@ class MINiMLEnricher:
                     continue
                 if (relation.get("type") or "").lower() != "sra":
                     continue
-                accessions.extend(self.insdc_fetcher._extract_sra(relation.get("target") or ""))
+                accessions.extend(self.insdc_fetcher.extract_sra_accessions(relation.get("target") or ""))
 
             accessions = self._dedupe(accessions)
             if not accessions:

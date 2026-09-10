@@ -38,7 +38,7 @@ from meta_standards_converter.miniml import (
     iter_harmonization_operations,
     iter_harmonization_patches,
 )
-from .json_source import JSONPackageSource
+from meta_standards_converter.sources.json import JSONPackageSource
 from .dataset_combination import (
     DatasetCombinationPolicy,
     DatasetCompatibilityError as _DatasetCompatibilityError,

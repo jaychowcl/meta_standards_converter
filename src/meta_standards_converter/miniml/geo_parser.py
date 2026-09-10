@@ -18,7 +18,6 @@ import time
 from collections import deque
 from xml.etree import ElementTree as ET
 
-from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
 from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator
 from meta_standards_converter.runtime_contracts import (
     CompletenessStatus,
@@ -36,45 +35,17 @@ from meta_standards_converter.xml_safety import parse_xml
 logger = logging.getLogger(__name__)
 
 
-class RelatedSeriesParseResult(list[dict]):
-    """List-compatible related-series result with explicit completeness."""
-
-    def __init__(
-        self,
-        packages,
-        *,
-        status: OperationStatusV2,
-        attempted_accessions,
-        failed_accessions,
-    ) -> None:
-        super().__init__(packages)
-        self.status = status
-        self.attempted_accessions = tuple(attempted_accessions)
-        self.failed_accessions = tuple(failed_accessions)
-
-    def summary_dict(self) -> dict:
-        return {
-            "status": self.status.to_dict(),
-            "attempted_accessions": list(self.attempted_accessions),
-            "failed_accessions": list(self.failed_accessions),
-            "package_count": len(self),
-        }
 
 
 class GEOParser:
     def __init__(
         self,
-        geo_fetcher=None,
         resource_profile: str = "standard",
         resource_overrides=None,
     ):
         self.resource_profile = get_resource_profile(
             resource_profile,
             overrides=resource_overrides,
-        )
-        self.geo_fetcher = geo_fetcher or GEOWebFetcher(
-            resource_profile=resource_profile,
-            resource_overrides=resource_overrides,
         )
         self.repeated_children = {
             "MINiML": {
@@ -143,13 +114,9 @@ class GEOParser:
         self,
         miniml: str,
         remove_empty: bool = False,
-        related_series: bool = False,
     ) -> list[MINiMLPackage]:
         started = time.monotonic()
-        parsed = self._parse(miniml=miniml)
-
-        if related_series:
-            parsed = self._parse_with_related_series(parsed=parsed)
+        parsed = self.parse_mapping(miniml=miniml)
 
         if remove_empty:
             parsed = [self.remove_empty_fields(series_package) for series_package in parsed]
@@ -163,14 +130,14 @@ class GEOParser:
             len(packages),
             sum(len(package.samples) for package in packages),
             sum(len(package.platforms) for package in packages),
-            related_series,
+            False,
             remove_empty,
             time.monotonic() - started,
         )
 
         return packages
 
-    def _parse(self, miniml: str) -> list[dict]:
+    def parse_mapping(self, miniml: str) -> list[dict]:
         root = parse_xml(
             miniml,
             max_bytes=self.resource_profile.max_xml_bytes,
@@ -194,127 +161,7 @@ class GEOParser:
     def remove_empty_fields(self, data):
         return self._remove_empty_fields(data)
 
-    def parse_related_series(
-        self,
-        miniml: str,
-        remove_empty: bool = False,
-        strict: bool = True,
-    ) -> RelatedSeriesParseResult:
-        root_parsed = self._parse(miniml=miniml)
-        related_parsed = []
-        attempted_accessions = []
-        failed_accessions = []
-        errors = []
-        seen_gses = set(self._extract_series_accessions(root_parsed))
-        pending_gses = deque()
 
-        for gse in self._extract_related_gse_accessions(root_parsed):
-            if gse not in seen_gses:
-                seen_gses.add(gse)
-                pending_gses.append(gse)
-
-        while pending_gses:
-            gse = pending_gses.popleft()
-            attempted_accessions.append(gse)
-            logger.info(
-                "Related-series progress accession=%s pending=%s seen=%s",
-                gse,
-                len(pending_gses),
-                len(seen_gses),
-            )
-            try:
-                related_miniml = self.geo_fetcher.fetch_gse_miniml(gse=gse)
-                parsed = self._parse(miniml=related_miniml)
-            except Exception as error:
-                if strict:
-                    raise
-                safe_error = SafeErrorEnvelope.from_exception(
-                    error,
-                    provider="ncbi_geo",
-                    stage="related_series",
-                    item_id=gse,
-                )
-                failed_accessions.append(gse)
-                errors.append(safe_error)
-                logger.warning(
-                    "Related-series collection degraded accession=%s "
-                    "error_type=%s correlation_id=%s",
-                    gse,
-                    safe_error.error_type,
-                    safe_error.correlation_id,
-                )
-                continue
-
-            related_parsed.extend(parsed)
-            for related_gse in self._extract_related_gse_accessions(parsed):
-                if related_gse not in seen_gses:
-                    seen_gses.add(related_gse)
-                    pending_gses.append(related_gse)
-
-        if remove_empty:
-            related_parsed = [
-                self.remove_empty_fields(series_package)
-                for series_package in related_parsed
-            ]
-
-        if errors:
-            status = OperationStatusV2(
-                execution=ExecutionStatus.DEGRADED,
-                completeness=CompletenessStatus.PARTIAL,
-                evidence_confidence=EvidenceConfidence.NOT_ASSESSED,
-                validation=ValidationStatus.VALID,
-                publication=PublicationDisposition.REVIEW_REQUIRED,
-                terminal_reason="related_series_partial",
-                errors=tuple(errors),
-            )
-        elif related_parsed:
-            status = OperationStatusV2(
-                execution=ExecutionStatus.SUCCEEDED,
-                completeness=CompletenessStatus.COMPLETE,
-                evidence_confidence=EvidenceConfidence.NOT_ASSESSED,
-                validation=ValidationStatus.VALID,
-                publication=PublicationDisposition.PUBLISHABLE,
-                terminal_reason="related_series_complete",
-            )
-        else:
-            status = OperationStatusV2(
-                execution=ExecutionStatus.SUCCEEDED,
-                completeness=CompletenessStatus.EMPTY,
-                evidence_confidence=EvidenceConfidence.NOT_ASSESSED,
-                validation=ValidationStatus.VALID,
-                publication=PublicationDisposition.NOT_REQUESTED,
-                terminal_reason="no_related_series",
-            )
-
-        return RelatedSeriesParseResult(
-            related_parsed,
-            status=status,
-            attempted_accessions=attempted_accessions,
-            failed_accessions=failed_accessions,
-        )
-
-    def _parse_with_related_series(self, parsed: list[dict]) -> list[dict]:
-        all_series = list(parsed)
-        seen_gses = set(self._extract_series_accessions(parsed))
-        pending_gses = deque()
-
-        for gse in self._extract_related_gse_accessions(parsed):
-            if gse not in seen_gses:
-                seen_gses.add(gse)
-                pending_gses.append(gse)
-
-        while pending_gses:
-            gse = pending_gses.popleft()
-            related_miniml = self.geo_fetcher.fetch_gse_miniml(gse=gse)
-            related_parsed = self._parse(miniml=related_miniml)
-            all_series.extend(related_parsed)
-
-            for related_gse in self._extract_related_gse_accessions(related_parsed):
-                if related_gse not in seen_gses:
-                    seen_gses.add(related_gse)
-                    pending_gses.append(related_gse)
-
-        return all_series
 
     def _top_level_nodes(self, root: ET.Element) -> dict[str, list[ET.Element]]:
         top_level = {
@@ -499,7 +346,7 @@ class GEOParser:
     def _child_key(self, parent_name: str, child_name: str) -> str:
         return self._to_snake_case(child_name)
 
-    def _extract_series_accessions(self, series_packages: list[dict]) -> list[str]:
+    def series_accessions(self, series_packages: list[dict]) -> list[str]:
         accessions = []
         for package in series_packages:
             series = package.get("series", {})
@@ -513,7 +360,7 @@ class GEOParser:
                         accessions.append(normalized)
         return accessions
 
-    def _extract_related_gse_accessions(self, series_packages: list[dict]) -> list[str]:
+    def related_accessions(self, series_packages: list[dict]) -> list[str]:
         related_gses = []
         for package in series_packages:
             series = package.get("series", {})

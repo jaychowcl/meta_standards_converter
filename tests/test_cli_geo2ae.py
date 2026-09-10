@@ -38,7 +38,7 @@ PLATFORM_HANDLERS = (
 
 
 class TestGeo2AECLI(unittest.TestCase):
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_resource_profile_and_overrides_configure_converter(self, converter_mock):
         converter_mock.return_value.convert.return_value = []
 
@@ -54,7 +54,7 @@ class TestGeo2AECLI(unittest.TestCase):
         self.assertEqual("large", profile.name)
         self.assertEqual(4096, profile.max_xml_bytes)
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_list_platform_handlers_requires_no_accession_or_converter(self, geo2ae_mock):
         stdout = StringIO()
 
@@ -65,7 +65,7 @@ class TestGeo2AECLI(unittest.TestCase):
         self.assertEqual("".join(f"{name}\n" for name in PLATFORM_HANDLERS), stdout.getvalue())
         geo2ae_mock.assert_not_called()
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_platform_handler_is_forwarded_to_every_accession(self, geo2ae_mock):
         geo2ae_mock.return_value.convert.return_value = ["magetab"]
 
@@ -99,7 +99,7 @@ class TestGeo2AECLI(unittest.TestCase):
 
         self.assertEqual(2, raised.exception.code)
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_one_accession_uses_defaults(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -117,7 +117,7 @@ class TestGeo2AECLI(unittest.TestCase):
         )
         self.assertEqual("", stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_multiple_accessions_are_converted_in_order(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -134,7 +134,7 @@ class TestGeo2AECLI(unittest.TestCase):
             converter.convert.call_args_list,
         )
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_related_and_out_are_passed_to_each_accession(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -151,7 +151,7 @@ class TestGeo2AECLI(unittest.TestCase):
             converter.convert.call_args_list,
         )
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_related_series_alias_is_passed_to_converter(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -167,7 +167,7 @@ class TestGeo2AECLI(unittest.TestCase):
             out=".",
         )
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_get_related_series_alias_is_still_supported(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -183,7 +183,7 @@ class TestGeo2AECLI(unittest.TestCase):
             out=".",
         )
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_keep_empty_is_passed_to_converter(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -199,7 +199,7 @@ class TestGeo2AECLI(unittest.TestCase):
             out=".",
         )
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_failed_accession_returns_one_and_continues(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         canary = "network-secret-token"
@@ -229,7 +229,7 @@ class TestGeo2AECLI(unittest.TestCase):
         self.assertNotIn(canary, stdout.getvalue())
         self.assertEqual("", stderr.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_verbose_emits_success_logs_to_stdout(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -245,7 +245,7 @@ class TestGeo2AECLI(unittest.TestCase):
             stdout.getvalue(),
         )
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_double_verbose_emits_debug_logs_to_stdout(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -257,7 +257,7 @@ class TestGeo2AECLI(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertIn("DEBUG meta_standards_converter.cli.geo2ae: Starting geo2ae CLI", stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_quiet_emits_only_errors(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -269,7 +269,7 @@ class TestGeo2AECLI(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertEqual("", stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_log_file_writes_configured_logs(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
@@ -286,7 +286,7 @@ class TestGeo2AECLI(unittest.TestCase):
         self.assertIn("INFO meta_standards_converter.cli.geo2ae: GSE234602: conversion started", log_content)
         self.assertIn("GSE234602: converted 1 MAGE-TAB output(s) to .", log_content)
 
-    @patch("meta_standards_converter.cli.geo2ae.geo2ae")
+    @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_repeated_main_calls_do_not_duplicate_log_lines(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]

@@ -12,8 +12,8 @@ import logging
 
 from meta_standards_converter.ae_handlers.ae_common import series_identity
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
-from meta_standards_converter.converters.json_source import JSONPackageSource
-from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
+from meta_standards_converter.sources.json import JSONPackageSource
+from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
@@ -21,7 +21,7 @@ from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 logger = logging.getLogger(__name__)
 
 
-class json2ae(JSONHandler):
+class JSON2AEConverter(JSONHandler):
     """Convert parsed MINiML JSON packages into MAGE-TAB payloads."""
 
     def __init__(self, enricher=None, ae_constructor=None, package_source=None):

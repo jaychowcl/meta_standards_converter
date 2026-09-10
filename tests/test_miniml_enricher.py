@@ -20,7 +20,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher  # noqa: E402
+from meta_standards_converter.metadata.enrichment import MINiMLEnricher  # noqa: E402
 from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
 
@@ -85,7 +85,7 @@ class TestMINiMLEnricher(unittest.TestCase):
 
     def test_enrich_adds_sra_accessions_and_runs(self):
         insdc_fetcher = Mock()
-        insdc_fetcher._extract_sra.side_effect = [["SRX1", "SRX1"], ["ERR2"]]
+        insdc_fetcher.extract_sra_accessions.side_effect = [["SRX1", "SRX1"], ["ERR2"]]
         insdc_fetcher.fetch_sra_runs.side_effect = [
             [{"run": "SRR1", "study": "ERP137216"}],
             [{"run": "ERR2", "study": "ERP137216"}, {"run": "ERR3", "study": "SRP999"}],
@@ -124,7 +124,7 @@ class TestMINiMLEnricher(unittest.TestCase):
         pubmed_fetcher = Mock()
         pubmed_fetcher.pubmed_summary.side_effect = requests.RequestException("no pubmed")
         insdc_fetcher = Mock()
-        insdc_fetcher._extract_sra.return_value = ["SRX1"]
+        insdc_fetcher.extract_sra_accessions.return_value = ["SRX1"]
         insdc_fetcher.fetch_sra_runs.side_effect = ET.ParseError("bad xml")
         data = _package(
             series={"iid": "GSE1", "pubmed_id": ["123"]},
@@ -151,7 +151,7 @@ class TestMINiMLEnricher(unittest.TestCase):
 
     def test_enrich_sra_does_not_add_ena_accession_without_study_values(self):
         insdc_fetcher = Mock()
-        insdc_fetcher._extract_sra.return_value = ["SRX1"]
+        insdc_fetcher.extract_sra_accessions.return_value = ["SRX1"]
         insdc_fetcher.fetch_sra_runs.return_value = [{"run": "SRR1", "study": None}]
         data = _package(series={"iid": "GSE1"}, sample=[{"iid": "GSM1", "relation": [{"type": "SRA", "target": "SRX1"}]}])
 
@@ -169,7 +169,7 @@ class TestMINiMLEnricher(unittest.TestCase):
         )
 
         with self.assertLogs(
-            "meta_standards_converter.enrichers.miniml_enricher", level="INFO"
+            "meta_standards_converter.metadata.enrichment", level="INFO"
         ) as logs:
             MINiMLEnricher(
                 pubmed_fetcher=pubmed_fetcher, insdc_fetcher=Mock()

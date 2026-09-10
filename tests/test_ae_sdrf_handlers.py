@@ -29,8 +29,8 @@ from meta_standards_converter.ae_handlers.ae_sdrf_handlers import (  # noqa: E40
     _TenXV3DropletSingleCellSequencingSDRFHandler,
     classify_file,
 )
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
-from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher  # noqa: E402
+from meta_standards_converter.miniml.geo_parser import GEOParser  # noqa: E402
+from meta_standards_converter.sources.insdc import INSDCWebfetcher  # noqa: E402
 
 
 class EmptyINSDCFetcher(INSDCWebfetcher):
@@ -519,7 +519,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
 
         self.assertEqual("SRR1", self.cell(sdrf, 1, "Comment[ENA_RUN]"))
         self.assertEqual("ftp://example/r1.fastq.gz", self.cell(sdrf, 1, "Comment[FASTQ_URI]"))
-        fetcher._extract_sra.assert_not_called()
+        fetcher.extract_sra_accessions.assert_not_called()
         fetcher.fetch_sra_runs.assert_not_called()
 
     def test_bulk_sequencing_handler_emits_one_row_per_fastq(self):

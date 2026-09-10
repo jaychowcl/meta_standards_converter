@@ -16,9 +16,9 @@ import os
 import re
 from collections.abc import Mapping, Sequence
 
-from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser
-from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
+from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+from meta_standards_converter.miniml.geo_parser import GEOParser
+from meta_standards_converter.sources.geo import GEOWebFetcher, GEOSource
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 from meta_standards_converter.runtime_contracts import (
@@ -78,7 +78,11 @@ def _relation_gses(series: Mapping, relation_type: str) -> list[tuple[str, str]]
    return matches
 
 
-class geo2json(JSONHandler):
+class GEO2JSONConverter(JSONHandler):
+   def metrics(self):
+      from meta_standards_converter.sources.contracts import request_metrics
+      return request_metrics(self.geo_fetcher, self.enricher)
+
    def __init__(
       self,
       enricher=None,
@@ -96,7 +100,7 @@ class geo2json(JSONHandler):
       self.geo_fetcher = geo_fetcher or GEOWebFetcher(
          resource_profile=self.resource_profile, resource_overrides=None
       )
-      self.parser = parser or GEOParser(geo_fetcher=self.geo_fetcher)
+      self.parser = parser or GEOSource(fetcher=self.geo_fetcher, resource_profile=self.resource_profile)
 
    def convert(
       self,

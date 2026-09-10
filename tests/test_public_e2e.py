@@ -16,12 +16,12 @@ from unittest.mock import Mock
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor
-from meta_standards_converter.converters.ae2json import ae2json
-from meta_standards_converter.converters.geo2ae import geo2ae
-from meta_standards_converter.converters.geo2json import geo2json
-from meta_standards_converter.converters.json2ae import json2ae
+from meta_standards_converter.converters.ae2json import AE2JSONConverter
+from meta_standards_converter.converters.geo2ae import GEO2AEConverter
+from meta_standards_converter.converters.geo2json import GEO2JSONConverter
+from meta_standards_converter.converters.json2ae import JSON2AEConverter
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser
+from meta_standards_converter.sources.geo import GEOSource
 from meta_standards_converter.miniml import MINiMLCodec
 
 
@@ -46,7 +46,7 @@ def offline_constructor():
     pubmed = Mock()
     pubmed.pubmed_summary.return_value = (None, None, None, None, None, None)
     insdc = Mock()
-    insdc._extract_sra.return_value = []
+    insdc.extract_sra_accessions.return_value = []
     insdc.fetch_sra_runs.return_value = []
     return AEConstructor(
         idf_constructor=IDFConstructor(pubmed_fetcher=pubmed),
@@ -57,10 +57,10 @@ def offline_constructor():
 def test_public_metadata_converters_write_interoperable_artifacts(tmp_path):
     miniml = (ROOT / "tests" / "GSE328265_family.xml").read_text(encoding="utf-8")
     fetcher = StaticGEOFetcher(miniml)
-    parser = GEOParser(geo_fetcher=fetcher)
+    parser = GEOSource(fetcher=fetcher)
     json_out = tmp_path / "json"
 
-    packages = geo2json(
+    packages = GEO2JSONConverter(
         geo_fetcher=fetcher,
         parser=parser,
         enricher=IdentityEnricher(),
@@ -70,7 +70,7 @@ def test_public_metadata_converters_write_interoperable_artifacts(tmp_path):
     assert json.loads(json_path.read_text(encoding="utf-8")) == MINiMLCodec().encode_many(packages)
 
     geo_magetab = tmp_path / "geo-magetab"
-    geo2ae(
+    GEO2AEConverter(
         geo_fetcher=fetcher,
         parser=parser,
         enricher=IdentityEnricher(),
@@ -80,14 +80,14 @@ def test_public_metadata_converters_write_interoperable_artifacts(tmp_path):
     assert (geo_magetab / "E-GEOD-328265.sdrf.txt").is_file()
 
     json_magetab = tmp_path / "json-magetab"
-    json2ae(ae_constructor=offline_constructor()).convert(
+    JSON2AEConverter(ae_constructor=offline_constructor()).convert(
         str(json_path), out=str(json_magetab), enrich=False
     )
     idf = json_magetab / "E-GEOD-328265.idf.txt"
     assert idf.is_file()
 
     roundtrip_out = tmp_path / "roundtrip"
-    roundtrip = ae2json().convert(str(idf), out=str(roundtrip_out))
+    roundtrip = AE2JSONConverter().convert(str(idf), out=str(roundtrip_out))
     assert roundtrip[0]["series"]["title"].startswith(
         "A CSF Disease-Associated Macrophage Signature"
     )

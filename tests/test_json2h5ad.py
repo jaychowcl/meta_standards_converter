@@ -36,7 +36,7 @@ from meta_standards_converter.converters.json2h5ad import (  # noqa: E402
     SourcePlanner,
     json2h5ad,
 )
-from meta_standards_converter.converters.json_source import (
+from meta_standards_converter.sources.json import (
     DatasetPackageGroup,
     SourceLoadResult,
 )

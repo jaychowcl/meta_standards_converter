@@ -21,7 +21,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.converters.geo2json import geo2json  # noqa: E402
+from meta_standards_converter.converters.geo2json import GEO2JSONConverter  # noqa: E402
 from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
 from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
@@ -36,7 +36,7 @@ def _package(series: dict) -> MINiMLPackage:
 
 class TestGeo2JSONConverter(unittest.TestCase):
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_typed_resource_profile_is_shared_by_default_network_collaborators(
         self, fetcher_mock, parser_mock, enricher_mock
@@ -45,7 +45,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
             "standard", overrides={"max_xml_bytes": 4096}
         )
 
-        converter = geo2json(resource_profile=profile)
+        converter = GEO2JSONConverter(resource_profile=profile)
 
         fetcher_mock.assert_called_once_with(
             resource_profile=profile, resource_overrides=None
@@ -53,10 +53,10 @@ class TestGeo2JSONConverter(unittest.TestCase):
         enricher_mock.assert_called_once_with(
             resource_profile=profile, resource_overrides=None
         )
-        parser_mock.assert_called_once_with(geo_fetcher=converter.geo_fetcher)
+        parser_mock.assert_called_once_with(fetcher=converter.geo_fetcher, resource_profile=profile)
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_fetches_parses_and_enriches_by_default(
         self,
@@ -72,7 +72,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         parser_mock.return_value.parse.return_value = [primary_json, related_json]
         enricher_mock.return_value.enrich.side_effect = [enriched_primary, enriched_related]
 
-        result = geo2json().convert(
+        result = GEO2JSONConverter().convert(
             gse="GSE1",
             related_series=True,
             remove_empty=False,
@@ -92,7 +92,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         self.assertEqual([enriched_primary, enriched_related], result)
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_can_skip_enrichment(
         self,
@@ -104,13 +104,13 @@ class TestGeo2JSONConverter(unittest.TestCase):
         parsed_json = _package({"iid": "GSE1"})
         parser_mock.return_value.parse.return_value = [parsed_json]
 
-        result = geo2json().convert(gse="GSE1", enrich=False, out=None)
+        result = GEO2JSONConverter().convert(gse="GSE1", enrich=False, out=None)
 
         enricher_mock.return_value.enrich.assert_not_called()
         self.assertEqual([parsed_json], result)
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_inherits_one_reciprocal_parent_pubmed_id_before_enrichment(
         self,
@@ -138,7 +138,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         parser_mock.return_value.parse.side_effect = [[child], [parent]]
         enricher_mock.return_value.enrich.side_effect = lambda data: data
 
-        result = geo2json().convert(gse="GSE1", out=None)
+        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
 
         self.assertEqual(1, len(result))
         self.assertEqual(["12345"], result[0]["series"]["pubmed_id"])
@@ -173,7 +173,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         self.assertEqual(["12345"], enriched_input["series"]["pubmed_id"])
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_preserves_direct_publication_without_parent_fetch(
         self,
@@ -192,14 +192,14 @@ class TestGeo2JSONConverter(unittest.TestCase):
         parser_mock.return_value.parse.return_value = [child]
         enricher_mock.return_value.enrich.side_effect = lambda data: data
 
-        result = geo2json().convert(gse="GSE1", out=None)
+        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
 
         self.assertEqual(["999"], result[0]["series"]["pubmed_id"])
         self.assertNotIn("extensions", result[0]["series"])
         fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_skips_parent_publication_lookup_when_enrichment_is_disabled(
         self,
@@ -216,14 +216,14 @@ class TestGeo2JSONConverter(unittest.TestCase):
         fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML>child</MINiML>"
         parser_mock.return_value.parse.return_value = [child]
 
-        result = geo2json().convert(gse="GSE1", enrich=False, out=None)
+        result = GEO2JSONConverter().convert(gse="GSE1", enrich=False, out=None)
 
         self.assertEqual([child], result)
         fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
         enricher_mock.return_value.enrich.assert_not_called()
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_leaves_publication_blank_when_parent_evidence_is_ambiguous(
         self,
@@ -248,13 +248,13 @@ class TestGeo2JSONConverter(unittest.TestCase):
         parser_mock.return_value.parse.side_effect = [[child], [parent]]
         enricher_mock.return_value.enrich.side_effect = lambda data: data
 
-        result = geo2json().convert(gse="GSE1", out=None)
+        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
 
         self.assertNotIn("pubmed_id", result[0]["series"])
         self.assertNotIn("extensions", result[0]["series"])
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_leaves_publication_blank_for_multiple_direct_parents(
         self,
@@ -275,13 +275,13 @@ class TestGeo2JSONConverter(unittest.TestCase):
         parser_mock.return_value.parse.return_value = [child]
         enricher_mock.return_value.enrich.side_effect = lambda data: data
 
-        result = geo2json().convert(gse="GSE1", out=None)
+        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
 
         self.assertNotIn("pubmed_id", result[0]["series"])
         fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_preserves_direct_publication_details_without_parent_fetch(
         self,
@@ -302,7 +302,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         parser_mock.return_value.parse.return_value = [child]
         enricher_mock.return_value.enrich.side_effect = lambda data: data
 
-        result = geo2json().convert(gse="GSE1", out=None)
+        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
 
         self.assertEqual(
             "Direct publication",
@@ -311,7 +311,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_leaves_publication_blank_for_nonreciprocal_or_failed_parent(
         self,
@@ -331,7 +331,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         with self.subTest("nonreciprocal"):
             fetcher_mock.return_value.fetch_gse_miniml.side_effect = ["child", "parent"]
             parser_mock.return_value.parse.side_effect = [[child], [nonreciprocal]]
-            result = geo2json().convert(gse="GSE1", out=None)
+            result = GEO2JSONConverter().convert(gse="GSE1", out=None)
             self.assertNotIn("pubmed_id", result[0]["series"])
 
         fetcher_mock.return_value.fetch_gse_miniml.reset_mock()
@@ -345,12 +345,12 @@ class TestGeo2JSONConverter(unittest.TestCase):
             with self.assertLogs(
                 "meta_standards_converter.converters.geo2json", level="WARNING"
             ) as logs:
-                result = geo2json().convert(gse="GSE1", out=None)
+                result = GEO2JSONConverter().convert(gse="GSE1", out=None)
             self.assertNotIn("pubmed_id", result[0]["series"])
             self.assertNotIn("parent unavailable", "\n".join(logs.output))
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_writes_json_list_file(
         self,
@@ -364,7 +364,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         enricher_mock.return_value.enrich.return_value = parsed_json
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            result = geo2json().convert(gse="GSE1", out=tmpdir)
+            result = GEO2JSONConverter().convert(gse="GSE1", out=tmpdir)
             with open(os.path.join(tmpdir, "GSE1.json"), encoding="utf-8") as handle:
                 written = json.load(handle)
 
@@ -372,7 +372,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         self.assertEqual([parsed_json.to_mapping()], written)
 
     @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOParser")
+    @patch("meta_standards_converter.converters.geo2json.GEOSource")
     @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
     def test_convert_emits_stage_logs_without_payload_dump(
         self,
@@ -387,7 +387,7 @@ class TestGeo2JSONConverter(unittest.TestCase):
         enricher_mock.return_value.enrich.return_value = enriched_json
 
         with self.assertLogs("meta_standards_converter.converters.geo2json", level="DEBUG") as logs:
-            result = geo2json().convert(gse="GSE1", related_series=True, out=None)
+            result = GEO2JSONConverter().convert(gse="GSE1", related_series=True, out=None)
 
         log_output = "\n".join(logs.output)
         self.assertEqual([enriched_json], result)

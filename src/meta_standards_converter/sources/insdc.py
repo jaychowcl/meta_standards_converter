@@ -25,8 +25,14 @@ from meta_standards_converter.xml_safety import parse_xml, read_limited_response
 
 
 class INSDCWebfetcher():
+
+    def metrics(self):
+        from meta_standards_converter.sources.contracts import request_metrics
+        return request_metrics(self.client) if self.client is not None else request_metrics(self.ncbi_requester, self.ena_requester)
+
     def __init__(
         self,
+        client=None,
         ncbi_requester=None,
         ena_requester=None,
         ncbi_request_settings=None,
@@ -39,6 +45,7 @@ class INSDCWebfetcher():
             resource_profile,
             overrides=resource_overrides,
         )
+        self.client = client
         self.ncbi_identity = ncbi_identity or NCBIApplicationIdentity()
         self.ncbi_requester = ncbi_requester or RateLimitedRequester(
             service="ncbi_eutils",
@@ -57,7 +64,7 @@ class INSDCWebfetcher():
             ),
         )
 
-    def _extract_sra(self, sra: str) -> list:
+    def extract_sra_accessions(self, sra: str) -> list:
         '''
         Extracts sra accession within substring
         '''
@@ -66,7 +73,7 @@ class INSDCWebfetcher():
 
         return matches
 
-    def _ncbi_nrx(self, nrx: str) -> list:
+    def fetch_sra_xml(self, nrx: str) -> list:
         '''
         lookup nrx accession to get nrr accessions
         '''
@@ -96,7 +103,7 @@ class INSDCWebfetcher():
         return root
 
     def fetch_sra_runs(self, accession: str) -> list:
-        root = self._ncbi_nrx(nrx=accession)
+        root = (self.client or self).fetch_sra_xml(nrx=accession)
         ena_fastqs_by_run = self.fetch_ena_fastq_files(accession=accession)
 
         records = []
@@ -165,7 +172,7 @@ class INSDCWebfetcher():
 
     def fetch_ena_fastq_files(self, accession: str) -> dict:
         try:
-            rows = self.fetch_ena_file_report(accession=accession)
+            rows = (self.client or self).fetch_ena_file_report(accession=accession)
         except (requests.RequestException, ValueError):
             return {}
 

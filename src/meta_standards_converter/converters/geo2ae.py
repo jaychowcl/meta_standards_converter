@@ -12,11 +12,11 @@ Converter for GEO XML to ArrayExpress MAGETAB format.
 
 import logging
 
-from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser
+from meta_standards_converter.sources.geo import GEOWebFetcher, GEOSource
+from meta_standards_converter.miniml.geo_parser import GEOParser
 
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor
-from meta_standards_converter.enrichers.miniml_enricher import MINiMLEnricher
+from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.runtime_contracts import (
    ResourceProfile,
@@ -25,7 +25,11 @@ from meta_standards_converter.runtime_contracts import (
 
 logger = logging.getLogger(__name__)
 
-class geo2ae(JSONHandler):
+class GEO2AEConverter(JSONHandler):
+   def metrics(self):
+      from meta_standards_converter.sources.contracts import request_metrics
+      return request_metrics(self.geo_fetcher, self.enricher)
+
    def __init__(
       self,
       enricher=None,
@@ -44,7 +48,7 @@ class geo2ae(JSONHandler):
       self.geo_fetcher = geo_fetcher or GEOWebFetcher(
          resource_profile=self.resource_profile, resource_overrides=None
       )
-      self.parser = parser or GEOParser(geo_fetcher=self.geo_fetcher)
+      self.parser = parser or GEOSource(fetcher=self.geo_fetcher, resource_profile=self.resource_profile)
       self.ae_constructor = ae_constructor or AEConstructor()
 
    def convert(

@@ -22,7 +22,7 @@ from meta_standards_converter.cli.common import (
     print_platform_handlers,
     record_safe_cli_error,
 )
-from meta_standards_converter.converters.geo2ae import geo2ae
+from meta_standards_converter.converters.geo2ae import GEO2AEConverter
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def main(argv=None) -> int:
     if not args.gse:
         parser.error("the following arguments are required: gse")
     configure_logging(args)
-    converter = geo2ae(
+    converter = GEO2AEConverter(
         resource_profile=configured_resource_profile(args, parser)
     )
     failed = False

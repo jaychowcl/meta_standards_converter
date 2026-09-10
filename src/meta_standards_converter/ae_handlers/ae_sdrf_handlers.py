@@ -20,7 +20,7 @@ from meta_standards_converter.ae_handlers.ae_common import (
     has_array_files,
     normalized_extension,
 )
-from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher
+from meta_standards_converter.sources.insdc import INSDCWebfetcher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 
 
@@ -604,7 +604,7 @@ class _BaseSDRFHandler():
                 continue
             if (relation.get("type") or "").lower() != "sra":
                 continue
-            accessions.extend(self.insdc_handler._extract_sra(relation.get("target") or ""))
+            accessions.extend(self.insdc_handler.extract_sra_accessions(relation.get("target") or ""))
 
         runs = []
         for accession in dict.fromkeys(accessions):

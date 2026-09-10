@@ -13,7 +13,7 @@ import logging
 import os
 
 from meta_standards_converter.ae_handlers.ae_parser import AEParser
-from meta_standards_converter.ae_handlers.ae_webfetcher import AEWebFetcher
+from meta_standards_converter.sources.magetab import AEWebFetcher
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 from meta_standards_converter.retrieval import RetrievalPolicy
 from meta_standards_converter.runtime_contracts import (
@@ -25,7 +25,11 @@ from meta_standards_converter.runtime_contracts import (
 logger = logging.getLogger(__name__)
 
 
-class ae2json:
+class AE2JSONConverter:
+    def metrics(self):
+        from meta_standards_converter.sources.contracts import request_metrics
+        return request_metrics(self.fetcher)
+
     def __init__(
         self,
         fetcher=None,

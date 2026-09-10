@@ -35,7 +35,7 @@ from meta_standards_converter.ae_handlers.ae_idf_handlers import (  # noqa: E402
 )
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
 from meta_standards_converter.harmonizers.harmonizers import Harmonizer  # noqa: E402
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
+from meta_standards_converter.miniml.geo_parser import GEOParser  # noqa: E402
 from meta_standards_converter.miniml import MINiMLCodec  # noqa: E402
 
 
@@ -1936,7 +1936,7 @@ class TestAEConstructor(unittest.TestCase):
 
     def test_magetab_sequencing_library_construction_uses_sra_text_in_idf(self):
         sra_fetcher = Mock()
-        sra_fetcher._extract_sra.return_value = ["SRX1"]
+        sra_fetcher.extract_sra_accessions.return_value = ["SRX1"]
         sra_fetcher.fetch_sra_runs.return_value = [
             {
                 "geo_sample": "GSM1",

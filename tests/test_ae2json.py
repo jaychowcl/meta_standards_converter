@@ -30,11 +30,11 @@ from meta_standards_converter.ae_handlers.ae_model import (  # noqa: E402
 )
 from meta_standards_converter.ae_handlers.ae_parser import AEParser  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
-from meta_standards_converter.ae_handlers.ae_webfetcher import (  # noqa: E402
+from meta_standards_converter.sources.magetab import (  # noqa: E402
     MAGETabInput,
     TextResource,
 )
-from meta_standards_converter.converters.ae2json import ae2json  # noqa: E402
+from meta_standards_converter.converters.ae2json import AE2JSONConverter  # noqa: E402
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: E402
 from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
@@ -117,7 +117,7 @@ class TestAE2JSONConverter(unittest.TestCase):
             "standard", overrides={"max_xml_bytes": 4096}
         )
 
-        converter = ae2json(
+        converter = AE2JSONConverter(
             resource_profile=profile,
             source_hosts=("metadata.example.org",),
         )
@@ -151,7 +151,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         text = "\n".join("\t".join(values) for values in [header, *rows]) + "\n"
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=[text])
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
         step = next(
             item for item in payload["series"]["assay_paths"][0]["steps"]
@@ -198,7 +198,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(idf=idf)
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         self.assertEqual(["temperature"], package["series"]["protocols"][0]["parameters"])
         self.assertEqual([{"value": ""}], package["series"]["quality_controls"])
 
@@ -230,7 +230,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(idf=idf, sdrfs=[text])
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         series = package["series"]
         self.assertEqual(["centrifuge"], series["protocols"][1]["hardware"])
         self.assertEqual(["ExtractSoft"], series["protocols"][1]["software"])
@@ -258,7 +258,7 @@ class TestAE2JSONConverter(unittest.TestCase):
     def test_model_edits_render_without_merging_into_miniml_fields(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
         payload["series"]["protocols"][1]["hardware"] = ["edited centrifuge"]
         package = MINiMLCodec().decode(payload).package
@@ -278,7 +278,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         text = "\n".join("\t".join(values) for values in [header, *rows]) + "\n"
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=[text])
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
         payload["series"]["title"] = "Edited core title"
         payload["series"]["assay_paths"][1]["steps"][-1]["name"] = "edited-scan-2"
@@ -298,7 +298,7 @@ class TestAE2JSONConverter(unittest.TestCase):
     def test_harmonized_groups_remain_internal_while_paths_preserve_multiplicity(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         payload = package.to_mapping()
         characteristics = payload["sample"][0]["channel"][0]["characteristics"]
         characteristics.extend([
@@ -336,7 +336,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=[text])
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         characteristics = {
             item["name"]: item
             for item in package["sample"][0]["channel"][0]["characteristics"]
@@ -527,7 +527,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
 
-        packages = ae2json(fetcher=fetcher).convert("E-MTAB-1")
+        packages = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")
 
         self.assertEqual(1, len(packages))
         package = packages[0]
@@ -572,7 +572,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertIsInstance(package, MINiMLPackage)
         self.assertEqual("3.0", package.miniml_schema_version)
@@ -594,7 +594,7 @@ class TestAE2JSONConverter(unittest.TestCase):
             sdrfs=[frozen_sdrf],
         )
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-6486")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-6486")[0]
         mapping = MINiMLCodec().decode(
             package.to_mapping(), strict=True
         ).package.to_mapping()
@@ -625,7 +625,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(idf=idf)
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertEqual("E-MTAB-999", package["series"]["iid"])
 
@@ -637,7 +637,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(idf=idf)
 
-        package = ae2json(fetcher=fetcher).convert("LOCAL-STUDY-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("LOCAL-STUDY-1")[0]
 
         self.assertEqual("LOCAL-STUDY-1", package["series"]["iid"])
         self.assertNotEqual("GSE123", package["series"]["iid"])
@@ -647,7 +647,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher.resolve.return_value = resolved_input()
 
         with self.assertLogs("meta_standards_converter", level="WARNING") as logs:
-            package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+            package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertNotIn("mage_tab", package)
         self.assertEqual(["idf", "sdrf"], [item["kind"] for item in package["source"]["documents"]])
@@ -662,7 +662,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(sdrfs=[sdrf(), second])
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertEqual(["GSM1", "GSM2"], [sample["iid"] for sample in package["sample"]])
         self.assertEqual(["A-TEST-1", "A-TEST-2"], [item["iid"] for item in package["platform"]])
@@ -676,7 +676,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher.resolve.return_value = resolved_input(sdrfs=[sdrf(rows)])
 
         with self.assertLogs("meta_standards_converter", level="WARNING") as logs:
-            package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+            package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertEqual("First", package["sample"][0]["title"])
         self.assertIn("conflicting title", "\n".join(logs.output))
@@ -703,7 +703,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input(idf=idf, sdrfs=[text])
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertEqual("Extract material", package["sample"][0]["channel"][0]["extract_protocol"])
 
@@ -712,14 +712,14 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher.resolve.return_value = resolved_input(sdrfs=["Source Name\tSample Name\nS1\n"])
 
         with self.assertRaisesRegex(ValueError, "columns"):
-            ae2json(fetcher=fetcher).convert("E-MTAB-1")
+            AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")
 
     def test_writes_package_list_using_investigation_accession(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            packages = ae2json(fetcher=fetcher).convert("E-MTAB-1", out=tmpdir)
+            packages = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1", out=tmpdir)
             path = os.path.join(tmpdir, "E-MTAB-1.json")
             with open(path, encoding="utf-8") as handle:
                 written = json.load(handle)
@@ -729,7 +729,7 @@ class TestAE2JSONConverter(unittest.TestCase):
     def test_semantic_round_trip_through_json2ae(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         pubmed = MagicMock()
         insdc = MagicMock()
         constructor = AEConstructor(
@@ -750,7 +750,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
 
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         self.assertNotIn("mage_tab", package)
         self.assertEqual(
             ["study.idf.txt", "study1.sdrf.txt"],
@@ -760,7 +760,7 @@ class TestAE2JSONConverter(unittest.TestCase):
     def test_unchanged_package_renders_semantic_source_content(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         magetab = AEConstructor().miniml2magetab(package)
         rows = {row[0]: row for row in magetab}
@@ -773,7 +773,7 @@ class TestAE2JSONConverter(unittest.TestCase):
     def test_edited_json_wins_while_semantic_sdrf_comments_are_retained(self):
         fetcher = MagicMock()
         fetcher.resolve.return_value = resolved_input()
-        package = ae2json(fetcher=fetcher).convert("E-MTAB-1")[0]
+        package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
         edited_payload = package.to_mapping()
         edited_payload["series"]["title"] = "Edited title"
         edited = MINiMLCodec().decode(edited_payload).package

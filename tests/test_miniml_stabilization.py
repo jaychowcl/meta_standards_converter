@@ -26,7 +26,7 @@ from meta_standards_converter.miniml import (
 )
 from tests.test_ae2json import IDF, resolved_input
 from tests.test_geo_parser import miniml_body
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser
+from meta_standards_converter.miniml.geo_parser import GEOParser
 
 
 def _parse_sdrf(header: list[str], row: list[str]):

@@ -22,12 +22,12 @@ if SRC not in sys.path:
 from meta_standards_converter.ae_handlers.ae_constructor import AEConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_idf_handlers import IDFConstructor  # noqa: E402
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
-from meta_standards_converter.converters.json2ae import json2ae  # noqa: E402
-from meta_standards_converter.converters.json_source import (  # noqa: E402
+from meta_standards_converter.converters.json2ae import JSON2AEConverter  # noqa: E402
+from meta_standards_converter.sources.json import (  # noqa: E402
     DatasetPackageGroup,
     SourceLoadResult,
 )
-from meta_standards_converter.geo_handlers.geo_parser import GEOParser  # noqa: E402
+from meta_standards_converter.miniml.geo_parser import GEOParser  # noqa: E402
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: E402
 
 
@@ -112,7 +112,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, [first, second])
-            result = json2ae(enricher=enricher, ae_constructor=constructor).convert(path)
+            result = JSON2AEConverter(enricher=enricher, ae_constructor=constructor).convert(path)
 
         self.assertEqual(["first-magetab", "second-magetab"], result)
         self.assertEqual([call(data=typed(first)), call(data=typed(second))], enricher.enrich.call_args_list)
@@ -130,7 +130,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = json2ae(enricher=enricher, ae_constructor=constructor).convert(
+            result = JSON2AEConverter(enricher=enricher, ae_constructor=constructor).convert(
                 path,
                 enrich=False,
             )
@@ -146,7 +146,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = json2ae(ae_constructor=constructor).convert(
+            result = JSON2AEConverter(ae_constructor=constructor).convert(
                 path,
                 enrich=False,
                 platform_handler="bulk_sequencing",
@@ -164,7 +164,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, [package("GSE1"), package("GSE2")])
-            result = json2ae(
+            result = JSON2AEConverter(
                 enricher=MagicMock(enrich=lambda data: data),
                 ae_constructor=constructor,
             ).convert(path, out=tmpdir)
@@ -177,7 +177,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
     def test_convert_rejects_missing_file(self):
         with self.assertRaisesRegex(FileNotFoundError, "MINiML JSON file not found"):
-            json2ae().convert("missing.json")
+            JSON2AEConverter().convert("missing.json")
 
     def test_convert_rejects_empty_package_list(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -185,14 +185,14 @@ class TestJSON2AEConverter(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError, "JSON source contains no convertible package groups"
             ):
-                json2ae().convert(path)
+                JSON2AEConverter().convert(path)
 
     def test_convert_rejects_non_object_package_before_enrichment(self):
         enricher = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, [package(), "invalid"])
             with self.assertRaisesRegex(ValueError, "package 2 must be a JSON object"):
-                json2ae(enricher=enricher).convert(path)
+                JSON2AEConverter(enricher=enricher).convert(path)
         enricher.enrich.assert_not_called()
 
     def test_convert_rejects_package_without_geo_series_accession(self):
@@ -207,7 +207,7 @@ class TestJSON2AEConverter(unittest.TestCase):
                 },
             )
             with self.assertRaisesRegex(ValueError, "series requires iid or accession"):
-                json2ae().convert(path)
+                JSON2AEConverter().convert(path)
 
     def test_convert_accepts_non_geo_study_accession(self):
         constructor = MagicMock()
@@ -216,7 +216,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = json2ae(ae_constructor=constructor).convert(path, enrich=False)
+            result = JSON2AEConverter(ae_constructor=constructor).convert(path, enrich=False)
 
         self.assertEqual(["magetab"], result)
 
@@ -228,7 +228,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = json2ae(ae_constructor=constructor).convert(path, enrich=False)
+            result = JSON2AEConverter(ae_constructor=constructor).convert(path, enrich=False)
 
         decoded = typed(payload)
         self.assertEqual(["magetab"], result)
@@ -269,7 +269,7 @@ class TestJSON2AEConverter(unittest.TestCase):
                 "meta_standards_converter.converters.json2ae",
                 level="WARNING",
             ) as logs:
-                result = json2ae(ae_constructor=constructor).convert(
+                result = JSON2AEConverter(ae_constructor=constructor).convert(
                     path,
                     enrich=False,
                 )
@@ -294,7 +294,7 @@ class TestJSON2AEConverter(unittest.TestCase):
                 ValueError,
                 "no convertible package groups",
             ):
-                json2ae().convert(path)
+                JSON2AEConverter().convert(path)
 
     def test_convert_uses_injected_package_source(self):
         constructor = MagicMock()
@@ -311,7 +311,7 @@ class TestJSON2AEConverter(unittest.TestCase):
             ),
         )
 
-        result = json2ae(
+        result = JSON2AEConverter(
             ae_constructor=constructor,
             package_source=source,
         ).convert("virtual-atlas.json", enrich=False)
@@ -324,7 +324,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, package("GSE-not-numeric"))
             with self.assertRaisesRegex(ValueError, "no usable study accession"):
-                json2ae().convert(path)
+                JSON2AEConverter().convert(path)
 
     def test_convert_rejects_malformed_geo_iid(self):
         payload = package("E-MTAB-unused")
@@ -333,7 +333,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
             with self.assertRaisesRegex(ValueError, "no usable study accession"):
-                json2ae().convert(path)
+                JSON2AEConverter().convert(path)
 
     def test_convert_logs_stages_without_metadata_payload(self):
         constructor = MagicMock()
@@ -344,7 +344,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
             with self.assertLogs("meta_standards_converter.converters.json2ae", level="DEBUG") as logs:
-                result = json2ae(
+                result = JSON2AEConverter(
                     enricher=MagicMock(enrich=lambda data: data),
                     ae_constructor=constructor,
                 ).convert(path)
@@ -371,7 +371,7 @@ class TestJSON2AEConverter(unittest.TestCase):
                 idf_constructor=IDFConstructor(pubmed_fetcher=pubmed_fetcher),
                 sdrf_constructor=SDRFConstructor(insdc_fetcher=insdc_fetcher)
             )
-            actual = json2ae(ae_constructor=converter_constructor).convert(path, enrich=False)
+            actual = JSON2AEConverter(ae_constructor=converter_constructor).convert(path, enrich=False)
 
         self.assertEqual(1, len(actual))
         rows = {row[0]: row[1:] for row in actual[0] if row}

@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
-from .json_source import JSONPackageSource
+from meta_standards_converter.sources.json import JSONPackageSource
 from .harmonization_provenance import patch_provenance_columns
 from .mage_tab_projection import _parameter_summary
 from .miniml_metadata import MINiMLMetadataProvider, MINiMLMetadataService

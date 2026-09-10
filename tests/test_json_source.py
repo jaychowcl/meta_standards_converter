@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from meta_standards_converter.converters.json_source import JSONPackageSource
+from meta_standards_converter.sources.json import JSONPackageSource
 
 
 def package(study: str, sample: str) -> dict:

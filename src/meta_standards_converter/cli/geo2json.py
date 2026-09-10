@@ -20,7 +20,7 @@ from meta_standards_converter.cli.common import (
     configure_logging,
     record_safe_cli_error,
 )
-from meta_standards_converter.converters.geo2json import geo2json
+from meta_standards_converter.converters.geo2json import GEO2JSONConverter
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
     configure_logging(args)
-    converter = geo2json(
+    converter = GEO2JSONConverter(
         resource_profile=configured_resource_profile(args, parser)
     )
     failed = False

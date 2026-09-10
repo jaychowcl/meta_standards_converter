@@ -21,17 +21,17 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.ae_handlers.ae_sdrf_handlers import SDRFConstructor  # noqa: E402
-from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher  # noqa: E402
+from meta_standards_converter.sources.insdc import INSDCWebfetcher  # noqa: E402
 
 
 class TestINSDCWebfetcher(unittest.TestCase):
-    def test_extract_sra_finds_sra_style_accessions(self):
+    def testextract_sra_accessions_finds_sra_style_accessions(self):
         self.assertEqual(
             ["SRX1", "ERR22", "drr333"],
-            INSDCWebfetcher()._extract_sra("SRX1 https://example/ERR22 and drr333"),
+            INSDCWebfetcher().extract_sra_accessions("SRX1 https://example/ERR22 and drr333"),
         )
 
-    def test_ncbi_nrx_uses_ncbi_requester(self):
+    def testfetch_sra_xml_uses_ncbi_requester(self):
         content = b"<EXPERIMENT_PACKAGE_SET />"
         response = Mock(
             headers={"Content-Length": str(len(content))},
@@ -41,7 +41,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
         requester = Mock()
         requester.get.return_value = response
 
-        root = INSDCWebfetcher(ncbi_requester=requester)._ncbi_nrx("SRX1")
+        root = INSDCWebfetcher(ncbi_requester=requester).fetch_sra_xml("SRX1")
 
         requester.get.assert_called_once_with(
             "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
@@ -57,7 +57,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
         response.raise_for_status.assert_called_once()
         self.assertEqual("EXPERIMENT_PACKAGE_SET", root.tag)
 
-    def test_ncbi_nrx_rejects_entity_declarations(self):
+    def testfetch_sra_xml_rejects_entity_declarations(self):
         content = b'<!DOCTYPE x [<!ENTITY y "boom">]><x>&y;</x>'
         response = Mock(
             headers={"Content-Length": str(len(content))},
@@ -68,7 +68,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
         requester.get.return_value = response
 
         with self.assertRaisesRegex(ValueError, "DTD/entity"):
-            INSDCWebfetcher(ncbi_requester=requester)._ncbi_nrx("SRX1")
+            INSDCWebfetcher(ncbi_requester=requester).fetch_sra_xml("SRX1")
 
     def test_fetch_ena_file_report_uses_ena_requester(self):
         response = Mock()
@@ -128,7 +128,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
 </EXPERIMENT_PACKAGE_SET>
 """
         fetcher = INSDCWebfetcher()
-        fetcher._ncbi_nrx = Mock(return_value=ET.fromstring(xml))
+        fetcher.fetch_sra_xml = Mock(return_value=ET.fromstring(xml))
         fetcher.fetch_ena_file_report = Mock(return_value=[
             {
                 "run_accession": "SRR1",
@@ -140,7 +140,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
 
         runs = fetcher.fetch_sra_runs("SRX1")
 
-        fetcher._ncbi_nrx.assert_called_once_with(nrx="SRX1")
+        fetcher.fetch_sra_xml.assert_called_once_with(nrx="SRX1")
         fetcher.fetch_ena_file_report.assert_called_once_with(accession="SRX1")
         self.assertEqual(1, len(runs))
         self.assertEqual(
@@ -224,7 +224,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
 </EXPERIMENT_PACKAGE_SET>
 """
         fetcher = INSDCWebfetcher()
-        fetcher._ncbi_nrx = Mock(return_value=ET.fromstring(xml))
+        fetcher.fetch_sra_xml = Mock(return_value=ET.fromstring(xml))
         fetcher.fetch_ena_file_report = Mock(return_value=[])
 
         runs = fetcher.fetch_sra_runs("SRX1")
@@ -250,7 +250,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
 </EXPERIMENT_PACKAGE_SET>
 """
         fetcher = INSDCWebfetcher()
-        fetcher._ncbi_nrx = Mock(return_value=ET.fromstring(xml))
+        fetcher.fetch_sra_xml = Mock(return_value=ET.fromstring(xml))
         fetcher.fetch_ena_file_report = Mock(side_effect=requests.RequestException("ena unavailable"))
 
         runs = fetcher.fetch_sra_runs("SRX1")

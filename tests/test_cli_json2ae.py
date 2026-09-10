@@ -48,7 +48,7 @@ class TestJSON2AECLI(unittest.TestCase):
         self.assertEqual(0, raised.exception.code)
         self.assertIn("canonical Atlas v1 JSON", stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_list_platform_handlers_requires_no_json_or_converter(self, json2ae_mock):
         stdout = StringIO()
 
@@ -59,7 +59,7 @@ class TestJSON2AECLI(unittest.TestCase):
         self.assertEqual("".join(f"{name}\n" for name in PLATFORM_HANDLERS), stdout.getvalue())
         json2ae_mock.assert_not_called()
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_platform_handler_is_forwarded_to_every_json(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]
 
@@ -93,7 +93,7 @@ class TestJSON2AECLI(unittest.TestCase):
 
         self.assertEqual(2, raised.exception.code)
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_one_json_uses_defaults(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]
 
@@ -107,7 +107,7 @@ class TestJSON2AECLI(unittest.TestCase):
             out=".",
         )
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_multiple_json_files_are_converted_in_order(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]
 
@@ -123,7 +123,7 @@ class TestJSON2AECLI(unittest.TestCase):
             json2ae_mock.return_value.convert.call_args_list,
         )
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_no_enrich_and_out_are_forwarded(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]
 
@@ -137,7 +137,7 @@ class TestJSON2AECLI(unittest.TestCase):
             out="output",
         )
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_failed_json_returns_one_and_continues(self, json2ae_mock):
         canary = "private-json-detail"
         json2ae_mock.return_value.convert.side_effect = [
@@ -165,7 +165,7 @@ class TestJSON2AECLI(unittest.TestCase):
         self.assertNotIn(canary, stdout.getvalue())
         self.assertEqual("", stderr.getvalue())
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_verbose_and_quiet_logging(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]
 
@@ -182,7 +182,7 @@ class TestJSON2AECLI(unittest.TestCase):
         self.assertIn("converted 1 MAGE-TAB output(s) to .", verbose.getvalue())
         self.assertEqual("", quiet.getvalue())
 
-    @patch("meta_standards_converter.cli.json2ae.json2ae")
+    @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_log_file_writes_configured_logs(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]
 

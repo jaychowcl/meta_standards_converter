@@ -51,6 +51,11 @@ class MAGETabInput:
 class AEWebFetcher:
     """Load an IDF and its SDRFs without persisting remote metadata files."""
 
+    def metrics(self):
+        from meta_standards_converter.sources.contracts import request_metrics
+        return request_metrics(self.requester)
+
+
     API_ROOT = "https://www.ebi.ac.uk/biostudies/api/v1"
     FILE_PAGE_SIZE = 100
     REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})

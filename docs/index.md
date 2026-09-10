@@ -281,3 +281,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   purpose: Routes maintainers to behavioral and documentation verification coverage, including the 2026-08-10 deterministic result.
   keywords: tests, 587 passed, 3 skipped, 89 subtests, pytest, no network, fake process, CLI, documentation, acceptance, regression
   link: [Open section](codebase.md#test-plan)
+
+- [MSC 6 source services](codebase.md#msc6-source-services): retrieval, pure parsing, client injection, metrics and preserved checkpoints.

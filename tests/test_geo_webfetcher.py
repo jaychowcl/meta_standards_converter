@@ -19,7 +19,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.geo_handlers.geo_webfetcher import GEOWebFetcher  # noqa: E402
+from meta_standards_converter.sources.geo import GEOWebFetcher  # noqa: E402
 
 
 def miniml_archive(
@@ -141,7 +141,7 @@ class TestGEOWebFetcher(unittest.TestCase):
         response.raise_for_status = Mock()
         requester.get.return_value = response
         with patch(
-            "meta_standards_converter.geo_handlers.geo_webfetcher.MAX_GEO_ARCHIVE_MEMBERS",
+            "meta_standards_converter.sources.geo.MAX_GEO_ARCHIVE_MEMBERS",
             1,
         ):
             with self.assertRaisesRegex(ValueError, "member-count limit"):

@@ -23,7 +23,7 @@ from meta_standards_converter.cli.ae2json import main  # noqa: E402
 
 
 class TestAE2JSONCLI(unittest.TestCase):
-    @patch("meta_standards_converter.cli.ae2json.ae2json")
+    @patch("meta_standards_converter.cli.ae2json.AE2JSONConverter")
     def test_resource_profile_and_overrides_configure_converter(self, converter_mock):
         converter_mock.return_value.convert.return_value = [{"series": {}}]
 
@@ -46,7 +46,7 @@ class TestAE2JSONCLI(unittest.TestCase):
             converter_mock.call_args.kwargs["source_hosts"],
         )
 
-    @patch("meta_standards_converter.cli.ae2json.ae2json")
+    @patch("meta_standards_converter.cli.ae2json.AE2JSONConverter")
     def test_one_source_uses_defaults(self, converter_mock):
         converter_mock.return_value.convert.return_value = [{"series": {}}]
 
@@ -58,7 +58,7 @@ class TestAE2JSONCLI(unittest.TestCase):
             source="E-MTAB-1", out=".", sdrf_sources=None
         )
 
-    @patch("meta_standards_converter.cli.ae2json.ae2json")
+    @patch("meta_standards_converter.cli.ae2json.AE2JSONConverter")
     def test_multiple_sources_are_converted_in_order(self, converter_mock):
         converter_mock.return_value.convert.return_value = [{"series": {}}]
 
@@ -74,7 +74,7 @@ class TestAE2JSONCLI(unittest.TestCase):
             converter_mock.return_value.convert.call_args_list,
         )
 
-    @patch("meta_standards_converter.cli.ae2json.ae2json")
+    @patch("meta_standards_converter.cli.ae2json.AE2JSONConverter")
     def test_sdrf_overrides_and_out_are_forwarded(self, converter_mock):
         converter_mock.return_value.convert.return_value = [{"series": {}}]
 
@@ -95,7 +95,7 @@ class TestAE2JSONCLI(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 main(["one.idf.txt", "two.idf.txt", "--sdrf", "override.sdrf.txt"])
 
-    @patch("meta_standards_converter.cli.ae2json.ae2json")
+    @patch("meta_standards_converter.cli.ae2json.AE2JSONConverter")
     def test_failure_returns_one_and_continues(self, converter_mock):
         canary = "private-magetab-detail"
         converter_mock.return_value.convert.side_effect = [
@@ -115,7 +115,7 @@ class TestAE2JSONCLI(unittest.TestCase):
         )
         self.assertNotIn(canary, stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.ae2json.ae2json")
+    @patch("meta_standards_converter.cli.ae2json.AE2JSONConverter")
     def test_verbose_logs_success(self, converter_mock):
         converter_mock.return_value.convert.return_value = [{"series": {}}]
         stdout = StringIO()

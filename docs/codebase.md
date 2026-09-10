@@ -602,9 +602,9 @@ follow this canonical overview.
   `meta_standards_converter.ae_handlers.ae_sdrf_handlers.SDRFConstructor`,
   `meta_standards_converter.ae_handlers.ae_sdrf_handlers.normalized_extension`,
   `meta_standards_converter.ae_handlers.ae_sdrf_handlers.classify_file`,
-  `meta_standards_converter.ae_handlers.ae_webfetcher.TextResource`,
-  `meta_standards_converter.ae_handlers.ae_webfetcher.MAGETabInput`, and
-  `meta_standards_converter.ae_handlers.ae_webfetcher.AEWebFetcher`.
+  `meta_standards_converter.sources.magetab.TextResource`,
+  `meta_standards_converter.sources.magetab.MAGETabInput`, and
+  `meta_standards_converter.sources.magetab.AEWebFetcher`.
 - CLI:
   `meta_standards_converter.cli.ae2json.main`,
   `meta_standards_converter.cli.geo2ae.main`,
@@ -619,10 +619,10 @@ follow this canonical overview.
   `meta_standards_converter.cli.common.log_level`, and
   `meta_standards_converter.cli.common.configure_logging`.
 - Conversion:
-  `meta_standards_converter.converters.ae2json.ae2json`,
-  `meta_standards_converter.converters.geo2ae.geo2ae`,
-  `meta_standards_converter.converters.geo2json.geo2json`,
-  `meta_standards_converter.converters.json2ae.json2ae`,
+  `meta_standards_converter.converters.ae2json.AE2JSONConverter`,
+  `meta_standards_converter.converters.geo2ae.GEO2AEConverter`,
+  `meta_standards_converter.converters.geo2json.GEO2JSONConverter`,
+  `meta_standards_converter.converters.json2ae.JSON2AEConverter`,
   `meta_standards_converter.converters.json2h5ad.Asset`,
   `meta_standards_converter.converters.json2h5ad.MetadataProjectionContext`,
   `meta_standards_converter.converters.json2h5ad.AnnDataMetadataProjection`,
@@ -653,16 +653,16 @@ follow this canonical overview.
   `meta_standards_converter.converters.json_outputs.JSONDataOutputOrchestrator`,
   `meta_standards_converter.converters.json_outputs.AnnDataMetadataExportResult`,
   `meta_standards_converter.converters.json_outputs.AnnDataMetadataBatchResult`,
-  `meta_standards_converter.converters.json_source.DatasetPackageGroup`,
-  `meta_standards_converter.converters.json_source.SourceLoadResult`, and
-  `meta_standards_converter.converters.json_source.JSONPackageSource`,
+  `meta_standards_converter.sources.json.DatasetPackageGroup`,
+  `meta_standards_converter.sources.json.SourceLoadResult`, and
+  `meta_standards_converter.sources.json.JSONPackageSource`,
   `meta_standards_converter.converters.miniml_metadata.MINiMLMetadataProvider`,
   and `meta_standards_converter.converters.miniml_metadata.MINiMLMetadataService`.
 - Fetch, parse, enrich, harmonize, and helpers:
-  `meta_standards_converter.enrichers.miniml_enricher.MINiMLEnricher`,
-  `meta_standards_converter.geo_handlers.geo_parser.GEOParser`,
-  `meta_standards_converter.geo_handlers.geo_parser.RelatedSeriesParseResult`,
-  `meta_standards_converter.geo_handlers.geo_webfetcher.GEOWebFetcher`,
+  `meta_standards_converter.metadata.enrichment.MINiMLEnricher`,
+  `meta_standards_converter.miniml.geo_parser.GEOParser`,
+  `meta_standards_converter.miniml.geo_parser.RelatedSeriesParseResult`,
+  `meta_standards_converter.sources.geo.GEOWebFetcher`,
   `meta_standards_converter.harmonizers.geo2ols.GEO2OLS`,
   `meta_standards_converter.harmonizers.harmonizers.Harmonizer`,
   `meta_standards_converter.harmonizers.pubmed2ols.Pubmed2OLS`,
@@ -672,8 +672,8 @@ follow this canonical overview.
   `meta_standards_converter.helpers.request_helper.NCBIApplicationIdentity`,
   `meta_standards_converter.helpers.request_helper.RequestSettings`,
   `meta_standards_converter.helpers.request_helper.RateLimitedRequester`,
-  `meta_standards_converter.insdc_handlers.insdc_webfetcher.INSDCWebfetcher`, and
-  `meta_standards_converter.pubmed_handlers.pubmed_webfetcher.PubmedWebFetcher`.
+  `meta_standards_converter.sources.insdc.INSDCWebfetcher`, and
+  `meta_standards_converter.sources.pubmed.PubmedWebFetcher`.
 
 <a id="principal-workflows"></a>
 ## Principal workflows
@@ -697,7 +697,7 @@ GSE -> fetch MINiML --failure--> exception
 
 Pseudocode: `fetch -> parse -> for package: enrich -> construct -> [write] -> list`.
 
-**Evidence:** [`converters/geo2ae.py`](../src/meta_standards_converter/converters/geo2ae.py), [`cli/geo2ae.py`](../src/meta_standards_converter/cli/geo2ae.py), and [`geo_webfetcher.py`](../src/meta_standards_converter/geo_handlers/geo_webfetcher.py).
+**Evidence:** [`converters/geo2ae.py`](../src/meta_standards_converter/converters/geo2ae.py), [`cli/geo2ae.py`](../src/meta_standards_converter/cli/geo2ae.py), and [`geo_webfetcher.py`](../src/meta_standards_converter/sources/geo.py).
 
 <a id="workflow-geo2json"></a>
 ### `geo2json`: GEO to parsed JSON
@@ -782,7 +782,7 @@ local/HTTP/accession -> resolve IDF + SDRF(s) --failure--> exception
 
 Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved); [write]; return [package]`.
 
-**Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/ae_handlers/ae_webfetcher.py), and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
+**Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/sources/magetab.py), and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
 
 <a id="workflow-json2h5ad"></a>
 ### `json2h5ad`: MINiML/Atlas v1 JSON to H5AD
@@ -858,7 +858,7 @@ package conversion -> processed normalize / raw reference + nf-core
 
 Pseudocode: `load -> if one and convert: convert_packages; else for group: try convert_packages into child; except record; return batch`.
 
-**Evidence:** [`JSON2H5ADConverter`](../src/meta_standards_converter/converters/json2h5ad.py), [`JSONPackageSource`](../src/meta_standards_converter/converters/json_source.py), and [`cli/json2h5ad.py`](../src/meta_standards_converter/cli/json2h5ad.py).
+**Evidence:** [`JSON2H5ADConverter`](../src/meta_standards_converter/converters/json2h5ad.py), [`JSONPackageSource`](../src/meta_standards_converter/sources/json.py), and [`cli/json2h5ad.py`](../src/meta_standards_converter/cli/json2h5ad.py).
 
 <a id="workflow-json2tsv"></a>
 ### `json2tsv`: MINiML/Atlas JSON to sample manifest
@@ -881,7 +881,7 @@ source -> load/group --failure--> exception
 
 Pseudocode: `load -> project -> validate -> order -> protect -> write selected delimiter + result JSON`.
 
-**Evidence:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py), [`converters/json_source.py`](../src/meta_standards_converter/converters/json_source.py), and [`cli/json2tsv.py`](../src/meta_standards_converter/cli/json2tsv.py).
+**Evidence:** [`converters/json2tabular.py`](../src/meta_standards_converter/converters/json2tabular.py), [`sources/json.py`](../src/meta_standards_converter/sources/json.py), and [`cli/json2tsv.py`](../src/meta_standards_converter/cli/json2tsv.py).
 
 <a id="workflow-json2obs"></a>
 ### `json2obs`: MINiML/Atlas JSON to AnnData metadata
@@ -981,8 +981,8 @@ verification asserts well-formedness and field contracts rather than claiming
 strict whole-document XSD validity.
 
 **Evidence:** [`tests/test_provider_reference_material.py`](../tests/test_provider_reference_material.py),
-[`insdc_handlers/insdc_webfetcher.py`](../src/meta_standards_converter/insdc_handlers/insdc_webfetcher.py),
-[`enrichers/miniml_enricher.py`](../src/meta_standards_converter/enrichers/miniml_enricher.py),
+[`sources/insdc.py`](../src/meta_standards_converter/sources/insdc.py),
+[`metadata/enrichment.py`](../src/meta_standards_converter/metadata/enrichment.py),
 and [`ae_handlers/ae_sdrf_handlers.py`](../src/meta_standards_converter/ae_handlers/ae_sdrf_handlers.py).
 
 <a id="project-purpose-and-layout"></a>
@@ -1705,7 +1705,7 @@ repeated SDRF columns from the model, so the supported round trip is semantic.
 
 **Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
 [`codec.py`](../src/meta_standards_converter/miniml/codec.py),
-[`geo_parser.py`](../src/meta_standards_converter/geo_handlers/geo_parser.py),
+[`geo_parser.py`](../src/meta_standards_converter/miniml/geo_parser.py),
 and [`ae_parser.py`](../src/meta_standards_converter/ae_handlers/ae_parser.py).
 
 <a id="workflow-details"></a>
@@ -2109,7 +2109,7 @@ output is unchanged.
   `allow_invalid=True`.
 
 <a id="miniml-enricher"></a>
-### `enrichers/miniml_enricher.py`
+### `metadata/enrichment.py`
 
 `class MINiMLEnricher`
 
@@ -2136,7 +2136,7 @@ output is unchanged.
 - On request or XML parse errors, keeps the accession and leaves that accession's run contribution empty.
 
 <a id="geo-web-fetcher"></a>
-### `geo_handlers/geo_webfetcher.py`
+### `sources/geo.py`
 
 `class GEOWebFetcher`
 
@@ -2162,7 +2162,7 @@ output is unchanged.
   expanded size fail closed. The bounded expected XML is returned as UTF-8.
 
 <a id="ae-web-fetcher"></a>
-### `ae_handlers/ae_webfetcher.py`
+### `sources/magetab.py`
 
 `TextResource(name, text, origin)` and `MAGETabInput(idf, sdrfs, source, source_kind)` are immutable transport records used between resolution and parsing.
 
@@ -2222,7 +2222,7 @@ package's source-document records.
 - `MINiMLV1Migrator` folds this bridge into the canonical v2 package and drops the internal container. `AEConstructor` renders from those canonical protocol and assay-path fields; no raw-table fingerprint or replay sidecar participates.
 
 <a id="geo-parser"></a>
-### `geo_handlers/geo_parser.py`
+### `miniml/geo_parser.py`
 
 <a id="geoparser-class-and-parse-methods"></a>
 #### GEOParser class and parse methods
@@ -2647,7 +2647,7 @@ Other helpers:
   changes them.
 
 <a id="pubmed-fetcher"></a>
-### `pubmed_handlers/pubmed_webfetcher.py`
+### `sources/pubmed.py`
 
 `class PubmedWebFetcher`
 
@@ -2671,7 +2671,7 @@ resource_profile="standard", resource_overrides=None)`
 - Returns the existing IDF tuple shape: DOI, author string, title, mapped status, term source ref, and term accession.
 
 <a id="insdc-fetcher"></a>
-### `insdc_handlers/insdc_webfetcher.py`
+### `sources/insdc.py`
 
 `class INSDCWebfetcher`
 
@@ -3016,3 +3016,24 @@ public-address, and redirect checks to BioStudies API/file URLs and explicit
 IDF/SDRF URLs; it bounds UTF-8 API JSON and MAGE-TAB text per file and across
 the run. Provider suffixes are trusted by default. Additional exact explicit
 source hosts require `ae2json --source-host HOST` or an injected policy.
+
+<a id="msc6-source-services"></a>
+## MSC 6 source services
+
+`GEOSource` owns retrieval and related-series traversal; `GEOParser` parses supplied
+XML without network calls. Converter-specific enrichment defaults and guarded
+parent-publication inheritance remain unchanged. `JSONPackageSource` owns JSON
+recognition and dataset grouping. INSDC accepts explicit clients with
+`fetch_sra_xml(nrx)` and `fetch_ena_file_report(accession)` methods; ThematicAtlases
+implements checkpoint interception by composition. `metrics()` returns cumulative
+request snapshots without exposing nested requesters. Existing MINiML, source
+evidence and checkpoint serialization remain unchanged.
+
+### Added source service callable inventory
+- `meta_standards_converter.sources.contracts.RequestMetrics`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L14).
+- `meta_standards_converter.sources.contracts.MetricsProvider`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L19).
+- `meta_standards_converter.sources.contracts.INSDCClient`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L22).
+- `meta_standards_converter.sources.contracts.PubMedClient`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L26).
+- `meta_standards_converter.sources.contracts.request_metrics`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L29).
+- `meta_standards_converter.sources.geo.RelatedSeriesParseResult`: [geo.py](../src/meta_standards_converter/sources/geo.py#L210).
+- `meta_standards_converter.sources.geo.GEOSource`: [geo.py](../src/meta_standards_converter/sources/geo.py#L235).

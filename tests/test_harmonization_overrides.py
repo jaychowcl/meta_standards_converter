@@ -17,10 +17,10 @@ from meta_standards_converter.converters.harmonization_overrides import (
     resolve_harmonization_overrides,
 )
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
-from meta_standards_converter.converters.json2ae import json2ae
+from meta_standards_converter.converters.json2ae import JSON2AEConverter
 from meta_standards_converter.converters.json2tabular import JSON2TSVConverter
 from meta_standards_converter.converters.json_outputs import JSONDataOutputOrchestrator
-from meta_standards_converter.converters.json_source import JSONPackageSource
+from meta_standards_converter.sources.json import JSONPackageSource
 from meta_standards_converter.cli import json2ae as json2ae_cli
 from meta_standards_converter.cli import json2h5ad as json2h5ad_cli
 from meta_standards_converter.cli import json2obs as json2obs_cli
@@ -217,7 +217,7 @@ def test_magetab_opt_in_replaces_destinations_and_keeps_typed_annotations_intern
         "miniml_json": package(), "harmonization_overrides": PROFILE
     }), encoding="utf-8")
 
-    magetab = json2ae().convert(
+    magetab = JSON2AEConverter().convert(
         str(source), enrich=False, use_harmonization_overrides=True
     )[0]
     sdrf = next(row[1] for row in magetab if row and row[0] == "SDRF File")
@@ -231,7 +231,7 @@ def test_magetab_opt_in_replaces_destinations_and_keeps_typed_annotations_intern
 
 
 def test_all_json_consumers_expose_explicit_opt_in():
-    assert "use_harmonization_overrides" in inspect.signature(json2ae.convert).parameters
+    assert "use_harmonization_overrides" in inspect.signature(JSON2AEConverter.convert).parameters
     assert "use_harmonization_overrides" in inspect.signature(JSON2H5ADConverter.convert).parameters
     assert "use_harmonization_overrides" in inspect.signature(JSON2TSVConverter.convert_source).parameters
     for cli in (json2ae_cli, json2h5ad_cli, json2obs_cli, json2tsv_cli):

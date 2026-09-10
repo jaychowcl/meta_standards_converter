@@ -10,10 +10,10 @@
 
 import pytest
 
-from meta_standards_converter.ae_handlers.ae_webfetcher import AEWebFetcher
+from meta_standards_converter.sources.magetab import AEWebFetcher
 from meta_standards_converter.helpers.request_helper import RequestSettings
-from meta_standards_converter.insdc_handlers.insdc_webfetcher import INSDCWebfetcher
-from meta_standards_converter.pubmed_handlers.pubmed_webfetcher import PubmedWebFetcher
+from meta_standards_converter.sources.insdc import INSDCWebfetcher
+from meta_standards_converter.sources.pubmed import PubmedWebFetcher
 
 
 pytestmark = pytest.mark.live_api

@@ -24,7 +24,7 @@ from meta_standards_converter.cli.geo2json import main  # noqa: E402
 
 
 class TestGeo2JSONCLI(unittest.TestCase):
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_resource_profile_and_overrides_configure_converter(self, converter_mock):
         converter_mock.return_value.convert.return_value = []
 
@@ -40,7 +40,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
         self.assertEqual("large", profile.name)
         self.assertEqual(4096, profile.max_xml_bytes)
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_one_accession_uses_defaults(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
@@ -59,7 +59,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
         )
         self.assertEqual("", stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_multiple_accessions_are_converted_in_order(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
@@ -76,7 +76,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
             converter.convert.call_args_list,
         )
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_flags_are_passed_to_converter(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
@@ -93,7 +93,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
             out=".dev",
         )
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_related_aliases_are_supported(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
@@ -113,7 +113,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
             converter.convert.call_args_list,
         )
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_failed_accession_returns_one_and_continues(self, geo2json_mock):
         converter = geo2json_mock.return_value
         canary = "network-secret-token"
@@ -143,7 +143,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
         self.assertNotIn(canary, stdout.getvalue())
         self.assertEqual("", stderr.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_verbose_emits_success_logs_to_stdout(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
@@ -159,7 +159,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
             stdout.getvalue(),
         )
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_double_verbose_emits_debug_logs_to_stdout(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
@@ -171,7 +171,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertIn("DEBUG meta_standards_converter.cli.geo2json: Starting geo2json CLI", stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_quiet_emits_only_errors(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
@@ -183,7 +183,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
         self.assertEqual(0, exit_code)
         self.assertEqual("", stdout.getvalue())
 
-    @patch("meta_standards_converter.cli.geo2json.geo2json")
+    @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_log_file_writes_configured_logs(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]

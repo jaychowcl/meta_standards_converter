@@ -19,7 +19,7 @@ import re
 from urllib.parse import urlparse
 
 from meta_standards_converter.ae_handlers.ae_model import build_model, validate_model
-from meta_standards_converter.ae_handlers.ae_webfetcher import MAGETabInput
+from meta_standards_converter.sources.magetab import MAGETabInput
 from meta_standards_converter.miniml import MINiMLPackage, MINiMLV1Migrator
 
 

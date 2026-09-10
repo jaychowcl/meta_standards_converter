@@ -18,7 +18,7 @@ from meta_standards_converter.cli.common import (
     print_platform_handlers,
     record_safe_cli_error,
 )
-from meta_standards_converter.converters.json2ae import json2ae
+from meta_standards_converter.converters.json2ae import JSON2AEConverter
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ def main(argv=None) -> int:
     if not args.json_path:
         parser.error("the following arguments are required: json_path")
     configure_logging(args)
-    converter = json2ae()
+    converter = JSON2AEConverter()
     failed = False
     logger.debug(
         "Starting json2ae CLI with %d JSON file(s), enrich=%s, out=%s",
