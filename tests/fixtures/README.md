@@ -44,9 +44,11 @@ Only the temporary workspace root and JSON2OBS staging-directory token are repla
 
 No scientific values, dtypes, ordering, identities, missing values or semantic diagnostics are dropped. Corruption tests change counts, axes, identities, dtypes, retained metadata and diagnostics and require the same comparison helper to reject them.
 
-## Known defect MSC-TEST-001
+## Resolved defect MSC-TEST-001
 
-The retained GSM9651991 extraction protocol explicitly describes Chromium Single Cell **5′** chemistry. Automatic technology detection currently renders **10xV2 / 3 prime tag**. This discrepancy predates the test work. `tests/e2e/test_known_defects.py` records the contradiction as a strict expected failure. The generic single-cell handler is explicitly selected in approved MAGE-TAB goldens to avoid adopting that contradiction as intended output. Production code is unchanged; a future scientific fix must resolve the assertion and remove the expected-failure marker with source-backed review.
+The original GSM9651991 source explicitly describes 5-prime chemistry with v1.1/v2 alternatives. The passing `tests/e2e/test_geo_chemistry_regression.py` now requires 5-prime output and absence of unsupported read/UMI sizes. The existing GEO and JSON MAGE-TAB golden deltas are limited to removing the unlabelled cDNA length 90 and adding end bias `5 prime tag`, isolation `10x technology`, and construction `10x 5 prime`. No kit version is selected from the alternatives. IDFs and original source inputs are unchanged.
+
+Seven additional [chemistry fixtures](chemistry/README.md) cover real source excerpts in constructed envelopes, including software-version contamination, mixed preparation methods, dual indices and non-10x/Flex controls. These test both converter workflows and exact repeated-comment retention after MAGE-TAB parsing.
 
 ## Test boundaries
 

@@ -13,7 +13,7 @@ from meta_standards_converter.magetab.idf import IDFConstructor
 from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
 from meta_standards_converter.magetab.semantics import overlay_miniml_semantics
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
-from meta_standards_converter.magetab.technology import _has_tenx_version, detect_ae_technology, has_array_files, series_identity
+from meta_standards_converter.magetab.technology import detect_ae_technology, has_array_files, series_identity
 
 
 PLATFORM_HANDLER_KEYS = (
@@ -79,9 +79,6 @@ class AEConstructor:
 
     def _detect_ae_technology(self, data: dict) -> str:
         return detect_ae_technology(data)
-
-    def _has_tenx_version(self, text: str, version: str) -> bool:
-        return _has_tenx_version(text, version)
 
     def _has_array_files(self, data: dict) -> bool:
         return has_array_files(data)

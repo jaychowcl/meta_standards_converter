@@ -1,0 +1,4 @@
+{
+  "protocol": "Chromium Single Cell 3' Reagent Kits User Guide (v3.1 Chemistry Dual Index)\nRead 1: 28 cycles (16 bp barcode, 12 bp UMI)\ni5 index: 10 cycles (sample index)\ni7 index: 10 cycles (sample index)\nRead 2: 90 cycles (transcript)",
+  "processing": ""
+}

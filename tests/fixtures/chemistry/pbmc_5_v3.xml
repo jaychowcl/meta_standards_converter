@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
+  <Platform iid="GPL900001">
+    <Title>Constructed platform</Title>
+    <Accession database="GEO">GPL900001</Accession>
+    <Technology>high-throughput sequencing</Technology>
+  </Platform>
+  <Sample iid="GSM900004">
+    <Title>pbmc_5_v3</Title>
+    <Accession database="GEO">GSM900004</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>Constructed source</Source>
+      <Organism>Homo sapiens</Organism>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>Gene Expression and V(D)J libraries were generated as outlined in the Chromium GEM-X Single Cell 5' v3 Gene Expression User Guide (CG000733) or fixed following the demonstrated protocol, Cell Fixation Protocol for GEM-X Single Cell 3' &amp; 5' Assays (CG000776).
+28 cycles Read 1
+10 cycles i7
+10 cycles i5
+90 cycles Read 2</Extract-Protocol>
+    </Channel>
+    <Data-Processing />
+    <Platform-Ref ref="GPL900001" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic single cell</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Series iid="GSE900004">
+    <Title>Constructed chemistry envelope: pbmc_5_v3</Title>
+    <Accession database="GEO">GSE900004</Accession>
+    <Summary>Synthetic envelope for recorded preparation evidence; not a deposited study.</Summary>
+    <Overall-Design>One library</Overall-Design>
+    <Sample-Ref ref="GSM900004" />
+  </Series>
+</MINiML>

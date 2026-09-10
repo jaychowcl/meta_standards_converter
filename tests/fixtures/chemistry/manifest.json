@@ -1,0 +1,126 @@
+[
+  {
+    "id": "GSM6975354",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM6975354",
+    "acquired": "2026-09-10",
+    "reduction": "Reviewed source excerpts only; punctuation retained. Vendor descriptions adapted to a constructed sample envelope in tests.",
+    "sha256": "6843aabdfbc8314e8a32bcc2158db1d0a11170b2143b36e08d110867cf42be16",
+    "family": "3 prime",
+    "versions": [
+      "2"
+    ],
+    "envelope": {
+      "gse": "GSE900001",
+      "sha256": "dae385fdaa83ba2790aef21367016d30cbef5cf03c6407a96bbda2f3e9d53725",
+      "kind": "Constructed GEO XML, synthetic accessions/organism/platform; only protocol and processing excerpts are real source evidence."
+    },
+    "diagnostics": []
+  },
+  {
+    "id": "GSM8288494",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM8288494",
+    "acquired": "2026-09-10",
+    "reduction": "Reviewed source excerpts only; punctuation retained. Vendor descriptions adapted to a constructed sample envelope in tests.",
+    "sha256": "3f544f3eb92c1e78046e27bf330dc5ab8be0ff199365ff4e1219652ca869eb75",
+    "family": null,
+    "versions": [
+      "2",
+      "3.1"
+    ],
+    "envelope": {
+      "gse": "GSE900002",
+      "sha256": "64a199c38802434104d26fa6a3d4140db1fa1e32a7c09e88f95f0941c4676c61",
+      "kind": "Constructed GEO XML, synthetic accessions/organism/platform; only protocol and processing excerpts are real source evidence."
+    },
+    "diagnostics": [
+      "ambiguous_family",
+      "ambiguous_version",
+      "unresolved_family"
+    ]
+  },
+  {
+    "id": "pbmc_5_v2",
+    "url": "https://www.10xgenomics.com/datasets/10k-human-pbmcs-5-v2-0-chromium-x-with-intronic-reads-2-standard",
+    "acquired": "2026-09-10",
+    "reduction": "Reviewed source excerpts only; punctuation retained. Vendor descriptions adapted to a constructed sample envelope in tests.",
+    "sha256": "7ce70983b39ef0a334143bd2fda80aeab17eb8f5418e09ac97ddf379c4a1b126",
+    "family": "5 prime",
+    "versions": [
+      "2"
+    ],
+    "envelope": {
+      "gse": "GSE900003",
+      "sha256": "19d456a99d679e9a770a4fe827f963b391d2513baa774fd88d05daea7a5681eb",
+      "kind": "Constructed GEO XML, synthetic accessions/organism/platform; only protocol and processing excerpts are real source evidence."
+    },
+    "diagnostics": []
+  },
+  {
+    "id": "pbmc_5_v3",
+    "url": "https://www.10xgenomics.com/datasets/10k_5p_Human_diseased_PBMC_ALL_Fix_stored",
+    "acquired": "2026-09-10",
+    "reduction": "Reviewed source excerpts only; punctuation retained. Vendor descriptions adapted to a constructed sample envelope in tests.",
+    "sha256": "10b49508053931edb16e31993fe9323d6d0de6158c39a7ef8972c6a3a8b06f1a",
+    "family": "5 prime",
+    "versions": [
+      "3"
+    ],
+    "envelope": {
+      "gse": "GSE900004",
+      "sha256": "880e18d2ab8e509c6f338dca1d6ecba90e5b5e15c39a4dbbdfb725a6a9bfd63d",
+      "kind": "Constructed GEO XML, synthetic accessions/organism/platform; only protocol and processing excerpts are real source evidence."
+    },
+    "diagnostics": [
+      "ambiguous_library_role"
+    ]
+  },
+  {
+    "id": "pbmc_3_v31",
+    "url": "https://www.10xgenomics.com/datasets/10k-human-pbmcs-3-ht-v3-1-chromium-x-3-1-high",
+    "acquired": "2026-09-10",
+    "reduction": "Reviewed source excerpts only; punctuation retained. Vendor descriptions adapted to a constructed sample envelope in tests.",
+    "sha256": "0915c19d95245992c90bd8ccbfc0b9714bbca163e4664777edff5b7ee80e1b51",
+    "family": "3 prime",
+    "versions": [
+      "3.1"
+    ],
+    "envelope": {
+      "gse": "GSE900005",
+      "sha256": "2de680fdbd91440762dde2017f1a5922267722436cfbeb0e98c7a753799fbb8e",
+      "kind": "Constructed GEO XML, synthetic accessions/organism/platform; only protocol and processing excerpts are real source evidence."
+    },
+    "diagnostics": []
+  },
+  {
+    "id": "GSM1520438",
+    "url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM1520438",
+    "acquired": "2026-09-10",
+    "reduction": "Reviewed source excerpts only; punctuation retained. Vendor descriptions adapted to a constructed sample envelope in tests.",
+    "sha256": "4962880307eec9f429adbe4912664128dd354ce333399d3ace1ec33a20981620",
+    "family": null,
+    "versions": [],
+    "envelope": {
+      "gse": "GSE900006",
+      "sha256": "b140dec8669179cd4d57dfd1ab1cc3fe71ec33162efd182d8f1ac18470ce3b2f",
+      "kind": "Constructed GEO XML, synthetic accessions/organism/platform; only protocol and processing excerpts are real source evidence."
+    },
+    "diagnostics": []
+  },
+  {
+    "id": "flex",
+    "url": "https://cdn.10xgenomics.com/image/upload/v1761674234/support-documents/CG000834_GEM-X_Flex_v2_Gene_Expression_UserGuide_Rev_A.pdf",
+    "acquired": "2026-09-10",
+    "reduction": "Reviewed source excerpts only; punctuation retained. Vendor descriptions adapted to a constructed sample envelope in tests.",
+    "sha256": "d6bdb5671386359f37f402dda09ced4a2b7ed5da359d37b0abd7401eab2184c9",
+    "family": "flex",
+    "versions": [
+      "2"
+    ],
+    "envelope": {
+      "gse": "GSE900007",
+      "sha256": "e316d1e31b2b0f78151970a8f6e798cb53d3cc01ea8f2e297446c5aae8a50f9d",
+      "kind": "Constructed GEO XML, synthetic accessions/organism/platform; only protocol and processing excerpts are real source evidence."
+    },
+    "diagnostics": []
+  }
+]

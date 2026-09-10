@@ -12,7 +12,11 @@ from meta_standards_converter.magetab.sdrf.handlers.single_cell import _SingleCe
 
 class _SpatialSequencingSDRFHandler(_SingleCellSequencingSDRFHandler):
     def extra_library_attrs(self, sample: dict, channel: dict, run: dict | None) -> list[SDRFAttr]:
-        attrs = super().extra_library_attrs(sample=sample, channel=channel, run=run)
+        # Spatial presets are outside the scoped single-cell chemistry change.
+        attrs = []
+        construction = self.library_construction(sample)
+        if construction:
+            attrs.append(SDRFAttr(label="Comment[library construction]", value=construction))
         values = {
             "Comment[cdna read]": "read2",
             "Comment[cell barcode read]": "read1",

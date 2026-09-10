@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
+  <Platform iid="GPL900001">
+    <Title>Constructed platform</Title>
+    <Accession database="GEO">GPL900001</Accession>
+    <Technology>high-throughput sequencing</Technology>
+  </Platform>
+  <Sample iid="GSM900002">
+    <Title>GSM8288494</Title>
+    <Accession database="GEO">GSM900002</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>Constructed source</Source>
+      <Organism>Homo sapiens</Organism>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>Single-cell library preparation was performed according to the manual of the Chromium Next GEM Single-cell 3' Reagent Kits v3.1 the Chromium Next GEM Single Cell 5′ Kit v2 for Dual Index (10x Genomics).</Extract-Protocol>
+    </Channel>
+    <Data-Processing />
+    <Platform-Ref ref="GPL900001" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic single cell</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Series iid="GSE900002">
+    <Title>Constructed chemistry envelope: GSM8288494</Title>
+    <Accession database="GEO">GSE900002</Accession>
+    <Summary>Synthetic envelope for recorded preparation evidence; not a deposited study.</Summary>
+    <Overall-Design>One library</Overall-Design>
+    <Sample-Ref ref="GSM900002" />
+  </Series>
+</MINiML>

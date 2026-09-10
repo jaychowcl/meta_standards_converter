@@ -636,80 +636,6 @@ class TestSDRFGraphHandlers(unittest.TestCase):
                 build.assert_called_once_with()
                 self.assertEqual([["Source Name"], ["GSM1"]], sdrf)
 
-    def test_tenx_v2_handler_emits_fixed_library_attributes(self):
-        sample = {
-            "iid": "GSM1",
-            "title": "10x v2 sample",
-            "description": "10x Chromium single cell v2",
-            "accession": [{"value": "GSM1"}],
-            "platform_ref": {"ref": "GPL1"},
-            "channel": [{"source": "source 1", "extract_protocol": "extract"}],
-        }
-
-        sdrf = FixedTechParent("tenx_v2_droplet_single_cell_sequencing")._miniml2sdrf(base_data(sample))
-
-        expected = {
-            "Comment[cdna read]": "read2",
-            "Comment[cdna read offset]": "0",
-            "Comment[cdna read size]": "98",
-            "Comment[cell barcode offset]": "0",
-            "Comment[cell barcode read]": "read1",
-            "Comment[cell barcode size]": "16",
-            "Comment[end bias]": "3 prime tag",
-            "Comment[input molecule]": "polyA RNA",
-            "Comment[library construction]": "10xV2",
-            "Comment[primer]": "oligo-dT",
-            "Comment[LIBRARY_STRAND]": "not applicable",
-            "Comment[sample barcode offset]": "0",
-            "Comment[sample barcode read]": "index1",
-            "Comment[sample barcode size]": "8",
-            "Comment[single cell isolation]": "10x technology",
-            "Comment[spike in]": "",
-            "Comment[umi barcode offset]": "16",
-            "Comment[umi barcode read]": "read1",
-            "Comment[umi barcode size]": "10",
-        }
-        for label, value in expected.items():
-            with self.subTest(label=label):
-                self.assertEqual(value, self.cell(sdrf, 1, label))
-
-    def test_tenx_v3_handler_emits_fixed_library_attributes(self):
-        sample = {
-            "iid": "GSM1",
-            "title": "10x v3 sample",
-            "description": "10x Chromium single cell v3",
-            "accession": [{"value": "GSM1"}],
-            "platform_ref": {"ref": "GPL1"},
-            "channel": [{"source": "source 1", "extract_protocol": "extract"}],
-        }
-
-        sdrf = FixedTechParent("tenx_v3_droplet_single_cell_sequencing")._miniml2sdrf(base_data(sample))
-
-        expected = {
-            "Comment[cdna read]": "read2",
-            "Comment[cdna read offset]": "0",
-            "Comment[cdna read size]": "91",
-            "Comment[cell barcode offset]": "0",
-            "Comment[cell barcode read]": "read1",
-            "Comment[cell barcode size]": "16",
-            "Comment[end bias]": "3 prime tag",
-            "Comment[input molecule]": "polyA RNA",
-            "Comment[library construction]": "10xV3",
-            "Comment[primer]": "oligo-dT",
-            "Comment[LIBRARY_STRAND]": "not applicable",
-            "Comment[sample barcode offset]": "0",
-            "Comment[sample barcode read]": "index1",
-            "Comment[sample barcode size]": "8",
-            "Comment[single cell isolation]": "10x technology",
-            "Comment[spike in]": "",
-            "Comment[umi barcode offset]": "16",
-            "Comment[umi barcode read]": "read1",
-            "Comment[umi barcode size]": "12",
-        }
-        for label, value in expected.items():
-            with self.subTest(label=label):
-                self.assertEqual(value, self.cell(sdrf, 1, label))
-
     def test_sequencing_subclasses_inherit_file_comments(self):
         sample = {
             "iid": "GSM1",
@@ -1018,10 +944,9 @@ class TestSDRFGraphHandlers(unittest.TestCase):
 
         sdrf = Parent()._miniml2sdrf(base_data(sample))
 
-        self.assertIn("Comment[cell barcode read]", sdrf[0])
-        self.assertEqual("read1", self.cell(sdrf, 1, "Comment[cell barcode read]"))
-        self.assertEqual("10xV3", self.cell(sdrf, 1, "Comment[library construction]"))
-        self.assertEqual("10x technology", self.cell(sdrf, 1, "Comment[single cell isolation]"))
+        self.assertNotIn("Comment[cell barcode read]", sdrf[0])
+        self.assertNotIn("Comment[end bias]", sdrf[0])
+        self.assertNotIn("Comment[library construction]", sdrf[0])
 
     def test_generic_single_cell_does_not_emit_droplet_read_geometry(self):
         sample = {

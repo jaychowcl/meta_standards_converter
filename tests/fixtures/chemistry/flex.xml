@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
+  <Platform iid="GPL900001">
+    <Title>Constructed platform</Title>
+    <Accession database="GEO">GPL900001</Accession>
+    <Technology>high-throughput sequencing</Technology>
+  </Platform>
+  <Sample iid="GSM900007">
+    <Title>flex</Title>
+    <Accession database="GEO">GSM900007</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>Constructed source</Source>
+      <Organism>Homo sapiens</Organism>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>GEM-X Flex v2 – Gene Expression libraries comprise standard Illumina paired-end constructs, which begin with P5 and end with P7. These libraries include 16 bp 10x GEM Barcodes encoded at the start of TruSeq Read 1.</Extract-Protocol>
+    </Channel>
+    <Data-Processing />
+    <Platform-Ref ref="GPL900001" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic single cell</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Series iid="GSE900007">
+    <Title>Constructed chemistry envelope: flex</Title>
+    <Accession database="GEO">GSE900007</Accession>
+    <Summary>Synthetic envelope for recorded preparation evidence; not a deposited study.</Summary>
+    <Overall-Design>One library</Overall-Design>
+    <Sample-Ref ref="GSM900007" />
+  </Series>
+</MINiML>

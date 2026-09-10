@@ -1629,7 +1629,7 @@ class TestAEConstructor(unittest.TestCase):
             AEConstructor()._detect_ae_technology(self.detection_data(sample=sample)),
         )
 
-    def test_detect_ae_technology_returns_tenx_v2_droplet_single_cell(self):
+    def test_detect_ae_technology_keeps_unscoped_v2_as_droplet_single_cell(self):
         sample = {
             "iid": "GSM1",
             "accession": [{"value": "GSM1"}],
@@ -1640,11 +1640,11 @@ class TestAEConstructor(unittest.TestCase):
         }
 
         self.assertEqual(
-            "tenx_v2_droplet_single_cell_sequencing",
+            "droplet_single_cell_sequencing",
             AEConstructor()._detect_ae_technology(self.detection_data(sample=sample)),
         )
 
-    def test_detect_ae_technology_returns_tenx_v3_droplet_single_cell(self):
+    def test_detect_ae_technology_keeps_unscoped_v3_as_droplet_single_cell(self):
         sample = {
             "iid": "GSM1",
             "accession": [{"value": "GSM1"}],
@@ -1655,7 +1655,7 @@ class TestAEConstructor(unittest.TestCase):
         }
 
         self.assertEqual(
-            "tenx_v3_droplet_single_cell_sequencing",
+            "droplet_single_cell_sequencing",
             AEConstructor()._detect_ae_technology(self.detection_data(sample=sample)),
         )
 

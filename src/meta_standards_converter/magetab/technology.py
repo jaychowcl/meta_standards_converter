@@ -9,7 +9,6 @@
 from __future__ import annotations
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
 import os
-import re
 from urllib.parse import urlparse
 from meta_standards_converter.helpers.json_helper import JSONHandler
 
@@ -64,11 +63,6 @@ def _validated_study_identity(value: str) -> str | None:
         return upper if upper[3:].isdigit() else None
     return value
 
-def _has_tenx_version(text: str, version: str) -> bool:
-    if "10x" not in text and "chromium" not in text:
-        return False
-    return re.search(rf"(?<![a-z0-9])v{version}(?![a-z0-9])", text) is not None
-
 def detect_ae_technology(data: dict) -> str:
     """Select the shared platform-handler key without importing either constructor."""
 
@@ -99,10 +93,6 @@ def detect_ae_technology(data: dict) -> str:
                 return "spatial_sequencing"
             if "10x" not in text and "droplet" not in text and "chromium" not in text:
                 return "plate_single_cell_sequencing"
-            if _has_tenx_version(text, "3"):
-                return "tenx_v3_droplet_single_cell_sequencing"
-            if _has_tenx_version(text, "2"):
-                return "tenx_v2_droplet_single_cell_sequencing"
             return "droplet_single_cell_sequencing"
         return "bulk_sequencing"
     if "array" in platform_tech or has_array_files(data):

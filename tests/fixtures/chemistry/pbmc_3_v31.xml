@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
+  <Platform iid="GPL900001">
+    <Title>Constructed platform</Title>
+    <Accession database="GEO">GPL900001</Accession>
+    <Technology>high-throughput sequencing</Technology>
+  </Platform>
+  <Sample iid="GSM900005">
+    <Title>pbmc_3_v31</Title>
+    <Accession database="GEO">GSM900005</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>Constructed source</Source>
+      <Organism>Homo sapiens</Organism>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>Chromium Single Cell 3' Reagent Kits User Guide (v3.1 Chemistry Dual Index)
+Read 1: 28 cycles (16 bp barcode, 12 bp UMI)
+i5 index: 10 cycles (sample index)
+i7 index: 10 cycles (sample index)
+Read 2: 90 cycles (transcript)</Extract-Protocol>
+    </Channel>
+    <Data-Processing />
+    <Platform-Ref ref="GPL900001" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic single cell</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+  </Sample>
+  <Series iid="GSE900005">
+    <Title>Constructed chemistry envelope: pbmc_3_v31</Title>
+    <Accession database="GEO">GSE900005</Accession>
+    <Summary>Synthetic envelope for recorded preparation evidence; not a deposited study.</Summary>
+    <Overall-Design>One library</Overall-Design>
+    <Sample-Ref ref="GSM900005" />
+  </Series>
+</MINiML>

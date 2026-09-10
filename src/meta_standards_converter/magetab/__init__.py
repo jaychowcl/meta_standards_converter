@@ -6,3 +6,5 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+
+from .chemistry import ChemistryDiagnostic, ChemistryEvidence, ChemistryResult, resolve_chemistry

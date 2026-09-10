@@ -9,7 +9,7 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 
 # MSC converter test audit
 
-Baseline: MSC `5f3767d`. This is a tests-only audit; scientific implementation, consumer repositories, existing run state and release pins are unchanged.
+Baseline: MSC `5f3767d`. The original audit was tests-only. The subsequent MSC-TEST-001 correction below changes generated chemistry annotations; consumer repositories, existing run state and release pins remain untouched.
 
 ## Findings and decisions
 
@@ -36,7 +36,9 @@ Retained branch coverage includes asset precedence, memory admission, interrupti
 
 ## Defects and limits
 
-**MSC-TEST-001**: automatic 10x chemistry detection contradicts an explicit 5-prime source protocol by emitting 3-prime metadata. A strict xfail records the scientific discrepancy; production code is unchanged. Approved MAGE-TAB examples select the generic single-cell handler explicitly.
+**MSC-TEST-001 resolved**: scoped preparation evidence replaces global version detection and fixed read geometry. The former strict xfail is now a normal passing regression in `test_geo_chemistry_regression.py`. New pure-parser and converter tests cover reviewed source excerpts, ambiguous fields, mixed samples, forced handlers, explicit recipes and repeated index retention. The original two MAGE-TAB expectations have a reviewed annotation-only delta documented in fixtures/README.md.
+
+Follow-up dispositions: remove the two fixed-v2/v3-attribute tests because they required invented biology; their replacement exercises all four handler selections against explicit source chemistry and absent unsupported fields. Strengthen the two version-detection tests to require broad droplet selection for unscoped versions. Retain technology dispatch and spatial behavior tests. Existing MAGE-TAB whitespace flattening and semantic column grouping remain unchanged; round-trip tests assert exact ordered comments and published protocol descriptions rather than claiming byte-identical regeneration.
 
 The project-local editable install initially advertised MSC 5.2.1 while importing MSC 6 source. The local installation metadata was refreshed to 6.0.0 before approving provenance expectations. This was an environment defect, not a source change.
 
@@ -340,8 +342,8 @@ Source fixtures and expected tables are excluded from comment-header insertion. 
 | `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_bulk_sequencing_for_regular_sra` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
 | `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_array_for_array_platform` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
 | `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_droplet_single_cell` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
-| `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_tenx_v2_droplet_single_cell` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
-| `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_tenx_v3_droplet_single_cell` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
+| `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_tenx_v2_droplet_single_cell` | strengthen | Renamed to require broad droplet selection for unscoped versions; per-library chemistry is verified separately. |
+| `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_tenx_v3_droplet_single_cell` | strengthen | Renamed to require broad droplet selection for unscoped versions; per-library chemistry is verified separately. |
 | `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_spatial_sequencing` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
 | `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_keeps_spatial_precedence_over_tenx_version` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
 | `tests/magetab/test_ae_constructor.py::test_detect_ae_technology_returns_plate_single_cell` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
@@ -379,8 +381,8 @@ Source fixtures and expected tables are excluded from comment-header insertion. 
 | `tests/magetab/test_ae_sdrf_handlers.py::test_bulk_sequencing_inheritance_tree` | remove | Private inheritance shape is not a scientific output contract. Bulk/plate rendering regressions remain. |
 | `tests/magetab/test_ae_sdrf_handlers.py::test_tenx_version_handlers_inherit_droplet_single_cell_handler` | remove | Private inheritance shape is redundant; version-specific dispatch and output field regressions remain. |
 | `tests/magetab/test_ae_sdrf_handlers.py::test_tenx_version_handler_dispatch` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
-| `tests/magetab/test_ae_sdrf_handlers.py::test_tenx_v2_handler_emits_fixed_library_attributes` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
-| `tests/magetab/test_ae_sdrf_handlers.py::test_tenx_v3_handler_emits_fixed_library_attributes` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
+| `tests/magetab/test_ae_sdrf_handlers.py::test_tenx_v2_handler_emits_fixed_library_attributes` | remove | Superseded by source-backed forced-handler tests for MSC-TEST-001; old expectations required unsupported fixed scientific values. |
+| `tests/magetab/test_ae_sdrf_handlers.py::test_tenx_v3_handler_emits_fixed_library_attributes` | remove | Superseded by source-backed forced-handler tests for MSC-TEST-001; old expectations required unsupported fixed scientific values. |
 | `tests/magetab/test_ae_sdrf_handlers.py::test_sequencing_subclasses_inherit_file_comments` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
 | `tests/magetab/test_ae_sdrf_handlers.py::test_greedy_sra_fallback_comments_are_not_emitted` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |
 | `tests/magetab/test_ae_sdrf_handlers.py::test_sample_library_layout_is_used_when_run_has_no_layout` | retain | Keep focused regression; no deletion justified. End-to-end examples complement this branch-level coverage. |

@@ -2394,7 +2394,7 @@ Current caveats:
 
 Other helpers:
 
-- `_detect_ae_technology()` chooses `bulk_sequencing`, `plate_single_cell_sequencing`, `droplet_single_cell_sequencing`, `tenx_v2_droplet_single_cell_sequencing`, `tenx_v3_droplet_single_cell_sequencing`, `spatial_sequencing`, `array`, or `generic`.
+- `_detect_ae_technology()` chooses `bulk_sequencing`, `plate_single_cell_sequencing`, `droplet_single_cell_sequencing`, `spatial_sequencing`, `array`, or `generic`. Version-specific option names remain accepted explicitly, but automatic selection does not interpret bare versions.
 - `_has_array_files()` detects array-like files from platform/sample/series supplementary data and raw data.
 - `_normalize_magetab_rows()` accepts row lists, comma-delimited legacy strings, and legacy `"SDRF file", sdrf` pairs.
 - Legacy `_strip_quotes()` remains private but is no longer used by construction or file writing.
@@ -2473,9 +2473,8 @@ Other helpers:
 - `scan_node()` maps scan name and sequencing file attrs.
 - `sequencing_file_attrs()` maps FASTQs and raw sequencing files; the former derived data comment block is intentionally left commented out.
 - `_BulkSequencingSDRFHandler` is selected for ordinary non-single-cell sequencing and expands each sample/channel/run into one path per FASTQ URI.
-- `_SingleCellSequencingSDRFHandler` adds library construction, cDNA read size, technical replicate group, and study text helpers.
-- `_DropletSingleCellSequencingSDRFHandler` adds 10x/droplet read geometry and isolation comments.
-- `_TenXV2DropletSingleCellSequencingSDRFHandler` and `_TenXV3DropletSingleCellSequencingSDRFHandler` inherit the droplet path and emit fixed 10x chemistry library attributes such as cDNA read, cDNA read offset/size, barcode read/offset/size, end bias, input molecule, library construction, primer, strand, single-cell isolation, spike-in, and UMI geometry. v2 emits `Comment[library construction] = 10xV2`, cDNA read size `98`, and UMI barcode size `10`; v3 emits `10xV3`, cDNA read size `91`, and UMI barcode size `12`.
+- `_SingleCellSequencingSDRFHandler` resolves each sample/channel/run through `resolve_chemistry()`, adds supported annotations, and records operation-local diagnostics. Unlabelled read-length lists do not supply cDNA lengths.
+- `_DropletSingleCellSequencingSDRFHandler` and the retained v2/v3 rendering selections share evidence-based annotation. No version, barcode, primer, strand or read-length presets are supplied. See [scoped chemistry](#scoped-library-chemistry).
 - `_PlateSingleCellSequencingSDRFHandler` inherits the bulk per-FASTQ row behavior and adds source-level index and description comments.
 - `_SpatialSequencingSDRFHandler` adds Visium library construction, read geometry, and read type/read index comments based on submitted filenames.
 
@@ -3086,8 +3085,31 @@ Converter-focused tests mirror `sources`, `miniml`, `magetab`, `metadata`, `expr
 <a id="converter-test-contracts"></a>
 ## Converter end-to-end test contracts
 
-`tests/e2e/` independently exercises all seven converters and their CLI entrypoints against stored inputs and complete reviewed outputs. The corpus uses reduced public GEO evidence, an unmodified public MAGE-TAB study, and a four-cell six-gene public PBMC count slice, plus explicitly synthetic edge cases. [Fixture provenance and review](../tests/fixtures/README.md) explains exact comparisons, source checks, permitted execution normalization, offline boundaries and the known 5-prime/3-prime auto-detection discrepancy (strict xfail MSC-TEST-001).
+`tests/e2e/` independently exercises all seven converters and their CLI entrypoints against stored inputs and complete reviewed outputs. The corpus uses reduced public GEO evidence, an unmodified public MAGE-TAB study, and a four-cell six-gene public PBMC count slice, plus explicitly synthetic edge cases. [Fixture provenance and review](../tests/fixtures/README.md) explains exact comparisons, source checks, permitted execution normalization, offline boundaries and the resolved 5-prime/3-prime discrepancy (passing regression MSC-TEST-001).
 
 Run `.venv/bin/python -m pytest tests/e2e -q`; run `.venv/bin/python -m pytest -q` for the complete offline suite. Tests compare full artifacts, exercise injected collaborators, verify old checkpoint bytes survive a version change, and deliberately corrupt outputs to prove scientific drift is rejected. The project-local installed MSC version must match the checkout. No production code or consumer APIs are changed by the test audit.
 
 [Test audit and dispositions](../tests/AUDIT.md) records retained, strengthened, consolidated, relocated and removed checks. Documentation policy lives under `tests/policy/`, separately from workflow correctness. `tests/test_documented_imports.py` verifies executable MSC imports in Python examples.
+
+
+<a id="scoped-library-chemistry"></a>
+## Scoped library chemistry
+
+`magetab.chemistry.resolve_chemistry(sample, channel=None, run=None, series=None)` is a pure service exported from `magetab` with `ChemistryResult`, `ChemistryEvidence` and `ChemistryDiagnostic`. It returns manufacturer, family, version candidates, library role, index configuration, ordered renderable attributes, field-level source evidence and diagnostic codes. It performs no retrieval and changes no input models.
+
+Flow: GEO retrieval/parser/enrichment or JSON package loading → AEConstructor broad technology selection → per-sample/channel/run SDRF handler → scoped chemistry resolution → ordered SDRF attributes and operation audit → existing IDF/SDRF publication. Retained v2/v3 handler options select rendering, not scientific presets.
+
+The resolver examines extraction protocols and explicit sample/library descriptions. It normalizes prime spellings and version punctuation only for matching, binds versions to preparation phrases, excludes unsupported software/fixation/compatibility/negated clauses, and keeps original evidence text and paths. Shared overall-design sentences require an explicit sample identifier or an all-samples/all-libraries preparation statement. General summaries and neighbouring samples do not supply chemistry.
+
+Fields resolve independently: 5-prime v1.1/v2 retains 5-prime and ambiguous versions; competing 3-prime and 5-prime preparation phrases retain neither as the end bias. Flex and Multiome are separate families. Reported transcript read lengths, paired barcode/UMI descriptions, explicit offsets and index cycle counts can be emitted; a bare read-length list and vendor-recommended recipes cannot. Multiple labelled library recipes without a matching library identity remain unresolved. Diagnostics are deduplicated within the handler's `last_sdrf_audit.warnings` and include source paths. Existing imported assay-path attributes remain authoritative during semantic overlay.
+
+This is a deliberately bounded grammar, not a general natural-language parser or a vendor layout registry. Complex/unsupported wording can remain unresolved. Existing spatial barcode presets remain outside this fix; spatial rendering also stops assigning cDNA length from an unlabelled list. No raw matrices, schemas, ontology policy or consumer code change.
+
+`tests/magetab/test_chemistry.py` covers resolution, scope, conflicts, unknown kits, read recipes, forced handlers and mixed samples. `tests/e2e/test_chemistry.py` exercises both actual output converters using seven source-excerpt fixtures in explicitly constructed GEO envelopes, compares complete SDRFs, checks diagnostics and reparses repeated chemistry comments. `test_geo_chemistry_regression.py` exercises the original frozen real GEO record. Fixture provenance and expected-value review are in [chemistry fixtures](../tests/fixtures/chemistry/README.md).
+
+Public source symbols:
+
+- `meta_standards_converter.magetab.chemistry.resolve_chemistry`: pure resolver with the signature and scoping contract above.
+- `meta_standards_converter.magetab.chemistry.ChemistryResult`: immutable result with ordered attributes, source evidence and diagnostics.
+- `meta_standards_converter.magetab.chemistry.ChemistryEvidence`: immutable field, value, source path and original text.
+- `meta_standards_converter.magetab.chemistry.ChemistryDiagnostic`: immutable code, affected field and source paths.
