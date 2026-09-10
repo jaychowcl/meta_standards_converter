@@ -186,7 +186,7 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: GEO to parsed JSON
   anchor: workflow-geo2json
   purpose: Traces GEO-to-JSON parsing, guarded direct-parent publication inheritance, optional enrichment, writing, and errors.
-  keywords: geo2json, GSE, GEOParser, parent publication, SubSeries, SuperSeries, reciprocal, PubMed, publication_inheritance, RelatedSeriesParseResult, related series, degraded, partial, safe error, enrichment, JSON
+  keywords: geo2json, GSE, GEOParser, contributor order, PYTHONHASHSEED, GSE60450, parent publication, SubSeries, SuperSeries, reciprocal, PubMed, publication_inheritance, RelatedSeriesParseResult, related series, degraded, partial, safe error, enrichment, JSON
   link: [Open section](codebase.md#workflow-geo2json)
 
 - id: workflow-json2ae

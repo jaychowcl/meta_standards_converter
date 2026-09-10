@@ -702,6 +702,8 @@ Pseudocode: `fetch -> parse -> for package: enrich -> construct -> [write] -> li
 <a id="workflow-geo2json"></a>
 ### `geo2json`: GEO to parsed JSON
 
+Contributor/contact reference fields are visited in parsed-document insertion order, with series then samples then platforms traversal and first-occurrence deduplication. This preserves source person order and keeps JSON/IDF output independent of Python hash randomization; GSE60450 supplies the real-source regression.
+
 ```text
 GSE -> fetch --failure--> exception
     -> parse --failure--> exception

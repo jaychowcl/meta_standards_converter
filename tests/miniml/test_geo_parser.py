@@ -251,3 +251,31 @@ class TestGEOParser(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_reference_fields_follow_document_order_regardless_of_key_set():
+    parser = GEOParser()
+    # Both orders must work in the same interpreter, independently of its hash seed.
+    for first, second in [('contact_ref', 'contributor_ref'), ('contributor_ref', 'contact_ref')]:
+        element = {first: [{'ref': 'first'}, {'ref': 'repeat'}],
+                   second: [{'ref': 'second'}, {'ref': 'repeat'}],
+                   'channel': [{'contact_ref': {'ref': 'nested'}}]}
+        assert parser._reference_values(element, {'contact_ref', 'contributor_ref'}) == [
+            'first', 'repeat', 'second', 'repeat', 'nested']
+        contributors = parser._resolve_contributors(element,
+            [{'contact_ref': {'ref': 'sample'}}], [{'contributor_ref': {'ref': 'platform'}}],
+            {iid: {'iid': iid} for iid in ['first', 'second', 'repeat', 'nested', 'sample', 'platform']})
+        assert [c['iid'] for c in contributors] == ['first', 'repeat', 'second', 'nested', 'sample', 'platform']
+
+
+def test_gse60450_contributors_follow_real_xml_reference_order():
+    from pathlib import Path
+    from xml.etree import ElementTree as ET
+    raw = (Path(__file__).parents[1] / 'fixtures/studies/GSE60450/inputs/geo.xml').read_text()
+    root = ET.fromstring(raw)
+    ns = {'g': 'http://www.ncbi.nlm.nih.gov/geo/info/MINiML'}
+    series = root.find('g:Series', ns)
+    refs = [node.attrib['ref'] for node in series if node.tag.rsplit('}', 1)[-1] in {'Contributor-Ref', 'Contact-Ref'}]
+    package = GEOParser().parse(raw)[0]
+    assert [c['iid'] for c in package['contributor']][:len(dict.fromkeys(refs))] == list(dict.fromkeys(refs))
+    assert len(package['sample']) == 12

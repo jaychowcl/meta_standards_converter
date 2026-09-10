@@ -1,0 +1,955 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<MINiML
+   xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.ncbi.nlm.nih.gov/geo/info/MINiML http://www.ncbi.nlm.nih.gov/geo/info/MINiML.xsd"
+   version="0.5.0" >
+
+  <Contributor iid="contrib1">
+    <Person><First>Gordon</First><Middle>K</Middle><Last>Smyth</Last></Person>
+    <Email>smyth@wehi.edu.au</Email>
+    <Phone> (+61 3) 9345 2326</Phone>
+    <Fax> (+61 3) 9347 0852</Fax>
+    <Laboratory>Smyth</Laboratory>
+    <Department>Bioinformatics</Department>
+    <Organization>Walter and Eliza Hall Institute of Medical Research</Organization>
+    <Address>
+      <Line>1G Royal Pde</Line>
+      <City>Parkville</City>
+      <State>Vic</State>
+      <Postal-Code>3052</Postal-Code>
+      <Country>Australia</Country>
+    </Address>
+    <Web-Link>http://www.wehi.edu.au</Web-Link>
+  </Contributor>
+
+  <Contributor iid="contrib2">
+    <Organization>GEO</Organization>
+    <Address>
+      <City></City>
+      <Country>USA</Country>
+    </Address>
+  </Contributor>
+
+  <Contributor iid="contrib3">
+    <Person><First>Nai</First><Middle>Y</Middle><Last>Fu</Last></Person>
+  </Contributor>
+
+  <Contributor iid="contrib4">
+    <Person><First>Aaron</First><Last>Lun</Last></Person>
+  </Contributor>
+
+  <Contributor iid="contrib5">
+    <Person><First>Jane</First><Middle>E</Middle><Last>Visvader</Last></Person>
+  </Contributor>
+
+  <Database iid="GEO">
+    <Name>Gene Expression Omnibus (GEO)</Name>
+    <Public-ID>GEO</Public-ID>
+    <Organization>NCBI NLM NIH</Organization>
+    <Web-Link>http://www.ncbi.nlm.nih.gov/geo</Web-Link>
+    <Email>geo@ncbi.nlm.nih.gov</Email>
+  </Database>
+
+  <Platform iid="GPL13112">
+    <Status database="GEO">
+      <Submission-Date>2011-02-02</Submission-Date>
+      <Release-Date>2011-02-02</Release-Date>
+      <Last-Update-Date>2019-03-19</Last-Update-Date>
+    </Status>
+    <Title>Illumina HiSeq 2000 (Mus musculus)</Title>
+    <Accession database="GEO">GPL13112</Accession>
+    <Technology>high-throughput sequencing</Technology>
+    <Distribution>virtual</Distribution>
+    <Organism taxid="10090">Mus musculus</Organism>
+    <Manufacturer></Manufacturer>
+    <Manufacture-Protocol>
+    </Manufacture-Protocol>
+    <Contact-Ref ref="contrib2" />
+  </Platform>
+
+  <Sample iid="GSM1480291">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Luminal virgin #1</Title>
+    <Accession database="GEO">GSM1480291</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, luminal cells, virgin</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+luminal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+virgin
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-LA
+MCL1-LA_BC2CTUACXX_GATCAG_L001_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480291/suppl/GSM1480291_MCL1-LA_BC2CTUACXX_GATCAG_L001_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991530" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681985" />
+  </Sample>
+
+  <Sample iid="GSM1480292">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Luminal virgin #2</Title>
+    <Accession database="GEO">GSM1480292</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, luminal cells, virgin</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+luminal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+virgin
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-LB
+MCL1-LB_BC2CTUACXX_TGACCA_L001_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480292/suppl/GSM1480292_MCL1-LB_BC2CTUACXX_TGACCA_L001_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991531" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681986" />
+  </Sample>
+
+  <Sample iid="GSM1480293">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Luminal 18.5 dP #1</Title>
+    <Accession database="GEO">GSM1480293</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, luminal cells, 18.5 day pregnancy</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+luminal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+18.5 day pregnancy
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-LC
+MCL1-LC_BC2CTUACXX_GCCAAT_L001_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480293/suppl/GSM1480293_MCL1-LC_BC2CTUACXX_GCCAAT_L001_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991532" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681987" />
+  </Sample>
+
+  <Sample iid="GSM1480294">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Luminal 18.5 dP #2</Title>
+    <Accession database="GEO">GSM1480294</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, luminal cells, 18.5 day pregnancy</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+luminal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+18.5 day pregnancy
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-LD
+MCL1-LD_BC2CTUACXX_GGCTAC_L001_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480294/suppl/GSM1480294_MCL1-LD_BC2CTUACXX_GGCTAC_L001_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991533" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681988" />
+  </Sample>
+
+  <Sample iid="GSM1480295">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Luminal 2 dL #1</Title>
+    <Accession database="GEO">GSM1480295</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, luminal cells, 2 day lactation</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+luminal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+2 day lactation
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-LE
+MCL1-LE_BC2CTUACXX_TAGCTT_L001_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480295/suppl/GSM1480295_MCL1-LE_BC2CTUACXX_TAGCTT_L001_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991534" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681989" />
+  </Sample>
+
+  <Sample iid="GSM1480296">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Luminal 2 dL #2</Title>
+    <Accession database="GEO">GSM1480296</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, luminal cells, 2 day lactation</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+luminal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+2 day lactation
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-LF
+MCL1-LF_BC2CTUACXX_CTTGTA_L001_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480296/suppl/GSM1480296_MCL1-LF_BC2CTUACXX_CTTGTA_L001_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991535" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681990" />
+  </Sample>
+
+  <Sample iid="GSM1480297">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Basal virgin #1</Title>
+    <Accession database="GEO">GSM1480297</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, basal cells, virgin</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+basal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+virgin
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-DG
+MCL1-DG_BC2CTUACXX_ACTTGA_L002_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480297/suppl/GSM1480297_MCL1-DG_BC2CTUACXX_ACTTGA_L002_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991536" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681991" />
+  </Sample>
+
+  <Sample iid="GSM1480298">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Basal virgin #2</Title>
+    <Accession database="GEO">GSM1480298</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, basal cells, virgin</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+basal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+virgin
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-DH
+MCL1-DH_BC2CTUACXX_CAGATC_L002_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480298/suppl/GSM1480298_MCL1-DH_BC2CTUACXX_CAGATC_L002_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991537" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681992" />
+  </Sample>
+
+  <Sample iid="GSM1480299">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Basal 18.5 dP #1</Title>
+    <Accession database="GEO">GSM1480299</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, basal cells, 18.5 day pregnancy</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+basal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+18.5 day pregnancy
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-DI
+MCL1-DI_BC2CTUACXX_ACAGTG_L002_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480299/suppl/GSM1480299_MCL1-DI_BC2CTUACXX_ACAGTG_L002_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991538" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681993" />
+  </Sample>
+
+  <Sample iid="GSM1480300">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Basal 18.5 dP #2</Title>
+    <Accession database="GEO">GSM1480300</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, basal cells, 18.5 day pregnancy</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+basal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+18.5 day pregnancy
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-DJ
+MCL1-DJ_BC2CTUACXX_CGATGT_L002_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480300/suppl/GSM1480300_MCL1-DJ_BC2CTUACXX_CGATGT_L002_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991539" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681994" />
+  </Sample>
+
+  <Sample iid="GSM1480301">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Basal 2 dL #1</Title>
+    <Accession database="GEO">GSM1480301</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, basal cells, 2 day lactation</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+basal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+2 day lactation
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-DK
+MCL1-DK_BC2CTUACXX_TTAGGC_L002_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480301/suppl/GSM1480301_MCL1-DK_BC2CTUACXX_TTAGGC_L002_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991540" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681995" />
+  </Sample>
+
+  <Sample iid="GSM1480302">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Basal 2 dL #2</Title>
+    <Accession database="GEO">GSM1480302</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>mammary gland, basal cells, 2 day lactation</Source>
+      <Organism taxid="10090">Mus musculus</Organism>
+      <Characteristics tag="strain/background">
+FVB/N
+      </Characteristics>
+      <Characteristics tag="genotype/variation">
+wild type
+      </Characteristics>
+      <Characteristics tag="gender">
+female
+      </Characteristics>
+      <Characteristics tag="tissue">
+mouse mammary gland
+      </Characteristics>
+      <Characteristics tag="immunophenotype">
+basal cell population
+      </Characteristics>
+      <Characteristics tag="developmental stage">
+2 day lactation
+      </Characteristics>
+      <Treatment-Protocol>
+No treatment.
+      </Treatment-Protocol>
+      <Growth-Protocol>
+Luminal and basal cells were sorted directly from mouse mammary glands.
+      </Growth-Protocol>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit.
+RNA libraries were prepared for sequencing using standard Illumina protocols.
+      </Extract-Protocol>
+    </Channel>
+    <Description>
+Sample name: MCL1-DL
+MCL1-DL_BC2CTUACXX_ATCACG_L002_R1
+Raw data file batch date: Aug. 9, 2013
+    </Description>
+    <Data-Processing>
+Illumina CASAVA pipeline version 1.8.2 used for basecalling.
+Reads were aligned to the mouse genome by subread version 1.4.4.
+Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation.
+Genome_build: GRCm38 (mm10, NCBI build 38.1)
+Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.
+    </Data-Processing>
+    <Platform-Ref ref="GPL13112" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480302/suppl/GSM1480302_MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.txt.gz
+    </Supplementary-Data>
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN02991541" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX681996" />
+  </Sample>
+
+  <Series iid="GSE60450">
+    <Status database="GEO">
+      <Submission-Date>2014-08-15</Submission-Date>
+      <Release-Date>2015-01-19</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Transcriptome analysis of luminal and basal cell subpopulations in the lactating versus pregnant mammary gland</Title>
+    <Accession database="GEO">GSE60450</Accession>
+    <Pubmed-ID>25730472</Pubmed-ID>
+    <Summary>
+To identify genes specifically expressed in lactating mammary glands, the gene expression profiles of luminal and basal cells from different developmental stages were compared.
+    </Summary>
+    <Overall-Design>
+Comparison of gene expression in luminal and basal cells harvested from the mammary glands of virgin, 18.5 day pregnant and 2 day lactating mice (2 mice per stage).
+    </Overall-Design>
+    <Type>Expression profiling by high throughput sequencing</Type>
+    <Contributor-Ref ref="contrib3" position="1" />
+    <Contributor-Ref ref="contrib4" position="2" />
+    <Contributor-Ref ref="contrib1" position="3" />
+    <Contributor-Ref ref="contrib5" position="4" />
+    <Contact-Ref ref="contrib1" />
+    <Sample-Ref ref="GSM1480291" />
+    <Sample-Ref ref="GSM1480292" />
+    <Sample-Ref ref="GSM1480293" />
+    <Sample-Ref ref="GSM1480294" />
+    <Sample-Ref ref="GSM1480295" />
+    <Sample-Ref ref="GSM1480296" />
+    <Sample-Ref ref="GSM1480297" />
+    <Sample-Ref ref="GSM1480298" />
+    <Sample-Ref ref="GSM1480299" />
+    <Sample-Ref ref="GSM1480300" />
+    <Sample-Ref ref="GSM1480301" />
+    <Sample-Ref ref="GSM1480302" />
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE60nnn/GSE60450/suppl/GSE60450_Lactation-GenewiseCounts.txt.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="TAR">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE60nnn/GSE60450/suppl/GSE60450_RAW.tar
+    </Supplementary-Data>
+    <Relation type="BioProject" target="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA258286" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRP045534" />
+  </Series>
+
+</MINiML>

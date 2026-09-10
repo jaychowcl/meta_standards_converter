@@ -306,8 +306,10 @@ class GEOParser:
     def _reference_values(self, element: dict, keys: set[str]) -> list[str]:
         refs = []
         for child in self._walk_dicts(element):
-            for key in keys:
-                for value in self._as_list(child.get(key)):
+            for key, values in child.items():
+                if key not in keys:
+                    continue
+                for value in self._as_list(values):
                     if isinstance(value, dict) and value.get("ref"):
                         refs.append(value["ref"])
         return refs
