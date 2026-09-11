@@ -21,11 +21,11 @@ def test_version_change_recomputes_and_preserves_old_checkpoint_bytes(workspace,
             calls.append(asset.scope_id)
             return super().read(asset, orientation=orientation, localize=localize)
     options = dict(asset_specs=["PBMC3K_SAMPLE=counts.tsv"], matrix_orientation="genes-by-observations", resume=True, processed_checkpoint_dir="checkpoints")
-    monkeypatch.setattr(JSON2H5ADConverter, "_package_version", lambda self: "6.0.0")
+    monkeypatch.setattr(JSON2H5ADConverter, "_package_version", lambda self: "7.0.0")
     JSON2H5ADConverter(reader=Reader()).convert("miniml.json", out="old", **options)
     old = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in Path("checkpoints").rglob("*") if p.is_file()}
     assert len(old) == 2
-    monkeypatch.setattr(JSON2H5ADConverter, "_package_version", lambda self: "7.0.0")
+    monkeypatch.setattr(JSON2H5ADConverter, "_package_version", lambda self: "8.0.0")
     JSON2H5ADConverter(reader=Reader()).convert("miniml.json", out="new", **options)
     assert calls == ["PBMC3K_SAMPLE", "PBMC3K_SAMPLE"]
     assert all(hashlib.sha256(p.read_bytes()).hexdigest() == digest for p, digest in old.items())

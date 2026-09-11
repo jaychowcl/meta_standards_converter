@@ -30,7 +30,7 @@ from meta_standards_converter.miniml import (
 
 def package_payload() -> dict:
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": {
             "iid": "GSE1",
@@ -66,7 +66,7 @@ def package_payload() -> dict:
     }
 
 
-def test_codec_decodes_typed_enrichment_from_v2_input() -> None:
+def test_codec_decodes_typed_enrichment_from_v3_input() -> None:
     result = MINiMLCodec().decode(package_payload())
 
     assert isinstance(result, MINiMLDecodeResult)
@@ -84,7 +84,7 @@ def test_codec_returns_warnings_and_strict_mode_promotes_them() -> None:
     compatible = MINiMLCodec().decode(payload)
 
     assert [issue.code for issue in compatible.diagnostics] == [
-        "schema_migrated", "unresolved_reference",
+        "unresolved_reference",
     ]
     with pytest.raises(MINiMLCompatibilityError, match="unresolved_reference"):
         MINiMLCodec().decode(payload, strict=True)
@@ -101,22 +101,28 @@ def test_codec_decodes_one_or_many_packages() -> None:
 
 def test_typed_package_is_immutable_and_preserves_typed_harmonized_values() -> None:
     payload = package_payload()
-    payload["sample"][0]["channel"] = [
+    payload['sample'][0]['channel'] = [
         {
-            "source": "lung",
-            "characteristics": [{
-                "name": "organism",
-                "value": "Homo sapiens",
-                "annotations": [
-                    {
-                        "field": "organism",
-                        "value": "Homo sapiens",
-                        "term_source_ref": "NCBITaxon",
-                        "term_accession_number": "NCBITaxon:9606",
-                    }
-                ],
-            }],
-        }
+            'source': 'lung',
+            'characteristics': [
+                {
+                    'name': 'organism',
+                    'value': 'Homo sapiens',
+                },
+                {
+                    'name': 'hz_organism',
+                    'value': 'Homo sapiens',
+                },
+                {
+                    'name': 'hz_organism_id',
+                    'value': 'NCBITaxon:9606',
+                },
+                {
+                    'name': 'hz_organism_onto',
+                    'value': 'NCBITaxon',
+                },
+            ],
+        },
     ]
     package = MINiMLCodec().decode(payload).package
 
@@ -130,30 +136,38 @@ def test_typed_package_is_immutable_and_preserves_typed_harmonized_values() -> N
         annotation.value = "changed"  # type: ignore[misc]
 
 
-def test_v2_characteristic_annotations_align_duplicate_fields_with_parentheses():
+def test_v3_characteristic_annotations_align_duplicate_fields_with_parentheses():
     payload = package_payload()
-    payload["sample"][0]["channel"] = [{
-        "characteristics": [
-            {
-                "name": "tissue",
-                "value": "kidney",
-                "annotations": [{
-                    "field": "tissue_name",
-                    "value": "kidney",
-                    "term_accession_number": "UBERON:0002113",
-                }],
-            },
-            {
-                "name": "organism part",
-                "value": "lung",
-                "annotations": [{
-                    "field": "tissue_name",
-                    "value": "lung",
-                    "term_accession_number": "UBERON:0002048",
-                }],
-            },
-        ]
-    }]
+    payload['sample'][0]['channel'] = [
+        {
+            'characteristics': [
+                {
+                    'name': 'tissue',
+                    'value': 'kidney',
+                },
+                {
+                    'name': 'hz_tissue_name',
+                    'value': 'kidney',
+                },
+                {
+                    'name': 'hz_tissue_name_id',
+                    'value': 'UBERON:0002113',
+                },
+                {
+                    'name': 'organism part',
+                    'value': 'lung',
+                },
+                {
+                    'name': 'hz_tissue_name(1)',
+                    'value': 'lung',
+                },
+                {
+                    'name': 'hz_tissue_name_id(1)',
+                    'value': 'UBERON:0002048',
+                },
+            ],
+        },
+    ]
 
     migrated = MINiMLCodec().encode(MINiMLCodec().decode(payload).package)
     rows = migrated["sample"][0]["channel"][0]["characteristics"]
@@ -213,15 +227,7 @@ def test_codec_dump_is_deterministic_and_replaces_existing_file(tmp_path) -> Non
 
 def test_channel_hz_groups_cover_harmonized_channel_scalars() -> None:
     payload = package_payload()
-    payload["sample"][0]["channel"] = [{
-        "source": "lung",
-        "annotations": [{
-            "field": "tissue_name",
-            "value": "lung",
-            "term_source_ref": "UBERON",
-            "term_accession_number": "UBERON:0002048",
-        }],
-    }]
+    payload['sample'][0]['channel'] = [{'source': 'lung', 'hz_tissue_name': 'lung', 'hz_tissue_name_id': 'UBERON:0002048', 'hz_tissue_name_onto': 'UBERON'}]
 
     package = MINiMLCodec().decode(payload).package
 

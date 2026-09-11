@@ -166,8 +166,8 @@ credentials, or tokens.
 MSC MINiML 3.0 folds semantic MAGE-TAB content into the typed package itself:
 `series.protocols` owns protocol identity and details, `series.assay_paths`
 owns ordered node and protocol-application paths, named values own units and
-typed `annotations`, channel-level `annotations` describe harmonized scalar
-channel fields such as `source`, declaration lists retain QC/replicate/normalization
+`hz_*` groups, and annotated channel scalar objects retain harmonized values
+beside their raw `value`. Declaration lists retain QC/replicate/normalization
 semantics, and `source.documents` records source-document provenance. Raw IDF
 and SDRF table layouts and the former `mage_tab` replay sidecar are deliberately
 outside the runtime representation.
@@ -175,7 +175,7 @@ outside the runtime representation.
 MAGE-TAB construction is therefore semantic and deterministic. IDF ordering
 is a renderer responsibility, while assay-path order and repeated
 characteristic/parameter occurrences remain data. The SDRF renderer reads the
-v2 `name` field (with `tag` only as a migration fallback) and unwraps typed
+canonical `name` field (with `tag` only as a migration fallback) and unwraps typed
 ontology values such as channel `source` and `molecule` instead of serializing
 their JSON object representation. IDF renderers emit the MAGE-TAB 1.1 labels
 `Publication Status Term Source REF`, `Publication Status Term Accession
@@ -197,12 +197,11 @@ has a single SDRF-table return shape, so it consolidates compatible document
 graphs and raises for heterogeneous layouts instead of silently losing order or
 path multiplicity.
 
-Runtime converters accept only explicit schema `2.0` packages. Legacy or
-unversioned packages enter through `MINiMLV1Migrator`, which folds supported
-sidecar semantics once, converts legacy `hz_*` channel/characteristic fields
-and `pre_hz_label` into typed characteristic annotations, and reports dropped
-source-layout evidence. No runtime workflow emits or consumes `hz_*` fields;
-harmonized values live only in typed annotation records.
+Runtime converters accept only explicit schema `3.0` packages. Legacy or
+unversioned source data enters through `MINiMLV1Migrator`, which folds supported
+sidecar semantics and legacy harmonized values directly into v3 `hz_*` groups.
+It preserves explicit source labels and reports dropped source-layout evidence.
+No v2 package or wire annotation array is constructed during ingestion.
 
 **Current-state evidence:** [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py),
 [`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py),
@@ -1053,7 +1052,7 @@ tests/GSE328265_family.xml
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
-- Distribution version `7.0.0` keeps typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `8.0.0` keeps typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 2.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -1252,7 +1251,7 @@ Representative AE output:
 
 ```json
 {
-  "miniml_schema_version": "2.0",
+  "miniml_schema_version": "3.0",
   "source": {
     "format": "MAGE-TAB",
     "documents": [{"kind": "idf", "name": "E-MTAB-1.idf.txt", "sha256": "..."}]
@@ -1443,7 +1442,7 @@ objects implement the read-only mapping interface used by legacy callers.
 ```python
 [
     {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": str, "version": str | None, "documents": list[dict]},
         "database": list[dict],
         "organization": list[dict],
@@ -1523,9 +1522,9 @@ PubMed publications, SRA/ENA accessions, SRA runs, and FASTQ file records are
 first-class typed enrichments.
 
 The wire discriminator is `miniml_schema_version: "3.0"`. Runtime decoding
-rejects unversioned, 1.x, and unknown versions. MINiML 2.0 remains readable and
-is deterministically migrated by `MINiMLV2Migrator`; `MINiMLV1Migrator` and the
-`miniml-migrate` command provide explicit one-way migration to 3.0. Canonical
+rejects unversioned, 1.x, 2.0, and unknown versions. The v3-only codec has no
+`migrate_v2` API. `MINiMLV1Migrator` and the `miniml-migrate` command retain
+explicit unversioned/1.0 source import directly into 3.0. Canonical
 collections are always lists, while `series` remains a single object.
 `MINiMLCodec.decode`/`decode_many` return immutable packages plus structured
 compatibility diagnostics. Strict mode promotes blocking diagnostics to
@@ -1603,8 +1602,8 @@ experiment date, contacts and roles, and generic IDF comments.
 
 Public symbols are exported from `meta_standards_converter.miniml`; neither a
 schema-path helper nor JSON Schema package data is public. Contract coverage
-lives in `tests/test_msc_miniml_v2.py`,
-`tests/test_miniml_migration_cli.py`, `tests/magetab/test_magetab_miniml_v2.py`, and
+lives in `tests/test_msc_miniml_v3.py`,
+`tests/test_miniml_migration_cli.py`, `tests/magetab/test_magetab_miniml_v3.py`, and
 `tests/miniml/test_geo_parser.py`. Cross-boundary stabilization coverage lives in
 `tests/test_miniml_stabilization.py`.
 
@@ -1673,7 +1672,6 @@ The typed semantic additions are
 `meta_standards_converter.miniml.model.AssayPath`,
 `meta_standards_converter.miniml.migration.MINiMLMigrationResult`,
 `meta_standards_converter.miniml.migration.MINiMLV1Migrator`,
-`meta_standards_converter.miniml.migration.MINiMLV2Migrator`,
 `meta_standards_converter.magetab.semantics.overlay_miniml_semantics`, and
 `meta_standards_converter.magetab.semantics.render_miniml_assay_documents`, and
 `meta_standards_converter.cli.miniml_migrate.main`.
@@ -2200,7 +2198,7 @@ package's source-document records.
 - `render_model(model)` regenerates one SDRF directly or consolidates multiple SDRFs by header plus occurrence. `overlay_core(model_rows, core_rows)` unions eligible core fields into that rendering while retaining model-only protocols, identities, annotations, rows, and structural graph columns.
 - IDF matching uses normalized row labels and inserts only rows in the mapped allowlist. Legacy MSC publication/protocol companion labels normalize to the four canonical MAGE-TAB 1.1 rows before rendering. SDRF matching uses `(normalized header, occurrence)` keys, so repeated characteristics remain position-stable. Missing core columns are inserted relative to the nearest core-order neighbor; independent curator fields such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`, and `Characteristics[hz_cell_type_onto]` remain separate rather than being reinterpreted as native ontology companions.
 - SDRF values align through the available `Sample Name`, `Source Name`, and `Comment[ENA_RUN]` identities. A core value replaces or populates a model cell only when all matching core rows agree on exactly one value. An unmatched model row keeps its existing value; an ambiguous newly inserted cell remains blank. Core-only rows are not added or broadcast as new assay paths.
-- `MINiMLV1Migrator` folds this bridge into the canonical v2 package and drops the internal container. `AEConstructor` renders from those canonical protocol and assay-path fields; no raw-table fingerprint or replay sidecar participates.
+- `MINiMLV1Migrator` folds this bridge into the canonical v3 package and drops the internal container. `AEConstructor` renders from those canonical protocol and assay-path fields; no raw-table fingerprint or replay sidecar participates.
 
 <a id="geo-parser"></a>
 ### `miniml/geo_parser.py`
@@ -2731,7 +2729,7 @@ sample evidence. Ambiguous sample/channel bindings warn rather than guessing.
 `DatasetPackageGroup` no longer stores profiles. Profile-free `miniml_json`
 envelopes remain readable; an embedded `harmonization_overrides` property is
 rejected with direct-converter migration guidance. Curator 5 removes profile
-arguments, validation, CLI flags and forwarding. MINiML 2 ingestion, MINiML 3,
+arguments, validation, CLI flags and forwarding. MINiML 3,
 patch 3.1, Atlas publication and GSK's own projection policy remain intact.
 
 Harmonized evidence exports by default: tables and AnnData use
@@ -2806,7 +2804,7 @@ Important test coverage:
 - `tests/converters/test_json2tsv.py`: neutral default columns, direct Atlas aggregation, injected neutral metadata services, replacement projectors, collisions, and validation behavior.
 - `tests/test_miniml_model_authority.py`: sample-bound typed protocol/material projection, exact ontology preservation, fallback ordering, and shared H5AD semantics.
 - `tests/test_miniml_stabilization.py`: deterministic MINiML migration, validation, and captured-index ordering without quadratic equality scans.
-- `tests/magetab/test_magetab_miniml_v2.py`: legacy and canonical IDF companion-label parsing, typed ontology alignment, and canonical semantic MAGE-TAB regeneration.
+- `tests/magetab/test_magetab_miniml_v3.py`: legacy and canonical IDF companion-label parsing, typed ontology alignment, and canonical semantic MAGE-TAB regeneration.
 - `tests/metadata/test_metadata_projector.py`: generic sample projector and ignored legacy combined-hook
   lifecycle, scalar broadcasting, axis-length validation, collision rejection,
   warning/error propagation, fail-closed output, invalid-output opt-in, and
@@ -3187,3 +3185,31 @@ MSC 7 implementation helpers (internal support; converter APIs are the caller bo
 - `meta_standards_converter.magetab.harmonized.bind_sample_groups`: Attach sample evidence to explicit paths only through unambiguous identities.
 
 For generated multi-channel samples with harmonized evidence, `Comment[msc_channel]` records the input channel occurrence before rendering. `ae2json` retains it in the existing channel extension namespace as `extensions.msc_channel`; this prevents identical source names from collapsing distinct channels and requires no MINiML schema change. Explicit paths use this marker or unambiguous label/source evidence.
+
+
+<a id="miniml-v3-only-cutover"></a>
+## MINiML v3-only cutover
+
+MSC 8.0.0, Agentic Curator 6.0.0, ThematicAtlases 6.0.0, and the GSK adapter
+6.0.0 require canonical MSC MINiML `3.0` at application boundaries. MSC no
+longer exports `MINiMLV2Migrator` or `MINiMLCodec.migrate_v2`; v2 packages are
+rejected, including packages embedded in Atlas metadata and profile-free
+Curator envelopes. GEO and MAGE-TAB source ingestion remains supported and
+constructs v3 directly, including harmonized values, units, ontology companions,
+hierarchy depth, and indexed occurrences. Explicit unversioned/1.0 source
+import remains available through `miniml-migrate legacy.json canonical.json`.
+
+Saved v2 documents must be regenerated from source or converted with the
+preceding MSC 7 release in a separate environment before loading. Changing only
+the version marker is insufficient when annotation arrays are present. This
+release does not rewrite historical runs, caches, checkpoints, or archives.
+The converter version separates new processed checkpoints from earlier releases;
+replacement profiles remain part of checkpoint identity.
+
+The canonical v3 wire schema is unchanged: raw values and `hz_*` evidence remain
+additive; source-bound patch evidence stays in `extensions.msc_harmonization`.
+Curator's evidence remains optional. Patch 3.1, Atlas 1.0, H5AD metadata 2.0,
+assay export 3.0, and unrelated status-v2 contracts keep their versions. GSK
+scientific selection policy is unchanged. Boundary rejection, fresh ingestion,
+semantic export/reparse, source preservation, profiles, and consumer integration
+are covered by the maintained v3 fixtures and `test_miniml_v3_only.py` tests.

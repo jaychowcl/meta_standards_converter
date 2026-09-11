@@ -48,7 +48,7 @@ from .model import (
     TableData,
     Variable,
 )
-from .migration import MINiMLMigrationResult, MINiMLV1Migrator, MINiMLV2Migrator
+from .migration import MINiMLMigrationResult, MINiMLV1Migrator
 from .harmonization import (
     HarmonizedValue,
     append_harmonized_value,
@@ -147,5 +147,4 @@ __all__ = [
     "MINiMLDecodeResult",
     "MINiMLMigrationResult",
     "MINiMLV1Migrator",
-    "MINiMLV2Migrator",
 ]

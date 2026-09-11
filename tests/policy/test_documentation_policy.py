@@ -469,7 +469,7 @@ class DocsIndexTests(unittest.TestCase):
         for phrase in (
             "MSC MINiML 3.0",
             "MINiMLV1Migrator",
-            "MINiMLV2Migrator",
+            "v3-only",
             "protocols",
             "assay paths",
             "hz_<field>",

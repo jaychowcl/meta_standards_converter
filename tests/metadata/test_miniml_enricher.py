@@ -26,7 +26,7 @@ from meta_standards_converter.runtime_contracts import get_resource_profile  # n
 
 def _package(*, series: dict, sample: list | None = None) -> dict:
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": series,
         **({"sample": sample} if sample is not None else {}),

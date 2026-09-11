@@ -28,7 +28,7 @@ from meta_standards_converter.runtime_contracts import get_resource_profile  # n
 
 def _package(series: dict) -> MINiMLPackage:
     return MINiMLPackage.from_mapping({
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": series,
     })

@@ -163,14 +163,14 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   title: Enriched MINiML-compatible core
   anchor: proposed-enriched-miniml-core
   purpose: Defines MSC MINiML 3.0 protocols, assay paths, occurrence-local hz groups, units, provenance, document-scoped SDRF ordering, migration, and semantic MAGE-TAB boundaries.
-  keywords: MSC MINiML 3.0, MAGE-TAB, hz fields, harmonized value, canonical IDF labels, units, factors, protocols, assay paths, v2 migration, semantic round trip
+  keywords: MSC MINiML 3.0, MAGE-TAB, hz fields, harmonized value, canonical IDF labels, units, factors, protocols, assay paths, v3-only boundary, semantic round trip
   link: [Open section](codebase.md#proposed-enriched-miniml-core)
 
 - id: miniml-package-model
   title: MSC MINiML 3.0 package API
   anchor: miniml-package-model
-  purpose: Defines the immutable Python model, 3.0 codec, source-compatible duplicate sample-title policy, v2 migration, patch 3.1 retention, package extension hoisting, strict hz validation, projector/provenance iterators, the shared append writer, and compatibility diagnostics.
-  keywords: MSC 5.2.1, MINiML 3.0, miniml-3.0-source-compat-v1, duplicate sample title, unique iid, xsd_uniqueness, MINiMLHarmonizationPatch 3.1, msc_harmonization, source evidence, exact span, package-list pointer rebasing, provenance index, one decode, MINiMLPackage, MINiMLCodec, MINiMLV2Migrator, HarmonizedValue, append_harmonized_value, hz_disease, collision parentheses, raw preservation, source documents
+  purpose: Defines the immutable Python model, 3.0 codec, source-compatible duplicate sample-title policy, v3-only boundary, patch 3.1 retention, package extension hoisting, strict hz validation, projector/provenance iterators, the shared append writer, and compatibility diagnostics.
+  keywords: MSC 5.2.1, MINiML 3.0, miniml-3.0-source-compat-v1, duplicate sample title, unique iid, xsd_uniqueness, MINiMLHarmonizationPatch 3.1, msc_harmonization, source evidence, exact span, package-list pointer rebasing, provenance index, one decode, MINiMLPackage, MINiMLCodec, HarmonizedValue, append_harmonized_value, hz_disease, collision parentheses, raw preservation, source documents
   link: [Open section](codebase.md#miniml-package-model)
 
 ## Workflow routes
@@ -298,3 +298,5 @@ python3 -c 'import pathlib,sys; p=pathlib.Path("docs/codebase.md").read_text(); 
   link: [Open section](codebase.md#sample-library-routing)
 
 - [MSC 7 export migration](codebase.md#harmonization-overrides): direct converter profiles, hz columns, ontology companions, occurrence binding, H5AD 2.0, assay 3.0, checkpoint separation and breaking Curator envelope removal.
+
+- [MINiML v3-only cutover](codebase.md#miniml-v3-only-cutover): MSC 8 and consumer 6 release; v2 rejection, direct source import, removed migration APIs, saved-input guidance, provenance, tests and checkpoint separation.

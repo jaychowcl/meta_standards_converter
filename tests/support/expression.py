@@ -27,7 +27,7 @@ def make_expression_source(tmp_path: Path) -> tuple[Path, Path]:
     adata.uns["source_note"] = "kept"
     adata.write_h5ad(h5ad)
     payload = {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": {"accession": [{"value": "GSE1"}]},
         "sample": [

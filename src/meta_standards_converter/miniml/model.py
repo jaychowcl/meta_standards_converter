@@ -1521,13 +1521,9 @@ class MINiMLPackage(Mapping[str, Any]):
     def from_mapping(cls, value: Mapping[str, Any]) -> "MINiMLPackage":
         data = _mapping(value, "MINiML package")
         version = data.get("miniml_schema_version")
-        if version == "2.0":
-            from .migration import MINiMLV2Migrator
-
-            return MINiMLV2Migrator().migrate(data).package
         if version != MINIML_SCHEMA_VERSION:
             raise MINiMLModelError(
-                "runtime decoding requires MSC MINiML schema version '3.0'"
+                "runtime decoding requires MSC MINiML schema version '3.0'; supply v3 or regenerate from source"
             )
         known = {
             "miniml_schema_version", "source", "database", "organization",

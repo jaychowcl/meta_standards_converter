@@ -15,7 +15,7 @@ from meta_standards_converter.sources.json import JSONPackageSource
 
 def package(study: str, sample: str) -> dict:
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": {"accession": [{"value": study}]},
         "sample": [{"iid": sample}],

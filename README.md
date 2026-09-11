@@ -8,7 +8,7 @@ Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MA
 
 `meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
 
-Version 7.0.0 retains MSC MINiML 3.0 as the strict immutable metadata model,
+Version 8.0.0 retains MSC MINiML 3.0 as the strict immutable metadata model,
 accepts source-authored duplicate sample titles only when non-empty unique
 sample iids preserve identity, and returns those accepted `xsd_uniqueness`
 warnings under the versioned `miniml-3.0-source-compat-v1` policy. It also
@@ -31,7 +31,7 @@ The eight primary workflows are:
 - `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
 - `json2tsv`: parsed JSON to a sample manifest in TSV or CSV format.
 - `json2obs`: parsed JSON plus expression assets to aggregated observation-metadata sidecars without matrix integration.
-- `miniml-migrate`: explicitly upgrade MINiML 1.x or 2.0 JSON to MSC MINiML 3.0.
+- `miniml-migrate`: explicitly import legacy unversioned/1.0 source JSON to MSC MINiML 3.0.
 
 ## Installation
 
@@ -168,7 +168,7 @@ sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
 | `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5AD catalogue, provenance JSON explicitly declaring no expression integration, optional nf-core results, and single- or multi-dataset result objects |
 | `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v1 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
 | `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Row-aggregated `.obs.csv` without expression integration, optional single-sample `.var.csv` and `.uns.json`, plus a JSON result manifest |
-| `miniml-migrate` | Legacy 1.x or `miniml_schema_version: "2.0"` JSON | Strict MSC MINiML 3.0 JSON plus migration diagnostics |
+| `miniml-migrate` | Legacy unversioned/1.0 source JSON | Strict MSC MINiML 3.0 JSON plus migration diagnostics |
 
 GEO and MAGE-TAB ingestion both produce MSC MINiML 3.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, occurrence-local harmonized values, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. Applied harmonization patch 3.1 fragments are retained under package `extensions.msc_harmonization` so exact authored spans and their occurrence paths survive conversion without becoming biological `hz_raw_*` fields. Package-list patches use an explicit leading package index even for a one-package list; MSC partitions and rebases those pointers into package-local retained fragments. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
 
@@ -176,14 +176,14 @@ Every newly parsed package carries `miniml_schema_version: "3.0"`. MSC owns
 this XSD-derived internal representation through the public
 `meta_standards_converter.miniml.MINiMLPackage` Python model and its codec; this
 model is the sole structural authority and no parallel JSON Schema is shipped.
-Runtime decoding rejects unversioned and 1.x documents;
-`MINiMLV1Migrator`, `MINiMLV2Migrator`, and `miniml-migrate` provide the explicit one-way upgrade. Canonical 3.0 writes raw values together with validated occurrence-local `hz_*` groups; it never emits `annotations` arrays.
+Runtime decoding accepts only v3 and rejects unversioned, 1.x, 2.0, and unknown versions.
+`MINiMLV1Migrator` and `miniml-migrate` explicitly import legacy unversioned/1.0 source data directly into v3; v2 migration has been removed. Canonical 3.0 writes raw values together with validated occurrence-local `hz_*` groups; it never emits `annotations` arrays.
 XSD compatibility deviations remain available as structured diagnostics. See the
 [MINiML package model contract](docs/codebase.md#miniml-package-model).
 
 **Unified core:** ordered protocols, assay paths, typed named values, nested
 units, ontology values, and occurrence-local `hz_*` groups are native MSC
-MINiML fields. Legacy annotation objects are migration input only.
+MINiML fields. Source ingestion constructs v3 groups directly, without annotation-array intermediates.
 Raw IDF/SDRF layout and the former `mage_tab` sidecar are deliberately absent;
 MAGE-TAB output is regenerated semantically. The per-document renderer preserves
 heterogeneous SDRF layouts; the legacy single-SDRF constructor rejects layouts
@@ -937,3 +937,5 @@ and produced non-partial H5AD results. See the
 ## Authors
 
 Created by [jaychowcl](https://github.com/jaychowcl) @ [Saez-Rodriguez Group](https://saezlab.org) & [EMBL-EBI Functional Genomics Team](https://www.ebi.ac.uk/about/teams/functional-genomics/) on May 2026
+
+MSC MINiML v2 input support has been removed. Supply v3 or regenerate from source; see [v3-only migration guidance](docs/codebase.md#miniml-v3-only-cutover).

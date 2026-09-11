@@ -24,7 +24,7 @@ from meta_standards_converter.miniml import (
 
 def complete_package() -> dict:
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {
             "format": "GEO MINiML",
             "version": "0.5.4",
@@ -214,10 +214,10 @@ def test_complete_xsd_derived_package_round_trips_through_python_model() -> None
     assert MINiMLCodec().decode(canonical, strict=True).package == model
 
 
-def test_v2_singletons_are_normalized_without_dropping_extensions() -> None:
+def test_v3_singletons_are_normalized_without_dropping_extensions() -> None:
     model = MINiMLPackage.from_mapping(
         {
-            "miniml_schema_version": "2.0",
+            "miniml_schema_version": "3.0",
             "source": {"format": "test"},
             "contributor": {
                 "iid": "contributor-1",
@@ -266,15 +266,15 @@ def test_compatibility_validation_reports_xsd_deviations_as_warnings() -> None:
 @pytest.mark.parametrize(
     ("payload", "message"),
     [
-        ({"miniml_schema_version": "2.0", "series": []}, "series must be an object"),
-        ({"miniml_schema_version": "2.0", "series": {}}, "series requires iid or accession"),
+        ({"miniml_schema_version": "3.0", "series": []}, "series must be an object"),
+        ({"miniml_schema_version": "3.0", "series": {}}, "series requires iid or accession"),
         (
-            {"miniml_schema_version": "2.0", "source": {"format": "test"}, "series": {"iid": "GSE1"}, "sample": ["bad"]},
+            {"miniml_schema_version": "3.0", "source": {"format": "test"}, "series": {"iid": "GSE1"}, "sample": ["bad"]},
             r"sample\[0\] must be an object",
         ),
         (
             {
-                "miniml_schema_version": "2.0",
+                "miniml_schema_version": "3.0",
                 "source": {"format": "test"},
                 "series": {"iid": "GSE1"},
                 "sample": [{"iid": "GSM1"}, {"iid": "GSM1"}],

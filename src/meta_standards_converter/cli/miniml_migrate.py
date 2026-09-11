@@ -19,7 +19,7 @@ from meta_standards_converter.miniml import MINiMLCodec
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Migrate MINiML 1.x or 2.0 JSON to MSC MINiML 3.0."
+        description="Import legacy unversioned/1.0 source JSON directly as MSC MINiML 3.0. MINiML 2.0 is unsupported."
     )
     parser.add_argument("source", help="Legacy MINiML JSON file.")
     parser.add_argument("destination", help="Destination for MSC MINiML 3.0 JSON.")
@@ -30,14 +30,7 @@ def main(argv=None) -> int:
     args = _parser().parse_args(argv)
     payload = json.loads(Path(args.source).read_text(encoding="utf-8"))
     values = payload if isinstance(payload, list) else [payload]
-    results = [
-        (
-            MINiMLCodec.migrate_v2(value)
-            if value.get("miniml_schema_version") == "2.0"
-            else MINiMLCodec.migrate_v1(value)
-        )
-        for value in values
-    ]
+    results = [MINiMLCodec.migrate_v1(value) for value in values]
     encoded = [result.package.to_mapping() for result in results]
     output = encoded if isinstance(payload, list) else encoded[0]
     Path(args.destination).write_text(

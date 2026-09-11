@@ -6,16 +6,22 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Explicit one-way migration from legacy MINiML JSON to MSC MINiML 2.0."""
+"""Explicit legacy source import into canonical MSC MINiML 3.0."""
 
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 from .model import MINiMLModelError, MINiMLPackage, MINiMLValidationIssue
-from .harmonization import HarmonizedValue, named_harmonized_rows
+from .harmonization import (
+    HarmonizedValue,
+    iter_harmonized_values,
+    named_harmonized_rows,
+    next_harmonized_index,
+    parse_harmonized_key,
+)
 
 
 @dataclass(frozen=True)
@@ -24,134 +30,15 @@ class MINiMLMigrationResult:
     diagnostics: tuple[MINiMLValidationIssue, ...] = ()
 
 
-class MINiMLV2Migrator:
-    """Translate MINiML 2.0 annotation objects into MINiML 3.0 ``hz_*`` values."""
-
-    def migrate(self, value: Mapping[str, Any]) -> MINiMLMigrationResult:
-        if not isinstance(value, Mapping):
-            raise MINiMLModelError("MINiML 2.0 package must be an object")
-        if value.get("miniml_schema_version") != "2.0":
-            raise MINiMLModelError(
-                "MINiML 2.0 migration requires miniml_schema_version '2.0'"
-            )
-        migrated = deepcopy(dict(value))
-        self._migrate_node(migrated)
-        migrated["miniml_schema_version"] = "3.0"
-        package = MINiMLPackage.from_mapping(migrated)
-        diagnostics = (
-            MINiMLValidationIssue(
-                "/miniml_schema_version",
-                "schema_migrated",
-                "MSC MINiML 2.0 annotations were migrated to 3.0 hz_* values.",
-            ),
-        )
-        return MINiMLMigrationResult(package, diagnostics)
-
-    @classmethod
-    def _migrate_node(cls, value: Any) -> None:
-        if isinstance(value, list):
-            for item in value:
-                cls._migrate_node(item)
-            return
-        if not isinstance(value, dict):
-            return
-
-        characteristics = value.get("characteristics")
-        if isinstance(characteristics, list):
-            migrated_rows: list[Any] = []
-            next_indexes: dict[str, int] = {}
-            for row in characteristics:
-                if not isinstance(row, dict):
-                    migrated_rows.append(row)
-                    continue
-                annotations = row.pop("annotations", None)
-                cls._migrate_node(row)
-                migrated_rows.append(row)
-                harmonized_values = []
-                for harmonized in cls._annotation_values(annotations):
-                    index = next_indexes.get(harmonized.field, 0)
-                    next_indexes[harmonized.field] = index + 1
-                    harmonized_values.append(
-                        HarmonizedValue(
-                            field=harmonized.field,
-                            value=harmonized.value,
-                            term_source_ref=harmonized.term_source_ref,
-                            term_accession_number=harmonized.term_accession_number,
-                            hierarchy_depth=harmonized.hierarchy_depth,
-                            index=index,
-                        )
-                    )
-                migrated_rows.extend(named_harmonized_rows(harmonized_values))
-            value["characteristics"] = migrated_rows
-
-        annotations = value.pop("annotations", None)
-        for harmonized in cls._annotation_values(annotations):
-            cls._add_flat_value(value, harmonized)
-
-        for key, item in tuple(value.items()):
-            if key == "characteristics":
-                continue
-            cls._migrate_node(item)
-
-    @staticmethod
-    def _annotation_values(value: Any) -> list[HarmonizedValue]:
-        values = value if isinstance(value, list) else []
-        result: list[HarmonizedValue] = []
-        next_indexes: dict[str, int] = {}
-        for item in values:
-            if not isinstance(item, Mapping):
-                continue
-            field = str(item.get("field") or "").strip()
-            label = item.get("value")
-            if not field or label in (None, ""):
-                continue
-            normalized = "_".join(field.casefold().replace("-", "_").split())
-            index = next_indexes.get(normalized, 0)
-            next_indexes[normalized] = index + 1
-            result.append(
-                HarmonizedValue(
-                    field=normalized,
-                    value=str(label),
-                    term_source_ref=(
-                        None
-                        if item.get("term_source_ref") in (None, "")
-                        else str(item["term_source_ref"])
-                    ),
-                    term_accession_number=(
-                        None
-                        if item.get("term_accession_number") in (None, "")
-                        else str(item["term_accession_number"])
-                    ),
-                    hierarchy_depth=item.get("hierarchy_depth"),
-                    index=index,
-                )
-            )
-        return result
-
-    @staticmethod
-    def _add_flat_value(target: dict[str, Any], value: HarmonizedValue) -> None:
-        candidate = value
-        while any(key in target for key in candidate.to_mapping()):
-            candidate = HarmonizedValue(
-                field=value.field,
-                value=value.value,
-                term_source_ref=value.term_source_ref,
-                term_accession_number=value.term_accession_number,
-                hierarchy_depth=value.hierarchy_depth,
-                index=candidate.index + 1,
-            )
-        target.update(candidate.to_mapping())
-
-
 class MINiMLV1Migrator:
-    """Translate legacy/unversioned packages without weakening the v2 codec."""
+    """Translate legacy/unversioned source packages directly into the v3 model."""
 
     def migrate(self, value: Mapping[str, Any]) -> MINiMLMigrationResult:
         if not isinstance(value, Mapping):
             raise MINiMLModelError("legacy MINiML package must be an object")
         version = value.get("miniml_schema_version")
         if version not in (None, "1.0"):
-            raise MINiMLModelError(f"cannot migrate MINiML schema version {version!r}")
+            raise MINiMLModelError(f"cannot migrate MINiML schema version {version!r}; supply MSC MINiML 3.0 or regenerate from source")
         legacy = deepcopy(dict(value))
         diagnostics: list[MINiMLValidationIssue] = []
         mage_tab = legacy.pop("mage_tab", None)
@@ -159,7 +46,7 @@ class MINiMLV1Migrator:
         source_version = legacy.pop("version", None)
         schema_location = legacy.pop("schema_location", None)
         source_documents = self._documents(mage_tab)
-        legacy["miniml_schema_version"] = "2.0"
+        legacy["miniml_schema_version"] = "3.0"
         legacy["source"] = {
             "format": source_format,
             **({"version": str(source_version)} if source_version is not None else {}),
@@ -174,7 +61,7 @@ class MINiMLV1Migrator:
                     MINiMLValidationIssue(
                         "/mage_tab/roundtrip",
                         "source_layout_dropped",
-                        "Raw IDF/SDRF source layout is not part of MSC MINiML 2.0.",
+                        "Raw IDF/SDRF source layout is not part of MSC MINiML 3.0.",
                     )
                 )
         package = MINiMLPackage.from_mapping(legacy)
@@ -258,92 +145,47 @@ class MINiMLV1Migrator:
 
     @classmethod
     def _fold_harmonization(cls, channel: dict[str, Any]) -> None:
-        """Move legacy ``hz_*`` values into v2 characteristic annotations."""
-        rows = [
-            deepcopy(item)
-            for item in cls._items(channel.get("characteristics"))
-            if isinstance(item, Mapping)
-        ]
-        grouped: dict[str, dict[str, Any]] = {}
-
-        def collect(label: str, value: Any) -> None:
-            if not label.startswith("hz_"):
-                return
-            body = label[3:]
-            qualifier = "value"
-            for suffix, candidate in (
-                ("_hierarchy_depth", "hierarchy_depth"),
-                ("_id", "id"),
-                ("_onto", "onto"),
-            ):
-                if body.endswith(suffix):
-                    body = body[:-len(suffix)]
-                    qualifier = candidate
-                    break
-            grouped.setdefault(body, {})[qualifier] = value
-
-        retained = []
-        for row in rows:
-            name = str(row.get("name", row.get("tag", "")))
-            if name.startswith("hz_"):
-                collect(name, row.get("value"))
-            else:
-                retained.append(row)
+        """Keep named hz rows and fold private legacy values directly into v3."""
+        rows = [cls._named_value(item) for item in cls._items(channel.get("characteristics"))
+                if isinstance(item, Mapping)]
+        # Validate complete indexed groups together; retain authored row order.
+        iter_harmonized_values(rows)
+        groups: dict[tuple[str, int], dict[str, Any]] = {}
         for key in tuple(channel):
             if not str(key).startswith("hz_"):
                 continue
-            value = channel.pop(key)
-            if isinstance(value, Mapping):
-                body = str(key)[3:]
-                grouped.setdefault(body, {}).update({
-                    "value": value.get("value"),
-                    "id": value.get("id", value.get("term_accession_number")),
-                    "onto": value.get("onto", value.get("term_source_ref")),
-                    "hierarchy_depth": value.get("hierarchy_depth"),
-                })
+            item = channel.pop(key)
+            field, role, index = parse_harmonized_key(str(key))
+            group = groups.setdefault((field, index), {})
+            if isinstance(item, Mapping):
+                group.update(value=item.get("value"), id=item.get("id", item.get("term_accession_number")),
+                             onto=item.get("onto", item.get("term_source_ref")), hierarchy_depth=item.get("hierarchy_depth"))
             else:
-                collect(str(key), value)
+                group[role] = item
         raw_label = channel.pop("pre_hz_label", None)
-
-        by_name = {
-            str(item.get("name", item.get("tag", ""))).casefold(): item
-            for item in retained
-        }
-        aliases = {
-            "species": "organism",
-            "organism": "organism",
-            "tissue": "tissue",
-            "disease": "disease",
-            "cell": "cell type",
-            "exposure": "exposure",
-        }
-        for field, item in grouped.items():
-            value = item.get("value")
-            if value in (None, ""):
-                continue
-            prefix = field.split("_", 1)[0].casefold()
-            target_name = aliases.get(prefix, prefix.replace("_", " "))
-            target = by_name.get(target_name.casefold())
-            if target is None:
-                target = {
-                    "name": target_name,
-                    "value": str(raw_label if target_name == "organism" and raw_label else value),
-                }
-                retained.append(target)
-                by_name[target_name.casefold()] = target
-            annotation = {"field": field, "value": str(value)}
-            if item.get("onto") not in (None, ""):
-                annotation["term_source_ref"] = str(item["onto"])
-            if item.get("id") not in (None, ""):
-                annotation["term_accession_number"] = str(item["id"])
+        for (field, index), item in groups.items():
+            if item.get("value") in (None, ""):
+                raise MINiMLModelError(f"legacy harmonized companions for hz_{field} require a value")
+            # Older private source payloads placed species evidence at channel level.
+            # Preserve their explicit pre-harmonization label when it is available.
+            if raw_label and field.startswith(("species", "organism")) and not any(
+                row["name"] == "organism" for row in rows
+            ):
+                rows.append({"name": "organism", "value": str(raw_label)})
             depth = item.get("hierarchy_depth")
-            if depth not in (None, ""):
-                try:
-                    annotation["hierarchy_depth"] = int(depth)
-                except (TypeError, ValueError):
-                    pass
-            target.setdefault("annotations", []).append(annotation)
-        channel["characteristics"] = retained
+            harmonized = HarmonizedValue(
+                field=field, value=str(item["value"]), index=index,
+                term_source_ref=str(item["onto"]) if item.get("onto") not in (None, "") else None,
+                term_accession_number=str(item["id"]) if item.get("id") not in (None, "") else None,
+                hierarchy_depth=int(depth) if depth not in (None, "") else None,
+            )
+            existing = iter_harmonized_values(rows)
+            if any(value.field == field and value.index == index for value in existing):
+                harmonized = replace(
+                    harmonized, index=next_harmonized_index(existing, field=field)
+                )
+            rows.extend(named_harmonized_rows([harmonized]))
+        channel["characteristics"] = rows
 
     @classmethod
     def _fold_model(cls, package: dict[str, Any], model: Any) -> None:
@@ -539,32 +381,31 @@ class MINiMLV1Migrator:
                 unit["term_source_ref"] = item["unit_term_source_ref"]
             if item.get("unit_term_accession_number"):
                 unit["term_accession_number"] = item["unit_term_accession_number"]
-            annotation = cls._legacy_annotation(item, "unit")
-            if annotation:
-                unit["annotations"] = [annotation]
+            harmonized = cls._legacy_harmonized_value(item, "unit")
+            if harmonized:
+                unit.update(harmonized.to_mapping())
             result["unit"] = unit
         if item.get("unit_type"):
             result["unit_type"] = str(item["unit_type"])
         if item.get("qualifier"):
             result["qualifier"] = str(item["qualifier"])
-        annotation = cls._legacy_annotation(item, "value")
-        if annotation:
-            result["annotations"] = [annotation]
+        harmonized = cls._legacy_harmonized_value(item, "value")
+        if harmonized:
+            result.update(harmonized.to_mapping())
         return result
 
     @staticmethod
-    def _legacy_annotation(item: Mapping[str, Any], prefix: str) -> dict[str, Any] | None:
+    def _legacy_harmonized_value(item: Mapping[str, Any], prefix: str) -> HarmonizedValue | None:
         value = item.get(f"hz_{prefix}")
         if value in (None, ""):
             return None
-        result = {"field": str(item.get("hz_field") or prefix), "value": str(value)}
-        if item.get(f"hz_{prefix}_onto"):
-            result["term_source_ref"] = item[f"hz_{prefix}_onto"]
-        if item.get(f"hz_{prefix}_id"):
-            result["term_accession_number"] = item[f"hz_{prefix}_id"]
-        if item.get(f"hz_{prefix}_hierarchy_depth") is not None:
-            result["hierarchy_depth"] = int(item[f"hz_{prefix}_hierarchy_depth"])
-        return result
+        depth = item.get(f"hz_{prefix}_hierarchy_depth")
+        return HarmonizedValue(
+            field=str(item.get("hz_field") or prefix), value=str(value),
+            term_source_ref=item.get(f"hz_{prefix}_onto"),
+            term_accession_number=item.get(f"hz_{prefix}_id"),
+            hierarchy_depth=int(depth) if depth is not None else None,
+        )
 
     @classmethod
     def _declaration(cls, value: Any) -> dict[str, Any]:
@@ -581,9 +422,13 @@ class MINiMLV1Migrator:
         if isinstance(value, Mapping):
             name = value.get("name", value.get("tag"))
             result = {"name": str(name or "unspecified"), "value": str(value.get("value", ""))}
-            for key in ("term_source_ref", "term_accession_number", "unit", "annotations", "comments", "qualifier", "unit_type"):
+            if str(name).startswith("hz_") and parse_harmonized_key(str(name))[1] == "hierarchy_depth":
+                depth = value.get("value")
+                result["value"] = int(depth) if isinstance(depth, str) else depth
+            for key in ("term_source_ref", "term_accession_number", "unit", "comments", "qualifier", "unit_type"):
                 if value.get(key) is not None:
                     result[key] = deepcopy(value[key])
+            result.update({str(key): deepcopy(item) for key, item in value.items() if str(key).startswith("hz_")})
             return result
         return {"name": "unspecified", "value": str(value)}
 

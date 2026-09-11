@@ -39,7 +39,7 @@ def test_magetab_parser_folds_semantics_into_msc_miniml_v2() -> None:
     assert "mage_tab" not in payload
 
 
-def test_msc_miniml_v2_renders_semantic_magetab() -> None:
+def test_msc_miniml_v3_renders_semantic_magetab() -> None:
     package = AEParser().parse(resolved_input())
 
     rows = AEConstructor().miniml2magetab(package)

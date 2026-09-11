@@ -18,7 +18,7 @@ from meta_standards_converter.metadata.projection.tabular import TabularProjecti
 
 def package(study: str = "GSE1", sample: str = "GSM1") -> dict:
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "database": [{"public_id": "GEO", "name": "Gene Expression Omnibus"}],
         "series": {"accession": [{"value": study}]},

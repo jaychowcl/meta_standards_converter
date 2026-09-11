@@ -25,7 +25,7 @@ def test_public_processed_h5ad_conversion_does_not_import_scanpy(
         var=pandas.DataFrame(index=["ENSG1", "ENSG2"]),
     ).write_h5ad(source_h5ad)
     package = {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": {"accession": [{"value": "GSE1"}]},
         "sample": [

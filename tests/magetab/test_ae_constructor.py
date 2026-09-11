@@ -1351,7 +1351,7 @@ class TestIDFConstructor(unittest.TestCase):
 class TestAEConstructor(unittest.TestCase):
     def typed(self, data):
         return MINiMLCodec().decode({
-            "miniml_schema_version": "2.0",
+            "miniml_schema_version": "3.0",
             "source": {"format": "test"},
             **data,
         }).package

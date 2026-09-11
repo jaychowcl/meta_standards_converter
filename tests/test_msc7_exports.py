@@ -181,7 +181,16 @@ def test_explicit_replacements_and_assay_characteristics_stay_local(tmp_path):
 
 def test_generated_characteristic_units_roundtrip():
     p=package()
-    p['sample'][0]['channel'][0]['characteristics'].insert(0, {'name':'duration','value':'30','unit':{'value':'min','hz_unit':'minute','hz_unit_id':'UO:1','hz_unit_hierarchy_depth':0}})
+    p['sample'][0]['channel'][0]['characteristics'].insert(0, {
+        'name': 'duration',
+        'value': '30',
+        'unit': {
+            'value': 'min',
+            'hz_unit': 'minute',
+            'hz_unit_id': 'UO:1',
+            'hz_unit_hierarchy_depth': 0,
+        },
+    })
     output=AEConstructor().miniml2magetab(MINiMLCodec().decode(p).package,platform_handler='generic')
     assert 'Comment[hz_unit]' in table(output)[0]
     parsed=reparse(output)
@@ -189,23 +198,14 @@ def test_generated_characteristic_units_roundtrip():
     assert list(iter_harmonized_values(duration.unit.to_mapping()))[0].hierarchy_depth==0
 
 
-@pytest.mark.parametrize('version', ['2.0', '3.0'])
 @pytest.mark.parametrize('atlas', [False, True])
 @pytest.mark.parametrize('enabled', [False, True])
-def test_all_python_outputs_preserve_evidence_and_optional_replacements(tmp_path, version, atlas, enabled):
+def test_all_python_outputs_preserve_evidence_and_optional_replacements(tmp_path, atlas, enabled):
     import anndata
     import pandas as pd
     from scipy import sparse
     from pathlib import Path
     p=package()
-    if version=='2.0':
-        c=p['sample'][0]['channel'][0]
-        c['source']={'value':'lung', 'annotations':[{'field':'tissue','value':'lung','term_accession_number':'UBERON:0002048'}]}
-        c['characteristics']=[{'name':'disease','value':'IPF','annotations':[
-            {'field':'disease','value':'idiopathic pulmonary fibrosis','term_accession_number':'MONDO:0002771','term_source_ref':'MONDO','hierarchy_depth':0},
-            {'field':'disease','value':'pulmonary fibrosis','term_accession_number':'MONDO:0003782'},
-        ]}]
-        p['miniml_schema_version']=version
     document=p
     if atlas:
         document=json.loads((Path(__file__).parent/'fixtures/edge_cases/atlas-groups/inputs/atlas.json').read_text())
@@ -243,8 +243,8 @@ def test_all_python_outputs_preserve_evidence_and_optional_replacements(tmp_path
 def test_checkpoint_identity_includes_profile_and_version(tmp_path):
     from meta_standards_converter.expression.assets import Asset
     args=dict(sample_id='GSM1',source_json_sha256='source',sample=package()['sample'][0],asset=Asset('GSM1','test.h5ad','h5ad'),orientation='auto')
-    old=ProcessedCheckpointStore(lambda:'6.0.0').key(tmp_path,**args)
-    new=ProcessedCheckpointStore(lambda:'7.0.0')
+    old=ProcessedCheckpointStore(lambda:'7.0.0').key(tmp_path,**args)
+    new=ProcessedCheckpointStore(lambda:'8.0.0')
     raw=new.key(tmp_path,**args)
     profiled=new.key(tmp_path,**args,replacement_profile=PROFILE)
     reordered=new.key(tmp_path,**args,replacement_profile=dict(reversed(list(PROFILE.items()))))
@@ -297,7 +297,7 @@ def test_explicit_multichannel_binding_uses_labels_and_reports_ambiguity(caplog)
     p=package();first=p['sample'][0]['channel'][0];first['label']={'value':'Cy3'}
     second=copy.deepcopy(first);second['label']={'value':'Cy5'};second['characteristics'][1]['value']='healthy'
     p['sample'][0]['channel'].append(second)
-    p['series']['assay_paths']=[{'steps':[{'kind':'sample','name':'GSM1','sample_ref':'GSM1'}, {'kind':'labeled_extract','name':label,'label':{'value':label}}, {'kind':'assay','name':'A'+label}]} for label in ['Cy5','Cy3']]
+    p['series']['assay_paths'] = [{'steps': [{'kind': 'sample', 'name': 'GSM1', 'sample_ref': 'GSM1'}, {'kind': 'labeled_extract', 'name': label, 'label': {'value': label}}, {'kind': 'assay', 'name': 'A' + label}]} for label in ['Cy5', 'Cy3']]
     result=AEConstructor().miniml2magetab(MINiMLCodec().decode(p).package,platform_handler='generic')
     h,*rows=table(result)
     assert [r[h.index('Characteristics[hz_disease]')] for r in rows]==['healthy','idiopathic pulmonary fibrosis']
@@ -309,7 +309,29 @@ def test_explicit_multichannel_binding_uses_labels_and_reports_ambiguity(caplog)
 
 def test_explicit_profile_updates_organism_and_source_standard_occurrences(tmp_path):
     p=package();p['sample'][0]['channel'][0]['organism']=[{'value':'human','hz_species':'Homo sapiens','hz_species_id':'NCBITaxon:9606','hz_species_onto':'ncbitaxon'}]
-    p['series']['assay_paths']=[{'steps':[{'kind':'sample','name':'GSM1','sample_ref':'GSM1','characteristics':[{'name':'organism','value':'human'}], 'comments':[{'name':'Sample_source_name','value':'raw source'}]}]}]
+    p['series']['assay_paths'] = [
+        {
+            'steps': [
+                {
+                    'kind': 'sample',
+                    'name': 'GSM1',
+                    'sample_ref': 'GSM1',
+                    'characteristics': [
+                        {
+                            'name': 'organism',
+                            'value': 'human',
+                        },
+                    ],
+                    'comments': [
+                        {
+                            'name': 'Sample_source_name',
+                            'value': 'raw source',
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
     profile={'schema_version':'1.0','replacements':{'organism':['species'],'source':['tissue']}}
     source=tmp_path/'input.json';source.write_text(json.dumps(p))
     output=JSON2AEConverter().convert(str(source),enrich=False,platform_handler='generic',replacement_profile=profile)[0]
@@ -381,7 +403,12 @@ def test_reparsed_channel_identity_binds_new_evidence_before_rendering():
     p=package();p['sample'][0]['channel']=[copy.deepcopy(p['sample'][0]['channel'][0]) for _ in range(2)]
     first=AEConstructor().miniml2magetab(MINiMLCodec().decode(p).package,platform_handler='generic')
     parsed=reparse(first).to_mapping()
-    parsed['sample'][0]['channel'][1]['characteristics'].append({'name':'hz_new','value':'second only'})
+    parsed['sample'][0]['channel'][1]['characteristics'].extend([
+        {
+            'name': 'hz_new',
+            'value': 'second only',
+        },
+    ])
     rendered=AEConstructor().miniml2magetab(MINiMLCodec().decode(parsed).package,platform_handler='generic')
     h,*rows=table(rendered)
     assert [r[h.index('Characteristics[hz_new]')] for r in rows]==['','second only']

@@ -89,28 +89,14 @@ class MINiMLCodec:
 
         return MINiMLV1Migrator().migrate(value)
 
-    @staticmethod
-    def migrate_v2(value: Mapping[str, Any]):
-        """Migrate an MSC MINiML 2.0 package to canonical 3.0."""
-        from .migration import MINiMLV2Migrator
-
-        return MINiMLV2Migrator().migrate(value)
-
     def decode(self, value: Mapping[str, Any], *, strict: bool = False) -> MINiMLDecodeResult:
-        migration_diagnostics: tuple[MINiMLValidationIssue, ...] = ()
-        if not isinstance(value, MINiMLPackage) and value.get("miniml_schema_version") == "2.0":
-            migrated = self.migrate_v2(value)
-            package = migrated.package
-            migration_diagnostics = migrated.diagnostics
-        else:
-            package = MINiMLPackage.from_mapping(value.to_mapping()) if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
-        diagnostics = (*migration_diagnostics, *package.validate())
+        package = MINiMLPackage.from_mapping(value.to_mapping()) if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
+        diagnostics = package.validate()
         if strict and diagnostics:
             structural = tuple(
                 item
                 for item in diagnostics
-                if item.code != "schema_migrated"
-                and not self._is_source_compatible_sample_title_warning(item, package)
+                if not self._is_source_compatible_sample_title_warning(item, package)
             )
             if structural:
                 raise MINiMLCompatibilityError(structural)

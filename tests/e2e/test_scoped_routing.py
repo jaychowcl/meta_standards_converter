@@ -22,6 +22,8 @@ CASES=json.loads((ROOT/'manifest.json').read_text())
 
 @pytest.mark.parametrize('case',CASES,ids=lambda c:c['id'])
 def test_real_routing_regressions(case,workspace,monkeypatch):
+    from meta_standards_converter.magetab.idf import IDFConstructor
+    monkeypatch.setattr(IDFConstructor, "_current_idf_date", lambda self: "2026-09-10")
     raw=(ROOT/(case['id']+'.xml')).read_bytes()
     assert hashlib.sha256(raw).hexdigest()==case['sha256']
     calls=install_replay(monkeypatch,documents={case['gse']:raw})

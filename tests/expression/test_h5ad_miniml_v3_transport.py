@@ -17,7 +17,7 @@ from meta_standards_converter.converters import JSON2H5ADConverter
 
 def _package() -> dict:
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "GEO MINiML"},
         "sample": [{"iid": "GSM1"}],
         "series": {"accession": [{"value": "GSE1"}]},

@@ -78,7 +78,7 @@ def test_channel_identifiers_do_not_leak():
     assert resolve_chemistry(s).family is None
 
 
-SHARED="Library preparation for snRNA-seq: Chromium Single Cell 3' Kit v3.1. The spatial libraries were prepared using Visium Spatial Gene Expression Reagent Kits."
+SHARED = "Library preparation for snRNA-seq: Chromium Single Cell 3' Kit v3.1. The spatial libraries were prepared using Visium Spatial Gene Expression Reagent Kits."
 
 
 def test_sample_identity_over_shared_protocol():
@@ -139,7 +139,18 @@ def test_full_construction_shares_lookup_and_registry_across_mixed_samples():
     for s in samples:
         s['relation']=[{'type':'SRA','target':'SRX1'}]
         s['data_processing']='shared processing'
-    data={'miniml_schema_version':'2.0','source':{'format':'test'},'series':{'iid':'GSE1','title':'mixed','sample_ref':[{'ref':s['iid']} for s in samples]},'sample':samples}
+    data = {
+        'miniml_schema_version': '3.0',
+        'source': {
+            'format': 'test',
+        },
+        'series': {
+            'iid': 'GSE1',
+            'title': 'mixed',
+            'sample_ref': [{'ref': s['iid']} for s in samples],
+        },
+        'sample': samples,
+    }
     provider=RecordedINSDC()
     converter=AEConstructor(insdc_client=provider)
     rows=converter.miniml2magetab(MINiMLCodec().decode(data).package)
@@ -252,7 +263,7 @@ def test_mixed_array_does_not_suppress_sequencing_retrieval():
     seq=sample('scRNA-seq',SHARED)
     seq['relation']=[{'type':'SRA','target':'SRX1'}]
     array={'iid':'GSM2','platform_ref':{'ref':'GPL1'},'channel':[{'source':'array'}]}
-    data={'miniml_schema_version':'2.0','source':{'format':'test'},'series':{'iid':'GSE1','title':'mixed'},
+    data={'miniml_schema_version':"3.0",'source':{'format':'test'},'series':{'iid':'GSE1','title':'mixed'},
           'platform':[{'iid':'GPL1','technology':'expression array'}], 'sample':[seq,array]}
     provider=RecordedINSDC()
     rows=AEConstructor(insdc_client=provider).miniml2magetab(MINiMLCodec().decode(data).package)

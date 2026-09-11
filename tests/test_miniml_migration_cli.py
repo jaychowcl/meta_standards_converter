@@ -14,7 +14,7 @@ from pathlib import Path
 from meta_standards_converter.cli.miniml_migrate import main
 import meta_standards_converter.miniml as miniml
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.test_msc_miniml_v2 import package_v2
+from tests.test_msc_miniml_v3 import package_v3
 
 
 def legacy_package() -> dict:
@@ -36,7 +36,7 @@ def test_python_model_accepts_migrated_and_complete_typed_packages() -> None:
     migrated = MINiMLCodec().migrate_v1(legacy_package()).package.to_mapping()
 
     assert MINiMLCodec().decode(migrated, strict=True).package.to_mapping() == migrated
-    decoded = MINiMLCodec().decode(package_v2(), strict=True).package.to_mapping()
+    decoded = MINiMLCodec().decode(package_v3(), strict=True).package.to_mapping()
     assert decoded["miniml_schema_version"] == "3.0"
     assert "annotations" not in json.dumps(decoded)
 
@@ -83,14 +83,3 @@ def test_v1_migrator_folds_private_harmonization_fields_into_hz_groups() -> None
     assert characteristics["hz_species_name_id"]["value"] == "NCBITaxon:9606"
     assert characteristics["hz_disease_category"]["value"] == "lung carcinoma"
     assert characteristics["hz_disease_category_id"]["value"] == "MONDO:0008903"
-
-
-def test_miniml_migrate_cli_accepts_v2_input(tmp_path) -> None:
-    source = tmp_path / "v2.json"
-    destination = tmp_path / "v3.json"
-    source.write_text(json.dumps(package_v2()), encoding="utf-8")
-
-    assert main([str(source), str(destination)]) == 0
-    payload = json.loads(destination.read_text(encoding="utf-8"))
-    assert payload["miniml_schema_version"] == "3.0"
-    assert "annotations" not in json.dumps(payload)

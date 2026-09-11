@@ -86,65 +86,6 @@ def test_miniml_v3_round_trips_flat_harmonized_values() -> None:
     ]
 
 
-def test_v2_annotations_migrate_to_occurrence_local_hz_values() -> None:
-    package = _package("2.0")
-    channel = package["sample"][0]["channel"][0]
-    channel["source"] = {
-        "value": "lung",
-        "annotations": [
-            {
-                "field": "tissue",
-                "value": "lung",
-                "term_accession_number": "UBERON:0002048",
-                "term_source_ref": "uberon",
-                "hierarchy_depth": 0,
-            }
-        ],
-    }
-    channel["characteristics"] = [
-        {
-            "name": "disease",
-            "value": "IPF",
-            "annotations": [
-                {
-                    "field": "disease",
-                    "value": "idiopathic pulmonary fibrosis",
-                    "term_accession_number": "MONDO:0002771",
-                    "term_source_ref": "mondo",
-                    "hierarchy_depth": 0,
-                },
-                {
-                    "field": "disease",
-                    "value": "pulmonary fibrosis",
-                    "term_accession_number": "MONDO:0003782",
-                    "term_source_ref": "mondo",
-                    "hierarchy_depth": 1,
-                },
-            ],
-        }
-    ]
-
-    decoded = MINiMLCodec().decode(package, strict=True)
-    encoded = MINiMLCodec.encode(decoded.package)
-
-    assert encoded["miniml_schema_version"] == "3.0"
-    assert encoded["sample"][0]["channel"][0]["source"]["hz_tissue_id"] == (
-        "UBERON:0002048"
-    )
-    rows = encoded["sample"][0]["channel"][0]["characteristics"]
-    assert {row["name"] for row in rows} == {
-        "disease",
-        "hz_disease",
-        "hz_disease_id",
-        "hz_disease_onto",
-        "hz_disease_hierarchy_depth",
-        "hz_disease(1)",
-        "hz_disease_id(1)",
-        "hz_disease_onto(1)",
-        "hz_disease_hierarchy_depth(1)",
-    }
-
-
 def test_harmonized_companions_require_a_value_and_aligned_suffix() -> None:
     with pytest.raises(MINiMLModelError, match="without a corresponding value"):
         parse_harmonized_mapping({"hz_disease_id": "MONDO:1"})

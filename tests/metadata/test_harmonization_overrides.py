@@ -40,67 +40,183 @@ PROFILE = {
 
 def package():
     return {
-        "miniml_schema_version": "2.0",
-        "source": {"format": "test"},
-        "database": [],
-        "organization": [],
-        "contributor": [],
-        "platform": [],
-        "series": {"accession": [{"value": "GSE1"}]},
-        "sample": [{
-            "iid": "GSM1",
-            "channel": [{
-                "organism": [{"value": "human", "taxid": "9606"}],
-                "characteristics": [
-                    {"name": "organism", "value": "human", "annotations": [{
-                        "field": "species_name", "value": "Homo sapiens",
-                        "term_source_ref": "ncbitaxon",
-                        "term_accession_number": "NCBITaxon:9606",
-                        "hierarchy_depth": 0,
-                    }]},
-                    {"name": "disease", "value": "raw case", "annotations": [{
-                        "field": "disease_category", "value": "fallback disease",
-                        "term_source_ref": "mondo",
-                        "term_accession_number": "MONDO:9",
-                    }]},
-                    {"name": "tissue", "value": "raw lung", "annotations": [
-                        {"field": "tissue_name", "value": "lung", "term_source_ref": "uberon", "term_accession_number": "UBERON:0002048", "hierarchy_depth": 0},
-                        {"field": "high_level_tissue", "value": "respiratory system", "term_source_ref": "uberon", "term_accession_number": "UBERON:0001004", "hierarchy_depth": 1},
-                    ]},
+        'miniml_schema_version': '3.0',
+        'source': {
+            'format': 'test',
+        },
+        'database': [],
+        'organization': [],
+        'contributor': [],
+        'platform': [],
+        'series': {
+            'accession': [
+                {
+                    'value': 'GSE1',
+                },
+            ],
+        },
+        'sample': [
+            {
+                'iid': 'GSM1',
+                'channel': [
+                    {
+                        'organism': [
+                            {
+                                'value': 'human',
+                                'taxid': '9606',
+                            },
+                        ],
+                        'characteristics': [
+                            {
+                                'name': 'organism',
+                                'value': 'human',
+                            },
+                            {
+                                'name': 'hz_species_name',
+                                'value': 'Homo sapiens',
+                            },
+                            {
+                                'name': 'hz_species_name_id',
+                                'value': 'NCBITaxon:9606',
+                            },
+                            {
+                                'name': 'hz_species_name_onto',
+                                'value': 'ncbitaxon',
+                            },
+                            {
+                                'name': 'hz_species_name_hierarchy_depth',
+                                'value': 0,
+                            },
+                            {
+                                'name': 'disease',
+                                'value': 'raw case',
+                            },
+                            {
+                                'name': 'hz_disease_category',
+                                'value': 'fallback disease',
+                            },
+                            {
+                                'name': 'hz_disease_category_id',
+                                'value': 'MONDO:9',
+                            },
+                            {
+                                'name': 'hz_disease_category_onto',
+                                'value': 'mondo',
+                            },
+                            {
+                                'name': 'tissue',
+                                'value': 'raw lung',
+                            },
+                            {
+                                'name': 'hz_tissue_name',
+                                'value': 'lung',
+                            },
+                            {
+                                'name': 'hz_tissue_name_id',
+                                'value': 'UBERON:0002048',
+                            },
+                            {
+                                'name': 'hz_tissue_name_onto',
+                                'value': 'uberon',
+                            },
+                            {
+                                'name': 'hz_tissue_name_hierarchy_depth',
+                                'value': 0,
+                            },
+                            {
+                                'name': 'hz_high_level_tissue',
+                                'value': 'respiratory system',
+                            },
+                            {
+                                'name': 'hz_high_level_tissue_id',
+                                'value': 'UBERON:0001004',
+                            },
+                            {
+                                'name': 'hz_high_level_tissue_onto',
+                                'value': 'uberon',
+                            },
+                            {
+                                'name': 'hz_high_level_tissue_hierarchy_depth',
+                                'value': 1,
+                            },
+                        ],
+                    },
                 ],
-            }],
-        }],
+            },
+        ],
     }
 
 
 def package_with_magetab_parameter():
     value = package()
     value["series"]["protocols"] = [{"name": "treatment"}]
-    value["series"]["assay_paths"] = [{
-        "document": "study.sdrf.txt",
-        "steps": [
-            {"kind": "sample", "name": "GSM1", "sample_ref": "GSM1"},
-            {"kind": "protocol_application", "protocol_ref": "treatment", "parameter_values": [{
-                "name": "duration", "value": "30",
-                "unit": {"value": "minutes", "annotations": [{
-                    "field": "unit", "value": "minute",
-                    "term_source_ref": "uo",
-                    "term_accession_number": "UO:0000031",
-                }]},
-            }]},
-        ],
-    }]
+    value['series']['assay_paths'] = [
+        {
+            'document': 'study.sdrf.txt',
+            'steps': [
+                {
+                    'kind': 'sample',
+                    'name': 'GSM1',
+                    'sample_ref': 'GSM1',
+                },
+                {
+                    'kind': 'protocol_application',
+                    'protocol_ref': 'treatment',
+                    'parameter_values': [
+                        {
+                            'name': 'duration',
+                            'value': '30',
+                            'unit': {
+                                'value': 'minutes',
+                                'hz_unit': 'minute',
+                                'hz_unit_id': 'UO:0000031',
+                                'hz_unit_onto': 'uo',
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
     return value
 
 
 def package_with_fibrosis_ontology_annotations():
     value = package()
-    value["sample"][0]["channel"][0]["characteristics"].extend(
-        [
-            {"name": "exposure", "value": "bleomycin injection", "annotations": [{"field": "exposure_name", "value": "exposure to bleomycin via injection", "term_source_ref": "ecto", "term_accession_number": "ECTO:0900222"}]},
-            {"name": "cell state", "value": "Fbl_24", "annotations": [{"field": "cell_state_name", "value": "Fbl_24", "term_source_ref": "pcl", "term_accession_number": "PCL:0015251"}]},
-        ]
-    )
+    value['sample'][0]['channel'][0]['characteristics'].extend([
+        {
+            'name': 'exposure',
+            'value': 'bleomycin injection',
+        },
+        {
+            'name': 'hz_exposure_name',
+            'value': 'exposure to bleomycin via injection',
+        },
+        {
+            'name': 'hz_exposure_name_id',
+            'value': 'ECTO:0900222',
+        },
+        {
+            'name': 'hz_exposure_name_onto',
+            'value': 'ecto',
+        },
+        {
+            'name': 'cell state',
+            'value': 'Fbl_24',
+        },
+        {
+            'name': 'hz_cell_state_name',
+            'value': 'Fbl_24',
+        },
+        {
+            'name': 'hz_cell_state_name_id',
+            'value': 'PCL:0015251',
+        },
+        {
+            'name': 'hz_cell_state_name_onto',
+            'value': 'pcl',
+        },
+    ])
     return value
 
 

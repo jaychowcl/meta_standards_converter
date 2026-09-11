@@ -41,7 +41,7 @@ from meta_standards_converter.retrieval import RetrievalPolicy
 def package(*files, accession="GSM1"):
     supplementary_data = [{"value": path} for path in files]
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": {"accession": [{"value": "GSE1"}]},
         "sample": [
@@ -778,21 +778,34 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 var=self.pandas.DataFrame(index=["ENSG1"]),
             ).write_h5ad(source_path)
             data = package(source_path)
-            data["sample"][0]["channel"] = [
+            data['sample'][0]['channel'] = [
                 {
-                    "organism": [{
-                        "taxid": "9606", "value": "human",
-                        "annotations": [{
-                            "field": "organism", "value": "Homo sapiens",
-                            "term_source_ref": "ncbitaxon",
-                            "term_accession_number": "NCBITaxon_9606",
-                        }],
-                    }],
+                    'organism': [
+                        {
+                            'taxid': '9606',
+                            'value': 'human',
+                            'hz_organism': 'Homo sapiens',
+                            'hz_organism_id': 'NCBITaxon_9606',
+                            'hz_organism_onto': 'ncbitaxon',
+                        },
+                    ],
                 },
                 {
-                    "organism": [{"taxid": "10090", "value": "Mus musculus"}],
+                    'organism': [
+                        {
+                            'taxid': '10090',
+                            'value': 'Mus musculus',
+                        },
+                    ],
                 },
-                {"organism": [{"taxid": "10090", "value": "mus musculus"}]},
+                {
+                    'organism': [
+                        {
+                            'taxid': '10090',
+                            'value': 'mus musculus',
+                        },
+                    ],
+                },
             ]
             json_path = self._write_json(tmpdir, data)
 
@@ -822,11 +835,9 @@ class TestProcessedAssetConversion(unittest.TestCase):
                     {
                         "organism": [{
                             "value": "human",
-                            "annotations": [{
-                                "field": "organism", "value": "Homo sapiens",
-                                "term_source_ref": "ncbitaxon",
-                                "term_accession_number": "NCBITaxon_9606",
-                            }],
+                            "hz_organism": "Homo sapiens",
+                            "hz_organism_onto": "ncbitaxon",
+                            "hz_organism_id": "NCBITaxon_9606",
                         }],
                     },
                     "Homo sapiens",
@@ -1027,124 +1038,249 @@ class TestProcessedAssetConversion(unittest.TestCase):
                 ).write_h5ad(path)
                 paths[sample_id] = path
             data = {
-                "miniml_schema_version": "2.0",
-                "source": {
-                    "format": "GEO MINiML",
-                    "version": "1.0",
-                    "schema_location": "MINiML.xsd",
+                'miniml_schema_version': '3.0',
+                'source': {
+                    'format': 'GEO MINiML',
+                    'version': '1.0',
+                    'schema_location': 'MINiML.xsd',
                 },
-                "database": [
+                'database': [
                     {
-                        "iid": "GEO",
-                        "public_id": "GEO",
-                        "name": "Gene Expression Omnibus (GEO)",
-                        "web_link": "https://www.ncbi.nlm.nih.gov/geo",
-                    }
-                ],
-                "contributor": [
-                    {"iid": "C1", "person": {"first": "Alice", "last": "Example"}},
-                    {"iid": "C2", "person": {"first": "Unrelated"}},
-                ],
-                "platform": [
-                    {
-                        "iid": "P1",
-                        "accession": [{"database": "GEO", "value": "GPL1"}],
-                        "contributor_ref": [{"ref": "C1"}],
-                    },
-                    {
-                        "iid": "P2",
-                        "accession": [{"database": "GEO", "value": "GPL2"}],
-                        "contributor_ref": [{"ref": "C2"}],
+                        'iid': 'GEO',
+                        'public_id': 'GEO',
+                        'name': 'Gene Expression Omnibus (GEO)',
+                        'web_link': 'https://www.ncbi.nlm.nih.gov/geo',
                     },
                 ],
-                "series": {
-                    "accession": [{"database": "GEO", "value": "GSE1"}],
-                    "title": "Study title",
-                    "summary": "GEO experiment summary",
-                    "contributor_ref": [{"ref": "C1"}],
-                    "sample_ref": [{"ref": "S1"}, {"ref": "S2"}],
-                    "pubmed_publication": [
+                'contributor': [
+                    {
+                        'iid': 'C1',
+                        'person': {
+                            'first': 'Alice',
+                            'last': 'Example',
+                        },
+                    },
+                    {
+                        'iid': 'C2',
+                        'person': {
+                            'first': 'Unrelated',
+                        },
+                    },
+                ],
+                'platform': [
+                    {
+                        'iid': 'P1',
+                        'accession': [
+                            {
+                                'database': 'GEO',
+                                'value': 'GPL1',
+                            },
+                        ],
+                        'contributor_ref': [
+                            {
+                                'ref': 'C1',
+                            },
+                        ],
+                    },
+                    {
+                        'iid': 'P2',
+                        'accession': [
+                            {
+                                'database': 'GEO',
+                                'value': 'GPL2',
+                            },
+                        ],
+                        'contributor_ref': [
+                            {
+                                'ref': 'C2',
+                            },
+                        ],
+                    },
+                ],
+                'series': {
+                    'accession': [
                         {
-                            "pubmed_id": "123",
-                            "doi": "10.1/example",
-                            "title": "Citation title",
-                            "author_list": "A Example, B Example",
-                            "status": "published",
-                            "abstract": "must not be embedded",
-                            "full_text": "must not be embedded",
-                            "article_body": {"section": "must not be embedded"},
-                        }
+                            'database': 'GEO',
+                            'value': 'GSE1',
+                        },
+                    ],
+                    'title': 'Study title',
+                    'summary': 'GEO experiment summary',
+                    'contributor_ref': [
+                        {
+                            'ref': 'C1',
+                        },
+                    ],
+                    'sample_ref': [
+                        {
+                            'ref': 'S1',
+                        },
+                        {
+                            'ref': 'S2',
+                        },
+                    ],
+                    'pubmed_publication': [
+                        {
+                            'pubmed_id': '123',
+                            'doi': '10.1/example',
+                            'title': 'Citation title',
+                            'author_list': 'A Example, B Example',
+                            'status': 'published',
+                            'abstract': 'must not be embedded',
+                            'full_text': 'must not be embedded',
+                            'article_body': {
+                                'section': 'must not be embedded',
+                            },
+                        },
                     ],
                 },
-                "sample": [
+                'sample': [
                     {
-                        "iid": "S1",
-                        "accession": [{"database": "GEO", "value": "GSM1"}],
-                        "title": "Sample one",
-                        "description": "Sample description",
-                        "supplementary_data": [{"value": paths["GSM1"]}],
-                        "platform_ref": {"ref": "P1"},
-                        "contact_ref": [{"ref": "C1"}],
-                        "library_strategy": "RNA-Seq",
-                        "library_source": ["transcriptomic", "TRANSCRIPTOMIC"],
-                        "library_selection": "cDNA",
-                        "instrument_model": {"predefined": "Illumina Test"},
-                        "ena_accession": "SRS1",
-                        "sra_accession": "SRX1",
-                        "sra_run": [
+                        'iid': 'S1',
+                        'accession': [
                             {
-                                "run": "SRR1",
-                                "biosample": "SAMN1",
-                                "library_layout": "PAIRED",
-                                "fastq_files": [{"uri": "https://example/R1.fastq.gz"}],
-                            },
-                            {
-                                "run": "SRR2",
-                                "biosample": "SAMN1",
-                                "library_layout": "PAIRED",
+                                'database': 'GEO',
+                                'value': 'GSM1',
                             },
                         ],
-                        "channel": [
+                        'title': 'Sample one',
+                        'description': 'Sample description',
+                        'supplementary_data': [
                             {
-                                "source": "blood",
-                                "molecule": "total RNA",
-                                "biomaterial_provider": ["Example Biobank"],
-                                "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
-                                "characteristics": [
+                                'value': paths['GSM1'],
+                            },
+                        ],
+                        'platform_ref': {
+                            'ref': 'P1',
+                        },
+                        'contact_ref': [
+                            {
+                                'ref': 'C1',
+                            },
+                        ],
+                        'library_strategy': 'RNA-Seq',
+                        'library_source': [
+                            'transcriptomic',
+                            'TRANSCRIPTOMIC',
+                        ],
+                        'library_selection': 'cDNA',
+                        'instrument_model': {
+                            'predefined': 'Illumina Test',
+                        },
+                        'ena_accession': 'SRS1',
+                        'sra_accession': 'SRX1',
+                        'sra_run': [
+                            {
+                                'run': 'SRR1',
+                                'biosample': 'SAMN1',
+                                'library_layout': 'PAIRED',
+                                'fastq_files': [
                                     {
-                                        "name": "cell type", "value": "Treg; memory",
-                                        "annotations": [{
-                                            "field": "cell_type", "value": "regulatory T cell",
-                                            "term_source_ref": "cl",
-                                            "term_accession_number": "CL:0000815",
-                                        }],
+                                        'uri': 'https://example/R1.fastq.gz',
                                     },
-                                    {"name": "developmental stage", "value": "adult"},
-                                    {"name": "treatment", "value": "CPI-703"},
                                 ],
-                                "treatment_protocol": "Long treatment protocol",
                             },
                             {
-                                "source": "blood",
-                                "characteristics": [
-                                    {"name": "cell-type", "value": "Activated Treg"},
-                                    {"name": "treatment", "value": "CPI-703"},
+                                'run': 'SRR2',
+                                'biosample': 'SAMN1',
+                                'library_layout': 'PAIRED',
+                            },
+                        ],
+                        'channel': [
+                            {
+                                'source': 'blood',
+                                'molecule': 'total RNA',
+                                'biomaterial_provider': [
+                                    'Example Biobank',
+                                ],
+                                'organism': [
+                                    {
+                                        'taxid': '9606',
+                                        'value': 'Homo sapiens',
+                                    },
+                                ],
+                                'characteristics': [
+                                    {
+                                        'name': 'cell type',
+                                        'value': 'Treg; memory',
+                                    },
+                                    {
+                                        'name': 'hz_cell_type',
+                                        'value': 'regulatory T cell',
+                                    },
+                                    {
+                                        'name': 'hz_cell_type_id',
+                                        'value': 'CL:0000815',
+                                    },
+                                    {
+                                        'name': 'hz_cell_type_onto',
+                                        'value': 'cl',
+                                    },
+                                    {
+                                        'name': 'developmental stage',
+                                        'value': 'adult',
+                                    },
+                                    {
+                                        'name': 'treatment',
+                                        'value': 'CPI-703',
+                                    },
+                                ],
+                                'treatment_protocol': 'Long treatment protocol',
+                            },
+                            {
+                                'source': 'blood',
+                                'characteristics': [
+                                    {
+                                        'name': 'cell-type',
+                                        'value': 'Activated Treg',
+                                    },
+                                    {
+                                        'name': 'treatment',
+                                        'value': 'CPI-703',
+                                    },
                                 ],
                             },
                         ],
                     },
                     {
-                        "iid": "S2",
-                        "accession": [{"database": "GEO", "value": "GSM2"}],
-                        "title": "Sample two",
-                        "supplementary_data": [{"value": paths["GSM2"]}],
-                        "platform_ref": {"ref": "P2"},
-                        "contact_ref": [{"ref": "C2"}],
-                        "library_strategy": "RNA-Seq",
-                        "channel": [{
-                            "organism": [{"taxid": "9606", "value": "Homo sapiens"}],
-                            "characteristics": [{"name": "dose", "value": "5 uM"}],
-                        }],
+                        'iid': 'S2',
+                        'accession': [
+                            {
+                                'database': 'GEO',
+                                'value': 'GSM2',
+                            },
+                        ],
+                        'title': 'Sample two',
+                        'supplementary_data': [
+                            {
+                                'value': paths['GSM2'],
+                            },
+                        ],
+                        'platform_ref': {
+                            'ref': 'P2',
+                        },
+                        'contact_ref': [
+                            {
+                                'ref': 'C2',
+                            },
+                        ],
+                        'library_strategy': 'RNA-Seq',
+                        'channel': [
+                            {
+                                'organism': [
+                                    {
+                                        'taxid': '9606',
+                                        'value': 'Homo sapiens',
+                                    },
+                                ],
+                                'characteristics': [
+                                    {
+                                        'name': 'dose',
+                                        'value': '5 uM',
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 ],
             }
@@ -1279,17 +1415,17 @@ class TestProcessedAssetConversion(unittest.TestCase):
                     var=self.pandas.DataFrame({"gene_ids": ["ENSG1"]}, index=["ENSG1"]),
                 ).write_h5ad(path)
                 sample = package(path, accession=sample_id)["sample"][0]
-                sample["channel"] = [
+                sample['channel'] = [
                     {
-                        "organism": [{
-                            "value": raw_organism,
-                            "annotations": [{
-                                "field": "organism", "value": "Homo sapiens",
-                                "term_source_ref": "ncbitaxon",
-                                "term_accession_number": "NCBITaxon_9606",
-                            }],
-                        }],
-                    }
+                        'organism': [
+                            {
+                                'value': raw_organism,
+                                'hz_organism': 'Homo sapiens',
+                                'hz_organism_id': 'NCBITaxon_9606',
+                                'hz_organism_onto': 'ncbitaxon',
+                            },
+                        ],
+                    },
                 ]
                 samples.append(sample)
             data = package()

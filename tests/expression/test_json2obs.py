@@ -85,7 +85,7 @@ def test_output_aggregates_obs_metadata_without_combining_expression(tmp_path):
     source.write_text(
         json.dumps(
             {
-                "miniml_schema_version": "2.0",
+                "miniml_schema_version": "3.0",
                 "source": {"format": "test"},
                 "series": {"accession": [{"value": "GSE1"}]},
                 "sample": samples,

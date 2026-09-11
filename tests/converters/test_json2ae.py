@@ -33,7 +33,7 @@ from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: 
 
 def package(accession="GSE1"):
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": {
             "accession": [{"value": accession, "database": "GEO"}],
@@ -206,7 +206,7 @@ class TestJSON2AEConverter(unittest.TestCase):
             path = self.write_json(
                 tmpdir,
                 {
-                    "miniml_schema_version": "2.0",
+                    "miniml_schema_version": "3.0",
                     "source": {"format": "test"},
                     "series": {"title": "Missing accession"},
                     "sample": [{"iid": "GSM1"}],

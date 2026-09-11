@@ -28,7 +28,7 @@ from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 
 def _package(h5ad_path: str) -> dict:
     return {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "test"},
         "series": {"accession": [{"value": "GSE1"}]},
         "sample": [

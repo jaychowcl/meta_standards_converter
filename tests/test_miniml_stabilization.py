@@ -41,7 +41,7 @@ def _render_sdrf(package):
 
 def test_schema_and_model_accept_the_same_supported_series_and_assay_fields():
     payload = {
-        "miniml_schema_version": "2.0",
+        "miniml_schema_version": "3.0",
         "source": {"format": "MAGE-TAB"},
         "database": [], "organization": [], "contributor": [], "platform": [], "sample": [],
         "series": {
