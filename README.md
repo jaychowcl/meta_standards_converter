@@ -2,940 +2,203 @@
 
 # meta_standards_converter
 
-Convert biological study metadata among GEO MINiML, parsed JSON, ArrayExpress MAGE-TAB, and AnnData/H5AD.
+Convert biological study metadata among GEO MINiML, JSON, MAGE-TAB, sample tables, and AnnData/H5AD.
 
 ## Description
 
-`meta_standards_converter` is a Python package and command-line toolkit for moving study metadata between GEO and ArrayExpress-compatible representations and for attaching that metadata to expression data. It can fetch and parse GEO MINiML, enrich packages with PubMed and SRA/ENA records, read and write MAGE-TAB IDF/SDRF files, normalize processed matrices into H5AD, and process raw FASTQs through pinned nf-core pipelines.
+MSC is a Python library and command-line toolkit for fetching study metadata,
+converting metadata formats, and attaching metadata to expression data. It can
+read Atlas documents without installing ThematicAtlases.
 
-Version 8.0.0 retains MSC MINiML 3.0 as the strict immutable metadata model,
-accepts source-authored duplicate sample titles only when non-empty unique
-sample iids preserve identity, and returns those accepted `xsd_uniqueness`
-warnings under the versioned `miniml-3.0-source-compat-v1` policy. It also
-provides the shared `append_harmonized_value(...)` writer for idempotent,
-validated, aligned `hz_*` collision groups while consuming
-Atlas document schema 1.0, H5AD metadata schema 2.0, and MINiML ledger schema
-1.0. MSC remains
-standalone: native MINiML, MAGE-TAB, delimited, and expression workflows do not
-import or depend on ThematicAtlases.
-Organization-specific H5AD adapters compose through the public `Asset`,
-`SourcePlanner`, `DatasetCombinationPolicy`, projector protocols, and the
-`JSON2H5ADConverter` facade.
-
-The eight primary workflows are:
-
-- `geo2ae`: GEO Series accession to MAGE-TAB IDF and SDRF.
-- `geo2json`: GEO Series accession to parsed MINiML-compatible JSON.
-- `json2ae`: parsed MINiML or canonical Atlas v1 JSON to MAGE-TAB IDF and SDRF.
-- `ae2json`: local, policy-approved HTTPS, or BioStudies MAGE-TAB to parsed JSON.
-- `json2h5ad`: parsed JSON plus H5AD, matrix, or FASTQ assets to normalized H5AD.
-- `json2tsv`: parsed JSON to a sample manifest in TSV or CSV format.
-- `json2obs`: parsed JSON plus expression assets to aggregated observation-metadata sidecars without matrix integration.
-- `miniml-migrate`: explicitly import legacy unversioned/1.0 source JSON to MSC MINiML 3.0.
+| Command | Use it to… |
+| --- | --- |
+| `geo2json` | Fetch a GEO Series and produce MSC MINiML JSON |
+| `geo2ae` | Fetch a GEO Series and produce MAGE-TAB IDF/SDRF files |
+| `ae2json` | Read local or remote MAGE-TAB and produce MSC MINiML JSON |
+| `json2ae` | Convert MSC MINiML or Atlas JSON to MAGE-TAB |
+| `json2tsv` | Export sample-level metadata as TSV or CSV |
+| `json2h5ad` | Produce a per-sample H5AD catalogue from metadata and expression assets |
+| `json2obs` | Export cell observation metadata and optional `var`/`uns` components |
+| `miniml-migrate` | Import supported unversioned/1.0 legacy source JSON as v3 |
 
 ## Installation
 
-Install the base package from GitHub:
+Install from a source checkout in a virtual environment:
 
 ```bash
-python -m pip install "git+https://github.com/jaychowcl/meta_standards_converter.git"
-```
-
-Install locally for development:
-
-```bash
-git clone https://github.com/jaychowcl/meta_standards_converter
+git clone https://github.com/jaychowcl/meta_standards_converter.git
 cd meta_standards_converter
-python -m pip install -e .
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install .
 ```
 
-Include AnnData/H5AD support when using `json2h5ad`:
+For `json2h5ad` or `json2obs`, install the scientific dependencies:
 
 ```bash
-python -m pip install -e '.[h5ad]'
+python -m pip install '.[h5ad]'
 ```
 
-Install the complete test stack and run the canonical suite with pytest:
-
-```bash
-python -m pip install -e '.[test]'
-PYTHONDONTWRITEBYTECODE=1 MPLCONFIGDIR=/tmp/matplotlib-meta-standards \
-  pytest -p no:cacheprovider -q
-```
-
-`unittest discover` is not a supported substitute because it does not collect
-the repository's pytest functions, fixtures, parametrization, or subtests.
-
-MSC owns its public metadata-provider contracts; they are skipped normally:
-
-```bash
-RUN_LIVE_API_TESTS=1 python -m pytest tests/live_api -m live_api -vv
-```
-
-Build the project image, which includes the H5AD extra, Java 21, Nextflow, `gffread`, and the Docker CLI:
-
-```bash
-docker build -t meta-standards-converter .
-```
+For development, use `python -m pip install -e '.[test]'`.
 
 ### Requirements
 
-- Python `>=3.10`.
-- Base dependencies: `requests>=2.31.0,<3` and `python-dateutil>=2.8.2,<3`.
-- H5AD dependencies have tested major-version bounds: AnnData `>=0.10.8,<1`,
-  h5py `>=3.10,<4`, NumPy `>=1.26,<3`, pandas `>=2.1,<4`, Scanpy
-  `>=1.10,<2`, and SciPy `>=1.11,<2`; install the `h5ad` extra.
-- `dependency-provenance/` contains the exact Python 3.12/Linux x86_64 PEP 751
-  base/H5AD runtime lock and deterministic CycloneDX 1.6 SBOM. Every selected
-  distribution artifact has its real SHA-256. Release policy requires a
-  verified signed artifact manifest and an approved offline advisory snapshot
-  no older than seven days; until a trusted operator supplies both, the
-  composing release gate fails closed. Critical/high/medium/low security-update
-  SLAs are 2/7/30/90 days.
-- Network access for live GEO, BioStudies, PubMed, NCBI SRA, and ENA lookups.
-- Host-side raw FASTQ processing: Java, Nextflow, and a supported Nextflow runtime/profile such as Docker or Apptainer.
-- GFF/GFF3 annotation conversion: `gffread`.
-- Rootless Compose processing: Linux, Docker Engine rootless extras, subordinate UID/GID support, ACL tools, and user-level systemd.
+- Python **3.10 or newer**.
+- Network access for GEO/BioStudies retrieval and optional PubMed/SRA/ENA enrichment.
+- The `h5ad` extra for expression and AnnData workflows.
+- For raw FASTQ processing: Java, Nextflow, a supported execution runtime,
+  and a reference genome/annotation. GFF conversion also requires `gffread`.
 
-The Python metadata converters do not require Docker. The project image supplies the scientific and workflow dependencies needed by `json2h5ad`, but raw Docker-profile processing also requires access to a Docker daemon.
-
-### Provider rate control
-
-All MSC HTTP attempts use one per-user, cross-process host gate. NCBI starts are
-spaced by 0.5 seconds; GEO FTP, BioStudies, and ENA starts are spaced by one
-second. Provider `Retry-After` cooldowns survive process exit, and a cooldown
-longer than the caller's inline wait budget is returned as deferred work rather
-than hidden by a long sleep. State contains only versioned timing values in an
-owner-only runtime directory; `SCIENTIFIC_PROVIDER_GATE_DIR` may select an
-explicit directory. `NCBI_API_KEY` is passed when present but is never logged
-and does not automatically raise the conservative request rate.
-The same gate exposes a bounded one-at-a-time lease for model-provider keys, so
-composing libraries can serialize identical model calls without a service
-dependency or sharing credentials.
-Each requester exposes cumulative `provider_attempts`, `retry_count`, and
-`rate_wait_seconds` counters so composing one-shot workers can publish accurate
-rate-control summaries without logging request parameters.
+Metadata conversion does not require Docker. See [runtime requirements](docs/codebase.md#runtime-behavior)
+for dependency bounds and [raw processing](docs/codebase.md#reference-annotation-flow)
+for reference configuration.
 
 ## Quickstart
 
 ### CLI quickstart
 
-Install the package, then run any of its seven commands. This example creates parsed JSON and then normalized H5AD. See the [CLI guide](#cli).
+Fetch a study and export its sample metadata (retrieval requires network access):
 
 ```bash
 geo2json GSE234602 --out output
-json2h5ad output/GSE234602.json --out output
+json2tsv output/GSE234602.json --out tables
 ```
+
+For an existing package, `json2tsv` performs metadata-only conversion without
+fetching expression assets. See the [CLI guide](#cli).
 
 ### Python API quickstart
 
-Import a converter and call `convert()`. See the [Python API guide](#python-api).
-
 ```python
-from meta_standards_converter.converters.geo2json import GEO2JSONConverter
+from meta_standards_converter.converters import JSON2TSVConverter
 
-packages = GEO2JSONConverter().convert("GSE234602", out="output")
+result = JSON2TSVConverter().export_manifest(
+    "output/GSE234602.json", outdir="tables"
+)
+print(result.output_path)
 ```
+
+See the [Python API guide](#python-api).
 
 ### Docker quickstart
 
-Build the image and mount a writable output directory. See the [Docker guide](#docker).
-
 ```bash
 docker build -t meta-standards-converter .
-mkdir -p output
-docker run --rm -v "$PWD/output:/out" \
-  meta-standards-converter geo2ae GSE234602 --out /out
+docker run --rm meta-standards-converter geo2json --help
 ```
+
+Mount an output directory when converting data; see the [Docker guide](#docker).
 
 ### Rootless Docker Compose quickstart
 
-Provision the dedicated runner once, then build through its rootless daemon. See the [Rootless Docker Compose guide](#rootless-docker-compose).
-
-```bash
-sudo "$PWD/scripts/provision-rootless-json2h5ad.sh" "$PWD" "$PWD/.out/json2h5ad"
-sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
-```
+Raw FASTQ workflows can use the dedicated rootless runner. Start with the
+[Rootless Docker Compose guide](#rootless-docker-compose) for provisioning,
+mounts, and runtime prerequisites.
 
 ### Inputs & Outputs
 
-| Workflow | Expected input | Output |
-| --- | --- | --- |
-| `geo2ae` | One or more `GSE...` accessions | `{accession}.idf.txt` and `{accession}.sdrf.txt`; Python returns MAGE-TAB row payloads |
-| `geo2json` | One or more `GSE...` accessions | `{GSE}.json`; Python returns a package `list[dict]` |
-| `json2ae` | Parsed MINiML object/list or canonical Atlas v1 document | IDF/SDRF files; Python returns ordered MAGE-TAB payloads |
-| `ae2json` | IDF path, policy-approved HTTPS IDF URL, or BioStudies/ArrayExpress accession; optional SDRF overrides | `{accession}.json`; Python returns MSC MINiML 3.0 with typed protocols and assay paths |
-| `json2h5ad` | Parsed MINiML object/list or canonical Atlas v1 document plus discovered or explicit H5AD, matrix, or FASTQ assets | Per-dataset sample H5AD catalogue, provenance JSON explicitly declaring no expression integration, optional nf-core results, and single- or multi-dataset result objects |
-| `json2tsv` | Parsed MINiML package JSON or a canonical Atlas v1 document | One normalized sample manifest in selected TSV/CSV format plus a JSON result manifest |
-| `json2obs` | Same JSON and expression assets accepted by `json2h5ad` | Row-aggregated `.obs.csv` without expression integration, optional single-sample `.var.csv` and `.uns.json`, plus a JSON result manifest |
-| `miniml-migrate` | Legacy unversioned/1.0 source JSON | Strict MSC MINiML 3.0 JSON plus migration diagnostics |
+MSC 8 requires **MSC MINiML 3.0** at JSON conversion boundaries. Fresh GEO and
+MAGE-TAB ingestion produces v3 directly. Saved v2 packages are rejected;
+regenerate them from source or use the preceding release to convert them in a
+separate environment. `miniml-migrate` accepts unversioned/1.0 input, **not v2**.
+See [migration guidance](docs/codebase.md#miniml-v3-only-cutover).
 
-GEO and MAGE-TAB ingestion both produce MSC MINiML 3.0 packages. MAGE-TAB protocols, declarations, document-scoped ordered assay paths, repeated attributes, occurrence-local harmonized values, unit ontology/type, qualifiers, comments, protocol-application metadata, and source-document provenance (role, URI, media type, and content SHA-256) are first-class model fields; raw source bodies are not retained. Applied harmonization patch 3.1 fragments are retained under package `extensions.msc_harmonization` so exact authored spans and their occurrence paths survive conversion without becoming biological `hz_raw_*` fields. Package-list patches use an explicit leading package index even for a one-package list; MSC partitions and rebases those pointers into package-local retained fragments. H5AD outputs retain expression values, canonical dotted `msc.*` observation metadata, the complete package in `uns["msc_miniml"]`, and conversion provenance.
+JSON converters accept a native package, a package list, or an Atlas document
+(schema 1.0). Atlas conversion selects harmonized datasets. Metadata converters
+produce JSON, IDF/SDRF, or one row per sample in TSV/CSV. H5AD and OBS workflows
+also need expression assets; their catalogues do not combine expression matrices.
 
-Every newly parsed package carries `miniml_schema_version: "3.0"`. MSC owns
-this XSD-derived internal representation through the public
-`meta_standards_converter.miniml.MINiMLPackage` Python model and its codec; this
-model is the sole structural authority and no parallel JSON Schema is shipped.
-Runtime decoding accepts only v3 and rejects unversioned, 1.x, 2.0, and unknown versions.
-`MINiMLV1Migrator` and `miniml-migrate` explicitly import legacy unversioned/1.0 source data directly into v3; v2 migration has been removed. Canonical 3.0 writes raw values together with validated occurrence-local `hz_*` groups; it never emits `annotations` arrays.
-XSD compatibility deviations remain available as structured diagnostics. See the
-[MINiML package model contract](docs/codebase.md#miniml-package-model).
-
-**Unified core:** ordered protocols, assay paths, typed named values, nested
-units, ontology values, and occurrence-local `hz_*` groups are native MSC
-MINiML fields. Source ingestion constructs v3 groups directly, without annotation-array intermediates.
-Raw IDF/SDRF layout and the former `mage_tab` sidecar are deliberately absent;
-MAGE-TAB output is regenerated semantically. The per-document renderer preserves
-heterogeneous SDRF layouts; the legacy single-SDRF constructor rejects layouts
-that cannot be consolidated without loss. Regenerated IDFs use the MAGE-TAB 1.1
-publication companions `Publication Status Term Source REF` and `Publication
-Status Term Accession Number`, and the protocol companions `Protocol Term
-Source REF` and `Protocol Term Accession Number`. The parser continues to
-accept MSC's former shorter publication labels and `Protocol Type Term ...`
-labels as legacy input aliases, but never emits them. See the
-[enriched-core contract](docs/codebase.md#proposed-enriched-miniml-core).
+Harmonized `hz_*` values are exported alongside source values by default.
+[Replacement profiles](docs/codebase.md#harmonization-overrides) optionally use
+harmonized values in ordinary destination fields while preserving the canonical
+input. See [data contracts](docs/codebase.md#data-contracts) for provenance and
+round-trip limits.
 
 ## Guide
 
 ### Configuration
 
-The package has no mandatory application config file. Configure conversions with CLI flags or the equivalent Python `convert()` keyword arguments; use files only for detailed asset mappings, nf-core parameters, or Nextflow infrastructure settings.
+There is no mandatory application configuration file. Use CLI options or Python
+arguments. Common controls include output paths, optional enrichment,
+`--platform-handler`, resource profiles, and expression asset selection.
 
-| Area | CLI / Python configuration | Default |
-| --- | --- | --- |
-| Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
-| Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
-| Remote enrichment | `--no-enrich` / `enrich=False` | Guarded parent-publication, PubMed, and SRA/ENA enrichment enabled |
-| MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
-| Resource envelope | `--resource-profile`, `--resource-override` / `resource_profile`, `resource_overrides` | Typed `standard` profile |
-| Additional MAGE-TAB source host | `ae2json --source-host` / `source_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
-| Output location | `--out` / `out` | Current directory |
-| Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING and above to stdout |
-| H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
-| Matrix orientation | `--matrix-orientation` / `matrix_orientation` | `auto`; ambiguous delimited matrices fail |
-| Raw pipeline | `--pipeline` / `pipeline` | `auto` modality detection |
-| Reference | `--genome`, or `--fasta` with `--gtf`/`--gff` | Explicitly accepted human/mouse inference when available |
-| Nextflow | `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, `--resume` | Docker profile and pinned pipeline revision |
-| Existing H5AD outputs | `--overwrite` / `overwrite=True` | Protect existing outputs |
-| H5AD projector validation | `--allow-invalid` / `allow_invalid=True` | Fail closed before publishing artifacts |
-| Legacy unverified-combination flag | `--allow-unverified-combination` / `allow_unverified_combination=True` | Deprecated and ignored; matrices are never combined |
+Use `json2ae ... --no-enrich` to skip the enrichment stage; MAGE-TAB construction
+may still resolve missing publication or sequencing evidence. Use
+`--replacement-profile-file policy.json` to activate an export replacement profile.
+Expression outputs are protected unless `--overwrite` is supplied; output
+behavior varies by command, so consult its reference before reusing a destination.
 
-#### Platform handlers
-
-`geo2ae` and `json2ae` detect the MAGE-TAB platform handler from study metadata by default. Use `--platform-handler KEY` (or the Python `platform_handler` argument) to force a handler, and run either command with `--list-platform-handlers` to print the authoritative runtime catalog.
-
-The following graph shows the conceptual specialization of the selectable handlers. It is not the literal inheritance tree of the private IDF and SDRF implementation classes.
-
-```mermaid
-flowchart TD
-    platform[platform handler] --> generic[generic]
-    platform --> array[array]
-    platform --> sequencing[sequencing]
-    sequencing --> bulk[bulk_sequencing]
-    sequencing --> single_cell[single_cell_sequencing]
-    single_cell --> plate[plate_single_cell_sequencing]
-    single_cell --> droplet[droplet_single_cell_sequencing]
-    single_cell --> spatial[spatial_sequencing]
-    droplet --> tenx_v2[tenx_v2_droplet_single_cell_sequencing]
-    droplet --> tenx_v3[tenx_v3_droplet_single_cell_sequencing]
-```
-
-For detailed H5AD source configuration, `--asset-manifest` accepts CSV or TSV. `scope_id` and `path` are required; supported optional columns are `kind`, `role`, `read`, `lane`, `run`, `md5`, `features_path`, `barcodes_path`, and `orientation`.
-
-```csv
-scope_id,path,kind,role,read,lane,md5,orientation
-GSM9651991,/data/GSM9651991.h5ad,h5ad,primary,,,,
-GSM9651992,https://example.org/GSM9651992_R1.fastq.gz,raw,primary,1,L001,,
-GSM9651992,https://example.org/GSM9651992_R2.fastq.gz,raw,primary,2,L001,,
-```
-
-Reference combinations accepted for raw processing are `--genome GENOME`, `--genome GENOME` with one annotation override, or `--fasta FASTA` with exactly one of `--gtf GTF` and `--gff GFF`. GFF/GFF3 is converted to a checksum-addressed GTF. A JSON object supplied through `--params-file` is merged into nf-core parameters, but converter-owned input, output, and reference values take precedence; `--nextflow-config` is reserved for resource and infrastructure configuration.
-
-The rootless Compose helper derives `DOCKER_HOST` and its runtime paths. `ROOTLESS_DOCKER_SOCKET` is the single test/operations seam for overriding the derived user socket; `JSON2H5AD_OUT` overrides the default `.out/json2h5ad` tree. Compose sets `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1`, causing Docker-profile raw processing to fail before Nextflow starts unless the connected daemon reports rootless security mode.
+See [configuration and precedence](docs/codebase.md#configuration).
 
 ### CLI
 
-The package installs `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`, and `miniml-migrate`. Run `<command> --help` for generated usage text.
-
-All commands process multiple positional inputs in order. A failed input is logged, later inputs continue, and the final exit status is `1`; a fully successful invocation returns `0`. Logging defaults to `WARNING`. `-v` selects `INFO`, `-vv` selects `DEBUG`, and `-q` selects `ERROR`.
-
-#### `geo2ae`
-
-Fetch one or more GEO Series and write MAGE-TAB IDF/SDRF files.
-
 ```bash
-geo2ae GSE234602 --out output
-geo2ae GSE234602 GSE34779 --related --keep-empty --out output
-geo2ae GSE234602 --platform-handler array --out output
-geo2ae --list-platform-handlers
+# Reconstruct MAGE-TAB from an existing v3 package.
+json2ae output/GSE234602.json --no-enrich --out mage
+
+# Choose CSV rather than TSV.
+json2tsv output/GSE234602.json --format csv --out csv-tables
+
+# Inspect all options for the installed command.
+json2h5ad --help
 ```
 
-| Argument | Behavior |
-| --- | --- |
-| `gse` | One or more GEO Series accessions; required. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--related`, `--related-series`, `--get-related-series` | Include transitively related GEO super/subseries; disabled by default. |
-| `--remove-empty` | Remove empty parsed fields; this is the default. |
-| `--keep-empty` | Preserve empty parsed fields; mutually exclusive with `--remove-empty`. |
-| `--out` `OUT` | Output directory; default `.`. |
-| `--platform-handler` `KEY` | Force both IDF and SDRF generation through a listed platform handler. |
-| `--list-platform-handlers` | Print valid handler keys, one per line, and exit without converting. |
-| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
-| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
-
-#### `geo2json`
-
-Fetch one or more GEO Series and write parsed MINiML-compatible JSON package lists.
-
-```bash
-geo2json GSE234602 --out output
-geo2json GSE234602 --no-enrich --keep-empty --out output
-```
-
-| Argument | Behavior |
-| --- | --- |
-| `gse` | One or more GEO Series accessions; required. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--related`, `--related-series`, `--get-related-series` | Include transitively related GEO super/subseries; disabled by default. |
-| `--remove-empty` | Remove empty parsed fields; this is the default. |
-| `--keep-empty` | Preserve empty parsed fields; mutually exclusive with `--remove-empty`. |
-| `--no-enrich` | Skip guarded parent-publication, PubMed, and SRA/ENA enrichment; enrichment is enabled by default. |
-| `--out` `OUT` | Output directory; default `.`. |
-| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
-| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
-
-#### `json2ae`
-
-Read parsed MINiML or canonical Atlas v1 JSON and write MAGE-TAB
-IDF/SDRF files.
-
-```bash
-json2ae output/GSE234602.json --out output
-json2ae atlas.json --out output
-json2ae primary.json related.json --no-enrich --out output
-json2ae study.json --platform-handler bulk_sequencing --out output
-json2ae --list-platform-handlers
-```
-
-| Argument | Behavior |
-| --- | --- |
-| `json_path` | One or more paths containing a parsed MINiML object/list or canonical Atlas v1 document. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--no-enrich` | Convert supplied metadata without PubMed/SRA enrichment; enrichment is enabled by default. |
-| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
-| `--out` `OUT` | Output directory; default `.`. |
-| `--platform-handler` `KEY` | Force both IDF and SDRF generation through a listed platform handler. |
-| `--list-platform-handlers` | Print valid handler keys, one per line, and exit without converting. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
-
-`json2ae` validates all retained packages before converting any of them. For
-an Atlas v1 document it converts datasets whose status is `harmonized`, warns
-about other dataset states and their diagnostics, and fails when no convertible
-package groups remain. Legacy unversioned `accessions` envelopes fail with cutover
-guidance instead of being inferred. If the input came from
-`ae2json`, MAGE-TAB is regenerated deterministically from the typed MINiML 3.0
-model; raw table bodies and the former `mage_tab` sidecar are not retained.
-During regeneration, mapped core content is
-overlaid as a keyed union: missing allowlisted IDF rows and non-structural SDRF
-columns are inserted while model-only rows, assay paths, node columns, and
-`Protocol REF` columns remain authoritative. Harmonized characteristics are exported as `Characteristics[hz_cell_type]`
-with adjacent `Term Source REF`, `Term Accession Number`, and optional
-`Comment[hz_cell_type_hierarchy_depth]`. Indexed groups retain `(1)`, `(2)`, etc.
-Factors and parameters use `Factor Value[hz_*]` and `Parameter Value[hz_*]`;
-units use local `Comment[hz_unit]` groups. The parser restores those groups.
-Explicit assay paths bind sample additions through sample/channel identity
-before column planning; ambiguous associations warn and retain local evidence.
-
-#### `ae2json`
-
-Resolve an IDF and its SDRFs, then write a MINiML-compatible JSON package.
-
-```bash
-ae2json study.idf.txt --out output
-ae2json https://example.org/study.idf.txt --source-host example.org --out output
-ae2json E-MTAB-1990 --out output
-ae2json study.idf.txt --sdrf first.sdrf.txt --sdrf second.sdrf.txt --out output
-```
-
-| Argument | Behavior |
-| --- | --- |
-| `source` | One or more IDF paths, policy-approved HTTPS IDF URLs, or BioStudies/ArrayExpress accessions. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--sdrf` `PATH_OR_URL` | Override IDF SDRF references; repeat for multiple SDRFs. Requires exactly one `source` and cannot accompany an accession source. |
-| `--out` `OUT` | Output directory; default `.`. |
-| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
-| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
-| `--source-host` `HOST` | Allow one additional exact HTTPS IDF/SDRF hostname; repeat for multiple hosts. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
-
-Remote IDF/SDRF text remains in memory under the selected per-file and aggregate
-byte ceilings. Accession mode paginates the BioStudies file listing to discover
-exactly one IDF and at least one SDRF; assay data files are not downloaded.
-Remote URLs are HTTPS-only, revalidate bounded redirects and public DNS answers,
-and accept provider hosts by default. Use `--source-host` for an additional
-exact host. Local IDF/SDRF reads stop at the same configured file ceiling.
-
-#### `json2h5ad`
-
-Select the best available expression source for every sample, normalize it into AnnData, and write H5AD outputs. Explicit manifest assets outrank `--asset` entries, which outrank JSON-discovered assets; within a source tier the order is H5AD, matrix, then raw FASTQ. Candidate planning indexes assets once by sample/study scope rather than rescanning the complete asset set for every sample.
-
-```bash
-json2h5ad output/GSE234602.json --out output
-json2h5ad output/GSE234602.json \
-  --asset GSM9651991=local.h5ad --out output
-json2h5ad output/GSE234602.json \
-  --force-reprocess --pipeline rnaseq --genome GRCh38 \
-  --gtf references/current.gtf.gz --profile docker --out output
-```
-
-| Argument | Behavior |
-| --- | --- |
-| `json_path` | One or more paths containing parsed MINiML packages or a canonical Atlas v1 document. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--out`, `--outdir` `OUTDIR` | Output directory; default `.`. |
-| `--asset-manifest` `ASSET_MANIFEST` | CSV/TSV mapping with required `scope_id` and `path` columns and optional kind, role, read/lane, matrix, checksum, and orientation metadata. |
-| `--asset` `ACCESSION=PATH` | Explicit local or remote H5AD, matrix, or FASTQ; repeat as needed. |
-| `--force-reprocess` | Ignore processed sources and require raw FASTQ for every sample. |
-| `--pipeline` `{auto,scrnaseq,rnaseq}` | Raw-input pipeline; default `auto`, which groups samples by detected modality. |
-| `--genome` `GENOME` | nf-core catalogue genome key, optionally combined with `--gtf` or `--gff`. |
-| `--fasta` `FASTA` | Local custom FASTA; requires exactly one of `--gtf` or `--gff`. |
-| `--gtf` `GTF` | Local GTF or GTF.GZ annotation; mutually exclusive with `--gff`. |
-| `--gff` `GFF` | Local GFF/GFF3 annotation; mutually exclusive with `--gtf` and converted to GTF with `gffread`. |
-| `--accept-inferred-reference` | Accept supported human/mouse reference inference when no explicit reference is supplied. |
-| `--profile` `PROFILE` | Nextflow profile; default `docker`. |
-| `--revision` `REVISION` | Override the pinned nf-core revision; defaults are `scrnaseq` 4.2.0 and `rnaseq` 3.26.0. |
-| `--params-file` `PARAMS_FILE` | Additional nf-core JSON parameters; converter-owned input, output, and reference values take precedence. |
-| `--nextflow-config` `NEXTFLOW_CONFIG` | Additional Nextflow resource/infrastructure config. |
-| `--work-dir` `WORK_DIR` | Nextflow work directory; defaults below the study/pipeline output tree. |
-| `--resume` | Resume Nextflow and reuse fingerprint-valid processed-sample checkpoints. |
-| `--force-memory` | Resume-only override of the fixed 8/32 GiB profile ceiling; the estimate must still fit within 90% of currently available RAM. |
-| `--processed-checkpoint-dir` `DIR` | Override the default `{OUTDIR}/.processed` location for atomic normalized sample checkpoints; matching checkpoints are reused with `--resume`. |
-| `--overwrite` | Replace normalized H5AD and manifest outputs; existing outputs are protected by default. |
-| `--allow-invalid` | Publish a partial bundle carrying projector-reported errors; structural type, collision, and axis-length errors always fail. |
-| `--allow-unverified-combination` | Deprecated compatibility option; ignored with a warning because catalogue outputs never combine expression matrices. |
-| `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Delimited matrix orientation; default `auto`, which rejects ambiguous generic matrices. |
-| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
-| `--resource-profile` `{standard,large}` | Select the typed network/disk/worker envelope; default `standard`. |
-| `--resource-override` `FIELD=VALUE` | Explicitly replace one typed resource limit; repeat for multiple fields. |
-| `--asset-host` `HOST` | Explicitly allow one additional exact remote asset hostname; repeat as needed. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
-
-Processed assets may be local or policy-approved HTTPS/FTP and may include `.h5ad`, `.h5ad.gz`, 10x HDF5, 10x MTX directories, CSV, TSV, or TXT matrices. Remote retrieval revalidates every redirect host/address, rejects private addresses and URL credentials, enforces typed object/run/cache/disk limits, and writes a SHA-256 integrity sidecar. A cache lock covers verification, capacity reservation, streaming, and publication; declared bytes—or the object ceiling for an unknown-length response—are reserved with one cache snapshot and one disk preflight before the body is consumed. Reuse atomically refreshes `last_used_at`. `AssetDownloader.retention_report(...)` is dry-run by default, verifies every candidate, preserves explicit active paths and the newest configured minimum, and can only move eligible assets plus sidecars into a recoverable `.quarantine` generation—it never deletes them. A narrowly scoped NCBI HTTPS range fallback handles `ftp.ncbi.nlm.nih.gov` responses that reject ordinary streaming while preserving the same DNS, redirect, byte, cache-integrity, aggregate, and disk limits. Provider hosts are allowed by default; any additional exact host requires `--asset-host`. Raw processing upgrades known ENA/NCBI FTP FASTQ links to HTTPS before writing nf-core samplesheets.
-
-Ordinary H5AD and delimited-matrix paths use AnnData, pandas, NumPy, and SciPy
-directly. Scanpy is imported lazily only when reading 10x HDF5 or MTX inputs,
-so processed H5AD conversion does not trigger unrelated plotting/font-system
-process discovery.
-
-Each successful sample produces `{GSM}.h5ad`; MSC never outer-concatenates
-expression matrices or labels that operation as integration. `{GSE}.json2h5ad.json`
-is the catalogue manifest and records `artifact_kind = per_sample_h5ad_catalogue`,
-`expression_integration = none`, the sample count, and a deliberately false
-combination-verification state. Organism, reference, modality, and feature
-namespace differences are valid catalogue heterogeneity and do not make the
-conversion partial. The compatibility evidence helper remains fail-closed for
-future explicit integration workflows: all-unknown dimensions are missing,
-numeric Entrez identifiers are not treated as gene symbols, and mixed/ambiguous
-feature namespaces are unknown. The legacy `--allow-unverified-combination`
-flag is ignored with a warning. Dataset, study, and sample identifiers must be
-safe single path components. Sample H5ADs and the manifest are staged and
-published as one rollback-safe dataset bundle. If restoration itself fails,
-`DatasetBundleRecoveryError` reports retained recovery paths instead of deleting
-the previous artifacts.
-
-Before a matrix is loaded, the converter estimates its peak resident-memory
-cost. A normal run admits at most the lower of the selected fixed ceiling
-(`standard`: 8 GiB; `large`: 32 GiB) and 70% of currently available host/cgroup
-RAM. Oversized samples are skipped, make the result partial, and are recorded in
-the result and catalogue `memory_report`. Each admitted sample is normalized,
-written immediately to `{OUTDIR}/.processed/{study}/`, and released before the
-next sample. A later `--resume --force-memory` run may bypass the fixed ceiling,
-but never the hard 90% current-availability limit.
-
-##### H5AD metadata schema 2.0
-
-Converter-owned observation columns use only canonical dotted names such as
-`msc.sample.accession`, `msc.archive.sra_run_accessions`,
-and `msc.characteristics.cell_type`. Version 4 does
-not generate the former underscore aliases. If a source H5AD already contains
-an underscore-style column, it is retained as opaque source data but is not
-used as MSC metadata. Study-level input splitting recognizes
-`msc.sample.accession` and the external generic columns `geo_accession`,
-`sample_id`, `sample`, and `gsm_accession`.
-
-Sample-bound Parameter Values appear as
-`msc.mage_tab.parameter.<slug>.*` columns; the lossless assay/row/column
-occurrences remain in `uns["msc_mage_tab"]["parameters"]`.
-
-Analysis-facing `obs` values remain scalar strings; repeated values are
-de-duplicated in source order and displayed with `; ` separators. The
-authoritative reversible projection is
-`uns["msc_metadata"]["sample_values"]`, with columns `sample_accession`,
-`field`, `ordinal`, `value`, and `value_type`. The complete source hierarchy
-continues to live in `uns["msc_miniml"]["fields"]`. H5AD provenance and the
-JSON manifest declare `1.0` as the H5AD metadata schema independently of the
-Atlas and MINiML schema versions.
-
-Original observation identifiers are stored in
-`obs["msc.observation.original_id"]`. Identifiers that already contain their
-sample accession as a delimiter-bounded token are preserved; unqualified IDs
-receive `-{sample_accession}`. Duplicate candidates receive deterministic
-numeric suffixes before catalogue files are written, yielding globally unique
-identifiers for observation-row aggregation without joining matrices.
-
-#### `json2tsv`
-
-Write one row per sample using the neutral dotted `msc.*` metadata contract.
-The command accepts ordinary MINiML package JSON or a
-canonical Atlas v1 document and retains only datasets whose status is
-`harmonized`. TSV is the default; `--format csv` selects CSV without a second
-command. The table and JSON result manifest publish as one bundle, and stdout
-contains the same machine-readable result summary while logs use stderr.
-
-```bash
-json2tsv atlas.json --outdir output --format csv
-```
-
-| Argument | Behavior |
-| --- | --- |
-| `json_path` | One or more parsed MINiML or canonical Atlas v1 JSON paths. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--out`, `--outdir` `OUTDIR` | Output directory; default `.`. |
-| `--format` `{tsv,csv}` | Manifest serialization; default `tsv`. |
-| `--allow-invalid` | Write projected rows despite projector-reported errors and return a partial result; default behavior raises before writing. |
-| `--overwrite` | Replace an existing destination; existing files are protected by default. |
-| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
-| `-v`, `--verbose` | Increase verbosity; repeat as `-vv` for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only; mutually exclusive with verbosity. |
-| `--log-file` `LOG_FILE` | Also write logs to this file, replacing an existing file. |
-
-#### `json2obs`
-
-Build the per-sample catalogue through `json2h5ad`, then aggregate only the
-observation rows and export cell metadata without publishing expression
-integration. The required output directory
-contains `<study>.obs.csv` with an explicit `cell_id` column. Optional typed
-sidecars expose feature metadata and reconstructable unstructured metadata.
-Atlas batches always isolate every completed dataset below
-`OUTDIR/<dataset_id>/`, including partial batches with only one success.
-
-```bash
-json2obs atlas.json --outdir output --asset GSM1=source.h5ad \
-  --include-var --include-uns
-```
-
-| Argument | Behavior |
-| --- | --- |
-| `json_path` | One or more parsed MINiML or canonical Atlas v1 JSON paths. |
-| `-h`, `--help` | Display generated help and exit. |
-| `--outdir` `OUTDIR` | Required component-output directory. |
-| `--include-var` | Add `<study>.var.csv` with a `feature_id` column for a single-sample catalogue; multi-sample feature tables require separate export. |
-| `--include-uns` | Add typed `<study>.uns.json`; multi-sample values are namespaced by sample. |
-| `--asset-manifest` `ASSET_MANIFEST` | CSV/TSV mapping accessions to assets. |
-| `--asset` `ACCESSION=PATH` | Explicit H5AD, matrix, or FASTQ asset; repeatable. |
-| `--force-reprocess` | Prefer raw processing over discovered processed assets. |
-| `--pipeline` `{auto,scrnaseq,rnaseq}` | Raw-input pipeline. |
-| `--genome` `GENOME` | nf-core genome key. |
-| `--fasta` `FASTA` | Custom reference FASTA. |
-| `--gtf` `GTF` | Custom GTF annotation. |
-| `--gff` `GFF` | Custom GFF/GFF3 annotation. |
-| `--accept-inferred-reference` | Permit supported organism-based reference inference. |
-| `--profile` `PROFILE` | Nextflow profile; default `docker`. |
-| `--revision` `REVISION` | Override the pinned nf-core revision. |
-| `--params-file` `PARAMS_FILE` | Additional nf-core parameters. |
-| `--nextflow-config` `NEXTFLOW_CONFIG` | Nextflow infrastructure configuration. |
-| `--work-dir` `WORK_DIR` | Nextflow working directory. |
-| `--resume` | Resume Nextflow and reuse fingerprint-valid processed-sample checkpoints. |
-| `--force-memory` | Resume-only override of the fixed 8/32 GiB profile ceiling, still bounded to 90% currently available RAM. |
-| `--processed-checkpoint-dir` `DIR` | Override the default processed-checkpoint directory; matching checkpoints are reused with `--resume`. |
-| `--overwrite` | Replace the complete component bundle. |
-| `--allow-invalid` | Publish projector-reported validation errors as a partial result. |
-| `--matrix-orientation` `{auto,genes-by-observations,observations-by-genes}` | Generic delimited-matrix orientation. |
-| `--replacement-profile` `JSON`, `--replacement-profile-file` `PATH` | Supply a schema-1.0 replacement profile; mutually exclusive. A supplied profile activates replacement on conversion copies. |
-| `-v`, `--verbose` | Increase verbosity; repeat for DEBUG. |
-| `-q`, `--quiet` | Emit ERROR logs only. |
-| `--log-file` `LOG_FILE` | Write detailed logs to a file. |
-
-Programmatic callers use `JSON2OBSConverter`; its manifest, H5AD, and
-AnnData-metadata methods return typed result objects. Injected
-`TabularMetadataProjector` objects can replace the default manifest columns.
-Related manifest and AnnData-metadata files are published into immutable,
-checksummed generations. A single fsynced `current.json` pointer is the
-crash-atomic authority; returned results expose `bundle_pointer_path`. Existing
-direct output files remain v1 compatibility views. If compatibility recovery
-fails, `ArtifactRecoveryError` preserves and reports every remaining backup.
+The [complete CLI reference](docs/codebase.md#cli) lists all arguments, defaults,
+and failure behavior. [Platform handlers](docs/codebase.md#configuration)
+explain automatic detection and explicit overrides.
 
 ### Python API
 
-The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use. `JSON2H5ADConverter(..., combination_policy=None)` retains a dedicated compatibility-evidence policy for future explicit integration workflows, but its `combine()` operation fails with guidance: catalogue conversion never performs a sparse outer join. Replacements must not turn catalogue publication into an implicit integration step; source processing and transactional publication remain converter responsibilities.
+Import converters from `meta_standards_converter.converters`. GEO and MAGE-TAB
+JSON ingestion returns typed `MINiMLPackage` objects; call `to_mapping()` when
+you need a serializable mapping. Python metadata converters generally return
+in-memory results when no output path is supplied; manifest and expression
+entrypoints have their own output contracts.
 
-Read the canonical Atlas v1 wire format without installing its producer:
-
-```python
-from meta_standards_converter.atlas_v1 import AtlasV1Reader
-
-result = AtlasV1Reader().load("atlas.json")
-for dataset in result.datasets:
-    print(dataset.dataset_id, dataset.metadata)
-```
-
-The reader validates the Atlas v1 identity, collections, cross-references and summary,
-returns only harmonized dataset metadata, and reports skipped states through
-`result.warnings`. MSC intentionally has no runtime or build dependency on
-ThematicAtlases; compatibility is verified with the producer-owned golden wire
-fixture copied into `tests/fixtures/contracts/`. A harmonized dataset whose
-metadata is exactly `{"packages": [...]}` remains one dataset group while each
-contained MINiML package is converted independently; this preserves related
-series packages without treating them as separate Atlas datasets.
-
-Convert GEO to MAGE-TAB:
-
-```python
-from meta_standards_converter.converters.geo2ae import GEO2AEConverter
-
-magetabs = GEO2AEConverter().convert(
-    gse="GSE234602",
-    related_series=False,
-    remove_empty=True,
-    out="output",
-    platform_handler=None,
-)
-```
-
-`GEO2AEConverter.convert(gse, related_series=False, remove_empty=True, out=None, platform_handler=None)` returns a list of in-memory MAGE-TAB payloads. `out=None` suppresses file writes; `platform_handler=None` keeps automatic detection.
-
-Convert GEO to JSON:
-
-```python
-from meta_standards_converter.converters.geo2json import GEO2JSONConverter
-
-packages = GEO2JSONConverter().convert(
-    gse="GSE234602",
-    related_series=False,
-    remove_empty=True,
-    enrich=True,
-    out="output",
-)
-```
-
-`GEO2JSONConverter.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[dict]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in package `extensions.publication_inheritance`. Legacy nested `series.extensions` inputs remain readable, but canonical encoding hoists all entries to package scope and rejects conflicts.
-
-For callers that collect related studies directly,
-`GEOParser.parse_related_series(..., strict=False)` returns a list-compatible
-`RelatedSeriesParseResult`. Its status 2.0 envelope, attempted/failed accession
-lists, and persistence-safe errors make partial traversal explicit; provider
-exception messages are neither returned nor logged.
-
-Convert parsed JSON to MAGE-TAB:
-
-```python
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
-
-magetabs = JSON2AEConverter().convert(
-    json_path="output/GSE234602.json",
-    out="output",
-    enrich=True,
-    platform_handler=None,
-)
-```
-
-`JSON2AEConverter.convert(json_path, out=None, enrich=True, platform_handler=None)`
-accepts a parsed MINiML object/list or canonical Atlas v1 document and
-returns ordered MAGE-TAB payloads. `json2ae(..., package_source=...)` permits
-injection of a compatible source loader. Forcing a handler regenerates
-IDF/SDRF content instead of reusing unchanged round-trip tables or a
-typed-model-only rendering. Regeneration unions eligible mapped core IDF rows
-and non-structural SDRF columns into the typed model, including separate
-harmonized `hz_*`, `hz_*_id`, and `hz_*_onto` characteristic columns when
-present.
-
-Convert MAGE-TAB to parsed JSON:
-
-```python
-from meta_standards_converter.converters.ae2json import AE2JSONConverter
-
-packages = AE2JSONConverter().convert(
-    source="E-MTAB-1990",
-    out="output",
-    sdrf_sources=None,
-)
-```
-
-`AE2JSONConverter.convert(source, out=None, sdrf_sources=None)` returns a one-package list. Configure the constructor with `resource_profile`, `resource_overrides`, and additional exact `source_hosts`. `sdrf_sources` is a list of explicit local paths or policy-approved HTTPS URLs and follows the same constraints as repeated CLI `--sdrf` values.
-
-Convert parsed JSON and expression assets to H5AD:
-
-```python
-from meta_standards_converter.expression.assets import Asset
-from meta_standards_converter.converters import JSON2H5ADConverter
-
-result = JSON2H5ADConverter().convert(
-    json_path="output/GSE234602.json",
-    out="output",
-    explicit_assets=[Asset("GSM9651991", "local.h5ad", "h5ad")],
-    asset_manifest=None,
-    asset_specs=None,
-    force_reprocess=False,
-    matrix_orientation="auto",
-    overwrite=False,
-    pipeline="auto",
-    genome="GRCh38",
-    fasta=None,
-    gtf="references/current.gtf.gz",
-    gff=None,
-    accept_inferred_reference=False,
-    profile="docker",
-    revision=None,
-    params_file=None,
-    nextflow_config=None,
-    work_dir=None,
-    resume=False,
-)
-```
-
-`JSON2H5ADConverter.convert()` accepts ordinary parsed MINiML JSON or a
-canonical Atlas v1 document. It returns `ConversionResult` for exactly
-one dataset group and `BatchConversionResult` for multiple groups.
-`convert_source(json_path, out=None, **options)` always returns
-`BatchConversionResult`. For multiple groups, each dataset is converted below
-an output child directory named for its dataset ID; per-group exceptions are
-recorded in `BatchConversionResult.failures` while later groups continue.
-Invalid paths, unsafe dataset IDs, invalid source shapes, sources with no
-convertible groups, and sources with no convertible samples raise before
-aggregation. `ConversionResult` exposes `study_accession`,
-`sample_h5ads`, `combined_h5ad`, `retained_h5ads`, `pipeline_runs`,
-`manifest_path`, `warnings`, `errors`, `failures`, `primary_h5ad`, and
-`partial`; catalogue conversions leave the compatibility field
-`combined_h5ad` as `None` and choose the first sample artifact as `primary_h5ad`.
-In-memory paths are absolute; persisted provenance paths are relative to their
-artifact parent where possible. See the
-[H5AD workflow contract](docs/codebase.md#workflow-json2h5ad).
-
-Applications can add organization-neutral metadata without subclassing the
-converter by passing metadata projectors:
-
-```python
-from meta_standards_converter.metadata.projection import AnnDataMetadataProjection
-from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
-
-
-class Projector:
-    def project_sample(self, *, adata, context):
-        return AnnDataMetadataProjection(
-            obs={"example.sample_accession": context.sample_accession},
-            obs_renames={"source_label": "author_source_label"},
-            obs_drops=("temporary_source_column",),
-            uns={"example": {"schema_version": "1"}},
-        )
-
-    def project_combined(self, *, adata, contexts):
-        return AnnDataMetadataProjection(
-            uns={"example": {"sample_count": len(contexts)}}
-        )
-
-
-result = JSON2H5ADConverter(metadata_projectors=[Projector()]).convert(
-    "output/GSE234602.json",
-    out="output",
-)
-```
-
-Projectors run after standard `msc_*` normalization and before H5AD writing.
-Scalars are broadcast over the selected axis, vectors must match the axis
-length, and existing `obs`, `var`, or top-level `uns` keys cannot be replaced.
-`obs_renames` and `obs_drops` are validated and applied atomically before
-projected `obs` additions; missing sources, duplicate targets, collisions, or
-attempting to rename and drop the same column fail unconditionally.
-Warnings returned by a projector are added to the conversion result and
-manifest. Projector-reported `errors` raise `AnnDataProjectionError` and leave
-no final bundle by default. `allow_invalid=True` writes artifacts, records the
-errors in the result and manifest, and makes `partial` true. Structural
-`TypeError` and `ValueError` conditions remain unconditional. Omitting
-projectors preserves the standard output.
-
-Create a private or organization-specific table without modifying MSC:
-
-```python
-from meta_standards_converter.metadata.projection import TabularMetadataProjection
-from meta_standards_converter.converters import JSON2TSVConverter
-
-
-class Projector:
-    def project_sample(self, *, context):
-        return TabularMetadataProjection(
-            values={"example.sample": context.sample_accession},
-            columns=("example.sample",),
-        )
-
-
-result = JSON2TSVConverter(
-    metadata_projectors=[Projector()]
-).convert_source("atlas.json", "output/metadata.tsv")
-```
-
-Explicit projector lists replace the default MSC table contract. Preferred
-columns are written first, remaining columns are sorted, collisions fail, and
-projector errors fail closed unless `allow_invalid=True`.
-`JSON2TSVConverter` and `JSON2H5ADConverter` also accept an optional
-`metadata_service` implementing the exported `MINiMLMetadataProvider`
-protocol. The default `MINiMLMetadataService` keeps study/sample identity,
-canonical sample fields, and modality scientifically consistent across
-delimited and AnnData outputs without coupling either exporter to the other.
+See [Python examples](docs/codebase.md#python-api-guide),
+[public interfaces](docs/codebase.md#public-api-reference), and
+[class relationships and injection points](docs/codebase.md#oop-design).
 
 ### Docker
 
-Build the image:
-
-```bash
-docker build -t meta-standards-converter .
-```
-
-With no command, the image displays `geo2ae --help`. Any installed CLI can be supplied after the image name:
-
-```bash
-docker run --rm meta-standards-converter geo2json --help
-```
-
-Mount host paths for inputs and outputs. Use matching container paths in CLI arguments:
-
-```bash
-mkdir -p output
-docker run --rm \
-  -v "$PWD/output:/work" \
-  meta-standards-converter \
-  geo2json GSE234602 --out /work
-
-docker run --rm \
-  -v "$PWD/output:/work" \
-  meta-standards-converter \
-  json2ae /work/GSE234602.json --out /work
-```
-
-The standard image contains no Docker daemon. Metadata conversion and processed-asset H5AD conversion work without a nested runtime. Raw FASTQ processing with the Docker profile requires a deliberately supplied daemon; use the hardened rootless Compose workflow below.
+The image includes the H5AD dependencies and raw-processing tools. Supply an
+installed command after the image name and mount input/output paths explicitly.
+The image does not include a Docker daemon. See [Docker usage](docs/codebase.md#docker-guide).
 
 ### Rootless Docker Compose
 
-The rootless workflow is intended for raw `json2h5ad` processing. It creates a locked `nfcore-runner` account, gives it read access to the project and read/write access only to `.out/json2h5ad`, and connects the converter to that account's rootless Docker socket.
-
-Provision once as root:
-
-```bash
-sudo "$PWD/scripts/provision-rootless-json2h5ad.sh" \
-  "$PWD" "$PWD/.out/json2h5ad"
-```
-
-Build and verify the image as the runner:
-
-```bash
-sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
-sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
-  run --rm converter docker info --format '{{json .SecurityOptions}}'
-```
-
-Generate JSON and process raw data. All mounted inputs, outputs, caches, and Nextflow work must remain under `.out/json2h5ad`:
-
-```bash
-sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
-  run --rm converter geo2json GSE104830 \
-  --out "$PWD/.out/json2h5ad/json" -vv
-
-sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
-  run --rm converter json2h5ad \
-  "$PWD/.out/json2h5ad/json/GSE104830.json" \
-  --out "$PWD/.out/json2h5ad/bulk" \
-  --force-reprocess --pipeline rnaseq \
-  --accept-inferred-reference --profile docker -vv
-```
-
-The helper refuses non-rootless daemons. Compose drops all capabilities, enables `no-new-privileges`, makes the root filesystem read-only, and mounts only the dedicated output tree and rootless socket. Final H5AD files use mode `0660`; provisioning establishes and verifies the project-owner and runner ACLs.
+The supported raw-processing setup uses a dedicated runner, restricted mounts,
+and its rootless Docker socket. Provisioning changes the host; follow the
+[full setup guide](docs/codebase.md#rootless-json2h5ad-runtime).
 
 ### Code flow
 
-```text
-CLI or Python API
-  |
-  +-- GEO accession
-  |     -> GEOWebFetcher -> GEOParser -> [MINiMLEnricher]
-  |          |                                  |
-  |          +-> geo2json: JSON packages        +-> PubMed / NCBI SRA / ENA
-  |          `-> geo2ae: AEConstructor -> IDF + SDRF
-  |
-  +-- parsed JSON
-  |     +-> json2ae: validate -> [enrich] -> AEConstructor -> IDF + SDRF
-  |     +-> json2tsv: group datasets -> project sample rows -> TSV/CSV manifest
-  |     +-> json2obs: aggregate sample obs -> optional var+uns sidecars
-  |     `-> json2h5ad: plan assets -> [nf-core for FASTQ]
-  |                         -> normalize AnnData -> per-sample H5AD catalogue + manifest
-  |
-  `-- IDF path, approved HTTPS URL, or BioStudies accession
-        -> bounded AEWebFetcher -> AEParser -> strict MINiML 3.0 package
-```
-
-Network requests pass through the
-[`RateLimitedRequester`](docs/codebase.md#request-helper) boundary.
-Limits are shared by normalized HTTP hostname, including across different
-service labels. Defaults conservatively allow two NCBI E-utilities starts per
-second and one start per second for GEO FTP, ENA Portal, and BioStudies.
-PubMed and SRA E-utilities fetchers also send the centrally validated
-`NCBIApplicationIdentity` tool/contact parameters on every request; callers
-may inject an approved replacement, and request logging never includes those
-parameters. The
-standard/large profiles cap default collaborators at four/eight requests in
-flight per host. These are client ceilings, not provider
-entitlements; `429` and transient server responses still use bounded retries.
-GEO MINiML tarballs may contain safe auxiliary regular files and directories,
-but exactly one root `{GSE}_family.xml` is required; traversal paths, duplicate
-members, links/special files, unexpected XML, and expansion-limit violations
-fail closed. Ordinary external SYSTEM/PUBLIC DTD declarations are stripped
-without network resolution before XML parsing, while entities and internal or
-malformed DTD subsets remain forbidden. Compressed responses are bounded by
-their decoded size without treating the encoded `Content-Length` as a decoded
-byte count.
-[`GEOWebFetcher`](docs/codebase.md#geo-web-fetcher),
-[`GEOParser`](docs/codebase.md#geo-parser),
-[`AEConstructor`](docs/codebase.md#ae-constructor), and the
-[H5AD](docs/codebase.md#json2h5ad-flow) and
-[tabular](docs/codebase.md#json2tabular-flow) workflows are traced in the
-canonical handoff. CLI entrypoints catch failures per top-level input, while
-programmatic converter calls raise errors to their caller.
+Source retrieval → parsing into canonical MINiML → optional enrichment or export
+replacement → destination construction/projection → result and optional files.
+Expression workflows add asset planning, reading or nf-core processing, and
+per-sample checkpointing. See [architecture](docs/codebase.md#architecture) and
+[execution flows](docs/codebase.md#principal-workflows).
 
 ## Testing
 
-Run the seven offline converter and CLI contracts with `.venv/bin/python -m pytest tests/e2e -q`. [Fixture inputs, reviewed outputs, and provenance](tests/fixtures/README.md) are stored in the repository. [The test audit](tests/AUDIT.md) records coverage decisions and a strict expected failure for the known automatic 5-prime/3-prime chemistry mismatch. Documentation policy checks are separate under `tests/policy/`.
-
-The deterministic, network-blocked suite was last verified on 2026-08-10:
-`587 passed, 3 skipped` (plus 89 unittest subtests). The skipped cases are the explicitly opt-in live API
-provider contracts. Normal tests fake HTTP and subprocess boundaries and do
-not launch nf-core.
+With `.[test]` installed:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider
+python -m pytest tests/e2e -q
+python -m pytest tests/policy tests/test_documented_imports.py -q
+python -m pytest -q
 ```
 
-Rootless acceptance was completed separately on 2026-07-31: the pinned
-`nf-core/rnaseq` 3.26.0 and `nf-core/scrnaseq` 4.2.0 profiles returned code 0
-and produced non-partial H5AD results. See the
+The default suite blocks external network/process effects; live provider checks
+are opt-in. See [test coverage and commands](docs/codebase.md#test-plan),
+[fixture provenance](tests/fixtures/README.md), and the historical
 [rootless acceptance report](docs/rootless-acceptance-2026-07-31.md).
 
 ## Docs
 
-- [Docs index](docs/index.md): routing index with stable anchors, section purposes, and keywords.
-- [Codebase docs](docs/codebase.md): canonical architecture, workflow, callable, test, and maintenance handoff.
+- [Docs index](docs/index.md): find topics by purpose, type, command, or keyword.
+- [Codebase docs](docs/codebase.md): architecture, OOP design, workflows, API reference, and maintenance guidance.
 
 ## Authors
 
 Created by [jaychowcl](https://github.com/jaychowcl) @ [Saez-Rodriguez Group](https://saezlab.org) & [EMBL-EBI Functional Genomics Team](https://www.ebi.ac.uk/about/teams/functional-genomics/) on May 2026
-
-MSC MINiML v2 input support has been removed. Supply v3 or regenerate from source; see [v3-only migration guidance](docs/codebase.md#miniml-v3-only-cutover).

@@ -9,19 +9,26 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 # meta_standards_converter Codebase Handoff
 
 This is the canonical handoff for the live package under
-`src/meta_standards_converter`. It covers all seven conversion paths, their
+`src/meta_standards_converter`. It covers seven conversion paths and the explicit legacy importer, their
 runtime boundaries, extension contracts, and the evidence needed to change them
 safely.
 
 <a id="architecture"></a>
 ## Architecture
 
-`meta_standards_converter` is a Python library and seven-command toolkit for
+`meta_standards_converter` is a Python library and eight-command toolkit for
 moving study metadata and expression assets among GEO MINiML, the package's
 parsed JSON model, ArrayExpress MAGE-TAB, delimited sample tables, and AnnData
 H5AD. CLI modules are thin batch adapters. Converter classes own use-case
 orchestration; fetchers and parsers own repository-specific I/O; MAGE-TAB
-constructors and H5AD/tabular projectors own output models.
+constructors and H5AD/tabular projectors own output models. The current distribution is **MSC 8.0.0**.
+
+Start with [the design and class map](#oop-design), then follow one
+[principal workflow](#principal-workflows). Use the
+[package layout](#project-purpose-and-layout) to locate code and the
+[API inventory](#public-api-and-callable-reference) for exact signatures.
+The reference describes the current checkout; dated acceptance reports are
+historical evidence, not a claim that external providers were retested.
 
 ```text
 Users: CLI / Python / Docker / rootless Compose
@@ -160,6 +167,7 @@ credentials, or tokens.
 - Rootless Compose refuses a daemon without rootless security mode and confines
   writable state to the configured output tree.
 
+<a id="typed-mage-tab-model"></a>
 <a id="proposed-enriched-miniml-core"></a>
 ## Enriched MINiML-compatible core
 
@@ -208,16 +216,54 @@ No v2 package or wire annotation array is constructed during ingestion.
 [`migration.py`](../src/meta_standards_converter/miniml/migration.py),
 and [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py).
 
+
+<a id="data-contracts"></a>
+## Data contracts and preservation
+
+| Contract | Current version | Role |
+| --- | --- | --- |
+| MSC distribution | 8.0.0 | Python/CLI compatibility and version-specific checkpoint namespace |
+| MSC MINiML | 3.0 | Canonical metadata; v2 is rejected |
+| Harmonization patch | 3.1 | Source-bound decisions applied additively by MSC |
+| Patch extension ledger | 1.0 | Retained operations in `extensions.msc_harmonization` |
+| Atlas document | 1.0 | Independent producer wire format accepted by MSC's local reader |
+| H5AD metadata | 2.0 | Dotted observation fields and normalized sample values |
+| Exported assay metadata | 3.0 | Occurrence structures with `hz_value`, `hz_unit` and companions |
+| MINiML AnnData transport | 1.0 | Canonical packages and typed field ledger in `uns["msc_miniml"]` |
+| Replacement profile | 1.0 | Optional export-time destination replacement policy |
+| Operational status | 2.0 | Independent execution/completeness/evidence/validation/publication axes |
+
+`hz_*` evidence is exported by default. A `replacement_profile` additionally
+selects harmonized values for ordinary destination fields on a conversion copy.
+It does not change canonical source values, ontology decisions, or retained
+patch evidence. Profile-free `miniml_json` envelopes remain accepted; embedded
+`harmonization_overrides` is rejected. See [replacement profiles](#harmonization-overrides).
+
+**Round-trip boundary:** v3 canonical packages and AnnData transport retain the
+patch ledger. MAGE-TAB preserves supported sample/channel/path occurrences,
+source and harmonized values, units, ontology companions, hierarchy depth and
+indexed groups. Reparse preserves flattened provenance comments, but does not
+reconstruct the complete `extensions.msc_harmonization` patch ledger. Raw
+IDF/SDRF byte layout is also outside this contract. Cross-location ambiguity
+is diagnosed rather than resolved by final row number.
+
+**Evidence:** [model](../src/meta_standards_converter/miniml/model.py),
+[patches](../src/meta_standards_converter/miniml/patches.py),
+[assay projection](../src/meta_standards_converter/metadata/projection/assay.py),
+[AnnData projection](../src/meta_standards_converter/metadata/projection/anndata.py),
+[harmonized MAGE-TAB](../src/meta_standards_converter/magetab/harmonized.py),
+[provenance transport](../src/meta_standards_converter/metadata/provenance.py).
+
 <a id="component-relationships-and-data-flow"></a>
 ## Component relationships and data flow
 
 | Source | Destination | Interface and direction | Data/lifecycle | Failure behavior |
 | --- | --- | --- | --- | --- |
 | CLI module | converter | `convert(...)` control call | One converter instance per command; inputs processed in order | Logs per-input exception and records non-zero status |
-| GEO converters | `GEOWebFetcher` → `GEOParser` | internal calls around HTTP/XML | GSE becomes Series-scoped package dictionaries | Fetch/parse errors propagate |
+| GEO converters | `GEOWebFetcher` → `GEOSource` → `GEOParser` | internal calls around HTTP/XML | GSE becomes Series-scoped immutable `MINiMLPackage` objects | Fetch/parse errors propagate |
 | GEO/JSON converters | `MINiMLEnricher` | optional internal mutation | Adds PubMed and SRA/ENA evidence to a package | Enricher records service-specific misses where implemented |
-| GEO/JSON converters | `AEConstructor` | `miniml2magetab` then optional `magetab2file` | Package becomes IDF/SDRF row collections and files | Validation/handler/write errors propagate |
-| `ae2json` | `AEWebFetcher` → `AEParser` | resolve and parse | IDF/SDRF text becomes package + typed sidecar | Invalid source cardinality or MAGE-TAB fails |
+| GEO/JSON converters | `AEConstructor` | `miniml2magetab` then optional `MAGETabWriter.write` | Package becomes IDF/SDRF row collections; `MAGETabWriter` owns files | Validation/handler/write errors propagate |
+| `ae2json` | `AEWebFetcher` → `AEParser` | resolve and parse | IDF/SDRF text becomes canonical v3 packages with source documents | Invalid source cardinality or MAGE-TAB fails |
 | tabular converters | `JSONPackageSource` → `MINiMLMetadataProvider` → projectors | load/group, obtain format-neutral sample metadata, then `project_sample` | Dataset groups become ordered row maps | Collisions/invalid output fail closed by default |
 | `JSON2H5ADConverter` | planner/downloader/runner | plan, localize, or process | Per-conversion state becomes sample AnnData | Per-sample failures retained; aggregate can be partial |
 | tabular and H5AD converters | `MINiMLMetadataProvider` | public injected service calls | Study/sample identity, canonical metadata, and modality use one scientific interpretation | Provider failures propagate without partial output |
@@ -230,18 +276,77 @@ decisions. Fetchers own network protocol details; parsers own input shape;
 constructors/projectors own output shape; callers own retrying a failed
 top-level conversion.
 
+<a id="json-helper"></a>
+<a id="oop-design"></a>
+## Design and object relationships
+
+The useful organizing principle is **one orchestration layer, several replaceable
+services, and a typed canonical model**. A converter selects and sequences work;
+source services perform retrieval; parsers interpret supplied content; constructors
+and projectors build the destination representation. MSC does not use a common
+converter superclass to own all workflows.
+
+```text
+CLI parser -> converter instance -> conversion-scoped services and data
+                                    |
+           +------------------------+-------------------------+
+           |                        |                         |
+      source services          MINiMLPackage              output services
+   fetch / resolve / group   immutable canonical v3    build / project / write
+           |                        |                         |
+     pure parsers           conversion copy + policy    files / result objects
+```
+
+| Relationship | Actual design | State and change implications |
+| --- | --- | --- |
+| `GEO2JSONConverter`, `GEO2AEConverter`, `JSON2AEConverter` → `JSONHandler` | Inherit generic JSON helpers; compose the substantive services | Inheritance supplies utilities, not a shared workflow state machine |
+| `GEO2JSONConverter` / `GEO2AEConverter` → `GEOSource` | Constructor injection; `parser` defaults to the source service | `GEOSource` owns related-Series retrieval; its `GEOParser` collaborator is network-free |
+| `JSON2TSVConverter` → `JSON2DelimitedConverter` | Specializes delimiter/output selection | Shared base owns grouping, projection, deterministic columns, validation and writing |
+| `JSON2OBSConverter` → `JSON2H5ADConverter` + `AnnDataComponentExporter` | Composition, not inheritance | Build a temporary per-sample catalogue, export metadata components, then clean up temporary matrices |
+| `JSON2H5ADConverter` → planner, reader, downloader, runner, metadata service | Constructor-injected collaborators | Converter owns sequencing, admission, checkpoints and publication; collaborators own their specific operations |
+| `AEConstructor` → evidence resolver, IDF/SDRF builders, protocol registry | Per-operation composition | Resolve network evidence before pure rendering; registry identity must agree across IDF and SDRF |
+| SDRF technology handlers → base/array/sequencing specializations | Inheritance within one rendering domain | Override technology behavior without placing retrieval policy in row rendering |
+| Projectors and source contracts → `Protocol` interfaces | Structural typing | Callers can inject compatible objects without subclassing MSC implementations |
+| `MINiMLPackage` → series, samples, channels, paths, named values | Frozen typed records with mapping codecs | Replace/copy records for transformations; `to_mapping()` produces the serializable boundary |
+
+**State ownership:** protocol registries and rendering graphs belong to a
+construction operation. Dataset groups and replacement resolutions belong to a
+conversion. Checkpoints, asset caches and host pacing persist independently and
+must use their own identity and integrity policies. A converter instance may
+retain injected clients and cumulative request metrics; it is not a claim of
+thread safety or a process-global cache.
+
+**Design decisions:** favor composition for independently replaceable I/O and
+scientific interpretation; retain inheritance where implementations share a
+specific behavior family. These are observed relationships, not invented
+historical rationale. The evidence-backed [decision records](#architectural-decisions)
+state which rationale is documented.
+
+**How to change behavior:** new metadata columns belong in a
+[projector](#api-tabular-metadata-projector), new expression formats in an
+[asset reader/planner](#package-exports), source retrieval changes in
+[source services](#msc6-source-services), and wire representation changes in
+[MINiML](#miniml-package-model). Trace the affected public workflow and its
+[tests](#test-plan) before editing a shared helper.
+
+**Evidence:** [converter constructors](../src/meta_standards_converter/converters/),
+[source contracts](../src/meta_standards_converter/sources/contracts.py),
+[MINiML model](../src/meta_standards_converter/miniml/model.py),
+[SDRF handlers](../src/meta_standards_converter/magetab/sdrf/handlers/),
+[component exporter](../src/meta_standards_converter/expression/components.py).
+
 <a id="entrypoints-and-interfaces"></a>
 ## Entrypoints and interfaces
 
 The supported public entrypoints are:
 
 <a id="interface-cli"></a>
-- seven console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
-  `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs`;
+- eight console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
+  `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`, and `miniml-migrate`;
 <a id="interface-python"></a>
-- direct Python converter classes, the twenty-four formal exports from
-  `meta_standards_converter.converters`, and the four-name
-  `meta_standards_converter.atlas_v1` facade;
+- seven lazy converter-class exports from `meta_standards_converter.converters`,
+  plus supported models, source services, projectors and expression collaborators
+  from their [owning packages](#package-exports);
 <a id="interface-docker"></a>
 - a Docker image that accepts any installed console command;
 <a id="interface-rootless-compose"></a>
@@ -261,12 +366,13 @@ database service, or plugin discovery mechanism is exposed.
   adaptation to locally owned immutable reader results. `JSONPackageSource`
   owns the subsequent MINiML package grouping/deduplication contract.
 
+<a id="converter"></a>
 <a id="orchestrator-metadata-converters"></a>
 - `geo2ae`, `geo2json`, `json2ae`, and `ae2json` coordinate metadata-only
-  conversions. `AEConstructor` owns MAGE-TAB handler selection and writing;
-  `AEParser` owns reverse mapping and round-trip extensions.
+  conversions. `AEConstructor` owns MAGE-TAB evidence orchestration and handler selection;
+  `MAGETabWriter` owns file output and `AEParser` owns reverse semantic mapping.
 <a id="orchestrator-json2h5ad-converter"></a>
-- `JSON2TSVConverter`, `JSON2H5ADConverter`, and `JSON2OBSConverter` own the respective JSON-origin workflows. Its manifest,
+- `JSON2TSVConverter`, `JSON2H5ADConverter`, and `JSON2OBSConverter` own the respective JSON-origin workflows. Their manifest,
   H5AD, and AnnData-metadata methods back the three thin CLI wrappers.
   `JSON2H5ADConverter` owns the expression conversion lifecycle beneath it.
   `SourcePlanner`, `AssetManifest`, and `AssetDownloader` resolve inputs;
@@ -300,12 +406,12 @@ database service, or plugin discovery mechanism is exposed.
   `RetrievalService` consumes the resource profile behind the supported
   `AssetDownloader` facade.
 <a id="core-magetab-construction"></a>
-- Neutral `ae_common.ProtocolRegistry` and technology/file detection feed
+- Neutral `magetab.protocols.ProtocolRegistry` and technology/file detection feed
   `IDFConstructor` and `SDRFConstructor`; typed MAGE-TAB
   records, and technology handlers form the MAGE-TAB construction subsystem.
   Constructor and SDRF modules now depend one-way on that neutral module; they
-  contain no mutual or late imports. `ae_constructor.ProtocolRegistry` remains
-  a v1 compatibility re-export of the same class.
+  contain no mutual or late imports. Import `ProtocolRegistry` from `magetab.protocols`; do not depend on incidental
+  imports inside constructor modules.
 
 Definitions, signatures, state, internal calls, external operations, and
 failure behavior are detailed in
@@ -314,14 +420,18 @@ failure behavior are detailed in
 <a id="public-api-reference"></a>
 ## Public API reference
 
-The formal support boundary is the twenty-four names in
-`meta_standards_converter.converters.__all__` (including the public
-`AssetDownloader`) plus the four names in
-`meta_standards_converter.atlas_v1.__all__`. CLI converter classes are also
-supported through their registered commands. Other non-underscored
-module-level symbols are inventoried later because Python makes them
-importable, but the repository contains no export declaration or compatibility
-statement for them; treat those as **evidence-gap**, not stable API.
+The public facade is distributed across owning packages. `converters` exports
+seven converter classes lazily; `miniml`, `sources`, `expression`, `metadata`,
+`metadata.projection`, `magetab`, and `atlas_v1` expose their own contracts.
+The [package export table](#package-exports) enumerates their current names.
+The [source inventory](#public-api-and-callable-reference) lists every public-named
+production definition, constructors, public methods and properties. Importable
+implementation helpers are distinguished from explicitly exported interfaces;
+Python visibility alone is not a stability guarantee.
+
+The curated contracts below explain the most consequential integration points.
+Exact current signatures, including inherited dataclass fields, appear in the
+source inventory; it supersedes historical call examples from preceding releases.
 
 <a id="atlas-v1-reader"></a>
 ### Atlas v1 reader facade
@@ -367,19 +477,12 @@ statement for them; treat those as **evidence-gap**, not stable API.
   and converters validate supported combinations.
 - **Side effects:** none.
 - **Support:** formal export for source-planner and adapter integrations.
-- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+- **Source:** [assets.py](../src/meta_standards_converter/expression/assets.py).
 
 <a id="api-json2h5ad-converter"></a>
 ### `JSON2H5ADConverter`
 
-- **Signature:** `JSON2H5ADConverter(planner=None, pipeline_runner=None, downloader=None, metadata_projectors=None, package_source=None, retrieval_policy=None, resource_profile="standard", resource_overrides=None, metadata_service=None, combination_policy=None)`; `convert(...)` and `convert_source(...)` own the documented expression workflow.
-- Dataset, study, sample, checkpoint, and output identities are validated as safe single path components before publication. `series.iid` is the canonical native-package study identity, so an ArrayExpress IID is not displaced by an earlier GEO secondary accession.
-- The injected/default combination policy owns multi-sample scientific
-  compatibility evidence. All-unknown dimensions are missing, Entrez IDs and
-  gene symbols are distinct namespaces, and `combine()` fails with guidance
-  because catalogue conversion never treats an outer join as integration. The
-  converter facade retains source, normalization, and publication orchestration.
-- `DatasetBundleRecoveryError` preserves the original publication error, rollback errors, and surviving recovery paths when an overwrite cannot be fully restored.
+- **Signature:** `JSON2H5ADConverter(planner: 'SourcePlanner | None' = None, reader=None, asset_cache_dir=None, pipeline_runner: 'NFCoreRunner | None' = None, downloader: 'AssetDownloader | None' = None, metadata_projectors: 'Sequence[AnnDataMetadataProjector] | None' = None, package_source: 'JSONPackageSource | None' = None, retrieval_policy: 'RetrievalPolicy | None' = None, resource_profile: 'str' = 'standard', resource_overrides: 'Mapping[str, int | float] | None' = None, metadata_service: 'MINiMLMetadataProvider | None' = None, combination_policy: 'DatasetCombinationPolicy | None' = None, available_memory: 'Callable[[], int] | None' = None, memory_estimator: 'Callable[[str, Asset], int] | None' = None)`; see [exact method signatures](#public-api-and-callable-reference).
 - **Inputs:** native MINiML or Atlas v1 JSON, source/reference/runtime options,
   and optional public collaborators.
 - **Outputs:** single or batch conversion results plus a transactional
@@ -391,7 +494,7 @@ statement for them; treat those as **evidence-gap**, not stable API.
 - **Side effects:** may read/download assets, run nf-core, and publish staged
   H5AD/provenance artifacts.
 - **Support:** formal export and composition boundary.
-- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+- **Source:** [json2h5ad.py](../src/meta_standards_converter/converters/json2h5ad.py).
 
 The non-exported injection implementation and its typed scientific rejection
 are importable as
@@ -404,15 +507,14 @@ They are documented implementation seams rather than additions to
 <a id="api-source-planner"></a>
 ### `SourcePlanner`
 
-- **Signature:** `SourcePlanner()`; `discover(packages) -> list[Asset]` and
-  `plan(packages, explicit_assets=None, force_reprocess=False) -> dict[str, Asset]`.
+- **Signature:** `SourcePlanner(discovery=None)`; `plan(packages, explicit_assets=None, force_reprocess=False) -> dict[str, Asset]`. The injected discovery collaborator supplies `discover(packages)`.
 - **Inputs:** MINiML packages and optional explicit assets.
-- **Outputs:** one ranked `Asset` per sample; subclasses may specialize
-  discovery while retaining converter-owned lifecycle policy.
+- **Outputs:** one ranked `Asset` per sample; inject an `AssetDiscovery` implementation
+  to specialize discovery while retaining converter-owned lifecycle policy.
 - **Failures:** unsupported or missing sources raise `ValueError`.
 - **Side effects:** planning does not download, execute, or publish.
 - **Support:** formal export and source-planning extension point.
-- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+- **Source:** [planning.py](../src/meta_standards_converter/expression/planning.py).
 
 <a id="api-anndata-metadata-projection"></a>
 ### `AnnDataMetadataProjection`
@@ -423,7 +525,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** construction performs no validation; application rejects missing transform sources, duplicate/colliding targets, rename/drop overlap, addition collisions, and wrong-length axis values.
 - **Side effects:** none.
 - **Support:** formal export.
-- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+- **Source:** [anndata.py](../src/meta_standards_converter/metadata/projection/anndata.py).
 
 <a id="api-anndata-projection-error"></a>
 ### `AnnDataProjectionError`
@@ -434,7 +536,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** raised before final bundle publication unless `allow_invalid=True`.
 - **Side effects:** none; staged files are discarded.
 - **Support:** formal export.
-- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+- **Source:** [anndata.py](../src/meta_standards_converter/metadata/projection/anndata.py).
 
 <a id="api-anndata-metadata-projector"></a>
 ### `AnnDataMetadataProjector`
@@ -447,7 +549,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** projector exceptions, collisions, invalid vectors, and wrong result types fail conversion.
 - **Side effects:** the converter, not the projector contract, owns applying returned additions.
 - **Support:** formal export and injection extension point; it has no `@runtime_checkable`, so runtime protocol checks are unsupported.
-- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+- **Source:** [anndata.py](../src/meta_standards_converter/metadata/projection/anndata.py).
 
 <a id="api-metadata-projection-context"></a>
 ### `MetadataProjectionContext`
@@ -458,18 +560,18 @@ They are documented implementation seams rather than additions to
 - **Failures:** no custom validation.
 - **Side effects:** none.
 - **Support:** formal export; these are all current fields.
-- **Source:** [`converters/json2h5ad.py`](../src/meta_standards_converter/converters/json2h5ad.py).
+- **Source:** [anndata.py](../src/meta_standards_converter/metadata/projection/anndata.py).
 
 <a id="api-json-data-output-orchestrator"></a>
 ### `JSON2OBSConverter`
 
-- **Signature:** `JSON2OBSConverter(h5ad_converter=None, components=None).convert(...)`.
+- **Signature:** `JSON2OBSConverter(h5ad_converter=None, components=None)`; see [exact method signatures](#public-api-and-callable-reference).
 - **Inputs:** JSON source, output destination, optional per-sample sidecars, and H5AD conversion options.
 - **Outputs:** `AnnDataMetadataBatchResult` with aggregated observation tables and optional sample components.
 - **Failures:** Preserves group errors, overwrite refusal, and atomic publication/recovery errors.
 - **Side effects:** Converts selected assets, then publishes tables through the artifact bundle service.
 - **Support:** Public MSC 6 API. TSV manifest publication is owned by `JSON2TSVConverter.export_manifest`; H5AD publication by `JSON2H5ADConverter.convert`.
-- **Source:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py).
+- **Source:** [json2obs.py](../src/meta_standards_converter/converters/json2obs.py).
 
 <a id="api-anndata-metadata-export-result"></a>
 ### `AnnDataMetadataExportResult`
@@ -480,7 +582,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** construction performs no custom validation; the orchestrator validates and serializes its data.
 - **Side effects:** none.
 - **Support:** formal export and successful per-dataset result for `json2obs`.
-- **Source:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py).
+- **Source:** [components.py](../src/meta_standards_converter/expression/components.py).
 
 <a id="api-anndata-metadata-batch-result"></a>
 ### `AnnDataMetadataBatchResult`
@@ -491,18 +593,18 @@ They are documented implementation seams rather than additions to
 - **Failures:** construction performs no custom validation; conversion failures are retained in `failures`.
 - **Side effects:** none.
 - **Support:** formal export and multi-dataset result for `json2obs`.
-- **Source:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py).
+- **Source:** [components.py](../src/meta_standards_converter/expression/components.py).
 
 <a id="api-json2tsv-converter"></a>
 ### `JSON2TSVConverter`
 
-- **Signature:** `JSON2TSVConverter(metadata_projectors=None, package_source=None, metadata_service=None, *, output_format="tsv")`; inherited `convert_source(source, destination, *, allow_invalid=False, overwrite=False) -> TabularConversionResult`.
+- **Signature:** `JSON2TSVConverter(metadata_projectors: 'Sequence[TabularMetadataProjector] | None' = None, package_source: 'JSONPackageSource | None' = None, metadata_service: 'MINiMLMetadataProvider | None' = None, *, output_format: 'str' = 'tsv') -> 'None'`; see [exact method signatures](#public-api-and-callable-reference).
 - **Inputs:** parsed MINiML JSON or canonical Atlas v1, TSV/CSV format, and destination.
 - **Outputs:** selected delimited file and result metadata.
 - **Failures:** invalid formats, source, projector, collision, fail-closed diagnostic, and protected-output errors propagate.
 - **Side effects:** creates the destination parent and writes TSV or CSV.
 - **Support:** formal export.
-- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
+- **Source:** [json2tsv.py](../src/meta_standards_converter/converters/json2tsv.py).
 
 <a id="api-miniml-metadata-service"></a>
 ### `MINiMLMetadataProvider` and `MINiMLMetadataService`
@@ -529,7 +631,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** converter validation applies to the returned projection.
 - **Side effects:** none.
 - **Support:** formal export and default projector when no explicit projectors are supplied.
-- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
+- **Source:** [tabular.py](../src/meta_standards_converter/metadata/projection/tabular.py).
 
 <a id="api-tabular-conversion-result"></a>
 ### `TabularConversionResult`
@@ -540,7 +642,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** no custom validation.
 - **Side effects:** none.
 - **Support:** formal export; `partial` is its public property.
-- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
+- **Source:** [tabular.py](../src/meta_standards_converter/metadata/projection/tabular.py).
 
 <a id="api-tabular-metadata-context"></a>
 ### `TabularMetadataContext`
@@ -551,7 +653,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** no custom validation.
 - **Side effects:** none.
 - **Support:** formal export; these are all current fields.
-- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
+- **Source:** [tabular.py](../src/meta_standards_converter/metadata/projection/tabular.py).
 
 <a id="api-tabular-metadata-projection"></a>
 ### `TabularMetadataProjection`
@@ -562,7 +664,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** converter rejects wrong types/collisions; errors raise `TabularProjectionError` unless `allow_invalid=True`.
 - **Side effects:** none.
 - **Support:** formal export.
-- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
+- **Source:** [tabular.py](../src/meta_standards_converter/metadata/projection/tabular.py).
 
 <a id="api-tabular-metadata-projector"></a>
 ### `TabularMetadataProjector`
@@ -573,106 +675,7 @@ They are documented implementation seams rather than additions to
 - **Failures:** projector exceptions propagate; converter validates type and collisions.
 - **Side effects:** none required.
 - **Support:** formal export/injection extension point; not runtime-checkable.
-- **Source:** [`converters/json2tsv.py`](../src/meta_standards_converter/converters/json2tsv.py).
-
-Supported production symbols are inventoried below by qualified name. Their
-signatures, inputs, outputs, exceptions, side effects, and decisive internal or
-external calls are documented in the linked legacy callable sections that
-follow this canonical overview.
-
-- MAGE-TAB:
-  `meta_standards_converter.magetab.constructor.validate_platform_handler`,
-  `meta_standards_converter.magetab.constructor.ProtocolRegistry`,
-  `meta_standards_converter.magetab.constructor.AEConstructor`,
-  `meta_standards_converter.magetab.idf.IDFConstructor`,
-  `meta_standards_converter.magetab.semantics.MAGETabModelError`,
-  `meta_standards_converter.magetab.semantics.build_model`,
-  `meta_standards_converter.magetab.semantics.validate_model`,
-  `meta_standards_converter.magetab.semantics.render_model`,
-  `meta_standards_converter.magetab.semantics.overlay_core`,
-  `meta_standards_converter.magetab.parser.normalized_label`,
-  `meta_standards_converter.magetab.parser.AEParser`,
-  `meta_standards_converter.magetab.sdrf.constructor.SDRFAttr`,
-  `meta_standards_converter.magetab.sdrf.constructor.SDRFNode`,
-  `meta_standards_converter.magetab.sdrf.constructor.SDRFEdge`,
-  `meta_standards_converter.magetab.sdrf.constructor.SDRFPath`,
-  `meta_standards_converter.magetab.sdrf.constructor.ColumnGroup`,
-  `meta_standards_converter.magetab.sdrf.constructor.SDRFAudit`,
-  `meta_standards_converter.magetab.sdrf.constructor.SDRFConstructor`,
-  `meta_standards_converter.magetab.sdrf.constructor.normalized_extension`,
-  `meta_standards_converter.magetab.sdrf.constructor.classify_file`,
-  `meta_standards_converter.sources.magetab.TextResource`,
-  `meta_standards_converter.sources.magetab.MAGETabInput`, and
-  `meta_standards_converter.sources.magetab.AEWebFetcher`.
-- CLI:
-  `meta_standards_converter.cli.ae2json.main`,
-  `meta_standards_converter.cli.geo2ae.main`,
-  `meta_standards_converter.cli.geo2json.main`,
-  `meta_standards_converter.cli.json2ae.main`,
-  `meta_standards_converter.cli.json2h5ad.main`,
-  `meta_standards_converter.cli.json2tsv.main`,
-  `meta_standards_converter.cli.json2obs.main`,
-  `meta_standards_converter.cli.common.add_platform_handler_arguments`,
-  `meta_standards_converter.cli.common.print_platform_handlers`,
-  `meta_standards_converter.cli.common.add_logging_arguments`,
-  `meta_standards_converter.cli.common.log_level`, and
-  `meta_standards_converter.cli.common.configure_logging`.
-- Conversion:
-  `meta_standards_converter.converters.ae2json.AE2JSONConverter`,
-  `meta_standards_converter.converters.geo2ae.GEO2AEConverter`,
-  `meta_standards_converter.converters.geo2json.GEO2JSONConverter`,
-  `meta_standards_converter.converters.json2ae.JSON2AEConverter`,
-  `meta_standards_converter.expression.assets.Asset`,
-  `meta_standards_converter.metadata.projection.anndata.MetadataProjectionContext`,
-  `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjection`,
-  `meta_standards_converter.metadata.projection.anndata.AnnDataProjectionError`,
-  `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjector`,
-  `meta_standards_converter.expression.assets.AssetManifest`,
-  `meta_standards_converter.expression.assets.AssetDownloader`,
-  `meta_standards_converter.expression.catalogue.PipelineRun`,
-  `meta_standards_converter.expression.catalogue.ConversionResult`,
-  `meta_standards_converter.expression.catalogue.BatchConversionResult`,
-  `meta_standards_converter.expression.catalogue.RawProcessingResult`,
-  `meta_standards_converter.expression.references.ReferenceResolver`,
-  `meta_standards_converter.expression.references.AnnotationConverter`,
-  `meta_standards_converter.expression.nfcore.NFCoreRunner`,
-  `meta_standards_converter.expression.planning.SourcePlanner`,
-  `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter`, and
-  `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter`.
-- Tabular and JSON source:
-  `meta_standards_converter.metadata.projection.tabular.TabularMetadataContext`,
-  `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjection`,
-  `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjector`,
-  `meta_standards_converter.metadata.projection.tabular.TabularConversionResult`,
-  `meta_standards_converter.metadata.projection.tabular.TabularProjectionError`,
-  `meta_standards_converter.metadata.projection.tabular.MSCMetadataProjector`,
-  `meta_standards_converter.converters.json2tsv.JSON2DelimitedConverter`,
-  `meta_standards_converter.converters.json2tsv.JSON2TSVConverter`,
-  `meta_standards_converter.converters.json2tsv.JSON2TSVConverter`,
-  `meta_standards_converter.converters.json2obs.JSON2OBSConverter`,
-  `meta_standards_converter.expression.components.AnnDataMetadataExportResult`,
-  `meta_standards_converter.expression.components.AnnDataMetadataBatchResult`,
-  `meta_standards_converter.sources.json.DatasetPackageGroup`,
-  `meta_standards_converter.sources.json.SourceLoadResult`, and
-  `meta_standards_converter.sources.json.JSONPackageSource`,
-  `meta_standards_converter.metadata.interpretation.MINiMLMetadataProvider`,
-  and `meta_standards_converter.metadata.interpretation.MINiMLMetadataService`.
-- Fetch, parse, enrich, harmonize, and helpers:
-  `meta_standards_converter.metadata.enrichment.MINiMLEnricher`,
-  `meta_standards_converter.miniml.geo_parser.GEOParser`,
-  `meta_standards_converter.miniml.geo_parser.RelatedSeriesParseResult`,
-  `meta_standards_converter.sources.geo.GEOWebFetcher`,
-  `meta_standards_converter.metadata.ontology_mappings.GEO2OLS`,
-  `meta_standards_converter.metadata.ontology_mappings.Harmonizer`,
-  `meta_standards_converter.metadata.ontology_mappings.Pubmed2OLS`,
-  `meta_standards_converter.helpers.json_helper.JSONHandler`,
-  `meta_standards_converter.helpers.request_helper.HostRequestCooldownDeferred`,
-  `meta_standards_converter.helpers.request_helper.HostRequestGate`,
-  `meta_standards_converter.helpers.request_helper.NCBIApplicationIdentity`,
-  `meta_standards_converter.helpers.request_helper.RequestSettings`,
-  `meta_standards_converter.helpers.request_helper.RateLimitedRequester`,
-  `meta_standards_converter.sources.insdc.INSDCWebfetcher`, and
-  `meta_standards_converter.sources.pubmed.PubmedWebFetcher`.
+- **Source:** [tabular.py](../src/meta_standards_converter/metadata/projection/tabular.py).
 
 <a id="principal-workflows"></a>
 ## Principal workflows
@@ -688,9 +691,9 @@ GSE -> fetch MINiML --failure--> exception
     -> [out?] write files / else return in memory
 ```
 
-1. The CLI validates accessions/options and calls `geo2ae.convert`.
+1. The CLI validates accessions/options and calls `GEO2AEConverter.convert`.
 2. `GEOWebFetcher.fetch_gse_miniml` performs the GEO FTP HTTP retrieval.
-3. `GEOParser.parse` scopes packages and optionally traverses related Series.
+3. `GEOSource.parse` delegates XML decoding to the pure `GEOParser` and owns optional related-Series retrieval.
 4. Each package is enriched and passed to `AEConstructor.miniml2magetab`.
 5. `out` writes IDF/SDRF; otherwise only the in-memory list is returned.
 
@@ -714,7 +717,7 @@ GSE -> fetch --failure--> exception
     -> [out?] JSON file / else return only
 ```
 
-1. The CLI calls `geo2json.convert` once per accession and continues after failures.
+1. The CLI calls `GEO2JSONConverter.convert` once per accession and continues after failures.
 2. GEO fetch and parsing are shared with `geo2ae`.
 3. With enrichment enabled, a child that has no direct publication and exactly one
    `SubSeries of` parent may inherit exactly one parent PubMed ID. The parent must
@@ -738,7 +741,8 @@ Pseudocode: `packages = parse(fetch(gse)); [inherit guarded parent PMID]; [enric
 ```text
 path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
                                       \-> non-harmonized dataset -> warning + skip
-     -> [enrich?] -> construct each package --failure--> exception
+     -> resolve optional profile on copy -> [enrich?]
+     -> construct each package --failure--> exception
      -> [out?] IDF/SDRF files / else in-memory MAGE-TAB list
 ```
 
@@ -752,7 +756,9 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
    dataset's single group; non-object entries fail before conversion.
 4. Every retained package must be an object with a usable study accession,
    and all packages are validated before collaborator calls.
-5. Optional enrichment precedes `AEConstructor.miniml2magetab`.
+5. Resolve the direct replacement profile per group on conversion copies, then
+   optionally enrich before `AEConstructor.miniml2magetab`. Skipping enrichment
+   does not disable the constructor's separate missing-evidence lookups.
 6. `AEConstructor` renders deterministic IDF/SDRF tables from native protocols,
    assay paths, named characteristics, units, and typed annotations. It does
    not replay raw source tables or consult a `mage_tab` sidecar, and it emits
@@ -761,16 +767,18 @@ path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
 7. `out` controls writing; construction errors propagate.
 
 Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
-[enrich] -> construct -> [write]; return`.
+resolve profile -> [enrich] -> construct -> [write]; return`.
 
 **Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py), and [`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py).
 
+<a id="ae-web-fetcher"></a>
+<a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>
 ### `ae2json`: MAGE-TAB to parsed JSON
 
 ```text
 local/HTTP/accession -> resolve IDF + SDRF(s) --failure--> exception
-                     -> parse/model/round-trip --failure--> exception
+                     -> parse semantic model -> direct v3 import --failure--> exception
                      -> [out?] accession JSON / else return package list
 ```
 
@@ -914,6 +922,40 @@ Pseudocode: `catalogue -> backed-read each sample metadata -> concatenate obs ro
 
 **Evidence:** [`converters/json2obs.py`](../src/meta_standards_converter/converters/json2obs.py) and [`cli/json2obs.py`](../src/meta_standards_converter/cli/json2obs.py).
 
+<a id="workflow-miniml-migrate"></a>
+### `miniml-migrate`: explicit legacy source import
+
+```text
+source JSON -> read + decode JSON -- invalid/unreadable --> exception; no write
+            -> preserve object/list shape
+            -> migrate every unversioned/1.0 package
+                 |-- v2 / unsupported schema -----------> exception; no write
+                 |-- malformed legacy content ----------> exception; no write
+                 `-- all converted to v3
+                       -> write destination -> print diagnostic summary -> exit 0
+```
+
+1. Parse the required source and destination paths; this command is not a batch
+   converter with per-input error continuation.
+2. Read a mapping or list and call `MINiMLCodec.migrate_v1` for every package.
+   `MINiMLV1Migrator` builds v3 directly, including supported legacy semantic
+   sidecars; it never constructs or accepts an intermediate v2 package.
+3. Encode all converted packages before writing; errors leave the destination
+   unwritten. Parent directories must already exist. A successful write uses
+   `Path.write_text` and **replaces an existing destination**; no overwrite flag
+   or durable artifact transaction is provided by this small utility.
+4. Print a JSON summary with `packages_migrated` and location-bearing diagnostics.
+   Empty input lists retain their list shape and produce an empty output list.
+
+Pseudocode: `parse args -> json.load -> migrate_v1 each -> to_mapping each ->
+write original object/list shape -> print diagnostics`.
+
+**Evidence:** [CLI](../src/meta_standards_converter/cli/miniml_migrate.py),
+[codec](../src/meta_standards_converter/miniml/codec.py),
+[migrator](../src/meta_standards_converter/miniml/migration.py).
+Saved v2 inputs require regeneration or conversion using the preceding release;
+see [compatibility guidance](#miniml-v3-only-cutover).
+
 <a id="extension-and-change-guidance"></a>
 ## Extension and change guidance
 
@@ -931,8 +973,10 @@ Pseudocode: `catalogue -> backed-read each sample metadata -> concatenate obs ro
   discovery paths plus partial failure and overwrite behavior.
 - Add an external service behind `RateLimitedRequester` with explicit timeout,
   delay, retry, safe-logging, and response validation tests.
-- Any round-trip model change requires unchanged restoration, edited overlay,
-  duplicate-header alignment, and fingerprint compatibility tests.
+- Any round-trip model change requires source-value and harmonized-occurrence
+  preservation, edited-core authority, duplicate-header alignment, and explicit
+  path/channel association tests. Raw layout and the complete patch ledger are
+  not reconstructed from flattened MAGE-TAB comments.
 - Any raw-runner change requires Docker artifact tests, rootless-daemon
   rejection, mount/ACL review, and corresponding README/codebase updates.
 
@@ -1049,6 +1093,647 @@ tests/test_xml_safety.py
 tests/GSE328265_family.xml
 ```
 
+<a id="configuration"></a>
+## Configuration
+
+The package has no mandatory application config file. Configure conversions with CLI flags or the equivalent Python `convert()` keyword arguments; use files only for detailed asset mappings, nf-core parameters, or Nextflow infrastructure settings.
+
+| Area | CLI / Python configuration | Default |
+| --- | --- | --- |
+| Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
+| Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
+| Remote enrichment | `--no-enrich` / `enrich=False` | Guarded parent-publication, PubMed, and SRA/ENA enrichment enabled |
+| MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
+| Resource envelope | `--resource-profile`, `--resource-override` / `resource_profile`, `resource_overrides` | Typed `standard` profile |
+| Additional MAGE-TAB source host | `ae2json --source-host` / `source_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
+| Output location | CLI `--out` / Python `out` | CLI defaults vary by command; Python metadata `out=None` returns in memory |
+| Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING normally; `json2obs` reserves stdout for its JSON result and logs to stderr |
+| H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
+| Matrix orientation | `--matrix-orientation` / `matrix_orientation` | `auto`; ambiguous delimited matrices fail |
+| Raw pipeline | `--pipeline` / `pipeline` | `auto` modality detection |
+| Reference | `--genome`, or `--fasta` with `--gtf`/`--gff` | Explicitly accepted human/mouse inference when available |
+| Nextflow | `--profile`, `--revision`, `--params-file`, `--nextflow-config`, `--work-dir`, `--resume` | Docker profile and pinned pipeline revision |
+| Existing H5AD outputs | `--overwrite` / `overwrite=True` | Protect existing outputs |
+| H5AD projector validation | `--allow-invalid` / `allow_invalid=True` | Fail closed before publishing artifacts |
+| Legacy unverified-combination flag | `--allow-unverified-combination` / `allow_unverified_combination=True` | Deprecated and ignored; matrices are never combined |
+
+#### Platform handlers
+
+`geo2ae` and `json2ae` detect the MAGE-TAB platform handler from study metadata by default. Use `--platform-handler KEY` (or the Python `platform_handler` argument) to force a handler, and run either command with `--list-platform-handlers` to print the authoritative runtime catalog.
+
+The following graph shows the conceptual specialization of the selectable handlers. It is not the literal inheritance tree of the private IDF and SDRF implementation classes.
+
+```mermaid
+flowchart TD
+    platform[platform handler] --> generic[generic]
+    platform --> array[array]
+    platform --> sequencing[sequencing]
+    sequencing --> bulk[bulk_sequencing]
+    sequencing --> single_cell[single_cell_sequencing]
+    single_cell --> plate[plate_single_cell_sequencing]
+    single_cell --> droplet[droplet_single_cell_sequencing]
+    single_cell --> spatial[spatial_sequencing]
+    droplet --> tenx_v2[tenx_v2_droplet_single_cell_sequencing]
+    droplet --> tenx_v3[tenx_v3_droplet_single_cell_sequencing]
+```
+
+For detailed H5AD source configuration, `--asset-manifest` accepts CSV or TSV. `scope_id` and `path` are required; supported optional columns are `kind`, `role`, `read`, `lane`, `run`, `md5`, `features_path`, `barcodes_path`, and `orientation`.
+
+```csv
+scope_id,path,kind,role,read,lane,md5,orientation
+GSM9651991,/data/GSM9651991.h5ad,h5ad,primary,,,,
+GSM9651992,https://example.org/GSM9651992_R1.fastq.gz,raw,primary,1,L001,,
+GSM9651992,https://example.org/GSM9651992_R2.fastq.gz,raw,primary,2,L001,,
+```
+
+Reference combinations accepted for raw processing are `--genome GENOME`, `--genome GENOME` with one annotation override, or `--fasta FASTA` with exactly one of `--gtf GTF` and `--gff GFF`. GFF/GFF3 is converted to a checksum-addressed GTF. A JSON object supplied through `--params-file` is merged into nf-core parameters, but converter-owned input, output, and reference values take precedence; `--nextflow-config` is reserved for resource and infrastructure configuration.
+
+The rootless Compose helper derives `DOCKER_HOST` and its runtime paths. `ROOTLESS_DOCKER_SOCKET` is the single test/operations seam for overriding the derived user socket; `JSON2H5AD_OUT` overrides the default `.out/json2h5ad` tree. Compose sets `META_STANDARDS_REQUIRE_ROOTLESS_DOCKER=1`, causing Docker-profile raw processing to fail before Nextflow starts unless the connected daemon reports rootless security mode.
+
+
+Replacement profiles are optional and direct: supplying one enables replacements.
+See [profile validation and fallback](#harmonization-overrides).
+
+
+<a id="cli"></a>
+## CLI reference
+
+All eight commands are registered in [pyproject.toml](../pyproject.toml).
+The tables below are derived from their current `argparse` parsers.
+`None` denotes an omitted value; repeatable options accumulate unless a
+mutually exclusive group is noted. Use `COMMAND --help` for installed-version help.
+
+The seven conversion commands isolate failures per input and return nonzero on
+errors (H5AD/OBS also report partial results). `miniml-migrate` propagates
+read/validation/write failures directly. Python errors are described with each
+workflow.
+
+
+<a id="command-ae2json"></a>
+#### `ae2json`
+
+Convert local, remote, or BioStudies MAGE-TAB metadata to parsed JSON.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `source` | text; multiple | `required` | IDF path, HTTP(S) IDF URL, or ArrayExpress/BioStudies accession. |
+| `--sdrf` | text; repeatable | `None` | Explicit SDRF path or HTTP(S) URL. Repeat for multiple SDRFs; requires one source. |
+| `--out` | text | `'.'` | Directory for generated JSON files. |
+| `--resource-profile` | standard / large | `'standard'` | Typed resource envelope. Defaults to standard. |
+| `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
+| `--source-host` | text; repeatable | `[]` | Explicitly allow one exact remote IDF/SDRF hostname. |
+| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
+| `--log-file` | text | `None` | Optional file path to write logs. |
+
+Mutually exclusive: `-v`, `-q`.
+
+[Execution and failure behavior](#workflow-ae2json); [parser source](../src/meta_standards_converter/cli/ae2json.py).
+
+
+<a id="command-geo2ae"></a>
+#### `geo2ae`
+
+Convert one or more GEO Series accessions to ArrayExpress MAGE-TAB files.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `gse` | text; multiple | `required` | GEO Series accession(s), for example GSE234602. |
+| `--related`, `--related-series`, `--get-related-series` | flag | `False` | Include related GEO super/subseries where available. |
+| `--remove-empty` | flag | `True` | Remove empty parsed MINiML fields before conversion. This is the default. |
+| `--keep-empty` | flag | `True` | Preserve empty parsed MINiML fields before conversion. |
+| `--out` | text | `'.'` | Directory for generated IDF and SDRF files. Defaults to the current directory. |
+| `--platform-handler` | plate_single_cell_sequencing / droplet_single_cell_sequencing / tenx_v2_droplet_single_cell_sequencing / tenx_v3_droplet_single_cell_sequencing / single_cell_sequencing / spatial_sequencing / bulk_sequencing / sequencing / array / generic | `None` | Force IDF and SDRF generation through the selected platform handler. |
+| `--list-platform-handlers` | flag | `False` | List available platform handler keys and exit. |
+| `--resource-profile` | standard / large | `'standard'` | Typed resource envelope. Defaults to standard. |
+| `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
+| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
+| `--log-file` | text | `None` | Optional file path to write logs. |
+
+Mutually exclusive: `--remove-empty`, `--keep-empty`.
+
+Mutually exclusive: `--platform-handler`, `--list-platform-handlers`.
+
+Mutually exclusive: `-v`, `-q`.
+
+[Execution and failure behavior](#workflow-geo2ae); [parser source](../src/meta_standards_converter/cli/geo2ae.py).
+
+
+<a id="command-geo2json"></a>
+#### `geo2json`
+
+Convert one or more GEO Series accessions to parsed MINiML JSON files.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `gse` | text; multiple | `required` | GEO Series accession(s), for example GSE234602. |
+| `--related`, `--related-series`, `--get-related-series` | flag | `False` | Include related GEO super/subseries where available. |
+| `--remove-empty` | flag | `True` | Remove empty parsed MINiML fields before conversion. This is the default. |
+| `--keep-empty` | flag | `True` | Preserve empty parsed MINiML fields before conversion. |
+| `--no-enrich` | flag | `True` | Skip PubMed/SRA enrichment and write parsed GEO MINiML JSON only. |
+| `--out` | text | `'.'` | Directory for generated JSON files. Defaults to the current directory. |
+| `--resource-profile` | standard / large | `'standard'` | Typed resource envelope. Defaults to standard. |
+| `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
+| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
+| `--log-file` | text | `None` | Optional file path to write logs. |
+
+Mutually exclusive: `--remove-empty`, `--keep-empty`.
+
+Mutually exclusive: `-v`, `-q`.
+
+[Execution and failure behavior](#workflow-geo2json); [parser source](../src/meta_standards_converter/cli/geo2json.py).
+
+
+<a id="command-json2ae"></a>
+#### `json2ae`
+
+Convert canonical Atlas v1 JSON or parsed MINiML JSON to ArrayExpress MAGE-TAB files.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `json_path` | text; multiple | `required` | Parsed MINiML or canonical Atlas v1 JSON file(s), for example GSE234602.json. |
+| `--no-enrich` | flag | `True` | Skip PubMed/SRA enrichment and convert the JSON exactly as supplied. |
+| `--out` | text | `'.'` | Directory for generated IDF and SDRF files. Defaults to the current directory. |
+| `--replacement-profile` | text | `None` | Replacement profile as inline JSON; supplying it activates replacements. |
+| `--replacement-profile-file` | text | `None` | Path to a replacement profile JSON object. |
+| `--platform-handler` | plate_single_cell_sequencing / droplet_single_cell_sequencing / tenx_v2_droplet_single_cell_sequencing / tenx_v3_droplet_single_cell_sequencing / single_cell_sequencing / spatial_sequencing / bulk_sequencing / sequencing / array / generic | `None` | Force IDF and SDRF generation through the selected platform handler. |
+| `--list-platform-handlers` | flag | `False` | List available platform handler keys and exit. |
+| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
+| `--log-file` | text | `None` | Optional file path to write logs. |
+
+Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
+
+Mutually exclusive: `--platform-handler`, `--list-platform-handlers`.
+
+Mutually exclusive: `-v`, `-q`.
+
+[Execution and failure behavior](#workflow-json2ae); [parser source](../src/meta_standards_converter/cli/json2ae.py).
+
+
+<a id="command-json2h5ad"></a>
+#### `json2h5ad`
+
+Convert parsed MINiML or canonical Atlas v1 JSON files to H5AD.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `json_path` | text; multiple | `required` | Parsed MINiML or canonical Atlas v1 JSON file(s), for example GSE234602.json. |
+| `--out`, `--outdir` | text | `'.'` | Directory for generated H5AD files. Defaults to the current directory. |
+| `--asset-manifest` | text | `None` | CSV/TSV mapping GEO accessions to local or remote assets. |
+| `--asset` | text; repeatable | `[]` | Explicit H5AD, matrix, or FASTQ asset. Repeat for multiple assets. |
+| `--force-reprocess` | flag | `False` | Ignore processed assets and rebuild every eligible sample from raw FASTQs. |
+| `--pipeline` | auto / scrnaseq / rnaseq | `'auto'` | nf-core pipeline for raw inputs. Defaults to metadata-based selection. |
+| `--genome` | text | `None` | nf-core genome key, for example GRCh38. |
+| `--fasta` | text | `None` | Custom reference genome FASTA path. |
+| `--gtf` | text | `None` | Custom reference annotation GTF path. |
+| `--gff` | text | `None` | Custom reference annotation GFF3 path. |
+| `--accept-inferred-reference` | flag | `False` | Allow a supported reference inferred from GEO organism metadata. |
+| `--profile` | text | `'docker'` | Nextflow profile. Defaults to docker. |
+| `--revision` | text | `None` | Override the pinned nf-core pipeline revision. |
+| `--params-file` | text | `None` | Additional nf-core JSON parameters. |
+| `--nextflow-config` | text | `None` | Nextflow resource/infrastructure config path. |
+| `--work-dir` | text | `None` | Nextflow work directory. |
+| `--resume` | flag | `False` | Resume from the Nextflow cache. |
+| `--force-memory` | flag | `False` | On a resumed run, bypass the fixed in-memory profile ceiling while retaining the hard 90%% available-memory ceiling. |
+| `--processed-checkpoint-dir` | text | `None` | Persistent directory for resumable processed-sample checkpoints. |
+| `--overwrite` | flag | `False` | Replace existing normalized outputs. |
+| `--allow-invalid` | flag | `False` | Write outputs carrying projector-reported validation errors. |
+| `--allow-unverified-combination` | flag | `False` | Deprecated compatibility flag; ignored because outputs are a per-sample catalogue and expression matrices are never combined. |
+| `--matrix-orientation` | auto / genes-by-observations / observations-by-genes | `'auto'` | Orientation for generic delimited matrices. |
+| `--replacement-profile` | text | `None` | Replacement profile as inline JSON; supplying it activates replacements. |
+| `--replacement-profile-file` | text | `None` | Path to a replacement profile JSON object. |
+| `--resource-profile` | standard / large | `'standard'` | Typed resource envelope. Defaults to standard. |
+| `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
+| `--asset-host` | text; repeatable | `[]` | Explicitly allow one additional exact remote asset hostname. |
+| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
+| `--log-file` | text | `None` | Optional file path to write logs. |
+
+Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
+
+Mutually exclusive: `-v`, `-q`.
+
+[Execution and failure behavior](#workflow-json2h5ad); [parser source](../src/meta_standards_converter/cli/json2h5ad.py).
+
+
+<a id="command-json2tsv"></a>
+#### `json2tsv`
+
+Convert parsed MINiML or canonical Atlas v1 JSON files to a sample manifest.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `json_path` | text; multiple | `required` |  |
+| `--out`, `--outdir` | text | `'.'` |  |
+| `--format` | tsv / csv | `'tsv'` |  |
+| `--allow-invalid` | flag | `False` |  |
+| `--overwrite` | flag | `False` |  |
+| `--replacement-profile` | text | `None` | Replacement profile as inline JSON; supplying it activates replacements. |
+| `--replacement-profile-file` | text | `None` | Path to a replacement profile JSON object. |
+| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
+| `--log-file` | text | `None` | Optional file path to write logs. |
+
+Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
+
+Mutually exclusive: `-v`, `-q`.
+
+[Execution and failure behavior](#workflow-json2tsv); [parser source](../src/meta_standards_converter/cli/json2tsv.py).
+
+
+<a id="command-json2obs"></a>
+#### `json2obs`
+
+Aggregate AnnData observation metadata without combining expression matrices.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `json_path` | text; multiple | `required` |  |
+| `--outdir` | text | `required` |  |
+| `--include-var` | flag | `False` |  |
+| `--include-uns` | flag | `False` |  |
+| `--asset-manifest` | text | `None` |  |
+| `--asset` | text; repeatable | `[]` |  |
+| `--force-reprocess` | flag | `False` |  |
+| `--pipeline` | auto / scrnaseq / rnaseq | `'auto'` |  |
+| `--genome` | text | `None` |  |
+| `--fasta` | text | `None` |  |
+| `--gtf` | text | `None` |  |
+| `--gff` | text | `None` |  |
+| `--accept-inferred-reference` | flag | `False` |  |
+| `--profile` | text | `'docker'` |  |
+| `--revision` | text | `None` |  |
+| `--params-file` | text | `None` |  |
+| `--nextflow-config` | text | `None` |  |
+| `--work-dir` | text | `None` |  |
+| `--resume` | flag | `False` |  |
+| `--force-memory` | flag | `False` | On resume, permit conversion up to 90%% of currently available memory. |
+| `--processed-checkpoint-dir` | text | `None` |  |
+| `--overwrite` | flag | `False` |  |
+| `--allow-invalid` | flag | `False` |  |
+| `--replacement-profile` | text | `None` | Replacement profile as inline JSON; supplying it activates replacements. |
+| `--replacement-profile-file` | text | `None` | Path to a replacement profile JSON object. |
+| `--matrix-orientation` | auto / genes-by-observations / observations-by-genes | `'auto'` |  |
+| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
+| `--log-file` | text | `None` | Optional file path to write logs. |
+
+Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
+
+Mutually exclusive: `-v`, `-q`.
+
+[Execution and failure behavior](#workflow-json2obs); [parser source](../src/meta_standards_converter/cli/json2obs.py).
+
+
+<a id="command-miniml-migrate"></a>
+#### `miniml-migrate`
+
+Import legacy unversioned/1.0 source JSON directly as MSC MINiML 3.0. MINiML 2.0 is unsupported.
+
+| Argument | Type / values | Default | Meaning |
+| --- | --- | --- | --- |
+| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
+| `source` | text | `required` | Legacy MINiML JSON file. |
+| `destination` | text | `required` | Destination for MSC MINiML 3.0 JSON. |
+
+[Execution and failure behavior](#workflow-miniml-migrate); [parser source](../src/meta_standards_converter/cli/miniml_migrate.py).
+
+<a id="python-api-guide"></a>
+## Python API guide
+
+The converters accept injectable collaborators for testing and integration, but default construction is sufficient for normal use. `JSON2H5ADConverter(..., combination_policy=None)` retains a dedicated compatibility-evidence policy for future explicit integration workflows, but its `combine()` operation fails with guidance: catalogue conversion never performs a sparse outer join. Replacements must not turn catalogue publication into an implicit integration step; source processing and transactional publication remain converter responsibilities.
+
+Read the canonical Atlas v1 wire format without installing its producer:
+
+```python
+from meta_standards_converter.atlas_v1 import AtlasV1Reader
+
+result = AtlasV1Reader().load("atlas.json")
+for dataset in result.datasets:
+    print(dataset.dataset_id, dataset.metadata)
+```
+
+The reader validates the Atlas v1 identity, collections, cross-references and summary,
+returns only harmonized dataset metadata, and reports skipped states through
+`result.warnings`. MSC intentionally has no runtime or build dependency on
+ThematicAtlases; compatibility is verified with the producer-owned golden wire
+fixture copied into `tests/fixtures/contracts/`. A harmonized dataset whose
+metadata is exactly `{"packages": [...]}` remains one dataset group while each
+contained MINiML package is converted independently; this preserves related
+series packages without treating them as separate Atlas datasets.
+
+Convert GEO to MAGE-TAB:
+
+```python
+from meta_standards_converter.converters.geo2ae import GEO2AEConverter
+
+magetabs = GEO2AEConverter().convert(
+    gse="GSE234602",
+    related_series=False,
+    remove_empty=True,
+    out="output",
+    platform_handler=None,
+)
+```
+
+`GEO2AEConverter.convert(...)` returns a list of in-memory MAGE-TAB payloads. `out=None` suppresses file writes; `platform_handler=None` keeps automatic detection.
+
+Convert GEO to JSON:
+
+```python
+from meta_standards_converter.converters.geo2json import GEO2JSONConverter
+
+packages = GEO2JSONConverter().convert(
+    gse="GSE234602",
+    related_series=False,
+    remove_empty=True,
+    enrich=True,
+    out="output",
+)
+```
+
+`GEO2JSONConverter.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[MINiMLPackage]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in package `extensions.publication_inheritance`. Legacy nested `series.extensions` inputs remain readable, but canonical encoding hoists all entries to package scope and rejects conflicts.
+
+For callers that collect related studies directly,
+`GEOSource.parse_related_series(..., strict=False)` returns a list-compatible
+`RelatedSeriesParseResult`. Its status 2.0 envelope, attempted/failed accession
+lists, and persistence-safe errors make partial traversal explicit; provider
+exception messages are neither returned nor logged.
+
+Convert parsed JSON to MAGE-TAB:
+
+```python
+from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
+magetabs = JSON2AEConverter().convert(
+    json_path="output/GSE234602.json",
+    out="output",
+    enrich=True,
+    platform_handler=None,
+)
+```
+
+`JSON2AEConverter.convert(json_path, out=None, enrich=True, platform_handler=None)`
+accepts a parsed MINiML object/list or canonical Atlas v1 document and
+returns ordered MAGE-TAB payloads. `json2ae(..., package_source=...)` permits
+injection of a compatible source loader. Forcing a handler regenerates
+IDF/SDRF content instead of reusing unchanged round-trip tables or a
+typed-model-only rendering. Regeneration unions eligible mapped core IDF rows
+and non-structural SDRF columns into the typed model, including separate
+harmonized `hz_*`, `hz_*_id`, and `hz_*_onto` characteristic columns when
+present.
+
+Convert MAGE-TAB to parsed JSON:
+
+```python
+from meta_standards_converter.converters.ae2json import AE2JSONConverter
+
+packages = AE2JSONConverter().convert(
+    source="E-MTAB-1990",
+    out="output",
+    sdrf_sources=None,
+)
+```
+
+`AE2JSONConverter.convert(source, out=None, sdrf_sources=None)` returns a one-package list. Configure the constructor with `resource_profile`, `resource_overrides`, and additional exact `source_hosts`. `sdrf_sources` is a list of explicit local paths or policy-approved HTTPS URLs and follows the same constraints as repeated CLI `--sdrf` values.
+
+Convert parsed JSON and expression assets to H5AD:
+
+```python
+from meta_standards_converter.expression.assets import Asset
+from meta_standards_converter.converters import JSON2H5ADConverter
+
+result = JSON2H5ADConverter().convert(
+    json_path="output/GSE234602.json",
+    out="output",
+    explicit_assets=[Asset("GSM9651991", "local.h5ad", "h5ad")],
+    asset_manifest=None,
+    asset_specs=None,
+    force_reprocess=False,
+    matrix_orientation="auto",
+    overwrite=False,
+    pipeline="auto",
+    genome="GRCh38",
+    fasta=None,
+    gtf="references/current.gtf.gz",
+    gff=None,
+    accept_inferred_reference=False,
+    profile="docker",
+    revision=None,
+    params_file=None,
+    nextflow_config=None,
+    work_dir=None,
+    resume=False,
+)
+```
+
+`JSON2H5ADConverter.convert()` accepts ordinary parsed MINiML JSON or a
+canonical Atlas v1 document. It returns `ConversionResult` for exactly
+one dataset group and `BatchConversionResult` for multiple groups.
+`convert_source(json_path, out=None, **options)` always returns
+`BatchConversionResult`. For multiple groups, each dataset is converted below
+an output child directory named for its dataset ID; per-group exceptions are
+recorded in `BatchConversionResult.failures` while later groups continue.
+Invalid paths, unsafe dataset IDs, invalid source shapes, sources with no
+convertible groups, and sources with no convertible samples raise before
+aggregation. `ConversionResult` exposes `study_accession`,
+`sample_h5ads`, `combined_h5ad`, `retained_h5ads`, `pipeline_runs`,
+`manifest_path`, `warnings`, `errors`, `failures`, `primary_h5ad`, and
+`partial`; catalogue conversions leave the compatibility field
+`combined_h5ad` as `None` and choose the first sample artifact as `primary_h5ad`.
+In-memory paths are absolute; persisted provenance paths are relative to their
+artifact parent where possible. See the
+[H5AD workflow contract](#workflow-json2h5ad).
+
+Applications can add organization-neutral metadata without subclassing the
+converter by passing metadata projectors:
+
+```python
+from meta_standards_converter.metadata.projection import AnnDataMetadataProjection
+from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
+
+
+class Projector:
+    def project_sample(self, *, adata, context):
+        return AnnDataMetadataProjection(
+            obs={"example.sample_accession": context.sample_accession},
+            uns={"example": {"schema_version": "1"}},
+        )
+
+
+
+result = JSON2H5ADConverter(metadata_projectors=[Projector()]).convert(
+    "output/GSE234602.json",
+    out="output",
+)
+```
+
+Projectors run after standard `msc.*` normalization and before H5AD writing.
+The sample hook runs per sample; the legacy `project_combined` hook is not called
+by catalogue conversion. Add `obs_renames`/`obs_drops` only when the referenced
+source columns are known to exist.
+Scalars are broadcast over the selected axis, vectors must match the axis
+length, and existing `obs`, `var`, or top-level `uns` keys cannot be replaced.
+`obs_renames` and `obs_drops` are validated and applied atomically before
+projected `obs` additions; missing sources, duplicate targets, collisions, or
+attempting to rename and drop the same column fail unconditionally.
+Warnings returned by a projector are added to the conversion result and
+manifest. Projector-reported `errors` raise `AnnDataProjectionError` and leave
+no final bundle by default. `allow_invalid=True` writes artifacts, records the
+errors in the result and manifest, and makes `partial` true. Structural
+`TypeError` and `ValueError` conditions remain unconditional. Omitting
+projectors preserves the standard output.
+
+Create a private or organization-specific table without modifying MSC:
+
+```python
+from meta_standards_converter.metadata.projection import TabularMetadataProjection
+from meta_standards_converter.converters import JSON2TSVConverter
+
+
+class Projector:
+    def project_sample(self, *, context):
+        return TabularMetadataProjection(
+            values={"example.sample": context.sample_accession},
+            columns=("example.sample",),
+        )
+
+
+result = JSON2TSVConverter(
+    metadata_projectors=[Projector()]
+).convert_source("atlas.json", "output/metadata.tsv")
+```
+
+Explicit projector lists replace the default MSC table contract. Preferred
+columns are written first, remaining columns are sorted, collisions fail, and
+projector errors fail closed unless `allow_invalid=True`.
+`JSON2TSVConverter` and `JSON2H5ADConverter` also accept an optional
+`metadata_service` implementing the exported `MINiMLMetadataProvider`
+protocol. The default `MINiMLMetadataService` keeps study/sample identity,
+canonical sample fields, and modality scientifically consistent across
+delimited and AnnData outputs without coupling either exporter to the other.
+
+
+<a id="docker-guide"></a>
+## Docker guide
+
+Build the image:
+
+```bash
+docker build -t meta-standards-converter .
+```
+
+With no command, the image displays `geo2ae --help`. Any installed CLI can be supplied after the image name:
+
+```bash
+docker run --rm meta-standards-converter geo2json --help
+```
+
+Mount host paths for inputs and outputs. Use matching container paths in CLI arguments:
+
+```bash
+mkdir -p output
+docker run --rm \
+  -v "$PWD/output:/work" \
+  meta-standards-converter \
+  geo2json GSE234602 --out /work
+
+docker run --rm \
+  -v "$PWD/output:/work" \
+  meta-standards-converter \
+  json2ae /work/GSE234602.json --out /work
+```
+
+The standard image contains no Docker daemon. Metadata conversion and processed-asset H5AD conversion work without a nested runtime. Raw FASTQ processing with the Docker profile requires a deliberately supplied daemon; use the hardened rootless Compose workflow below.
+
+### Rootless Docker Compose guide
+
+The rootless workflow is intended for raw `json2h5ad` processing. It creates a locked `nfcore-runner` account, gives it read access to the project and read/write access only to `.out/json2h5ad`, and connects the converter to that account's rootless Docker socket.
+
+Provision once as root:
+
+```bash
+sudo "$PWD/scripts/provision-rootless-json2h5ad.sh" \
+  "$PWD" "$PWD/.out/json2h5ad"
+```
+
+Build and verify the image as the runner:
+
+```bash
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" build converter
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
+  run --rm converter docker info --format '{{json .SecurityOptions}}'
+```
+
+Generate JSON and process raw data. All mounted inputs, outputs, caches, and Nextflow work must remain under `.out/json2h5ad`:
+
+```bash
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
+  run --rm converter geo2json GSE104830 \
+  --out "$PWD/.out/json2h5ad/json" -vv
+
+sudo -u nfcore-runner -H "$PWD/scripts/json2h5ad-compose.sh" \
+  run --rm converter json2h5ad \
+  "$PWD/.out/json2h5ad/json/GSE104830.json" \
+  --out "$PWD/.out/json2h5ad/bulk" \
+  --force-reprocess --pipeline rnaseq \
+  --accept-inferred-reference --profile docker -vv
+```
+
+The helper refuses non-rootless daemons. Compose drops all capabilities, enables `no-new-privileges`, makes the root filesystem read-only, and mounts only the dedicated output tree and rootless socket. Final H5AD files use mode `0660`; provisioning establishes and verifies the project-owner and runner ACLs.
+
+
+<a id="request-helper"></a>
+## Host-aware request policy
+
+Source fetchers own provider-specific operations; `RateLimitedRequester` owns
+bounded attempts, timing and redacted metrics. `HostRequestGate` shares start
+times and cooldowns across processes using a locked, owner-only per-user runtime
+directory. This is a filesystem coordination boundary, not a service database.
+
+| Source operation | Request and response use | Owning code |
+| --- | --- | --- |
+| GEO MINiML | HTTPS GET to `ftp.ncbi.nlm.nih.gov/geo/series/{bucket}/{GSE}/miniml/{GSE}_family.xml.tgz`; validate the bounded archive and decode its expected XML | [GEOWebFetcher](../src/meta_standards_converter/sources/geo.py) |
+| BioStudies MAGE-TAB | API root `https://www.ebi.ac.uk/biostudies/api/v1`; resolve study file records, page file listings, fetch selected IDF/SDRF resources | [AEWebFetcher](../src/meta_standards_converter/sources/magetab.py) |
+| PubMed | GET `https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi` with PubMed IDs; extract publication summaries for enrichment and IDF evidence | [PubmedWebFetcher](../src/meta_standards_converter/sources/pubmed.py) |
+| SRA | GET `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi` for SRA XML; parse run, library, instrument and study evidence | [INSDCWebfetcher](../src/meta_standards_converter/sources/insdc.py) |
+| ENA | GET `https://www.ebi.ac.uk/ena/portal/api/filereport`; parse the run/FASTQ file report and merge supported missing evidence | [INSDCWebfetcher](../src/meta_standards_converter/sources/insdc.py) |
+
+Conservative defaults space NCBI E-utilities starts by 0.5 seconds and GEO FTP,
+BioStudies and ENA starts by one second. `Retry-After` cooldowns survive process
+exit. A cooldown exceeding the inline wait budget produces deferred work rather
+than an unbounded sleep. `SCIENTIFIC_PROVIDER_GATE_DIR` selects an explicit
+state directory; otherwise the validated runtime-directory fallback applies.
+`NCBIApplicationIdentity` supplies tool/contact parameters. `NCBI_API_KEY` is
+optional and secret: it is not logged and does not raise the default request rate.
+
+Request metrics expose cumulative `provider_attempts`, `retry_count` and
+`rate_wait_seconds`; converters aggregate them through public `metrics()` methods
+where provided. The same gate supports model-provider leases for composing
+libraries, but MSC conversion does not itself perform LLM inference.
+
+Resource profiles control timeouts and in-flight ceilings. These are client
+limits, not provider entitlements. Redacted telemetry records host/service,
+status and timing, never credentials, request parameters, source XML or study
+payloads. [Secure retrieval](#secure-retrieval-and-xml) separately enforces
+host/address, archive/XML, checksum and byte limits. [Source contracts](#msc6-source-services)
+define how consumers inject clients and observe metrics without accessing nested
+private requesters.
+
+**Evidence:** [request helper](../src/meta_standards_converter/helpers/request_helper.py),
+[resource profiles](../src/meta_standards_converter/runtime_contracts.py),
+[operational events](../src/meta_standards_converter/operational_events.py).
+
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
 
@@ -1057,11 +1742,6 @@ tests/GSE328265_family.xml
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
 - The package requires Python `>=3.10`.
-- The 2026-08-02 local compatibility point passed the complete deterministic
-  suite on Python 3.12 with python-dateutil 2.9.0.post0, requests 2.34.2,
-  AnnData 0.13.2, h5py 3.16.0, NumPy 2.4.6, pandas 3.0.5, Scanpy 1.12.3, and
-  SciPy 1.18.0. Declared next-major ceilings contain that tested point; they are
-  compatibility bounds, not claims that every intervening version was tested.
 - Base runtime dependencies are `requests>=2.31,<3` and
   `python-dateutil>=2.8.2,<3`; the `h5ad` extra bounds AnnData `<1`, Scanpy
   `<2`, NumPy `<3`, pandas `<4`, SciPy `<2`, and h5py `<4` while retaining the
@@ -1076,7 +1756,7 @@ tests/GSE328265_family.xml
   operator artifacts are deliberately absent, leaving the composing release
   gate blocked instead of fabricating security evidence.
 - The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
-- Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
+- Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and `GEOSource` owns related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are derived from the standard resource profile and
   enforced across the process by normalized hostname: 10-second connect and
   60-second read timeouts with at most four network workers. Service-specific
@@ -1089,7 +1769,7 @@ tests/GSE328265_family.xml
   totals. XML, parsed metadata, publication content, tokens, and credentials are
   never logged.
 - `GEO2AEConverter.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
-- `GEO2JSONConverter.convert()` returns parsed GEO package JSON, enriched by default, and can write `{accession}.json`.
+- `GEO2JSONConverter.convert()` returns typed `MINiMLPackage` objects, enriched by default, and can write `{accession}.json`.
 - `JSON2AEConverter.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
 - `AE2JSONConverter.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `JSON2H5ADConverter.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes a per-sample H5AD catalogue without matrix integration.
@@ -1099,80 +1779,14 @@ tests/GSE328265_family.xml
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
 
 <a id="end-to-end-geo2ae-flow"></a>
-## End-To-End geo2ae Flow
+## GEO to MAGE-TAB
 
-```text
-main(argv)
-  -> parse CLI args
-  -> instantiate GEO2AEConverter()
-  -> for each GSE accession:
-       GEO2AEConverter.convert(gse, related_series, remove_empty, out, platform_handler)
-       continue to the next accession if a conversion fails
-  -> return 1 if any accession failed, else 0
-
-GEO2AEConverter.convert(gse, related_series, remove_empty, out, platform_handler=None)
-  -> GEOWebFetcher.fetch_gse_miniml(gse)
-  -> GEOParser.parse(miniml, remove_empty=remove_empty, related_series=related_series)
-  -> MINiMLEnricher.enrich(data) for each parsed package
-  -> instantiate one shared AEConstructor()
-  -> for each enriched metadata package:
-       AEConstructor.miniml2magetab(data, platform_handler=platform_handler)
-  -> if out:
-       AEConstructor.magetab2file(magetab, out) for each MAGE-TAB payload
-  -> return list of MAGE-TAB payloads
-```
-
-`GEO2JSONConverter.convert(gse, related_series, remove_empty, enrich, out)` follows the same GEO fetch and parse stages, optionally enriches each parsed package through `MINiMLEnricher`, writes `{gse}.json` when `out` is truthy, and returns the list of JSON packages without invoking AE/MAGE-TAB construction.
-
-The persisted JSON and H5AD workflows are documented separately under End-To-End json2ae Flow and End-To-End json2h5ad Flow.
-
-External calls in the live conversion path are isolated behind fetchers:
-
-- `GEOWebFetcher.fetch_gse_miniml()` calls GEO FTP through `RateLimitedRequester(service="geo_ftp")`.
-- `PubmedWebFetcher.pubmed_summary()` calls NCBI PubMed ESummary through `RateLimitedRequester(service="ncbi_eutils")`.
-- `INSDCWebfetcher.fetch_sra_runs()` calls NCBI SRA EFetch and ENA Portal file reports through service-specific `RateLimitedRequester` instances.
-
-CLI behavior:
-
-- Positional `gse` accepts one or more GEO Series accessions.
-- `--related`, `--related-series`, and `--get-related-series` are aliases that enable related super/subseries traversal.
-- `--remove-empty` is the default and removes empty parsed MINiML fields before conversion.
-- `--keep-empty` preserves empty parsed MINiML fields.
-- `--out DIR` defaults to the current directory.
-- `--platform-handler KEY` forces the same validated technology key through IDF and SDRF generation.
-- `--list-platform-handlers` requires no GSE input, prints the stable keys one per line, and exits without conversion.
-- Failed accessions log an error and traceback to stdout through the configured logger, then later accessions still run.
+See the canonical [GEO to MAGE-TAB workflow](#workflow-geo2ae) for stages, branches, calls and outputs.
 
 <a id="end-to-end-json2ae-flow"></a>
-## End-To-End json2ae Flow
+## JSON to MAGE-TAB
 
-```text
-main(argv)
-  -> parse JSON paths, --out, --no-enrich, platform-handler, and logging flags
-  -> instantiate JSON2AEConverter()
-  -> for each JSON path:
-       JSON2AEConverter.convert(json_path, enrich, out, platform_handler)
-       continue to the next path if conversion fails
-  -> return 1 if any path failed, else 0
-
-JSON2AEConverter.convert(json_path, out, enrich=True, platform_handler=None)
-  -> fail if the path does not exist or JSON decoding fails
-  -> normalize one package object to a one-element list
-  -> require a non-empty list of package objects
-  -> validate each package contains a usable study accession; GSE accessions must be numeric
-  -> for each package in order:
-       MINiMLEnricher.enrich(data) when enrich=True
-       AEConstructor.miniml2magetab(data, platform_handler=platform_handler)
-  -> if out:
-       AEConstructor.magetab2file(magetab, out) for each payload
-  -> return the ordered list of MAGE-TAB payloads
-```
-
-Enrichment is enabled by default to match the live `geo2ae` path and may call PubMed, NCBI SRA, and ENA. `--no-enrich` or `enrich=False` makes conversion operate on the supplied JSON without those enrichment calls. The input is otherwise not rewritten. All packages are validated before enrichment or construction begins, and related Series require no separate traversal flag because their packages are already represented in the input list.
-
-The converter uses one injected or default `MINiMLEnricher` and `AEConstructor` per instance. It delegates file naming, IDF/SDRF validation, TSV rendering, and overwrite behavior to `AEConstructor.magetab2file()`. Logs contain paths, package indexes, counts, and stages rather than metadata payloads.
-
-Both MAGE-TAB-producing CLIs expose `--platform-handler KEY` and standalone `--list-platform-handlers`. A forced handler bypasses unchanged source-table reuse and typed-model-only rendering so the chosen IDF/SDRF handlers always run; unsupported MAGE-TAB extension fields are restored afterward where possible. Omitting the option preserves automatic detection and existing round-trip behavior.
+See the canonical [JSON to MAGE-TAB workflow](#workflow-json2ae) for stages, branches, calls and outputs.
 
 <a id="end-to-end-ae2json-flow"></a>
 ## End-To-End ae2json Flow
@@ -1400,9 +2014,10 @@ Generated nf-core parameters include `genome` plus the explicit/effective `gtf`,
 <a id="rootless-json2h5ad-runtime"></a>
 ## Rootless json2h5ad Runtime
 
-The deterministic suite was refreshed on 2026-08-10 and reported
-`587 passed, 3 skipped` (plus 89 unittest subtests). The public wire contract is Atlas document schema 1.0
-and converter output uses H5AD metadata schema 2.0.
+This is the supported process boundary for raw `json2h5ad` workflows.
+[Historical acceptance evidence](../docs/rootless-acceptance-2026-07-31.md) records
+the separately executed rootless run; [current test commands](#test-plan) verify
+the checkout without claiming a new live runtime acceptance.
 
 `Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
 
@@ -1431,79 +2046,43 @@ The dedicated acceptance run on 2026-07-31 completed `nf-core/rnaseq` 3.26.0
 and `nf-core/scrnaseq` 4.2.0 with return code 0 and non-partial H5AD results.
 See [`rootless-acceptance-2026-07-31.md`](rootless-acceptance-2026-07-31.md).
 
+<a id="parser-generic-xml-mapping"></a>
 <a id="parsed-miniml-data-shape"></a>
-## Parsed MINiML Data Shape
+## Parsed MINiML data shape
 
-`GEOParser.parse()` returns `list[MINiMLPackage]`, with one canonical,
-self-contained package per top-level MINiML `Series`. `AEParser.parse()`
-returns one `MINiMLPackage` in the same canonical representation. Package
-objects implement the read-only mapping interface used by legacy callers.
+There are two different mappings during GEO ingestion. `GEOParser.parse_mapping`
+creates a source-faithful legacy mapping from XML, preserving text as strings,
+attributes, repeated children and reference identity. It is immediately imported
+into v3 by `MINiMLV1Migrator`; it is not a converter input contract.
 
-```python
-[
-    {
-        "miniml_schema_version": "3.0",
-        "source": {"format": str, "version": str | None, "documents": list[dict]},
-        "database": list[dict],
-        "organization": list[dict],
-        "contributor": list[dict],
-        "platform": list[dict],
-        "sample": list[dict],
-        "series": dict,
-    }
-]
-```
-
-`AEParser.parse()` uses the same core package vocabulary but identifies its
-source dialect and documents under `source`. Its `series.iid` is the explicit
-ArrayExpress accession, then an ArrayExpress-form investigation accession,
-then another ArrayExpress-classified accession, with the investigation
-accession as fallback. GEO secondary accessions remain in `series.accession`
-and do not displace an available ArrayExpress IID.
-
-`miniml_schema_version` versions MSC's JSON representation. It is independent
-of `source.version`, which records the source MINiML or MAGE-TAB dialect.
-
-Top-level package keys are singular. Parser keys inside each parsed XML element are original XML names converted to snake_case. Repeated XML elements also keep the singular snake_case key and point to a list.
-
-Examples:
+The canonical public shape is `MINiMLPackage` in Python and its `to_mapping()`
+representation in JSON. The diagram shows relationships, not a complete fixture:
 
 ```text
-Sample-Ref          -> sample_ref
-Pubmed-ID           -> pubmed_id
-Data-Table          -> data_table
-Supplementary-Data  -> supplementary_data
-Raw-Data            -> raw_data
+package (miniml_schema_version = "3.0")
+  source -> format / version / document identities and content digests
+  series -> identity / sample refs / protocols / ordered assay paths
+  sample[] -> identity / platform refs / channels / run metadata
+    channel[] -> source / organism / molecule / characteristics
+      raw occurrence -> value + local hz_<field> and ontology companions
+  platform[] / database[] / contributor[] / organization[]
+  extensions -> msc_harmonization patch ledger + other source provenance
 ```
 
-Element text mapping is generic:
+Sample order, channel identity, path binding, repeated named values and indexed
+harmonized groups are significant. A harmonized scalar is adjacent to its raw
+occurrence, while named characteristic collections use adjacent named rows.
+Do not search only one `annotations` object: canonical v3 has no annotation
+array. Internal typed attributes may still be called `annotations`.
 
-- Plain leaf elements with no attributes or child elements become strings.
-- Elements with attributes become dictionaries containing those attributes.
-- When an attribute-bearing or child-bearing element also has text, the text is stored as `value`.
-- Values remain strings; the parser does not coerce dates, numbers, booleans, or ontology identifiers.
-- Namespaces are stripped to local names.
-- Non-`version` root attributes are attached to each package under snake_case keys.
+`MINiMLEnricher` attaches PubMed publications and SRA/ENA run evidence without
+replacing raw source values. [Model and codec](#miniml-package-model) define
+structural validation, and [data contracts](#data-contracts) distinguish source
+metadata, export projections and retained patch provenance.
 
-Example:
-
-```xml
-<Characteristics>whole larval tissue</Characteristics>
-<Characteristics tag="time">30 Days</Characteristics>
-```
-
-parses as:
-
-```python
-{"characteristics": ["whole larval tissue", {"tag": "time", "value": "30 Days"}]}
-```
-
-`MINiMLEnricher` adds remote lookup results without changing the raw parsed GEO fields:
-
-- `series.pubmed_publication`: one dict per `series.pubmed_id`, with `pubmed_id`, `doi`, `author_list`, `title`, `status`, `status_term_source_ref`, and `status_term_accession_number`.
-- `sample.*.sra_accession`: SRA/ENA/DDBJ accessions extracted from SRA sample relations.
-- `sample.*.ena_accession`: deduplicated study/project accessions such as `ERP137216` collected from SRA run enrichment.
-- `sample.*.sra_run`: run dicts returned by `INSDCWebfetcher.fetch_sra_runs()`, including study accession, library metadata, run/sample IDs, read lengths, instrument model, and per-FASTQ `filename`/`uri`/`md5`.
+**Evidence:** [source mapping](../src/meta_standards_converter/miniml/geo_parser.py),
+[direct importer](../src/meta_standards_converter/miniml/migration.py),
+[canonical types](../src/meta_standards_converter/miniml/model.py).
 
 <a id="miniml-package-model"></a>
 ## MSC MINiML 3.0 package API
@@ -1563,7 +2142,7 @@ identity, allocates the next free collision index for a distinct value, and
 writes aligned mapping members or `name`/`tag` rows without replacing raw
 evidence.
 
-MSC 5.2 adds the generic `MINiMLHarmonizationPatch` 3.1 contract without
+MSC exposes the generic `MINiMLHarmonizationPatch` 3.1 contract without
 changing the MINiML 3.0 discriminator. An operation contains an occurrence
 path, a typed harmonized value and optional bounded source evidence. The
 `exact_value` and `exact_span` claims are Unicode-normalized and revalidated at
@@ -1607,79 +2186,14 @@ lives in `tests/test_msc_miniml_v3.py`,
 `tests/miniml/test_geo_parser.py`. Cross-boundary stabilization coverage lives in
 `tests/test_miniml_stabilization.py`.
 
-The complete qualified model API is
-`meta_standards_converter.miniml.model.Accession`,
-`meta_standards_converter.miniml.model.Address`,
-`meta_standards_converter.miniml.model.Channel`,
-`meta_standards_converter.miniml.model.Characteristics`,
-`meta_standards_converter.miniml.model.Contributor`,
-`meta_standards_converter.miniml.model.DataColumn`,
-`meta_standards_converter.miniml.model.Database`,
-`meta_standards_converter.miniml.model.DataTable`,
-`meta_standards_converter.miniml.model.FASTQFile`,
-`meta_standards_converter.miniml.model.InstrumentModel`,
-`meta_standards_converter.miniml.model.MINiMLModelError`,
-`meta_standards_converter.miniml.model.MINiMLPackage`,
-`meta_standards_converter.miniml.model.MINiMLValidationIssue`,
-`meta_standards_converter.miniml.model.Organization`,
-`meta_standards_converter.miniml.model.Organism`,
-`meta_standards_converter.miniml.model.Person`,
-`meta_standards_converter.miniml.model.Platform`,
-`meta_standards_converter.miniml.model.PubMedPublication`,
-`meta_standards_converter.miniml.model.Reference`,
-`meta_standards_converter.miniml.model.Relation`,
-`meta_standards_converter.miniml.model.Repeat`,
-`meta_standards_converter.miniml.model.Sample`,
-`meta_standards_converter.miniml.model.Series`,
-`meta_standards_converter.miniml.model.SRARun`,
-`meta_standards_converter.miniml.model.Status`,
-`meta_standards_converter.miniml.model.SupplementLink`,
-`meta_standards_converter.miniml.model.TableData`,
-`meta_standards_converter.miniml.model.Variable`,
-`meta_standards_converter.miniml.codec.MINiMLBatchDecodeResult`,
-`meta_standards_converter.miniml.codec.MINiMLCodec`,
-`meta_standards_converter.miniml.codec.MINiMLCompatibilityError`, and
-`meta_standards_converter.miniml.codec.MINiMLDecodeResult`,
-`meta_standards_converter.miniml.harmonization.HarmonizedValue`,
-`meta_standards_converter.miniml.harmonization.append_harmonized_value`,
-`meta_standards_converter.miniml.harmonization.harmonized_mapping`,
-`meta_standards_converter.miniml.harmonization.harmonized_value_mappings`,
-`meta_standards_converter.miniml.harmonization.is_harmonized_key`,
-`meta_standards_converter.miniml.harmonization.iter_harmonized_values`,
-`meta_standards_converter.miniml.harmonization.named_harmonized_rows`,
-`meta_standards_converter.miniml.harmonization.next_harmonized_index`,
-`meta_standards_converter.miniml.harmonization.parse_harmonized_key`, and
-`meta_standards_converter.miniml.harmonization.parse_harmonized_mapping`,
-`meta_standards_converter.miniml.patches.MINiMLHarmonizationPatch`,
-`meta_standards_converter.miniml.patches.canonical_miniml_document`,
-`meta_standards_converter.miniml.patches.miniml_source_fingerprint`,
-`meta_standards_converter.miniml.patches.apply_miniml_harmonization_patch`,
-`meta_standards_converter.miniml.patches.validate_harmonization_extension_mapping`,
-`meta_standards_converter.miniml.patches.iter_harmonization_patches`,
-`meta_standards_converter.miniml.patches.iter_harmonization_operations`,
-`meta_standards_converter.miniml.patches.harmonization_provenance_index`, and
-`meta_standards_converter.metadata.provenance.patch_provenance_columns`.
-
-The typed semantic additions are
-`meta_standards_converter.miniml.model.NamedComment`,
-`meta_standards_converter.miniml.model.NamedValue`,
-`meta_standards_converter.miniml.model.OntologyValue`,
-`meta_standards_converter.miniml.model.SourceDocument`,
-`meta_standards_converter.miniml.model.SourceInfo`,
-`meta_standards_converter.miniml.model.Protocol`,
-`meta_standards_converter.miniml.model.ProtocolApplication`,
-`meta_standards_converter.miniml.model.AssayNode`,
-`meta_standards_converter.miniml.model.AssayPath`,
-`meta_standards_converter.miniml.migration.MINiMLMigrationResult`,
-`meta_standards_converter.miniml.migration.MINiMLV1Migrator`,
-`meta_standards_converter.magetab.semantics.overlay_miniml_semantics`, and
-`meta_standards_converter.magetab.semantics.render_miniml_assay_documents`, and
-`meta_standards_converter.cli.miniml_migrate.main`.
+The [owning-package export table](#package-exports) and
+[exact callable reference](#public-api-and-callable-reference) cover model,
+codec, patch, harmonization and migration interfaces.
 
 MAGE-TAB parsing folds its parser state immediately into native protocols,
 declarations, assay paths, attributes, units, comments, and document
-provenance. No `mage_tab`, raw table, layout, row/column index, ordinal, or
-synthetic object id survives. Construction regenerates ordered IDF rows and
+provenance. Raw-table replay state is discarded. Canonical source-document order and
+explicit occurrence identity remain part of the semantic model. Construction regenerates ordered IDF rows and
 repeated SDRF columns from the model, so the supported round trip is semantic.
 
 **Evidence:** [`model.py`](../src/meta_standards_converter/miniml/model.py),
@@ -1690,90 +2204,106 @@ and [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py).
 <a id="workflow-details"></a>
 ## Workflow Details
 
+<a id="geo-parser"></a>
+<a id="geoparser-class-and-parse-methods"></a>
+<a id="parser-reference-resolution"></a>
+<a id="parser-cleanup-and-helpers"></a>
 <a id="geo-parse-flow"></a>
-### GEO Parse Flow
+### GEO parse flow
 
 ```text
-GEOParser.parse(miniml, remove_empty, related_series)
-  -> _parse(miniml)
-       -> ET.fromstring(miniml)
-       -> _top_level_nodes(root)
-       -> _parse_element(each top-level node)
-       -> _build_indexes(parsed_top_level)
-       -> _series_package(root, each series, indexes)
-  -> if related_series:
-       _parse_with_related_series(parsed)
-  -> if remove_empty:
-       remove_empty_fields(each package)
-  -> return parsed package list
+GEOParser.parse(miniml, remove_empty=False)               # no network
+  -> parse_mapping(miniml)
+       -> xml_safety.parse_xml(max_bytes=resource profile)
+       -> _top_level_nodes -> _parse_element -> _build_indexes
+       -> _series_package for each Series
+  -> [remove_empty] prune empty source mapping fields
+  -> MINiMLV1Migrator.migrate(each legacy source mapping)  # direct v3
+  -> list[MINiMLPackage]
 ```
 
-Per-Series packages include only records relevant to that series:
+Per-Series scoping follows sample references, then the samples' platform and
+contact references, then referenced contributors, organizations and databases.
+Missing external references remain representable; diagnostics belong to the
+model/codec boundary. Contributor traversal follows source insertion order.
+The source XML mapping stage preserves strings and repeated tags; it is not the
+canonical v3 wire representation. Call `parse()` for typed packages, not
+`parse_mapping()` as a substitute for canonical conversion.
 
-- Samples referenced by `series.sample_ref[*].ref`.
-- Platforms referenced by included sample `platform_ref.ref`.
-- Contributors referenced by series, sample, or platform `contributor_ref` and `contact_ref`.
-- Organizations referenced by included contributors or databases through `organization_ref.ref`.
-- Databases referenced by included `accession[*].database` or `status[*].database`.
+**Evidence:** [pure parser](../src/meta_standards_converter/miniml/geo_parser.py),
+[source service](../src/meta_standards_converter/sources/geo.py).
 
-Missing references are tolerated. The original reference remains in place, and the unresolved target record is omitted from package lists.
-
-The parser uses an XSD-inspired `repeated_children` map for known repeated MINiML fields. Unknown repeated sibling tags still become lists if they occur more than once.
-
+<a id="parser-related-series-helpers"></a>
 <a id="related-series-flow"></a>
-### Related-Series Flow
+### Related-Series flow
 
 ```text
-parse(miniml, related_series=True)
-  -> _parse input MINiML into root packages
-  -> _parse_with_related_series(root packages)
-       -> seed seen_gses from series.accession[*].value
-       -> seed queue from superseries/subseries relation entries
-       -> fetch unseen related GSE MINiML
-       -> _parse related MINiML
-       -> append related packages
-       -> enqueue newly discovered related GSEs
-       -> stop when queue is empty
-  -> return root packages plus related packages
+GEOSource.parse(miniml, related_series=True)
+  -> GEOParser.parse_mapping(input XML)
+  -> _parse_with_related_series
+       -> seed seen accessions and pending relation queue
+       -> fetch unseen related GSE -> parse_mapping -> append packages
+       -> enqueue newly discovered relations until exhausted
+  -> [remove_empty] -> MINiMLV1Migrator.migrate each -> typed packages
 ```
 
-`GEOParser.parse_related_series(miniml, remove_empty=False, strict=True)` uses
-the same traversal logic but returns only related packages, excluding the input
-packages, in a list-compatible `RelatedSeriesParseResult`. The result always
-contains status 2.0 plus attempted/failed accessions. When `strict=True`, fetch
-or parse failures raise. When `strict=False`, successful packages are retained
-with degraded/partial/review-required status and persistence-safe error
-envelopes; raw provider exception messages are neither returned nor logged.
+The default related traversal propagates errors. The separate
+`GEOSource.parse_related_series(miniml, remove_empty=False, strict=True)` returns
+only related packages in a list-compatible `RelatedSeriesParseResult` with
+attempted/failed accessions and status 2.0. With `strict=False`, successful
+related packages survive failures, with partial/degraded/review-required status
+and safe error envelopes. Provider exception text is not exposed.
 
-Related GSE accessions are discovered from `series.relation` entries only when relation `type`, `target`, or `comment` mentions superseries/subseries and contains `GSE` followed by digits.
+`GEOParser` itself has no retrieval collaborator or related traversal method.
+The single guarded parent-publication lookup in `geo2json` is a different
+[enrichment path](#workflow-geo2json); it does not enable recursive traversal.
 
+**Evidence:** [GEOSource](../src/meta_standards_converter/sources/geo.py),
+[GEO converter](../src/meta_standards_converter/converters/geo2json.py).
+
+<a id="ae-idf-handlers"></a>
+<a id="ae-constructor"></a>
 <a id="idf-and-mage-tab-construction-flow"></a>
-### IDF And MAGE-TAB Construction Flow
-
-`AEConstructor` is a coordinator, not an SDRF subclass. It owns an `IDFConstructor` and an `SDRFConstructor`, supplied as optional dependencies or created by default.
+### IDF and MAGE-TAB construction flow
 
 ```text
-AEConstructor.miniml2magetab(data)
-  -> create one ProtocolRegistry for the series accession
-  -> detect one shared AE technology key
-  -> SDRFConstructor._miniml2sdrf(data, protocol_registry, technology_type)
-       -> generate SDRF table
-       -> register actual non-empty Protocol REF values and required placeholder refs
-  -> IDFConstructor.miniml2idf(data, protocol_registry, technology_type)
-       -> build IDF rows
-       -> emit Protocol rows from the same registry
-       -> include empty ["SDRF File"] placeholder after protocol rows
-       -> infer term source rows
-       -> move Experiment Description after Investigation Title
-       -> move top-level Comment[...] rows to the bottom
-  -> replace existing SDRF File placeholder with ["SDRF File", sdrf_table]
-  -> return MAGE-TAB payload
+AEConstructor.miniml2magetab(package, platform_handler=None)
+  -> codec decode/encode -> validate forced handler or detect technology
+  -> create operation ProtocolRegistry and initial SDRF handler
+  -> evidence.sample_runs(handler, technology)             # may retrieve
+  -> [automatic] create_operation_handler by sample/channel/run evidence
+  -> SDRFConstructor.build(handler)                        # pure rendering
+  -> IDFConstructor.prefix_rows(data)                      # validate first
+  -> evidence.publications(data)                          # may retrieve
+  -> IDFConstructor.miniml2idf(... same registry, evidence)
+  -> embed SDRF table -> overlay_miniml_semantics -> return row payload
+converter -> MAGETabWriter.write(payload, out)             # optional filesystem
 ```
 
-`ProtocolRegistry` normalizes protocol text, reuses refs for identical `(kind, text)` pairs, and names refs as `P-{series_accession}-{n}`. Known protocol kinds map to MAGE-TAB labels such as `Extract-Protocol`, `Hybridization-Protocol`, `Scan-Protocol`, and `Data-Processing`. Required placeholder refs can be created with empty protocol text for protocols that must be present in IDF and SDRF.
+`MAGETabEvidenceResolver` owns PubMed/INSDC collaborators. Available enriched
+run/publication evidence suppresses lookups. A mixed-study generic IDF summary
+must not suppress sequencing evidence needed by individual samples. Explicit
+handler selection overrides automatic per-occurrence routing.
 
-`AEConstructor.magetab2file()` normalizes legacy mixed payloads, finds the SDRF row, validates the SDRF payload is a non-empty row table, chooses filenames from `Comment[ArrayExpressAccession]`, `Investigation Accession`, or `Comment[SecondaryAccession]`, writes IDF/SDRF TSV files, and returns the IDF path.
+The protocol registry reuses identities for matching protocol kind/text and
+is shared across IDF and SDRF construction. Builders do not create network
+clients. The final semantic overlay retains native explicit assay paths and
+occurrence-local harmonized columns; incompatible source-document graphs fail
+instead of being silently merged.
 
+`MAGETabWriter.write` locates and validates the embedded SDRF, chooses the
+accession-based filenames, and writes IDF/SDRF tables. It owns writing separately
+from `AEConstructor`; metadata output is not the expression bundle publisher.
+
+**Evidence:** [constructor](../src/meta_standards_converter/magetab/constructor.py),
+[evidence resolver](../src/meta_standards_converter/metadata/enrichment.py),
+[writer](../src/meta_standards_converter/magetab/writer.py),
+[semantic overlay](../src/meta_standards_converter/magetab/semantics.py).
+
+<a id="sdrf-handlers"></a>
+<a id="sdrf-dataclasses"></a>
+<a id="sdrfconstructor"></a>
+<a id="sdrf-file-helpers"></a>
 <a id="sdrf-graph-and-rendering-flow"></a>
 ### SDRF Graph And Rendering Flow
 
@@ -1837,6 +2367,7 @@ Detection rules in broad order:
 
 Assay terms such as ChIP-seq, ATAC-seq, multiome, methylation, or array assay names do not by themselves create special technology handlers beyond sequencing or array.
 
+<a id="sequencing-handlers"></a>
 <a id="sequencing-sdrf-flow"></a>
 ### Sequencing SDRF Flow
 
@@ -1868,6 +2399,7 @@ Sequencing behavior:
 - Sequencing handlers emit supplementary processed assets as `Derived Array Data File` columns while raw reads remain FASTQ comments.
 - Single-cell handlers add library construction, technical replicate, read geometry, isolation, or spatial read-index comments where their subclass supports it.
 
+<a id="array-and-generic-handlers"></a>
 <a id="array-sdrf-flow"></a>
 ### Array SDRF Flow
 
@@ -1897,6 +2429,8 @@ Array behavior:
 - Matrix-like supplementary files render as `Derived Array Data Matrix File`; other processed assets render as `Derived Array Data File`.
 - Repeated raw and derived files are preserved as repeated columns and recorded as warnings.
 
+<a id="base-sdrf-handler"></a>
+<a id="legacy-fallback-notes"></a>
 <a id="base-sdrf-behavior"></a>
 ### Base SDRF Behavior
 
@@ -1918,6 +2452,7 @@ Base handler behavior shared by generic, sequencing, and array handlers:
 
 Legacy greedy GEO and SRA fallback comment classes are kept only as commented reference code at the bottom of `ae_sdrf_handlers.py`. They have no runtime effect.
 
+<a id="harmonizers"></a>
 <a id="sra-pubmed-and-ontology-enrichment"></a>
 ### SRA, PubMed, And Ontology Enrichment
 
@@ -1930,766 +2465,1071 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 - Term source names combine non-empty `source ref` cells with every declared `database` record. A matching declared record supplies its URL and exact version, including an intentionally missing version; `Harmonizer` is used only when no matching database exists.
 
 <a id="public-api-and-callable-reference"></a>
-## Public API And Callable Reference
+## Public API and callable reference
 
-This section lists public and semi-public callables used by tests or by package orchestration. Many helper methods are intentionally private but documented here because this project currently relies on direct helper behavior in tests and internal composition.
+This source-derived inventory covers every public-named top-level definition.
+Rows under a class list its declared public methods/properties and constructor;
+base classes supply inherited behavior. Dataclass signatures include inherited
+fields. Type annotations describe inputs/returns; an omitted annotation is not
+an assertion that a function returns nothing. `self`/`cls` are omitted.
 
-<a id="cli"></a>
-### `cli/geo2ae.py`, `cli/geo2json.py`, `cli/json2ae.py`, `cli/ae2json.py`, `cli/json2h5ad.py`, `cli/json2tsv.py`, and `cli/json2obs.py`
-
-`_parser() -> argparse.ArgumentParser`
-
-- `geo2ae` and `geo2json` build command-line parsers for one or more GSE accessions.
-- Adds `--related`, `--related-series`, and `--get-related-series` aliases.
-- Adds mutually exclusive `--remove-empty` and `--keep-empty` options.
-- Adds `--out`, defaulting to `"."`.
-- Adds logging controls: repeatable `-v`/`--verbose`, `-q`/`--quiet`, and `--log-file`.
-- `geo2ae` and `json2ae` add mutually exclusive `--platform-handler` and `--list-platform-handlers`; list mode runs without positional inputs or converter construction.
-- `geo2json` also adds `--no-enrich`, which skips PubMed/SRA enrichment and writes parsed-only JSON.
-- `json2ae` accepts one or more parsed MINiML or canonical Atlas v1 JSON paths, adds `--no-enrich`, and writes IDF/SDRF files under `--out`.
-- `ae2json` accepts one or more IDF paths, HTTP(S) IDF URLs, or BioStudies accessions. Repeatable `--sdrf` overrides are allowed with exactly one source.
-- `json2h5ad` accepts parsed JSON plus `--asset`/`--asset-manifest`, source and matrix controls, catalogue or user FASTA references, `--gtf`/`--gff` annotation overrides, pinned nf-core execution controls, `--resume`, `--processed-checkpoint-dir`, `--overwrite`, and `--allow-invalid`. Resume covers both Nextflow work and fingerprint-valid processed-sample checkpoints.
-- `json2tsv` accepts parsed MINiML or Atlas JSON and writes the sample manifest as TSV by default or CSV with `--format csv`; `--out` selects an exact file and `--outdir` derives a filename.
-- `json2obs` accepts the same metadata and raw/processed data inputs and processed-checkpoint controls as `json2h5ad`, writes a required row-aggregated `obs.csv` with an explicit `cell_id` column without combining expression matrices, and can add typed `uns.json` or single-sample `var.csv` sidecars.
-
-`main(argv=None) -> int`
-
-- Parses arguments, configures `meta_standards_converter` logging to stdout and optional file output, creates the command's converter, and converts each accession or JSON file in order.
-- Default logging emits `WARNING+`; `-v` emits `INFO+`, `-vv` emits `DEBUG+`, and `--quiet` emits `ERROR+`.
-- On conversion failure, logs the exception traceback, marks the run failed, and continues.
-- Success/progress messages are logged rather than printed; normal success output appears with `-v`.
-- Returns `1` if any accession failed, otherwise `0`.
-
-<a id="converter"></a>
-### `converters/geo2ae.py`, `converters/geo2json.py`, `converters/json2ae.py`, `converters/ae2json.py`, `converters/json2h5ad.py`, and `converters/json2tsv.py`
-
-`class geo2ae(JSONHandler)`
-
-- Main programmatic converter.
-- The class inherits `JSONHandler`, though the converter path does not currently rely on inherited helper methods.
-- `__init__(enricher=None, geo_fetcher=None, parser=None, ae_constructor=None)` accepts enrichment, GEO fetcher, parser, and MAGE-TAB constructor dependencies. Defaults are `MINiMLEnricher()`, `GEOWebFetcher()`, `GEOParser(geo_fetcher=self.geo_fetcher)`, and `AEConstructor()`.
-
-`convert(gse, related_series=False, remove_empty=True, out=None, platform_handler=None)`
-
-- Fetches MINiML with `self.geo_fetcher.fetch_gse_miniml(gse=gse)`.
-- Parses with `self.parser.parse(miniml, remove_empty=remove_empty, related_series=related_series)`.
-- Enriches each parsed package with `self.enricher.enrich(data=meta_json)`.
-- Reuses the injected or default `AEConstructor`.
-- Converts each enriched package to a MAGE-TAB payload.
-- Passes a non-`None` `platform_handler` through to `AEConstructor.miniml2magetab()`.
-- Writes each payload when `out` is truthy.
-- Returns the list of MAGE-TAB payloads.
-
-`class geo2json(JSONHandler)`
-
-- Main programmatic GEO-to-JSON converter.
-- `__init__(enricher=None, geo_fetcher=None, parser=None)` accepts enrichment, GEO fetcher, and parser dependencies with the same defaults as `geo2ae`.
-
-`convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)`
-
-- Fetches and parses MINiML using the same GEO fetcher/parser path as `geo2ae`.
-- Enriches each parsed package by default; `enrich=False` returns parsed-only GEO JSON.
-- Writes one `{gse}.json` file containing the full package list when `out` is truthy.
-- Returns the list of JSON packages.
-
-`class json2ae(JSONHandler)`
-
-- `__init__(enricher=None, ae_constructor=None, package_source=None)` accepts injectable enrichment, MAGE-TAB construction, and JSON package-source collaborators.
-- `convert(json_path, out=None, enrich=True, platform_handler=None) -> list[list]` accepts the package form written by `geo2json`, one package object, or a canonical Atlas v1 document.
-- Atlas loading retains harmonized dataset metadata, logs shared-reader warnings for skipped states, rejects v1 envelopes, and raises `ValueError` when no convertible groups remain.
-- Validates the entire top-level shape, package types, and study accessions before invoking collaborators. Non-GEO accessions are accepted; `GSE...` values retain numeric validation.
-- Enriches packages by default; `enrich=False` preserves the supplied metadata and avoids enrichment calls.
-- Passes a non-`None` `platform_handler` through to `AEConstructor.miniml2magetab()`.
-- Builds all MAGE-TAB payloads in input order, then writes each through the shared `AEConstructor` when `out` is truthy.
-- Returns the ordered in-memory MAGE-TAB payload list.
-
-`class ae2json`
-
-- `__init__(fetcher=None, parser=None)` accepts injectable `AEWebFetcher` and `AEParser` collaborators.
-- `convert(source, out=None, sdrf_sources=None) -> list[dict]` resolves and parses one MAGE-TAB study and returns a one-package list.
-- When `out` is supplied, writes the package list to `{ArrayExpress-or-first-accession}.json`, with path separators made filename-safe.
-
-`class JSON2H5ADConverter`; compatibility alias `class json2h5ad`
-
-- Accepts injectable `SourcePlanner`, `NFCoreRunner`, `AssetDownloader`,
-  `DatasetCombinationPolicy`, and ordered `AnnDataMetadataProjector`
-  collaborators, plus available-memory and peak-memory-estimator test seams.
-- `convert(..., allow_invalid=False, resume=False, force_memory=False) -> ConversionResult | BatchConversionResult` accepts ordinary
-  parsed MINiML JSON or a canonical Atlas v1 document. It returns the
-  single-group result directly and aggregates multiple groups.
-- `convert_source(json_path, out=None, allow_invalid=False, **options) -> BatchConversionResult`
-  always aggregates groups. Per-group exceptions populate `failures` and do
-  not discard successful conversions.
-- `ConversionResult` exposes the compatibility field `combined_h5ad` (always
-  `None` for catalogue conversion), `sample_h5ads`, retained pipeline files,
-  pipeline commands, warnings/errors/failures, first-sample `primary_h5ad`, and
-  `partial`; `memory_report` records every newly assessed sample admission or
-  skip and is also persisted in the catalogue manifest.
-- `AssetManifest` loads CSV/TSV mappings or `ACCESSION=PATH` CLI specifications. Manifest entries outrank CLI entries, which outrank discovered JSON assets.
-- `AssetManifest.load(path: str) -> list[Asset]` reads CSV/TSV, requires
-  `scope_id`/`path`, groups raw members, and raises `ValueError` for blank or
-  unsupported records. `parse_spec(spec: str) -> Asset` parses the compact
-  CLI form and raises on malformed specifications; neither writes files.
-- `AssetDownloader.localize(value: str, md5: str | None = None) -> str`
-  returns local paths unchanged or streams HTTP(S)/FTP into its cache, verifies
-  an optional digest, and raises on transport/checksum failure; downloading is
-  its filesystem/network side effect.
-- `AssetDownloader.retention_report(*, max_age_seconds,
-  min_retained_assets=1, active_paths=(), now=None, apply=False) -> dict`
-  returns a dry-run-first integrity/age/source report. Applying a plan moves
-  only verified, old, non-active, non-minimum assets and their sidecars into a
-  timestamped recoverable quarantine; it never deletes cache data.
-- `SourcePlanner.plan(packages, explicit_assets=None, force_reprocess=False)
-  -> dict[str, Asset]` selects one asset per sample; `discover(packages) ->
-  list[Asset]`, `samples(packages) -> list[str]`,
-  `sample_accession(sample) -> str | None`, and
-  `classify(path) -> str | None` expose discovery/classification without
-  filesystem writes. Planning raises when required raw coverage is absent.
-- `NFCoreRunner.process(assets, packages, out, study_accession,
-  pipeline="auto", genome=None, fasta=None, gtf=None, gff=None,
-  accept_inferred_reference=False, profile="docker", revision=None,
-  params_file=None, nextflow_config=None, work_dir=None, resume=False)
-  -> RawProcessingResult` validates runtime/reference inputs, writes workflow
-  inputs/logs, invokes Nextflow without a shell, discovers outputs, and raises
-  on invalid configuration, runtime preflight, subprocess, or output failure.
-- `ReferenceResolver` accepts a catalogue `genome` with an optional GTF/GFF override or `fasta` paired with exactly one GTF/GFF; supported organism inference must be explicitly accepted before Nextflow starts.
-- `AnnotationConverter` validates local FASTA/annotation paths, records annotation SHA-256, passes GTF through, and converts GFF3 to a shared checksum-addressed GTF through `gffread`.
-- Generic delimited matrices require an explicit orientation when it cannot be represented by a study-scoped sample column.
-- `_scientific_modules()` loads AnnData, NumPy, pandas, and SciPy only;
-  `_scanpy_module()` is called exclusively by 10x HDF5/MTX readers, keeping
-  ordinary processed-H5AD conversion independent of Scanpy import side effects.
-
-`MetadataProjectionContext`, `AnnDataMetadataProjection`, and the
-`AnnDataMetadataProjector` protocol form the metadata extension
-contract. Sample projectors run after standard `_normalize()` processing and
-before MINiML attachment/writing. Former `project_combined` callbacks are not
-part of the protocol and are not invoked. Scalar
-`obs`/`var` values broadcast, vector values must match their axis, and existing
-axis or top-level `uns` keys cannot be overwritten. Observation drops and
-renames are checked as one operation and applied before additions; invalid
-sources, duplicate targets, collisions, and rename/drop overlap fail closed.
-Projector warnings are
-deduplicated into `ConversionResult.warnings` and the manifest. Reported
-`errors` raise `AnnDataProjectionError` before publication unless
-`allow_invalid=True`, which records them and returns a partial result.
-Structural return-type, collision, and vector-length errors remain
-unconditional. All H5ADs and the manifest are staged before a backup/swap
-commit; commit failure restores the prior complete bundle. With no projectors,
-output is unchanged.
-
-`JSON2TSVConverter`
-
-- Accept injectable ordered `TabularMetadataProjector` collaborators.
-- Use `MSCMetadataProjector` only when no explicit projector list is supplied.
-- Accept both MINiML package JSON and canonical Atlas v1 JSON through
-  `JSONPackageSource`.
-- Select TSV or CSV serialization with the validated `output_format` argument.
-- Return `TabularConversionResult`; projection errors fail closed unless
-  `allow_invalid=True`.
-
-<a id="miniml-enricher"></a>
-### `metadata/enrichment.py`
-
-`class MINiMLEnricher`
-
-`__init__(pubmed_fetcher=None, insdc_fetcher=None)`
-
-- Accepts PubMed and INSDC fetcher dependencies for tests or custom network behavior.
-- Defaults to `PubmedWebFetcher()` and `INSDCWebfetcher()`.
-
-`enrich(data: dict) -> dict`
-
-- Mutates and returns one parsed MINiML package.
-- Calls `enrich_pubmed()` and `enrich_sra()`.
-
-`enrich_pubmed(data: dict) -> dict`
-
-- Deduplicates `series.pubmed_id` values while preserving first-seen order.
-- Adds `series.pubmed_publication` records with the fields consumed by `IDFConstructor`.
-- On request or XML parse errors, records the PubMed ID with `None` metadata values so late IDF rendering does not retry the lookup.
-
-`enrich_sra(data: dict) -> dict`
-
-- Extracts SRA accessions from `sample.relation` entries whose type is `SRA`.
-- Adds `sample.sra_accession`, `sample.sra_run`, and `sample.ena_accession` when fetched runs contain study accessions.
-- On request or XML parse errors, keeps the accession and leaves that accession's run contribution empty.
-
-<a id="geo-web-fetcher"></a>
-### `sources/geo.py`
-
-`class GEOWebFetcher`
-
-`__init__(requester=None, request_settings=None)`
-
-- Defaults to `RateLimitedRequester(service="geo_ftp")`.
-- Accepts a custom requester or GEO request settings for tests and advanced callers.
-
-`url_gse_miniml(gse: str) -> str`
-
-- Requires an accession starting with `GSE`, case-insensitive.
-- Converts accessions to the GEO FTP bucket pattern. For example, `GSE234602` becomes bucket `GSE234nnn`.
-- Returns the GEO FTP HTTPS URL ending in `{gse}_family.xml.tgz`.
-
-`fetch_gse_miniml(gse) -> str`
-
-- Builds the URL with `url_gse_miniml()`.
-- Downloads the `.tgz` archive through the `geo_ftp` requester and calls `raise_for_status()`.
-- Streams every tar member without filesystem extraction, accepting safe
-  auxiliary regular files/directories but requiring exactly one root
-  `{gse}_family.xml`. Absolute/traversal paths, duplicate names, links and
-  special files, unexpected XML, excessive member counts, and excessive total
-  expanded size fail closed. The bounded expected XML is returned as UTF-8.
-
-<a id="ae-web-fetcher"></a>
-### `sources/magetab.py`
-
-`TextResource(name, text, origin)` and `MAGETabInput(idf, sdrfs, source, source_kind)` are immutable transport records used between resolution and parsing.
-
-`class AEWebFetcher`
-
-- `__init__(requester=None, request_settings=None)` defaults to `RateLimitedRequester(service="biostudies")`.
-- `resolve(source, sdrf_sources=None) -> MAGETabInput` dispatches existing paths, HTTP(S) URLs, and accession tokens. Missing path-like inputs raise `FileNotFoundError` instead of becoming accession lookups.
-- Local and HTTP IDFs use explicit SDRF overrides when supplied; otherwise every `SDRF File` value is resolved relative to the IDF.
-- Accession lookup requires exactly one discovered IDF and at least one SDRF. Explicit overrides are rejected for accession sources.
-- Remote metadata is fetched as text and never persisted by the fetcher.
-
-<a id="ae-parser"></a>
-### `magetab/parser.py`
-
-`class AEParser`
-
-- `parse(source: MAGETabInput) -> dict` parses one IDF plus all SDRFs into the existing MINiML-compatible package shape.
-- Root metadata uses MINiML 3.0 with normalized MAGE-TAB format/version and specification provenance under `source`. `series.iid` prefers `Comment[ArrayExpressAccession]`, then an ArrayExpress-form investigation/classified accession, then the investigation accession.
-- IDF rows are normalized by case and whitespace. Repeated row values remain ordered and feed investigation, accessions, design/factor, status, publication, contributor, database, and protocol records.
-- SDRF headers map source/sample identities, characteristics, factors, protocol refs, platforms, technology, SRA/ENA runs, FASTQ metadata, and array raw/derived files. Repeated sample rows merge without duplicating list values.
-- Conflicting scalar values keep the first value and append a warning. Unknown IDF rows are diagnosed but not retained as raw layout; supported generic SDRF values become typed assay-path steps.
-- `build_model(...)` creates an internal semantic bridge containing complete protocol columns, QC/replicate/normalization declarations, every SDRF assay path, ordered nodes and protocol references, comments/files, and per-value unit/ontology companions. The migrator folds it into canonical `series.protocols`, variables, and assay paths before the package leaves `parse()`.
-- Malformed non-rectangular SDRF rows fail with a filename and column-count error.
+The summary comes from the defining docstring when present. Direct `raise`
+types are listed as an aid to navigation, not an exhaustive exception guarantee:
+I/O errors and collaborator failures can propagate through calls. See the
+workflow and curated contract sections for validation, outputs and side effects.
+Unexported helpers remain implementation interfaces even when importable.
 
 <a id="ae-roundtrip"></a>
-### Retired raw MAGE-TAB round-trip sidecar
-
-Raw-table round-trip helpers are retired in MSC 4. The disconnected
-`ae_handlers/ae_roundtrip.py` module represented the pre-MINiML-2.0
-`mage_tab.roundtrip` sidecar and was neither emitted nor consumed by the active
-conversion path. Keeping it public would falsely imply exact IDF/SDRF layout
-survives the canonical boundary.
-
-`AEParser` now maps supported scientific content into typed MINiML 3.0
-protocols, assay paths, values, units, annotations, and source-document
-provenance. `MINiMLV1Migrator` explicitly reports `source_layout_dropped` when
-it encounters an old raw-table sidecar, and `AEConstructor` reconstructs
-semantic MAGE-TAB from the typed model. Operators requiring byte/layout-exact
-round trips must retain the original IDF/SDRF source files identified by the
-package's source-document records.
-
-<a id="typed-mage-tab-model"></a>
-### `magetab/semantics.py`
-
-- `MAGETabModelError` is the public validation failure and
-  `validate_model(model)` enforces schema version 1 collections, unique SDRF
-  and assay identities, references, step shapes, and scalar harmonization
-  annotations.
-- `build_model(idf_rows, sdrfs)` creates the version-1 internal semantic bridge consumed immediately by `MINiMLV1Migrator`; it is not a public wire extension.
-- `protocols` contains one position-stable record per IDF protocol, including name, arbitrary type, ontology, description, hardware, software, parameters, contact, and performer.
-- `declarations` independently stores aligned quality-control, replicate, and normalization terms with source/accession annotations.
-- `assay_paths` contains one record per original SDRF data row. Ordered steps distinguish material/assay nodes, protocol references, annotated characteristics/factors/parameters, comments, files, and generic fields. This preserves array assay multiplicity and many-to-one sample relationships.
-- Attribute steps keep `Unit`, `Term Source REF`, and `Term Accession Number` as independent fields; barcode/read geometry remains independent comment steps rather than being folded into protocol prose.
-- `render_model(model)` regenerates one SDRF directly or consolidates multiple SDRFs by header plus occurrence. `overlay_core(model_rows, core_rows)` unions eligible core fields into that rendering while retaining model-only protocols, identities, annotations, rows, and structural graph columns.
-- IDF matching uses normalized row labels and inserts only rows in the mapped allowlist. Legacy MSC publication/protocol companion labels normalize to the four canonical MAGE-TAB 1.1 rows before rendering. SDRF matching uses `(normalized header, occurrence)` keys, so repeated characteristics remain position-stable. Missing core columns are inserted relative to the nearest core-order neighbor; independent curator fields such as `Characteristics[hz_cell_type]`, `Characteristics[hz_cell_type_id]`, and `Characteristics[hz_cell_type_onto]` remain separate rather than being reinterpreted as native ontology companions.
-- SDRF values align through the available `Sample Name`, `Source Name`, and `Comment[ENA_RUN]` identities. A core value replaces or populates a model cell only when all matching core rows agree on exactly one value. An unmatched model row keeps its existing value; an ambiguous newly inserted cell remains blank. Core-only rows are not added or broadcast as new assay paths.
-- `MINiMLV1Migrator` folds this bridge into the canonical v3 package and drops the internal container. `AEConstructor` renders from those canonical protocol and assay-path fields; no raw-table fingerprint or replay sidecar participates.
-
-<a id="geo-parser"></a>
-### `miniml/geo_parser.py`
-
-<a id="geoparser-class-and-parse-methods"></a>
-#### GEOParser class and parse methods
-
-`class GEOParser`
-
-- Owns `repeated_children`, an XSD-inspired map of repeated MINiML children by parent tag.
-- Parses only recognized top-level package categories: organization, contributor, database, platform, sample, and series.
-- `__init__(geo_fetcher=None)` accepts a GEO fetcher dependency for related-series traversal and defaults to `GEOWebFetcher()`.
-
-`parse(miniml, remove_empty=False, related_series=False) -> list[dict]`
-
-- Parses the input MINiML into per-series packages.
-- Optionally traverses related super/subseries.
-- Optionally removes empty fields after all parsing/traversal.
-
-`_parse(miniml) -> list[dict]`
-
-- Parses one MINiML XML string without related-series fetching or cleanup.
-- Builds top-level parsed records, indexes them by `iid`, and creates one package per series.
-
-`parse_related_series(miniml, remove_empty=False, strict=True) -> RelatedSeriesParseResult`
-
-- Parses the input MINiML, seeds a queue from related-series relations, and returns only fetched related packages.
-- Deduplicates GSE accessions.
-- Raises on fetch/parse failures in strict mode; non-strict mode retains
-  successes with a degraded status 2.0 envelope, attempted/failed accessions,
-  and safe errors.
-- Applies empty cleanup to related packages when requested.
-
-`RelatedSeriesParseResult` subclasses `list[dict]` for compatibility and adds
-`status`, `attempted_accessions`, `failed_accessions`, and `summary_dict()`.
-
-`remove_empty_fields(data)`
-
-- Public wrapper around `_remove_empty_fields()`.
-- Removes `None`, empty strings, empty lists, and empty dicts recursively.
-
-<a id="parser-reference-resolution"></a>
-#### Reference resolution
-
-- `_top_level_nodes(root)` collects known top-level MINiML elements.
-- `_build_indexes(parsed_top_level)` creates `iid` lookup maps.
-- `_series_package(root, series, indexes)` assembles a scoped package and attaches root attributes.
-- `_resolve_samples()`, `_resolve_platforms()`, `_resolve_contributors()`, `_resolve_databases()`, and `_resolve_organizations()` resolve package records from references.
-- `_items_for_refs()` preserves first-seen order and deduplicates refs.
-- `_reference_values()` walks nested dicts for ref-bearing keys.
-
-<a id="parser-generic-xml-mapping"></a>
-#### Generic XML mapping
-
-- `_parse_element(node)` converts XML recursively to strings, dicts, and lists.
-- `_child_key(parent_name, child_name)` currently returns singular snake_case child names.
-- `_normalized_text(text)` collapses whitespace.
-- `_local_name(tag)` strips XML namespaces.
-- `_to_snake_case(value)` normalizes tag/attribute names.
-
-<a id="parser-related-series-helpers"></a>
-#### Related-series helpers
-
-- `_extract_series_accessions()` returns normalized `GSE` accessions from package series accessions.
-- `_extract_related_gse_accessions()` extracts related `GSE` accessions from relation type/target/comment text.
-- `_is_related_series_relation()` recognizes superseries/subseries relation text.
-
-<a id="parser-cleanup-and-helpers"></a>
-#### Cleanup and helpers
-
-- `_remove_empty_fields(value)` recursively removes empty values.
-- `_is_empty_value(value)` defines empty values as `None`, `""`, `[]`, or `{}`.
-- `_walk_dicts(value)` recursively yields nested dicts.
-- `_as_list(value)` normalizes scalars and `None` to list handling.
-- `_attach_namespaced_root_attributes(root, package)` copies non-version root attributes into packages.
-
-<a id="ae-idf-handlers"></a>
-### `magetab/idf.py`
-
-`class IDFConstructor`
-
-`__init__(pubmed_fetcher=None)`
-
-- Accepts a PubMed fetcher dependency for tests or custom network behavior.
-- Defaults to `PubmedWebFetcher()`.
-
-`miniml2idf(data, protocol_registry=None, technology_type=None) -> list`
-
-- Builds IDF rows in this order before final normalization: MAGE-TAB version, investigation rows, experimental design/factor rows, person rows, date rows, publication rows, experiment description, protocol rows, `SDRF File` placeholder, term source rows, then platform-specific rows. The `_idf_qc_rep_norm()` extension call is intentionally commented out, so QC/replicate/normalization placeholder rows are not included in final IDF output.
-- Final normalization moves the first `Experiment Description` row immediately after the first `Investigation Title` row when both are present.
-- Final normalization moves every top-level row whose first cell starts with `Comment[` to the bottom while preserving relative order among non-comment rows and among comment rows. SDRF companion columns such as `Comment[FASTQ_URI]` are unaffected because they live inside the SDRF table, not top-level IDF rows.
-- `_move_experiment_description_after_title(rows)` performs the experiment-description relocation, `_is_comment_row(row)` identifies top-level comment rows, and `_move_comment_rows_to_bottom(rows)` performs the stable comment partition.
-
-Investigation and experimental rows:
-
-- `_idf_investigations()` uses series title, series accessions, enriched sample study accessions, converted ArrayExpress-style accessions, and related super/subseries GSE accessions.
-- `_secondary_accession_pairs()` emits exactly one `Comment[SecondaryAccession]` row and one positionally aligned `Comment[SecondaryAccessionTermSourceRef]` row. Series accessions come first, followed by first-seen `sample.*.ena_accession` values; duplicates are removed case-insensitively while preserving the first rendered value.
-- Secondary-accession term sources are inferred by prefix as `GSE -> GEO`, `ERP -> ENA`, `SRP -> SRA`, and `DRP -> DRA`. Unknown Series prefixes retain their declared database, while unknown enriched sample prefixes receive a blank source-ref cell.
-- `_to_arrayexpress_accessions()` replaces `GSE` with `E-GEOD-`.
-- `Comment[RelatedExperiment]` is emitted when `series.relation` contains superseries/subseries relation text and related `GSE...` accessions. This row records parsed relationships and does not depend on fetching related packages with `--related`.
-- `_idf_experimental()` derives experimental factor names from sample channel characteristics whose normalized tag has more than one distinct normalized value; `Experimental Factor Type` currently mirrors the factor names while factor term source/accession rows remain blank.
-- `_idf_platform_specific(data, technology_type)` dispatches to a private platform IDF handler.
-- `_idf_term_source(magetab, data)` emits all declared databases plus referenced term sources. Declared URL/version values, including blanks, are source-authoritative; only undeclared sources fall back to `Harmonizer` metadata.
-- `_idf_persons(data)` prefixes a real structured address with its organization, preserves string addresses verbatim, and leaves a missing address blank rather than copying the affiliation.
-
-Platform IDF handler inheritance mirrors the SDRF platform tree:
-
-```text
-_BasePlatformIDFHandler
-├── _SequencingPlatformIDFHandler
-│   ├── _BulkSequencingPlatformIDFHandler
-│   │   └── _PlateSingleCellSequencingPlatformIDFHandler
-│   └── _SingleCellSequencingPlatformIDFHandler
-│       ├── _DropletSingleCellSequencingPlatformIDFHandler
-│       └── _SpatialSequencingPlatformIDFHandler
-├── _ArrayPlatformIDFHandler
-└── _GenericPlatformIDFHandler
-```
-
-The dispatch keys mostly match SDRF: `plate_single_cell_sequencing`, `droplet_single_cell_sequencing`, `tenx_v2_droplet_single_cell_sequencing`, `tenx_v3_droplet_single_cell_sequencing`, `single_cell_sequencing`, `spatial_sequencing`, `bulk_sequencing`, `sequencing`, and `array`; unknown or missing keys use `_GenericPlatformIDFHandler`. The 10x v2/v3 keys intentionally route to `_DropletSingleCellSequencingPlatformIDFHandler`.
-
-Sequencing platform IDF handlers emit empty label-only `Comment[AEExperiment]`, `Comment[AEExperimentType]`, and `Comment[AECurator]` rows. The `single_cell_sequencing`, `droplet_single_cell_sequencing`, 10x v2/v3 droplet, and `plate_single_cell_sequencing` handlers replace the `Comment[AEExperimentType]` row with `RNA-seq of coding RNA from single cells`; other sequencing handlers, including `spatial_sequencing`, leave it blank. Secondary accessions are already consolidated by `_idf_investigations()`, so platform handlers do not emit another secondary-accession row. Sequencing handlers emit `Comment[SequenceDataURI]` from enriched `sample.*.sra_run[*].run` accessions when valid runs exist. Runs are deduplicated, grouped by prefix such as `ERR` or `SRR`, sorted numerically, and collapsed to one ENA data/view URL per prefix group using min-max ranges, for example `http://www.ebi.ac.uk/ena/data/view/ERR5385036-ERR5385041`. Missing and malformed run accessions are logged as warnings and skipped. Droplet single-cell IDF handlers append empty label-only `Comment[AEExpectedClusters]`, `Comment[AEAdditionalAttributes]`, and `Comment[AEBatchEffect]` rows. Array, generic, and unknown handlers do not emit these rows.
-
-Person, QC, and date rows:
-
-- `_idf_persons()` uses contributors for names, email, phone, fax, organization-based affiliation, and flattened addresses prefixed with organization when available.
-- `_idf_qc_rep_norm()` still returns label-only placeholder rows for quality control, replicate, and normalization, but `miniml2idf()` does not currently include them because its extension call is commented out.
-- `_idf_dates()` normalizes parseable status dates to `YYYY-MM-DD`.
-- `_normalized_idf_date()` preserves unparseable values and empty strings.
-- `Public Release Date` uses the earliest parseable normalized GEO release date; `Comment[GEOReleaseDate]` preserves all GEO release date values.
-- `Comment[ArrayExpressSubmissionDate]` uses the current conversion date as one `YYYY-MM-DD` value while GEO update dates are comments.
-
-Publication, experiment, protocol, and term source rows:
-
-- `_idf_publications()` prefers `series.pubmed_publication`; if absent, it reads `series.pubmed_id`, enriches each ID through PubMed ESummary, and maps publication status.
-- `_idf_publications()` logs a warning when neither enriched publication records nor usable `series.pubmed_id` values are present, because PubMed-backed publication rows cannot be populated.
-- `_lookup_pubmed_id()` delegates to `self.pubmed_fetcher.pubmed_summary()` and returns DOI, author string, title, status term, source ref, and accession.
-- `_idf_experiments()` combines series summary and overall design into `Experiment Description`.
-- `_idf_protocols()` uses a supplied `ProtocolRegistry` when present; otherwise it falls back to scanning known GEO protocol paths.
-- `_idf_protocols_from_registry()` emits protocols registered by the SDRF build and appends missing required protocol definitions.
-- `Protocol Parameters` and `Protocol Contact` row definitions are intentionally commented out; `Protocol Hardware` and `Protocol Software` remain and are extended when required protocol placeholders are appended.
-- Required protocol definitions are deduped by harmonized protocol type: `sample collection protocol` is required for all IDFs, while `nucleic acid sequencing protocol` is required for sequencing IDFs.
-- `_idf_term_source()` scans rows containing `source ref` and emits source name/file/version rows from `Harmonizer().ontologies`.
-
-Current caveats:
-
-- PubMed lookup is fetcher-owned and normally invoked by `MINiMLEnricher`; direct IDF construction can still invoke it as a fallback when enriched records are absent.
-- Unknown PubMed statuses are preserved as literal publication-status labels with blank ontology refs.
-- Some date rows are intentionally blank placeholders for internal curation.
-- `_idf_term_source()` runs before comment rows are moved, so current term-source inference is based on the pre-normalized IDF rows.
-
-<a id="ae-constructor"></a>
-### `magetab/constructor.py`
-
-`class ProtocolRegistry`
-
-- Maps protocol kind/text pairs to stable `P-{series_accession}-{n}` refs.
-- Reuses the same ref for identical cleaned text under the same kind.
-- Tracks kind, MAGE-TAB label, and cleaned description.
-- `get_ref(kind: str, text: str | None, label: str | None = None) -> str |
-  None` cleans text, returns `None` when it is empty, reuses existing identity,
-  or mutates registry state by allocating the next reference.
-- `ensure_required(kind, label)` creates or reuses a required placeholder ref even when protocol text is empty.
-- `records()` returns records in insertion order.
-
-`class AEConstructor`
-
-`__init__(idf_constructor=None, sdrf_constructor=None)`
-
-- Accepts dependency injection for tests or custom constructors.
-- Defaults to `IDFConstructor()` and `SDRFConstructor()`.
-
-`miniml2magetab(data, platform_handler=None) -> list`
-
-- Creates a `ProtocolRegistry` from `_series_accession(data)`.
-- Validates a supplied platform-handler key against `PLATFORM_HANDLER_KEYS`, or detects the shared MAGE-TAB technology key with `_detect_ae_technology(data)` when omitted.
-- Forced mode skips unchanged round-trip and typed-model-only shortcuts so both selected handlers execute.
-- Builds SDRF first so protocol refs are registered.
-- Builds IDF with the same registry and technology key.
-- Replaces the first `SDRF File` row with the in-memory SDRF table.
-- Preserves valid quote and apostrophe characters in in-memory IDF/SDRF values.
-- Raises `ValueError` if the IDF lacks an SDRF row.
-
-`magetab2file(magetab, out=None) -> str`
-
-- Creates the output directory.
-- Normalizes row shapes with `_normalize_magetab_rows()`.
-- Uses `csv.writer` TSV escaping so quote characters survive written IDF/SDRF files.
-- Validates and extracts the embedded SDRF table.
-- Chooses IDF and SDRF filenames from the MAGE-TAB accession rows.
-- Replaces the embedded SDRF table with the SDRF filename in the IDF.
-- Writes both files as tab-delimited UTF-8 text and returns the IDF path.
-
-Other helpers:
-
-- `_detect_ae_technology()` chooses `bulk_sequencing`, `plate_single_cell_sequencing`, `droplet_single_cell_sequencing`, `spatial_sequencing`, `array`, or `generic`. Version-specific option names remain accepted explicitly, but automatic selection does not interpret bare versions.
-- `_has_array_files()` detects array-like files from platform/sample/series supplementary data and raw data.
-- `_normalize_magetab_rows()` accepts row lists, comma-delimited legacy strings, and legacy `"SDRF file", sdrf` pairs.
-- Legacy `_strip_quotes()` remains private but is no longer used by construction or file writing.
-- `_sdrf_row_index()` finds the SDRF row case-insensitively.
-- `_magetab_accession()` searches ArrayExpress, investigation, then secondary accession rows.
-- `_safe_filename_token()` removes path separators from accession-derived filenames.
-- `_is_table()` validates row-table shape.
-- `_write_tsv()` writes `None` as blank cells.
-
-<a id="sdrf-handlers"></a>
-### `magetab/sdrf/constructor.py`
-
-<a id="sdrf-dataclasses"></a>
-#### SDRF dataclasses
-
-- `SDRFAttr`: companion attributes, including nested companion attributes.
-- `SDRFNode`: visible primary SDRF node columns.
-- `SDRFEdge`: visible `Protocol REF` columns.
-- `SDRFPath`: one logical row path.
-- `ColumnGroup`: planned column plus companions.
-- `SDRFAudit`: warnings, dropped values, validation errors.
-
-<a id="sdrfconstructor"></a>
-#### SDRFConstructor
-
-`class SDRFConstructor`
-
-`__init__(insdc_fetcher=None)`
-
-- Accepts an INSDC fetcher dependency for tests or custom network behavior.
-- Defaults to `INSDCWebfetcher()`.
-
-- `_add_sdrf_to_idf()` appends an in-memory SDRF row to IDF rows; this remains for compatibility but `AEConstructor` now coordinates insertion.
-- Generic, sequencing, bulk-sequencing, and array paths register and reference `sample.data_processing` as a `Data-Processing` protocol. AE parsing maps processing/normalization protocols back to that sample field and maps only extraction protocols to `channel.extract_protocol`; library-construction and sequencing protocols are not collapsed into extraction. Sequencing paths also reference a populated `sample.scan_protocol`.
-- Single-cell read/barcode/isolation comment labels emitted by the SDRF handlers are recognized by `AEParser` and do not create self-generated unmapped-column warnings.
-- `_miniml2sdrf(data, protocol_registry=None, technology_type=None)` uses the supplied AE technology key or detects one for compatibility, selects a handler, builds the table, stores `last_sdrf_audit`, and returns rows.
-- `_detect_sdrf_technology(data)` delegates to `AEConstructor._detect_ae_technology(data)`.
-- `_has_array_files(data)` delegates to `AEConstructor._has_array_files(data)`.
-- `_lookup_sra(sra)` delegates SRA fetching/parsing to `self.insdc_fetcher.fetch_sra_runs()` and returns `[]` on request or XML parse errors.
-
-<a id="sdrf-file-helpers"></a>
-#### File helpers
-
-- `normalized_extension(path)` parses URLs/paths, strips one compression suffix, and returns the lowercase extension.
-- `classify_file(path)` returns `sequencing_raw`, `array_raw`, `matrix_or_derived`, or `supplementary`.
-
-<a id="base-sdrf-handler"></a>
-#### Base SDRF handler
-
-`class _BaseSDRFHandler`
-
-- Initializes samples, platform lookup, sample lookup, series accession, protocol registry, audit object, and factor tags.
-- Uses enriched `sample.sra_run` when present; otherwise uses the parent constructor's injected `insdc_fetcher` for SRA accession extraction and run lookup.
-- `build()` orchestrates path building, column planning, and rendering.
-- `build_paths()` creates generic source/factor paths.
-- `plan_columns()`, `merge_column_group()`, `render_paths()`, `column_labels()`, `column_values()`, `path_groups()`, `group_with_values()`, `attr_columns()`, `occurrence_key()`, and `render_value()` handle table planning and rendering; `render_value()` preserves quote characters while normalizing missing values to blank cells.
-- `ordered_samples()` respects series sample refs before remaining samples.
-- `channels()` normalizes missing channels to `[{}]` and warns for multi-channel samples.
-- `source_node()`, `sample_comment_attrs()`, `characteristic_attrs()`, `organism_part_value()`, `provider()`, and `material_type()` build mapped source columns.
-- `characteristic_attrs()` seeds required blank source characteristics for organism, organism part, developmental stage, disease, and genotype; the first matching JSON value fills the seeded column and repeated values remain as repeated columns.
-- `factor_nodes()`, `_factor_tags()`, `factor_value()`, `characteristic_values()`, and `characteristic_value()` handle experimental factors.
-- `extraction_edges()` and `protocol_edge()` register protocol refs and warn for required blank refs.
-- All SDRF handlers add a required sample collection `Protocol REF`; sequencing handlers also add a required nucleic acid sequencing `Protocol REF`.
-- `sample_accession()`, `biosample_accessions()`, `biosample_accession()`, `platform()`, `platform_accession()`, `instrument_model()`, `supplementary_files()`, `raw_files()`, `derived_files()`, `arrayexpress_ftp()`, `file_node()`, `sra_runs()`, and `clean()` provide common extraction utilities.
-
-<a id="sequencing-handlers"></a>
-#### Sequencing handlers
-
-- `_SequencingSDRFHandler.build_paths()` builds source, sample collection protocol, extraction, extract, library protocol, assay, nucleic acid sequencing protocol, scan, and factor nodes for each sample/channel/run.
-- `extract_node()` maps material type and library attributes.
-- `library_attrs()` maps library layout, selection, source, and strategy; source is uppercased for `Comment[LIBRARY_SOURCE]`.
-- `geo_first_value()` prefers GEO over conflicting SRA values and records warnings.
-- `library_protocol_text()` combines extraction/library/SRA fields for protocol descriptions.
-- `assay_node()` maps technology type, ENA/SRA identifiers, submitted file, MD5, and instrument model.
-- `geo_first_instrument_model()` prefers GEO instrument model over SRA.
-- `scan_node()` maps scan name and sequencing file attrs.
-- `sequencing_file_attrs()` maps FASTQs and raw sequencing files; the former derived data comment block is intentionally left commented out.
-- `_BulkSequencingSDRFHandler` is selected for ordinary non-single-cell sequencing and expands each sample/channel/run into one path per FASTQ URI.
-- `_SingleCellSequencingSDRFHandler` resolves each sample/channel/run through `resolve_chemistry()`, adds supported annotations, and records operation-local diagnostics. Unlabelled read-length lists do not supply cDNA lengths.
-- `_DropletSingleCellSequencingSDRFHandler` and the retained v2/v3 rendering selections share evidence-based annotation. No version, barcode, primer, strand or read-length presets are supplied. See [scoped chemistry](#scoped-library-chemistry).
-- `_PlateSingleCellSequencingSDRFHandler` inherits the bulk per-FASTQ row behavior and adds source-level index and description comments.
-- `_SpatialSequencingSDRFHandler` adds Visium library construction, read geometry, and read type/read index comments based on submitted filenames.
-
-<a id="array-and-generic-handlers"></a>
-#### Array and generic handlers
-
-- `_ArraySDRFHandler.build_paths()` builds source, extraction, labeled extract, hybridization, assay, scan, file, and factor nodes.
-- `array_extract_node()` builds array extract nodes.
-- `labeled_extract_node()` maps channel labels.
-- `array_assay_node()` maps array assay technology and Array Design REF.
-- `array_file_nodes()` maps raw image/data files, derived matrix files, and supplementary files.
-- `_GenericSDRFHandler` uses the base source/factor path behavior.
-
-<a id="legacy-fallback-notes"></a>
-#### Legacy fallback notes
-
-- `_GEOFallbackComments` and `_SRAFallbackComments` are commented out as reference code.
-- No greedy fallback comments are emitted at runtime.
-
-<a id="harmonizers"></a>
-### `metadata/ontology_mappings.py`
-
-`class GEO2OLS`
-
-- Ensures an `ontologies` dict exists.
-- Registers EFO and OBI term source metadata.
-
-`geoprotocols2efo(protocol_type: str) -> list`
-
-- Maps known MAGE-TAB/GEO protocol labels to ontology term, source ref, and accession.
-- Maps `Library-Construction-Protocol` to `nucleic acid library construction protocol`, EFO, and `EFO_0004184`; registered EFO term-source metadata uses release `3.90.0`.
-- Raises `ValueError` for blank protocol type.
-- Returns `[protocol_type, None, None]` for unknown non-blank protocol labels, allowing custom protocol labels to survive in IDF output.
-
-### `metadata/ontology_mappings.py`
-
-`class Pubmed2OLS`
-
-- Ensures an `ontologies` dict exists.
-- Registers EFO and MeSH term source metadata.
-
-`pubstatus2efo(pub_status: str) -> list`
-
-- Returns `[None, None, None]` for blank status.
-- Splits composite statuses on `+` and maps the first token.
-- Maps common PubMed statuses such as `ppublish`, `epublish`, `pubmed`, `medline`, and `retracted`.
-- Returns `[original_status_label, None, None]` for unknown non-blank statuses.
-
-### `metadata/ontology_mappings.py`
-
-`class Harmonizer(Pubmed2OLS, GEO2OLS)`
-
-- Combines PubMed and GEO ontology mappings through multiple inheritance.
-- Initializes a shared `ontologies` dictionary before calling parent initializers.
-
-<a id="json-helper"></a>
-### `helpers/json_helper.py`
-
-`class JSONHandler`
-
-`_from_path(obj, path_str)`
-
-- Resolves dotted paths through dict/list structures.
-- Numeric path components are treated as list indexes.
-- `*` expands over lists.
-- Missing branches return `[None]`, preserving positional behavior for callers.
-
-`_flatten_values(value)`
-
-- Recursively flattens nested lists and dict values.
-- Returns scalar values as a one-item list.
-
-<a id="request-helper"></a>
-### `helpers/request_helper.py`
-
-`class NCBIApplicationIdentity`
-
-- Validates a 1-64 character NCBI tool identifier, optional contact email, and
-  optional nonblank API-key token. The secret is excluded from `repr`.
-- `params() -> dict[str, str]` returns configured `tool`/`email`/`api_key`
-  parameters used
-  by both NCBI fetchers. Defaults identify the released MSC application and its
-  public maintainer contact; callers may inject an approved replacement. A
-  missing email emits one warning and does not relax conservative pacing.
-- Request telemetry contains service/host/attempt/status only and never logs
-  these parameters.
-
-`class HostRequestCooldownDeferred`
-
-- Signals that a persisted provider cooldown exceeds the caller's inline wait
-  budget. `retry_at` is an absolute Unix timestamp suitable for a retryable
-  checkpoint; it is not a request URL or provider payload.
-
-`class HostRequestGate`
-
-- Normalizes a provider/model key and stores only versioned request-start and
-  cooldown timestamps in an owner-only state file selected by SHA-256.
-- Uses `flock` across processes and keeps the lock through the bounded wait and
-  timestamp update, so unrelated traces under the same Unix user share one
-  conservative start schedule.
-- `slot(...)` adds a distinct one-at-a-time cross-process lease around a caller's
-  provider operation and applies the same start pacing after acquisition. It is
-  intended for model keys that must not overlap; cancellation while waiting
-  raises `InterruptedError`, and the lease always releases on context exit.
-- Honors numeric and HTTP-date `Retry-After` values. A cooldown beyond
-  `max_wait_seconds` raises `HostRequestCooldownDeferred` instead of sleeping
-  past a worker's budget.
-- Uses `SCIENTIFIC_PROVIDER_GATE_DIR` when explicitly configured, otherwise an
-  XDG runtime directory when writable, with an owner-only per-user `/tmp`
-  fallback. Explicit invalid, unowned, or symbolic-link paths fail closed.
-
-`class RequestSettings`
-
-- Stores request behavior: `timeout`, `request_delay`, `max_in_flight`,
-  `max_retries`, retry HTTP statuses, exponential backoff base, and maximum
-  backoff plus `max_inline_wait`. Invalid time, delay, concurrency, retry, or
-  wait values fail at construction.
-- Defaults retry HTTP statuses to `{403, 408, 425, 429, 500, 502, 503, 504}`;
-  ordinary non-throttling 4xx responses are not retried.
-
-`DEFAULT_REQUEST_SETTINGS`
-
-- `ncbi_eutils`: timeout 30 seconds, request delay 0.5 seconds, two maximum
-  in-flight requests, and 3 retries.
-- `geo_ftp`, `biostudies`, and `ena_portal`: timeout 30 seconds, request delay
-  1.0 seconds, two maximum in-flight requests, and 3 retries.
-
-`class RateLimitedRequester`
-
-- `get(url: str, **kwargs: Any) -> requests.Response` wraps `requests.get()`, applies a default timeout,
-  enforces host-wide delay and in-flight limits, retries configured statuses, and returns a response
-  or raises the exhausted HTTP/transport error.
-- `reset_service_state()` is a class-level test/operations hook that clears
-  shared limiter timestamps; it mutates process-global requester state.
-- Maintains process-local in-flight limits and delegates every actual request
-  attempt to `HostRequestGate`, so separate processes and libraries targeting
-  the same host share start pacing and cooldowns. Different hosts remain
-  independent.
-- Retries transient HTTP statuses. Numeric or HTTP-date `Retry-After` controls
-  the persisted cooldown; otherwise full jitter selects a value from zero to
-  `min(0.5 * (2 ** attempt), 8.0)`.
-- Retries `ConnectionError`, `Timeout`, and `ChunkedEncodingError` with the same
-  bounded full-jitter policy and exact configured attempt count.
-- Raises the exhausted retry response through `response.raise_for_status()`.
-- Exposes cumulative `provider_attempts`, `retry_count`, and
-  `rate_wait_seconds` counters for the lifetime of the requester. Gate waits are
-  counted once at the actual provider-attempt boundary; cached work never
-  changes them.
-
 <a id="pubmed-fetcher"></a>
-### `sources/pubmed.py`
-
-`class PubmedWebFetcher`
-
-`__init__(requester=None, request_settings=None, ncbi_identity=None,
-resource_profile="standard", resource_overrides=None)`
-
-- Defaults to `RateLimitedRequester(service="ncbi_eutils")`.
-- Accepts a custom requester, NCBI E-utilities request settings, or validated
-  application identity.
-
-`fetch_pubmed_summary(pubmed_id: str) -> ET.Element`
-
-- Calls NCBI PubMed ESummary for one PubMed ID through the `ncbi_eutils`
-  requester with the configured tool/contact parameters.
-- Raises for HTTP errors and returns the parsed XML root.
-
-`pubmed_summary(pubmed_id: str) -> tuple`
-
-- Parses DOI, author list, title, and PubMed publication status from ESummary XML.
-- Maps publication status through `Harmonizer().pubstatus2efo()`.
-- Returns the existing IDF tuple shape: DOI, author string, title, mapped status, term source ref, and term accession.
-
 <a id="insdc-fetcher"></a>
-### `sources/insdc.py`
+### Implementation lookup
 
-`class INSDCWebfetcher`
+Earlier helper anchors remain aliases to this inventory. Search the qualified
+name below; use the owning module rather than retired compatibility imports.
 
-`__init__(ncbi_requester=None, ena_requester=None,
-ncbi_request_settings=None, ena_request_settings=None, ncbi_identity=None,
-resource_profile="standard", resource_overrides=None)`
+Raw-table round-trip helpers are retired; MAGE-TAB uses canonical semantic
+reconstruction. The retired `ae_roundtrip` module is not a public interface.
 
-- Defaults to `RateLimitedRequester(service="ncbi_eutils")` for NCBI SRA EFetch.
-- Defaults to `RateLimitedRequester(service="ena_portal")` for ENA Portal file reports.
-- Accepts custom requesters, per-service request settings, or a validated NCBI
-  application identity. EFetch receives its tool/contact parameters; ENA calls
-  do not receive NCBI-specific fields.
 
-`_extract_sra(sra: str)`
+### `meta_standards_converter.artifact_bundle`
 
-- Extracts SRA/ENA/DDBJ-style accessions matching `[SED]R[RXSP]` plus digits.
-- Matching is case-insensitive.
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.artifact_bundle.ArtifactRecoveryError` [source](../src/meta_standards_converter/artifact_bundle.py#L29) | `ArtifactRecoveryError(publication_error: 'BaseException', recovery_errors: 'list[BaseException]', recovery_paths: 'tuple[Path, ...]') -> 'None'` | Publication failed and one or more compatibility views need recovery. Bases: RuntimeError. |
+| `ArtifactRecoveryError.__init__` [source](../src/meta_standards_converter/artifact_bundle.py#L32) | `__init__(publication_error: BaseException, recovery_errors: list[BaseException], recovery_paths: tuple[Path, ...]) -> None` | See source; follows the owning type contract. |
+| `meta_standards_converter.artifact_bundle.PublishedArtifactBundle` [source](../src/meta_standards_converter/artifact_bundle.py#L49) | `PublishedArtifactBundle(pointer_path: 'Path', generation_path: 'Path', artifacts: 'dict[str, Path]') -> None` | Resolved immutable generation selected by one current pointer. |
+| `meta_standards_converter.artifact_bundle.DurableArtifactBundlePublisher` [source](../src/meta_standards_converter/artifact_bundle.py#L82) | `DurableArtifactBundlePublisher(*, replace: 'Callable[[os.PathLike[str] \| str, os.PathLike[str] \| str], None]' = <built-in function replace>) -> 'None'` | Publish immutable generations and one crash-atomic current pointer. |
+| `DurableArtifactBundlePublisher.__init__` [source](../src/meta_standards_converter/artifact_bundle.py#L85) | `__init__(*, replace: Callable[[os.PathLike[str] \| str, os.PathLike[str] \| str], None]=os.replace) -> None` | See source; follows the owning type contract. |
+| `DurableArtifactBundlePublisher.publish` [source](../src/meta_standards_converter/artifact_bundle.py#L92) | `publish(staged: Mapping[str, Path], destinations: Mapping[str, Path], *, overwrite: bool) -> PublishedArtifactBundle` | Publish ``staged`` files and return the committed immutable generation. Direct raises: ArtifactRecoveryError, FileExistsError, FileNotFoundError, ValueError. |
+| `meta_standards_converter.artifact_bundle.resolve_current_bundle` [source](../src/meta_standards_converter/artifact_bundle.py#L254) | `resolve_current_bundle(pointer_path: str \| Path) -> PublishedArtifactBundle` | Validate and resolve the immutable generation selected by ``pointer_path``. |
 
-`_ncbi_nrx(nrx: str)`
+### `meta_standards_converter.atlas_v1.reader`
 
-- Calls NCBI SRA EFetch with `retmode=xml` through the `ncbi_eutils` requester.
-- Raises for HTTP errors and returns the parsed XML root.
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.atlas_v1.reader.AtlasV1Error` [source](../src/meta_standards_converter/atlas_v1/reader.py#L54) | `bases: ValueError` | The input is not a valid or supported Atlas v1 document. Bases: ValueError. |
+| `meta_standards_converter.atlas_v1.reader.AtlasV1Dataset` [source](../src/meta_standards_converter/atlas_v1/reader.py#L59) | `AtlasV1Dataset(dataset_id: 'str', source_repository: 'str', source_ordinal: 'int', metadata: 'Mapping[str, Any]') -> None` | One harmonized dataset adapted from an Atlas v1 document. |
+| `meta_standards_converter.atlas_v1.reader.AtlasV1ReadResult` [source](../src/meta_standards_converter/atlas_v1/reader.py#L69) | `AtlasV1ReadResult(datasets: 'tuple[AtlasV1Dataset, ...]', warnings: 'tuple[str, ...]' = ()) -> None` | Convertible datasets plus diagnostics for skipped dataset states. |
+| `meta_standards_converter.atlas_v1.reader.AtlasV1Reader` [source](../src/meta_standards_converter/atlas_v1/reader.py#L192) | `AtlasV1Reader()` | Read the versioned wire format without importing its producer package. |
+| `AtlasV1Reader.load` [source](../src/meta_standards_converter/atlas_v1/reader.py#L195) | `load(path: str \| Path) -> AtlasV1ReadResult` | See source; follows the owning type contract. |
+| `AtlasV1Reader.from_mapping` [source](../src/meta_standards_converter/atlas_v1/reader.py#L200) | `from_mapping(value: Mapping[str, Any]) -> AtlasV1ReadResult` | Direct raises: AtlasV1Error. |
 
-`fetch_sra_runs(accession: str) -> list`
+### `meta_standards_converter.cli.ae2json`
 
-- Calls `_ncbi_nrx()` and ENA Portal `filereport`, then parses and merges run metadata into the run dictionaries consumed by SDRF handlers.
-- Preserves the existing run record shape and adds `study`: library layout/source/strategy/selection, SRA/ENA study/sample/run IDs, GEO sample ID, BioSample ID, instrument model, submitted FASTQ filename, MD5, read lengths, and per-FASTQ `filename`/`uri`/`md5` records.
-- ENA `fastq_ftp` links are preferred for FASTQ `uri`; if ENA links are absent or unavailable, original NCBI SRA XML `url`/`Alternatives` links are used as fallback.
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.ae2json.main` [source](../src/meta_standards_converter/cli/ae2json.py#L55) | `main(argv=None)` | See defining source and workflow contracts. |
 
-ENA file report helpers:
+### `meta_standards_converter.cli.common`
 
-- `fetch_ena_file_report()` calls `https://www.ebi.ac.uk/ena/portal/api/filereport` through the `ena_portal` requester with `result=read_run`, FASTQ fields, and JSON output.
-- `fetch_ena_fastq_files()` groups parsed ENA FASTQ records by `run_accession`.
-- `_parse_ena_fastq_report()`, `_split_ena_file_field()`, `_normalize_ena_ftp_uri()`, and `_filename_from_uri()` parse semicolon-delimited ENA file fields.
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.common.parse_resource_override` [source](../src/meta_standards_converter/cli/common.py#L25) | `parse_resource_override(value: str) -> tuple[str, int \| float]` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.add_resource_profile_arguments` [source](../src/meta_standards_converter/cli/common.py#L44) | `add_resource_profile_arguments(parser) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.configured_resource_profile` [source](../src/meta_standards_converter/cli/common.py#L61) | `configured_resource_profile(args, parser) -> ResourceProfile` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.add_platform_handler_arguments` [source](../src/meta_standards_converter/cli/common.py#L71) | `add_platform_handler_arguments(parser: argparse.ArgumentParser) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.print_platform_handlers` [source](../src/meta_standards_converter/cli/common.py#L85) | `print_platform_handlers() -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.add_logging_arguments` [source](../src/meta_standards_converter/cli/common.py#L90) | `add_logging_arguments(parser: argparse.ArgumentParser) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.log_level` [source](../src/meta_standards_converter/cli/common.py#L111) | `log_level(args) -> int` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.configure_logging` [source](../src/meta_standards_converter/cli/common.py#L121) | `configure_logging(args, *, stream=None) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.cli.common.record_safe_cli_error` [source](../src/meta_standards_converter/cli/common.py#L144) | `record_safe_cli_error(logger: logging.Logger, error: BaseException, *, location: str, stage: str, provider: str \| None=None) -> SafeErrorEnvelope` | Log and return a durable error without serializing its raw message. |
+| `meta_standards_converter.cli.common.add_replacement_profile_arguments` [source](../src/meta_standards_converter/cli/common.py#L170) | `add_replacement_profile_arguments(parser)` | Add explicit, mutually exclusive export replacement policy inputs. |
+| `meta_standards_converter.cli.common.replacement_profile_from_args` [source](../src/meta_standards_converter/cli/common.py#L177) | `replacement_profile_from_args(args, parser)` | Parse once before conversion; malformed policy input must not publish files. |
 
-SRA XML helper methods:
+### `meta_standards_converter.cli.geo2ae`
 
-- `_parse_sra_library()`, `_parse_sra_sample_ids()`, `_parse_sra_instrument_model()`, `_parse_sra_fastqs()`, `_element_accession()`, `_find_text()`, `_strip_ns()`, and `_clean_sdrf_text()` support SRA parsing.
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.geo2ae.main` [source](../src/meta_standards_converter/cli/geo2ae.py#L72) | `main(argv=None) -> int` | See defining source and workflow contracts. |
 
-- Because it returns `None`, normal validation currently raises `AssertionError`.
+### `meta_standards_converter.cli.geo2json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.geo2json.main` [source](../src/meta_standards_converter/cli/geo2json.py#L76) | `main(argv=None) -> int` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.cli.json2ae`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.json2ae.main` [source](../src/meta_standards_converter/cli/json2ae.py#L61) | `main(argv=None) -> int` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.cli.json2h5ad`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.json2h5ad.main` [source](../src/meta_standards_converter/cli/json2h5ad.py#L137) | `main(argv=None) -> int` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.cli.json2obs`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.json2obs.main` [source](../src/meta_standards_converter/cli/json2obs.py#L70) | `main(argv=None) -> int` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.cli.json2tsv`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.json2tsv.main` [source](../src/meta_standards_converter/cli/json2tsv.py#L43) | `main(argv=None) -> int` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.cli.miniml_migrate`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.miniml_migrate.main` [source](../src/meta_standards_converter/cli/miniml_migrate.py#L29) | `main(argv=None) -> int` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.converters.ae2json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.ae2json.AE2JSONConverter` [source](../src/meta_standards_converter/converters/ae2json.py#L28) | `AE2JSONConverter(fetcher=None, parser=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None, source_hosts=())` | See defining source and workflow contracts. |
+| `AE2JSONConverter.metrics` [source](../src/meta_standards_converter/converters/ae2json.py#L29) | `metrics()` | See source; follows the owning type contract. |
+| `AE2JSONConverter.__init__` [source](../src/meta_standards_converter/converters/ae2json.py#L33) | `__init__(fetcher=None, parser=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None, source_hosts=())` | See source; follows the owning type contract. |
+| `AE2JSONConverter.convert` [source](../src/meta_standards_converter/converters/ae2json.py#L55) | `convert(source: str, out: str \| None=None, sdrf_sources: list[str] \| None=None) -> list[MINiMLPackage]` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.converters.dataset_combination`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.dataset_combination.DatasetCompatibilityError` [source](../src/meta_standards_converter/converters/dataset_combination.py#L18) | `bases: ValueError` | A public-safe scientific reason that prevents dataset combination. Bases: ValueError. |
+| `meta_standards_converter.converters.dataset_combination.DatasetCombinationPolicy` [source](../src/meta_standards_converter/converters/dataset_combination.py#L22) | `DatasetCombinationPolicy(*, scientific_modules: 'Callable[[], tuple[Any, Any, Any, Any]]', attach_sample_values: 'Callable[[Any, dict[str, dict]], None]', package_version: 'Callable[[], str]', metadata_schema_version: 'str') -> 'None'` | Inspect compatibility evidence without claiming matrix integration. |
+| `DatasetCombinationPolicy.__init__` [source](../src/meta_standards_converter/converters/dataset_combination.py#L25) | `__init__(*, scientific_modules: Callable[[], tuple[Any, Any, Any, Any]], attach_sample_values: Callable[[Any, dict[str, dict]], None], package_version: Callable[[], str], metadata_schema_version: str) -> None` | See source; follows the owning type contract. |
+| `DatasetCombinationPolicy.combine` [source](../src/meta_standards_converter/converters/dataset_combination.py#L38) | `combine(adatas: dict[str, object], *, allow_unverified: bool=False)` | Direct raises: DatasetCompatibilityError. |
+| `DatasetCombinationPolicy.missing_combination_evidence` [source](../src/meta_standards_converter/converters/dataset_combination.py#L50) | `missing_combination_evidence(adatas: Mapping[str, object]) -> dict[str, list[str]]` | See source; follows the owning type contract. |
+| `DatasetCombinationPolicy.feature_namespace` [source](../src/meta_standards_converter/converters/dataset_combination.py#L102) | `feature_namespace(adata) -> str` | See source; follows the owning type contract. |
+| `DatasetCombinationPolicy.declared_reference` [source](../src/meta_standards_converter/converters/dataset_combination.py#L124) | `declared_reference(adata) -> str \| None` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.converters.geo2ae`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.geo2ae.GEO2AEConverter` [source](../src/meta_standards_converter/converters/geo2ae.py#L29) | `GEO2AEConverter(enricher=None, geo_fetcher=None, parser=None, ae_constructor=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None)` | Bases: JSONHandler. |
+| `GEO2AEConverter.metrics` [source](../src/meta_standards_converter/converters/geo2ae.py#L30) | `metrics()` | See source; follows the owning type contract. |
+| `GEO2AEConverter.__init__` [source](../src/meta_standards_converter/converters/geo2ae.py#L34) | `__init__(enricher=None, geo_fetcher=None, parser=None, ae_constructor=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None)` | See source; follows the owning type contract. |
+| `GEO2AEConverter.convert` [source](../src/meta_standards_converter/converters/geo2ae.py#L55) | `convert(gse: str, related_series: bool=False, remove_empty: bool=True, out: str=None, platform_handler: str \| None=None)` | fetches MINIML from GEO using gse accession, parses into meta_json, then writes via AEConstructor. |
+
+### `meta_standards_converter.converters.geo2json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.geo2json.GEO2JSONConverter` [source](../src/meta_standards_converter/converters/geo2json.py#L81) | `GEO2JSONConverter(enricher=None, geo_fetcher=None, parser=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None)` | Bases: JSONHandler. |
+| `GEO2JSONConverter.metrics` [source](../src/meta_standards_converter/converters/geo2json.py#L82) | `metrics()` | See source; follows the owning type contract. |
+| `GEO2JSONConverter.__init__` [source](../src/meta_standards_converter/converters/geo2json.py#L86) | `__init__(enricher=None, geo_fetcher=None, parser=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None)` | See source; follows the owning type contract. |
+| `GEO2JSONConverter.convert` [source](../src/meta_standards_converter/converters/geo2json.py#L105) | `convert(gse: str, related_series: bool=False, remove_empty: bool=True, enrich: bool=True, out: str=None) -> list[MINiMLPackage]` | Fetches GEO MINiML, parses it to JSON packages, optionally enriches, and optionally writes JSON. |
+| `GEO2JSONConverter.json2file` [source](../src/meta_standards_converter/converters/geo2json.py#L267) | `json2file(gse: str, packages: list[MINiMLPackage], out: str) -> str` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.converters.json2ae`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.json2ae.JSON2AEConverter` [source](../src/meta_standards_converter/converters/json2ae.py#L26) | `JSON2AEConverter(enricher=None, ae_constructor=None, package_source=None)` | Convert parsed MINiML JSON packages into MAGE-TAB payloads. Bases: JSONHandler. |
+| `JSON2AEConverter.__init__` [source](../src/meta_standards_converter/converters/json2ae.py#L29) | `__init__(enricher=None, ae_constructor=None, package_source=None)` | See source; follows the owning type contract. |
+| `JSON2AEConverter.convert` [source](../src/meta_standards_converter/converters/json2ae.py#L34) | `convert(json_path: str, out: str=None, enrich: bool=True, platform_handler: str \| None=None, *, replacement_profile: Mapping[str, Any] \| None=None) -> list[list]` | Load parsed MINiML JSON and optionally write IDF/SDRF files. |
+
+### `meta_standards_converter.converters.json2h5ad`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter` [source](../src/meta_standards_converter/converters/json2h5ad.py#L124) | `JSON2H5ADConverter(planner: 'SourcePlanner \| None' = None, reader=None, asset_cache_dir=None, pipeline_runner: 'NFCoreRunner \| None' = None, downloader: 'AssetDownloader \| None' = None, metadata_projectors: 'Sequence[AnnDataMetadataProjector] \| None' = None, package_source: 'JSONPackageSource \| None' = None, retrieval_policy: 'RetrievalPolicy \| None' = None, resource_profile: 'str' = 'standard', resource_overrides: 'Mapping[str, int \| float] \| None' = None, metadata_service: 'MINiMLMetadataProvider \| None' = None, combination_policy: 'DatasetCombinationPolicy \| None' = None, available_memory: 'Callable[[], int] \| None' = None, memory_estimator: 'Callable[[str, Asset], int] \| None' = None)` | See defining source and workflow contracts. |
+| `JSON2H5ADConverter.__init__` [source](../src/meta_standards_converter/converters/json2h5ad.py#L169) | `__init__(planner: SourcePlanner \| None=None, reader=None, asset_cache_dir=None, pipeline_runner: NFCoreRunner \| None=None, downloader: AssetDownloader \| None=None, metadata_projectors: Sequence[AnnDataMetadataProjector] \| None=None, package_source: JSONPackageSource \| None=None, retrieval_policy: RetrievalPolicy \| None=None, resource_profile: str='standard', resource_overrides: Mapping[str, int \| float] \| None=None, metadata_service: MINiMLMetadataProvider \| None=None, combination_policy: DatasetCombinationPolicy \| None=None, available_memory: Callable[[], int] \| None=None, memory_estimator: Callable[[str, Asset], int] \| None=None)` | Direct raises: ValueError. |
+| `JSON2H5ADConverter.convert` [source](../src/meta_standards_converter/converters/json2h5ad.py#L219) | `convert(json_path: str, out: str \| None=None, explicit_assets: list[Asset] \| None=None, asset_manifest: str \| None=None, asset_specs: list[str] \| None=None, force_reprocess: bool=False, matrix_orientation: str='auto', overwrite: bool=False, pipeline: str='auto', genome: str \| None=None, fasta: str \| None=None, gtf: str \| None=None, gff: str \| None=None, accept_inferred_reference: bool=False, profile: str='docker', revision: str \| None=None, params_file: str \| None=None, nextflow_config: str \| None=None, work_dir: str \| None=None, resume: bool=False, force_memory: bool=False, processed_checkpoint_dir: str \| None=None, allow_invalid: bool=False, allow_unverified_combination: bool=False, *, replacement_profile: Mapping[str, Any] \| None=None, **options) -> ConversionResult \| BatchConversionResult` | Direct raises: FileNotFoundError, TypeError, ValueError. |
+| `JSON2H5ADConverter.convert_source` [source](../src/meta_standards_converter/converters/json2h5ad.py#L314) | `convert_source(json_path: str, out: str \| None=None, allow_invalid: bool=False, *, replacement_profile: Mapping[str, Any] \| None=None, **options) -> BatchConversionResult` | Direct raises: FileNotFoundError, TypeError, ValueError. |
+
+### `meta_standards_converter.converters.json2obs`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.json2obs.JSON2OBSConverter` [source](../src/meta_standards_converter/converters/json2obs.py#L33) | `JSON2OBSConverter(h5ad_converter=None, components=None)` | See defining source and workflow contracts. |
+| `JSON2OBSConverter.__init__` [source](../src/meta_standards_converter/converters/json2obs.py#L34) | `__init__(h5ad_converter=None, components=None)` | See source; follows the owning type contract. |
+| `JSON2OBSConverter.convert` [source](../src/meta_standards_converter/converters/json2obs.py#L38) | `convert(source: str \| Path, *, outdir: str \| Path, include_var: bool=False, include_uns: bool=False, overwrite: bool=False, replacement_profile: Mapping[str, Any] \| None=None, **options) -> AnnDataMetadataExportResult \| AnnDataMetadataBatchResult` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.converters.json2tsv`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.json2tsv.JSON2DelimitedConverter` [source](../src/meta_standards_converter/converters/json2tsv.py#L33) | `JSON2DelimitedConverter(metadata_projectors: 'Sequence[TabularMetadataProjector] \| None' = None, package_source: 'JSONPackageSource \| None' = None, metadata_service: 'MINiMLMetadataProvider \| None' = None) -> 'None'` | Host one or more injected sample projectors and write one table. |
+| `JSON2DelimitedConverter.__init__` [source](../src/meta_standards_converter/converters/json2tsv.py#L38) | `__init__(metadata_projectors: Sequence[TabularMetadataProjector] \| None=None, package_source: JSONPackageSource \| None=None, metadata_service: MINiMLMetadataProvider \| None=None) -> None` | See source; follows the owning type contract. |
+| `JSON2DelimitedConverter.convert_source` [source](../src/meta_standards_converter/converters/json2tsv.py#L52) | `convert_source(source: str \| Path, destination: str \| Path, *, allow_invalid: bool=False, overwrite: bool=False, replacement_profile: Mapping[str, Any] \| None=None) -> TabularConversionResult` | Direct raises: FileExistsError, TabularProjectionError, TypeError, ValueError. |
+| `meta_standards_converter.converters.json2tsv.JSON2TSVConverter` [source](../src/meta_standards_converter/converters/json2tsv.py#L160) | `JSON2TSVConverter(metadata_projectors: 'Sequence[TabularMetadataProjector] \| None' = None, package_source: 'JSONPackageSource \| None' = None, metadata_service: 'MINiMLMetadataProvider \| None' = None, *, output_format: 'str' = 'tsv') -> 'None'` | Bases: JSON2DelimitedConverter. |
+| `JSON2TSVConverter.__init__` [source](../src/meta_standards_converter/converters/json2tsv.py#L161) | `__init__(metadata_projectors: Sequence[TabularMetadataProjector] \| None=None, package_source: JSONPackageSource \| None=None, metadata_service: MINiMLMetadataProvider \| None=None, *, output_format: str='tsv') -> None` | Direct raises: ValueError. |
+| `JSON2TSVConverter.export_manifest` [source](../src/meta_standards_converter/converters/json2tsv.py#L180) | `export_manifest(source: str \| Path, *, outdir: str \| Path, output_format: str='tsv', allow_invalid: bool=False, overwrite: bool=False, replacement_profile: Mapping[str, Any] \| None=None)` | Direct raises: FileExistsError. |
+
+### `meta_standards_converter.expression.assets`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.assets.Asset` [source](../src/meta_standards_converter/expression/assets.py#L21) | `Asset(scope_id: 'str', path: 'str', kind: 'str', role: 'str' = 'primary', source: 'str' = 'json', members: 'tuple[dict, ...]' = (), features_path: 'str \| None' = None, barcodes_path: 'str \| None' = None, orientation: 'str' = 'auto', md5: 'str \| None' = None, study_scope: 'str \| None' = None, reference: 'str \| None' = None, annotation_source: 'str \| None' = None, annotation_format: 'str \| None' = None, annotation_sha256: 'str \| None' = None, effective_annotation: 'str \| None' = None) -> None` | One processed or raw data source associated with a sample or study. |
+| `meta_standards_converter.expression.assets.AssetManifest` [source](../src/meta_standards_converter/expression/assets.py#L42) | `AssetManifest()` | Load explicit asset mappings from CSV/TSV or compact CLI specifications. |
+| `AssetManifest.load` [source](../src/meta_standards_converter/expression/assets.py#L45) | `load(path: str) -> list[Asset]` | Direct raises: ValueError. |
+| `AssetManifest.parse_spec` [source](../src/meta_standards_converter/expression/assets.py#L96) | `parse_spec(spec: str) -> Asset` | Direct raises: ValueError. |
+| `meta_standards_converter.expression.assets.classify_asset` [source](../src/meta_standards_converter/expression/assets.py#L113) | `classify_asset(path: str \| None) -> str \| None` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.expression.catalogue`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.catalogue.PipelineRun` [source](../src/meta_standards_converter/expression/catalogue.py#L24) | `PipelineRun(pipeline: 'str', revision: 'str', command: 'list[str]', work_dir: 'str', out_dir: 'str', returncode: 'int \| None' = None, log_path: 'str \| None' = None, annotation_source: 'str \| None' = None, annotation_format: 'str \| None' = None, annotation_sha256: 'str \| None' = None, effective_annotation: 'str \| None' = None, warnings: 'list[str]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.expression.catalogue.ConversionResult` [source](../src/meta_standards_converter/expression/catalogue.py#L40) | `ConversionResult(study_accession: 'str', combined_h5ad: 'str \| None' = None, sample_h5ads: 'dict[str, str]' = <factory>, retained_h5ads: 'list[str]' = <factory>, pipeline_runs: 'list[PipelineRun]' = <factory>, manifest_path: 'str \| None' = None, warnings: 'list[str]' = <factory>, failures: 'list[str]' = <factory>, errors: 'list[str]' = <factory>, memory_report: 'list[dict[str, Any]]' = <factory>) -> None` | Files and diagnostics produced for one parsed GEO study. |
+| `ConversionResult.primary_h5ad` [source](../src/meta_standards_converter/expression/catalogue.py#L55) | `primary_h5ad() -> str \| None` | Property.  |
+| `ConversionResult.partial` [source](../src/meta_standards_converter/expression/catalogue.py#L59) | `partial() -> bool` | Property.  |
+| `ConversionResult.to_dict` [source](../src/meta_standards_converter/expression/catalogue.py#L65) | `to_dict() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.expression.catalogue.BatchConversionResult` [source](../src/meta_standards_converter/expression/catalogue.py#L84) | `BatchConversionResult(conversions: 'dict[str, ConversionResult]' = <factory>, warnings: 'list[str]' = <factory>, failures: 'list[str]' = <factory>) -> None` | Per-study conversions and diagnostics for one JSON source. |
+| `BatchConversionResult.partial` [source](../src/meta_standards_converter/expression/catalogue.py#L92) | `partial() -> bool` | Property.  |
+| `BatchConversionResult.to_dict` [source](../src/meta_standards_converter/expression/catalogue.py#L97) | `to_dict() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.expression.catalogue.RawProcessingResult` [source](../src/meta_standards_converter/expression/catalogue.py#L110) | `RawProcessingResult(assets: 'dict[str, Asset]', retained_h5ads: 'list[str]' = <factory>, runs: 'list[PipelineRun]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.expression.catalogue.CataloguePublisher` [source](../src/meta_standards_converter/expression/catalogue.py#L116) | `CataloguePublisher()` | See defining source and workflow contracts. |
+| `CataloguePublisher.publish` [source](../src/meta_standards_converter/expression/catalogue.py#L164) | `publish(*, sample_sources: Mapping[str, Path], result: ConversionResult, planned: dict[str, Asset], json_path: str, overwrite: bool) -> None` | Direct raises: FileExistsError. |
+| `meta_standards_converter.expression.catalogue.DatasetBundleRecoveryError` [source](../src/meta_standards_converter/expression/catalogue.py#L413) | `DatasetBundleRecoveryError(publication_error: 'BaseException', recovery_errors: 'Sequence[BaseException]', recovery_paths: 'Sequence[Path]') -> 'None'` | A dataset bundle failed to publish and could not be fully restored. Bases: RuntimeError. |
+| `DatasetBundleRecoveryError.__init__` [source](../src/meta_standards_converter/expression/catalogue.py#L416) | `__init__(publication_error: BaseException, recovery_errors: Sequence[BaseException], recovery_paths: Sequence[Path]) -> None` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.expression.checkpoints`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.checkpoints.ProcessedCheckpointStore` [source](../src/meta_standards_converter/expression/checkpoints.py#L19) | `ProcessedCheckpointStore(package_version)` | See defining source and workflow contracts. |
+| `ProcessedCheckpointStore.__init__` [source](../src/meta_standards_converter/expression/checkpoints.py#L20) | `__init__(package_version)` | See source; follows the owning type contract. |
+| `ProcessedCheckpointStore.key` [source](../src/meta_standards_converter/expression/checkpoints.py#L23) | `key(root: Path \| None, *, sample_id: str, source_json_sha256: str, sample: Mapping[str, Any], asset: Asset, orientation: str, replacement_profile: Mapping[str, Any] \| None=None) -> tuple[Path, Path, str] \| None` | See source; follows the owning type contract. |
+| `ProcessedCheckpointStore.metadata` [source](../src/meta_standards_converter/expression/checkpoints.py#L67) | `metadata(checkpoint)` | See source; follows the owning type contract. |
+| `ProcessedCheckpointStore.observation_ids` [source](../src/meta_standards_converter/expression/checkpoints.py#L81) | `observation_ids(path: Path) -> set[str] \| None` | Read checkpoint observation metadata without materialising its matrix. |
+| `ProcessedCheckpointStore.write` [source](../src/meta_standards_converter/expression/checkpoints.py#L95) | `write(checkpoint, adata, *, warnings: Sequence[str], errors: Sequence[str]) -> None` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.expression.components`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.components.AnnDataMetadataExportResult` [source](../src/meta_standards_converter/expression/components.py#L23) | `AnnDataMetadataExportResult(study_accession: 'str', obs: 'Any', obs_path: 'str', manifest_path: 'str', var: 'Any \| None' = None, var_path: 'str \| None' = None, uns: 'Mapping[str, Any] \| None' = None, uns_path: 'str \| None' = None, warnings: 'tuple[str, ...]' = (), errors: 'tuple[str, ...]' = (), failures: 'tuple[str, ...]' = (), bundle_pointer_path: 'str \| None' = None) -> None` | Aggregated observation metadata and optional catalogue sidecars. |
+| `AnnDataMetadataExportResult.partial` [source](../src/meta_standards_converter/expression/components.py#L40) | `partial() -> bool` | Property.  |
+| `AnnDataMetadataExportResult.to_dict` [source](../src/meta_standards_converter/expression/components.py#L43) | `to_dict() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.expression.components.AnnDataMetadataBatchResult` [source](../src/meta_standards_converter/expression/components.py#L75) | `AnnDataMetadataBatchResult(conversions: 'dict[str, AnnDataMetadataExportResult]', failures: 'tuple[str, ...]' = (), warnings: 'tuple[str, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `AnnDataMetadataBatchResult.partial` [source](../src/meta_standards_converter/expression/components.py#L81) | `partial() -> bool` | Property.  |
+| `AnnDataMetadataBatchResult.to_dict` [source](../src/meta_standards_converter/expression/components.py#L84) | `to_dict() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.expression.components.scientific_modules` [source](../src/meta_standards_converter/expression/components.py#L96) | `scientific_modules()` | See defining source and workflow contracts. |
+| `meta_standards_converter.expression.components.AnnDataComponentExporter` [source](../src/meta_standards_converter/expression/components.py#L103) | `AnnDataComponentExporter()` | See defining source and workflow contracts. |
+| `AnnDataComponentExporter.export` [source](../src/meta_standards_converter/expression/components.py#L104) | `export(conversion: ConversionResult, destination: Path, *, include_var: bool, include_uns: bool, overwrite: bool) -> AnnDataMetadataExportResult` | Direct raises: FileExistsError, ValueError. |
+
+### `meta_standards_converter.expression.nfcore`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.nfcore.NFCoreRunner` [source](../src/meta_standards_converter/expression/nfcore.py#L28) | `NFCoreRunner(command_runner=None, which=None, reference_resolver=None, runtime_runner=None, annotation_converter=None)` | Prepare, execute, and inspect pinned nf-core RNA-seq workflows. |
+| `NFCoreRunner.__init__` [source](../src/meta_standards_converter/expression/nfcore.py#L34) | `__init__(command_runner=None, which=None, reference_resolver=None, runtime_runner=None, annotation_converter=None)` | See source; follows the owning type contract. |
+| `NFCoreRunner.process` [source](../src/meta_standards_converter/expression/nfcore.py#L48) | `process(assets: dict[str, Asset], packages: list[dict], out: str, study_accession: str, pipeline: str='auto', genome: str \| None=None, fasta: str \| None=None, gtf: str \| None=None, gff: str \| None=None, accept_inferred_reference: bool=False, profile: str='docker', revision: str \| None=None, params_file: str \| None=None, nextflow_config: str \| None=None, work_dir: str \| None=None, resume: bool=False) -> RawProcessingResult` | Direct raises: RuntimeError, ValueError. |
+
+### `meta_standards_converter.expression.normalization`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.normalization.AnnDataNormalizer` [source](../src/meta_standards_converter/expression/normalization.py#L29) | `AnnDataNormalizer(*, metadata_service, planner, localize, package_version, combination_policy=None)` | See defining source and workflow contracts. |
+| `AnnDataNormalizer.__init__` [source](../src/meta_standards_converter/expression/normalization.py#L77) | `__init__(*, metadata_service, planner, localize, package_version, combination_policy=None)` | See source; follows the owning type contract. |
+| `AnnDataNormalizer.normalize` [source](../src/meta_standards_converter/expression/normalization.py#L88) | `normalize(adata, sample: dict, package: dict, study_accession: str, asset: Asset, characteristic_columns: list[str], artifact_parent: Path, harmonization_resolution=None) -> dict` | See source; follows the owning type contract. |
+| `AnnDataNormalizer.ensure_observation_ids` [source](../src/meta_standards_converter/expression/normalization.py#L296) | `ensure_observation_ids(adata, sample_id: str, used: set[str]) -> None` | Make one sample globally unique without retaining earlier matrices. |
+| `AnnDataNormalizer.characteristic_columns` [source](../src/meta_standards_converter/expression/normalization.py#L318) | `characteristic_columns(packages: list[dict]) -> list[str]` | See source; follows the owning type contract. |
+| `AnnDataNormalizer.attach_miniml` [source](../src/meta_standards_converter/expression/normalization.py#L376) | `attach_miniml(adata, packages: list[dict], source_json: str, source_json_sha256: str \| None, sample_id: str \| None=None, artifact_parent: Path \| None=None) -> None` | See source; follows the owning type contract. |
+| `AnnDataNormalizer.attach_harmonization` [source](../src/meta_standards_converter/expression/normalization.py#L470) | `attach_harmonization(adata, resolution, *, packages: list[dict] \| tuple[dict, ...]=(), sample_id: str \| None=None) -> None` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.expression.planning`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.planning.AssetDiscovery` [source](../src/meta_standards_converter/expression/planning.py#L20) | `AssetDiscovery(*args, **kwargs)` | Bases: Protocol. |
+| `AssetDiscovery.discover` [source](../src/meta_standards_converter/expression/planning.py#L21) | `discover(packages: list[dict]) -> list[Asset]` | See source; follows the owning type contract. |
+| `meta_standards_converter.expression.planning.SourcePlanner` [source](../src/meta_standards_converter/expression/planning.py#L24) | `SourcePlanner(discovery: 'AssetDiscovery \| None' = None)` | Discover assets and select the best available source for every sample. |
+| `SourcePlanner.__init__` [source](../src/meta_standards_converter/expression/planning.py#L30) | `__init__(discovery: AssetDiscovery \| None=None)` | See source; follows the owning type contract. |
+| `SourcePlanner.plan` [source](../src/meta_standards_converter/expression/planning.py#L33) | `plan(packages: list[dict], explicit_assets: list[Asset] \| None=None, force_reprocess: bool=False) -> dict[str, Asset]` | Direct raises: ValueError. |
+| `SourcePlanner.samples` [source](../src/meta_standards_converter/expression/planning.py#L179) | `samples(packages: list[dict]) -> list[str]` | See source; follows the owning type contract. |
+| `SourcePlanner.sample_accession` [source](../src/meta_standards_converter/expression/planning.py#L189) | `sample_accession(sample: dict) -> str \| None` | See source; follows the owning type contract. |
+| `SourcePlanner.classify` [source](../src/meta_standards_converter/expression/planning.py#L197) | `classify(path: str \| None) -> str \| None` | See source; follows the owning type contract. |
+| `meta_standards_converter.expression.planning.DefaultAssetDiscovery` [source](../src/meta_standards_converter/expression/planning.py#L224) | `DefaultAssetDiscovery()` | See defining source and workflow contracts. |
+| `DefaultAssetDiscovery.discover` [source](../src/meta_standards_converter/expression/planning.py#L225) | `discover(packages: list[dict]) -> list[Asset]` | See source; follows the owning type contract. |
+| `DefaultAssetDiscovery.samples` [source](../src/meta_standards_converter/expression/planning.py#L264) | `samples(packages: list[dict]) -> list[str]` | See source; follows the owning type contract. |
+| `DefaultAssetDiscovery.sample_accession` [source](../src/meta_standards_converter/expression/planning.py#L274) | `sample_accession(sample: dict) -> str \| None` | See source; follows the owning type contract. |
+| `DefaultAssetDiscovery.classify` [source](../src/meta_standards_converter/expression/planning.py#L282) | `classify(path: str \| None) -> str \| None` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.expression.readers`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.readers.scientific_modules` [source](../src/meta_standards_converter/expression/readers.py#L27) | `scientific_modules()` | See defining source and workflow contracts. |
+| `meta_standards_converter.expression.readers.scanpy_module` [source](../src/meta_standards_converter/expression/readers.py#L41) | `scanpy_module()` | See defining source and workflow contracts. |
+| `meta_standards_converter.expression.readers.read_h5ad` [source](../src/meta_standards_converter/expression/readers.py#L52) | `read_h5ad(anndata, path: str)` | See defining source and workflow contracts. |
+| `meta_standards_converter.expression.readers.underlying_suffix` [source](../src/meta_standards_converter/expression/readers.py#L67) | `underlying_suffix(path: str) -> str` | See defining source and workflow contracts. |
+| `meta_standards_converter.expression.readers.AssetReader` [source](../src/meta_standards_converter/expression/readers.py#L120) | `AssetReader(*args, **kwargs)` | Bases: Protocol. |
+| `AssetReader.read` [source](../src/meta_standards_converter/expression/readers.py#L121) | `read(asset: Asset, *, orientation: str='auto', localize: Callable[[str], str]) -> Any` | See source; follows the owning type contract. |
+| `meta_standards_converter.expression.readers.ProcessedAssetReader` [source](../src/meta_standards_converter/expression/readers.py#L124) | `ProcessedAssetReader()` | See defining source and workflow contracts. |
+| `ProcessedAssetReader.read` [source](../src/meta_standards_converter/expression/readers.py#L125) | `read(asset: Asset, *, orientation: str='auto', localize)` | Direct raises: ValueError. |
+
+### `meta_standards_converter.expression.references`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.expression.references.ReferenceResolver` [source](../src/meta_standards_converter/expression/references.py#L21) | `ReferenceResolver()` | Resolve explicit or safely confirmed nf-core reference parameters. |
+| `ReferenceResolver.resolve` [source](../src/meta_standards_converter/expression/references.py#L27) | `resolve(packages: list[dict], genome: str \| None=None, fasta: str \| None=None, gtf: str \| None=None, gff: str \| None=None, accept_inferred: bool=False) -> dict` | Direct raises: ValueError. |
+| `meta_standards_converter.expression.references.AnnotationConverter` [source](../src/meta_standards_converter/expression/references.py#L96) | `AnnotationConverter(command_runner=None, which=None)` | Validate local annotations and normalize GFF3 input to GTF. |
+| `AnnotationConverter.__init__` [source](../src/meta_standards_converter/expression/references.py#L99) | `__init__(command_runner=None, which=None)` | See source; follows the owning type contract. |
+| `AnnotationConverter.prepare` [source](../src/meta_standards_converter/expression/references.py#L103) | `prepare(reference: dict, reference_dir: Path) -> dict` | Direct raises: RuntimeError. |
+
+### `meta_standards_converter.helpers.json_helper`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.helpers.json_helper.JSONHandler` [source](../src/meta_standards_converter/helpers/json_helper.py#L13) | `JSONHandler()` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.helpers.request_helper`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.helpers.request_helper.NCBIApplicationIdentity` [source](../src/meta_standards_converter/helpers/request_helper.py#L46) | `NCBIApplicationIdentity(tool: 'str' = 'meta_standards_converter', email: 'str \| None' = 'jaychowcl@gmail.com', api_key: 'str \| None' = <factory>) -> None` | Contactable application identity required by NCBI E-utilities. |
+| `NCBIApplicationIdentity.params` [source](../src/meta_standards_converter/helpers/request_helper.py#L75) | `params() -> dict[str, str]` | See source; follows the owning type contract. |
+| `meta_standards_converter.helpers.request_helper.HostRequestCooldownDeferred` [source](../src/meta_standards_converter/helpers/request_helper.py#L90) | `HostRequestCooldownDeferred(key: 'str', retry_at: 'float') -> 'None'` | The shared provider cooldown exceeds the caller's inline wait budget. Bases: TimeoutError. |
+| `HostRequestCooldownDeferred.__init__` [source](../src/meta_standards_converter/helpers/request_helper.py#L93) | `__init__(key: str, retry_at: float) -> None` | See source; follows the owning type contract. |
+| `meta_standards_converter.helpers.request_helper.HostRequestGate` [source](../src/meta_standards_converter/helpers/request_helper.py#L99) | `HostRequestGate(directory: 'str \| Path \| None' = None) -> 'None'` | Coordinate provider request starts across local processes for one user. |
+| `HostRequestGate.__init__` [source](../src/meta_standards_converter/helpers/request_helper.py#L107) | `__init__(directory: str \| Path \| None=None) -> None` | See source; follows the owning type contract. |
+| `HostRequestGate.default` [source](../src/meta_standards_converter/helpers/request_helper.py#L122) | `default() -> 'HostRequestGate'` | See source; follows the owning type contract. |
+| `HostRequestGate.reset_default` [source](../src/meta_standards_converter/helpers/request_helper.py#L129) | `reset_default() -> None` | Forget the process singleton without deleting shared pacing state. |
+| `HostRequestGate.default_directory` [source](../src/meta_standards_converter/helpers/request_helper.py#L136) | `default_directory() -> Path` | See source; follows the owning type contract. |
+| `HostRequestGate.fallback_directory` [source](../src/meta_standards_converter/helpers/request_helper.py#L146) | `fallback_directory() -> Path` | See source; follows the owning type contract. |
+| `HostRequestGate.wait` [source](../src/meta_standards_converter/helpers/request_helper.py#L153) | `wait(key: str, *, min_interval_seconds: int \| float, max_wait_seconds: int \| float \| None=None, sleep: Callable[[float], None]=time.sleep, clock: Callable[[], float]=time.time) -> float` | Direct raises: HostRequestCooldownDeferred. |
+| `HostRequestGate.defer` [source](../src/meta_standards_converter/helpers/request_helper.py#L187) | `defer(key: str, *, delay_seconds: int \| float, clock: Callable[[], float]=time.time) -> float` | See source; follows the owning type contract. |
+| `HostRequestGate.slot` [source](../src/meta_standards_converter/helpers/request_helper.py#L204) | `slot(key: str, *, min_interval_seconds: int \| float, max_wait_seconds: int \| float \| None=None, sleep: Callable[[float], None]=time.sleep, monotonic_clock: Callable[[], float]=time.monotonic, wall_clock: Callable[[], float]=time.time, cancelled: Callable[[], bool] \| None=None)` | Return a one-at-a-time lease that also applies start pacing. |
+| `HostRequestGate.retry_after_seconds` [source](../src/meta_standards_converter/helpers/request_helper.py#L237) | `retry_after_seconds(value: Any, *, clock: Callable[[], float]=time.time) -> float \| None` | See source; follows the owning type contract. |
+| `meta_standards_converter.helpers.request_helper.RequestSettings` [source](../src/meta_standards_converter/helpers/request_helper.py#L438) | `RequestSettings(timeout: 'float \| tuple[float, float]' = 30, request_delay: 'float' = 1.0, max_in_flight: 'int' = 2, max_retries: 'int' = 3, retry_statuses: 'frozenset[int]' = frozenset({504, 425, 429, 403, 500, 502, 503, 408}), backoff_base: 'float' = 0.5, backoff_max: 'float' = 8.0, max_inline_wait: 'float' = 30.0) -> None` | See defining source and workflow contracts. |
+| `RequestSettings.from_resource_profile` [source](../src/meta_standards_converter/helpers/request_helper.py#L471) | `from_resource_profile(profile: ResourceProfile, **overrides: Any) -> 'RequestSettings'` | See source; follows the owning type contract. |
+| `meta_standards_converter.helpers.request_helper.RateLimitedRequester` [source](../src/meta_standards_converter/helpers/request_helper.py#L494) | `RateLimitedRequester(service: 'str', settings: 'RequestSettings \| None' = None, get: 'Callable \| None' = None, sleep: 'Callable[[float], None] \| None' = None, clock: 'Callable[[], float] \| None' = None, event_emitter=None, host_gate: 'HostRequestGate \| None' = None, random_value: 'Callable[[], float]' = <built-in method random of Random object at 0x39431f40>)` | Apply host-wide request-start and process in-flight limits per HTTP host. |
+| `RateLimitedRequester.__init__` [source](../src/meta_standards_converter/helpers/request_helper.py#L500) | `__init__(service: str, settings: RequestSettings \| None=None, get: Callable \| None=None, sleep: Callable[[float], None] \| None=None, clock: Callable[[], float] \| None=None, event_emitter=None, host_gate: HostRequestGate \| None=None, random_value: Callable[[], float]=random.random)` | See source; follows the owning type contract. |
+| `RateLimitedRequester.get` [source](../src/meta_standards_converter/helpers/request_helper.py#L524) | `get(url: str, **kwargs: Any) -> requests.Response` | GET one URL under the process-wide host policy and bounded retries. |
+| `RateLimitedRequester.reset_service_state` [source](../src/meta_standards_converter/helpers/request_helper.py#L701) | `reset_service_state() -> None` | Reset process host state; retained name preserves the v1 test API. |
+
+### `meta_standards_converter.magetab.chemistry`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.chemistry.ChemistryEvidence` [source](../src/meta_standards_converter/magetab/chemistry.py#L21) | `ChemistryEvidence(field: 'str', value: 'str', path: 'str', text: 'str') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.chemistry.ChemistryDiagnostic` [source](../src/meta_standards_converter/magetab/chemistry.py#L29) | `ChemistryDiagnostic(code: 'str', field: 'str', paths: 'tuple[str, ...]') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.chemistry.ChemistryResult` [source](../src/meta_standards_converter/magetab/chemistry.py#L36) | `ChemistryResult(manufacturer: 'str \| None', family: 'str \| None', versions: 'tuple[str, ...]', library_role: 'str \| None', index_configuration: 'str \| None', attributes: 'tuple[tuple[str, str], ...]', evidence: 'tuple[ChemistryEvidence, ...]', diagnostics: 'tuple[ChemistryDiagnostic, ...]') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.chemistry.resolve_chemistry` [source](../src/meta_standards_converter/magetab/chemistry.py#L132) | `resolve_chemistry(sample: dict, channel: dict \| None=None, run: dict \| None=None, series: dict \| list \| None=None) -> ChemistryResult` | Resolve applicable facts for one sample/channel and optional library/run. |
+
+### `meta_standards_converter.magetab.constructor`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.constructor.validate_platform_handler` [source](../src/meta_standards_converter/magetab/constructor.py#L33) | `validate_platform_handler(value: str) -> str` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.constructor.AEConstructor` [source](../src/meta_standards_converter/magetab/constructor.py#L44) | `AEConstructor(idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None)` | See defining source and workflow contracts. |
+| `AEConstructor.__init__` [source](../src/meta_standards_converter/magetab/constructor.py#L45) | `__init__(idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None)` | See source; follows the owning type contract. |
+| `AEConstructor.miniml2magetab` [source](../src/meta_standards_converter/magetab/constructor.py#L50) | `miniml2magetab(data: MINiMLPackage, platform_handler: str \| None=None) -> list` | converts miniml json to magetab idf. Walks through sections of idf to extract from miniml Direct raises: ValueError. |
+
+### `meta_standards_converter.magetab.harmonized`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.harmonized.columns` [source](../src/meta_standards_converter/magetab/harmonized.py#L17) | `columns(value, prefix='Characteristics', used=None)` | Render complete value groups; indexes are scoped to their output occurrence. |
+| `meta_standards_converter.magetab.harmonized.channel_groups` [source](../src/meta_standards_converter/magetab/harmonized.py#L85) | `channel_groups(channel)` | Yield supported containers without recursively losing biological scope. |
+| `meta_standards_converter.magetab.harmonized.channel_columns` [source](../src/meta_standards_converter/magetab/harmonized.py#L102) | `channel_columns(channel)` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.harmonized.sdrf_attrs` [source](../src/meta_standards_converter/magetab/harmonized.py#L109) | `sdrf_attrs(pairs)` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.harmonized.read_group` [source](../src/meta_standards_converter/magetab/harmonized.py#L120) | `read_group(header, row, index)` | Read a harmonized value plus its adjacent standard ontology companions. |
+| `meta_standards_converter.magetab.harmonized.bind_sample_groups` [source](../src/meta_standards_converter/magetab/harmonized.py#L146) | `bind_sample_groups(package, paths)` | Attach sample evidence to explicit paths only through unambiguous identities. |
+
+### `meta_standards_converter.magetab.idf`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.idf.IDFConstructor` [source](../src/meta_standards_converter/magetab/idf.py#L24) | `IDFConstructor()` | See defining source and workflow contracts. |
+| `IDFConstructor.miniml2idf` [source](../src/meta_standards_converter/magetab/idf.py#L32) | `miniml2idf(data: dict, protocol_registry=None, technology_type=None, *, prefix_rows=None, publication_details=()) -> list` | converts miniml json to magetab idf. Walks through sections of idf to extract from miniml |
+| `IDFConstructor.prefix_rows` [source](../src/meta_standards_converter/magetab/idf.py#L51) | `prefix_rows(data)` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.magetab.parser`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.parser.normalized_label` [source](../src/meta_standards_converter/magetab/parser.py#L56) | `normalized_label(value: str) -> str` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.parser.AEParser` [source](../src/meta_standards_converter/magetab/parser.py#L60) | `AEParser()` | Project standard MAGE-TAB metadata into the parsed MINiML shape. |
+| `AEParser.parse` [source](../src/meta_standards_converter/magetab/parser.py#L127) | `parse(source: MAGETabInput) -> dict` | Direct raises: ValueError. |
+
+### `meta_standards_converter.magetab.protocols`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.protocols.ProtocolRegistry` [source](../src/meta_standards_converter/magetab/protocols.py#L13) | `ProtocolRegistry(series_accession: 'str')` | Allocate stable protocol references shared by IDF and SDRF construction. |
+| `ProtocolRegistry.__init__` [source](../src/meta_standards_converter/magetab/protocols.py#L32) | `__init__(series_accession: str)` | See source; follows the owning type contract. |
+| `ProtocolRegistry.get_ref` [source](../src/meta_standards_converter/magetab/protocols.py#L36) | `get_ref(kind: str, text: str \| None, label: str \| None=None) -> str \| None` | See source; follows the owning type contract. |
+| `ProtocolRegistry.ensure_required` [source](../src/meta_standards_converter/magetab/protocols.py#L51) | `ensure_required(kind: str, label: str \| None=None) -> str` | See source; follows the owning type contract. |
+| `ProtocolRegistry.records` [source](../src/meta_standards_converter/magetab/protocols.py#L69) | `records() -> list[dict]` | See source; follows the owning type contract. |
+| `ProtocolRegistry.clean` [source](../src/meta_standards_converter/magetab/protocols.py#L73) | `clean(value)` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.magetab.sdrf.constructor`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.sdrf.constructor.SDRFConstructor` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L25) | `SDRFConstructor()` | See defining source and workflow contracts. |
+| `SDRFConstructor.create_handler` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L43) | `create_handler(data, protocol_registry=None, technology_type=None)` | See source; follows the owning type contract. |
+| `SDRFConstructor.create_operation_handler` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L60) | `create_operation_handler(data, protocol_registry=None, run_evidence=None)` | Plan scoped dispatch, sharing source identities, registry and audit. |
+| `SDRFConstructor.build` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L96) | `build(handler)` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.magetab.sdrf.handlers.base`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.sdrf.handlers.base.classify_file` [source](../src/meta_standards_converter/magetab/sdrf/handlers/base.py#L20) | `classify_file(path: str) -> str` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.magetab.sdrf.model`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.sdrf.model.SDRFAttr` [source](../src/meta_standards_converter/magetab/sdrf/model.py#L14) | `SDRFAttr(label: 'str', value: 'str \| None', attrs: "list['SDRFAttr']" = <factory>, required: 'bool' = False) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.sdrf.model.SDRFNode` [source](../src/meta_standards_converter/magetab/sdrf/model.py#L22) | `SDRFNode(kind: 'str', key: 'str', value: 'str \| None', attrs: 'list[SDRFAttr]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.sdrf.model.SDRFEdge` [source](../src/meta_standards_converter/magetab/sdrf/model.py#L30) | `SDRFEdge(protocol_ref: 'str \| None', attrs: 'list[SDRFAttr]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.sdrf.model.SDRFPath` [source](../src/meta_standards_converter/magetab/sdrf/model.py#L36) | `SDRFPath(parts: 'list[SDRFNode \| SDRFEdge]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.sdrf.model.ColumnGroup` [source](../src/meta_standards_converter/magetab/sdrf/model.py#L41) | `ColumnGroup(main_key: 'str', main_label: 'str', companions: "list['ColumnGroup']" = <factory>) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.sdrf.model.SDRFAudit` [source](../src/meta_standards_converter/magetab/sdrf/model.py#L48) | `SDRFAudit(warnings: 'list[str]' = <factory>, dropped_values: 'list[str]' = <factory>, validation_errors: 'list[str]' = <factory>) -> None` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.magetab.sdrf.renderer`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.sdrf.renderer.SDRFRenderer` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L13) | `SDRFRenderer()` | See defining source and workflow contracts. |
+| `SDRFRenderer.plan_columns` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L14) | `plan_columns(paths: list[SDRFPath]) -> list[ColumnGroup]` | See source; follows the owning type contract. |
+| `SDRFRenderer.merge_column_group` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L22) | `merge_column_group(columns: OrderedDict, group: ColumnGroup) -> None` | See source; follows the owning type contract. |
+| `SDRFRenderer.render_paths` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L36) | `render_paths(columns: list[ColumnGroup], paths: list[SDRFPath]) -> list` | See source; follows the owning type contract. |
+| `SDRFRenderer.column_labels` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L53) | `column_labels(column: ColumnGroup) -> list` | See source; follows the owning type contract. |
+| `SDRFRenderer.column_values` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L60) | `column_values(column: ColumnGroup, values: dict) -> list` | See source; follows the owning type contract. |
+| `SDRFRenderer.path_groups` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L67) | `path_groups(path: SDRFPath) -> list[tuple[ColumnGroup, dict]]` | See source; follows the owning type contract. |
+| `SDRFRenderer.group_with_values` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L91) | `group_with_values(key: str, label: str, value, attrs: list[SDRFAttr]) -> tuple[ColumnGroup, dict]` | See source; follows the owning type contract. |
+| `SDRFRenderer.attr_columns` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L97) | `attr_columns(parent_key: str, attrs: list[SDRFAttr]) -> tuple[list[ColumnGroup], dict]` | See source; follows the owning type contract. |
+| `SDRFRenderer.occurrence_key` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L116) | `occurrence_key(counts: dict, label: str) -> str` | See source; follows the owning type contract. |
+| `SDRFRenderer.render_value` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L121) | `render_value(value)` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.magetab.semantics`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.semantics.MAGETabModelError` [source](../src/meta_standards_converter/magetab/semantics.py#L18) | `bases: ValueError` | Raised when the enriched MAGE-TAB model contract is invalid. Bases: ValueError. |
+| `meta_standards_converter.magetab.semantics.validate_model` [source](../src/meta_standards_converter/magetab/semantics.py#L32) | `validate_model(model: dict) -> dict` | Validate and return an enriched MAGE-TAB model version 1. |
+| `meta_standards_converter.magetab.semantics.build_model` [source](../src/meta_standards_converter/magetab/semantics.py#L141) | `build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> dict` | Build a typed model without projecting unsupported values into MINiML fields. |
+| `meta_standards_converter.magetab.semantics.render_model` [source](../src/meta_standards_converter/magetab/semantics.py#L237) | `render_model(model: dict) -> list \| None` | Render a version-1 typed model into the constructor's in-memory MAGE-TAB form. |
+| `meta_standards_converter.magetab.semantics.overlay_miniml_semantics` [source](../src/meta_standards_converter/magetab/semantics.py#L276) | `overlay_miniml_semantics(package: dict, core_rows: list) -> list` | Render ordered MSC MINiML semantics over constructor-generated IDF/SDRF rows. |
+| `meta_standards_converter.magetab.semantics.render_miniml_assay_documents` [source](../src/meta_standards_converter/magetab/semantics.py#L401) | `render_miniml_assay_documents(paths) -> dict[str, list[list]]` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.semantics.overlay_core` [source](../src/meta_standards_converter/magetab/semantics.py#L533) | `overlay_core(model_rows: list, core_rows: list) -> list` | Union MINiML projections into model tables while preserving model structure. |
+
+### `meta_standards_converter.magetab.technology`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.technology.normalized_extension` [source](../src/meta_standards_converter/magetab/technology.py#L19) | `normalized_extension(path: str) -> str` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.technology.has_array_files` [source](../src/meta_standards_converter/magetab/technology.py#L28) | `has_array_files(data: dict) -> bool` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.technology.series_identity` [source](../src/meta_standards_converter/magetab/technology.py#L41) | `series_identity(data: dict) -> str \| None` | Return the model-authoritative series iid, with accession fallback. |
+| `meta_standards_converter.magetab.technology.TechnologyEvidence` [source](../src/meta_standards_converter/magetab/technology.py#L93) | `TechnologyEvidence(path: 'str', text: 'str', candidates: 'tuple[str, ...]') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.technology.TechnologyDiagnostic` [source](../src/meta_standards_converter/magetab/technology.py#L100) | `TechnologyDiagnostic(code: 'str', paths: 'tuple[str, ...]') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.technology.TechnologyDecision` [source](../src/meta_standards_converter/magetab/technology.py#L106) | `TechnologyDecision(handler: 'str', evidence: 'tuple[TechnologyEvidence, ...]' = (), diagnostics: 'tuple[TechnologyDiagnostic, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.magetab.technology.resolve_technology` [source](../src/meta_standards_converter/magetab/technology.py#L135) | `resolve_technology(sample: dict, channel: dict \| None=None, run: dict \| None=None, *, data: dict \| None=None) -> TechnologyDecision` | Route one sample/library using identity before shared method descriptions. |
+| `meta_standards_converter.magetab.technology.detect_ae_technology` [source](../src/meta_standards_converter/magetab/technology.py#L219) | `detect_ae_technology(data: dict) -> str` | Return an IDF summary key; SDRF dispatch resolves each sample/library. |
+
+### `meta_standards_converter.magetab.writer`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.writer.MAGETabWriter` [source](../src/meta_standards_converter/magetab/writer.py#L14) | `MAGETabWriter()` | See defining source and workflow contracts. |
+| `MAGETabWriter.write` [source](../src/meta_standards_converter/magetab/writer.py#L15) | `write(magetab: list, out: str=None) -> str` | Write magetab to idf and sdrf Direct raises: ValueError. |
+
+### `meta_standards_converter.metadata.enrichment`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.enrichment.MetadataEnrichment` [source](../src/meta_standards_converter/metadata/enrichment.py#L34) | `MetadataEnrichment(*args, **kwargs)` | Bases: Protocol. |
+| `MetadataEnrichment.enrich` [source](../src/meta_standards_converter/metadata/enrichment.py#L35) | `enrich(data: MINiMLPackage) -> MINiMLPackage` | See source; follows the owning type contract. |
+| `meta_standards_converter.metadata.enrichment.MINiMLEnricher` [source](../src/meta_standards_converter/metadata/enrichment.py#L38) | `MINiMLEnricher(pubmed_fetcher=None, insdc_fetcher=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None)` | See defining source and workflow contracts. |
+| `MINiMLEnricher.metrics` [source](../src/meta_standards_converter/metadata/enrichment.py#L40) | `metrics()` | See source; follows the owning type contract. |
+| `MINiMLEnricher.__init__` [source](../src/meta_standards_converter/metadata/enrichment.py#L44) | `__init__(pubmed_fetcher=None, insdc_fetcher=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None)` | See source; follows the owning type contract. |
+| `MINiMLEnricher.enrich` [source](../src/meta_standards_converter/metadata/enrichment.py#L62) | `enrich(data: MINiMLPackage) -> MINiMLPackage` | See source; follows the owning type contract. |
+| `MINiMLEnricher.enrich_pubmed` [source](../src/meta_standards_converter/metadata/enrichment.py#L88) | `enrich_pubmed(data: dict) -> dict` | See source; follows the owning type contract. |
+| `MINiMLEnricher.enrich_sra` [source](../src/meta_standards_converter/metadata/enrichment.py#L103) | `enrich_sra(data: dict) -> dict` | See source; follows the owning type contract. |
+| `meta_standards_converter.metadata.enrichment.MAGETabEvidenceResolver` [source](../src/meta_standards_converter/metadata/enrichment.py#L173) | `MAGETabEvidenceResolver(pubmed_client=None, insdc_client=None)` | Resolve only evidence requested by MAGE-TAB construction, per operation. |
+| `MAGETabEvidenceResolver.__init__` [source](../src/meta_standards_converter/metadata/enrichment.py#L176) | `__init__(pubmed_client=None, insdc_client=None)` | See source; follows the owning type contract. |
+| `MAGETabEvidenceResolver.publications` [source](../src/meta_standards_converter/metadata/enrichment.py#L180) | `publications(data)` | See source; follows the owning type contract. |
+| `MAGETabEvidenceResolver.sample_runs` [source](../src/meta_standards_converter/metadata/enrichment.py#L188) | `sample_runs(handler, technology_type)` | See source; follows the owning type contract. |
+| `MAGETabEvidenceResolver.fetch_runs` [source](../src/meta_standards_converter/metadata/enrichment.py#L210) | `fetch_runs(accession)` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.metadata.harmonization_overrides`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.harmonization_overrides.HarmonizationSelection` [source](../src/meta_standards_converter/metadata/harmonization_overrides.py#L43) | `HarmonizationSelection(sample_accession: 'str', destination: 'str', value: 'str', identifier: 'str \| None', ontology: 'str \| None', source_field: 'str', hierarchy_depth: 'int \| None', status: 'str' = 'selected') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.metadata.harmonization_overrides.HarmonizationResolution` [source](../src/meta_standards_converter/metadata/harmonization_overrides.py#L55) | `HarmonizationResolution(packages: 'tuple[dict[str, Any], ...]', profile: 'Mapping[str, Any] \| None' = None, selections: 'tuple[HarmonizationSelection, ...]' = (), warnings: 'tuple[str, ...]' = (), enabled: 'bool' = False, applied: 'bool' = False) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.metadata.harmonization_overrides.resolve_harmonization_overrides` [source](../src/meta_standards_converter/metadata/harmonization_overrides.py#L64) | `resolve_harmonization_overrides(packages: Sequence[Mapping[str, Any]], profile: Mapping[str, Any] \| None, *, enabled: bool) -> HarmonizationResolution` | Return a harmonization-aware deep copy derived from typed annotations. |
+| `meta_standards_converter.metadata.harmonization_overrides.validate_harmonization_overrides` [source](../src/meta_standards_converter/metadata/harmonization_overrides.py#L170) | `validate_harmonization_overrides(profile: Mapping[str, Any]) -> dict[str, Any]` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.metadata.interpretation`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.interpretation.MINiMLMetadataProvider` [source](../src/meta_standards_converter/metadata/interpretation.py#L25) | `MINiMLMetadataProvider(*args, **kwargs)` | Public dependency contract shared by tabular and AnnData exporters. Bases: Protocol. |
+| `MINiMLMetadataProvider.study_accession` [source](../src/meta_standards_converter/metadata/interpretation.py#L28) | `study_accession(packages: Sequence[Mapping[str, Any]]) -> str \| None` | Return the first GEO series accession represented by ``packages``. |
+| `MINiMLMetadataProvider.samples` [source](../src/meta_standards_converter/metadata/interpretation.py#L31) | `samples(package: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]` | Return mapping-valued samples from one MINiML package. |
+| `MINiMLMetadataProvider.sample_accession` [source](../src/meta_standards_converter/metadata/interpretation.py#L34) | `sample_accession(sample: Mapping[str, Any]) -> str \| None` | Return the canonical sample accession when present. |
+| `MINiMLMetadataProvider.sample_metadata` [source](../src/meta_standards_converter/metadata/interpretation.py#L37) | `sample_metadata(sample: Mapping[str, Any], package: Mapping[str, Any]) -> dict[str, Any]` | Render canonical sample metadata for an output adapter. |
+| `MINiMLMetadataProvider.sample_modality` [source](../src/meta_standards_converter/metadata/interpretation.py#L44) | `sample_modality(sample: Mapping[str, Any]) -> str` | Classify the expression modality using the established policy. |
+| `MINiMLMetadataProvider.sample_metadata_values` [source](../src/meta_standards_converter/metadata/interpretation.py#L47) | `sample_metadata_values(sample: Mapping[str, Any], package: Mapping[str, Any]) -> dict[str, Any]` | Return lossless tuple-valued metadata for AnnData transport. |
+| `MINiMLMetadataProvider.render_sample_metadata` [source](../src/meta_standards_converter/metadata/interpretation.py#L54) | `render_sample_metadata(values: Mapping[str, Any]) -> dict[str, Any]` | Render lossless values into the canonical delimited representation. |
+| `MINiMLMetadataProvider.metadata_slug` [source](../src/meta_standards_converter/metadata/interpretation.py#L59) | `metadata_slug(value: Any) -> str` | Return the established canonical metadata column slug. |
+| `MINiMLMetadataProvider.values` [source](../src/meta_standards_converter/metadata/interpretation.py#L62) | `values(values: Any) -> list[str]` | Flatten and case-insensitively de-duplicate metadata values. |
+| `MINiMLMetadataProvider.join_values` [source](../src/meta_standards_converter/metadata/interpretation.py#L65) | `join_values(values: Any) -> str` | Render flattened values using the canonical delimiter. |
+| `MINiMLMetadataProvider.metadata_database` [source](../src/meta_standards_converter/metadata/interpretation.py#L68) | `metadata_database(package: Mapping[str, Any]) -> Mapping[str, Any]` | Return the package's primary metadata database declaration. |
+| `MINiMLMetadataProvider.platform_accession_values` [source](../src/meta_standards_converter/metadata/interpretation.py#L73) | `platform_accession_values(sample: Mapping[str, Any], package: Mapping[str, Any]) -> list[str]` | Resolve platform references to platform accessions. |
+| `MINiMLMetadataProvider.text` [source](../src/meta_standards_converter/metadata/interpretation.py#L80) | `text(value: Any) -> str \| None` | Normalize scalar metadata whitespace. |
+| `meta_standards_converter.metadata.interpretation.MINiMLMetadataService` [source](../src/meta_standards_converter/metadata/interpretation.py#L84) | `MINiMLMetadataService()` | Own canonical, output-format-neutral MINiML metadata interpretation. |
+| `MINiMLMetadataService.study_accession` [source](../src/meta_standards_converter/metadata/interpretation.py#L97) | `study_accession(packages: Sequence[Mapping[str, Any]]) -> str \| None` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.samples` [source](../src/meta_standards_converter/metadata/interpretation.py#L110) | `samples(package: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.sample_accession` [source](../src/meta_standards_converter/metadata/interpretation.py#L117) | `sample_accession(sample: Mapping[str, Any]) -> str \| None` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.sample_metadata` [source](../src/meta_standards_converter/metadata/interpretation.py#L125) | `sample_metadata(sample: Mapping[str, Any], package: Mapping[str, Any]) -> dict[str, Any]` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.sample_metadata_values` [source](../src/meta_standards_converter/metadata/interpretation.py#L134) | `sample_metadata_values(sample: Mapping[str, Any], package: Mapping[str, Any]) -> dict[str, Any]` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.render_sample_metadata` [source](../src/meta_standards_converter/metadata/interpretation.py#L381) | `render_sample_metadata(values: Mapping[str, Any]) -> dict[str, Any]` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.sample_modality` [source](../src/meta_standards_converter/metadata/interpretation.py#L394) | `sample_modality(sample: Mapping[str, Any]) -> str` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.metadata_slug` [source](../src/meta_standards_converter/metadata/interpretation.py#L414) | `metadata_slug(value: Any) -> str` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.values` [source](../src/meta_standards_converter/metadata/interpretation.py#L420) | `values(values: Any) -> list[str]` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.join_values` [source](../src/meta_standards_converter/metadata/interpretation.py#L459) | `join_values(values: Any) -> str` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.metadata_database` [source](../src/meta_standards_converter/metadata/interpretation.py#L462) | `metadata_database(package: Mapping[str, Any]) -> Mapping[str, Any]` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.platform_accession_values` [source](../src/meta_standards_converter/metadata/interpretation.py#L472) | `platform_accession_values(sample: Mapping[str, Any], package: Mapping[str, Any]) -> list[str]` | See source; follows the owning type contract. |
+| `MINiMLMetadataService.text` [source](../src/meta_standards_converter/metadata/interpretation.py#L494) | `text(value: Any) -> str \| None` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.metadata.ontology_mappings`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.ontology_mappings.Pubmed2OLS` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L9) | `Pubmed2OLS()` | See defining source and workflow contracts. |
+| `Pubmed2OLS.__init__` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L10) | `__init__()` | See source; follows the owning type contract. |
+| `Pubmed2OLS.pubstatus2efo` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L17) | `pubstatus2efo(pub_status: str) -> list` | take pubmed publication status and map to EFO publication status term. Return efo term, source ref, accession number. |
+| `meta_standards_converter.metadata.ontology_mappings.GEO2OLS` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L53) | `GEO2OLS()` | See defining source and workflow contracts. |
+| `GEO2OLS.__init__` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L54) | `__init__()` | See source; follows the owning type contract. |
+| `GEO2OLS.geoprotocols2efo` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L62) | `geoprotocols2efo(protocol_type: str) -> list` | take GEO protocol types and map to EFO protocol type term. Return efo term, source ref, accession number. Direct raises: ValueError. |
+| `meta_standards_converter.metadata.ontology_mappings.Harmonizer` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L99) | `Harmonizer()` | Bases: Pubmed2OLS, GEO2OLS. |
+| `Harmonizer.__init__` [source](../src/meta_standards_converter/metadata/ontology_mappings.py#L100) | `__init__()` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.metadata.projection.anndata`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.projection.anndata.MetadataProjectionContext` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L18) | `MetadataProjectionContext(sample: 'Mapping[str, Any]', package: 'Mapping[str, Any]', study_accession: 'str', sample_accession: 'str', asset: 'Asset', base_metadata: 'Mapping[str, Any]') -> None` | Read-only conversion context supplied to metadata projectors. |
+| `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjection` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L30) | `AnnDataMetadataProjection(obs: 'Mapping[str, Any]' = <factory>, var: 'Mapping[str, Any]' = <factory>, uns: 'Mapping[str, Any]' = <factory>, obs_renames: 'Mapping[str, str]' = <factory>, obs_drops: 'tuple[str, ...]' = (), warnings: 'tuple[str, ...]' = (), errors: 'tuple[str, ...]' = ()) -> None` | Metadata additions returned by an :class:`AnnDataMetadataProjector`. |
+| `meta_standards_converter.metadata.projection.anndata.AnnDataProjectionError` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L42) | `AnnDataProjectionError(errors: 'Sequence[str]')` | Raised when an AnnData projector reports invalid projected metadata. Bases: ValueError. |
+| `AnnDataProjectionError.__init__` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L45) | `__init__(errors: Sequence[str])` | See source; follows the owning type contract. |
+| `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjector` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L50) | `AnnDataMetadataProjector(*args, **kwargs)` | Optional extension that adds organization-neutral metadata to AnnData. Bases: Protocol. |
+| `AnnDataMetadataProjector.project_sample` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L53) | `project_sample(*, adata: Any, context: MetadataProjectionContext) -> AnnDataMetadataProjection` | Return metadata additions for one sample AnnData object. |
+| `meta_standards_converter.metadata.projection.anndata.AnnDataProjectorRunner` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L62) | `AnnDataProjectorRunner(projectors=())` | See defining source and workflow contracts. |
+| `AnnDataProjectorRunner.__init__` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L63) | `__init__(projectors=())` | See source; follows the owning type contract. |
+| `AnnDataProjectorRunner.project_sample` [source](../src/meta_standards_converter/metadata/projection/anndata.py#L66) | `project_sample(adata, context: MetadataProjectionContext, *, warnings: list[str], errors: list[str], allow_invalid: bool) -> None` | Direct raises: AnnDataProjectionError. |
+
+### `meta_standards_converter.metadata.projection.tabular`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.projection.tabular.TabularMetadataContext` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L17) | `TabularMetadataContext(package: 'Mapping[str, Any]', sample: 'Mapping[str, Any]', dataset_id: 'str', study_accession: 'str', sample_accession: 'str', base_metadata: 'Mapping[str, Any]') -> None` | Read-only sample context supplied to a tabular projector. |
+| `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjection` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L28) | `TabularMetadataProjection(values: 'Mapping[str, Any]', columns: 'tuple[str, ...]' = (), warnings: 'tuple[str, ...]' = (), errors: 'tuple[str, ...]' = ()) -> None` | One projector's columns, values, and validation diagnostics. |
+| `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjector` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L36) | `TabularMetadataProjector(*args, **kwargs)` | Bases: Protocol. |
+| `TabularMetadataProjector.project_sample` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L37) | `project_sample(*, context: TabularMetadataContext) -> TabularMetadataProjection` | Project one parsed sample into tabular values. |
+| `meta_standards_converter.metadata.projection.tabular.TabularConversionResult` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L43) | `TabularConversionResult(row_count: 'int', columns: 'tuple[str, ...]', dataset_ids: 'tuple[str, ...]', warnings: 'tuple[str, ...]' = (), errors: 'tuple[str, ...]' = (), output_path: 'str \| None' = None, manifest_path: 'str \| None' = None, bundle_pointer_path: 'str \| None' = None) -> None` | Result and compatibility paths for one tabular artifact generation. |
+| `TabularConversionResult.partial` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L56) | `partial() -> bool` | Property.  |
+| `TabularConversionResult.to_dict` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L59) | `to_dict() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.metadata.projection.tabular.TabularProjectionError` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L75) | `bases: ValueError` | Bases: ValueError. |
+| `meta_standards_converter.metadata.projection.tabular.MSCMetadataProjector` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L78) | `MSCMetadataProjector()` | Default canonical tabular view of MINiML sample metadata. |
+| `MSCMetadataProjector.project_sample` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L145) | `project_sample(*, context: TabularMetadataContext) -> TabularMetadataProjection` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.metadata.provenance`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.provenance.patch_provenance_columns` [source](../src/meta_standards_converter/metadata/provenance.py#L31) | `patch_provenance_columns(package: Mapping[str, Any], sample: Mapping[str, Any] \| str, *, occupied: set[str] \| None=None) -> dict[str, Any]` | Return stable indexed ``msc.harmonization.*`` columns for one sample. |
+
+### `meta_standards_converter.miniml.codec`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.miniml.codec.MINiMLCompatibilityError` [source](../src/meta_standards_converter/miniml/codec.py#L26) | `MINiMLCompatibilityError(diagnostics: 'Sequence[MINiMLValidationIssue]')` | Compatibility diagnostics were promoted to a decoding failure. Bases: ValueError. |
+| `MINiMLCompatibilityError.__init__` [source](../src/meta_standards_converter/miniml/codec.py#L29) | `__init__(diagnostics: Sequence[MINiMLValidationIssue])` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.codec.MINiMLDecodeResult` [source](../src/meta_standards_converter/miniml/codec.py#L36) | `MINiMLDecodeResult(package: 'MINiMLPackage', diagnostics: 'tuple[MINiMLValidationIssue, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.codec.MINiMLBatchDecodeResult` [source](../src/meta_standards_converter/miniml/codec.py#L42) | `MINiMLBatchDecodeResult(packages: 'tuple[MINiMLPackage, ...]', diagnostics: 'tuple[MINiMLValidationIssue, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.codec.MINiMLCodec` [source](../src/meta_standards_converter/miniml/codec.py#L47) | `MINiMLCodec()` | See defining source and workflow contracts. |
+| `MINiMLCodec.migrate_v1` [source](../src/meta_standards_converter/miniml/codec.py#L86) | `migrate_v1(value: Mapping[str, Any])` | Migrate a legacy package without weakening the strict v3 decoder. |
+| `MINiMLCodec.decode` [source](../src/meta_standards_converter/miniml/codec.py#L92) | `decode(value: Mapping[str, Any], *, strict: bool=False) -> MINiMLDecodeResult` | Direct raises: MINiMLCompatibilityError. |
+| `MINiMLCodec.decode_many` [source](../src/meta_standards_converter/miniml/codec.py#L105) | `decode_many(value: Mapping[str, Any] \| Sequence[Mapping[str, Any]], *, strict: bool=False) -> MINiMLBatchDecodeResult` | See source; follows the owning type contract. |
+| `MINiMLCodec.encode` [source](../src/meta_standards_converter/miniml/codec.py#L116) | `encode(package: MINiMLPackage) -> dict[str, Any]` | Direct raises: TypeError. |
+| `MINiMLCodec.encode_many` [source](../src/meta_standards_converter/miniml/codec.py#L123) | `encode_many(packages: Sequence[MINiMLPackage]) -> list[dict[str, Any]]` | See source; follows the owning type contract. |
+| `MINiMLCodec.load` [source](../src/meta_standards_converter/miniml/codec.py#L126) | `load(path: str \| Path, *, strict: bool=False) -> MINiMLBatchDecodeResult` | See source; follows the owning type contract. |
+| `MINiMLCodec.dump` [source](../src/meta_standards_converter/miniml/codec.py#L130) | `dump(packages: MINiMLPackage \| Sequence[MINiMLPackage], path: str \| Path) -> None` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.miniml.geo_parser`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.miniml.geo_parser.GEOParser` [source](../src/meta_standards_converter/miniml/geo_parser.py#L40) | `GEOParser(resource_profile: 'str' = 'standard', resource_overrides=None)` | See defining source and workflow contracts. |
+| `GEOParser.__init__` [source](../src/meta_standards_converter/miniml/geo_parser.py#L41) | `__init__(resource_profile: str='standard', resource_overrides=None)` | See source; follows the owning type contract. |
+| `GEOParser.parse` [source](../src/meta_standards_converter/miniml/geo_parser.py#L113) | `parse(miniml: str, remove_empty: bool=False) -> list[MINiMLPackage]` | See source; follows the owning type contract. |
+| `GEOParser.parse_mapping` [source](../src/meta_standards_converter/miniml/geo_parser.py#L140) | `parse_mapping(miniml: str) -> list[dict]` | See source; follows the owning type contract. |
+| `GEOParser.remove_empty_fields` [source](../src/meta_standards_converter/miniml/geo_parser.py#L161) | `remove_empty_fields(data)` | See source; follows the owning type contract. |
+| `GEOParser.series_accessions` [source](../src/meta_standards_converter/miniml/geo_parser.py#L351) | `series_accessions(series_packages: list[dict]) -> list[str]` | See source; follows the owning type contract. |
+| `GEOParser.related_accessions` [source](../src/meta_standards_converter/miniml/geo_parser.py#L365) | `related_accessions(series_packages: list[dict]) -> list[str]` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.miniml.harmonization`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.miniml.harmonization.HarmonizedValue` [source](../src/meta_standards_converter/miniml/harmonization.py#L33) | `HarmonizedValue(field: 'str', value: 'Any', term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, hierarchy_depth: 'int \| None' = None, index: 'int' = 0) -> None` | One typed harmonized value represented by a flat ``hz_*`` wire group. |
+| `HarmonizedValue.suffix` [source](../src/meta_standards_converter/miniml/harmonization.py#L68) | `suffix() -> str` | Property.  |
+| `HarmonizedValue.to_mapping` [source](../src/meta_standards_converter/miniml/harmonization.py#L71) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `HarmonizedValue.to_annotation_mapping` [source](../src/meta_standards_converter/miniml/harmonization.py#L82) | `to_annotation_mapping() -> dict[str, Any]` | Return a consumer-neutral semantic mapping for projection code. |
+| `meta_standards_converter.miniml.harmonization.is_harmonized_key` [source](../src/meta_standards_converter/miniml/harmonization.py#L94) | `is_harmonized_key(value: Any) -> bool` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.harmonization.parse_harmonized_key` [source](../src/meta_standards_converter/miniml/harmonization.py#L98) | `parse_harmonized_key(key: str) -> tuple[str, str, int]` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.harmonization.parse_harmonized_mapping` [source](../src/meta_standards_converter/miniml/harmonization.py#L118) | `parse_harmonized_mapping(value: Mapping[str, Any]) -> tuple[HarmonizedValue, ...]` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.harmonization.harmonized_mapping` [source](../src/meta_standards_converter/miniml/harmonization.py#L155) | `harmonized_mapping(values: Iterable[HarmonizedValue]) -> dict[str, Any]` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.harmonization.named_harmonized_rows` [source](../src/meta_standards_converter/miniml/harmonization.py#L171) | `named_harmonized_rows(values: Iterable[HarmonizedValue], *, name_key: str='name') -> list[dict[str, Any]]` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.harmonization.iter_harmonized_values` [source](../src/meta_standards_converter/miniml/harmonization.py#L181) | `iter_harmonized_values(value: Mapping[str, Any] \| Sequence[Mapping[str, Any]] \| None) -> tuple[HarmonizedValue, ...]` | Read harmonized groups from an object or a named/tag-value row list. |
+| `meta_standards_converter.miniml.harmonization.next_harmonized_index` [source](../src/meta_standards_converter/miniml/harmonization.py#L204) | `next_harmonized_index(values: Iterable[HarmonizedValue], *, field: str) -> int` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.harmonization.append_harmonized_value` [source](../src/meta_standards_converter/miniml/harmonization.py#L214) | `append_harmonized_value(destination: MutableMapping[str, Any] \| MutableSequence[MutableMapping[str, Any]], value: HarmonizedValue, *, name_key: str \| None=None) -> HarmonizedValue` | Validate and append one harmonized group without replacing raw evidence. |
+| `meta_standards_converter.miniml.harmonization.harmonized_value_mappings` [source](../src/meta_standards_converter/miniml/harmonization.py#L275) | `harmonized_value_mappings(value: Mapping[str, Any] \| Sequence[Mapping[str, Any]] \| None) -> tuple[dict[str, Any], ...]` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.miniml.migration`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.miniml.migration.MINiMLMigrationResult` [source](../src/meta_standards_converter/miniml/migration.py#L28) | `MINiMLMigrationResult(package: 'MINiMLPackage', diagnostics: 'tuple[MINiMLValidationIssue, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.migration.MINiMLV1Migrator` [source](../src/meta_standards_converter/miniml/migration.py#L33) | `MINiMLV1Migrator()` | Translate legacy/unversioned source packages directly into the v3 model. |
+| `MINiMLV1Migrator.migrate` [source](../src/meta_standards_converter/miniml/migration.py#L36) | `migrate(value: Mapping[str, Any]) -> MINiMLMigrationResult` | Direct raises: MINiMLModelError. |
+
+### `meta_standards_converter.miniml.model`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.miniml.model.MINiMLModelError` [source](../src/meta_standards_converter/miniml/model.py#L35) | `bases: ValueError` | A package cannot be represented by the stable MINiML JSON model. Bases: ValueError. |
+| `meta_standards_converter.miniml.model.MINiMLValidationIssue` [source](../src/meta_standards_converter/miniml/model.py#L91) | `MINiMLValidationIssue(path: 'str', code: 'str', message: 'str', severity: 'str' = 'warning') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.model.NamedComment` [source](../src/meta_standards_converter/miniml/model.py#L150) | `NamedComment(name: 'str', value: 'str') -> None` | See defining source and workflow contracts. |
+| `NamedComment.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L161) | `from_mapping(value: Any) -> 'NamedComment'` | Direct raises: MINiMLModelError. |
+| `NamedComment.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L169) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.OntologyValue` [source](../src/meta_standards_converter/miniml/model.py#L220) | `OntologyValue(value: 'str', term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `OntologyValue.from_value` [source](../src/meta_standards_converter/miniml/model.py#L235) | `from_value(value: Any) -> 'OntologyValue'` | Direct raises: MINiMLModelError. |
+| `OntologyValue.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L248) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.NamedValue` [source](../src/meta_standards_converter/miniml/model.py#L258) | `NamedValue(name: 'str', value: 'Any', term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, unit: 'OntologyValue \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = (), comments: 'tuple[NamedComment, ...]' = (), qualifier: 'str \| None' = None, unit_type: 'str \| None' = None) -> None` | See defining source and workflow contracts. |
+| `NamedValue.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L301) | `from_mapping(value: Any) -> 'NamedValue'` | Direct raises: MINiMLModelError. |
+| `NamedValue.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L323) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.SourceDocument` [source](../src/meta_standards_converter/miniml/model.py#L336) | `SourceDocument(kind: 'str', name: 'str', uri: 'str \| None' = None, sha256: 'str \| None' = None, media_type: 'str \| None' = None) -> None` | See defining source and workflow contracts. |
+| `SourceDocument.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L358) | `from_mapping(value: Any) -> 'SourceDocument'` | Direct raises: MINiMLModelError. |
+| `SourceDocument.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L376) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.SourceInfo` [source](../src/meta_standards_converter/miniml/model.py#L386) | `SourceInfo(format: 'str', version: 'str \| None' = None, schema_location: 'str \| None' = None, documents: 'tuple[SourceDocument, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `SourceInfo.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L404) | `from_mapping(value: Any) -> 'SourceInfo'` | Direct raises: MINiMLModelError. |
+| `SourceInfo.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L417) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.PubMedPublication` [source](../src/meta_standards_converter/miniml/model.py#L426) | `PubMedPublication(pubmed_id: 'str', doi: 'str \| None' = None, author_list: 'str \| None' = None, title: 'str \| None' = None, status: 'str \| None' = None, status_term_source_ref: 'str \| None' = None, status_term_accession_number: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `PubMedPublication.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L437) | `from_mapping(value: Any) -> 'PubMedPublication'` | See source; follows the owning type contract. |
+| `PubMedPublication.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L442) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.FASTQFile` [source](../src/meta_standards_converter/miniml/model.py#L457) | `FASTQFile(uri: 'str \| None' = None, filename: 'str \| None' = None, md5: 'str \| None' = None, bytes: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `FASTQFile.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L465) | `from_mapping(value: Any) -> 'FASTQFile'` | See source; follows the owning type contract. |
+| `FASTQFile.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L470) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.SRARun` [source](../src/meta_standards_converter/miniml/model.py#L479) | `SRARun(run: 'str \| None' = None, study: 'str \| None' = None, experiment: 'str \| None' = None, sample: 'str \| None' = None, biosample: 'str \| None' = None, geo_sample: 'str \| None' = None, library_layout: 'str \| None' = None, library_selection: 'str \| None' = None, library_source: 'str \| None' = None, library_strategy: 'str \| None' = None, scan_name: 'str \| None' = None, instrument_model: 'str \| None' = None, fastq_files: 'tuple[FASTQFile, ...]' = (), submitted_file_name: 'str \| None' = None, md5: 'str \| None' = None, read_lengths: 'tuple[Any, ...]' = (), extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `SRARun.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L499) | `from_mapping(value: Any) -> 'SRARun'` | See source; follows the owning type contract. |
+| `SRARun.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L504) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Accession` [source](../src/meta_standards_converter/miniml/model.py#L564) | `Accession(value: 'str', database: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Accession.from_value` [source](../src/meta_standards_converter/miniml/model.py#L570) | `from_value(value: Any) -> 'Accession'` | Direct raises: MINiMLModelError. |
+| `Accession.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L581) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Reference` [source](../src/meta_standards_converter/miniml/model.py#L589) | `Reference(ref: 'str', position: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Reference.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L595) | `from_mapping(value: Any) -> 'Reference'` | Direct raises: MINiMLModelError. |
+| `Reference.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L606) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Status` [source](../src/meta_standards_converter/miniml/model.py#L614) | `Status(submission_date: 'str \| None' = None, release_date: 'str \| None' = None, last_update_date: 'str \| None' = None, comments: 'tuple[Any, ...]' = (), database: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Status.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L623) | `from_mapping(value: Any) -> 'Status'` | See source; follows the owning type contract. |
+| `Status.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L634) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.SupplementLink` [source](../src/meta_standards_converter/miniml/model.py#L644) | `SupplementLink(value: 'str', type: 'str \| None' = None, checksum: 'str \| None' = None, build: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `SupplementLink.from_value` [source](../src/meta_standards_converter/miniml/model.py#L652) | `from_value(value: Any) -> 'SupplementLink'` | See source; follows the owning type contract. |
+| `SupplementLink.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L661) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Organism` [source](../src/meta_standards_converter/miniml/model.py#L670) | `Organism(value: 'str', taxid: 'str \| None' = None, term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = (), extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Organism.from_value` [source](../src/meta_standards_converter/miniml/model.py#L679) | `from_value(value: Any) -> 'Organism'` | See source; follows the owning type contract. |
+| `Organism.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L696) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Relation` [source](../src/meta_standards_converter/miniml/model.py#L706) | `Relation(type: 'str', target: 'str', comment: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Relation.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L713) | `from_mapping(value: Any) -> 'Relation'` | See source; follows the owning type contract. |
+| `Relation.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L717) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Address` [source](../src/meta_standards_converter/miniml/model.py#L725) | `Address(lines: 'tuple[Any, ...]' = (), city: 'str \| None' = None, state: 'str \| None' = None, province: 'str \| None' = None, zip_code: 'str \| None' = None, postal_code: 'str \| None' = None, country: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Address.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L736) | `from_mapping(value: Any) -> 'Address'` | See source; follows the owning type contract. |
+| `Address.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L740) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Person` [source](../src/meta_standards_converter/miniml/model.py#L750) | `Person(first: 'str \| None' = None, middle: 'str \| None' = None, last: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Person.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L757) | `from_mapping(value: Any) -> 'Person'` | See source; follows the owning type contract. |
+| `Person.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L761) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Characteristics` [source](../src/meta_standards_converter/miniml/model.py#L770) | `Characteristics(name: 'str', value: 'Any', term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, unit: 'OntologyValue \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = (), comments: 'tuple[NamedComment, ...]' = (), qualifier: 'str \| None' = None, unit_type: 'str \| None' = None) -> None` | See defining source and workflow contracts. |
+| `Characteristics.from_value` [source](../src/meta_standards_converter/miniml/model.py#L782) | `from_value(value: Any) -> 'Characteristics'` | See source; follows the owning type contract. |
+| `Characteristics.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L796) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.InstrumentModel` [source](../src/meta_standards_converter/miniml/model.py#L812) | `InstrumentModel(predefined: 'str \| None' = None, other: 'str \| None' = None, value: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `InstrumentModel.from_value` [source](../src/meta_standards_converter/miniml/model.py#L819) | `from_value(value: Any) -> 'InstrumentModel'` | See source; follows the owning type contract. |
+| `InstrumentModel.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L824) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.DataColumn` [source](../src/meta_standards_converter/miniml/model.py#L833) | `DataColumn(name: 'str \| None' = None, type: 'str \| None' = None, unit: 'str \| None' = None, description: 'str \| None' = None, link_prefix: 'str \| None' = None, link_suffix: 'str \| None' = None, link_delimiter: 'str \| None' = None, position: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `DataColumn.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L845) | `from_mapping(value: Any) -> 'DataColumn'` | See source; follows the owning type contract. |
+| `DataColumn.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L850) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.TableData` [source](../src/meta_standards_converter/miniml/model.py#L859) | `TableData(value: 'str', rows: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `TableData.from_value` [source](../src/meta_standards_converter/miniml/model.py#L865) | `from_value(value: Any) -> 'TableData'` | See source; follows the owning type contract. |
+| `TableData.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L870) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.DataTable` [source](../src/meta_standards_converter/miniml/model.py#L878) | `DataTable(external_file: 'SupplementLink \| None' = None, title: 'str \| None' = None, columns: 'tuple[DataColumn, ...]' = (), internal_data: 'TableData \| None' = None, external_data: 'TableData \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `DataTable.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L887) | `from_mapping(value: Any) -> 'DataTable'` | See source; follows the owning type contract. |
+| `DataTable.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L898) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Channel` [source](../src/meta_standards_converter/miniml/model.py#L907) | `Channel(source: 'OntologyValue \| None' = None, organisms: 'tuple[Organism, ...]' = (), characteristics: 'tuple[Characteristics, ...]' = (), biomaterial_providers: 'tuple[Any, ...]' = (), treatment_protocol: 'str \| None' = None, growth_protocol: 'str \| None' = None, molecule: 'OntologyValue \| None' = None, extract_protocol: 'str \| None' = None, label: 'str \| None' = None, label_protocol: 'str \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = (), extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Channel.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L922) | `from_mapping(value: Any) -> 'Channel'` | See source; follows the owning type contract. |
+| `Channel.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L939) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Variable` [source](../src/meta_standards_converter/miniml/model.py#L952) | `Variable(factor: 'str \| None' = None, type: 'OntologyValue \| None' = None, description: 'str \| None' = None, sample_ref: 'tuple[Reference, ...]' = (), position: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Variable.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L961) | `from_mapping(value: Any) -> 'Variable'` | See source; follows the owning type contract. |
+| `Variable.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L965) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Repeat` [source](../src/meta_standards_converter/miniml/model.py#L974) | `Repeat(factor: 'str \| None' = None, sample_ref: 'tuple[Reference, ...]' = (), position: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Repeat.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L981) | `from_mapping(value: Any) -> 'Repeat'` | See source; follows the owning type contract. |
+| `Repeat.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L985) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Database` [source](../src/meta_standards_converter/miniml/model.py#L1014) | `Database(iid: 'str \| None' = None, name: 'str \| None' = None, public_id: 'str \| None' = None, organization_ref: 'Reference \| None' = None, organization: 'str \| None' = None, web_link: 'str \| None' = None, email: 'str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Database.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1025) | `from_mapping(value: Any) -> 'Database'` | See source; follows the owning type contract. |
+| `Database.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1029) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Organization` [source](../src/meta_standards_converter/miniml/model.py#L1038) | `Organization(iid: 'str \| None' = None, name: 'str \| None' = None, address: 'Address \| str \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Organization.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1045) | `from_mapping(value: Any) -> 'Organization'` | See source; follows the owning type contract. |
+| `Organization.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1052) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Contributor` [source](../src/meta_standards_converter/miniml/model.py#L1061) | `Contributor(iid: 'str \| None' = None, person: 'Person \| None' = None, organization: 'str \| None' = None, company: 'str \| None' = None, email: 'str \| None' = None, phone: 'str \| None' = None, fax: 'str \| None' = None, laboratory: 'str \| None' = None, department: 'str \| None' = None, address: 'Address \| str \| None' = None, organization_ref: 'Reference \| None' = None, web_link: 'str \| None' = None, roles: 'tuple[OntologyValue, ...]' = (), extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Contributor.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1078) | `from_mapping(value: Any) -> 'Contributor'` | See source; follows the owning type contract. |
+| `Contributor.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1087) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Platform` [source](../src/meta_standards_converter/miniml/model.py#L1098) | `Platform(iid: 'str \| None' = None, accessions: 'tuple[Accession, ...]' = (), statuses: 'tuple[Status, ...]' = (), title: 'str \| None' = None, technology: 'str \| None' = None, distribution: 'str \| None' = None, organisms: 'tuple[Organism, ...]' = (), manufacturer: 'str \| None' = None, manufacture_protocol: 'str \| None' = None, catalog_number: 'str \| None' = None, support: 'str \| None' = None, coating: 'str \| None' = None, description: 'str \| None' = None, web_links: 'tuple[Any, ...]' = (), pubmed_ids: 'tuple[Any, ...]' = (), citations: 'tuple[Any, ...]' = (), contributor_ref: 'tuple[Reference, ...]' = (), contributors: 'tuple[Contributor, ...]' = (), contact_ref: 'tuple[Reference, ...]' = (), contacts: 'tuple[Contributor, ...]' = (), supplementary_data: 'tuple[SupplementLink, ...]' = (), relations: 'tuple[Relation, ...]' = (), data_table: 'DataTable \| None' = None, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Platform.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1125) | `from_mapping(value: Any) -> 'Platform'` | See source; follows the owning type contract. |
+| `Platform.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1130) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Sample` [source](../src/meta_standards_converter/miniml/model.py#L1140) | `Sample(iid: 'str \| None' = None, accessions: 'tuple[Accession, ...]' = (), statuses: 'tuple[Status, ...]' = (), title: 'str \| None' = None, type: 'str \| None' = None, anchor: 'str \| None' = None, tag_length: 'str \| None' = None, tag_count: 'str \| None' = None, channel_count: 'str \| None' = None, channels: 'tuple[Channel, ...]' = (), hybridization_protocol: 'str \| None' = None, scan_protocol: 'str \| None' = None, description: 'str \| None' = None, data_processing: 'str \| None' = None, platform_ref: 'Reference \| None' = None, library_strategy: 'str \| None' = None, library_source: 'str \| None' = None, library_selection: 'str \| None' = None, instrument_model: 'InstrumentModel \| None' = None, barcode: 'str \| None' = None, contact_ref: 'tuple[Reference, ...]' = (), contacts: 'tuple[Contributor, ...]' = (), supplementary_data: 'tuple[SupplementLink, ...]' = (), raw_data: 'tuple[SupplementLink, ...]' = (), relations: 'tuple[Relation, ...]' = (), data_table: 'DataTable \| None' = None, sra_accessions: 'tuple[str, ...]' = (), ena_accessions: 'tuple[str, ...]' = (), sra_runs: 'tuple[SRARun, ...]' = (), sra_runs_present: 'bool' = False, extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Sample.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1174) | `from_mapping(value: Any) -> 'Sample'` | See source; follows the owning type contract. |
+| `Sample.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1179) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Protocol` [source](../src/meta_standards_converter/miniml/model.py#L1199) | `Protocol(name: 'str', type: 'OntologyValue \| None' = None, description: 'str \| None' = None, parameters: 'tuple[str, ...]' = (), hardware: 'tuple[str, ...]' = (), software: 'tuple[str, ...]' = (), contacts: 'tuple[str, ...]' = (), performers: 'tuple[str, ...]' = (), comments: 'tuple[NamedComment, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `Protocol.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1215) | `from_mapping(value: Any) -> 'Protocol'` | Direct raises: MINiMLModelError. |
+| `Protocol.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1237) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.ProtocolApplication` [source](../src/meta_standards_converter/miniml/model.py#L1249) | `ProtocolApplication(protocol_ref: 'str', parameter_values: 'tuple[NamedValue, ...]' = (), performer: 'str \| None' = None, date: 'str \| None' = None, comments: 'tuple[NamedComment, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `ProtocolApplication.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1262) | `from_mapping(value: Any) -> 'ProtocolApplication'` | Direct raises: MINiMLModelError. |
+| `ProtocolApplication.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1277) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.AssayNode` [source](../src/meta_standards_converter/miniml/model.py#L1286) | `AssayNode(kind: 'str', name: 'str', sample_ref: 'str \| None' = None, characteristics: 'tuple[NamedValue, ...]' = (), factor_values: 'tuple[NamedValue, ...]' = (), provider: 'str \| None' = None, material_type: 'OntologyValue \| None' = None, description: 'str \| None' = None, label: 'OntologyValue \| None' = None, technology_type: 'OntologyValue \| None' = None, array_design_ref: 'Reference \| None' = None, link: 'SupplementLink \| None' = None, comments: 'tuple[NamedComment, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `AssayNode.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1308) | `from_mapping(value: Any) -> 'AssayNode'` | Direct raises: MINiMLModelError. |
+| `AssayNode.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1338) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.AssayPath` [source](../src/meta_standards_converter/miniml/model.py#L1362) | `AssayPath(steps: 'tuple[AssayStep, ...]', document: 'str \| None' = None, comments: 'tuple[NamedComment, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `AssayPath.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1372) | `from_mapping(value: Any) -> 'AssayPath'` | Direct raises: MINiMLModelError. |
+| `AssayPath.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1380) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.Series` [source](../src/meta_standards_converter/miniml/model.py#L1389) | `Series(iid: 'str \| None' = None, accessions: 'tuple[Accession, ...]' = (), statuses: 'tuple[Status, ...]' = (), title: 'str \| None' = None, pubmed_ids: 'tuple[Any, ...]' = (), citations: 'tuple[Any, ...]' = (), web_links: 'tuple[Any, ...]' = (), summary: 'str \| None' = None, overall_design: 'str \| None' = None, types: 'tuple[Any, ...]' = (), contributor_ref: 'tuple[Reference, ...]' = (), contributors: 'tuple[Contributor, ...]' = (), contact_ref: 'tuple[Reference, ...]' = (), contacts: 'tuple[Contributor, ...]' = (), sample_ref: 'tuple[Reference, ...]' = (), variables: 'tuple[Variable, ...]' = (), repeats: 'tuple[Repeat, ...]' = (), supplementary_data: 'tuple[SupplementLink, ...]' = (), relations: 'tuple[Relation, ...]' = (), data_tables: 'tuple[DataTable, ...]' = (), pubmed_publications: 'tuple[PubMedPublication, ...]' = (), experiment_date: 'str \| None' = None, protocols: 'tuple[Protocol, ...]' = (), assay_paths: 'tuple[AssayPath, ...]' = (), quality_controls: 'tuple[OntologyValue, ...]' = (), replicate_types: 'tuple[OntologyValue, ...]' = (), normalization_types: 'tuple[OntologyValue, ...]' = (), comments: 'tuple[NamedComment, ...]' = (), extras: 'Mapping[str, Any]' = <factory>) -> None` | See defining source and workflow contracts. |
+| `Series.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1421) | `from_mapping(value: Any) -> 'Series'` | See source; follows the owning type contract. |
+| `Series.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1464) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.model.MINiMLPackage` [source](../src/meta_standards_converter/miniml/model.py#L1483) | `MINiMLPackage(series: 'Series', source: 'SourceInfo', databases: 'tuple[Database, ...]' = (), organizations: 'tuple[Organization, ...]' = (), contributors: 'tuple[Contributor, ...]' = (), platforms: 'tuple[Platform, ...]' = (), samples: 'tuple[Sample, ...]' = (), extensions: 'Mapping[str, Any]' = <factory>, miniml_schema_version: 'str' = '3.0') -> None` | Bases: Mapping[str, Any]. |
+| `MINiMLPackage.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1521) | `from_mapping(value: Mapping[str, Any]) -> 'MINiMLPackage'` | Direct raises: MINiMLModelError. |
+| `MINiMLPackage.load` [source](../src/meta_standards_converter/miniml/model.py#L1569) | `load(path: str \| Path) -> 'MINiMLPackage'` | See source; follows the owning type contract. |
+| `MINiMLPackage.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L1573) | `to_mapping() -> dict[str, Any]` | Direct raises: MINiMLModelError. |
+| `MINiMLPackage.dump` [source](../src/meta_standards_converter/miniml/model.py#L1602) | `dump(path: str \| Path) -> None` | See source; follows the owning type contract. |
+| `MINiMLPackage.validate` [source](../src/meta_standards_converter/miniml/model.py#L1627) | `validate() -> tuple[MINiMLValidationIssue, ...]` | Direct raises: MINiMLModelError. |
+
+### `meta_standards_converter.miniml.patches`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.miniml.patches.canonical_miniml_document` [source](../src/meta_standards_converter/miniml/patches.py#L64) | `canonical_miniml_document(value: MINiMLPackage \| Mapping[str, Any] \| Iterable[Mapping[str, Any]]) -> dict[str, Any] \| list[dict[str, Any]]` | Strictly decode and encode one package or a non-empty package sequence. |
+| `meta_standards_converter.miniml.patches.miniml_source_fingerprint` [source](../src/meta_standards_converter/miniml/patches.py#L96) | `miniml_source_fingerprint(value: MINiMLPackage \| Mapping[str, Any] \| Iterable[Mapping[str, Any]]) -> str` | Hash canonical biological content, excluding only retained patches. |
+| `meta_standards_converter.miniml.patches.MINiMLHarmonizationPatch` [source](../src/meta_standards_converter/miniml/patches.py#L192) | `MINiMLHarmonizationPatch(base_sha256: 'str', adds: 'tuple[Mapping[str, Any], ...]', schema_version: 'str' = '3.1', miniml_schema_version: 'str' = '3.0') -> None` | Immutable document-level harmonized additions and source provenance. |
+| `MINiMLHarmonizationPatch.from_mapping` [source](../src/meta_standards_converter/miniml/patches.py#L230) | `from_mapping(value: Mapping[str, Any]) -> 'MINiMLHarmonizationPatch'` | Direct raises: MINiMLModelError, TypeError. |
+| `MINiMLHarmonizationPatch.patch_id` [source](../src/meta_standards_converter/miniml/patches.py#L252) | `patch_id() -> str` | Property.  |
+| `MINiMLHarmonizationPatch.matches` [source](../src/meta_standards_converter/miniml/patches.py#L258) | `matches(document: Any) -> bool` | See source; follows the owning type contract. |
+| `MINiMLHarmonizationPatch.to_mapping` [source](../src/meta_standards_converter/miniml/patches.py#L261) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.miniml.patches.apply_miniml_harmonization_patch` [source](../src/meta_standards_converter/miniml/patches.py#L413) | `apply_miniml_harmonization_patch(document: MINiMLPackage \| Mapping[str, Any] \| Iterable[Mapping[str, Any]], patch: MINiMLHarmonizationPatch \| Mapping[str, Any]) -> dict[str, Any] \| list[dict[str, Any]]` | Apply and retain one immutable patch without replacing raw metadata. |
+| `meta_standards_converter.miniml.patches.validate_harmonization_extension_mapping` [source](../src/meta_standards_converter/miniml/patches.py#L470) | `validate_harmonization_extension_mapping(value: Any) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.patches.iter_harmonization_patches` [source](../src/meta_standards_converter/miniml/patches.py#L522) | `iter_harmonization_patches(package: MINiMLPackage \| Mapping[str, Any]) -> tuple[dict[str, Any], ...]` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.patches.iter_harmonization_operations` [source](../src/meta_standards_converter/miniml/patches.py#L540) | `iter_harmonization_operations(package: MINiMLPackage \| Mapping[str, Any], *, sample: str \| int \| None=None, field: str \| None=None) -> tuple[dict[str, Any], ...]` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.patches.harmonization_provenance_index` [source](../src/meta_standards_converter/miniml/patches.py#L583) | `harmonization_provenance_index(package: MINiMLPackage \| Mapping[str, Any]) -> dict[str, dict[str, tuple[dict[str, Any], ...]]]` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.operational_events`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.operational_events.redact` [source](../src/meta_standards_converter/operational_events.py#L29) | `redact(value: Any, *, key: str='') -> Any` | See defining source and workflow contracts. |
+| `meta_standards_converter.operational_events.OperationalEventEmitter` [source](../src/meta_standards_converter/operational_events.py#L43) | `OperationalEventEmitter(*, repository: 'str', jsonl_path: 'str \| Path \| None' = None, logger: 'logging.Logger \| None' = None) -> 'None'` | Emit the cross-repository schema-1.0 operational envelope. |
+| `OperationalEventEmitter.__init__` [source](../src/meta_standards_converter/operational_events.py#L46) | `__init__(*, repository: str, jsonl_path: str \| Path \| None=None, logger: logging.Logger \| None=None) -> None` | See source; follows the owning type contract. |
+| `OperationalEventEmitter.emit` [source](../src/meta_standards_converter/operational_events.py#L53) | `emit(event_type: str, *, component: str, level: str='INFO', run_id: str \| None=None, stage: str \| None=None, status: str \| None=None, duration_seconds: float \| None=None, attributes: Mapping[str, Any] \| None=None) -> dict[str, Any]` | Direct raises: ValueError. |
+| `OperationalEventEmitter.metrics` [source](../src/meta_standards_converter/operational_events.py#L69) | `metrics() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `OperationalEventEmitter.export_json` [source](../src/meta_standards_converter/operational_events.py#L74) | `export_json(path: str \| Path) -> dict[str, Any]` | See source; follows the owning type contract. |
+| `OperationalEventEmitter.prometheus_text` [source](../src/meta_standards_converter/operational_events.py#L79) | `prometheus_text() -> str` | See source; follows the owning type contract. |
+| `OperationalEventEmitter.export_prometheus` [source](../src/meta_standards_converter/operational_events.py#L89) | `export_prometheus(path: str \| Path) -> str` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.retrieval`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.retrieval.RetrievalError` [source](../src/meta_standards_converter/retrieval.py#L57) | `bases: RuntimeError` | Base class for policy-enforced retrieval failures. Bases: RuntimeError. |
+| `meta_standards_converter.retrieval.RetrievalSecurityError` [source](../src/meta_standards_converter/retrieval.py#L61) | `bases: RetrievalError` | A URL violated scheme, host, address, credential, or redirect policy. Bases: RetrievalError. |
+| `meta_standards_converter.retrieval.RetrievalSizeError` [source](../src/meta_standards_converter/retrieval.py#L65) | `bases: RetrievalError` | An object, aggregate run, cache, or disk ceiling would be exceeded. Bases: RetrievalError. |
+| `meta_standards_converter.retrieval.CacheIntegrityError` [source](../src/meta_standards_converter/retrieval.py#L69) | `bases: RetrievalError` | A cached file is missing or fails its immutable integrity metadata. Bases: RetrievalError. |
+| `meta_standards_converter.retrieval.RetrievalPolicy` [source](../src/meta_standards_converter/retrieval.py#L74) | `RetrievalPolicy(resource_profile: 'ResourceProfile' = <factory>, allowed_hosts: 'frozenset[str]' = frozenset(), allowed_host_suffixes: 'frozenset[str]' = frozenset({'ncbi.nlm.nih.gov', 'biostudies.org', 'ebi.ac.uk'}), allowed_schemes: 'frozenset[str]' = frozenset({'ftp', 'https'}), allow_file_urls: 'bool' = False, ranged_fallback_hosts: 'frozenset[str]' = frozenset({'ftp.ncbi.nlm.nih.gov'}), resolver: 'Callable[..., list[Any]]' = getaddrinfo, disk_preflight: 'Callable[..., Any]' = require_disk_headroom) -> None` | See defining source and workflow contracts. |
+| `RetrievalPolicy.validate_url` [source](../src/meta_standards_converter/retrieval.py#L86) | `validate_url(value: str) -> None` | Direct raises: RetrievalSecurityError. |
+| `meta_standards_converter.retrieval.RetrievalService` [source](../src/meta_standards_converter/retrieval.py#L142) | `RetrievalService(cache_dir: 'str \| Path', *, policy: 'RetrievalPolicy \| None' = None, session: 'Any \| None' = None, urlopen: 'Callable[..., Any] \| None' = None) -> 'None'` | Retrieve remote assets without crossing configured trust/resource bounds. |
+| `RetrievalService.__init__` [source](../src/meta_standards_converter/retrieval.py#L145) | `__init__(cache_dir: str \| Path, *, policy: RetrievalPolicy \| None=None, session: Any \| None=None, urlopen: Callable[..., Any] \| None=None) -> None` | See source; follows the owning type contract. |
+| `RetrievalService.localize` [source](../src/meta_standards_converter/retrieval.py#L159) | `localize(value: str, *, md5: str \| None=None, max_bytes: int \| None=None) -> str` | Direct raises: ValueError. |
+| `RetrievalService.retention_report` [source](../src/meta_standards_converter/retrieval.py#L550) | `retention_report(*, max_age_seconds: float, min_retained_assets: int=1, active_paths=(), now: datetime \| None=None, apply: bool=False) -> dict` | Plan or quarantine old verified assets; never delete cache data. Direct raises: ValueError. |
+| `meta_standards_converter.retrieval.AssetDownloader` [source](../src/meta_standards_converter/retrieval.py#L745) | `AssetDownloader(cache_dir: 'str \| Path', *, policy: 'RetrievalPolicy \| None' = None, session: 'Any \| None' = None, urlopen: 'Callable[..., Any] \| None' = None) -> 'None'` | Compatibility facade for the former JSON-to-H5AD downloader. Bases: RetrievalService. |
+
+### `meta_standards_converter.runtime_contracts`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.runtime_contracts.ExecutionStatus` [source](../src/meta_standards_converter/runtime_contracts.py#L32) | `ExecutionStatus(*values)` | Bases: str, Enum. |
+| `meta_standards_converter.runtime_contracts.CompletenessStatus` [source](../src/meta_standards_converter/runtime_contracts.py#L39) | `CompletenessStatus(*values)` | Bases: str, Enum. |
+| `meta_standards_converter.runtime_contracts.EvidenceConfidence` [source](../src/meta_standards_converter/runtime_contracts.py#L46) | `EvidenceConfidence(*values)` | Bases: str, Enum. |
+| `meta_standards_converter.runtime_contracts.ValidationStatus` [source](../src/meta_standards_converter/runtime_contracts.py#L54) | `ValidationStatus(*values)` | Bases: str, Enum. |
+| `meta_standards_converter.runtime_contracts.PublicationDisposition` [source](../src/meta_standards_converter/runtime_contracts.py#L60) | `PublicationDisposition(*values)` | Bases: str, Enum. |
+| `meta_standards_converter.runtime_contracts.RetryCategory` [source](../src/meta_standards_converter/runtime_contracts.py#L67) | `RetryCategory(*values)` | Bases: str, Enum. |
+| `meta_standards_converter.runtime_contracts.SafeErrorEnvelope` [source](../src/meta_standards_converter/runtime_contracts.py#L74) | `SafeErrorEnvelope(error_type: 'str', provider: 'str \| None' = None, location: 'str \| None' = None, http_status: 'int \| None' = None, retry_category: 'RetryCategory' = <RetryCategory.UNKNOWN: 'unknown'>, stage: 'str \| None' = None, item_id: 'str \| None' = None, correlation_id: 'str' = '', contract_version: 'str' = '1.0') -> None` | A persistence-safe description that intentionally excludes raw messages. |
+| `SafeErrorEnvelope.from_exception` [source](../src/meta_standards_converter/runtime_contracts.py#L100) | `from_exception(error: BaseException, *, provider: str \| None=None, location: str \| Path \| None=None, http_status: int \| None=None, retry_category: RetryCategory=RetryCategory.UNKNOWN, stage: str \| None=None, item_id: str \| None=None, correlation_id: str \| None=None) -> 'SafeErrorEnvelope'` | See source; follows the owning type contract. |
+| `SafeErrorEnvelope.from_dict` [source](../src/meta_standards_converter/runtime_contracts.py#L124) | `from_dict(value: Mapping[str, Any]) -> 'SafeErrorEnvelope'` | Direct raises: ValueError. |
+| `SafeErrorEnvelope.to_dict` [source](../src/meta_standards_converter/runtime_contracts.py#L142) | `to_dict() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `meta_standards_converter.runtime_contracts.OperationStatusV2` [source](../src/meta_standards_converter/runtime_contracts.py#L157) | `OperationStatusV2(execution: 'ExecutionStatus', completeness: 'CompletenessStatus', evidence_confidence: 'EvidenceConfidence', validation: 'ValidationStatus', publication: 'PublicationDisposition', terminal_reason: 'str', errors: 'tuple[SafeErrorEnvelope, ...]' = (), contract_version: 'str' = '2.0') -> None` | Independent execution, completeness, evidence, validation, and release axes. |
+| `OperationStatusV2.safe_to_publish` [source](../src/meta_standards_converter/runtime_contracts.py#L196) | `safe_to_publish() -> bool` | Property.  |
+| `OperationStatusV2.to_dict` [source](../src/meta_standards_converter/runtime_contracts.py#L204) | `to_dict() -> dict[str, Any]` | See source; follows the owning type contract. |
+| `OperationStatusV2.from_dict` [source](../src/meta_standards_converter/runtime_contracts.py#L217) | `from_dict(value: Mapping[str, Any]) -> 'OperationStatusV2'` | Direct raises: ValueError. |
+| `OperationStatusV2.aggregate` [source](../src/meta_standards_converter/runtime_contracts.py#L238) | `aggregate(values: Iterable['OperationStatusV2'], *, terminal_reason: str='aggregate_complete') -> 'OperationStatusV2'` | See source; follows the owning type contract. |
+| `meta_standards_converter.runtime_contracts.ResourceProfile` [source](../src/meta_standards_converter/runtime_contracts.py#L279) | `ResourceProfile(name: 'str', max_redirects: 'int', connect_timeout_seconds: 'int', read_timeout_seconds: 'int', max_xml_bytes: 'int', max_compressed_archive_bytes: 'int', max_expanded_archive_bytes: 'int', max_ontology_file_bytes: 'int', max_matrix_bytes: 'int', max_in_memory_matrix_bytes: 'int', max_aggregate_download_bytes: 'int', max_cache_bytes: 'int', network_workers: 'int', ontology_build_workers: 'int', disk_headroom_fraction: 'float' = 0.1, available_memory_fraction: 'float' = 0.7, force_memory_fraction: 'float' = 0.9) -> None` | Disk, network, worker, and in-memory admission ceilings. |
+| `ResourceProfile.with_overrides` [source](../src/meta_standards_converter/runtime_contracts.py#L320) | `with_overrides(overrides: Mapping[str, int \| float]) -> 'ResourceProfile'` | Direct raises: ValueError. |
+| `meta_standards_converter.runtime_contracts.get_resource_profile` [source](../src/meta_standards_converter/runtime_contracts.py#L370) | `get_resource_profile(name: str \| ResourceProfile='standard', *, overrides: Mapping[str, int \| float] \| None=None) -> ResourceProfile` | See defining source and workflow contracts. |
+| `meta_standards_converter.runtime_contracts.DiskBudget` [source](../src/meta_standards_converter/runtime_contracts.py#L387) | `DiskBudget(path: 'str', required_bytes: 'int', required_with_headroom_bytes: 'int', free_bytes: 'int', headroom_fraction: 'float') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.runtime_contracts.DiskBudgetError` [source](../src/meta_standards_converter/runtime_contracts.py#L395) | `bases: RuntimeError` | Raised before work starts when its disk envelope cannot be honored. Bases: RuntimeError. |
+| `meta_standards_converter.runtime_contracts.require_disk_headroom` [source](../src/meta_standards_converter/runtime_contracts.py#L399) | `require_disk_headroom(path: str \| Path, *, required_bytes: int, headroom_fraction: float=0.1) -> DiskBudget` | See defining source and workflow contracts. |
+
+### `meta_standards_converter.sources.contracts`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.contracts.RequestMetrics` [source](../src/meta_standards_converter/sources/contracts.py#L14) | `RequestMetrics(provider_attempts: int = 0, retry_count: int = 0, rate_wait_seconds: float = 0.0) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.sources.contracts.MetricsProvider` [source](../src/meta_standards_converter/sources/contracts.py#L19) | `MetricsProvider(*args, **kwargs)` | Bases: Protocol. |
+| `MetricsProvider.metrics` [source](../src/meta_standards_converter/sources/contracts.py#L20) | `metrics() -> RequestMetrics` | See source; follows the owning type contract. |
+| `meta_standards_converter.sources.contracts.INSDCClient` [source](../src/meta_standards_converter/sources/contracts.py#L22) | `INSDCClient(*args, **kwargs)` | Bases: Protocol. |
+| `INSDCClient.fetch_sra_xml` [source](../src/meta_standards_converter/sources/contracts.py#L23) | `fetch_sra_xml(nrx: str) -> Any` | See source; follows the owning type contract. |
+| `INSDCClient.fetch_ena_file_report` [source](../src/meta_standards_converter/sources/contracts.py#L24) | `fetch_ena_file_report(accession: str) -> list` | See source; follows the owning type contract. |
+| `meta_standards_converter.sources.contracts.PubMedClient` [source](../src/meta_standards_converter/sources/contracts.py#L26) | `PubMedClient(*args, **kwargs)` | Bases: Protocol. |
+| `PubMedClient.pubmed_summary` [source](../src/meta_standards_converter/sources/contracts.py#L27) | `pubmed_summary(pubmed_id: str) -> tuple` | See source; follows the owning type contract. |
+| `meta_standards_converter.sources.contracts.request_metrics` [source](../src/meta_standards_converter/sources/contracts.py#L29) | `request_metrics(*requesters) -> RequestMetrics` | Sum explicit, distinct requesters; never inspect nested collaborators. |
+| `meta_standards_converter.sources.contracts.GEOXMLParser` [source](../src/meta_standards_converter/sources/contracts.py#L42) | `GEOXMLParser(*args, **kwargs)` | Parse supplied XML without performing retrieval. Bases: Protocol. |
+| `GEOXMLParser.parse` [source](../src/meta_standards_converter/sources/contracts.py#L44) | `parse(miniml: str, remove_empty: bool=False) -> Any` | See source; follows the owning type contract. |
+| `meta_standards_converter.sources.contracts.MAGETabSourceResolver` [source](../src/meta_standards_converter/sources/contracts.py#L47) | `MAGETabSourceResolver(*args, **kwargs)` | Bases: Protocol. |
+| `MAGETabSourceResolver.resolve` [source](../src/meta_standards_converter/sources/contracts.py#L48) | `resolve(source: str, sdrf_sources: list[str] \| None=None) -> Any` | See source; follows the owning type contract. |
+| `meta_standards_converter.sources.contracts.PackageLoader` [source](../src/meta_standards_converter/sources/contracts.py#L51) | `PackageLoader(*args, **kwargs)` | Bases: Protocol. |
+| `PackageLoader.load` [source](../src/meta_standards_converter/sources/contracts.py#L52) | `load(json_path: str) -> Any` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.sources.geo`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.geo.GEOWebFetcher` [source](../src/meta_standards_converter/sources/geo.py#L47) | `GEOWebFetcher(requester=None, request_settings=None, resource_profile: str = 'standard', resource_overrides=None)` | See defining source and workflow contracts. |
+| `GEOWebFetcher.metrics` [source](../src/meta_standards_converter/sources/geo.py#L49) | `metrics()` | See source; follows the owning type contract. |
+| `GEOWebFetcher.__init__` [source](../src/meta_standards_converter/sources/geo.py#L54) | `__init__(requester=None, request_settings=None, resource_profile: str='standard', resource_overrides=None)` | See source; follows the owning type contract. |
+| `GEOWebFetcher.url_gse_miniml` [source](../src/meta_standards_converter/sources/geo.py#L74) | `url_gse_miniml(gse: str) -> str` | creates url from gse accession for fetching gse mininml and returns url as string. Direct raises: ValueError. |
+| `GEOWebFetcher.fetch_gse_miniml` [source](../src/meta_standards_converter/sources/geo.py#L93) | `fetch_gse_miniml(gse) -> str` | creates url from gse accession, fetches miniml file, returns miniml as string. Direct raises: ValueError. |
+| `meta_standards_converter.sources.geo.RelatedSeriesParseResult` [source](../src/meta_standards_converter/sources/geo.py#L210) | `RelatedSeriesParseResult(packages, *, status: meta_standards_converter.runtime_contracts.OperationStatusV2, attempted_accessions, failed_accessions) -> None` | List-compatible related-series result with explicit completeness. Bases: list[dict]. |
+| `RelatedSeriesParseResult.__init__` [source](../src/meta_standards_converter/sources/geo.py#L213) | `__init__(packages, *, status: OperationStatusV2, attempted_accessions, failed_accessions) -> None` | See source; follows the owning type contract. |
+| `RelatedSeriesParseResult.summary_dict` [source](../src/meta_standards_converter/sources/geo.py#L226) | `summary_dict() -> dict` | See source; follows the owning type contract. |
+| `meta_standards_converter.sources.geo.GEOSource` [source](../src/meta_standards_converter/sources/geo.py#L235) | `GEOSource(fetcher=None, parser=None, resource_profile='standard')` | Coordinate GEO retrieval and related-series collection around a pure parser. |
+| `GEOSource.metrics` [source](../src/meta_standards_converter/sources/geo.py#L238) | `metrics()` | See source; follows the owning type contract. |
+| `GEOSource.__init__` [source](../src/meta_standards_converter/sources/geo.py#L243) | `__init__(fetcher=None, parser=None, resource_profile='standard')` | See source; follows the owning type contract. |
+| `GEOSource.parse` [source](../src/meta_standards_converter/sources/geo.py#L248) | `parse(miniml, remove_empty=False, related_series=False)` | See source; follows the owning type contract. |
+| `GEOSource.parse_related_series` [source](../src/meta_standards_converter/sources/geo.py#L256) | `parse_related_series(miniml: str, remove_empty: bool=False, strict: bool=True) -> RelatedSeriesParseResult` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.sources.insdc`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.insdc.INSDCWebfetcher` [source](../src/meta_standards_converter/sources/insdc.py#L27) | `INSDCWebfetcher(client=None, ncbi_requester=None, ena_requester=None, ncbi_request_settings=None, ena_request_settings=None, ncbi_identity: meta_standards_converter.helpers.request_helper.NCBIApplicationIdentity \| None = None, resource_profile: str = 'standard', resource_overrides=None)` | See defining source and workflow contracts. |
+| `INSDCWebfetcher.metrics` [source](../src/meta_standards_converter/sources/insdc.py#L29) | `metrics()` | See source; follows the owning type contract. |
+| `INSDCWebfetcher.__init__` [source](../src/meta_standards_converter/sources/insdc.py#L33) | `__init__(client=None, ncbi_requester=None, ena_requester=None, ncbi_request_settings=None, ena_request_settings=None, ncbi_identity: NCBIApplicationIdentity \| None=None, resource_profile: str='standard', resource_overrides=None)` | See source; follows the owning type contract. |
+| `INSDCWebfetcher.extract_sra_accessions` [source](../src/meta_standards_converter/sources/insdc.py#L67) | `extract_sra_accessions(sra: str) -> list` | Extracts sra accession within substring |
+| `INSDCWebfetcher.fetch_sra_xml` [source](../src/meta_standards_converter/sources/insdc.py#L76) | `fetch_sra_xml(nrx: str) -> list` | lookup nrx accession to get nrr accessions |
+| `INSDCWebfetcher.fetch_sra_runs` [source](../src/meta_standards_converter/sources/insdc.py#L105) | `fetch_sra_runs(accession: str) -> list` | See source; follows the owning type contract. |
+| `INSDCWebfetcher.fetch_ena_file_report` [source](../src/meta_standards_converter/sources/insdc.py#L160) | `fetch_ena_file_report(accession: str) -> list` | See source; follows the owning type contract. |
+| `INSDCWebfetcher.fetch_ena_fastq_files` [source](../src/meta_standards_converter/sources/insdc.py#L173) | `fetch_ena_fastq_files(accession: str) -> dict` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.sources.json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.json.DatasetPackageGroup` [source](../src/meta_standards_converter/sources/json.py#L24) | `DatasetPackageGroup(dataset_id: 'str', packages: 'tuple[MINiMLPackage, ...]', source_accession: 'str \| None' = None, source_packages: 'tuple[MINiMLPackage, ...] \| None' = None, harmonization_resolution: 'Any \| None' = None) -> None` | One study-sized group of parsed MINiML packages. |
+| `DatasetPackageGroup.resolved` [source](../src/meta_standards_converter/sources/json.py#L33) | `resolved(*, replacement_profile: Mapping[str, Any] \| None=None) -> 'DatasetPackageGroup'` | See source; follows the owning type contract. |
+| `meta_standards_converter.sources.json.SourceLoadResult` [source](../src/meta_standards_converter/sources/json.py#L52) | `SourceLoadResult(groups: 'tuple[DatasetPackageGroup, ...]', warnings: 'tuple[str, ...]' = (), diagnostics: 'tuple[MINiMLValidationIssue, ...]' = ()) -> None` | Groups and non-fatal source diagnostics. |
+| `meta_standards_converter.sources.json.JSONPackageSource` [source](../src/meta_standards_converter/sources/json.py#L60) | `JSONPackageSource(atlas_reader: 'AtlasV1Reader \| None' = None) -> 'None'` | Recognize native MINiML payloads and canonical Atlas v1 documents. |
+| `JSONPackageSource.__init__` [source](../src/meta_standards_converter/sources/json.py#L63) | `__init__(atlas_reader: AtlasV1Reader \| None=None) -> None` | See source; follows the owning type contract. |
+| `JSONPackageSource.load` [source](../src/meta_standards_converter/sources/json.py#L67) | `load(path: str \| Path) -> SourceLoadResult` | Direct raises: ValueError. |
+
+### `meta_standards_converter.sources.magetab`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.magetab.TextResource` [source](../src/meta_standards_converter/sources/magetab.py#L37) | `TextResource(name: 'str', text: 'str', origin: 'str') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.sources.magetab.MAGETabInput` [source](../src/meta_standards_converter/sources/magetab.py#L44) | `MAGETabInput(idf: 'TextResource', sdrfs: 'tuple[TextResource, ...]', source: 'str', source_kind: 'str') -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.sources.magetab.AEWebFetcher` [source](../src/meta_standards_converter/sources/magetab.py#L51) | `AEWebFetcher(requester=None, request_settings=None, resource_profile: 'str \| ResourceProfile' = 'standard', resource_overrides=None, retrieval_policy: 'RetrievalPolicy \| None' = None)` | Load an IDF and its SDRFs without persisting remote metadata files. |
+| `AEWebFetcher.metrics` [source](../src/meta_standards_converter/sources/magetab.py#L54) | `metrics()` | See source; follows the owning type contract. |
+| `AEWebFetcher.__init__` [source](../src/meta_standards_converter/sources/magetab.py#L63) | `__init__(requester=None, request_settings=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None, retrieval_policy: RetrievalPolicy \| None=None)` | See source; follows the owning type contract. |
+| `AEWebFetcher.resolve` [source](../src/meta_standards_converter/sources/magetab.py#L89) | `resolve(source: str, sdrf_sources: list[str] \| None=None) -> MAGETabInput` | Direct raises: FileNotFoundError, ValueError. |
+
+### `meta_standards_converter.sources.pubmed`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.pubmed.PubmedWebFetcher` [source](../src/meta_standards_converter/sources/pubmed.py#L25) | `PubmedWebFetcher(requester=None, request_settings=None, ncbi_identity: meta_standards_converter.helpers.request_helper.NCBIApplicationIdentity \| None = None, resource_profile: str = 'standard', resource_overrides=None)` | See defining source and workflow contracts. |
+| `PubmedWebFetcher.metrics` [source](../src/meta_standards_converter/sources/pubmed.py#L27) | `metrics()` | See source; follows the owning type contract. |
+| `PubmedWebFetcher.__init__` [source](../src/meta_standards_converter/sources/pubmed.py#L31) | `__init__(requester=None, request_settings=None, ncbi_identity: NCBIApplicationIdentity \| None=None, resource_profile: str='standard', resource_overrides=None)` | See source; follows the owning type contract. |
+| `PubmedWebFetcher.fetch_pubmed_summary` [source](../src/meta_standards_converter/sources/pubmed.py#L53) | `fetch_pubmed_summary(pubmed_id: str) -> ET.Element` | See source; follows the owning type contract. |
+| `PubmedWebFetcher.pubmed_summary` [source](../src/meta_standards_converter/sources/pubmed.py#L71) | `pubmed_summary(pubmed_id: str) -> tuple` | See source; follows the owning type contract. |
+
+### `meta_standards_converter.xml_safety`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.xml_safety.XMLSafetyError` [source](../src/meta_standards_converter/xml_safety.py#L41) | `bases: ValueError` | Base class for rejected external XML content. Bases: ValueError. |
+| `meta_standards_converter.xml_safety.XMLSizeLimitError` [source](../src/meta_standards_converter/xml_safety.py#L45) | `bases: XMLSafetyError` | External XML or its transport body exceeded a configured byte ceiling. Bases: XMLSafetyError. |
+| `meta_standards_converter.xml_safety.UnsafeXMLDocumentError` [source](../src/meta_standards_converter/xml_safety.py#L49) | `bases: XMLSafetyError` | External XML declared an unsafe or malformed DTD/entity construct. Bases: XMLSafetyError. |
+| `meta_standards_converter.xml_safety.parse_xml` [source](../src/meta_standards_converter/xml_safety.py#L118) | `parse_xml(value: str \| bytes, *, max_bytes: int) -> ET.Element` | See defining source and workflow contracts. |
+| `meta_standards_converter.xml_safety.read_limited_response` [source](../src/meta_standards_converter/xml_safety.py#L130) | `read_limited_response(response: Any, *, max_bytes: int, chunk_size: int=1024 * 1024) -> bytes` | See defining source and workflow contracts. |
+| `meta_standards_converter.xml_safety.stream_limited_response` [source](../src/meta_standards_converter/xml_safety.py#L173) | `stream_limited_response(response: Any, destination, *, max_bytes: int, chunk_size: int=1024 * 1024) -> int` | Stream a response into an open binary file under a hard byte ceiling. |
+
+<a id="package-exports"></a>
+## Owning-package exports
+
+These are the explicit package `__all__` surfaces. Re-exported names resolve
+to the definitions above; constructors, fields and methods are documented there.
+Importing a facade is distinct from constructing a network or expression workflow.
+The top-level `meta_standards_converter` package exports no converter facade.
+
+
+### `meta_standards_converter.atlas_v1`
+
+| Export | Definition or value |
+| --- | --- |
+| `meta_standards_converter.atlas_v1.AtlasV1Dataset` | `meta_standards_converter.atlas_v1.reader.AtlasV1Dataset` |
+| `meta_standards_converter.atlas_v1.AtlasV1Error` | `meta_standards_converter.atlas_v1.reader.AtlasV1Error` |
+| `meta_standards_converter.atlas_v1.AtlasV1ReadResult` | `meta_standards_converter.atlas_v1.reader.AtlasV1ReadResult` |
+| `meta_standards_converter.atlas_v1.AtlasV1Reader` | `meta_standards_converter.atlas_v1.reader.AtlasV1Reader` |
+
+### `meta_standards_converter.converters`
+
+| Export | Definition or value |
+| --- | --- |
+| `meta_standards_converter.converters.GEO2JSONConverter` | `meta_standards_converter.converters.geo2json.GEO2JSONConverter` |
+| `meta_standards_converter.converters.GEO2AEConverter` | `meta_standards_converter.converters.geo2ae.GEO2AEConverter` |
+| `meta_standards_converter.converters.AE2JSONConverter` | `meta_standards_converter.converters.ae2json.AE2JSONConverter` |
+| `meta_standards_converter.converters.JSON2AEConverter` | `meta_standards_converter.converters.json2ae.JSON2AEConverter` |
+| `meta_standards_converter.converters.JSON2TSVConverter` | `meta_standards_converter.converters.json2tsv.JSON2TSVConverter` |
+| `meta_standards_converter.converters.JSON2H5ADConverter` | `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter` |
+| `meta_standards_converter.converters.JSON2OBSConverter` | `meta_standards_converter.converters.json2obs.JSON2OBSConverter` |
+
+### `meta_standards_converter.expression`
+
+| Export | Definition or value |
+| --- | --- |
+| `meta_standards_converter.expression.Asset` | `meta_standards_converter.expression.assets.Asset` |
+| `meta_standards_converter.expression.AssetManifest` | `meta_standards_converter.expression.assets.AssetManifest` |
+| `meta_standards_converter.expression.AssetDiscovery` | `meta_standards_converter.expression.planning.AssetDiscovery` |
+| `meta_standards_converter.expression.SourcePlanner` | `meta_standards_converter.expression.planning.SourcePlanner` |
+| `meta_standards_converter.expression.DefaultAssetDiscovery` | `meta_standards_converter.expression.planning.DefaultAssetDiscovery` |
+| `meta_standards_converter.expression.AssetReader` | `meta_standards_converter.expression.readers.AssetReader` |
+| `meta_standards_converter.expression.ProcessedAssetReader` | `meta_standards_converter.expression.readers.ProcessedAssetReader` |
+| `meta_standards_converter.expression.ConversionResult` | `meta_standards_converter.expression.catalogue.ConversionResult` |
+| `meta_standards_converter.expression.BatchConversionResult` | `meta_standards_converter.expression.catalogue.BatchConversionResult` |
+| `meta_standards_converter.expression.DatasetBundleRecoveryError` | `meta_standards_converter.expression.catalogue.DatasetBundleRecoveryError` |
+
+### `meta_standards_converter.metadata`
+
+| Export | Definition or value |
+| --- | --- |
+| `meta_standards_converter.metadata.MetadataEnrichment` | `meta_standards_converter.metadata.enrichment.MetadataEnrichment` |
+| `meta_standards_converter.metadata.MINiMLEnricher` | `meta_standards_converter.metadata.enrichment.MINiMLEnricher` |
+| `meta_standards_converter.metadata.MINiMLMetadataService` | `meta_standards_converter.metadata.interpretation.MINiMLMetadataService` |
+| `meta_standards_converter.metadata.MINiMLMetadataProvider` | `meta_standards_converter.metadata.interpretation.MINiMLMetadataProvider` |
+
+### `meta_standards_converter.metadata.projection`
+
+| Export | Definition or value |
+| --- | --- |
+| `meta_standards_converter.metadata.projection.MSCMetadataProjector` | `meta_standards_converter.metadata.projection.tabular.MSCMetadataProjector` |
+| `meta_standards_converter.metadata.projection.TabularMetadataProjector` | `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjector` |
+| `meta_standards_converter.metadata.projection.TabularMetadataContext` | `meta_standards_converter.metadata.projection.tabular.TabularMetadataContext` |
+| `meta_standards_converter.metadata.projection.TabularMetadataProjection` | `meta_standards_converter.metadata.projection.tabular.TabularMetadataProjection` |
+| `meta_standards_converter.metadata.projection.TabularProjectionError` | `meta_standards_converter.metadata.projection.tabular.TabularProjectionError` |
+| `meta_standards_converter.metadata.projection.AnnDataMetadataProjector` | `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjector` |
+| `meta_standards_converter.metadata.projection.AnnDataMetadataProjection` | `meta_standards_converter.metadata.projection.anndata.AnnDataMetadataProjection` |
+| `meta_standards_converter.metadata.projection.MetadataProjectionContext` | `meta_standards_converter.metadata.projection.anndata.MetadataProjectionContext` |
+| `meta_standards_converter.metadata.projection.AnnDataProjectionError` | `meta_standards_converter.metadata.projection.anndata.AnnDataProjectionError` |
+
+### `meta_standards_converter.miniml`
+
+| Export | Definition or value |
+| --- | --- |
+| `meta_standards_converter.miniml.MINIML_SCHEMA_VERSION` | `'3.0'` |
+| `meta_standards_converter.miniml.MINIML_STRICT_COMPATIBILITY_POLICY_VERSION` | `'miniml-3.0-source-compat-v1'` |
+| `meta_standards_converter.miniml.AssayNode` | `meta_standards_converter.miniml.model.AssayNode` |
+| `meta_standards_converter.miniml.AssayPath` | `meta_standards_converter.miniml.model.AssayPath` |
+| `meta_standards_converter.miniml.Accession` | `meta_standards_converter.miniml.model.Accession` |
+| `meta_standards_converter.miniml.Address` | `meta_standards_converter.miniml.model.Address` |
+| `meta_standards_converter.miniml.Channel` | `meta_standards_converter.miniml.model.Channel` |
+| `meta_standards_converter.miniml.Characteristics` | `meta_standards_converter.miniml.model.Characteristics` |
+| `meta_standards_converter.miniml.Contributor` | `meta_standards_converter.miniml.model.Contributor` |
+| `meta_standards_converter.miniml.DataColumn` | `meta_standards_converter.miniml.model.DataColumn` |
+| `meta_standards_converter.miniml.Database` | `meta_standards_converter.miniml.model.Database` |
+| `meta_standards_converter.miniml.DataTable` | `meta_standards_converter.miniml.model.DataTable` |
+| `meta_standards_converter.miniml.FASTQFile` | `meta_standards_converter.miniml.model.FASTQFile` |
+| `meta_standards_converter.miniml.InstrumentModel` | `meta_standards_converter.miniml.model.InstrumentModel` |
+| `meta_standards_converter.miniml.HarmonizedValue` | `meta_standards_converter.miniml.harmonization.HarmonizedValue` |
+| `meta_standards_converter.miniml.MINiMLHarmonizationPatch` | `meta_standards_converter.miniml.patches.MINiMLHarmonizationPatch` |
+| `meta_standards_converter.miniml.PATCH_EXTENSION_KEY` | `'msc_harmonization'` |
+| `meta_standards_converter.miniml.PATCH_EXTENSION_SCHEMA_VERSION` | `'1.0'` |
+| `meta_standards_converter.miniml.PATCH_SCHEMA_VERSION` | `'3.1'` |
+| `meta_standards_converter.miniml.apply_miniml_harmonization_patch` | `meta_standards_converter.miniml.patches.apply_miniml_harmonization_patch` |
+| `meta_standards_converter.miniml.canonical_miniml_document` | `meta_standards_converter.miniml.patches.canonical_miniml_document` |
+| `meta_standards_converter.miniml.harmonization_provenance_index` | `meta_standards_converter.miniml.patches.harmonization_provenance_index` |
+| `meta_standards_converter.miniml.iter_harmonization_operations` | `meta_standards_converter.miniml.patches.iter_harmonization_operations` |
+| `meta_standards_converter.miniml.iter_harmonization_patches` | `meta_standards_converter.miniml.patches.iter_harmonization_patches` |
+| `meta_standards_converter.miniml.miniml_source_fingerprint` | `meta_standards_converter.miniml.patches.miniml_source_fingerprint` |
+| `meta_standards_converter.miniml.append_harmonized_value` | `meta_standards_converter.miniml.harmonization.append_harmonized_value` |
+| `meta_standards_converter.miniml.MINiMLModelError` | `meta_standards_converter.miniml.model.MINiMLModelError` |
+| `meta_standards_converter.miniml.MINiMLPackage` | `meta_standards_converter.miniml.model.MINiMLPackage` |
+| `meta_standards_converter.miniml.MINiMLValidationIssue` | `meta_standards_converter.miniml.model.MINiMLValidationIssue` |
+| `meta_standards_converter.miniml.Organization` | `meta_standards_converter.miniml.model.Organization` |
+| `meta_standards_converter.miniml.NamedComment` | `meta_standards_converter.miniml.model.NamedComment` |
+| `meta_standards_converter.miniml.NamedValue` | `meta_standards_converter.miniml.model.NamedValue` |
+| `meta_standards_converter.miniml.OntologyValue` | `meta_standards_converter.miniml.model.OntologyValue` |
+| `meta_standards_converter.miniml.Organism` | `meta_standards_converter.miniml.model.Organism` |
+| `meta_standards_converter.miniml.Person` | `meta_standards_converter.miniml.model.Person` |
+| `meta_standards_converter.miniml.Platform` | `meta_standards_converter.miniml.model.Platform` |
+| `meta_standards_converter.miniml.PubMedPublication` | `meta_standards_converter.miniml.model.PubMedPublication` |
+| `meta_standards_converter.miniml.Protocol` | `meta_standards_converter.miniml.model.Protocol` |
+| `meta_standards_converter.miniml.ProtocolApplication` | `meta_standards_converter.miniml.model.ProtocolApplication` |
+| `meta_standards_converter.miniml.Reference` | `meta_standards_converter.miniml.model.Reference` |
+| `meta_standards_converter.miniml.Relation` | `meta_standards_converter.miniml.model.Relation` |
+| `meta_standards_converter.miniml.Repeat` | `meta_standards_converter.miniml.model.Repeat` |
+| `meta_standards_converter.miniml.Sample` | `meta_standards_converter.miniml.model.Sample` |
+| `meta_standards_converter.miniml.Series` | `meta_standards_converter.miniml.model.Series` |
+| `meta_standards_converter.miniml.SRARun` | `meta_standards_converter.miniml.model.SRARun` |
+| `meta_standards_converter.miniml.Status` | `meta_standards_converter.miniml.model.Status` |
+| `meta_standards_converter.miniml.SourceDocument` | `meta_standards_converter.miniml.model.SourceDocument` |
+| `meta_standards_converter.miniml.SourceInfo` | `meta_standards_converter.miniml.model.SourceInfo` |
+| `meta_standards_converter.miniml.SupplementLink` | `meta_standards_converter.miniml.model.SupplementLink` |
+| `meta_standards_converter.miniml.TableData` | `meta_standards_converter.miniml.model.TableData` |
+| `meta_standards_converter.miniml.Variable` | `meta_standards_converter.miniml.model.Variable` |
+| `meta_standards_converter.miniml.harmonized_mapping` | `meta_standards_converter.miniml.harmonization.harmonized_mapping` |
+| `meta_standards_converter.miniml.harmonized_value_mappings` | `meta_standards_converter.miniml.harmonization.harmonized_value_mappings` |
+| `meta_standards_converter.miniml.is_harmonized_key` | `meta_standards_converter.miniml.harmonization.is_harmonized_key` |
+| `meta_standards_converter.miniml.iter_harmonized_values` | `meta_standards_converter.miniml.harmonization.iter_harmonized_values` |
+| `meta_standards_converter.miniml.named_harmonized_rows` | `meta_standards_converter.miniml.harmonization.named_harmonized_rows` |
+| `meta_standards_converter.miniml.next_harmonized_index` | `meta_standards_converter.miniml.harmonization.next_harmonized_index` |
+| `meta_standards_converter.miniml.parse_harmonized_key` | `meta_standards_converter.miniml.harmonization.parse_harmonized_key` |
+| `meta_standards_converter.miniml.parse_harmonized_mapping` | `meta_standards_converter.miniml.harmonization.parse_harmonized_mapping` |
+| `meta_standards_converter.miniml.MINiMLBatchDecodeResult` | `meta_standards_converter.miniml.codec.MINiMLBatchDecodeResult` |
+| `meta_standards_converter.miniml.MINiMLCodec` | `meta_standards_converter.miniml.codec.MINiMLCodec` |
+| `meta_standards_converter.miniml.MINiMLCompatibilityError` | `meta_standards_converter.miniml.codec.MINiMLCompatibilityError` |
+| `meta_standards_converter.miniml.MINiMLDecodeResult` | `meta_standards_converter.miniml.codec.MINiMLDecodeResult` |
+| `meta_standards_converter.miniml.MINiMLMigrationResult` | `meta_standards_converter.miniml.migration.MINiMLMigrationResult` |
+| `meta_standards_converter.miniml.MINiMLV1Migrator` | `meta_standards_converter.miniml.migration.MINiMLV1Migrator` |
+
+### `meta_standards_converter.sources`
+
+| Export | Definition or value |
+| --- | --- |
+| `meta_standards_converter.sources.GEOXMLParser` | `meta_standards_converter.sources.contracts.GEOXMLParser` |
+| `meta_standards_converter.sources.MAGETabSourceResolver` | `meta_standards_converter.sources.contracts.MAGETabSourceResolver` |
+| `meta_standards_converter.sources.PackageLoader` | `meta_standards_converter.sources.contracts.PackageLoader` |
+| `meta_standards_converter.sources.INSDCClient` | `meta_standards_converter.sources.contracts.INSDCClient` |
+| `meta_standards_converter.sources.PubMedClient` | `meta_standards_converter.sources.contracts.PubMedClient` |
+| `meta_standards_converter.sources.MetricsProvider` | `meta_standards_converter.sources.contracts.MetricsProvider` |
+| `meta_standards_converter.sources.RequestMetrics` | `meta_standards_converter.sources.contracts.RequestMetrics` |
+| `meta_standards_converter.sources.JSONPackageSource` | `meta_standards_converter.sources.json.JSONPackageSource` |
+| `meta_standards_converter.sources.DatasetPackageGroup` | `meta_standards_converter.sources.json.DatasetPackageGroup` |
+| `meta_standards_converter.sources.SourceLoadResult` | `meta_standards_converter.sources.json.SourceLoadResult` |
+| `meta_standards_converter.sources.GEOSource` | `meta_standards_converter.sources.geo.GEOSource` |
+| `meta_standards_converter.sources.GEOWebFetcher` | `meta_standards_converter.sources.geo.GEOWebFetcher` |
+| `meta_standards_converter.sources.AEWebFetcher` | `meta_standards_converter.sources.magetab.AEWebFetcher` |
+| `meta_standards_converter.sources.MAGETabInput` | `meta_standards_converter.sources.magetab.MAGETabInput` |
+| `meta_standards_converter.sources.TextResource` | `meta_standards_converter.sources.magetab.TextResource` |
 
 <a id="maintenance-notes"></a>
 ## Maintenance Notes
@@ -2706,9 +3546,9 @@ SRA XML helper methods:
 - Socket access still grants full control of the dedicated rootless daemon; keep `nfcore-runner` locked and deny it unrelated files and credentials.
 
 <a id="harmonization-overrides"></a>
-## Harmonization overrides
+## Converter-owned replacement profiles
 
-MSC 7 owns export replacement policy. `JSON2AEConverter.convert`,
+MSC owns export replacement policy. `JSON2AEConverter.convert`,
 `JSON2TSVConverter.convert_source` / `export_manifest`,
 `JSON2H5ADConverter.convert` / `convert_source`, and `JSON2OBSConverter.convert`
 accept keyword-only `replacement_profile: Mapping[str, Any] | None = None`.
@@ -2728,8 +3568,8 @@ sample evidence. Ambiguous sample/channel bindings warn rather than guessing.
 
 `DatasetPackageGroup` no longer stores profiles. Profile-free `miniml_json`
 envelopes remain readable; an embedded `harmonization_overrides` property is
-rejected with direct-converter migration guidance. Curator 5 removes profile
-arguments, validation, CLI flags and forwarding. MINiML 3,
+rejected with direct-converter migration guidance. Curator produces harmonization
+patches; it does not own export-profile configuration. MINiML 3,
 patch 3.1, Atlas publication and GSK's own projection policy remain intact.
 
 Harmonized evidence exports by default: tables and AnnData use
@@ -2737,7 +3577,7 @@ Harmonized evidence exports by default: tables and AnnData use
 `_onto` fields without legacy aliases. H5AD metadata is version `2.0`; the
 exported `msc_assay` ledger is `3.0`. Canonical MINiML transport stays `1.0`.
 Processed checkpoint identity includes normalized policy and converter version;
-MSC 7 writes a separate version directory from historical checkpoints.
+MSC 8 writes into its own version-specific directory, separate from historical checkpoints.
 
 MAGE-TAB renders sample/channel and assay characteristics, factors, parameters
 and units with adjacent ontology companions and optional hierarchy depth.
@@ -2793,10 +3633,10 @@ Important test coverage:
 - `tests/miniml/test_geo_parser.py`: parser package scoping, cardinality, namespace handling, empty cleanup, related-series traversal, and fixture-backed parsing with `tests/GSE328265_family.xml`.
 - `tests/converters/test_geo2ae.py`: converter orchestration, related-series forwarding, enrichment, stage logging, and `remove_empty` forwarding.
 - `tests/converters/test_geo2json.py`: JSON converter orchestration, optional enrichment, JSON file writing, and stage logging.
-- `tests/converters/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and extension restoration.
-- `tests/converters/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, sidecar/fingerprint creation, unchanged lossless reuse, edited-core precedence, keyed IDF/SDRF overlay union, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
+- `tests/converters/test_json2ae.py`: object/list loading, validation, default and skipped enrichment, MAGE-TAB writing, safe logging, independent fixture expectations, and source provenance.
+- `tests/converters/test_ae2json.py`: IDF/SDRF mapping, typed protocol/declaration/assay-path capture, model edit authority, assay multiplicity, units/ontology, canonical v3 import, edited-core authority, semantic IDF/SDRF reconstruction, occurrence-aware duplicate headers, harmonized `hz_*` columns, ambiguity-safe row alignment, multiple SDRFs, conflicts, unmapped restoration, frozen strict E-MTAB-6486 normalization, and output writing.
 - `tests/sources/test_ae_webfetcher.py`: bounded local and streamed HTTPS resolution, typed profile propagation, explicit host policy, explicit SDRF overrides, paginated BioStudies discovery/download calls, in-memory remote content, and invalid source metadata.
-- `tests/expression/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 1 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, catalogue-only output, fail-closed compatibility evidence, Entrez/symbol separation, canonical/generic study splitting, correlation-safe partial-failure summaries, partial results, and raw-output reintegration.
+- `tests/expression/test_json2h5ad.py`: asset precedence/manifests/downloads, canonical H5AD schema 2 metadata, normalized multivalue rows, smart observation IDs, opaque source-column preservation, real dictionary reference scoping, artifact-relative provenance, MINiML enrichment and publication filtering, count/TPM matrices, catalogue-only output, fail-closed compatibility evidence, Entrez/symbol separation, canonical/generic study splitting, correlation-safe partial-failure summaries, partial results, and raw-output reintegration.
 - `tests/test_retrieval.py`: host/address/redirect policy, cache integrity,
   byte/disk/aggregate ceilings, and bounded NCBI range fallback behavior.
 - `tests/test_atlas_v1_reader.py`: producer-owned golden fixture consumption, harmonized-state adaptation, structural validation, v1 cutover failure, and no-ThematicAtlases dependency proof.
@@ -2821,7 +3661,7 @@ Important test coverage:
 - `tests/cli/test_cli_json2h5ad.py`: H5AD CLI defaults, workflow/reference/asset flags, partial status, multiple input order, logging, and failure continuation.
 - `tests/cli/test_cli_json2tsv.py`: TSV/CSV input order and partial exit status.
 - `tests/test_project_scripts.py`: console script registration.
-- `tests/policy/test_documentation_policy.py`: stable documentation anchors, required README Guide structure including configuration, complete Mermaid platform-handler hierarchy coverage, interface-specific quickstart links, live-parser coverage for every documented CLI argument and alias, console-script mentions, docs links, and author-header policy.
+- `tests/policy/test_documentation_policy.py`: stable documentation anchors, concise README structure and configuration links, canonical platform-handler hierarchy coverage, interface-specific quickstart links, parser coverage for every CLI argument and alias in the codebase reference, console-script mentions, docs links, and author-header policy.
 - `tests/magetab/test_ae_constructor.py`: IDF rows, merged and source-aligned secondary accessions, protocol registry behavior, AE constructor sequencing, SDRF row insertion, file normalization, and protocol ref consistency.
 - `tests/magetab/test_ae_sdrf_handlers.py`: SDRF graph rendering, source/comment/characteristic behavior, file classification, sequencing/array/single-cell/spatial handlers, SRA precedence warnings, and disabled greedy fallback comments.
 - `tests/metadata/test_miniml_enricher.py`: additive PubMed/SRA enrichment fields, deduplication, and fetch error tolerance.
@@ -2869,7 +3709,7 @@ deliberately retained. The public surface also exports
 `PublishedArtifactBundle` and `resolve_current_bundle`; result envelopes expose
 the additive `bundle_pointer_path` field without changing H5AD metadata schema
 1.0 or Atlas v1 inputs. Qualified public symbols are
-`meta_standards_converter.converters.DatasetBundleRecoveryError` and
+`meta_standards_converter.expression.DatasetBundleRecoveryError` and
 `meta_standards_converter.expression.catalogue.DatasetBundleRecoveryError`,
 `meta_standards_converter.artifact_bundle.ArtifactRecoveryError`,
 `meta_standards_converter.artifact_bundle.DurableArtifactBundlePublisher`,
@@ -3031,8 +3871,10 @@ IDF/SDRF URLs; it bounds UTF-8 API JSON and MAGE-TAB text per file and across
 the run. Provider suffixes are trusted by default. Additional exact explicit
 source hosts require `ae2json --source-host HOST` or an injected policy.
 
+<a id="miniml-enricher"></a>
+<a id="geo-web-fetcher"></a>
 <a id="msc6-source-services"></a>
-## MSC 6 source services
+## Source services
 
 `GEOSource` owns retrieval and related-series traversal; `GEOParser` parses supplied
 XML without network calls. Converter-specific enrichment defaults and guarded
@@ -3043,21 +3885,15 @@ implements checkpoint interception by composition. `metrics()` returns cumulativ
 request snapshots without exposing nested requesters. Existing MINiML, source
 evidence and checkpoint serialization remain unchanged.
 
-### Added source service callable inventory
-- `meta_standards_converter.sources.contracts.RequestMetrics`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L14).
-- `meta_standards_converter.sources.contracts.MetricsProvider`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L19).
-- `meta_standards_converter.sources.contracts.INSDCClient`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L22).
-- `meta_standards_converter.sources.contracts.PubMedClient`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L26).
-- `meta_standards_converter.sources.contracts.request_metrics`: [contracts.py](../src/meta_standards_converter/sources/contracts.py#L29).
-- `meta_standards_converter.sources.geo.RelatedSeriesParseResult`: [geo.py](../src/meta_standards_converter/sources/geo.py#L210).
-- `meta_standards_converter.sources.geo.GEOSource`: [geo.py](../src/meta_standards_converter/sources/geo.py#L235).
+See [source contracts and exact signatures](#public-api-and-callable-reference)
+and [owning-package exports](#package-exports) for supported injection interfaces.
 
 <a id="msc6-service-architecture"></a>
-## MSC 6 service architecture and migration
+## Service integration and migration
 
-The converter API is a coordinated breaking release. CLI commands and serialized scientific contracts remain unchanged. Consumers import types from their owning packages; retired converter modules and lowercase classes are removed.
+MSC 6 introduced owning-package services; MSC 7 moved replacement profiles to converters and MSC 8 removed MINiML v2 ingestion. Current callers use the owning packages below. Retired converter modules and lowercase classes are not compatibility facades. Consult [current data contracts](#data-contracts) and [migration guidance](#miniml-v3-only-cutover) rather than treating earlier release behavior as current.
 
-Import converter classes from `meta_standards_converter.converters` and projection types such as `AnnDataMetadataProjection` and `TabularMetadataProjection` from `meta_standards_converter.metadata.projection`. The README's custom-projector examples use these public exports.
+Import converter classes from `meta_standards_converter.converters` and projection types such as `AnnDataMetadataProjection` and `TabularMetadataProjection` from `meta_standards_converter.metadata.projection`. The [Python guide](#python-api-guide) uses these public exports.
 
 ```text
 cli -> converters (one workflow per module)
@@ -3078,39 +3914,11 @@ json2obs -> JSON2H5ADConverter -> AnnDataComponentExporter -> artifact bundle
 
 Protocol registries, SDRF handler audits and caches remain scoped to each build. Shared request gates and retrieval caches retain their existing ownership. Technology inheritance remains intact. MINiML models, ontology policy, Atlas lifecycle, runtime contracts, XML safety, and artifact publication retain their existing responsibilities.
 
-Processed checkpoint fingerprints retain the existing payload and SHA-256 algorithm. Destinations now include a hash of the MSC package version. A different version cannot reuse or overwrite historical processed checkpoints. Stored Atlas envelopes are unchanged; production resume still requires a supported, validated transition or a new run. No live cutover is performed by this refactor.
+Processed checkpoint fingerprints hash source/package identity, assets, matrix orientation, validation policy and the normalized replacement profile. The path includes a hash of the MSC package version, preventing a different release from reusing or overwriting historical version-specific checkpoints. A different profile changes the fingerprint; this does not imply a separate profile directory. Saved canonical v2 metadata must be regenerated or converted with the preceding release before resuming through MSC 8.
 
-### Owning service symbol reference
-
-- `meta_standards_converter.expression.components.AnnDataComponentExporter`: `AnnDataComponentExporter()`; [source](../src/meta_standards_converter/expression/components.py).
-- `meta_standards_converter.expression.normalization.AnnDataNormalizer`: `AnnDataNormalizer(self, *, metadata_service, planner, localize, package_version, combination_policy=None)`; [source](../src/meta_standards_converter/expression/normalization.py).
-- `meta_standards_converter.metadata.projection.anndata.AnnDataProjectorRunner`: `AnnDataProjectorRunner(self, projectors=())`; [source](../src/meta_standards_converter/metadata/projection/anndata.py).
-- `meta_standards_converter.expression.planning.AssetDiscovery`: `AssetDiscovery()`; [source](../src/meta_standards_converter/expression/planning.py).
-- `meta_standards_converter.expression.readers.AssetReader`: `AssetReader()`; [source](../src/meta_standards_converter/expression/readers.py).
-- `meta_standards_converter.expression.catalogue.CataloguePublisher`: `CataloguePublisher()`; [source](../src/meta_standards_converter/expression/catalogue.py).
-- `meta_standards_converter.magetab.sdrf.model.ColumnGroup`: `ColumnGroup()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
-- `meta_standards_converter.expression.planning.DefaultAssetDiscovery`: `DefaultAssetDiscovery()`; [source](../src/meta_standards_converter/expression/planning.py).
-- `meta_standards_converter.sources.contracts.GEOXMLParser`: `GEOXMLParser()`; [source](../src/meta_standards_converter/sources/contracts.py).
-- `meta_standards_converter.sources.contracts.MAGETabSourceResolver`: `MAGETabSourceResolver()`; [source](../src/meta_standards_converter/sources/contracts.py).
-- `meta_standards_converter.magetab.writer.MAGETabWriter`: `MAGETabWriter()`; [source](../src/meta_standards_converter/magetab/writer.py).
-- `meta_standards_converter.metadata.enrichment.MetadataEnrichment`: `MetadataEnrichment()`; [source](../src/meta_standards_converter/metadata/enrichment.py).
-- `meta_standards_converter.sources.contracts.PackageLoader`: `PackageLoader()`; [source](../src/meta_standards_converter/sources/contracts.py).
-- `meta_standards_converter.expression.readers.ProcessedAssetReader`: `ProcessedAssetReader()`; [source](../src/meta_standards_converter/expression/readers.py).
-- `meta_standards_converter.expression.checkpoints.ProcessedCheckpointStore`: `ProcessedCheckpointStore(self, package_version)`; [source](../src/meta_standards_converter/expression/checkpoints.py).
-- `meta_standards_converter.magetab.protocols.ProtocolRegistry`: `ProtocolRegistry(self, series_accession: str)`; [source](../src/meta_standards_converter/magetab/protocols.py).
-- `meta_standards_converter.magetab.sdrf.model.SDRFAttr`: `SDRFAttr()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
-- `meta_standards_converter.magetab.sdrf.model.SDRFAudit`: `SDRFAudit()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
-- `meta_standards_converter.magetab.sdrf.model.SDRFEdge`: `SDRFEdge()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
-- `meta_standards_converter.magetab.sdrf.model.SDRFNode`: `SDRFNode()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
-- `meta_standards_converter.magetab.sdrf.model.SDRFPath`: `SDRFPath()`; [source](../src/meta_standards_converter/magetab/sdrf/model.py).
-- `meta_standards_converter.magetab.sdrf.renderer.SDRFRenderer`: `SDRFRenderer()`; [source](../src/meta_standards_converter/magetab/sdrf/renderer.py).
-- `meta_standards_converter.expression.assets.classify_asset`: `classify_asset(path: str | None)`; [source](../src/meta_standards_converter/expression/assets.py).
-- `meta_standards_converter.magetab.sdrf.handlers.base.classify_file`: `classify_file(path: str)`; [source](../src/meta_standards_converter/magetab/sdrf/handlers/base.py).
-- `meta_standards_converter.expression.readers.read_h5ad`: `read_h5ad(anndata, path: str)`; [source](../src/meta_standards_converter/expression/readers.py).
-- `meta_standards_converter.expression.readers.scanpy_module`: `scanpy_module()`; [source](../src/meta_standards_converter/expression/readers.py).
-- `meta_standards_converter.expression.components.scientific_modules`: `scientific_modules()`; [source](../src/meta_standards_converter/expression/components.py).
-- `meta_standards_converter.expression.readers.scientific_modules`: `scientific_modules()`; [source](../src/meta_standards_converter/expression/readers.py).
-- `meta_standards_converter.expression.readers.underlying_suffix`: `underlying_suffix(path: str)`; [source](../src/meta_standards_converter/expression/readers.py).
+See [the class map](#oop-design) for relationships and
+[the callable inventory](#public-api-and-callable-reference) for current
+constructors, methods and source locations.
 
 ### Explicit MAGE-TAB evidence orchestration
 
@@ -3188,7 +3996,7 @@ For generated multi-channel samples with harmonized evidence, `Comment[msc_chann
 
 
 <a id="miniml-v3-only-cutover"></a>
-## MINiML v3-only cutover
+## MINiML compatibility and migration
 
 MSC 8.0.0, Agentic Curator 6.0.0, ThematicAtlases 6.0.0, and the GSK adapter
 6.0.0 require canonical MSC MINiML `3.0` at application boundaries. MSC no

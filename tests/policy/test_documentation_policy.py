@@ -100,6 +100,7 @@ CLI_COMMANDS = (
     "json2h5ad",
     "json2tsv",
     "json2obs",
+    "miniml-migrate",
 )
 PRINCIPAL_WORKFLOW_ANCHORS = (
     "workflow-geo2ae",
@@ -109,6 +110,7 @@ PRINCIPAL_WORKFLOW_ANCHORS = (
     "workflow-json2h5ad",
     "workflow-json2tsv",
     "workflow-json2obs",
+    "workflow-miniml-migrate",
 )
 FORMAL_EXPORT_ANCHORS = (
     "api-asset",
@@ -323,6 +325,54 @@ class DocsIndexTests(unittest.TestCase):
             self.assertLess(line_index + 1, len(codebase_lines))
             self.assertRegex(codebase_lines[line_index + 1], r"^#{2,6} ", anchor)
 
+    def test_readme_is_a_short_guide_with_current_reference_routes(self):
+        text = README.read_text(encoding="utf-8")
+        self.assertLessEqual(len(text.splitlines()), 250)
+        for anchor in ("cli", "python-api-guide", "configuration", "oop-design"):
+            self.assertIn(f"docs/codebase.md#{anchor}", text)
+        self.assertNotIn("#### Platform handlers", text)
+
+    def test_exported_package_names_and_current_workflows_have_routes(self):
+        text = CODEBASE.read_text(encoding="utf-8")
+        for package in ("converters", "sources", "expression", "miniml", "magetab", "metadata", "metadata.projection", "atlas_v1"):
+            module = importlib.import_module(f"meta_standards_converter.{package}")
+            for name in getattr(module, "__all__", ()):
+                self.assertIn(f"`meta_standards_converter.{package}.{name}`", text)
+        self.assertIn('<a id="workflow-miniml-migrate"></a>', text)
+        self.assertIn("codebase.md#workflow-miniml-migrate", INDEX.read_text())
+        self.assertNotIn("twenty-four formal exports", text)
+        self.assertNotIn("seven-command toolkit", text)
+
+    def test_documentation_local_links_and_unique_anchors(self):
+        def document_anchors(text):
+            explicit = re.findall(r'<a id="([^"]+)"', text)
+            self.assertEqual(len(explicit), len(set(explicit)), "Duplicate explicit anchor")
+            anchors = set(explicit)
+            seen = {}
+            prose = re.sub(r"```.*?```", "", text, flags=re.S)
+            for heading in re.findall(r"^#{1,6} (.+)$", prose, re.M):
+                slug = re.sub(r"[^\w -]", "", heading.lower()).replace(" ", "-")
+                ordinal = seen.get(slug, 0)
+                seen[slug] = ordinal + 1
+                anchors.add(slug + (f"-{ordinal}" if ordinal else ""))
+            return anchors
+
+        for document in (README, INDEX, CODEBASE):
+            text = document.read_text(encoding="utf-8")
+            document_anchors(text)
+            prose = re.sub(r"```.*?```", "", text, flags=re.S)
+            for target in re.findall(r"\[[^\]\n]*\]\(([^)\s]+)\)", prose):
+                if target.startswith(("https:", "http:", "mailto:")):
+                    continue
+                relative, _, fragment = target.partition("#")
+                destination = (document.parent / relative).resolve() if relative else document
+                self.assertTrue(destination.exists(), (document, target))
+                if fragment and destination.suffix == ".md":
+                    self.assertIn(fragment, document_anchors(destination.read_text()), (document, target))
+                elif fragment and re.fullmatch(r"L\d+(?:-L\d+)?", fragment):
+                    line = int(fragment.split("-")[0][1:])
+                    self.assertLessEqual(line, len(destination.read_text().splitlines()), target)
+
     def test_readme_contains_requested_sections_in_order(self):
         readme_text = README.read_text(encoding="utf-8")
         expected_headings = [
@@ -361,7 +411,7 @@ class DocsIndexTests(unittest.TestCase):
         self.assertEqual(sorted(positions), positions)
         self.assertNotIn("## Configuration", lines)
 
-    def test_docs_record_current_v1_schema_tests_and_rootless_acceptance(self):
+    def test_docs_record_current_contracts_and_link_historical_acceptance(self):
         readme_text = README.read_text(encoding="utf-8")
         codebase_text = CODEBASE.read_text(encoding="utf-8")
         index_text = INDEX.read_text(encoding="utf-8")
@@ -369,11 +419,10 @@ class DocsIndexTests(unittest.TestCase):
 
         self.assertTrue(report.is_file())
         report_text = report.read_text(encoding="utf-8")
-        for document in (readme_text, codebase_text):
-            self.assertIn("Atlas document schema 1.0", document)
-            self.assertIn("H5AD metadata schema 2.0", document)
-            self.assertIn("587 passed, 3 skipped", document)
-            self.assertIn("2026-08-10", document)
+        self.assertIn("Atlas document schema 1.0", codebase_text)
+        self.assertIn("H5AD metadata schema 2.0", codebase_text)
+        self.assertNotIn("587 passed, 3 skipped", readme_text)
+        self.assertIn("docs/rootless-acceptance-2026-07-31.md", codebase_text)
         self.assertIn('<a id="h5ad-metadata-schema-v1"></a>', codebase_text)
         self.assertIn('<a id="h5ad-metadata-schema-v3"></a>', codebase_text)
         self.assertIn("#h5ad-metadata-schema-v1", index_text)
@@ -398,8 +447,8 @@ class DocsIndexTests(unittest.TestCase):
         ):
             self.assertNotIn(symbol, codebase_text)
 
-    def test_readme_configuration_documents_platform_handler_hierarchy(self):
-        readme_text = README.read_text(encoding="utf-8")
+    def test_codebase_configuration_documents_platform_handler_hierarchy(self):
+        readme_text = CODEBASE.read_text(encoding="utf-8")
         match = re.search(
             r"^#### Platform handlers\s*$\n(?P<section>.*?)(?=^#### |^### |\Z)",
             readme_text,
@@ -424,10 +473,10 @@ class DocsIndexTests(unittest.TestCase):
         ):
             self.assertIn(f"[{label}](#{anchor})", readme_text)
 
-    def test_readme_cli_guide_documents_every_parser_argument(self):
-        readme_text = README.read_text(encoding="utf-8")
+    def test_codebase_cli_reference_documents_every_parser_argument(self):
+        readme_text = CODEBASE.read_text(encoding="utf-8")
         modules = {
-            command: importlib.import_module(f"meta_standards_converter.cli.{command}")
+            command: importlib.import_module(f"meta_standards_converter.cli.{command.replace('-', '_')}")
             for command in CLI_COMMANDS
         }
 
@@ -476,8 +525,8 @@ class DocsIndexTests(unittest.TestCase):
             "semantic",
         ):
             self.assertIn(phrase, codebase_text)
-        self.assertIn("Unified core", readme_text)
-        self.assertIn('miniml_schema_version: "3.0"', readme_text)
+        self.assertIn("MSC MINiML 3.0", readme_text)
+        self.assertIn("v2", readme_text)
 
     def test_readme_documents_all_console_scripts(self):
         readme_text = README.read_text(encoding="utf-8")
