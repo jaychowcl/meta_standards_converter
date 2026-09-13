@@ -68,11 +68,15 @@ def test_native_json_downstream_exports_keep_biology_protocols_and_files(tmp_pat
     JSON2TSVConverter().convert_source(path, tsv)
     text = tsv.read_text()
     assert 'SRS011830' in text and 'Caenorhabditis elegans' in text
-    output = JSON2AEConverter().convert(str(path), platform_handler='generic')[0]
+    output = JSON2AEConverter().convert(str(path), enrich=False, platform_handler='generic')[0]
     sdrf = next(r[1] for r in output if r[0] == 'SDRF File'); header = sdrf[0]
     assert 'Characteristics[organism]' in header
     assert 'Protocol REF' in header
-    assert 'Array Data File' in header
+    assert 'Comment[ARCHIVE_FILE_URI]' in header
+    assert 'Comment[FASTQ_URI]' in header
+    assert all(not row[header.index('Comment[FASTQ_URI]')] for row in sdrf[1:])
+    assert len(sdrf) == 2
+    assert path.read_text() == json.dumps(data)
     assert all(row[0] == 'SRS011830' for row in sdrf[1:])
     assert 'SRR037073' in str(sdrf)
 

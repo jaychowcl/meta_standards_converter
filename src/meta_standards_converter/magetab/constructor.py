@@ -58,6 +58,8 @@ class AEConstructor:
         normalize_administration(data)
         from meta_standards_converter.magetab.protocol_export import prepare_protocols
         prepare_protocols(data)
+        from meta_standards_converter.magetab.native_files import project_native_files
+        project_native_files(data)
         forced = platform_handler is not None
         if forced:
             technology_type = validate_platform_handler(platform_handler)

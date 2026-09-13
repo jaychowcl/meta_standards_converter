@@ -4119,6 +4119,21 @@ accessions and conflicting metadata remain separate. Local names use
 is remapped with its definition. The semantic overlay emits one contiguous complete
 protocol block. `tests/test_protocol_export.py` covers these export-only contracts.
 
+`native_files.project_native_files` consolidates only native ENA/SRA explicit
+raw-file paths on that same export copy. It groups by the complete experimental
+workflow and joins archival annotations only within the same biological sample,
+experiment and run. Equivalent URI relationships combine compatible metadata;
+conflicts and distinct workflows remain separate. Every supplied FASTQ URI,
+including index reads, has a run/scan row with `Comment[FASTQ_URI]` and associated
+filename, format, role, bytes and checksum comments. Submitted representations
+use repeated `SUBMITTED_FILE_*` comment groups; other archive alternatives use
+`ARCHIVE_FILE_*`. Each archive group includes empty slots for absent fields so
+filenames, URIs and checksums remain aligned. No FASTQ means a run row with an
+empty FASTQ URI and explicit archive references, without a peer lookup. Derived
+file nodes and sample-scoped paths remain explicit; the projector creates no
+raw/processed cross-products. Stored MINiML file occurrences and GEO/AE layouts
+are unchanged. `tests/test_native_file_layout.py` covers these contracts.
+
 The final `AEConstructor` boundary applies the existing stable comment partition
 **after** the semantic overlay, so no ordinary IDF row follows a comment.
 Verified `E-...` ArrayExpress accessions appear only in
@@ -4431,6 +4446,7 @@ Residual projection and entity helpers:
 | --- | --- |
 | `meta_standards_converter.miniml.archive_entities.actors` | `actors(records, provider)` |
 | `meta_standards_converter.miniml.archive_entities.declare_ontologies` | `declare_ontologies(data, issues=None)` |
+| `meta_standards_converter.magetab.native_files.project_native_files` | `project_native_files(data)` |
 | `meta_standards_converter.magetab.protocol_export.prepare_protocols` | `prepare_protocols(data)` |
 | `meta_standards_converter.miniml.archive_administration.normalize_administration` | `normalize_administration(data)` |
 | `meta_standards_converter.miniml.archive_dates.normalize_archive_dates` | `normalize_archive_dates(data)` |
