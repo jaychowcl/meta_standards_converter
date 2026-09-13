@@ -314,8 +314,13 @@ def finish(provider, records, series, samples, protocols, paths):
     data['database'] = [{'iid': db, 'name': db} for db in sorted(dbs)]
     from .archive_entities import actors, declare_ontologies
     data['organization'], data['contributor'] = actors(records, provider)
+    sample_actors = {o['iid']: o.get('sample_accession') for o in data['organization']}
     if data['contributor']:
-        series['contributor_ref'] = [{'ref': c['iid']} for c in data['contributor']]
+        series['contributor_ref'] = [{'ref': c['iid']} for c in data['contributor'] if not sample_actors.get(c.get('organization_ref', {}).get('ref'))]
+        for sample in samples:
+            aliases = {sample['iid'], *[a['value'] for a in sample.get('accession', [])]}
+            refs = [{'ref': c['iid']} for c in data['contributor'] if sample_actors.get(c.get('organization_ref', {}).get('ref')) in aliases]
+            if refs: sample['contact_ref'] = refs
     declare_ontologies(data)
     from .archive_residuals import finalize
     return finalize(data)

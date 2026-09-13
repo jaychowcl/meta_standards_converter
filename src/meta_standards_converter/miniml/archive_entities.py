@@ -35,7 +35,7 @@ def actors(records, provider):
         if node.tag == 'EXPERIMENT_PACKAGE': accession = identifier(node.find('EXPERIMENT'))
         if accession:
             owner, path = (node.tag, accession), ()
-        if node.tag == 'Organization':
+        if node.tag == 'Organization' or (node.tag == 'Owner' and owner[0] == 'BioSample'):
             yield node, owner, path
         for index, child in enumerate(node):
             yield from organization_nodes(child, owner, (*path, index))
@@ -47,23 +47,32 @@ def actors(records, provider):
             seen.add(identity)
             iid = f'{provider}:{owner[0]}:{owner[1]}:organization-' + '-'.join(map(str, path))
             value = {'iid': iid, 'name': text(org, 'Name')}
+            sample_accession = owner[1] if owner[0] in ('BioSample', 'SAMPLE') else None
+            if sample_accession: value['sample_accession'] = sample_accession
+            if org.tag == 'Owner':
+                value['role'] = 'owner'
+                if text(org, 'Name') and org.find('Name').get('url'):
+                    value['web_link'] = org.find('Name').get('url')
             for source, target in [('url', 'web_link'), ('role', 'role'), ('type', 'type')]:
                 if org.get(source): value[target] = org.get(source)
             address = org.find('Address')
             if address is not None: value['address'] = _address(address)
             organizations.append(value)
-            for ci, contact in enumerate(org.findall('Contact')):
+            contacts = org.findall('Contacts/Contact') if org.tag == 'Owner' else org.findall('Contact')
+            for ci, contact in enumerate(contacts):
                 person = {k: text(contact, 'Name/' + v) for k, v in [('first','First'), ('middle','Middle'), ('last','Last')]}
                 item = {'iid': f'{iid}:contact-{ci}', 'organization_ref': {'ref': iid}}
                 if any(person.values()): item['person'] = {k:v for k,v in person.items() if v}
                 email = contact.get('email')
                 if email and re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', email): item['email'] = email
+                secondary = contact.get('sec_email')
+                if secondary and re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', secondary): item.setdefault('extensions', {})['secondary_email'] = secondary
                 for source, target in [('phone','phone'), ('fax','fax'), ('url','web_link')]:
                     if contact.get(source): item[target] = contact.get(source)
                 if contact.get('role'): item['roles'] = [{'value': contact.get('role')}]
                 address = contact.find('Address')
                 if address is not None: item['address'] = _address(address)
-                if len(item) > 2: contributors.append(item)
+                if set(item) - {'iid', 'organization_ref', 'sample_accession'}: contributors.append(item)
     centers = set()
     for root in records.xml:
         for node in root.iter():

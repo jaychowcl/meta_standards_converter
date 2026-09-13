@@ -73,3 +73,48 @@ def test_known_address_fields_are_projected_as_address_fields():
     assert person['address']['postal_code']=='N6A3K7'
     assert person['address']['city']=='London'
     assert person['address']['country']=='Canada'
+
+
+def test_biosample_owner_contacts_are_scoped_and_residuals_are_pruned():
+    from tests.test_archive_residuals import nodes
+    from meta_standards_converter.miniml.archive_residuals import finalize
+    records = fixture_records('sra')
+    owner = records.xml[1].find('.//BioSample/Owner')
+    contact = owner.find('Contacts/Contact')
+    contact.set('sec_email', 'second@lab.test')
+    contact.set('role', 'submitter')
+    ET.SubElement(contact, 'Unknown').text = 'retain this detail'
+    data = SRAParser().parse(records).to_mapping()
+    sample = data['sample'][0]
+    refs = {r['ref'] for r in sample['contact_ref']}
+    people = [c for c in data['contributor'] if c['iid'] in refs]
+    assert len(people) == 1
+    person = people[0]
+    assert person['person'] == {'first': 'Brendan', 'last': 'Daisley'}
+    assert person['extensions']['secondary_email'] == 'second@lab.test'
+    assert person['roles'] == [{'value': 'submitter'}]
+    assert person['iid'] not in {r['ref'] for r in data['series']['contributor_ref']}
+    org = next(o for o in data['organization'] if o['iid'] == person['organization_ref']['ref'])
+    assert org['name'] == 'University of Western Ontario'
+    assert org['web_link'] == 'http://www.uwo.ca'
+    residual = [r for r in data['extensions']['insdc']['records'] if r['kind'] == 'BioSample']
+    assert 'retain this detail' in str(residual)
+    assert 'Brendan' not in str(residual) and 'second@lab.test' not in str(residual)
+    assert finalize(data).to_mapping() == data
+    rows = dict((r[0], r[1:]) for r in IDFConstructor()._idf_persons(data))
+    assert rows['Person First Name'].count('Brendan') == 2  # independent source occurrences
+    MINiMLCodec().decode(data, strict=True)
+
+
+def test_owner_without_contact_and_malformed_secondary_email_are_preserved():
+    records = fixture_records('sra')
+    owner = records.xml[1].find('.//BioSample/Owner')
+    owner.find('Contacts/Contact').set('sec_email', 'https://not-an-email.test')
+    ET.SubElement(owner, 'Unknown').text = 'owner detail'
+    data = SRAParser().parse(records).to_mapping()
+    assert 'https://not-an-email.test' in str(data['extensions'])
+    owner.remove(owner.find('Contacts'))
+    data = SRAParser().parse(records).to_mapping()
+    assert any(o.get('sample_accession') == 'SAMN14218700' for o in data['organization'])
+    assert not data['sample'][0].get('contact_ref')
+    assert 'owner detail' in str(data['extensions'])

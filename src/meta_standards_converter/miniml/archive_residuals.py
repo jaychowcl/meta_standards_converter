@@ -173,7 +173,7 @@ class Projection:
         if tag=='EXPERIMENT_PACKAGE': node_acc=accession(next(iter(children(node,'EXPERIMENT')),{})) or acc
         if node_acc: owner, path=(tag,node_acc), ()
         actor_id = f'{provider}:{owner[0]}:{owner[1]}:organization-' + '-'.join(map(str,path))
-        if tag=='Organization': actor=self.actors.get(actor_id, {})
+        if tag=='Organization' or (tag=='Owner' and owner[0]=='BioSample'): actor=self.actors.get(actor_id, {})
         if tag=='Contact' and actor is not None:
             # Contacts are numbered within their organization's Contact list.
             actor=self.actors.get(actor.get('iid','') + ':contact-' + str(getattr(self,'contact_index',0)), {})
@@ -295,7 +295,10 @@ class Projection:
             if tag=='Contact':
                 for source,target in [('email','email'),('phone','phone'),('fax','fax'),('url','web_link')]:
                     if attrs.get(source) and actor.get(target)==attrs[source]:mapped_attrs.add(source)
+                if attrs.get('sec_email') and actor.get('extensions', {}).get('secondary_email')==attrs['sec_email']:mapped_attrs.add('sec_email')
+                if attrs.get('role') and {'value':attrs['role']} in actor.get('roles',[]):mapped_attrs.add('role')
             if tag=='Name' and actor.get('name')==text:mapped_text=True
+            if tag=='Name' and attrs.get('url') and actor.get('web_link')==attrs['url']:mapped_attrs.add('url')
             if tag in ('First','Middle','Last') and actor.get('person',{}).get(tag.lower())==text:mapped_text=True
             address = actor.get('address')
             if isinstance(address, dict):

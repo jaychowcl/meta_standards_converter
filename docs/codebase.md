@@ -4075,6 +4075,13 @@ in `series.variable[].name`, alongside the existing normalized `factor` category
 consumers prefer `name`. The `json2ae` orchestration remains unchanged.
 
 
+BioSample `Owner` records are organizations, including owners without contacts.
+Their `Contacts/Contact` occurrences become root contributors referenced through
+only the matching sample's `contact_ref`; independent archive contact occurrences
+remain distinct. Valid `sec_email` values use `contributor.extensions.secondary_email`.
+Malformed emails and unknown contact siblings remain in INSDC residual metadata;
+mapped names, contact values and owner URLs are removed from residuals.
+
 Native sources collect explicitly linked PubMed IDs from supplied XML identifiers,
 project publications and PubMed URLs in retrieved cross-references. Parsers map
 already fetched citation status with the shared `Harmonizer.pubstatus2efo` mapping.

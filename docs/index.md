@@ -512,3 +512,5 @@ PYCODE
 
 Preserve stable anchors when reorganizing material. Update this index and the
 canonical guide together when an interface, workflow, or contract changes.
+
+- BioSample owners and scoped contacts: [Native archive imports](codebase.md#native-archive-imports); keywords: Owner, Contacts, contact_ref, secondary_email, contact residuals.

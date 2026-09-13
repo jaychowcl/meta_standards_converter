@@ -86,7 +86,8 @@ def test_private_evidence_does_not_serialize_and_unmapped_contact_detail_remains
     package=SRAParser().parse(fixture_records('sra'))
     data=package.to_mapping()
     assert '_archive_source_records' not in json.dumps(data)
-    assert 'sec_email' in json.dumps(data['extensions'])
+    assert 'sec_email' not in json.dumps(data['extensions'])
+    assert any(c.get('extensions', {}).get('secondary_email') for c in data['contributor'])
     # The mapped primary contact email is absent from its native XML residual.
     assert not any(n.get('attributes',{}).get('email')=='bdaisley@uwo.ca' for n in nodes(data['extensions']))
 
@@ -97,7 +98,8 @@ def test_saved_v2_preserves_unmapped_siblings_across_repeated_enrichment():
     first,_=merge_archive_metadata(package,MINiMLCodec().decode(extra).package,prefer=True)
     saved=MINiMLCodec().decode(json.loads(json.dumps(first.to_mapping()))).package
     second,_=merge_archive_metadata(saved,MINiMLCodec().decode(extra).package,prefer=True)
-    assert 'sec_email' in str(second.to_mapping()['extensions'])
+    assert 'sec_email' not in str(second.to_mapping()['extensions'])
+    assert any(c.get('extensions', {}).get('secondary_email') for c in second.to_mapping()['contributor'])
     assert not any('miniml_schema_version' in r['metadata'] for r in second.to_mapping()['extensions']['insdc']['records'])
 
 
