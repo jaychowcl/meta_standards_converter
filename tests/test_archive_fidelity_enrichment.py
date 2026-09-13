@@ -42,7 +42,8 @@ def test_complete_workflows_factors_people_taxonomy_and_native_files():
     data,issues=merge_archive_metadata(original,linked,prefer=True)
     data=data.to_mapping()
     assert not issues
-    assert data['contributor'] and all(p['iid'].startswith('E-MTAB-1:') for p in data['contributor'])
+    assert any(p['iid'].startswith('E-MTAB-1:') for p in data['contributor'])
+    assert {p['iid'] for p in original.to_mapping()['contributor']} <= {p['iid'] for p in data['contributor']}
     assert data['series']['contributor_ref']
     assert data['sample'][0]['channel'][0]['organism']==[{'value':'Danio rerio','taxid':'7955'}]
     assert data['sample'][0]['iid']==original.samples[0].iid
@@ -105,8 +106,8 @@ def test_conflicting_organism_does_not_keep_old_taxid_and_local_refs_are_scoped(
     data=data.to_mapping()
     assert not data['sample'][0]['channel'][0]['organism'][0].get('taxid')
     assert next(c for c in data['sample'][0]['channel'][0]['characteristics'] if c['name']=='condition')['term_source_ref']=='E-MTAB-1:LOCAL'
-    assert data['organization'][0]['iid']=='E-MTAB-1:org1'
-    assert data['contributor'][0]['organization_ref']=={'ref':'E-MTAB-1:org1'}
+    assert any(o['iid']=='E-MTAB-1:org1' for o in data['organization'])
+    assert next(c for c in data['contributor'] if c['iid'].startswith('E-MTAB-1:'))['organization_ref']=={'ref':'E-MTAB-1:org1'}
 
 
 def test_mismatched_run_workflow_is_reported_and_retained():

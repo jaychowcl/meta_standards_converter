@@ -351,44 +351,31 @@ class IDFConstructor():
         """
         Extracts person information from MINiML JSON using JSONHandler.
         """
-        handler = JSONHandler()
-
-        contributors = handler._from_path(data, "contributor.*")
-        contributor_count = len(contributors)
-
-        last_names = handler._from_path(data, "contributor.*.person.last")
-        first_names = handler._from_path(data, "contributor.*.person.first")
-        mid_initials = handler._from_path(data, "contributor.*.person.middle")
-        emails = handler._from_path(data, "contributor.*.email")
-        phones = handler._from_path(data, "contributor.*.phone")
-        faxes = handler._from_path(data, "contributor.*.fax")
-
-        addresses = []
-        for contributor in contributors:
-            address = contributor.get("address")
-            address_parts = handler._flatten_values(address) if address else []
-            if address and not isinstance(address, str):
-                address_parts = [contributor.get("organization"), *address_parts]
-            addresses.append(", ".join(str(x) for x in address_parts if x) or None)
-
-        affiliations = [
-            contributor.get("organization")
-            for contributor in contributors
-        ]
-
-        return [
-            ["Person Last Name", *last_names],
-            ["Person First Name", *first_names],
-            ["Person Mid Initials", *mid_initials],
-            ["Person Email", *emails],
-            ["Person Phone", *phones],
-            ["Person Fax", *faxes],
-            ["Person Address", *addresses],
-            ["Person Affiliation", *affiliations],
-            ["Person Roles", *([None] * contributor_count)],
-            ["Person Roles Term Source Ref", *([None] * contributor_count)],
-            ["Person Roles Term Accession Number", *([None] * contributor_count)],
-        ]
+        from copy import deepcopy
+        contributors = deepcopy(data.get("contributor", []))
+        known = {c.get("iid") for c in contributors if c.get("iid")}
+        series = data.get("series", {})
+        for contributor in [*series.get("contributor", []), *series.get("contact", [])]:
+            if contributor.get("iid") and contributor["iid"] in known:
+                continue
+            contributors.append(deepcopy(contributor))
+            if contributor.get("iid"): known.add(contributor["iid"])
+        organizations = {o['iid']: o for o in data.get('organization', [])}
+        rows = {key: [] for key in ("Last Name", "First Name", "Mid Initials", "Email", "Phone", "Fax", "Address", "Affiliation", "Roles", "Roles Term Source Ref", "Roles Term Accession Number")}
+        for c in contributors:
+            org = organizations.get(c.get('organization_ref', {}).get('ref'), {})
+            affiliation = c.get('organization') or org.get('name')
+            address = c.get('address') or org.get('address')
+            parts = JSONHandler()._flatten_values(address) if address else []
+            if address and not isinstance(address, str): parts = [affiliation, *parts]
+            values = {'Last Name': c.get('person', {}).get('last'), 'First Name': c.get('person', {}).get('first'),
+                      'Mid Initials': c.get('person', {}).get('middle'), 'Affiliation': affiliation,
+                      'Address': ', '.join(str(x) for x in parts if x) or None}
+            for field in ('Email', 'Phone', 'Fax'): values[field] = c.get(field.lower())
+            for label, key in [('Roles','value'), ('Roles Term Source Ref','term_source_ref'), ('Roles Term Accession Number','term_accession_number')]:
+                values[label] = ';'.join(str(r.get(key) or '') for r in c.get('roles', [])) or None
+            for key in rows: rows[key].append(values.get(key))
+        return [['Person ' + key, *values] for key, values in rows.items()]
 
     def _idf_qc_rep_norm(self, data: dict) -> list:
         """

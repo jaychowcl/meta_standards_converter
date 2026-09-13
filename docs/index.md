@@ -453,7 +453,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Native retrieval and enrichment fidelity
   anchor: native-archive-fidelity
   purpose: Identity validation, structured workflow merging and file URI export contracts.
-  keywords: PRJA, BioProject UID, BioSample UID, Accession search, PRJDA, assembly version, File URI, qualified units, contributor, database, sample_ref, indexed_statistics, harmonization decoding
+  keywords: PRJA, BioProject UID, BioSample UID, Accession search, PRJDA, assembly version, File URI, qualified units, contributor, organization, platform, person roles, database, sample_ref, indexed_statistics, harmonization decoding
   link: [Open section](codebase.md#native-archive-fidelity)
 
 - id: native-archive-workflows

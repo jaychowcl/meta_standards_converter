@@ -154,6 +154,8 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
                     current.setdefault(key, []).extend(deepcopy(run.get(key, [])))
             elif not prefer:
                 target.setdefault('sra_run', []).append(deepcopy(run))
+        if source.get('platform_ref') and (prefer or not target.get('platform_ref')):
+            target['platform_ref'] = deepcopy(source['platform_ref'])
         channels, incoming = target.get('channel', []), source.get('channel', [])
         # A single channel is unambiguous; multi-channel arrays have no generic join.
         if len(channels) == len(incoming) == 1:
@@ -214,6 +216,8 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
             if len(values) > 1:
                 sample.pop(key, None)
     data['series']['sample_ref'] = [{'ref': s['iid']} for s in native_samples]
+    from ..miniml.archive_entities import declare_ontologies
+    declare_ontologies(data, issues)
     return MINiMLCodec().decode(data).package, issues
 
 

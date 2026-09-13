@@ -294,6 +294,11 @@ def finish(provider, records, series, samples, protocols, paths):
             'sample': samples, 'extensions': {'insdc': retained(provider, records)}}
     dbs = {a['database'] for entity in [series, *samples] for a in entity.get('accession', [])}
     data['database'] = [{'iid': db, 'name': db} for db in sorted(dbs)]
+    from .archive_entities import actors, declare_ontologies
+    data['organization'], data['contributor'] = actors(records, provider)
+    if data['contributor']:
+        series['contributor_ref'] = [{'ref': c['iid']} for c in data['contributor']]
+    declare_ontologies(data)
     return MINiMLCodec().decode(data).package
 
 
@@ -354,22 +359,6 @@ def fill_linked_metadata(records, series, samples, protocols, paths):
                 if aid.get('IdType') == 'doi':
                     pub['doi'] = aid.text
             series.setdefault('pubmed_publication', []).append(pub)
-        for organization in root.findall('.//Organization'):
-            for contact in organization.findall('Contact'):
-                key = ET.tostring(contact)
-                if key in seen_contacts:
-                    continue
-                seen_contacts.add(key)
-                value = {'organization': text(organization, 'Name')}
-                person = {k: text(contact, 'Name/' + v) for k, v in [('first', 'First'), ('middle', 'Middle'), ('last', 'Last')]}
-                if any(person.values()):
-                    value['person'] = {k: v for k, v in person.items() if v}
-                if contact.get('email'):
-                    value['email'] = contact.get('email')
-                address = contact.find('Address')
-                if address is not None:
-                    value['address'] = {'lines': [n.text for n in address if n.text]}
-                series.setdefault('contact', []).append(value)
     # EBI BioSamples supplies repeated values and optional ontology URLs.
     for record in records.linked:
         if record['provider'] != 'biosamples':

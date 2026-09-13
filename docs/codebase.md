@@ -4110,6 +4110,12 @@ reports. A missing optional field or empty optional inventory does not itself
 make an import incomplete. Requested but unavailable linked metadata does.
 
 <a id="native-archive-fidelity"></a>
+
+Native imports project explicit organizations and contacts with source-bound IDs.
+Enrichment imports registered platforms and rewrites sample/contact references.
+IDF person rows include inline study contacts, organization affiliations and supplied roles.
+Ontology references receive database declarations; explicit identifier namespaces take precedence over inconsistent source labels, which remain retained.
+
 ### Retrieval and enrichment fidelity
 
 `SRASource.project_xml` resolves BioProject accessions with exact Entrez
