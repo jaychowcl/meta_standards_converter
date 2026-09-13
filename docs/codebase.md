@@ -4061,3 +4061,11 @@ records preserve native values displaced in the core projection.
 Converter/publication contracts are covered by
 `tests/test_native_archive_converters.py`; precedence, ambiguous joins and missing
 values by `tests/test_native_archive_enrichment.py`.
+
+Native `source.format` (`SRA`/`ENA`) narrowly disables the legacy automatic remote
+enricher and publication fallback at export, and characteristic-to-factor
+inference in IDF/SDRF. Explicit factors still export. Native study/sample identity
+wins over GEO aliases. Actual ArrayExpress identifiers are exported separately
+from GEO secondary accessions. MAGE-TAB ingestion retains original factor names
+in `series.variable[].name`, alongside the existing normalized `factor` category;
+consumers prefer `name`. The `json2ae` orchestration remains unchanged.

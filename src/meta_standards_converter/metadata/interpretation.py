@@ -101,6 +101,8 @@ class MINiMLMetadataService:
             series = package.get("series")
             if not isinstance(series, Mapping):
                 continue
+            if package.get("source", {}).get("format") in {"SRA", "ENA"} and series.get("iid"):
+                return str(series["iid"])
             for accession in self._as_list(series.get("accession")):
                 value = self._value(accession)
                 if isinstance(value, str) and value.upper().startswith("GSE"):
@@ -115,6 +117,9 @@ class MINiMLMetadataService:
         )
 
     def sample_accession(self, sample: Mapping[str, Any]) -> str | None:
+        iid = sample.get("iid")
+        if isinstance(iid, str) and iid.startswith(("SRS", "ERS", "DRS", "SAMN", "SAMEA", "SAMD")):
+            return iid
         for accession in self._as_list(sample.get("accession")):
             value = self._value(accession)
             if isinstance(value, str) and value.upper().startswith("GSM"):

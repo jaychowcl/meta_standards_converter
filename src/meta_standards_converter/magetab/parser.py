@@ -328,6 +328,7 @@ class AEParser:
             if factor.strip():
                 variables.append({
                     "factor": self._normalized_variable_factor(factor),
+                    "name": factor.strip(),
                     "type": {
                         "value": factor_types[index].strip() if index < len(factor_types) else factor.strip(),
                         **({"term_source_ref": factor_sources[index].strip()} if index < len(factor_sources) and factor_sources[index].strip() else {}),

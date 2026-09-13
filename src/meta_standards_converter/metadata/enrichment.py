@@ -64,6 +64,8 @@ class MINiMLEnricher:
         codec = MINiMLCodec()
         package = codec.decode(data).package
         mutable = codec.encode(package)
+        if mutable.get("source", {}).get("format") in {"SRA", "ENA"}:
+            return package
         self._pubmed_failures = 0
         self._sra_failures = 0
         self.enrich_pubmed(data=mutable)
@@ -178,6 +180,8 @@ class MAGETabEvidenceResolver:
         self.insdc = insdc_client if insdc_client is not None else INSDCWebfetcher()
 
     def publications(self, data):
+        if data.get("source", {}).get("format") in {"SRA", "ENA"}:
+            return []
         from meta_standards_converter.helpers.json_helper import JSONHandler
         handler = JSONHandler()
         if any(isinstance(p, dict) for p in handler._from_path(data, "series.pubmed_publication.*")):

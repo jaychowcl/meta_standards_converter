@@ -544,7 +544,7 @@ class TestAE2JSONConverter(unittest.TestCase):
             [item["value"] for item in package["series"]["accession"]],
         )
         self.assertEqual(
-            [{"factor": "disease state", "type": {"value": "disease"}}],
+            [{"factor": "disease state", "name": "disease", "type": {"value": "disease"}}],
             package["series"]["variable"],
         )
         self.assertEqual("12345", package["series"]["pubmed_publication"][0]["pubmed_id"])
@@ -608,7 +608,7 @@ class TestAE2JSONConverter(unittest.TestCase):
             mapping["sample"][0]["channel"][0]["characteristics"],
         )
         self.assertEqual(
-            [{"factor": "agent", "type": {"value": "compound"}}],
+            [{"factor": "agent", "name": "compound", "type": {"value": "compound"}}],
             mapping["series"]["variable"],
         )
         self.assertGreaterEqual(

@@ -129,6 +129,15 @@ class IDFConstructor():
         accession_databases = [source for _accession, source in secondary_accessions]
         related_experiments = self._related_experiments(data=data)
 
+        native = data.get("source", {}).get("format") in {"SRA", "ENA"}
+        if native:
+            from meta_standards_converter.metadata.archive_enrichment import linked_accessions
+            linked = linked_accessions(data)
+            series_accession_values = [v for v in series_accession_values + linked if isinstance(v, str) and v.startswith("E-")]
+            for value in linked:
+                if value.startswith("GSE") and value not in accession_values:
+                    accession_values.append(value)
+                    accession_databases.append("GEO")
         arrayexpress_accessions = self._to_arrayexpress_accessions(series_accession_values)
 
         rows = [
@@ -244,12 +253,11 @@ class IDFConstructor():
         return "superseries" in relation_text or "subseries" in relation_text
 
     def _to_arrayexpress_accessions(self, accession_values: list) -> list:
-        return [
-            accession.replace("GSE", "E-GEOD-")
-            if isinstance(accession, str)
-            else None
+        return list(dict.fromkeys(
+            "E-GEOD-" + accession[3:] if re.fullmatch(r"GSE\d+", accession) else accession
             for accession in accession_values
-        ]
+            if isinstance(accession, str) and re.fullmatch(r"GSE\d+|E-[A-Z]+-\d+", accession)
+        ))
 
     def _idf_experimental(self, data: dict) -> list:
         """
@@ -279,7 +287,7 @@ class IDFConstructor():
             for variable in self._as_list(series.get("variable")):
                 if not isinstance(variable, dict):
                     continue
-                name = clean(variable.get("factor") or variable.get("name") or variable.get("tag"))
+                name = clean(variable.get("name") or variable.get("factor") or variable.get("tag"))
                 typed = variable.get("type")
                 factor_type = clean(typed.get("value")) if isinstance(typed, dict) else clean(typed)
                 factor_type = factor_type or name
@@ -317,6 +325,7 @@ class IDFConstructor():
         factor_names = (
             [item[0] for item in declared_factors]
             if declared_factors
+            else [] if data.get("source", {}).get("format") in {"SRA", "ENA"}
             else [
                 factors[tag_key]["name"]
                 for tag_key in factor_order

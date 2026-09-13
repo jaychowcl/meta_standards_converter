@@ -470,12 +470,14 @@ class _BaseSDRFHandler(SDRFRenderer):
             for variable in self._as_list(series.get("variable")):
                 if not isinstance(variable, dict):
                     continue
-                tag = variable.get("factor") or variable.get("name") or variable.get("tag")
+                tag = variable.get("name") or variable.get("factor") or variable.get("tag")
                 if tag and tag not in variable_tags:
                     variable_tags.append(tag)
         if variable_tags:
             return variable_tags
 
+        if self.data.get("source", {}).get("format") in {"SRA", "ENA"}:
+            return []
         values_by_tag = {}
         for sample in self.samples:
             for channel in self.channels(sample=sample):
