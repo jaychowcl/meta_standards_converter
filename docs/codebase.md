@@ -4090,6 +4090,27 @@ fields from residuals while retaining unmapped siblings. No title-based publicat
 search or implicit GEO/AE traversal is performed.
 
 
+`archive_dates.normalize_archive_dates` runs at native residual finalization and
+on the private MAGE-TAB construction copy, including `json2ae --no-enrich`.
+The explicit attributes `ENA-FIRST-PUBLIC` / `ENA-LAST-UPDATE` map to ENA
+sample release/update status, while `INSDC first public` / `INSDC last update`
+map to INSDC sample status. BioSample status remains separate. Exact literals,
+precision and conflicting occurrences survive; copied assay-path attributes do
+not multiply status occurrences. Qualified annotations remain beside the status.
+Collection dates remain characteristics. Unbound paths are not assigned to samples
+by descriptive similarity. Status enrichment combines compatible records and
+retains conflicting records even within the same archive.
+
+The final `AEConstructor` boundary applies the existing stable comment partition
+**after** the semantic overlay, so no ordinary IDF row follows a comment.
+Verified `E-...` ArrayExpress accessions appear only in
+`Comment[ArrayExpressAccession]`; other secondary accession/value-source pairs
+remain aligned. These corrections cover all routes through the constructor,
+without changing `json2ae` orchestration or saved input files. Publication and
+export acceptance tests live in `tests/test_archive_publications.py` and
+`tests/test_archive_export_cleanup.py`.
+
+
 <a id="native-archive-contract"></a>
 ### Archive extension and mapping contract
 
@@ -4392,6 +4413,7 @@ Residual projection and entity helpers:
 | --- | --- |
 | `meta_standards_converter.miniml.archive_entities.actors` | `actors(records, provider)` |
 | `meta_standards_converter.miniml.archive_entities.declare_ontologies` | `declare_ontologies(data, issues=None)` |
+| `meta_standards_converter.miniml.archive_dates.normalize_archive_dates` | `normalize_archive_dates(data)` |
 | `meta_standards_converter.miniml.archive_residuals.children` | `children(node, tag)` |
 | `meta_standards_converter.miniml.archive_residuals.child_text` | `child_text(node, path)` |
 | `meta_standards_converter.miniml.archive_residuals.all_text` | `all_text(node)` |

@@ -89,7 +89,9 @@ def _merge_entity(target, extra, prefer, protected=()):
         elif key == 'status':
             current = target.setdefault(key, [])
             for status in value:
-                same = next((v for v in current if v.get('database') == status.get('database') and v.get('accession') == status.get('accession')), None)
+                same = next((v for v in current if v.get('database') == status.get('database') and v.get('accession') == status.get('accession')
+                             and all(not informative(v.get(k)) or not informative(literal) or v[k] == literal
+                                     for k, literal in status.items())), None)
                 if same is None: current.append(deepcopy(status))
                 else:
                     for field, literal in status.items():

@@ -52,6 +52,8 @@ class AEConstructor:
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
         data = MINiMLCodec().encode(MINiMLCodec().decode(data).package)
+        from meta_standards_converter.miniml.archive_dates import normalize_archive_dates
+        normalize_archive_dates(data)
         forced = platform_handler is not None
         if forced:
             technology_type = validate_platform_handler(platform_handler)
@@ -86,7 +88,7 @@ class AEConstructor:
         if sdrf_index is None:
             raise ValueError("IDF does not contain an SDRF File row.")
         idf[sdrf_index] = ["SDRF File", sdrf, *idf[sdrf_index][2:]]
-        return overlay_miniml_semantics(data, idf)
+        return IDFConstructor()._move_comment_rows_to_bottom(overlay_miniml_semantics(data, idf))
 
     def _detect_ae_technology(self, data: dict) -> str:
         return detect_ae_technology(data)

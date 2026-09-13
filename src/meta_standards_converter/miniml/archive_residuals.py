@@ -113,6 +113,15 @@ class Projection:
         return [o for s in self.data.get('sample', []) for c in s.get('channel', []) for o in c.get('organism', [])]
 
     def character(self, sample, name, value, unit=None, terms=None):
+        from .archive_dates import _date_key
+        date_key = _date_key(name, value)
+        if date_key and not unit and not terms:
+            database, field, literal = date_key
+            for index, status in enumerate(sample.get('status', [])):
+                occurrence = (sample.get('iid'), 'status', index, field)
+                if status.get('database') == database and status.get(field) == literal and occurrence not in self._mapped_characters:
+                    self._mapped_characters.add(occurrence)
+                    return True
         wanted = {'name': name, 'value': value}
         if unit: wanted['unit'] = {'value': unit}
         if terms: wanted.update(terms)
@@ -327,6 +336,8 @@ def source_records(package):
 def finalize(data, records=None):
     """Finalize after each mapping/merge; private source occurrences survive only in memory."""
     from .codec import MINiMLCodec
+    from .archive_dates import normalize_archive_dates
+    normalize_archive_dates(data)
     records=deepcopy(records if records is not None else data.get('extensions',{}).get('insdc',{}).get('records',[]))
     from ..metadata.archive_enrichment import linked_accessions
     for acc in linked_accessions(data):

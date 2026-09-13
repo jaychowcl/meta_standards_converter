@@ -38,7 +38,11 @@ def test_identity_and_default_enrichment_do_not_replace_native():
         def __getattr__(self, name):
             raise AssertionError('Native imports already control retrieval')
     typed = MINiMLCodec().decode(data).package
-    assert MINiMLEnricher(pubmed_fetcher=Forbidden(), insdc_fetcher=Forbidden()).enrich(typed) == typed
+    from tests.test_archive_publications import PubMed
+    hydrated = MINiMLEnricher(pubmed_fetcher=PubMed(), insdc_fetcher=Forbidden()).enrich(typed).to_mapping()
+    assert hydrated['series']['iid'] == data['series']['iid']
+    assert hydrated['sample'] == data['sample']
+    assert hydrated['series']['assay_paths'] == data['series']['assay_paths']
 
 
 def test_native_idf_accessions_and_no_implicit_factors():

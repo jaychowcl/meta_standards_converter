@@ -39,6 +39,7 @@ SDRF File	E-GEOD-328265.sdrf.txt
 Term Source Name	EFO	GEO
 Term Source File	http://www.ebi.ac.uk/efo/efo.owl	http://www.ncbi.nlm.nih.gov/geo
 Term Source Version	3.90.0	
+Investigation Accession	GSE328265
 Comment[SecondaryAccession]	GSE328265	SRP689887
 Comment[SecondaryAccessionTermSourceRef]	GEO	SRA
 Comment[ArrayExpressAccession]	E-GEOD-328265
@@ -50,4 +51,3 @@ Comment[AEExperiment]
 Comment[AEExperimentType]	RNA-seq of coding RNA from single cells
 Comment[AECurator]
 Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/SRR37976431
-Investigation Accession	GSE328265

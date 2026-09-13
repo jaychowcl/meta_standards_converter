@@ -439,7 +439,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Native archive converters, metadata and enrichment
   anchor: native-archive-imports
   purpose: Native SRA/ENA discovery, parsing, preservation and conversion contracts.
-  keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc, native identity, custom factor names, explicit protocols, PubMed hydration, publication-only enrichment, publication status, native date precision, scoped protocol enrichment, enrichment precedence, CLI reports
+  keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc, native identity, custom factor names, explicit protocols, PubMed hydration, publication-only enrichment, publication status, final IDF comment order, ArrayExpress accession comments, administrative sample status, no-enrich cleanup, native date precision, scoped protocol enrichment, enrichment precedence, CLI reports
   link: [Open section](codebase.md#native-archive-imports)
 
 - id: native-archive-contract

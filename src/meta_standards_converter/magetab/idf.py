@@ -192,7 +192,7 @@ class IDFConstructor():
         declared_source=None,
     ) -> None:
         accession = self._clean_secondary_accession_value(accession)
-        if not accession:
+        if not accession or re.fullmatch(r"E-[A-Z]+-\d+", accession, re.IGNORECASE):
             return
 
         dedupe_key = accession.upper()
