@@ -24,7 +24,11 @@ def linked(package, accession, title):
     data['series']['accession'].append({'value': accession, 'database': 'ArrayExpress' if accession.startswith('E-') else 'GEO'})
     data['series']['title'] = title
     data['sample'][0]['title'] = title
+    old_iid = data['sample'][0]['iid']
     data['sample'][0]['iid'] = 'GSM1'
+    for path in data['series'].get('assay_paths', []):
+        for step in path['steps']:
+            if step.get('sample_ref') == old_iid: step['sample_ref'] = 'GSM1'
     data['sample'][0]['channel'][0]['characteristics'] = [{'name': 'host', 'value': title, 'term_accession_number': 'ONT:1', 'term_source_ref': 'ONT'}]
     return MINiMLCodec().decode(data).package
 
@@ -109,7 +113,10 @@ def test_peer_only_runs_are_added_on_exact_study_and_sample_match():
     other['sample'][0]['sra_run'][0]['run'] = 'SRR99'
     for path in other['series']['assay_paths']:
         for step in path['steps']:
-            if step['kind'] == 'scan': step['name'] = 'SRR99'
+            if step['kind'] == 'scan':
+                step['name'] = 'SRR99'
+                for comment in step.get('comments', []):
+                    if comment['name'] in ('ENA_RUN', 'SRA_RUN'): comment['value'] = 'SRR99'
     merged, issues = merge_archive_metadata(package, MINiMLCodec().decode(other).package)
     assert {r['run'] for r in merged.to_mapping()['sample'][0]['sra_run']} == {'SRR11192680', 'SRR99'}
     assert any(s.get('name') == 'SRR99' for p in merged.to_mapping()['series']['assay_paths'] for s in p['steps'])

@@ -10,7 +10,7 @@
 from copy import deepcopy
 import re
 from pathlib import PurePosixPath
-from urllib.parse import urlsplit, unquote
+from urllib.parse import urlsplit, unquote, quote
 
 
 def remap_references(value, mappings):
@@ -88,7 +88,7 @@ def is_file(step):
 
 
 def file_node(file, kind='array_data_file'):
-    uri = file.get('uri') or file.get('value')
+    uri = _file_uri(file.get('uri') or file.get('value'))
     node = {'kind': kind, 'name': file.get('filename') or unquote(PurePosixPath(urlsplit(uri or '').path).name) or uri or ''}
     if uri:
         node['link'] = {'value': uri}
@@ -101,113 +101,208 @@ def file_node(file, kind='array_data_file'):
     return node
 
 
+def _file_uri(value):
+    # ArrayExpress FASTQ_URI historically supplies this explicit FTP location
+    # without a scheme. Treat the remainder as a literal path, including '#'.
+    if isinstance(value, str) and value.startswith('ftp.sra.ebi.ac.uk/'):
+        return 'ftp://ftp.sra.ebi.ac.uk/' + quote(value.split('/', 1)[1], safe="/%:@!$&'()*+,;=-._~")
+    return value
+
+
+def _prepare_path(path, target, proto_names):
+    result = deepcopy(path)
+    steps = result['steps']
+    scope = path_ids(path)
+    for pattern in (r'[SED]RR\d+', r'[SED]RX\d+'):
+        if len({v for v in scope if re.fullmatch(pattern, v)}) > 1:
+            raise ValueError('conflicting enrichment run or experiment identifiers')
+    file_names = {s.get('name') for s in steps if is_file(s)}
+    for step in steps:
+        file_names.update(unquote(PurePosixPath(urlsplit(_file_uri(c['value'])).path).name)
+                          for c in step.get('comments', [])
+                          if c.get('name', '').upper() == 'FASTQ_URI' and c.get('value'))
+    expanded = []
+    for step in steps:
+        if step.get('sample_ref') or step.get('kind') in ('source', 'sample'):
+            step['sample_ref'] = target
+        if step.get('protocol_ref') in proto_names:
+            step['protocol_ref'] = proto_names[step['protocol_ref']]
+        if step.get('kind') == 'scan' and step.get('name') in file_names:
+            runs = {v for v in scope if re.fullmatch(r'[SED]RR\d+', v)}
+            if len(runs) == 1:
+                step['name'] = next(iter(runs))
+        if step.get('link', {}).get('value'):
+            step['link']['value'] = _file_uri(step['link']['value'])
+        comments = step.get('comments', [])
+        reads = [file_node({'uri': c['value'], 'format': 'fastq'}) for c in comments
+                 if c.get('name', '').upper() == 'FASTQ_URI' and c.get('value')]
+        fields = {'FASTQ_FILE_NAME': 'filename', 'FASTQ_MD5': 'MD5', 'FASTQ_BYTES': 'File size',
+                  'FASTQ_FORMAT': 'File format', 'FASTQ_CHECKSUM': 'Checksum',
+                  'FASTQ_CHECKSUM_METHOD': 'Checksum method', 'READ_TYPE': 'READ_TYPE', 'READ_INDEX': 'READ_INDEX'}
+        moved = set()
+        for label, destination in fields.items():
+            values = [(i, c) for i, c in enumerate(comments) if c.get('name', '').upper() == label]
+            if reads and len(values) == len(reads):
+                for read, (i, comment) in zip(reads, values):
+                    if destination == 'filename':
+                        if read['name'] and read['name'] != comment['value']:
+                            read['comments'].append(deepcopy(comment))
+                        else:
+                            read['name'] = comment['value']
+                    else:
+                        read['comments'].append({**deepcopy(comment), 'name': destination})
+                    moved.add(i)
+        kept = [c for i, c in enumerate(comments) if i not in moved
+                and not (c.get('name', '').upper() == 'FASTQ_URI' and c.get('value'))]
+        if 'comments' in step:
+            step['comments'] = kept
+        expanded.append(step)
+        # A supplied run FASTQ is an acquisition output, preceding processing.
+        expanded.extend(reads)
+    result['steps'] = expanded
+    return result
+
+
+def _acquisition(steps):
+    end = next((i for i, s in enumerate(steps) if is_file(s)), len(steps))
+    prefix = steps[:end]
+    # Without an explicit raw node, operations after the scan belong to results.
+    if end == len(steps) or steps[end]['kind'] != 'array_data_file':
+        scan = next((i for i, s in enumerate(prefix) if s['kind'] == 'scan'), None)
+        if scan is not None:
+            prefix = prefix[:scan + 1]
+    return deepcopy(prefix)
+
+
+def _bind_native(steps, target, native):
+    for step in steps:
+        if step.get('kind') in ('source', 'sample', 'assay', 'scan'):
+            old = next((s for s in native if s.get('kind') == step['kind']), None)
+            if old:
+                step['name'] = old['name']
+                step['sample_ref'] = target
+                step.setdefault('comments', []).extend(c for c in deepcopy(old.get('comments', []))
+                                                        if c not in step.get('comments', []))
+    return steps
+
+
+def _biological_node(sample):
+    node = {'kind': 'source', 'name': sample['iid'], 'sample_ref': sample['iid']}
+    if len(sample.get('channel', [])) == 1:
+        channel = sample['channel'][0]
+        node['characteristics'] = deepcopy(channel.get('characteristics', []))
+        node['characteristics'] += [{'name': 'organism', 'value': o['value'],
+            **({'term_source_ref': 'NCBITaxon', 'term_accession_number': o['taxid']} if o.get('taxid') else {})}
+            for o in channel.get('organism', [])]
+    return node
+
+
 def merge_workflows(data, extra, matched, proto_names, prefer, issues):
-    """Replace uniquely matched complete workflows while retaining every file branch."""
+    """Bind complete ordered branches and acquisition prefixes by explicit identity."""
     paths = data['series'].setdefault('assay_paths', [])
     originals = deepcopy(paths)
-    native_samples = {s['iid']: s for s in data['sample']}
-    templates, incoming_files, explicit = {}, [], set()
+    samples = {s['iid']: s for s in data['sample']}
+    templates, incoming, explicit = {}, [], set()
     for path in extra['series'].get('assay_paths', []):
         refs = {s['sample_ref'] for s in path['steps'] if s.get('sample_ref')}
         scope = path_ids(path)
         targets = {matched[r] for r in refs if r in matched}
-        # Older packages omitted sample_ref; recover only via verified accessions.
-        if not targets and scope:
+        if not refs and scope:
             targets = {target for target in matched.values() if any(
                 compatible(scope, {r.get('run'), r.get('experiment')})
-                for r in native_samples[target].get('sra_run', []))}
-        if len(targets) != 1 or (refs & matched.keys() and refs - matched.keys()):
+                for r in samples[target].get('sra_run', []))}
+        if len(targets) != 1 or (refs - matched.keys()):
             issues.append('enrichment workflow: ambiguous or unresolved sample binding')
             continue
         target = next(iter(targets))
+        try:
+            prepared = _prepare_path(path, target, proto_names)
+        except ValueError as error:
+            issues.append(f'{target}: {error}')
+            continue
         candidates = [p for p in originals if any(s.get('sample_ref') == target for s in p['steps'])
                       and compatible(scope, path_ids(p))]
         run_scopes = {tuple(sorted(path_ids(p))) for p in candidates}
+        if not prefer:
+            # Peer runs may be new to the native inventory but must be present
+            # in the already validated merged sample/run registry.
+            if scope and not any(compatible(scope, {r.get('run'), r.get('experiment')})
+                                 for r in samples[target].get('sra_run', [])):
+                issues.append(f'{target}: incompatible peer workflow scope')
+                continue
+            paths.append(prepared)
+            continue
+        if not scope and not any(s['kind'] in ('assay', 'scan', 'extract', 'labeled_extract') for s in prepared['steps']):
+            if any(is_file(s) for s in prepared['steps']):
+                paths.append(prepared)
+            continue
         if not candidates or (not scope and len(run_scopes) != 1):
             issues.append(f'{target}: ambiguous or incompatible enrichment workflow scope')
             continue
-        steps = deepcopy(path['steps'])
-        for step in steps:
-            if step.get('sample_ref') or step.get('kind') in ('source', 'sample'):
-                step['sample_ref'] = target
-            if step.get('protocol_ref') in proto_names:
-                step['protocol_ref'] = proto_names[step['protocol_ref']]
-        for step in steps:
-            kept = []
-            for comment in step.get('comments', []):
-                if comment.get('name', '').upper() == 'FASTQ_URI' and comment.get('value'):
-                    node = file_node({'uri': comment['value'], 'format': 'fastq'})
-                    node['comments'].append(deepcopy(comment))
-                    incoming_files.append((target, scope, node))
-                else:
-                    kept.append(comment)
-            if 'comments' in step:
-                step['comments'] = kept
-        workflow = [s for s in steps if not is_file(s)]
-        explicit_workflow = any(s.get('kind') in ('extract', 'labeled_extract') for s in workflow)
-        if explicit_workflow:
-            explicit.add(target)
+        prefix = _acquisition(prepared['steps'])
         for key in run_scopes:
             identity = (target, key)
-            if workflow not in templates.setdefault(identity, []):
-                templates[identity].append(workflow)
-        for step in steps:
-            if is_file(step):
-                incoming_files.append((target, scope, step))
-        if not prefer:
-            paths.append({'steps': steps})
-    if prefer and templates:
-        data['extensions']['insdc']['records'].append({'provider': data.get('source', {}).get('format', 'native'),
-            'kind': 'MINiML_workflows', 'accession': data['series']['iid'], 'metadata': {'assay_paths': originals}})
+            if prefix not in templates.setdefault(identity, []):
+                templates[identity].append(prefix)
+            incoming.append((identity, prepared))
+    if prefer:
         for path in paths:
             target = next((s.get('sample_ref') for s in path['steps'] if s.get('sample_ref')), None)
             choices = templates.get((target, tuple(sorted(path_ids(path)))), [])
             if len(choices) > 1:
-                issues.append(f'{target}: ambiguous enrichment workflows retained outside core')
+                message = f'{target}: ambiguous enrichment workflows retained outside core'
+                if message not in issues:
+                    issues.append(message)
                 continue
             if not choices:
                 continue
-            steps = deepcopy(choices[0])
-            for step in steps:
-                if step.get('kind') in ('source', 'sample', 'assay', 'scan'):
-                    native = next((s for s in path['steps'] if s.get('kind') == step['kind']), None)
+            prefix = _bind_native(deepcopy(choices[0]), target, path['steps'])
+            # An experiment-level workflow does not delete the native run.
+            for kind in ('assay', 'scan'):
+                if not any(s['kind'] == kind for s in prefix):
+                    native = next((s for s in path['steps'] if s['kind'] == kind), None)
                     if native:
-                        step['name'] = native['name']
-                        step['sample_ref'] = target
-                        step.setdefault('comments', []).extend(c for c in deepcopy(native.get('comments', [])) if c not in step.get('comments', []))
-            path['steps'] = steps + deepcopy([s for s in path['steps'] if is_file(s)])
-    # Update biological projections only on biological nodes, never on extracts.
-    for path in paths:
-        for step in path['steps']:
-            sample = native_samples.get(step.get('sample_ref'))
-            if sample and step.get('kind') in ('source', 'sample') and len(sample.get('channel', [])) == 1:
-                channel = sample['channel'][0]
-                values = deepcopy(channel.get('characteristics', []))
-                values += [{'name': 'organism', 'value': o['value'], **({'term_source_ref': 'NCBITaxon', 'term_accession_number': o['taxid']} if o.get('taxid') else {})} for o in channel.get('organism', [])]
-                step['characteristics'] = values
-    if prefer:
-        for target, scope, node in incoming_files:
-            candidate = next((p for p in paths if any(s.get('sample_ref') == target for s in p['steps']) and compatible(scope, path_ids(p))), None)
-            if candidate:
-                paths.append({'steps': deepcopy([s for s in candidate['steps'] if not is_file(s)]) + [node]})
+                        position = next((i for i, s in enumerate(prefix) if s['kind'] == 'scan'), len(prefix)) if kind == 'assay' else len(prefix)
+                        prefix.insert(position, deepcopy(native))
+            if any(s['kind'] in ('extract', 'labeled_extract') for s in prefix):
+                explicit.add(target)
+            # Preserve the complete original branch after raw acquisition.
+            end = next((i for i, s in enumerate(path['steps']) if is_file(s)), len(path['steps']))
+            path['steps'] = prefix + deepcopy(path['steps'][end:])
+        for (target, key), prepared in incoming:
+            if len(templates[(target, key)]) != 1 or not any(is_file(s) for s in prepared['steps']):
+                continue
+            candidates = [p for p in originals if any(s.get('sample_ref') == target for s in p['steps'])
+                          and tuple(sorted(path_ids(p))) == key]
+            # All candidates have the same verified sample/run identity.
+            steps = _bind_native(deepcopy(prepared['steps']), target, candidates[0]['steps'])
+            paths.append({**deepcopy(prepared), 'steps': steps})
         for source in extra.get('sample', []):
             target = matched.get(source['iid'])
             if target is None:
                 continue
             for run in source.get('sra_run', []):
                 scope = {run[k] for k in ('run', 'experiment') if run.get(k)}
-                candidate = next((p for p in paths if any(s.get('sample_ref') == target for s in p['steps']) and compatible(scope, path_ids(p))), None)
-                if candidate and scope:
-                    files = run.get('files') or run.get('fastq_files', [])
-                    for file in files:
+                candidates = [p for p in paths if any(s.get('sample_ref') == target for s in p['steps'])
+                              and compatible(scope, path_ids(p))]
+                prefixes = []
+                for path in candidates:
+                    prefix = _acquisition(path['steps'])
+                    if prefix not in prefixes:
+                        prefixes.append(prefix)
+                if scope and len(prefixes) == 1:
+                    for file in run.get('files') or run.get('fastq_files', []):
                         if file.get('uri') or file.get('filename'):
-                            paths.append({'steps': deepcopy([s for s in candidate['steps'] if not is_file(s)]) + [file_node(file)]})
-            represented = {s.get('link', {}).get('value') for p in extra['series'].get('assay_paths', []) for s in p['steps']}
-            represented.update(f.get('uri') for run in source.get('sra_run', []) for f in (run.get('files') or run.get('fastq_files', [])))
+                            paths.append({'steps': deepcopy(prefixes[0]) + [file_node(file)]})
+            represented = {s.get('link', {}).get('value') for p in paths
+                           if any(n.get('sample_ref') == target for n in p['steps']) for s in p['steps']}
             for field, kind in [('raw_data', 'array_data_file'), ('supplementary_data', 'derived_array_data_file')]:
                 for link in source.get(field, []):
-                    if link.get('value') and link['value'] not in represented:
-                        # This is a sample result; no run is implied by list order.
-                        paths.append({'steps': [{'kind': 'source', 'name': target, 'sample_ref': target,
-                                                 'characteristics': deepcopy(native_samples[target].get('channel', [{}])[0].get('characteristics', []))}, file_node(link, kind)]})
+                    if link.get('value') and _file_uri(link['value']) not in represented:
+                        paths.append({'steps': [_biological_node(samples[target]), file_node(link, kind)]})
+    for path in paths:
+        for step in path['steps']:
+            sample = samples.get(step.get('sample_ref'))
+            if sample and step.get('kind') in ('source', 'sample'):
+                step.update({k: v for k, v in _biological_node(sample).items() if k == 'characteristics'})
     return explicit

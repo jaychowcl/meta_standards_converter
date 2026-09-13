@@ -4270,6 +4270,13 @@ make an import incomplete. Requested but unavailable linked metadata does.
 <a id="native-archive-fidelity"></a>
 ### Retrieval and enrichment fidelity
 
+Enrichment validates internally consistent experiment/run identifiers before binding
+ordered paths. Verified FASTQ filename aliases may identify the same run; explicit
+ENA FTP locations gain a usable scheme with literal reserved characters encoded.
+Acquisition prefixes enrich native raw branches while raw→processing→result order
+is retained on complete incoming branches. New peer runs bind against the merged
+run registry. Sample result links are checked per sample, never package-wide.
+
 MAGE-TAB protocol parsing ignores wholly empty padded IDF slots while retaining
 unnamed populated definitions at their original positions, including fields beyond
 a shorter Protocol Name row.
