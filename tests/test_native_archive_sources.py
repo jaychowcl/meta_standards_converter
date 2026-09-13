@@ -173,7 +173,8 @@ def test_sra_assembly_links_retain_full_versioned_summaries():
     data = SRAParser().parse(records).to_mapping()
     assembly = next(r for r in data['extensions']['insdc']['records'] if r['kind'] == 'assembly')
     assert assembly['accession'] == 'GCA_000001405.29'
-    assert assembly['metadata']['synonym']['refseq'] == 'GCF_000001405.40'
+    assert {'type':'assembly','target':'GCF_000001405.40'} in data['series']['relation']
+    assert assembly['metadata']['meta']=={'nested':['retained']}
     assert assembly['metadata']['meta'] == {'nested': ['retained']}
     assert not data['series'].get('supplementary_data')
     assert any(r['type'] == 'assembly directory' for r in data['series']['relation'])

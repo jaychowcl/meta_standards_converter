@@ -122,6 +122,11 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     from copy import deepcopy
     from ..miniml import MINiMLCodec
     data, extra = package.to_mapping(), other.to_mapping()
+    from ..miniml.archive_residuals import source_records, finalize
+    evidence = source_records(package)
+    if not hasattr(package, '_archive_source_records'):
+        evidence.append({'provider':data.get('source',{}).get('format'), 'kind':'MINiML', 'accession':data['series']['iid'],
+                         'metadata':{k:deepcopy(v) for k,v in data.items() if k not in ('extensions','source','miniml_schema_version')}})
     issues = []
     for document in (data, extra):
         source = document.get('source', {}).get('format', '')
@@ -232,7 +237,26 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     data['series']['sample_ref'] = [{'ref': s['iid']} for s in native_samples]
     from ..miniml.archive_entities import declare_ontologies
     declare_ontologies(data, issues)
-    return MINiMLCodec().decode(data).package, issues
+    # Keep only unrepresented incoming fields. Rewrite the snapshot's references
+    # using the same verified joins and protocol namespace as the core merge.
+    snapshot = deepcopy(extra)
+    def rewrite(value):
+        if isinstance(value, list):
+            for v in value: rewrite(v)
+        elif isinstance(value, dict):
+            for key, v in list(value.items()):
+                if key in ('iid','sample_ref','ref') and isinstance(v,str): value[key] = matched.get(v,v)
+                elif key == 'protocol_ref' and isinstance(v,str) and v in proto_names: value[key] = proto_names[v]
+                elif key != 'extensions': rewrite(v)
+    rewrite(snapshot)
+    for protocol in snapshot['series'].get('protocols', []):
+        protocol['name'] = proto_names.get(protocol['name'], protocol['name'])
+    snapshot['series']['iid'] = data['series']['iid']
+    evidence.append({'provider':extra.get('source',{}).get('format'), 'kind':'MINiML', 'accession':extra['series']['iid'],
+                     'metadata':{k:v for k,v in snapshot.items() if k not in ('extensions','source','miniml_schema_version')}})
+    if not prefer: evidence.extend(source_records(other))
+    evidence.extend(r for r in data['extensions']['insdc']['records'] if r['kind']=='annotation' and r not in evidence)
+    return finalize(data, evidence), issues
 
 
 class LinkedArchiveEnricher:

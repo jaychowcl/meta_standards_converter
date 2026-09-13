@@ -102,6 +102,32 @@ class ENASource:
             result.issues.append(f'{accession}: no public read study resolved')
         return result
 
+    def fetch_reference_ranges(self, records):
+        """Validate bounded ENA accession ranges; keep their records outside membership."""
+        for root in list(records.xml):
+            for sample in root.findall('.//SAMPLE'):
+                for link in sample.findall('.//XREF_LINK'):
+                    db, literal = link.findtext('DB',''), link.findtext('ID','')
+                    if db not in ('ENA-RUN','ENA-EXPERIMENT','ENA-STUDY') or '-' not in literal:
+                        continue
+                    candidates=[]
+                    for part in literal.split(','):
+                        match=re.fullmatch(r'([SED]R[PRX])(\d+)-\1(\d+)', part.strip())
+                        if match and 0 <= int(match[3])-int(match[2]) < 1000:
+                            candidates.extend(match[1]+str(i).zfill(len(match[2])) for i in range(int(match[2]),int(match[3])+1))
+                        elif re.fullmatch(r'[SED]R[PRX]\d+', part.strip()): candidates.append(part.strip())
+                        else:
+                            candidates=[]
+                            break
+                    if not candidates or len(candidates)>1000: continue
+                    found=set()
+                    for batch in chunks(candidates):
+                        response=self.verified_xml(batch,records,'accession range')
+                        if response is not None: found.update(identifier(n) for n in response)
+                    if set(candidates)<=found:
+                        records.linked.append({'provider':'ena','kind':'accession_range','accession':identifier(sample),
+                            'metadata':{'database':db,'literal':literal,'accessions':candidates}})
+
     def fetch_associated_analyses(self, records):
         """Fetch one hop of explicit analysis links without importing their read studies."""
         members, requests, existing = set(), set(), set()
@@ -166,6 +192,7 @@ class ENASource:
                 root = self.verified_xml(batch, records, kind)
                 if root is not None:
                     records.xml.append(root)
+        self.fetch_reference_ranges(records)
         self.fetch_associated_analyses(records)
         count = attempt(records, 'ENA run count', lambda: self.http.get(self.portal + 'count',
             {'result': 'read_run', 'query': query, 'format': 'json', 'includeMetagenomes': 'true'}, 'json'))

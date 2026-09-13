@@ -282,6 +282,13 @@ def finish(provider, records, series, samples, protocols, paths):
             values = {r[key] for r in runs if r.get(key)}
             if len(values) == 1 and all(r.get(key) for r in runs):
                 sample[key] = values.pop()
+    for record in records.linked:
+        if record['kind'] == 'accession_range':
+            target = next((s for s in samples if record['accession'] in {a['value'] for a in s['accession']}), None)
+            if target is not None:
+                value = record['metadata']
+                target['relation'] = [r for r in target.get('relation', []) if r != {'type':value['database'], 'target':value['literal']}]
+                target['relation'].extend({'type':value['database'], 'target':a} for a in value['accessions'])
     by_sample = {s['iid']: s for s in samples}
     for path in paths:
         for step in path['steps']:
@@ -310,7 +317,8 @@ def finish(provider, records, series, samples, protocols, paths):
     if data['contributor']:
         series['contributor_ref'] = [{'ref': c['iid']} for c in data['contributor']]
     declare_ontologies(data)
-    return MINiMLCodec().decode(data).package
+    from .archive_residuals import finalize
+    return finalize(data)
 
 
 def study_record(node, seed):

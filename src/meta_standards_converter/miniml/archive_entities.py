@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Source-bound archive actors and ontology declarations (no retrieval)."""
 from copy import deepcopy
 import logging
@@ -11,6 +19,7 @@ def actors(records, provider):
     from ..sources.archive_support import identifier
     def organization_nodes(node, owner, path=()):
         accession = identifier(node) or (node.get('uid') if node.tag == 'DocumentSummary' else None)
+        if node.tag == 'EXPERIMENT_PACKAGE': accession = identifier(node.find('EXPERIMENT'))
         if accession:
             owner, path = (node.tag, accession), ()
         if node.tag == 'Organization':
@@ -42,6 +51,15 @@ def actors(records, provider):
                 address = contact.find('Address')
                 if address is not None: item['address'] = {'lines': [v.strip() for v in address.itertext() if v.strip()]}
                 if len(item) > 2: contributors.append(item)
+    centers = set()
+    for root in records.xml:
+        for node in root.iter():
+            if node.tag not in ('STUDY','PROJECT') or not node.get('center_name'):
+                continue
+            iid = f'{provider}:{node.tag}:{identifier(node)}:center_name'
+            if iid not in centers:
+                centers.add(iid)
+                organizations.append({'iid':iid, 'name':node.get('center_name'), 'role':'center_name'})
     return organizations, contributors
 
 

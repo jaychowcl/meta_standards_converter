@@ -53,7 +53,12 @@ def merge_declarations(data, extra, namespace):
             incoming['iid'] = mappings[iid]
     remap_references(extra, mappings)
     for kind in ('organization', 'contributor', 'platform'):
-        data.setdefault(kind, []).extend(deepcopy(extra.get(kind, [])))
+        current = {v['iid']: v for v in data.setdefault(kind, [])}
+        for incoming in extra.get(kind, []):
+            if incoming['iid'] in current:
+                current[incoming['iid']].update(deepcopy(incoming))
+            else:
+                data[kind].append(deepcopy(incoming))
     # IDF contributors are study-scoped even when the input omitted explicit refs.
     if extra.get('contributor') and not extra['series'].get('contributor_ref'):
         extra['series']['contributor_ref'] = [{'ref': p['iid']} for p in extra['contributor']]

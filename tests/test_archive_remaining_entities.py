@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 import xml.etree.ElementTree as ET
 
 from meta_standards_converter.miniml import MINiMLCodec
@@ -47,3 +55,12 @@ def test_idf_inline_contacts_affiliations_and_roles():
 def test_native_ontology_references_have_declarations():
     data = SRAParser().parse(fixture_records('sra')).to_mapping()
     assert 'NCBITaxon' in {d['iid'] for d in data['database']}
+
+
+def test_declared_archive_centers_are_organizations_without_invented_people():
+    from meta_standards_converter.miniml.ena_parser import ENAParser
+    records=fixture_records('ena')
+    records.xml[0].find('STUDY').set('center_name','Declared sequencing centre')
+    data=ENAParser().parse(records).to_mapping()
+    assert any(o['name']=='Declared sequencing centre' and o.get('role')=='center_name' for o in data['organization'])
+    assert not data['contributor']

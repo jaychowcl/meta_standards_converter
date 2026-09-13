@@ -4078,16 +4078,26 @@ consumers prefer `name`. The `json2ae` orchestration remains unchanged.
 <a id="native-archive-contract"></a>
 ### Archive extension and mapping contract
 
-`extensions.insdc` has `version: "1.0"` and an ordered `records` array. Each
-record contains `provider`, `kind`, `accession`, and `metadata`. XML metadata is
-represented by `tag`, `attributes`, ordered `children`, optional `text` and
-meaningful `tail`; indexed JSON retains provider keys and literal values. An
-Entrez experiment package retains its complete wrapper and separately identified
-study/sample/experiment/run records. Linked BioSamples, taxonomy, assembly and
-cross-reference records retain their original structured payloads. Optional
-raw-response files use content-addressed names and are separate from this model.
-Native accession-resolution responses are captured as well as study retrieval.
-The extension is source evidence, not a completeness or per-field provenance log.
+`extensions.insdc` version **2.0** retains only source metadata not represented
+by the final MINiML mapping. Version 1.0 whole-record packages still decode.
+Each ordered record has `provider`, `kind`, `accession`, and residual `metadata`.
+XML retains unmapped attributes/children and necessary identifying context;
+indexed JSON retains unmapped provider keys. Empty records and duplicated
+experiment-package entity wrappers are omitted. Repeated source characteristics
+remain occurrences; no package-wide string deduplication is performed.
+
+`archive_residuals.Projection` binds source fields to their corresponding study,
+sample, experiment, run, publication, actor or file. Its field-specific rules
+recognize coherent value/unit groups and positional file projections. The native
+parser finalizes these projections into a typed package. Private source records
+stay attached to that in-memory package while enrichment runs, and are excluded
+from serialization. After enrichment, `finalize` re-evaluates the bindings against
+the selected core values, retaining displaced and unmatched information.
+Saved packages retain displaced core metadata through scoped MINiML residuals.
+There is no serialized per-field provenance ledger. Verified enrichment links
+are promoted into core relations before pruning; discovery does not require
+whole-record XML. Original response bytes remain an optional `--evidence-dir`
+export. Operational diagnostics stay in logs and optional import reports.
 
 | Source evidence | Core MINiML projection | Scope / transformation |
 | --- | --- | --- |
@@ -4110,6 +4120,7 @@ reports. A missing optional field or empty optional inventory does not itself
 make an import incomplete. Requested but unavailable linked metadata does.
 
 <a id="native-archive-fidelity"></a>
+### Retrieval and enrichment fidelity
 
 Statuses preserve database and entity scope; native IDF dates never substitute submission for experiment dates. Sample-bound assembly reports use source-to-file branches. Explicit ENA sample/run analysis links are fetched one hop and reconciled without expanding read membership. Assembly descriptions do not define protocols.
 
@@ -4117,8 +4128,6 @@ Native imports project explicit organizations and contacts with source-bound IDs
 Enrichment imports registered platforms and rewrites sample/contact references.
 IDF person rows include inline study contacts, organization affiliations and supplied roles.
 Ontology references receive database declarations; explicit identifier namespaces take precedence over inconsistent source labels, which remain retained.
-
-### Retrieval and enrichment fidelity
 
 `SRASource.project_xml` resolves BioProject accessions with exact Entrez
 `ESearch(db=bioproject, term="<accession>[PRJA]")`, then fetches the unique UID.
@@ -4355,6 +4364,34 @@ Supporting mapping helpers (no network or shared converter orchestration):
 | `meta_standards_converter.metadata.archive_workflows.is_file` | `is_file(step)` |
 | `meta_standards_converter.metadata.archive_workflows.file_node` | `file_node(file, kind='array_data_file')` |
 | `meta_standards_converter.metadata.archive_workflows.merge_workflows` | `merge_workflows(data, extra, matched, proto_names, prefer, issues)` |
+
+ENA accession ranges are expanded only within a 1000-record bound and validated through Browser XML before individual relations are emitted. Returned range records do not expand read membership.
+
+Residual projection and entity helpers:
+
+| Qualified callable | Signature |
+| --- | --- |
+| `meta_standards_converter.miniml.archive_entities.actors` | `actors(records, provider)` |
+| `meta_standards_converter.miniml.archive_entities.declare_ontologies` | `declare_ontologies(data, issues=None)` |
+| `meta_standards_converter.miniml.archive_residuals.children` | `children(node, tag)` |
+| `meta_standards_converter.miniml.archive_residuals.child_text` | `child_text(node, path)` |
+| `meta_standards_converter.miniml.archive_residuals.all_text` | `all_text(node)` |
+| `meta_standards_converter.miniml.archive_residuals.accession` | `accession(node)` |
+| `meta_standards_converter.miniml.archive_residuals.contains` | `contains(expected, actual)` |
+| `meta_standards_converter.miniml.archive_residuals.diff` | `diff(source, target)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection` | `Projection` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.entity` | `entity(self, kind, acc)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.organisms` | `organisms(self)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.character` | `character(self, sample, name, value, unit=None, terms=None)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.relations` | `relations(self, entity)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.reference` | `reference(self, value, kind, acc)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.xml` | `xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.indexed` | `indexed(self, metadata, kind, acc)` |
+| `meta_standards_converter.miniml.archive_residuals.source_records` | `source_records(package)` |
+| `meta_standards_converter.miniml.archive_residuals.finalize` | `finalize(data, records=None)` |
+| `meta_standards_converter.miniml.insdc_support.result_file` | `result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=True)` |
+| `meta_standards_converter.sources.ena.ENASource.fetch_reference_ranges` | `fetch_reference_ranges(self, records)` |
+| `meta_standards_converter.sources.ena.ENASource.fetch_associated_analyses` | `fetch_associated_analyses(self, records)` |
 
 <a id="native-archive-validation"></a>
 ### Native import validation

@@ -49,10 +49,6 @@
               {
                 "name": "material type",
                 "value": "cell"
-              },
-              {
-                "name": "compound",
-                "value": "none"
               }
             ],
             "molecule": {

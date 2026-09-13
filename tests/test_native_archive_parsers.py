@@ -52,7 +52,7 @@ def test_native_identity_biology_and_relationships(provider, parser):
     assert sample["sra_run"][0]["run"] == "SRR11192680"
     assert sample["sra_run"][0]["library_layout"] == "PAIRED"
     assert data["series"]["assay_paths"]
-    assert data["extensions"]["insdc"]["version"] == "1.0"
+    assert data["extensions"]["insdc"]["version"] == "2.0"
     assert data["extensions"]["insdc"]["records"]
     assert "completeness" not in json.dumps(data)
     MINiMLCodec().decode(data, strict=True)

@@ -354,7 +354,7 @@ class IDFConstructor():
         from copy import deepcopy
         contributors = deepcopy(data.get("contributor", []))
         known = {c.get("iid") for c in contributors if c.get("iid")}
-        series = data.get("series", {})
+        series = data.get("series") or {}
         for contributor in [*series.get("contributor", []), *series.get("contact", [])]:
             if contributor.get("iid") and contributor["iid"] in known:
                 continue

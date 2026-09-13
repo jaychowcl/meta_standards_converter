@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from meta_standards_converter.miniml import MINiMLCodec
@@ -79,3 +87,19 @@ def test_cross_reference_lists_split_only_verified_accession_literals():
     from meta_standards_converter.miniml.insdc_support import relations
     node=ET.fromstring('<SAMPLE><XREF_LINK><DB>ENA-STUDY</DB><ID>DRP1,ERP2</ID></XREF_LINK><XREF_LINK><DB>description</DB><ID>one,two</ID></XREF_LINK></SAMPLE>')
     assert relations(node)==[{'type':'ENA-STUDY','target':'DRP1'},{'type':'ENA-STUDY','target':'ERP2'},{'type':'description','target':'one,two'}]
+
+
+def test_ena_range_links_are_resolved_before_individual_relations():
+    from meta_standards_converter.sources.ena import ENASource
+    from tests.test_native_archive_sources import HTTP
+    records=fixture_records('ena');sample=records.xml[1].find('SAMPLE')
+    link=ET.SubElement(sample,'XREF_LINK');ET.SubElement(link,'DB').text='ENA-RUN';ET.SubElement(link,'ID').text='ERR000001-ERR000002,ERR000004'
+    def handler(url,p,fmt):
+        ids=url.rsplit('/',1)[-1].split(',')
+        return ET.fromstring('<RUN_SET>'+''.join(f'<RUN accession="{a}"/>' for a in ids)+'</RUN_SET>')
+    source=ENASource(http=HTTP(handler));source.fetch_reference_ranges(records)
+    data=ENAParser().parse(records).to_mapping()
+    refs=data['sample'][0]['relation']
+    assert all({'type':'ENA-RUN','target':a} in refs for a in ['ERR000001','ERR000002','ERR000004'])
+    assert not any('-ERR' in r.get('target','') for r in refs)
+    assert len(data['sample'][0]['sra_run'])==1
