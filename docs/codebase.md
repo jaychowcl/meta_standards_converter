@@ -4088,7 +4088,9 @@ remain occurrences; no package-wide string deduplication is performed.
 
 `archive_residuals.Projection` binds source fields to their corresponding study,
 sample, experiment, run, publication, actor or file. Its field-specific rules
-recognize coherent value/unit groups and positional file projections. The native
+recognize coherent value/unit groups, positional file projections, normalized study
+descriptions, and matching archive-date/link attributes. Differing source dates
+remain residual rather than being removed by a same-text search. The native
 parser finalizes these projections into a typed package. Private source records
 stay attached to that in-memory package while enrichment runs, and are excluded
 from serialization. After enrichment, `finalize` re-evaluates the bindings against

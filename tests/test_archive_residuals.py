@@ -99,3 +99,27 @@ def test_saved_v2_preserves_unmapped_siblings_across_repeated_enrichment():
     second,_=merge_archive_metadata(saved,MINiMLCodec().decode(extra).package,prefer=True)
     assert 'sec_email' in str(second.to_mapping()['extensions'])
     assert not any('miniml_schema_version' in r['metadata'] for r in second.to_mapping()['extensions']['insdc']['records'])
+
+
+def test_study_residual_recognizes_description_dates_and_verified_attribute_links():
+    from meta_standards_converter.miniml.archive_residuals import Projection
+    from meta_standards_converter.miniml.insdc_support import tree
+    data = {'series': {'iid': 'PRJEB1', 'accession': [{'value': 'ERP1'}, {'value': 'PRJEB1'}],
+                       'summary': 'Submitted description with whitespace.',
+                       'status': [{'database': 'ENA', 'release_date': '2021-03-09', 'last_update_date': '2021-03-20'}],
+                       'relation': [{'type': 'ArrayExpress', 'target': 'E-MTAB-1'}]}}
+    node = tree(ET.fromstring('''<STUDY accession="ERP1"><DESCRIPTOR>
+      <STUDY_DESCRIPTION>Submitted description\n with whitespace.</STUDY_DESCRIPTION>
+      </DESCRIPTOR><STUDY_ATTRIBUTES>
+      <STUDY_ATTRIBUTE><TAG>ENA-FIRST-PUBLIC</TAG><VALUE>2021-03-09</VALUE></STUDY_ATTRIBUTE>
+      <STUDY_ATTRIBUTE><TAG>ENA-LAST-UPDATE</TAG><VALUE>2021-03-09</VALUE></STUDY_ATTRIBUTE>
+      <STUDY_ATTRIBUTE><TAG>ArrayExpress</TAG><VALUE>E-MTAB-1</VALUE><CUSTOM>keep</CUSTOM></STUDY_ATTRIBUTE>
+      <STUDY_ATTRIBUTE><TAG>UNMAPPED</TAG><VALUE>2021-03-09</VALUE></STUDY_ATTRIBUTE>
+      </STUDY_ATTRIBUTES></STUDY>'''))
+    residual = Projection(data).xml(node, 'STUDY', 'ERP1', 'ena')
+    rendered = str(residual)
+    assert 'STUDY_DESCRIPTION' not in rendered
+    assert 'ENA-FIRST-PUBLIC' not in rendered
+    assert 'E-MTAB-1' not in rendered
+    assert 'ENA-LAST-UPDATE' in rendered  # Differing browser and index dates survive.
+    assert 'UNMAPPED' in rendered and 'CUSTOM' in rendered

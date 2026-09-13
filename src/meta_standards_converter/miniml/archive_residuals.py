@@ -176,6 +176,16 @@ class Projection:
                     node=deepcopy(node);node['children']=[c for c in node.get('children',[]) if c['tag'] not in ('TAG','VALUE','UNITS')]
                     drop=not node['children'] and not attrs
                 else: mapped_text=True;mapped_attrs.update(('attribute_name','display_name','unit'))
+        if tag == 'STUDY_ATTRIBUTE':
+            name, value = child_text(node, 'TAG'), child_text(node, 'VALUE')
+            date_field = {'ENA-FIRST-PUBLIC': 'release_date', 'ENA-LAST-UPDATE': 'last_update_date'}.get(name)
+            represented = bool(date_field and any(s.get('database') == 'ENA' and s.get(date_field) == value
+                                                  for s in entity.get('status', [])))
+            represented |= {'type': name, 'target': value} in self.relations(entity)
+            if represented:
+                node = deepcopy(node)
+                node['children'] = [c for c in node.get('children', []) if c['tag'] not in ('TAG', 'VALUE')]
+                drop = not node['children'] and not attrs
         if tag in ('XREF_LINK','URL_LINK'):
             db=child_text(node,'DB') if tag=='XREF_LINK' else child_text(node,'LABEL') or 'external'
             value=child_text(node,'ID') if tag=='XREF_LINK' else child_text(node,'URL')
@@ -184,10 +194,10 @@ class Projection:
                 if record['accession']==acc and record['metadata']['database']==db and record['metadata']['literal']==value: parts=record['metadata']['accessions']
             if all({'type':db,'target':p.strip()} in self.relations(entity) for p in parts): return None
         if tag in ('PRIMARY_ID','SECONDARY_ID','EXTERNAL_ID') and self.reference(text,kind,acc): mapped_text=True;mapped_attrs.update(('namespace','label'))
-        field={'STUDY_TITLE':'title','STUDY_ABSTRACT':'summary','TITLE':'title','DESCRIPTION':'description'}.get(tag)
+        field={'STUDY_TITLE':'title','STUDY_ABSTRACT':'summary','STUDY_DESCRIPTION':'summary','TITLE':'title','DESCRIPTION':'description'}.get(tag)
         if kind in ('PROJECT','STUDY','DocumentSummary','study') and tag in ('DESCRIPTION','Description'): field='summary'
         if tag=='Title' and kind=='DocumentSummary': field='title'
-        if field and text and text == entity.get(field): mapped_text=True
+        if field and text and ' '.join(text.split()) == ' '.join(str(entity.get(field) or '').split()): mapped_text=True
         channel=entity.get('channel',[{}])[0]
         if kind=='BioSample' and tag=='Title' and entity.get('title')==text: mapped_text=True
         if kind=='BioSample' and tag=='OrganismName' and any(o.get('value')==text for o in channel.get('organism',[])): mapped_text=True
