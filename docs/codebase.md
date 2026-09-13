@@ -4215,7 +4215,7 @@ export. Operational diagnostics stay in logs and optional import reports.
 | Analysis/assembly files, protocols and associations | `supplementary_data`, additional assay branches, `protocols`, `relation` | Explicit sample/run associations only; assembly FTP directories are relations, never invented file URLs |
 | Experimental factors / replicates | `series.variable`, factor values / repeat metadata from explicit linked declarations | Original factor `name` survives normalization; varying attributes alone do not declare factors |
 
-`miniml.archive_protocols.library_description` is a pure helper shared by both
+`meta_standards_converter.miniml.archive_protocols.library_description` is a pure helper shared by both
 native parsers. It appends complete sentences starting with explicit library
 preparation forms (library was/libraries were made, prepared or constructed
 using/with), preserving source wording, versions and enzyme motifs. Sentences
@@ -4226,7 +4226,10 @@ qualifying sentence can supply an otherwise absent library protocol; unrelated
 design prose cannot. Sequencing instruments remain on runs/assays rather than
 being copied into library-construction hardware. Residual matching recognizes
 the combined dedicated text and method sentences at the same experiment scope.
-For saved native packages, `prepare_native_protocols` runs inside shared protocol
+Its sentence selector is
+`meta_standards_converter.miniml.archive_protocols.method_sentences`.
+For saved native packages,
+`meta_standards_converter.miniml.archive_protocols.prepare_native_protocols` runs inside shared protocol
 export preparation on the in-memory copy. Method recovery requires a generated
 `<experiment>:library` definition and a unique matching assay description through
 explicit protocol references. Ambiguous/shared references and GEO/AE definitions
