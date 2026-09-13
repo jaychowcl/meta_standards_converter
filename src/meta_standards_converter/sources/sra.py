@@ -17,6 +17,7 @@ class SRASource:
 
     def __init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None):
         self.http = http or ArchiveHTTP('ncbi_eutils', requester, resource_profile, evidence_dir)
+        self._projects = {}
 
     def search(self, term, db='sra'):
         ids, issues, start, count = [], [], 0, None
@@ -47,6 +48,53 @@ class SRASource:
     def xml(self, db, ids):
         return self.http.get(self.base + 'efetch.fcgi', {'db': db, 'id': ','.join(ids), 'retmode': 'xml'})
 
+    def project_xml(self, accession, result):
+        """Resolve the accession namespace before EFetch, then verify the record."""
+        if accession in self._projects:
+            return self._projects[accession]
+        ids = [accession]
+        if not accession.isdigit():
+            ids, issues = self.search(accession + '[PRJA]', db='bioproject')
+            result.issues.extend(issues)
+        if len(ids) != 1:
+            result.issues.append(f'BioProject {accession}: missing or ambiguous UID')
+            return None
+        root = attempt(result, f'BioProject {accession}', lambda: self.xml('bioproject', ids))
+        if root is None:
+            return None
+        nodes = root.findall('.//ProjectID/ArchiveID')
+        valid = [n for n in nodes if n.get('id') == ids[0] and n.get('accession')
+                 and (accession.isdigit() or n.get('accession') == accession)]
+        if len(nodes) != 1 or len(valid) != 1 or any(n.tag.lower() == 'error' for n in root.iter()):
+            result.issues.append(f'BioProject {accession}: missing, error or mismatched identity')
+            return None
+        self._projects[accession] = root
+        self._projects[ids[0]] = root
+        self._projects[valid[0].get('accession')] = root
+        return root
+
+    def linked_xml(self, db, ids, result):
+        """Keep only requested, identifiable linked entities from a batch."""
+        root = attempt(result, db, lambda: self.xml(db, ids))
+        if root is None:
+            return None
+        paths = {'biosample': './/BioSample', 'taxonomy': './/Taxon', 'pubmed': './/PubmedArticle'}
+        clean = ET.Element(root.tag)
+        found = set()
+        for node in root.findall(paths[db]):
+            if any(n.tag.lower() == 'error' for n in node.iter()):
+                continue
+            aliases = ({node.get('accession'), node.get('id')} if db == 'biosample' else
+                       {node.findtext('TaxId')} if db == 'taxonomy' else
+                       {node.findtext('MedlineCitation/PMID')})
+            matched = set(ids) & aliases
+            if matched:
+                clean.append(node)
+                found.update(matched)
+        for missing in sorted(set(ids) - found):
+            result.issues.append(f'{db} {missing}: missing, error or mismatched identity')
+        return clean if len(clean) else None
+
     def links(self, dbfrom, db, ids, name):
         root = self.http.get(self.base + 'elink.fcgi', {'dbfrom': dbfrom, 'db': db,
             'id': ','.join(ids), 'linkname': name, 'cmd': 'neighbor'})
@@ -63,7 +111,7 @@ class SRASource:
             if acc in visited:
                 return
             visited.add(acc)
-            root = attempt(result, f'BioProject {acc}', lambda: self.xml('bioproject', [acc]))
+            root = self.project_xml(acc, result)
             if root is None:
                 queries.append(f'{acc}[GPRJ]')
                 return
@@ -74,7 +122,7 @@ class SRASource:
             uid = node.get('id') if node is not None else acc
             children = attempt(result, f'BioProject children {acc}', lambda: self.links('bioproject', 'bioproject', [uid], 'bioproject_bioproject_u2d')) or []
             for child in children:
-                doc = attempt(result, f'BioProject child {child}', lambda: self.xml('bioproject', [child]))
+                doc = self.project_xml(child, result)
                 if doc is not None:
                     for item in doc.findall('.//ProjectID/ArchiveID'):
                         if item.get('accession'):
@@ -124,16 +172,22 @@ class SRASource:
                 if key in linked and value:
                     linked[key].add(value)
             linked['taxonomy'].update(n.text for n in root.findall('.//SAMPLE_NAME/TAXON_ID') if n.text)
+        accepted_projects = set()
         for db in ('biosample', 'bioproject'):
-            for batch in chunks(sorted(linked[db])):
-                root = attempt(records, db, lambda: self.xml(db, batch))
+            for batch in chunks(sorted(linked[db]), size=1 if db == 'bioproject' else 100):
+                root = self.project_xml(batch[0], records) if db == 'bioproject' else self.linked_xml(db, batch, records)
+                if root is not None and db == 'bioproject':
+                    uid = root.find('.//ProjectID/ArchiveID').get('id')
+                    if uid in accepted_projects:
+                        continue
+                    accepted_projects.add(uid)
                 if root is not None:
                     records.xml.append(root)
                     if db == 'bioproject':
                         linked['pubmed'].update(n.get('id') for n in root.findall('.//Publication') if n.get('id') and n.findtext('DbType') == 'ePubmed')
         for db in ('taxonomy', 'pubmed'):
             for batch in chunks(sorted(linked[db])):
-                root = attempt(records, db, lambda: self.xml(db, batch))
+                root = self.linked_xml(db, batch, records)
                 if root is not None:
                     records.xml.append(root)
         assembly_ids = []
@@ -148,7 +202,7 @@ class SRASource:
             if data is not None:
                 for uid in batch:
                     item = data.get('result', {}).get(uid)
-                    if item:
+                    if item and not item.get('error') and item.get('assemblyaccession') and str(item.get('uid', uid)) == uid:
                         records.linked.append({'provider': 'sra', 'kind': 'assembly', 'accession': item.get('assemblyaccession'), 'metadata': item})
                     else:
                         records.issues.append(f'assembly {uid}: missing summary')

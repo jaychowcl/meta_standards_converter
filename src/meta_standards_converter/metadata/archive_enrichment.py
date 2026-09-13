@@ -48,7 +48,7 @@ def linked_accessions(package):
 # These are absence markers for precedence only; the source literals remain retained.
 _MISSING = {'', 'na', 'n/a', 'null', 'none', 'unknown', 'not applicable',
             'not available', 'not provided', 'not collected', 'missing', 'unspecified'}
-_ID = re.compile(r'(?<![A-Z0-9])(?:[SED]R[PSXR]\d+|SAM(?:N|EA|D)\d+|PRJ(?:NA|EB|DB)\d+|GS[EM]\d+|E-[A-Z]+-\d+)(?![A-Z0-9])')
+_ID = re.compile(r'(?<![A-Z0-9])(?:[SED]R[PSXR]\d+|SAM(?:N|EA|D)\d+|PRJ(?:NA|EB|DB|DA)\d+|GS[EM]\d+|E-[A-Z]+-\d+)(?![A-Z0-9])')
 
 
 def informative(value):

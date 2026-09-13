@@ -11,7 +11,7 @@ from copy import deepcopy
 from pathlib import PurePosixPath
 import re
 import xml.etree.ElementTree as ET
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, quote, unquote
 
 from .codec import MINiMLCodec
 from ..sources.archive_support import identifier
@@ -65,7 +65,7 @@ def accessions(node, primary):
     if node is not None:
         for item in node.findall('IDENTIFIERS/*'):
             value = (item.text or '').strip()
-            if re.fullmatch(r'(?:[SED]R[PSXR]\d+|PRJ(?:NA|EB|DB)\d+|SAM(?:N|EA|D)\d+|GS[EM]\d+|E-[A-Z]+-\d+)', value):
+            if re.fullmatch(r'(?:[SED]R[PSXR]\d+|PRJ(?:NA|EB|DB|DA)\d+|SAM(?:N|EA|D)\d+|GS[EM]\d+|E-[A-Z]+-\d+)', value):
                 if value not in values:
                     values.append(value)
     return [{'value': v, 'database': database_for(v)} for v in values]
@@ -153,10 +153,15 @@ def files_from_ena(row):
         for i in range(max(map(len, columns.values()))):
             value = lambda key: columns[key][i] if i < len(columns[key]) else ''
             path = value('ftp')
+            # Portal FTP locations are paths: a literal # is not a URI fragment.
             uri = (path if '://' in path else 'ftp://' + path) if path else None
+            if uri:
+                scheme, location = uri.split('://', 1)
+                host, separator, file_path = location.partition('/')
+                uri = scheme + '://' + host + separator + quote(unquote(file_path), safe='/')
             item = {'uri': uri, 'format': value('format') or family, 'role': value('file_role')}
             if uri:
-                item['filename'] = PurePosixPath(urlsplit(uri).path).name
+                item['filename'] = PurePosixPath(unquote(urlsplit(uri).path)).name
             for key in ('md5', 'bytes', 'aspera', 'galaxy'):
                 if value(key):
                     item[key] = value(key)

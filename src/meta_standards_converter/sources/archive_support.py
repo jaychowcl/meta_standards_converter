@@ -45,7 +45,7 @@ def accession_kind(value):
     value = str(value).strip().upper()
     for kind, pattern in [('study', r'[SED]RP\d+'), ('experiment', r'[SED]RX\d+'),
                           ('run', r'[SED]RR\d+'), ('sample', r'[SED]RS\d+'),
-                          ('project', r'PRJ(?:NA|EB|DB)\d+'),
+                          ('project', r'PRJ(?:NA|EB|DB|DA)\d+'),
                           ('biosample', r'SAM(?:N|EA|D)\d+')]:
         if re.fullmatch(pattern, value):
             return value, kind

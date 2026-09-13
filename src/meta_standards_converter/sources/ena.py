@@ -9,6 +9,8 @@
 """ENA Portal membership discovery and full Browser record retrieval."""
 import csv
 import io
+import re
+import xml.etree.ElementTree as ET
 from .archive_support import ArchiveHTTP, Resolution, StudyRecords, StudySeed, accession_kind, attempt, chunks, identifier
 
 
@@ -30,6 +32,23 @@ class ENASource:
     def xml(self, accessions):
         return self.http.get(self.browser + ','.join(accessions), {'includeLinks': 'true'})
 
+    def verified_xml(self, accessions, result, kind='record'):
+        root = attempt(result, f'{kind} XML', lambda: self.xml(accessions))
+        if root is None:
+            return None
+        clean, found = ET.Element(root.tag), set()
+        for node in root:
+            aliases = {identifier(node)} | {n.text for n in node.findall('IDENTIFIERS/*')}
+            matches = {acc for acc in accessions if acc in aliases or
+                       (re.fullmatch(r'GC[AF]_\d+', acc) and any(
+                           re.fullmatch(re.escape(acc) + r'\.\d+', a or '') for a in aliases))}
+            if matches and not any(n.tag.lower() == 'error' for n in node.iter()):
+                clean.append(node)
+                found.update(matches)
+        for missing in sorted(set(accessions) - found):
+            result.issues.append(f'{kind}: missing XML record {missing}')
+        return clean if len(clean) else None
+
     def resolve(self, accession):
         accession, kind = accession_kind(accession)
         result, visited, queries = Resolution(), set(), []
@@ -37,7 +56,7 @@ class ENASource:
             if acc in visited:
                 return
             visited.add(acc)
-            root = attempt(result, acc, lambda: self.xml([acc]))
+            root = self.verified_xml([acc], result, 'project')
             if root is not None and root.find('.//UMBRELLA_PROJECT') is not None:
                 for child in root.findall('.//CHILD_PROJECT'):
                     if child.get('accession'):
@@ -65,7 +84,7 @@ class ENASource:
         records = StudyRecords(seed)
         query = f'secondary_study_accession="{seed.study}"' if seed.study.startswith(('SRP', 'ERP', 'DRP')) else f'study_accession="{seed.primary}"'
         for accession in dict.fromkeys((seed.study, seed.primary)):
-            root = attempt(records, accession, lambda: self.xml([accession]))
+            root = self.verified_xml([accession], records)
             if root is not None:
                 records.xml.append(root)
         for kind in ('study', 'sample', 'read_experiment', 'read_run', 'analysis', 'assembly'):
@@ -90,19 +109,17 @@ class ENASource:
         inventory = {}
         for kind, field in [('sample', 'sample_accession'), ('read_experiment', 'experiment_accession'),
                             ('read_run', 'run_accession'), ('analysis', 'analysis_accession'), ('assembly', 'assembly_accession')]:
-            accessions = list(dict.fromkeys(r[field] for r in records.indexed.get(kind, []) if r.get(field)))
+            accessions = list(dict.fromkeys((r.get('assembly_set_accession') or r[field]) if kind == 'assembly' else r[field]
+                                           for r in records.indexed.get(kind, []) if r.get(field)))
             if kind == 'sample':
                 members = {r.get('sample_accession') for k in ('read_experiment', 'read_run') for r in records.indexed.get(k, []) if r.get('sample_accession')}
                 if members:
                     accessions = sorted(members)
             inventory[kind] = accessions
             for batch in chunks(accessions):
-                root = attempt(records, f'{kind} XML', lambda: self.xml(batch))
+                root = self.verified_xml(batch, records, kind)
                 if root is not None:
                     records.xml.append(root)
-                    returned = {identifier(n) for n in root} | {n.text for n in root.findall('.//IDENTIFIERS/*')}
-                    for missing in sorted(set(batch) - returned):
-                        records.issues.append(f'{kind}: missing XML record {missing}')
         count = attempt(records, 'ENA run count', lambda: self.http.get(self.portal + 'count',
             {'result': 'read_run', 'query': query, 'format': 'json', 'includeMetagenomes': 'true'}, 'json'))
         if count is not None:
@@ -126,6 +143,9 @@ class ENASource:
         for acc in inventory['sample']:
             if acc.startswith('SAM'):
                 obj = attempt(records, f'BioSamples {acc}', lambda: self.http.get('https://www.ebi.ac.uk/biosamples/samples/' + acc, fmt='json'))
+                if obj is not None and obj.get('accession') != acc:
+                    records.issues.append(f'BioSamples {acc}: mismatched identity')
+                    obj = None
                 if obj is not None:
                     records.linked.append({'provider': 'biosamples', 'kind': 'sample', 'accession': acc, 'metadata': obj})
         for taxid in sorted(taxa):

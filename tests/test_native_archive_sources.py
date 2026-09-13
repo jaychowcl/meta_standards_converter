@@ -118,7 +118,7 @@ def test_sra_sample_expansion_and_umbrella_children_are_explicit():
             assert p['linkname'] == 'bioproject_bioproject_u2d'
             return ET.fromstring('<eLinkResult><LinkSet><LinkSetDb><Link><Id>2</Id></Link></LinkSetDb></LinkSet></eLinkResult>')
         if p['db'] == 'bioproject':
-            if p['id'] == 'PRJNA1':
+            if p['id'] == '1':
                 return ET.fromstring('<RecordSet><Project><ProjectID><ArchiveID id="1" accession="PRJNA1"/></ProjectID><ProjectTypeTopAdmin/></Project></RecordSet>')
             return ET.fromstring('<RecordSet><Project><ProjectID><ArchiveID id="2" accession="PRJNA2"/></ProjectID></Project></RecordSet>')
         return ET.fromstring('<EXPERIMENT_PACKAGE_SET><EXPERIMENT_PACKAGE><EXPERIMENT><STUDY_REF accession="SRP2"/></EXPERIMENT></EXPERIMENT_PACKAGE><EXPERIMENT_PACKAGE><EXPERIMENT><STUDY_REF accession="SRP3"/></EXPERIMENT></EXPERIMENT_PACKAGE></EXPERIMENT_PACKAGE_SET>')
