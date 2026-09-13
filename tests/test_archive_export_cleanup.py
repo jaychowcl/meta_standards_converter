@@ -96,3 +96,20 @@ def test_enrichment_keeps_conflicting_dates_in_the_same_archive():
     extra=workflow().to_mapping();extra['series']['status']=[{'database':'ENA','release_date':'2021-01-01'}]
     merged,_=merge_archive_metadata(MINiMLCodec().decode(data).package,MINiMLCodec().decode(extra).package,prefer=True)
     assert {s['release_date'] for s in merged.to_mapping()['series']['status'] if s['database']=='ENA'}=={'2020-01-01','2021-01-01'}
+
+
+@pytest.mark.parametrize('name', ['ENA first public','ENA last update'])
+def test_space_separated_dates_preserve_precision_and_residual_siblings(name):
+    records=fixture_records('ena');attributes=records.xml[1].find('SAMPLE/SAMPLE_ATTRIBUTES')
+    attr=ET.SubElement(attributes,'SAMPLE_ATTRIBUTE')
+    ET.SubElement(attr,'TAG').text=name;ET.SubElement(attr,'VALUE').text='2020-03'
+    ET.SubElement(attr,'CUSTOM').text='preserve me'
+    data=ENAParser().parse(records).to_mapping()
+    field='release_date' if name.endswith('public') else 'last_update_date'
+    assert {'database':'ENA',field:'2020-03'} in data['sample'][0]['status']
+    assert not any(c['name']==name for c in data['sample'][0]['channel'][0]['characteristics'])
+    assert 'preserve me' in str(data['extensions'])
+    assert not any(n.get('tag')=='VALUE' and n.get('text')=='2020-03' for n in nodes(data['extensions']))
+    from tests.test_protocol_export import render
+    table=next(r[1] for r in render(data) if r[0]=='SDRF File')
+    assert not any(name in header for header in table[0])

@@ -4079,6 +4079,13 @@ in `series.variable[].name`, alongside the existing normalized `factor` category
 consumers prefer `name`. The `json2ae` orchestration remains unchanged.
 
 
+GEO file-reference fields containing the standalone `NONE` sentinel produce no file
+objects; biological missing-value characteristics and actual filenames are unchanged.
+Native saved-JSON export removes legacy phantom file paths on its private copy.
+Space-separated `ENA first public` and `ENA last update` attributes use the same
+scoped status/residual mapping as their hyphenated forms; collection dates remain
+characteristics.
+
 BioSample `Owner` records are organizations, including owners without contacts.
 Their `Contacts/Contact` occurrences become root contributors referenced through
 only the matching sample's `contact_ref`; independent archive contact occurrences

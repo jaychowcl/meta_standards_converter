@@ -10,6 +10,8 @@
 from collections import Counter
 
 _RULES = {
+    'ena first public': ('ENA', 'release_date'),
+    'ena last update': ('ENA', 'last_update_date'),
     'ena-first-public': ('ENA', 'release_date'),
     'ena-last-update': ('ENA', 'last_update_date'),
     'insdc first public': ('INSDC', 'release_date'),

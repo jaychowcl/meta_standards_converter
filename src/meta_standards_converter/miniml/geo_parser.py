@@ -332,6 +332,10 @@ class GEOParser:
             parent_name = self._local_name(node.tag)
             for child in children:
                 child_name = self._local_name(child.tag)
+                if child_name in {'Supplementary-Data', 'Raw-Data'}:
+                    from .file_references import is_file_placeholder
+                    if is_file_placeholder(self._normalized_text(child.text)):
+                        continue
                 key = self._child_key(parent_name=parent_name, child_name=child_name)
                 if child_name in self.repeated_children.get(parent_name, set()):
                     repeatable_keys.add(key)

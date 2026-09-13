@@ -52,6 +52,8 @@ class AEConstructor:
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
         data = MINiMLCodec().encode(MINiMLCodec().decode(data).package)
+        from meta_standards_converter.miniml.file_references import clean_native_file_placeholders
+        clean_native_file_placeholders(data)
         from meta_standards_converter.miniml.archive_dates import normalize_archive_dates
         normalize_archive_dates(data)
         from meta_standards_converter.miniml.archive_administration import normalize_administration
