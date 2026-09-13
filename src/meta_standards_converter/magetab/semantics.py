@@ -320,6 +320,8 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
 def _insert_retained_patch_comments(package: dict, rows: list) -> None:
     """Add applied-patch evidence comments without manufacturing attributes."""
 
+    if not package.get("extensions", {}).get("msc_harmonization"):
+        return
     sdrf_row = next(
         (
             row
@@ -334,7 +336,19 @@ def _insert_retained_patch_comments(package: dict, rows: list) -> None:
     if not table or not isinstance(table[0], list):
         return
     samples = [item for item in package.get("sample", []) if isinstance(item, dict)]
-    row_columns = [patch_provenance_columns(package, sample) for sample in samples]
+    from meta_standards_converter.miniml import iter_harmonization_operations
+    grouped = {}
+    for operation in iter_harmonization_operations(package):
+        match = re.match(r"/sample/(\d+)/", operation['path'])
+        if match:
+            grouped.setdefault(int(match.group(1)), []).append(operation)
+    row_columns = [patch_provenance_columns(package, sample, operations=tuple(grouped.get(i, [])))
+                   for i, sample in enumerate(samples)]
+    by_identity = {s['iid']: columns for s, columns in zip(samples, row_columns)}
+    for path in package.get('series', {}).get('assay_paths', []):
+        for step in path.get('steps', []):
+            if step.get('kind') in ('source', 'sample') and step.get('sample_ref') in by_identity:
+                by_identity.setdefault(step.get('name'), by_identity[step['sample_ref']])
     union: list[str] = []
     for columns in row_columns:
         for key in columns:
@@ -363,8 +377,9 @@ def _insert_retained_patch_comments(package: dict, rows: list) -> None:
         for key in union
     ]
     header[offset:offset] = labels
+    identity_indexes = [i for i, label in enumerate(header) if label in ('Sample Name', 'Source Name')]
     for row_index, row in enumerate(table[1:]):
-        columns = row_columns[row_index] if row_index < len(row_columns) else {}
+        columns = next((by_identity[row[i]] for i in identity_indexes if i < len(row) and row[i] in by_identity), {})
         row[offset:offset] = [columns.get(key, "") or "" for key in union]
 
 
@@ -470,6 +485,8 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
         if not header:
             continue
         result.append((header, step.get("name", "")))
+        if step.get('link', {}).get('value'):
+            result.append(('Comment[File URI]', step['link']['value']))
         result.extend(_named_values_columns("Characteristics", step.get("characteristics", [])))
         result.extend(_named_values_columns("Factor Value", step.get("factor_values", [])))
         for field, field_header in (

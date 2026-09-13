@@ -57,6 +57,10 @@ class ENAParser:
                     records.issues.append(f'{run_id}: unresolved sample {member}')
                     continue
                 value = m.attach_run(sample, experiment, run, records.seed.study, files)
+                statistics = {k: row[k] for row in rows.get(run_id, [])
+                              for k in ('read_count', 'base_count') if row.get(k) not in (None, '')}
+                if statistics:
+                    value['indexed_statistics'] = statistics
                 paths.extend(m.assay_paths(sample, value, experiment, files, protocol))
         return m.finish('ena', records, series, list(samples.values()), protocols, paths)
 

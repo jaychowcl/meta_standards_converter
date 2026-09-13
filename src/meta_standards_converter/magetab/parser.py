@@ -782,22 +782,22 @@ class AEParser:
                 if uri.strip() and item not in raw:
                     raw.append(item)
 
-        for label in ("Array Data File", "Image File"):
-            raw = sample.setdefault("raw_data", [])
-            for value in self._cells(header, row, label):
-                item = {"value": value.strip()}
-                if value.strip() and item not in raw:
-                    raw.append(item)
-        for label in (
-            "Array Data Matrix File",
-            "Derived Array Data File",
-            "Derived Array Data Matrix File",
-        ):
-            derived = sample.setdefault("supplementary_data", [])
-            for value in self._cells(header, row, label):
-                item = {"value": value.strip()}
-                if value.strip() and item not in derived:
-                    derived.append(item)
+        file_headers = {'Array Data File', 'Image File', 'Array Data Matrix File',
+                        'Derived Array Data File', 'Derived Array Data Matrix File'}
+        for index, label in enumerate(header):
+            if label not in file_headers or not row[index].strip():
+                continue
+            value = row[index].strip()
+            for j in range(index + 1, len(header)):
+                if header[j] in file_headers or header[j] in {'Source Name', 'Sample Name', 'Assay Name', 'Scan Name', 'Protocol REF'}:
+                    break
+                if normalized_label(header[j]) == normalized_label('Comment[File URI]') and row[j].strip():
+                    value = row[j].strip()
+                    break
+            key = 'raw_data' if label in {'Array Data File', 'Image File'} else 'supplementary_data'
+            item = {'value': value}
+            if item not in sample.setdefault(key, []):
+                sample[key].append(item)
 
     def _set_scalar(self, target, key, value, context):
         value = value.strip()
@@ -822,7 +822,7 @@ class AEParser:
         if not match:
             return False
         key = " ".join(match.group(1).split()).casefold()
-        return key in self.KNOWN_COMMENTS or re.fullmatch(r"read\d+ file", key) is not None
+        return key == "file uri" or key in self.KNOWN_COMMENTS or re.fullmatch(r"read\d+ file", key) is not None
 
     def _cells(self, header, row, label):
         target = normalized_label(label)

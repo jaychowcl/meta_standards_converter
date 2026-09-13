@@ -309,6 +309,9 @@ class MINiMLV1Migrator:
                     "name": str(step.get("name") or step.get("header") or "comment"),
                     "value": str(step.get("value", "")),
                 }
+                if comment['name'].casefold() == 'file uri' and result[-1].get('kind', '').endswith('_file'):
+                    result[-1]['link'] = {'value': comment['value']}
+                    continue
                 target = result[-1] if comment["name"] == "msc_channel" else last_named or current_application or result[-1]
                 target.setdefault("comments", []).append(comment)
                 continue

@@ -33,6 +33,7 @@ def patch_provenance_columns(
     sample: Mapping[str, Any] | str,
     *,
     occupied: set[str] | None = None,
+    operations: tuple[dict, ...] | None = None,
 ) -> dict[str, Any]:
     """Return stable indexed ``msc.harmonization.*`` columns for one sample."""
 
@@ -44,7 +45,11 @@ def patch_provenance_columns(
         for key in (occupied or set())
         if key.startswith("msc.harmonization.") and "." in key
     }
-    for operation in iter_harmonization_operations(package, sample=sample_id):
+    if operations is None:
+        if not package.get("extensions", {}).get("msc_harmonization"):
+            return {}
+        operations = iter_harmonization_operations(package, sample=sample_id)
+    for operation in operations:
         harmonized = operation["harmonized_value"]
         field = str(harmonized["field"])
         index = counts.get(field, 0)
