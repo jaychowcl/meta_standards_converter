@@ -4101,6 +4101,15 @@ Collection dates remain characteristics. Unbound paths are not assigned to sampl
 by descriptive similarity. Status enrichment combines compatible records and
 retains conflicting records even within the same archive.
 
+`protocol_export.prepare_protocols` works only on the constructor's mutable copy.
+It retains unused definitions and merges compatible equivalents after whitespace,
+typographic-quote and explicit numeric ug/µg comparison normalization. Source text
+is unchanged. Registered P-MTAB identifiers win over local names; distinct registered
+accessions and conflicting metadata remain separate. Local names use
+`P-<series.iid>-<number>` with reserved-name collision avoidance. Every path reference
+is remapped with its definition. The semantic overlay emits one contiguous complete
+protocol block. `tests/test_protocol_export.py` covers these export-only contracts.
+
 The final `AEConstructor` boundary applies the existing stable comment partition
 **after** the semantic overlay, so no ordinary IDF row follows a comment.
 Verified `E-...` ArrayExpress accessions appear only in
@@ -4413,6 +4422,7 @@ Residual projection and entity helpers:
 | --- | --- |
 | `meta_standards_converter.miniml.archive_entities.actors` | `actors(records, provider)` |
 | `meta_standards_converter.miniml.archive_entities.declare_ontologies` | `declare_ontologies(data, issues=None)` |
+| `meta_standards_converter.magetab.protocol_export.prepare_protocols` | `prepare_protocols(data)` |
 | `meta_standards_converter.miniml.archive_dates.normalize_archive_dates` | `normalize_archive_dates(data)` |
 | `meta_standards_converter.miniml.archive_residuals.children` | `children(node, tag)` |
 | `meta_standards_converter.miniml.archive_residuals.child_text` | `child_text(node, path)` |

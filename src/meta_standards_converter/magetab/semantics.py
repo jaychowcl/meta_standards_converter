@@ -294,8 +294,11 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
             ("Protocol Contact", lambda item: "; ".join(str(value) for value in item.get("contacts", []))),
             ("Protocol Performer", lambda item: "; ".join(str(value) for value in item.get("performers", []))),
         )
-        for label, accessor in fields:
-            _replace_row(rows, label, [accessor(item) or "" for item in protocols])
+        labels = {label for label, _ in fields}
+        position = next((i for i, row in enumerate(rows) if row and row[0] in labels), len(rows))
+        rows[:] = [row for row in rows if not row or row[0] not in labels]
+        rows[position:position] = [[label, *[accessor(item) or "" for item in protocols]]
+                                   for label, accessor in fields]
     for field, labels in (
         ("quality_controls", DECLARATION_FIELDS["quality_control"]),
         ("replicate_types", DECLARATION_FIELDS["replicate"]),

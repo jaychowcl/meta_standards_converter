@@ -54,6 +54,8 @@ class AEConstructor:
         data = MINiMLCodec().encode(MINiMLCodec().decode(data).package)
         from meta_standards_converter.miniml.archive_dates import normalize_archive_dates
         normalize_archive_dates(data)
+        from meta_standards_converter.magetab.protocol_export import prepare_protocols
+        prepare_protocols(data)
         forced = platform_handler is not None
         if forced:
             technology_type = validate_platform_handler(platform_handler)
