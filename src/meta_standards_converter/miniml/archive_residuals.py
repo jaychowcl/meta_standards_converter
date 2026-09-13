@@ -42,7 +42,13 @@ def contains(expected, actual):
     if isinstance(expected, dict):
         return isinstance(actual, dict) and all(k in actual and contains(v, actual[k]) for k,v in expected.items() if v not in (None, '', [], {}))
     if isinstance(expected, list):
-        return isinstance(actual, list) and all(any(contains(v, a) for a in actual) for v in expected)
+        if not isinstance(actual, list): return False
+        available = list(actual)
+        for value in expected:
+            match = next((i for i, item in enumerate(available) if contains(value, item)), None)
+            if match is None: return False
+            available.pop(match)
+        return True
     return expected == actual
 
 
@@ -95,6 +101,7 @@ class Projection:
         self.actors = {v['iid']: v for k in ('organization','contributor') for v in data.get(k, [])}
         self.publications = {str(p['pubmed_id']): p for p in self.series.get('pubmed_publication', [])}
         self.ids = {a['value'] for a in self.series.get('accession', [])}
+        self._mapped_characters = set()
 
     def entity(self, kind, acc):
         if kind in ('SAMPLE','BioSample','sample'): return self.samples.get(acc, {})
@@ -109,13 +116,18 @@ class Projection:
         wanted = {'name': name, 'value': value}
         if unit: wanted['unit'] = {'value': unit}
         if terms: wanted.update(terms)
-        for channel in sample.get('channel', []):
-            for item in channel.get('characteristics', []):
-                if contains(wanted, item): return True
+        for channel_index, channel in enumerate(sample.get('channel', [])):
+            for item_index, item in enumerate(channel.get('characteristics', [])):
+                occurrence = (sample.get('iid'), channel_index, item_index)
+                if occurrence in self._mapped_characters: continue
+                represented = contains(wanted, item)
                 # A supplied value may have been replaced by an explicit linked
                 # value/unit pair (e.g. Age "1 days" -> 1 + days).
                 if item.get('name') == name and not unit and item.get('unit', {}).get('value'):
-                    if value == str(item.get('value')) + ' ' + item['unit']['value']: return True
+                    represented |= value == str(item.get('value')) + ' ' + item['unit']['value']
+                if represented:
+                    self._mapped_characters.add(occurrence)
+                    return True
         return False
 
     def relations(self, entity):
@@ -316,6 +328,9 @@ def finalize(data, records=None):
             data['series'].setdefault('relation', []).append({'type': 'GEO' if acc.startswith('GSE') else 'ArrayExpress', 'target': acc})
     projection=Projection(data, records);residual=[];seen=set()
     for record in records:
+        # One destination occurrence can represent at most one occurrence within
+        # this source record. Independent records keep their own matching scope.
+        projection._mapped_characters.clear()
         kind,acc,metadata=record['kind'],record.get('accession'),record['metadata']
         if kind in ('MINiML','MINiML_workflows'):
             # Incoming identifiers have been remapped by the merger before this

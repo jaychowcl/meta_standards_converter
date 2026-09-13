@@ -123,3 +123,17 @@ def test_study_residual_recognizes_description_dates_and_verified_attribute_link
     assert 'E-MTAB-1' not in rendered
     assert 'ENA-LAST-UPDATE' in rendered  # Differing browser and index dates survive.
     assert 'UNMAPPED' in rendered and 'CUSTOM' in rendered
+
+
+def test_residual_list_matching_counts_separate_source_occurrences():
+    from meta_standards_converter.miniml.archive_residuals import diff
+    occurrence = {'name': 'organism', 'value': 'Danio rerio'}
+    assert diff([occurrence, occurrence], [occurrence]) == [occurrence]
+
+
+def test_residual_character_matching_does_not_reuse_one_destination_occurrence():
+    from meta_standards_converter.miniml.archive_residuals import Projection
+    sample = {'iid': 'S1', 'channel': [{'characteristics': [{'name': 'organism', 'value': 'Danio rerio'}]}]}
+    projection = Projection({'series': {}, 'sample': [sample]})
+    assert projection.character(sample, 'organism', 'Danio rerio')
+    assert not projection.character(sample, 'organism', 'Danio rerio')

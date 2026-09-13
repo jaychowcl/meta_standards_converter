@@ -4084,7 +4084,9 @@ Each ordered record has `provider`, `kind`, `accession`, and residual `metadata`
 XML retains unmapped attributes/children and necessary identifying context;
 indexed JSON retains unmapped provider keys. Empty records and duplicated
 experiment-package entity wrappers are omitted. Repeated source characteristics
-remain occurrences; no package-wide string deduplication is performed.
+remain occurrences; no package-wide string deduplication is performed. Residual
+list and characteristic matching consumes destination occurrences within each
+source record, so one output value cannot erase two supplied occurrences.
 
 `archive_residuals.Projection` binds source fields to their corresponding study,
 sample, experiment, run, publication, actor or file. Its field-specific rules
