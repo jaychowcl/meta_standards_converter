@@ -110,3 +110,28 @@ def test_archive_groups_and_versioned_identities_remain_aligned():
     assert [v for k,v in pairs if k=='Comment[ARCHIVE_FILE_URI]']==['https://r/v1.sra','https://r/v2.sra']
     assert [v for k,v in pairs if k=='Comment[ARCHIVE_FILE_MD5]']==['abc','']
     assert [v for k,v in pairs if k=='Comment[ARCHIVE_FILE_CHECKSUM_METHOD]']==['','SHA256']
+
+
+def test_enrichment_file_aliases_complete_the_same_read_relationship():
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    uri='ftp://reads/one_1.fastq.gz'
+    enriched={'kind':'array_data_file','name':'one_1.fastq.gz','link':{'value':uri},
+              'comments':[{'name':'FASTQ_URI','value':uri}]}
+    untyped={'kind':'array_data_file','name':'one_1.fastq.gz','link':{'value':uri}}
+    data['series']['assay_paths'].extend([{'steps':deepcopy(base)+[enriched]}, {'steps':deepcopy(base)+[untyped]}])
+    paths=projected(data)
+    assert len(paths)==3
+    assert not any(k=='FASTQ_FASTQ_URI' for p in paths for k,v in comments(p))
+    assert not any(k=='ARCHIVE_FILE_URI' and v==uri for p in paths for k,v in comments(p))
+    # An explicit FASTQ_URI label is sufficient even without a format field.
+    data=package();data['series']['assay_paths']=[{'steps':deepcopy(base)+[enriched]}]
+    paths=projected(data);assert ('FASTQ_URI',uri) in comments(paths[0])
+
+
+def test_repeated_sample_processed_relationship_is_not_an_extra_workflow():
+    data=package();source=deepcopy(data['series']['assay_paths'][0]['steps'][0])
+    result={'steps':[source,{'kind':'derived_array_data_file','name':'sample.tsv','link':{'value':'https://results/sample.tsv'}}]}
+    different=deepcopy(result);different['steps'].insert(1,{'kind':'protocol_application','protocol_ref':'different-processing'})
+    data['series']['assay_paths'].extend([result,deepcopy(result),different])
+    paths=projected(data)
+    assert len(paths)==5 and paths.count(result)==1 and different in paths

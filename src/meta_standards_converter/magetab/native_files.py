@@ -16,7 +16,9 @@ import json
 
 
 _FIELDS = ('NAME', 'URI', 'FORMAT', 'ROLE', 'BYTES', 'MD5', 'CHECKSUM', 'CHECKSUM_METHOD')
-_ALIASES = {'FILE FORMAT': 'FORMAT', 'FILE SIZE': 'BYTES', 'CHECKSUM METHOD': 'CHECKSUM_METHOD'}
+_ALIASES = {'FILE FORMAT': 'FORMAT', 'FILE SIZE': 'BYTES', 'CHECKSUM METHOD': 'CHECKSUM_METHOD',
+            'FILE URI': 'URI', 'FASTQ_URI': 'URI', 'FASTQ_FILE_NAME': 'NAME',
+            'FASTQ_MD5': 'MD5', 'FASTQ_BYTES': 'BYTES'}
 
 
 def _key(value):
@@ -35,8 +37,11 @@ def _record(step):
             result.setdefault('_extra', []).append(deepcopy(comment))
         else:
             result[name] = value
-    if not result.get('FORMAT') and link.get('type'):
-        result['FORMAT'] = link['type']
+    if not result.get('FORMAT'):
+        if any(c.get('name', '').upper() == 'FASTQ_URI' for c in step.get('comments', [])):
+            result['FORMAT'] = 'fastq'
+        elif link.get('type'):
+            result['FORMAT'] = link['type']
     extra = {k: v for k, v in step.items() if k not in {'kind', 'name', 'link', 'comments'}}
     if extra:
         result['_node'] = extra
@@ -119,19 +124,22 @@ def project_native_files(data):
         if identity not in groups:
             groups[identity] = (path, scope, [])
             order.append((identity, None))
-        reads = groups[identity][2]
+        files = groups[identity][2]
         for step in raw:
-            record = _record(step)
-            if _fastq(record):
-                _combine(reads, record)
-            else:
-                _combine(pool, record)
+            _combine(files, _record(step))
+    # Complete aliases before deciding their representation: an untyped copy of
+    # an explicitly identified FASTQ is not a separate archival alternative.
+    for path, scope, files in groups.values():
+        for record in files:
+            if not _fastq(record):
+                _combine(archives[scope], record)
     result = []
     for identity, original in order:
         if identity is None:
             result.append(original)
             continue
-        path, scope, reads = groups[identity]
+        path, scope, files = groups[identity]
+        reads = [record for record in files if _fastq(record)]
         for read in reads or [{}]:
             row = deepcopy(path)
             scan = next(s for s in row['steps'] if s.get('kind') == 'scan')
@@ -148,4 +156,16 @@ def project_native_files(data):
                 comments.extend(_comments(record, prefix, fixed=True))
             result.append(row)
     if paths:
-        series['assay_paths'] = result
+        # Repeated, explicitly bound sample-result relationships do not imply
+        # additional experiments. Do not match unbound sources by their names.
+        seen = set()
+        sample_ids = {s['iid'] for s in data.get('sample', [])}
+        unique = []
+        for path in result:
+            bound = any(s.get('sample_ref') in sample_ids for s in path.get('steps', []))
+            identity = _key(path)
+            if not bound or identity not in seen:
+                unique.append(path)
+            if bound:
+                seen.add(identity)
+        series['assay_paths'] = unique

@@ -4123,7 +4123,10 @@ protocol block. `tests/test_protocol_export.py` covers these export-only contrac
 raw-file paths on that same export copy. It groups by the complete experimental
 workflow and joins archival annotations only within the same biological sample,
 experiment and run. Equivalent URI relationships combine compatible metadata;
-conflicts and distinct workflows remain separate. Every supplied FASTQ URI,
+conflicts and distinct workflows remain separate. Explicit `FASTQ_URI` aliases
+and otherwise untyped copies of the same URI complete the file record before
+classification, avoiding duplicate FASTQ/archive annotations. Identical processed
+paths collapse only when explicitly bound to a known sample. Every supplied FASTQ URI,
 including index reads, has a run/scan row with `Comment[FASTQ_URI]` and associated
 filename, format, role, bytes and checksum comments. Submitted representations
 use repeated `SUBMITTED_FILE_*` comment groups; other archive alternatives use
