@@ -268,7 +268,12 @@ class LinkedArchiveEnricher:
     def enrich(self, package):
         issues = []
         # Stable ascending priority: informative AE values are applied last.
-        links = sorted(linked_accessions(package), key=lambda a: (a.startswith('E-'), a))
+        discovered = set(linked_accessions(package))
+        # The legacy E-GEOD namespace is an exact GEO accession lookup, not an
+        # asserted identity. Accept it only after retrieving matching metadata.
+        candidates = {'E-GEOD-' + acc[3:] for acc in discovered if acc.startswith('GSE')}
+        probes = candidates - discovered
+        links = sorted(discovered | candidates, key=lambda a: (a.startswith('E-'), a))
         for accession in links:
             try:
                 if accession.startswith('GSE'):
@@ -284,6 +289,9 @@ class LinkedArchiveEnricher:
                 candidates = [p for p in packages if accession in entity_ids(p.to_mapping()['series'])]
                 if len(candidates) != 1:
                     issues.append(f'{accession}: ambiguous or unavailable enrichment study')
+                    continue
+                if accession in probes and not (entity_ids(package.to_mapping()['series']) & entity_ids(candidates[0].to_mapping()['series'])):
+                    issues.append(f'{accession}: unresolved enrichment study identity')
                     continue
                 package, merge_issues = merge_archive_metadata(package, candidates[0], prefer=True, linked_accession=accession)
                 issues.extend(merge_issues)

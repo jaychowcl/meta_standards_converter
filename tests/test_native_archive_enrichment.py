@@ -158,3 +158,35 @@ def test_experiment_protocol_enrichment_does_not_leak_to_other_experiments():
         specific = any(s.get('protocol_ref', '').endswith(':specific') for s in path['steps'])
         if any(s.get('name') == 'SRX99' for s in path['steps']): assert not specific
         else: assert specific
+
+
+def test_geo_link_discovers_verified_egeod_and_applies_ae_last():
+    package=native().to_mapping()
+    package['series']['relation']=[{'type':'GEO','target':'GSE1'}]
+    package=MINiMLCodec().decode(package).package
+    calls=[]
+    class Converter:
+        def convert(self, accession, **kwargs):
+            calls.append(accession)
+            return [linked(package,accession,'AE' if accession.startswith('E-') else 'GEO')]
+    result,issues=LinkedArchiveEnricher(geo_converter=Converter(),ae_converter=Converter()).enrich(package)
+    assert not issues
+    assert calls==['GSE1','E-GEOD-1']
+    assert result.series.title=='AE'
+    assert result.series.iid==package.series.iid
+
+
+def test_unrelated_egeod_candidate_cannot_redefine_native_study():
+    package=native().to_mapping();package['series']['relation']=[{'type':'GEO','target':'GSE1'}]
+    package=MINiMLCodec().decode(package).package
+    class Geo:
+        def convert(self, accession, **kwargs):return [linked(package,accession,'GEO')]
+    class AE:
+        def convert(self, accession, **kwargs):
+            other=linked(package,accession,'wrong').to_mapping()
+            other['series']['accession']=[{'value':accession,'database':'ArrayExpress'},{'value':'SRP999999','database':'SRA'}]
+            other['series']['relation']=[]
+            return [MINiMLCodec().decode(other).package]
+    result,issues=LinkedArchiveEnricher(geo_converter=Geo(),ae_converter=AE()).enrich(package)
+    assert result.series.title=='GEO'
+    assert any('identity' in i for i in issues)

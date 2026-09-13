@@ -141,3 +141,12 @@ def test_sparse_linked_paths_cannot_remove_native_assay_or_run(scope):
     for p in raw:
         assert any(s['kind']=='scan' and s['name']=='SRR11192680' for s in p['steps'])
         assert any(s['kind']=='assay' and s['name']=='SRX7812918' for s in p['steps'])
+
+
+def test_linked_document_names_do_not_split_native_export():
+    from tests.test_protocol_export import render
+    extra=workflow().to_mapping()
+    extra['series']['assay_paths'][0]['document']='study1.sdrf.txt'
+    extra['series']['assay_paths'][0]['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv','link':{'value':'https://example.org/counts.tsv'}})
+    result,issues=merge(extra);assert not issues
+    render(result.to_mapping())

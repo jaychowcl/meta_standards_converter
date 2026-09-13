@@ -111,6 +111,8 @@ def _file_uri(value):
 
 def _prepare_path(path, target, proto_names):
     result = deepcopy(path)
+    # Source document names are evidence, not separate native output datasets.
+    result.pop('document', None)
     steps = result['steps']
     scope = path_ids(path)
     for pattern in (r'[SED]RR\d+', r'[SED]RX\d+'):

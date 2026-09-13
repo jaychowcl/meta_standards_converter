@@ -4270,6 +4270,13 @@ make an import incomplete. Requested but unavailable linked metadata does.
 <a id="native-archive-fidelity"></a>
 ### Retrieval and enrichment fidelity
 
+With GEO/AE enrichment enabled, exact GSE identifiers also probe the corresponding
+legacy E-GEOD accession. This is a lookup candidate until the returned study shares
+a verified core identifier; absent or mismatched records do not redefine native
+identity. GEO is applied first and verified ArrayExpress metadata last. Incoming SDRF
+document filenames remain source evidence; matched paths join the native output
+document instead of splitting it into incompatible source-specific tables.
+
 Enrichment validates internally consistent experiment/run identifiers before binding
 ordered paths. Verified FASTQ filename aliases may identify the same run; explicit
 ENA FTP locations gain a usable scheme with literal reserved characters encoded.
