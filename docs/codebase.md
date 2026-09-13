@@ -4111,6 +4111,8 @@ make an import incomplete. Requested but unavailable linked metadata does.
 
 <a id="native-archive-fidelity"></a>
 
+Statuses preserve database and entity scope; native IDF dates never substitute submission for experiment dates. Sample-bound assembly reports use source-to-file branches. Explicit ENA sample/run analysis links are fetched one hop and reconciled without expanding read membership. Assembly descriptions do not define protocols.
+
 Native imports project explicit organizations and contacts with source-bound IDs.
 Enrichment imports registered platforms and rewrites sample/contact references.
 IDF person rows include inline study contacts, organization affiliations and supplied roles.

@@ -86,6 +86,14 @@ def _merge_entity(target, extra, prefer, protected=()):
             # Files retain all alternatives. Identity declarations need no duplicates.
             target.setdefault(key, [])
             target[key].extend(deepcopy(v) for v in value if key in {'raw_data', 'supplementary_data'} or v not in target[key])
+        elif key == 'status':
+            current = target.setdefault(key, [])
+            for status in value:
+                same = next((v for v in current if v.get('database') == status.get('database') and v.get('accession') == status.get('accession')), None)
+                if same is None: current.append(deepcopy(status))
+                else:
+                    for field, literal in status.items():
+                        if informative(literal) and (prefer or not informative(same.get(field))): same[field] = deepcopy(literal)
         elif key == 'characteristics':
             groups = {}
             for item in value:
@@ -115,6 +123,12 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     from ..miniml import MINiMLCodec
     data, extra = package.to_mapping(), other.to_mapping()
     issues = []
+    for document in (data, extra):
+        source = document.get('source', {}).get('format', '')
+        database = {'MAGE-TAB': 'ArrayExpress', 'GEO MINiML': 'GEO'}.get(source, source)
+        for entity in [document['series'], *document.get('sample', [])]:
+            for status in entity.get('status', []):
+                status.setdefault('database', database)
     native_ids, extra_ids = entity_ids(data['series']), entity_ids(extra['series'])
     shared_read = {a for a in native_ids & extra_ids if re.fullmatch(r'[SED]RP\d+', a)}
     linked_match = linked_accession and linked_accession in linked_accessions(package) and linked_accession in extra_ids

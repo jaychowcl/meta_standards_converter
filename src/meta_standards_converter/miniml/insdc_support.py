@@ -77,7 +77,11 @@ def relations(node):
         for link in node.findall('.//XREF_LINK'):
             db, target = text(link, 'DB'), text(link, 'ID')
             if db and target:
-                values.append({'type': db, 'target': target})
+                parts = target.split(',')
+                if db in {'ENA-STUDY','ENA-SAMPLE','ENA-EXPERIMENT','ENA-RUN','ENA-ANALYSIS','ENA-SUBMISSION'} and all(re.fullmatch(r'[SED]R[PSXRZA]\d+', p.strip()) for p in parts):
+                    values.extend({'type': db, 'target': p.strip()} for p in parts)
+                else:
+                    values.append({'type': db, 'target': target})
         for link in node.findall('.//URL_LINK'):
             target = text(link, 'URL')
             if target:
@@ -117,6 +121,11 @@ def sample_record(node, primary):
                 attr.update(term_source_ref='NCBITaxon', term_accession_number=next(iter(host_ids)))
     if organism or taxid:
         channel['organism'] = [{'value': organism or '', 'taxid': taxid}]
+    statuses = []
+    for a in attrs:
+        field = {'ENA-FIRST-PUBLIC': 'release_date', 'ENA-LAST-UPDATE': 'last_update_date'}.get(a['name'])
+        if field and a['value']:
+            statuses.append({field: a['value'], 'database': 'ENA'})
     source = next((a['value'] for a in attrs if a['name'] == 'source_name'), None)
     if source is None:
         source = next((a['value'] for a in attrs if a['name'] == 'isolation_source'), None)
@@ -124,7 +133,7 @@ def sample_record(node, primary):
         channel['source'] = {'value': source}
     return {'iid': primary, 'accession': accessions(node, primary), 'title': text(node, 'TITLE'),
             'description': text(node, 'DESCRIPTION'), 'type': 'SRA', 'channel_count': '1',
-            'channel': [channel], 'relation': relations(node), 'sra_run': []}
+            'channel': [channel], 'status': statuses, 'relation': relations(node), 'sra_run': []}
 
 
 def library(experiment):
@@ -278,14 +287,16 @@ def finish(provider, records, series, samples, protocols, paths):
         for step in path['steps']:
             if step.get('kind') == 'source' and step.get('sample_ref') in by_sample:
                 channel = by_sample[step['sample_ref']]['channel'][0]
-                organism = [v for v in step.get('characteristics', []) if v['name'] == 'organism']
+                organism = []
+                for value in channel.get('organism', []):
+                    organism.append({'name': 'organism', 'value': value['value'], **({'term_source_ref': 'NCBITaxon', 'term_accession_number': value['taxid']} if value.get('taxid') else {})})
                 step['characteristics'] = deepcopy(channel['characteristics']) + organism
     for row in records.indexed.get('study', []):
         if row.get('study_accession') not in (records.seed.primary, records.seed.study):
             continue
         status = {key: row[source] for key, source in (('release_date', 'first_public'), ('last_update_date', 'last_updated')) if row.get(source)}
         if status:
-            series.setdefault('status', []).append(status)
+            series.setdefault('status', []).append({**status, 'database': provider.upper()})
         for key, source in (('title', 'study_title'), ('summary', 'study_description')):
             if not series.get(key) and row.get(source):
                 series[key] = row[source]
@@ -334,9 +345,9 @@ def fill_linked_metadata(records, series, samples, protocols, paths):
                     if a.get('unit'):
                         value['unit'] = {'value': a.get('unit')}
                     channel['characteristics'].append(value)
-            sample.setdefault('status', []).append({k: bio.get(v) for k, v in [
+            sample.setdefault('status', []).append({'database': 'BioSample', **{k: bio.get(v) for k, v in [
                 ('submission_date', 'submission_date'), ('release_date', 'publication_date'),
-                ('last_update_date', 'last_update')] if bio.get(v)})
+                ('last_update_date', 'last_update')] if bio.get(v)}})
         for project in root.findall('.//Project'):
             desc = project.find('ProjectDescr')
             if not series.get('title'):
@@ -395,22 +406,27 @@ def project_results(records, series, samples, protocols, paths):
                 entries.setdefault(identifier(node), {'rows': [], 'node': None})['node'] = node
     for kind in ('analysis', 'assembly'):
         for row in records.indexed.get(kind, []):
-            acc = row.get(kind + '_accession') or row.get('accession')
+            acc = (row.get('assembly_set_accession') if kind == 'assembly' else None) or row.get(kind + '_accession') or row.get('accession')
             if acc:
                 entries.setdefault(acc, {'rows': [], 'node': None})['rows'].append(row)
     for record in records.linked:
         if record['kind'] == 'assembly':
-            acc = record['accession']
-            series.setdefault('relation', []).append({'type': 'assembly', 'target': acc})
             metadata = record['metadata']
+            ids = list(dict.fromkeys([record['accession'], *[metadata.get('synonym', {}).get(k) for k in ('genbank', 'refseq')]]))
+            sample = by_sample.get(metadata.get('biosampleaccn'))
+            for acc in filter(None, ids):
+                for target in ([series, sample] if sample else [series]):
+                    target.setdefault('relation', []).append({'type': 'assembly', 'target': acc})
             for field in ('ftppath_genbank', 'ftppath_refseq'):
+                if metadata.get(field): series['relation'].append({'type': 'assembly directory', 'target': metadata[field]})
+            for field in ('ftppath_stats_rpt', 'ftppath_regions_rpt', 'ftppath_assembly_rpt'):
                 if metadata.get(field):
-                    series['relation'].append({'type': 'assembly directory', 'target': metadata[field]})
+                    result_file(sample or series, {'uri': metadata[field], 'format': 'assembly report'}, paths)
     for acc, entry in entries.items():
         node, rows = entry['node'], entry['rows']
         sample_refs, run_refs, files = [], [], []
         study_ref = identifier(node.find('STUDY_REF')) if node is not None else None
-        if study_ref and study_ref not in (records.seed.study, records.seed.primary):
+        if study_ref and study_ref not in (records.seed.study, records.seed.primary) and not (node.findall('SAMPLE_REF') or node.findall('RUN_REF')):
             continue
         if node is not None:
             sample_refs.extend(identifier(n) for n in node.findall('SAMPLE_REF') if identifier(n))
@@ -432,10 +448,13 @@ def project_results(records, series, samples, protocols, paths):
             selected = run_selected
         targets = list(selected.values()) if sample_refs or run_refs else [series]
         series.setdefault('relation', []).append({'type': 'analysis' if acc.startswith(('ERZ', 'SRZ', 'DRZ')) else 'assembly', 'target': acc})
-        description = text(node, 'DESCRIPTION')
+        for target in targets:
+            if target is not series:
+                target.setdefault('relation', []).append({'type': 'analysis' if acc.startswith(('ERZ','SRZ','DRZ')) else 'assembly', 'target': acc})
+        description = text(node, 'PROTOCOL') or text(node, 'METHOD') or text(node, 'ANALYSIS_TYPE/SEQUENCE_ASSEMBLY/ASSEMBLY_METHOD')
         software = [n.text for n in node.findall('.//PROGRAM') if n.text] if node is not None else []
         protocol = None
-        if description or software:
+        if description:
             protocol = {'name': acc + ':analysis', 'type': {'value': 'data analysis protocol'},
                         'description': description, 'software': software}
             protocols.append(protocol)
@@ -450,13 +469,27 @@ def project_results(records, series, samples, protocols, paths):
                 target.setdefault('supplementary_data', []).append(deepcopy(link))
                 if target is series:
                     continue
-                # A result is an additional branch, never an expression matrix.
-                bases = [p for p in paths if any(s.get('sample_ref') == target['iid'] for s in p['steps'])
-                         and (not run_refs or any(s.get('kind') == 'scan' and s.get('name') in run_refs for s in p['steps']))]
-                if bases:
-                    steps = deepcopy([s for s in bases[0]['steps'] if s.get('kind') not in ('array_data_file', 'derived_array_data_file')])
-                    if protocol:
-                        steps.append({'kind': 'protocol_application', 'protocol_ref': protocol['name']})
-                    steps.append({'kind': 'derived_array_data_file', 'name': PurePosixPath(urlsplit(f['uri']).path).name,
-                                  'link': deepcopy(link), 'comments': [{'name': k.upper(), 'value': str(f[k])} for k in ('format', 'bytes', 'checksum_method', 'checksum') if f.get(k)]})
-                    paths.append({'steps': steps})
+                result_file(target, f, paths, run_refs, protocol, add_link=False)
+
+
+def result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=True):
+    """A sample result without run evidence is a source-to-file branch."""
+    link = {'value': file['uri'], 'type': file.get('format') or 'analysis'}
+    if file.get('md5'): link['checksum'] = file['md5']
+    if add_link: target.setdefault('supplementary_data', []).append(deepcopy(link))
+    if 'channel' not in target:
+        return
+    bases = [p for p in paths if any(s.get('sample_ref') == target['iid'] for s in p['steps'])
+             and (not run_refs or any(s.get('kind') == 'scan' and s.get('name') in run_refs for s in p['steps']))]
+    if not bases:
+        return
+    if run_refs:
+        branches = {next((s['name'] for s in p['steps'] if s.get('kind') == 'scan'), ''): p for p in bases}.values()
+    else:
+        branches = [bases[0]]
+    for base in branches:
+        steps = deepcopy([s for s in base['steps'] if (s.get('kind') not in ('array_data_file','derived_array_data_file') if run_refs else s.get('kind') == 'source')])
+        if protocol: steps.append({'kind':'protocol_application', 'protocol_ref':protocol['name']})
+        steps.append({'kind':'derived_array_data_file', 'name':unquote(PurePosixPath(urlsplit(file['uri']).path).name), 'link':deepcopy(link),
+                      'comments':[{'name':k.upper(),'value':str(file[k])} for k in ('format','bytes','checksum_method','checksum') if file.get(k)]})
+        paths.append({'steps':steps})

@@ -121,7 +121,7 @@ def test_linked_biosample_attributes_and_project_publications_are_mapped():
 
 def test_analysis_files_are_sample_scoped_only_with_explicit_references():
     records = fixture_records('ena')
-    records.xml.append(ET.fromstring('''<ANALYSIS_SET><ANALYSIS accession="ERZ1"><STUDY_REF accession="SRP250911"/><SAMPLE_REF accession="SRS6225446"/><TITLE>assembly</TITLE><DESCRIPTION>Assembly method</DESCRIPTION><ANALYSIS_TYPE><SEQUENCE_ASSEMBLY><PROGRAM>assembler</PROGRAM><COVERAGE>30</COVERAGE></SEQUENCE_ASSEMBLY></ANALYSIS_TYPE><FILES><FILE filename="https://example.org/assembly.fasta" filetype="fasta" checksum_method="SHA256" checksum="abc"/></FILES></ANALYSIS></ANALYSIS_SET>'''))
+    records.xml.append(ET.fromstring('''<ANALYSIS_SET><ANALYSIS accession="ERZ1"><STUDY_REF accession="SRP250911"/><SAMPLE_REF accession="SRS6225446"/><TITLE>assembly</TITLE><PROTOCOL>Assembly method</PROTOCOL><ANALYSIS_TYPE><SEQUENCE_ASSEMBLY><PROGRAM>assembler</PROGRAM><COVERAGE>30</COVERAGE></SEQUENCE_ASSEMBLY></ANALYSIS_TYPE><FILES><FILE filename="https://example.org/assembly.fasta" filetype="fasta" checksum_method="SHA256" checksum="abc"/></FILES></ANALYSIS></ANALYSIS_SET>'''))
     data = ENAParser().parse(records).to_mapping()
     link = data['sample'][0]['supplementary_data'][0]
     assert link['value'].endswith('assembly.fasta')
@@ -173,7 +173,7 @@ def test_sra_explicit_experiment_pool_members_receive_same_run():
 def test_analysis_portal_files_and_run_associations_project_to_paths():
     records = fixture_records('ena')
     records.indexed['analysis'] = [{'analysis_accession': 'ERZ1', 'study_accession': 'PRJNA609050', 'run_accession': 'SRR11192680', 'submitted_ftp': 'host/assembly.fa.gz', 'submitted_format': 'fasta'}]
-    records.xml.append(ET.fromstring('<ANALYSIS_SET><ANALYSIS accession="ERZ1"><STUDY_REF accession="SRP250911"/><RUN_REF accession="SRR11192680"/><DESCRIPTION>Assembly pipeline</DESCRIPTION><FILES><FILE filename="relative/assembly.fa.gz" filetype="fasta"/></FILES></ANALYSIS></ANALYSIS_SET>'))
+    records.xml.append(ET.fromstring('<ANALYSIS_SET><ANALYSIS accession="ERZ1"><STUDY_REF accession="SRP250911"/><RUN_REF accession="SRR11192680"/><PROTOCOL>Assembly pipeline</PROTOCOL><FILES><FILE filename="relative/assembly.fa.gz" filetype="fasta"/></FILES></ANALYSIS></ANALYSIS_SET>'))
     data = ENAParser().parse(records).to_mapping()
     assert data['sample'][0]['supplementary_data'][0]['value'] == 'ftp://host/assembly.fa.gz'
     paths = data['series']['assay_paths']

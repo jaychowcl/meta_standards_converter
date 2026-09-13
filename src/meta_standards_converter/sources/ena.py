@@ -102,6 +102,30 @@ class ENASource:
             result.issues.append(f'{accession}: no public read study resolved')
         return result
 
+    def fetch_associated_analyses(self, records):
+        """Fetch one hop of explicit analysis links without importing their read studies."""
+        members, requests, existing = set(), set(), set()
+        for root in records.xml:
+            for node in root.iter():
+                if node.tag in ('SAMPLE', 'RUN'):
+                    members.add(identifier(node))
+                    members.update(n.text for n in node.findall('IDENTIFIERS/*'))
+                    for link in node.findall('.//XREF_LINK'):
+                        if link.findtext('DB') == 'ENA-ANALYSIS':
+                            requests.update(a.strip() for a in (link.findtext('ID') or '').split(',') if re.fullmatch(r'[SED]RZ\d+', a.strip()))
+                if node.tag == 'ANALYSIS': existing.add(identifier(node))
+        for batch in chunks(sorted(requests - existing)):
+            root = self.verified_xml(batch, records, 'associated analysis')
+            if root is None: continue
+            accepted = ET.Element(root.tag)
+            for node in root:
+                refs = {identifier(n) for tag in ('SAMPLE_REF','RUN_REF') for n in node.findall(tag)}
+                if refs & members:
+                    accepted.append(node)
+                else:
+                    records.issues.append(f'{identifier(node)}: associated analysis has no verified dataset binding')
+            if len(accepted): records.xml.append(accepted)
+
     def fetch(self, seed):
         records = StudyRecords(seed)
         query = f'secondary_study_accession="{seed.study}"' if seed.study.startswith(('SRP', 'ERP', 'DRP')) else f'study_accession="{seed.primary}"'
@@ -142,6 +166,7 @@ class ENASource:
                 root = self.verified_xml(batch, records, kind)
                 if root is not None:
                     records.xml.append(root)
+        self.fetch_associated_analyses(records)
         count = attempt(records, 'ENA run count', lambda: self.http.get(self.portal + 'count',
             {'result': 'read_run', 'query': query, 'format': 'json', 'includeMetagenomes': 'true'}, 'json'))
         if count is not None:

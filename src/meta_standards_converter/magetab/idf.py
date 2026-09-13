@@ -400,6 +400,16 @@ class IDFConstructor():
         handler = JSONHandler()
         native = data.get("source", {}).get("format") in {"SRA", "ENA"}
         provider = data["source"]["format"] if native else "GEO"
+        if native:
+            statuses = data.get('series', {}).get('status', [])
+            native_dates = [s['release_date'] for s in statuses if s.get('database', provider) == provider and s.get('release_date')]
+            rows = [['Date of Experiment', *([data['series']['experiment_date']] if data['series'].get('experiment_date') else [])],
+                    ['Public Release Date', self._earliest_idf_date([v[:10] for v in native_dates])]]
+            for database in dict.fromkeys([provider, *[s.get('database', provider) for s in statuses]]):
+                for field, label in [('release_date','ReleaseDate'), ('last_update_date','LastUpdateDate')]:
+                    rows.append([f'Comment[{database}{label}]', *[s[field] for s in statuses if s.get('database', provider) == database and s.get(field)]])
+            rows.append(['Comment[ArrayExpressSubmissionDate]', self._current_idf_date()])
+            return rows
         normalize = (lambda value: value) if native else self._normalized_idf_date
 
         submission_dates = [

@@ -673,6 +673,8 @@ class AEParser:
             match = re.fullmatch(r"\s*(Characteristics|Factor\s+Value)\s*\[(.*)]\s*", label, re.I)
             if not match or not row[index].strip():
                 continue
+            if not biological or match.group(1).lower().startswith('factor'):
+                continue
             tag = match.group(2).strip()
             value = row[index].strip()
             companions = {}
