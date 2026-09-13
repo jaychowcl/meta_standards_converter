@@ -97,6 +97,13 @@ def _merge_entity(target, extra, prefer, protected=()):
                     current[:] = [v for v in current if v['name'] != name] + deepcopy(group)
                 elif not old:
                     current.extend(deepcopy(group))
+        elif key == 'organism' and informative(value) and (prefer or not informative(target.get(key))):
+            organisms = deepcopy(value)
+            for organism in organisms:
+                same = [o for o in target.get(key, []) if o.get('value', '').strip().casefold() == organism.get('value', '').strip().casefold()]
+                if len(same) == 1 and not organism.get('taxid') and same[0].get('taxid'):
+                    organism['taxid'] = same[0]['taxid']
+            target[key] = organisms
         elif informative(value) and (prefer or not informative(target.get(key))):
             # Replace complete typed values (including units / term references) together.
             target[key] = deepcopy(value)
@@ -119,6 +126,9 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     else:
         extension['records'].append({'provider': extra.get('source', {}).get('format', 'linked'),
             'kind': 'MINiML', 'accession': extra['series'].get('iid'), 'metadata': deepcopy(extra)})
+    from .archive_workflows import merge_declarations, merge_workflows
+    namespace = str(extra['series'].get('iid') or 'linked') + ':'
+    merge_declarations(data, extra, namespace)
     _merge_entity(data['series'], extra['series'], prefer,
                   {'iid', 'sample_ref', 'assay_paths', 'protocols', 'contact_ref'})
     native_samples, extra_samples = data.get('sample', []), extra.get('sample', [])
@@ -135,16 +145,15 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
         target, source = native_samples[i], extra_samples[j]
         matched[source['iid']] = target['iid']
         _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'contact_ref', 'platform_ref'})
-        if not prefer:
-            runs = {r['run']: r for r in target.get('sra_run', [])}
-            for run in source.get('sra_run', []):
-                if run['run'] in runs:
-                    current = runs[run['run']]
-                    _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'})
-                    for key in ('files', 'fastq_files'):
-                        current.setdefault(key, []).extend(deepcopy(run.get(key, [])))
-                else:
-                    target.setdefault('sra_run', []).append(deepcopy(run))
+        runs = {r['run']: r for r in target.get('sra_run', [])}
+        for run in source.get('sra_run', []):
+            if run['run'] in runs:
+                current = runs[run['run']]
+                _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'})
+                for key in ('files', 'fastq_files'):
+                    current.setdefault(key, []).extend(deepcopy(run.get(key, [])))
+            elif not prefer:
+                target.setdefault('sra_run', []).append(deepcopy(run))
         channels, incoming = target.get('channel', []), source.get('channel', [])
         # A single channel is unambiguous; multi-channel arrays have no generic join.
         if len(channels) == len(incoming) == 1:
@@ -170,85 +179,13 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
             data['series']['protocols'].append(protocol)
     sample_map = {s['iid']: s for s in native_samples}
     paths = data['series'].setdefault('assay_paths', [])
-    # Attach linked sample protocols/factors to native paths without replacing run IDs.
-    def path_ids(path):
-        values = []
-        for step in path['steps']:
-            if step.get('kind') in ('assay', 'scan'):
-                values.append(step.get('name', ''))
-                values.extend(c.get('value', '') for c in step.get('comments', [])
-                              if c.get('name', '').upper() in {'ENA_RUN', 'ENA_EXPERIMENT', 'SRA_RUN', 'SRA_EXPERIMENT'})
-        ids = {v for value in values for v in _ID.findall(str(value)) if re.fullmatch(r'[SED]R[RX]\d+', v)}
-        return ids
-    additions = {}
-    for path in extra['series'].get('assay_paths', []):
-        refs = {s.get('sample_ref') for s in path.get('steps', []) if s.get('sample_ref')}
-        targets = {matched[r] for r in refs if r in matched}
-        if len(targets) != 1 or any(r not in matched for r in refs):
-            continue
-        target = next(iter(targets))
-        scope = path_ids(path)
-        scope = {v for v in scope if re.fullmatch(r'[SED]RR\d+', v)} or scope
-        phase = 'material'
-        for step in path['steps']:
-            if step.get('kind') == 'scan':
-                phase = 'processing'
-            elif step.get('kind') == 'assay':
-                phase = 'scanning'
-            step = deepcopy(step)
-            if step.get('protocol_ref') in proto_names:
-                step['protocol_ref'] = proto_names[step['protocol_ref']]
-            if step.get('sample_ref'):
-                step['sample_ref'] = target
-            if step.get('kind') == 'protocol_application' or step.get('factor_values'):
-                additions.setdefault(target, []).append((step, scope, phase))
-        if not prefer:
-            cp = deepcopy(path)
-            for step in cp['steps']:
-                if step.get('sample_ref'):
-                    step['sample_ref'] = target
-                    if step.get('kind') == 'source':
-                        step['name'] = target
-                if step.get('protocol_ref') in proto_names:
-                    step['protocol_ref'] = proto_names[step['protocol_ref']]
-            paths.append(cp)
-    for path in paths:
-        target = next((s.get('sample_ref') for s in path['steps'] if s.get('sample_ref')), None)
-        if target not in sample_map:
-            continue
-        applicable = [(step, phase) for step, scope, phase in additions.get(target, []) if not scope or scope & path_ids(path)]
-        channels = sample_map[target].get('channel', [])
-        if len(channels) == 1:
-            for step in path['steps']:
-                if step['kind'] == 'source':
-                    organisms = [{'name': 'organism', 'value': o['value'], 'term_source_ref': 'NCBITaxon',
-                                  'term_accession_number': o.get('taxid')} for o in channels[0].get('organism', [])]
-                    step['characteristics'] = deepcopy(channels[0].get('characteristics', [])) + organisms
-                    for addition, _phase in applicable:
-                        if addition.get('factor_values'):
-                            step['factor_values'] = deepcopy(addition['factor_values'])
-            definitions = {p['name']: p for p in data['series'].get('protocols', [])}
-            def protocol_type(step):
-                value = definitions.get(step.get('protocol_ref'), {}).get('type', {})
-                name = value.get('term_accession_number') or value.get('value', '').casefold()
-                return {'nucleic acid library construction protocol': 'library construction protocol'}.get(name, name)
-            for step, phase in applicable:
-                if step.get('kind') != 'protocol_application' or step in path['steps']:
-                    continue
-                kind = protocol_type(step)
-                if prefer and kind:
-                    path['steps'][:] = [old for old in path['steps'] if old.get('kind') != 'protocol_application' or protocol_type(old) != kind]
-                boundary = 'assay' if phase == 'material' else 'scan'
-                position = next((i for i, node in enumerate(path['steps']) if node.get('kind') == boundary), len(path['steps']))
-                if phase == 'processing' and position < len(path['steps']):
-                    position += 1
-                path['steps'].insert(position, deepcopy(step))
+    explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues)
     # GEO commonly supplies sample-level protocol text and result links without
     # a MAGE-TAB assay graph. Project those explicit values onto matching paths.
     if prefer:
         for source in extra_samples:
             target = matched.get(source['iid'])
-            if target is None:
+            if target is None or target in explicit:
                 continue
             target_paths = [p for p in paths if any(s.get('sample_ref') == target for s in p['steps'])]
             if not target_paths:
@@ -271,22 +208,12 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
                     if field == 'data_processing' and position < len(path['steps']):
                         position += 1
                     path['steps'].insert(position, {'kind': 'protocol_application', 'protocol_ref': name})
-            for field, kind in (('raw_data', 'array_data_file'), ('supplementary_data', 'derived_array_data_file')):
-                for link in source.get(field, []):
-                    if not link.get('value'):
-                        continue
-                    steps = deepcopy([s for s in target_paths[0]['steps'] if s.get('kind') not in ('array_data_file', 'derived_array_data_file')])
-                    steps.append({'kind': kind, 'name': link['value'], 'link': deepcopy(link)})
-                    paths.append({'steps': steps})
     for sample in native_samples:
         for key in ('library_strategy', 'library_selection', 'library_source'):
             values = {r.get(key) for r in sample.get('sra_run', [])}
             if len(values) > 1:
                 sample.pop(key, None)
     data['series']['sample_ref'] = [{'ref': s['iid']} for s in native_samples]
-    for db in extra.get('database', []):
-        if db not in data.setdefault('database', []):
-            data['database'].append(deepcopy(db))
     return MINiMLCodec().decode(data).package, issues
 
 

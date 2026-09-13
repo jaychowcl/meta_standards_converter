@@ -235,6 +235,10 @@ class MINiMLV1Migrator:
             if not isinstance(item, Mapping):
                 continue
             steps = cls._assay_steps(item.get("steps"))
+            if item.get("sample_ref"):
+                for step in steps:
+                    if step.get("kind") in {"source", "sample", "assay", "scan"}:
+                        step["sample_ref"] = item["sample_ref"]
             if steps:
                 paths.append({
                     **({"document": str(item["sdrf"])} if item.get("sdrf") else {}),

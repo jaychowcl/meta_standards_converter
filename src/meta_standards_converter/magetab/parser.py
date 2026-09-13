@@ -224,6 +224,12 @@ class AEParser:
         package["mage_tab"]["model"] = validate_model(
             build_model(idf_rows=idf_rows, sdrfs=source_sdrfs)
         )
+        # Carry the exact SDRF row assignment across the legacy model boundary.
+        row_samples = {(name, i): self._row_identity(table[0], row)
+                       for name, table in source_sdrfs
+                       for i, row in enumerate(table[1:], 1)}
+        for path in package["mage_tab"]["model"]["assay_paths"]:
+            path["sample_ref"] = row_samples.get((path["sdrf"], path["row_index"]))
         retained_hz = {
             (sample["iid"], i): channel.pop("_msc_hz", [])
             for sample in sample_values for i, channel in enumerate(sample.get("channel", []))
@@ -239,6 +245,13 @@ class AEParser:
     def _table(self, text: str, name: str, rectangular: bool) -> list[list[str]]:
         rows = [row for row in csv.reader(io.StringIO(text), delimiter="\t") if row]
         if rectangular and rows:
+            def canonical_header(label):
+                match = re.fullmatch(r"\s*(Comment|Characteristics|Factor\s*Value|Parameter\s*Value|Unit)\s*\[(.*?)\](.*)", label, re.I)
+                if not match:
+                    return label
+                kind = {'factorvalue': 'Factor Value', 'parametervalue': 'Parameter Value'}.get(normalized_label(match.group(1)), match.group(1).strip().title())
+                return f"{kind}[{match.group(2)}]{match.group(3)}"
+            rows[0] = [canonical_header(label) for label in rows[0]]
             width = len(rows[0])
             for index, row in enumerate(rows[1:], start=2):
                 if len(row) != width:
@@ -599,7 +612,16 @@ class AEParser:
         )
 
     def _map_material_types(self, *, filename, header, row, sample, channel):
-        for raw_value in self._cells(header, row, "Material Type"):
+        biological = True
+        from .semantics import NODE_HEADERS
+        for index, label in enumerate(header):
+            if label in {"Source Name", "Sample Name"}:
+                biological = True
+            elif label in NODE_HEADERS:
+                biological = False
+            if normalized_label(label) != normalized_label("Material Type"):
+                continue
+            raw_value = row[index]
             value = raw_value.strip()
             if not value:
                 continue
@@ -618,6 +640,8 @@ class AEParser:
                     molecule,
                     f"{filename} sample {sample['iid']}",
                 )
+                continue
+            if not biological:
                 continue
             material = {"tag": "material type", "value": value}
             if material not in channel["characteristics"]:
@@ -652,19 +676,22 @@ class AEParser:
             tag = match.group(2).strip()
             value = row[index].strip()
             companions = {}
+            companion_target = companions
             for companion_index in range(index + 1, len(header)):
                 companion = normalized_label(header[companion_index])
-                if companion == normalized_label("Unit"):
-                    if row[companion_index].strip():
-                        companions["unit"] = row[companion_index].strip()
+                unit_match = re.fullmatch(r"\s*Unit(?:\[([^]]*)])?\s*", header[companion_index], re.I)
+                if unit_match:
+                    companion_target = companions.setdefault("unit", {"value": row[companion_index].strip()})
+                    if unit_match.group(1):
+                        companions["unit_type"] = unit_match.group(1).strip()
                     continue
                 if companion == normalized_label("Term Source REF"):
                     if row[companion_index].strip():
-                        companions["term_source_ref"] = row[companion_index].strip()
+                        companion_target["term_source_ref"] = row[companion_index].strip()
                     continue
                 if companion == normalized_label("Term Accession Number"):
                     if row[companion_index].strip():
-                        companions["term_accession_number"] = row[companion_index].strip()
+                        companion_target["term_accession_number"] = row[companion_index].strip()
                     continue
                 break
             if tag.casefold() == "organism":
