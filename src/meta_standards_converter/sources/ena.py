@@ -220,7 +220,8 @@ class ENASource:
         if xrefs:
             records.linked.append({'provider': 'ena', 'kind': 'cross_references', 'accession': seed.study,
                                    'metadata': list(csv.DictReader(io.StringIO(xrefs), delimiter='\t'))})
-        taxa, pmids = set(), set()
+        from .archive_support import publication_ids
+        taxa, pmids = set(), publication_ids(records)
         for root in records.xml:
             taxa.update(n.text for n in root.findall('.//SAMPLE_NAME/TAXON_ID') if n.text)
             pmids.update(n.findtext('ID') for n in root.findall('.//XREF_LINK') if n.findtext('DB', '').lower() == 'pubmed' and n.findtext('ID'))

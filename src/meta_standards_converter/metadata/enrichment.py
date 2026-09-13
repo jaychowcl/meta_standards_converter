@@ -58,16 +58,22 @@ class MINiMLEnricher:
         self.insdc_fetcher = insdc_fetcher or INSDCWebfetcher(
             resource_profile=profile
         )
+        self.publication_issues = []
 
     def enrich(self, data: MINiMLPackage) -> MINiMLPackage:
         started = time.monotonic()
         codec = MINiMLCodec()
         package = codec.decode(data).package
         mutable = codec.encode(package)
-        if mutable.get("source", {}).get("format") in {"SRA", "ENA"}:
-            return package
         self._pubmed_failures = 0
         self._sra_failures = 0
+        self.publication_issues = []
+        if mutable.get("source", {}).get("format") in {"SRA", "ENA"}:
+            from meta_standards_converter.miniml.archive_entities import declare_ontologies
+            from meta_standards_converter.miniml.archive_residuals import finalize, source_records
+            self.enrich_pubmed(data=mutable, fill_missing=True)
+            declare_ontologies(mutable)
+            return finalize(mutable, source_records(package))
         self.enrich_pubmed(data=mutable)
         self.enrich_sra(data=mutable)
         series = mutable.get("series") if isinstance(mutable.get("series"), dict) else {}
@@ -87,12 +93,39 @@ class MINiMLEnricher:
         )
         return codec.decode(mutable).package
 
-    def enrich_pubmed(self, data: dict) -> dict:
+    def enrich_pubmed(self, data: dict, *, fill_missing: bool = False) -> dict:
         series = data.get("series")
         if not isinstance(series, dict):
             return data
 
         pubmed_ids = self._dedupe(self._as_list(series.get("pubmed_id")))
+        if fill_missing:
+            publications = series.setdefault('pubmed_publication', [])
+            pubmed_ids = self._dedupe([*pubmed_ids, *[p.get('pubmed_id') for p in publications],
+                *[r.get('target') for r in series.get('relation', []) if str(r.get('type', '')).lower() == 'pubmed']])
+            if not pubmed_ids:
+                return data
+            series['pubmed_id'] = pubmed_ids
+            fields = ('doi', 'author_list', 'title')
+            status_fields = ('status', 'status_term_source_ref', 'status_term_accession_number')
+            for pmid in pubmed_ids:
+                existing = [p for p in publications if str(p.get('pubmed_id')) == str(pmid)]
+                if not existing:
+                    existing = [{'pubmed_id': pmid}]
+                    publications.extend(existing)
+                if all(all(p.get(k) for k in (*fields, *status_fields)) for p in existing):
+                    continue
+                fetched = self._pubmed_publication(pubmed_id=pmid)
+                for publication in existing:
+                    for field in fields:
+                        if not publication.get(field) and fetched.get(field):
+                            publication[field] = fetched[field]
+                    compatible = all(not publication.get(k) or publication[k] == fetched.get(k) for k in status_fields)
+                    if compatible:
+                        for field in status_fields:
+                            if not publication.get(field) and fetched.get(field):
+                                publication[field] = fetched[field]
+            return data
         if not pubmed_ids:
             return data
 
@@ -143,8 +176,13 @@ class MINiMLEnricher:
             doi, authors, title, status, source_ref, accession = self.pubmed_fetcher.pubmed_summary(
                 pubmed_id=pubmed_id
             )
-        except (requests.RequestException, ET.ParseError):
+            if not any((doi, authors, title, status)):
+                raise ValueError('PubMed response contains no citation metadata')
+        except (requests.RequestException, ET.ParseError, ValueError) as error:
             self._pubmed_failures = getattr(self, "_pubmed_failures", 0) + 1
+            issue = f'PubMed {pubmed_id}: {type(error).__name__}'
+            self.publication_issues.append(issue)
+            logger.warning('%s', issue)
             doi, authors, title, status, source_ref, accession = (None, None, None, None, None, None)
 
         return {

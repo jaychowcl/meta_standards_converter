@@ -211,6 +211,8 @@ class SRASource:
                     records.xml.append(root)
                     if db == 'bioproject':
                         linked['pubmed'].update(n.get('id') for n in root.findall('.//Publication') if n.get('id') and n.findtext('DbType') == 'ePubmed')
+        from .archive_support import publication_ids
+        linked['pubmed'].update(publication_ids(records))
         for db in ('taxonomy', 'pubmed'):
             for batch in chunks(sorted(linked[db])):
                 root = self.linked_xml(db, batch, records)

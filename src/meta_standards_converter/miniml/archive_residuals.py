@@ -162,6 +162,12 @@ class Projection:
         mapped_text=False; mapped_attrs={'alias'} if mapped_alias else set(); drop=False
         if kind=='PubmedArticle':
             pub=getattr(self,'publication',{})
+            if tag == 'PublicationStatus':
+                from ..metadata.ontology_mappings import Harmonizer
+                expected = Harmonizer().pubstatus2efo(text)
+                if expected[0] and all(pub.get(k) == v for k, v in zip(
+                        ('status', 'status_term_source_ref', 'status_term_accession_number'), expected)):
+                    mapped_text = True
             if tag=='PMID' and pub.get('pubmed_id')==text:mapped_text=True;mapped_attrs.update(('Version',))
             if tag=='ArticleTitle' and pub.get('title')==all_text(node).strip():return None
             if tag=='ArticleId' and attrs.get('IdType')=='doi' and pub.get('doi')==text:mapped_text=True;mapped_attrs.add('IdType')

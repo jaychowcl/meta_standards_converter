@@ -2939,7 +2939,7 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `MINiMLEnricher.metrics` [source](../src/meta_standards_converter/metadata/enrichment.py#L40) | `metrics()` | See source; follows the owning type contract. |
 | `MINiMLEnricher.__init__` [source](../src/meta_standards_converter/metadata/enrichment.py#L44) | `__init__(pubmed_fetcher=None, insdc_fetcher=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None)` | See source; follows the owning type contract. |
 | `MINiMLEnricher.enrich` [source](../src/meta_standards_converter/metadata/enrichment.py#L62) | `enrich(data: MINiMLPackage) -> MINiMLPackage` | See source; follows the owning type contract. |
-| `MINiMLEnricher.enrich_pubmed` [source](../src/meta_standards_converter/metadata/enrichment.py#L88) | `enrich_pubmed(data: dict) -> dict` | See source; follows the owning type contract. |
+| `MINiMLEnricher.enrich_pubmed` [source](../src/meta_standards_converter/metadata/enrichment.py#L88) | `enrich_pubmed(data: dict, *, fill_missing: bool = False) -> dict` | See source; follows the owning type contract. |
 | `MINiMLEnricher.enrich_sra` [source](../src/meta_standards_converter/metadata/enrichment.py#L103) | `enrich_sra(data: dict) -> dict` | See source; follows the owning type contract. |
 | `meta_standards_converter.metadata.enrichment.MAGETabEvidenceResolver` [source](../src/meta_standards_converter/metadata/enrichment.py#L173) | `MAGETabEvidenceResolver(pubmed_client=None, insdc_client=None)` | Resolve only evidence requested by MAGE-TAB construction, per operation. |
 | `MAGETabEvidenceResolver.__init__` [source](../src/meta_standards_converter/metadata/enrichment.py#L176) | `__init__(pubmed_client=None, insdc_client=None)` | See source; follows the owning type contract. |
@@ -4032,7 +4032,7 @@ BioSample/BioProject/PubMed metadata and assembly links; ENA uses Portal invento
 and Browser XML with linked BioSamples/taxonomy metadata. Sources report incomplete
 retrieval separately from scientific metadata.
 
-The version 1.0 `extensions.insdc` container retains structured provider records,
+The version 2.0 `extensions.insdc` container retains residual provider fields,
 including original XML attributes and repeated children. It contains no import
 completeness diagnostics. Core mapping preserves sample/run relationships, native
 identity, repeated characteristics, library scope, file alternatives and full
@@ -4064,8 +4064,8 @@ Converter/publication contracts are covered by
 `tests/test_native_archive_converters.py`; precedence, ambiguous joins and missing
 values by `tests/test_native_archive_enrichment.py`.
 
-Native `source.format` (`SRA`/`ENA`) narrowly disables the legacy automatic remote
-enricher and publication fallback at export, and characteristic-to-factor
+Native `source.format` (`SRA`/`ENA`) disables automatic sequencing replacement
+and constructor publication fallback at export, and characteristic-to-factor
 inference in IDF/SDRF. The semantic overlay also clears inferred IDF protocols
 when a native import declares none. Explicit factors and protocols still export. Native study/sample identity
 wins over GEO aliases. Actual ArrayExpress identifiers are exported separately
@@ -4073,6 +4073,21 @@ from GEO secondary accessions. Native date comments carry their provider name an
 retain partial precision instead of inferring a calendar day. MAGE-TAB ingestion retains original factor names
 in `series.variable[].name`, alongside the existing normalized `factor` category;
 consumers prefer `name`. The `json2ae` orchestration remains unchanged.
+
+
+Native sources collect explicitly linked PubMed IDs from supplied XML identifiers,
+project publications and PubMed URLs in retrieved cross-references. Parsers map
+already fetched citation status with the shared `Harmonizer.pubstatus2efo` mapping.
+Each converter calls its optional `publication_enricher` collaborator after peer
+and GEO/AE enrichment; the default `MINiMLEnricher` hydrates missing native citation
+fields only. It preserves populated values and treats status/ontology as a coupled
+group. Ordinary `json2ae` uses this same publication-only branch; `--no-enrich`
+skips it and native constructor evidence cannot initiate a fallback lookup.
+No IDs means no request, while unavailable known IDs produce warnings and converter
+issues without discarding the native package. Complete citations avoid repeat
+lookups. `archive_residuals.finalize` then removes mapped status and other citation
+fields from residuals while retaining unmapped siblings. No title-based publication
+search or implicit GEO/AE traversal is performed.
 
 
 <a id="native-archive-contract"></a>
@@ -4319,8 +4334,8 @@ facades. Their ownership and signatures are listed here for source retrieval:
 | `meta_standards_converter.converters.archive_results.ArchiveImportResult` | `packages(self); ok(self); to_mapping(self)` |
 | `meta_standards_converter.converters.archive_results.publish_json` | `publish_json(path, value, overwrite=False)` |
 | `meta_standards_converter.converters.archive_results.output_name` | `output_name(seed, seeds)` |
-| `meta_standards_converter.converters.sra2json.SRA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |
-| `meta_standards_converter.converters.ena2json.ENA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |
+| `meta_standards_converter.converters.sra2json.SRA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |
+| `meta_standards_converter.converters.ena2json.ENA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |
 | `meta_standards_converter.metadata.archive_enrichment.linked_accessions` | `linked_accessions(package)` |
 | `meta_standards_converter.metadata.archive_enrichment.informative` | `informative(value)` |
 | `meta_standards_converter.metadata.archive_enrichment.entity_ids` | `entity_ids(entity, *, sample=False)` |
@@ -4421,3 +4436,5 @@ and `docs/ena`. Live checks rely on public-provider availability and may differ
 from deterministic fixtures as records change. Full native imports of the small
 SRP002056 study were also exercised manually against both providers during
 implementation; development outputs stay outside version control.
+
+| `meta_standards_converter.sources.archive_support.publication_ids` | `publication_ids(records)` |

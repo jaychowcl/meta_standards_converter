@@ -93,6 +93,10 @@ def declare_ontologies(data, issues=None):
                     message = f'{data["series"]["iid"]}: corrected explicit ontology namespace {value["term_source_ref"]} to {match[1]}'
                     logging.getLogger(__name__).warning(message)
                 value['term_source_ref'] = match[1]
+            publication_source = value.get('status_term_source_ref')
+            if publication_source and publication_source not in declarations:
+                declarations.add(publication_source)
+                data.setdefault('database', []).append({'iid': publication_source, 'name': publication_source})
             if value.get('term_source_ref') and value['term_source_ref'] not in declarations:
                 name = value['term_source_ref']; declarations.add(name)
                 data.setdefault('database', []).append({'iid': name, 'name': name})

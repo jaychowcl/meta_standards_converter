@@ -19,12 +19,13 @@ logger = logging.getLogger(__name__)
 
 class SRA2JSONConverter:
     def __init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None,
-                 resource_profile='standard', resource_overrides=None):
+                 resource_profile='standard', resource_overrides=None, *, publication_enricher=None):
         self.profile = get_resource_profile(resource_profile, overrides=resource_overrides)
         self.source = source or SRASource(resource_profile=self.profile)
         self.parser = parser or SRAParser()
         self.linked_enricher = linked_enricher
         self.peer_converter = peer_converter
+        self.publication_enricher = publication_enricher
 
     def convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False,
                 report_path=None, evidence_dir=None, overwrite=False, seen_studies=None,
@@ -87,6 +88,13 @@ class SRA2JSONConverter:
                         links = linked_accessions(package)
                         if links:
                             logger.warning('%s: linked GEO/ArrayExpress metadata may be richer; use --enrich-from-geo-ae (%s)', seed.primary, ', '.join(links))
+                    try:
+                        from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+                        publication_enricher = self.publication_enricher or MINiMLEnricher(resource_profile=self.profile)
+                        package = publication_enricher.enrich(package)
+                        outcome.issues.extend(getattr(publication_enricher, 'publication_issues', []))
+                    except Exception as error:
+                        outcome.issues.append(f'publication enrichment unavailable: {type(error).__name__}')
                     if out is not None:
                         path = Path(out) / output_name(seed, _filename_seeds or resolution.studies)
                         publish_json(path, package.to_mapping(), overwrite)
