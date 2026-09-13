@@ -358,6 +358,9 @@ def fill_linked_metadata(records, series, samples, protocols, paths):
             sample.setdefault('status', []).append({'database': 'BioSample', **{k: bio.get(v) for k, v in [
                 ('submission_date', 'submission_date'), ('release_date', 'publication_date'),
                 ('last_update_date', 'last_update')] if bio.get(v)}})
+            for name, literal in [('access', bio.get('access')), ('record status', bio.find('Status').get('status') if bio.find('Status') is not None else None)]:
+                if literal:
+                    sample['status'].append({'database': 'BioSample', 'comment': [{'name':name, 'value':literal}]})
         for project in root.findall('.//Project'):
             desc = project.find('ProjectDescr')
             if not series.get('title'):
@@ -390,6 +393,8 @@ def fill_linked_metadata(records, series, samples, protocols, paths):
         sample = by_id.get(record['accession'])
         if sample is None:
             continue
+        if record['metadata'].get('status'):
+            sample.setdefault('status', []).append({'database':'BioSamples', 'comment':[{'name':'status','value':record['metadata']['status']}]})
         attrs = sample['channel'][0]['characteristics']
         names = {a['name'].replace('_', ' ').casefold() for a in attrs}
         for name, values in record['metadata'].get('characteristics', {}).items():

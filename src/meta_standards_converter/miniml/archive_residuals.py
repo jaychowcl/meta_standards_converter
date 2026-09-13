@@ -122,6 +122,20 @@ class Projection:
                 if status.get('database') == database and status.get(field) == literal and occurrence not in self._mapped_characters:
                     self._mapped_characters.add(occurrence)
                     return True
+        if name and name.strip().lower() == 'insdc status' and not unit and not terms:
+            for index, status in enumerate(sample.get('status', [])):
+                occurrence = (sample.get('iid'), 'administration', index)
+                if status.get('database') == 'INSDC' and {'name':name, 'value':value} in status.get('comment', []) and occurrence not in self._mapped_characters:
+                    self._mapped_characters.add(occurrence)
+                    return True
+        if name and name.strip().lower() in {'insdc center name', 'insdc center alias'} and not unit and not terms:
+            for relation in sample.get('relation', []):
+                actor = self.actors.get(relation.get('target'), {})
+                occurrence = ('administration', actor.get('iid'))
+                field = 'alias' if name.strip().lower().endswith('alias') else 'name'
+                if actor.get('role') == name and actor.get(field) == value and occurrence not in self._mapped_characters:
+                    self._mapped_characters.add(occurrence)
+                    return True
         wanted = {'name': name, 'value': value}
         if unit: wanted['unit'] = {'value': unit}
         if terms: wanted.update(terms)
@@ -236,6 +250,8 @@ class Projection:
             if any(o.get('taxid')==attrs.get('taxonomy_id') and o.get('value')==attrs.get('taxonomy_name') for o in channel.get('organism',[])):
                 mapped_attrs.update(('taxonomy_id','taxonomy_name'))
         if kind=='BioSample':
+            if tag == 'BioSample' and any(s.get('database') == 'BioSample' and {'name':'access','value':attrs.get('access')} in s.get('comment', []) for s in entity.get('status', [])): mapped_attrs.add('access')
+            if tag == 'Status' and any(s.get('database') == 'BioSample' and {'name':'record status','value':attrs.get('status')} in s.get('comment', []) for s in entity.get('status', [])): mapped_attrs.add('status')
             for attr,field in [('publication_date','release_date'),('submission_date','submission_date'),('last_update','last_update_date')]:
                 if attrs.get(attr) and any(s.get(field)==attrs[attr] and s.get('database')=='BioSample' for s in entity.get('status',[])):mapped_attrs.add(attr)
         if tag=='STUDY_TYPE' and any(t.get('value')==attrs.get('existing_study_type') for t in entity.get('type',[])):mapped_attrs.add('existing_study_type')
@@ -338,6 +354,8 @@ def finalize(data, records=None):
     from .codec import MINiMLCodec
     from .archive_dates import normalize_archive_dates
     normalize_archive_dates(data)
+    from .archive_administration import normalize_administration
+    normalize_administration(data)
     records=deepcopy(records if records is not None else data.get('extensions',{}).get('insdc',{}).get('records',[]))
     from ..metadata.archive_enrichment import linked_accessions
     for acc in linked_accessions(data):
@@ -369,6 +387,8 @@ def finalize(data, records=None):
                     rest=[v for v in rest if not any(o.get('value')==v.get('text') for c in sample.get('channel',[]) for o in c.get('organism',[]))]
                 if rest:attrs[name]=rest
             left['characteristics']=attrs
+            if any(s.get('database') == 'BioSamples' and {'name':'status','value':metadata.get('status')} in s.get('comment', []) for s in sample.get('status', [])):
+                left.pop('status', None)
             for key,field in [('name','title'),('description','description')]:
                 if sample.get(field)==metadata.get(key):left.pop(key,None)
         elif kind in ('analysis','assembly') and record['provider']=='ena':

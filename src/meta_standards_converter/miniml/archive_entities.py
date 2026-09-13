@@ -67,12 +67,13 @@ def actors(records, provider):
     centers = set()
     for root in records.xml:
         for node in root.iter():
-            if node.tag not in ('STUDY','PROJECT') or not node.get('center_name'):
+            if node.tag not in ('STUDY','PROJECT','SAMPLE') or not node.get('center_name'):
                 continue
             iid = f'{provider}:{node.tag}:{identifier(node)}:center_name'
             if iid not in centers:
                 centers.add(iid)
-                organizations.append({'iid':iid, 'name':node.get('center_name'), 'role':'center_name'})
+                organizations.append({'iid':iid, 'name':node.get('center_name'), 'role':'center_name',
+                                      **({'sample_accession':identifier(node)} if node.tag == 'SAMPLE' else {})})
     return organizations, contributors
 
 

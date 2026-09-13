@@ -4101,6 +4101,15 @@ Collection dates remain characteristics. Unbound paths are not assigned to sampl
 by descriptive similarity. Status enrichment combines compatible records and
 retains conflicting records even within the same archive.
 
+`archive_administration.normalize_administration` projects explicit INSDC status
+attributes into sample status comments and center names/aliases into source-scoped
+organizations with sample relations. Repeated supplied occurrences survive; copies
+on assay paths do not multiply them. XML sample centers remain separate source
+occurrences. BioSample access, BioSample record status and EBI BioSamples status
+retain separate labels/database scopes. These attributes no longer appear as
+biological characteristics. Fresh imports finalize residuals after projection;
+existing native JSON receives the same cleanup on the private export copy.
+
 `protocol_export.prepare_protocols` works only on the constructor's mutable copy.
 It retains unused definitions and merges compatible equivalents after whitespace,
 typographic-quote and explicit numeric ug/µg comparison normalization. Source text
@@ -4423,6 +4432,7 @@ Residual projection and entity helpers:
 | `meta_standards_converter.miniml.archive_entities.actors` | `actors(records, provider)` |
 | `meta_standards_converter.miniml.archive_entities.declare_ontologies` | `declare_ontologies(data, issues=None)` |
 | `meta_standards_converter.magetab.protocol_export.prepare_protocols` | `prepare_protocols(data)` |
+| `meta_standards_converter.miniml.archive_administration.normalize_administration` | `normalize_administration(data)` |
 | `meta_standards_converter.miniml.archive_dates.normalize_archive_dates` | `normalize_archive_dates(data)` |
 | `meta_standards_converter.miniml.archive_residuals.children` | `children(node, tag)` |
 | `meta_standards_converter.miniml.archive_residuals.child_text` | `child_text(node, path)` |
