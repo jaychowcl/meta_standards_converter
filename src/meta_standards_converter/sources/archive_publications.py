@@ -113,7 +113,7 @@ def resolve_identifiers(records, http, provider):
                 matches = [r for r in payload.get('records',[]) if r.get('requested-id')==value
                            and r.get('pmcid')==value and citation_identifier('pubmed',r.get('pmid'))]
                 if len(matches)!=1: raise ValueError('missing or mismatched PMCID mapping')
-                return matches[0]['pmid']
+                return str(matches[0]['pmid'])
             payload = http.get(EUTILS+'esearch.fcgi', {'db':'pubmed','term':'"'+value+'"[AID]', 'retmode':'json','retmax':100},'json')
             search = payload['esearchresult']; ids = search.get('idlist',[])
             if int(search.get('count',len(ids))) > len(ids): raise ValueError('incomplete DOI lookup')

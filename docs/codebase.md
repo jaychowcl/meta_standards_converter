@@ -4090,7 +4090,7 @@ run, analysis and assembly XML identities bound these requests. SRA uses validat
 `sra_pubmed`, `bioproject_pubmed`, `biosample_pubmed`, `sra_pmc` and `bioproject_pmc`
 ELinks, preserving each UID's owner. Nonempty SRA links resolve their experiment
 accession through verified ESummary metadata. Explicit PMCIDs resolve through
-NCBI ID Conversion; explicit DOIs use exact PubMed `[AID]` queries and DOI-verified
+NCBI ID Conversion (numeric JSON PMIDs normalize to strings); explicit DOIs use exact PubMed `[AID]` queries and DOI-verified
 EFetch responses. There is no accession-based literature discovery.
 
 `pubmed_publication` may retain a DOI/title with an empty PMID. Sample/run citations

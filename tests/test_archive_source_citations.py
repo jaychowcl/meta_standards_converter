@@ -86,7 +86,7 @@ def test_identifier_resolution_verifies_doi_and_pmc_namespace():
     def handler(url,p,fmt):
         if 'idconv' in url:
             assert p['ids']=='PMC456'
-            return {'records':[{'requested-id':'PMC456','pmcid':'PMC456','pmid':'123'}]}
+            return {'records':[{'requested-id':'PMC456','pmcid':'PMC456','pmid':123}]}
         if 'esearch' in url:
             assert p['db']=='pubmed' and p['term']=='"10.1234/explicit"[AID]'
             return {'esearchresult':{'idlist':['999','124']}}
