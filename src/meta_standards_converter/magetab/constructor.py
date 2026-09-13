@@ -58,6 +58,8 @@ class AEConstructor:
         normalize_archive_dates(data)
         from meta_standards_converter.miniml.archive_administration import normalize_administration
         normalize_administration(data)
+        from ..miniml.archive_paths import complete_native_paths
+        complete_native_paths(data)
         from meta_standards_converter.magetab.protocol_export import prepare_protocols
         prepare_protocols(data)
         from meta_standards_converter.magetab.native_files import project_native_files

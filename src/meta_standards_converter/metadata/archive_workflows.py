@@ -267,7 +267,7 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
                         position = next((i for i, s in enumerate(prefix) if s['kind'] == 'scan'), len(prefix)) if kind == 'assay' else len(prefix)
                         prefix.insert(position, deepcopy(native))
             if any(s['kind'] in ('extract', 'labeled_extract') for s in prefix):
-                explicit.add(target)
+                explicit.add((target, tuple(sorted(path_ids(path)))))
             # Preserve the complete original branch after raw acquisition.
             end = next((i for i, s in enumerate(path['steps']) if is_file(s)), len(path['steps']))
             path['steps'] = prefix + deepcopy(path['steps'][end:])
@@ -307,4 +307,8 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
             sample = samples.get(step.get('sample_ref'))
             if sample and step.get('kind') in ('source', 'sample'):
                 step.update({k: v for k, v in _biological_node(sample).items() if k == 'characteristics'})
-    return explicit
+    # Scalar material fields are safe only when every native acquisition for
+    # that sample received the explicit incoming workflow.
+    return {target for target in samples if any(t == target for t, _ in explicit)
+            and all((target, tuple(sorted(path_ids(p)))) in explicit for p in originals
+                    if path_ids(p) and any(s.get('sample_ref') == target for s in p['steps']))}

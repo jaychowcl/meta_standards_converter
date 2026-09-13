@@ -322,6 +322,8 @@ def finish(provider, records, series, samples, protocols, paths):
             refs = [{'ref': c['iid']} for c in data['contributor'] if sample_actors.get(c.get('organization_ref', {}).get('ref')) in aliases]
             if refs: sample['contact_ref'] = refs
     declare_ontologies(data)
+    from .archive_paths import complete_native_paths
+    complete_native_paths(data)
     from .archive_residuals import finalize
     return finalize(data)
 

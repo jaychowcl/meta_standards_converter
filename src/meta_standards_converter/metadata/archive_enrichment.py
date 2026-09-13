@@ -157,6 +157,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
              for i, n in enumerate(native_samples)}
     reverse = {j: [i for i, js in joins.items() if j in js] for j in range(len(extra_samples))}
     matched = {}
+    original_channels = {s['iid']: deepcopy(s.get('channel', [])) for s in native_samples}
     for i, candidates in joins.items():
         if len(candidates) != 1 or len(reverse[candidates[0]]) != 1:
             if candidates:
@@ -203,34 +204,19 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     sample_map = {s['iid']: s for s in native_samples}
     paths = data['series'].setdefault('assay_paths', [])
     explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues)
-    # GEO commonly supplies sample-level protocol text and result links without
-    # a MAGE-TAB assay graph. Project those explicit values onto matching paths.
-    if prefer:
-        for source in extra_samples:
-            target = matched.get(source['iid'])
-            if target is None or target in explicit:
-                continue
-            target_paths = [p for p in paths if any(s.get('sample_ref') == target for s in p['steps'])]
-            if not target_paths:
-                continue
-            sample = sample_map[target]
-            channels = sample.get('channel', [])
-            channel_fields = ('growth_protocol', 'treatment_protocol', 'extract_protocol', 'label_protocol')
-            for field in (*channel_fields, 'hybridization_protocol', 'scan_protocol', 'data_processing'):
-                description = (channels[0].get(field) if len(channels) == 1 else None) if field in channel_fields else sample.get(field)
-                if not informative(description):
-                    continue
-                name = namespace + target + ':' + field
-                data['series'].setdefault('protocols', []).append({'name': name, 'description': description,
-                    'type': {'value': field.replace('_', ' ')}})
-                for path in target_paths:
-                    # Replace the previous provider's application together with its ref.
-                    path['steps'][:] = [step for step in path['steps'] if not step.get('protocol_ref', '').endswith(':' + target + ':' + field)]
-                    boundary = 'scan' if field in ('scan_protocol', 'data_processing') else 'assay'
-                    position = next((i for i, step in enumerate(path['steps']) if step.get('kind') == boundary), len(path['steps']))
-                    if field == 'data_processing' and position < len(path['steps']):
-                        position += 1
-                    path['steps'].insert(position, {'kind': 'protocol_application', 'protocol_ref': name})
+    if prefer and extra.get('source', {}).get('format') == 'MAGE-TAB':
+        # AE sample scalars are projections of its workflows. Rejected paths
+        # cannot supply a material/protocol for an unrelated native acquisition.
+        scoped_fields = ('molecule', 'growth_protocol', 'treatment_protocol', 'extract_protocol', 'label_protocol')
+        for target in set(matched.values()) - explicit:
+            current = sample_map[target].get('channel', [])
+            previous = original_channels.get(target, [])
+            if len(current) == len(previous) == 1:
+                for field in scoped_fields:
+                    if field in previous[0]: current[0][field] = deepcopy(previous[0][field])
+                    else: current[0].pop(field, None)
+    from ..miniml.archive_paths import complete_native_paths
+    complete_native_paths(data)
     for sample in native_samples:
         for key in ('library_strategy', 'library_selection', 'library_source'):
             values = {r.get(key) for r in sample.get('sra_run', [])}

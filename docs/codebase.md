@@ -4199,6 +4199,17 @@ export acceptance tests live in `tests/test_archive_publications.py` and
 <a id="native-archive-contract"></a>
 ### Archive extension and mapping contract
 
+`meta_standards_converter.miniml.archive_paths.complete_native_paths` (`data`) is a
+pure, native-only projection used after source mapping/enrichment and on the
+constructor copy before protocol naming. It exposes final sample titles, source
+descriptions and platform titles at their own nodes; explicit channel molecules
+become extract materials, with supplied field-scoped methods retained intact.
+Complete accepted AE material workflows take priority. Rejected AE paths cannot
+supply flattened material/protocol fields to unrelated acquisitions. Processing
+methods remain definitions and apply only to result branches. Native study-wide
+supplementary links export as aligned IDF `Comment[Study supplementary file]` and
+`Comment[Study supplementary file type]`, without an invented run association.
+
 `extensions.insdc` version **2.0** retains only source metadata not represented
 by the final MINiML mapping. Version 1.0 whole-record packages still decode.
 Each ordered record has `provider`, `kind`, `accession`, and residual `metadata`.

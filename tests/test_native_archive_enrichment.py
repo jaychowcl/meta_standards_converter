@@ -134,8 +134,9 @@ def test_processing_protocol_priority_is_coherent_and_scoped():
     names = {p['name']: p for p in data['series']['protocols']}
     for path in data['series']['assay_paths']:
         applied = [names[s['protocol_ref']].get('description') for s in path['steps'] if s.get('protocol_ref') in names]
-        assert 'AE processing' in applied
+        assert 'AE processing' not in applied
         assert 'GEO processing' not in applied
+    assert any(p.get('description') == 'AE processing' for p in names.values())
 
 
 def test_experiment_protocol_enrichment_does_not_leak_to_other_experiments():

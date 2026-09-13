@@ -314,6 +314,11 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
     for comment in series.get("comments", []) or []:
         if isinstance(comment, dict) and comment.get("name"):
             _replace_row(rows, f"Comment[{comment['name']}]", [comment.get("value", "")])
+    if package.get('source', {}).get('format') in {'ENA', 'SRA'}:
+        files = [v for v in series.get('supplementary_data', []) if v.get('value')]
+        if files:
+            _replace_row(rows, 'Comment[Study supplementary file]', [v['value'] for v in files])
+            _replace_row(rows, 'Comment[Study supplementary file type]', [v.get('type', '') for v in files])
     from .harmonized import bind_sample_groups
     assay_table = _render_miniml_assay_paths(bind_sample_groups(package, series.get("assay_paths")))
     if assay_table:
