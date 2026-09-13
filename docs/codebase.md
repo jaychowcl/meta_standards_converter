@@ -4270,6 +4270,10 @@ make an import incomplete. Requested but unavailable linked metadata does.
 <a id="native-archive-fidelity"></a>
 ### Retrieval and enrichment fidelity
 
+MAGE-TAB protocol parsing ignores wholly empty padded IDF slots while retaining
+unnamed populated definitions at their original positions, including fields beyond
+a shorter Protocol Name row.
+
 Statuses preserve database and entity scope; native IDF dates never substitute submission for experiment dates. Sample-bound assembly reports use source-to-file branches. Explicit ENA sample/run analysis links are fetched one hop and reconciled without expanding read membership. Their indexed analysis rows supply verified file locations for Browser records with relative filenames; file roles, sizes and delivery alternatives remain on scoped links. Assembly descriptions do not define protocols.
 
 Native imports project explicit organizations, declared study/project centres and contacts with source-bound IDs. Known address components populate city, country and postal-code fields.

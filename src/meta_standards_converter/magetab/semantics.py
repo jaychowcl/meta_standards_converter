@@ -152,7 +152,7 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
         ],
         default=0,
     )
-    protocol_count = len(names) if names else inferred_protocol_count
+    protocol_count = inferred_protocol_count
     protocol_labels = {}
     protocol_widths = {}
     protocols = []
@@ -164,6 +164,8 @@ def build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> di
                 protocol_labels[key] = label
                 protocol_widths[key] = len(row_values)
             record[key] = row_values[position] if position < len(row_values) else ""
+        if not any(str(record.get(key) or "").strip() for key in PROTOCOL_FIELDS.values()):
+            continue
         if not record.get("name"):
             record["name"] = record["id"]
         protocols.append(record)

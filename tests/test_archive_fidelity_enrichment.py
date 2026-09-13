@@ -119,3 +119,16 @@ def test_mismatched_run_workflow_is_reported_and_retained():
     assert any('scope' in i for i in issues)
     assert not any(s['kind']=='extract' for p in data.to_mapping()['series']['assay_paths'] for s in p['steps'])
     assert any(r['kind']=='MINiML' for r in data.to_mapping()['extensions']['insdc']['records'])
+
+
+def test_idf_protocol_padding_is_not_a_definition_and_short_names_do_not_truncate():
+    from meta_standards_converter.magetab.semantics import build_model
+    model = build_model([['Protocol Name', 'P1', '', ''],
+                         ['Protocol Type', 'extraction', '', ''],
+                         ['Protocol Description', 'extract RNA', '', '', 'sequence explicitly']], [])
+    protocols = model['protocols']
+    assert len(protocols) == 2
+    assert protocols[0]['name'] == 'P1'
+    assert protocols[1]['description'] == 'sequence explicitly'
+    assert protocols[1]['position'] == 3
+    assert protocols[1]['name'] == 'protocol:4'
