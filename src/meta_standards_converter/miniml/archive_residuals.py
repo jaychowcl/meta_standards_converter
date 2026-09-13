@@ -287,6 +287,14 @@ class Projection:
             if any(s.get('kind')=='assay' and s.get('name')==acc and s.get('description')==text for p in self.paths for s in p['steps']):mapped_text=True
         if tag in ('LIBRARY_CONSTRUCTION_PROTOCOL','PROTOCOL','METHOD','ASSEMBLY_METHOD'):
             if any(p.get('description')==text and p['name'].split(':')[0]==acc for p in self.series.get('protocols',[])):mapped_text=True
+            if tag == 'LIBRARY_CONSTRUCTION_PROTOCOL':
+                from .archive_protocols import library_description
+                designs = {s.get('description') for p in self.paths for s in p['steps']
+                           if s.get('kind') == 'assay' and s.get('name') == acc}
+                combined = {library_description(text, design) for design in designs}
+                if any(p.get('description') in combined and p['name'] == acc + ':library'
+                       for p in self.series.get('protocols', [])):
+                    mapped_text = True
         if tag=='SRAFile':
             file=[f for r in runs for f in r.get('files',[]) if f.get('filename')==attrs.get('filename')]
             for source,target in [('filename','filename'),('size','bytes'),('md5','md5'),('semantic_name','format'),('supertype','role'),('url','uri')]:

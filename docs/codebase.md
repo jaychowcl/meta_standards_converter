@@ -4207,13 +4207,25 @@ export. Operational diagnostics stay in logs and optional import reports.
 | Sample title, description, attributes | `sample.title`, `description`, `channel.characteristics[]` | Attribute occurrences, units and missing literals stay distinct |
 | Sample taxon, host and explicit molecule | `channel.organism[]`, host characteristic with taxon annotation, `channel.molecule` | TRANSCRIPTOMIC does not imply total RNA; organism and host stay separate |
 | Experiment library fields / platform | `sample.sra_run[]` and assay comments | Sample scalar library fields require consistency across runs |
-| Explicit library construction text | `series.protocols[]` and protocol applications | No manufactured extraction/treatment sequence |
+| Explicit library construction text | `series.protocols[]` and protocol applications | Preserve dedicated text; append qualifying library-preparation sentences from experiment design descriptions; no manufactured extraction/treatment sequence |
 | Run statistics and read averages | Run `statistics`, `indexed_statistics`, `read_lengths` | ENA indexed `read_count` and `base_count` retain their original field names and values in `indexed_statistics`; spot/base totals and nominal insert length are not read lengths |
 | File reports / SRA file alternatives | Run `files`, `fastq_files`, sample `raw_data`, assay-file nodes | Parallel ENA lists align by position, including gaps; archive files retain actual formats; alternatives are not deduplicated |
 | Explicit publications and contacts | Scoped `pubmed_id`/`pubmed_publication`, publication relations; root `contributor`/`organization` and `contact_ref` | Source-linked identifiers only; BioSample owners and contacts remain sample-scoped; valid secondary emails use contributor extensions; unmapped details stay residual |
 | Indexed and submitted dates | Entity status where semantics match; complete source records retained | Original date precision is retained in JSON |
 | Analysis/assembly files, protocols and associations | `supplementary_data`, additional assay branches, `protocols`, `relation` | Explicit sample/run associations only; assembly FTP directories are relations, never invented file URLs |
 | Experimental factors / replicates | `series.variable`, factor values / repeat metadata from explicit linked declarations | Original factor `name` survives normalization; varying attributes alone do not declare factors |
+
+`miniml.archive_protocols.library_description` is a pure helper shared by both
+native parsers. It appends complete sentences starting with explicit library
+preparation forms (library was/libraries were made, prepared or constructed
+using/with), preserving source wording, versions and enzyme motifs. Sentences
+containing archive/sample/run identifiers, multiplexing or barcode/index
+assignments are excluded. Repeated or already-contained sentences are not
+appended again. The complete design description remains on the assay. A
+qualifying sentence can supply an otherwise absent library protocol; unrelated
+design prose cannot. Sequencing instruments remain on runs/assays rather than
+being copied into library-construction hardware. Residual matching recognizes
+the combined dedicated text and method sentences at the same experiment scope.
 
 Incomplete Browser retrieval can use available ENA indexed fields for a partial
 package. Full-record failures and identifier/count mismatches remain in logs and

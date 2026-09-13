@@ -221,14 +221,14 @@ def attach_run(sample, experiment, run, study, files):
 
 
 def protocol_for(experiment):
-    description = text(experiment, 'DESIGN/LIBRARY_DESCRIPTOR/LIBRARY_CONSTRUCTION_PROTOCOL')
+    from .archive_protocols import library_description
+    description = library_description(
+        text(experiment, 'DESIGN/LIBRARY_DESCRIPTOR/LIBRARY_CONSTRUCTION_PROTOCOL'),
+        text(experiment, 'DESIGN/DESIGN_DESCRIPTION'))
     if not description:
         return None
     result = {'name': identifier(experiment) + ':library', 'description': description,
               'type': {'value': 'library construction protocol'}}
-    hardware = library(experiment).get('instrument_model')
-    if hardware:
-        result['hardware'] = [hardware]
     return result
 
 
