@@ -4085,7 +4085,10 @@ mapped names, contact values and owner URLs are removed from residuals.
 Native sources collect explicitly linked PubMed IDs from supplied XML identifiers,
 project publications and named fields/URLs in retrieved cross-references. ENA uses
 `/ena/xref/rest/json/search` with validated targets, cached requests and pages of
-1,000; the TSV service is headerless. Associated study/project, sample, experiment,
+1,000; the TSV service is headerless. Versionless assembly cross-references
+remain attached to the explicitly supplied accession without a version; they
+are not attributed to a specific assembly version. Conflicting explicit versions
+remain rejected. Associated study/project, sample, experiment,
 run, analysis and assembly XML identities bound these requests. SRA uses validated
 `sra_pubmed`, `bioproject_pubmed`, `biosample_pubmed`, `sra_pmc` and `bioproject_pmc`
 ELinks, preserving each UID's owner. Nonempty SRA links resolve their experiment

@@ -174,3 +174,29 @@ def test_sra_link_retrieval_binds_uid_to_verified_experiment_project_and_sample(
     assert data['series']['pubmed_id']==['124']
     assert data['sample'][0]['pubmed_id']==['125']
     assert any(r.get('experiment_ref')=='SRX7812918' and r['target']=='123' for r in data['series']['relation'])
+
+
+@pytest.mark.parametrize('target,accepted', [('GCA_123',True),('GCA_123.1',False),('GCA_999',False)])
+def test_versionless_assembly_crossrefs_keep_family_scope(target,accepted):
+    row={'Source':'GTDB','Source Primary Accession':'GCF_123.2',
+         'Target':'assembly','Target Primary Accession':target,'Target Secondary Accession':''}
+    source=ENASource(http=HTTP(lambda *a:[row]))
+    records=StudyRecords(StudySeed('ERP1','PRJEB1'))
+    source.cross_references('GCA_123.2',records)
+    assert bool(records.linked)==accepted
+    assert bool(records.issues)!=accepted
+    if accepted:
+        assert records.linked[0]['accession']=='GCA_123'
+        assert records.linked[0]['metadata'][0]['Target Primary Accession']=='GCA_123'
+
+
+def test_versionless_assembly_citation_is_not_assigned_to_a_version_or_study():
+    records=fixture_records('sra')
+    records.xml.append(ET.fromstring('<ASSEMBLY_SET><ASSEMBLY accession="GCA_123.2"/></ASSEMBLY_SET>'))
+    row={**xref('GCA_123'),'Target':'assembly'}
+    ENASource(http=HTTP(lambda *a:[row])).cross_references('GCA_123.2',records)
+    data=SRAParser().parse(records).to_mapping()
+    assert not data['series'].get('pubmed_id')
+    citation=next(r for r in data['series']['relation'] if r.get('publication'))
+    assert citation['assembly_ref']=='GCA_123'
+    assert citation['publication']['pubmed_id']=='123'

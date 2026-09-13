@@ -8,6 +8,7 @@
 # =============================================================================
 """Pure citation projection, retaining the scope of each explicit source link."""
 from copy import deepcopy
+import re
 from ..sources.archive_publications import references, study_accessions
 
 
@@ -21,6 +22,9 @@ def project_publications(records, series, samples):
     scoped = {identifier(n):n.tag.lower() for root in records.xml for n in root.iter()
               if n.tag in ('EXPERIMENT','ASSEMBLY','ANALYSIS') and identifier(n)}
     scoped.update({r['accession']:r['kind'] for r in records.linked if r['kind'] in ('analysis','assembly')})
+    for acc, kind in list(scoped.items()):
+        if kind=='assembly' and re.fullmatch(r'GC[AF]_\d+\.\d+', acc):
+            scoped[acc.rsplit('.',1)[0]] = 'assembly'
     articles = {}
     for root in records.xml:
         for article in root.findall('.//PubmedArticle'):
@@ -74,7 +78,6 @@ def project_publications(records, series, samples):
         if record['kind']!='cross_references' or record['accession'] not in aliases: continue
         for row in record['metadata']:
             source, acc = row.get('Source'), row.get('Source Primary Accession','')
-            import re
             if (source=='ArrayExpress' and re.fullmatch(r'E-[A-Z]+-\d+',acc)) or (source=='GEO' and re.fullmatch(r'GSE\d+',acc)):
                 value = {'value':acc,'database':database_for(acc)}
                 if value not in series.setdefault('accession',[]): series['accession'].append(value)

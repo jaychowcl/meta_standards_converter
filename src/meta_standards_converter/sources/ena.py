@@ -26,6 +26,11 @@ class ENASource:
 
     def cross_references(self, accession, records):
         """Fetch bounded JSON pages; TSV has no header and loses its first row."""
+        def family_scope(row):
+            return (isinstance(row, dict) and row.get('Target')=='assembly'
+                    and re.fullmatch(r'GC[AF]_\d+\.\d+', accession)
+                    and row.get('Target Primary Accession')==accession.rsplit('.',1)[0]
+                    and row.get('Target Secondary Accession') in ('',None,accession.rsplit('.',1)[0]))
         if accession not in self._xrefs:
             rows, issues, offset = [], [], 0
             seen_pages = set()
@@ -38,7 +43,7 @@ class ENASource:
                     if page and signature in seen_pages: raise ValueError('repeated cross-reference page')
                     seen_pages.add(signature)
                     for row in page:
-                        if not isinstance(row, dict) or accession not in {row.get('Target Primary Accession'),row.get('Target Secondary Accession')}:
+                        if not isinstance(row, dict) or (accession not in {row.get('Target Primary Accession'),row.get('Target Secondary Accession')} and not family_scope(row)):
                             issues.append(f'ENA cross references {accession}: mismatched target')
                             continue
                         rows.append(row)
@@ -50,8 +55,13 @@ class ENASource:
             self._xrefs[accession] = rows, issues
         rows, issues = self._xrefs[accession]
         records.issues.extend(i for i in issues if i not in records.issues)
-        record = {'provider':'ena','kind':'cross_references','accession':accession,'metadata':rows}
-        if rows and record not in records.linked: records.linked.append(record)
+        grouped = {}
+        for row in rows:
+            owner = row['Target Primary Accession'] if family_scope(row) else accession
+            grouped.setdefault(owner, []).append(row)
+        for owner, values in grouped.items():
+            record = {'provider':'ena','kind':'cross_references','accession':owner,'metadata':values}
+            if record not in records.linked: records.linked.append(record)
 
     def search(self, result, query, fields='all'):
         rows = self.http.get(self.portal + 'search', {'result': result, 'query': query,
