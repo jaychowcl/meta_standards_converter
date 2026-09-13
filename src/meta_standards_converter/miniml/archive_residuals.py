@@ -102,6 +102,17 @@ class Projection:
         self.publications = {str(p['pubmed_id']): p for p in self.series.get('pubmed_publication', [])}
         self.ids = {a['value'] for a in self.series.get('accession', [])}
         self._mapped_characters = set()
+        self.all_publications = [p for entity in [self.series, *data.get('sample', []), *self.runs.values()]
+                                 for p in entity.get('pubmed_publication', [])]
+        self.all_publications.extend(r['publication'] for r in self.series.get('relation', []) if r.get('publication'))
+        self.publications = {str(p['pubmed_id']):p for p in self.all_publications if p.get('pubmed_id')}
+
+    def citations(self, acc):
+        target = self.series if acc in self.ids else self.samples.get(acc, self.runs.get(acc, {}))
+        values = list(target.get('pubmed_publication', []))
+        values.extend(r['publication'] for r in self.series.get('relation', []) if r.get('publication')
+                      and acc in (r.get('experiment_ref'),r.get('assembly_ref'),r.get('analysis_ref')))
+        return values
 
     def entity(self, kind, acc):
         if kind in ('SAMPLE','BioSample','sample'): return self.samples.get(acc, {})
@@ -164,7 +175,7 @@ class Projection:
         if any(value == r.get(k) for r in runs for k in ('run','study','sample','biosample','experiment','geo_sample')): return True
         return False
 
-    def xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None):
+    def xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None, citation=None):
         tag = node['tag']; attrs=node.get('attributes', {})
         text=str(node.get('text') or '').strip()
         entity = self.entity(kind, acc)
@@ -183,6 +194,20 @@ class Projection:
         if tag=='PubmedArticle': self.publication=self.publications.get(child_text(node,'MedlineCitation/PMID'),{})
         if tag=='Statistics' and any(r.get('statistics') == node for r in runs): return None
         mapped_text=False; mapped_attrs={'alias'} if mapped_alias else set(); drop=False
+        from ..sources.archive_publications import citation_identifier
+        if tag=='Publication':
+            wanted = citation_identifier(child_text(node,'DbType'),attrs.get('id'))
+            citation = next((p for p in (self.citations(owner[1]) or self.citations(acc)) if wanted and contains(wanted,p)), {})
+            if citation:
+                mapped_attrs.add('id')
+        if citation:
+            field = {'Title':'title','AuthorList':'author_list','DOI':'doi'}.get(tag)
+            if field and citation.get(field)==text: mapped_text=True
+            if tag=='DbType': mapped_text=True
+        if tag=='Link':
+            wanted = citation_identifier(attrs.get('type') or attrs.get('target'),text)
+            if wanted and any(contains(wanted,p) for p in self.citations(owner[1])):
+                mapped_text=True; mapped_attrs.update(('type','target'))
         if kind=='PubmedArticle':
             pub=getattr(self,'publication',{})
             if tag == 'PublicationStatus':
@@ -312,7 +337,7 @@ class Projection:
         for i,c in enumerate(node.get('children',[])):
             if tag=='EXPERIMENT_PACKAGE' and c['tag'] in ('STUDY','SAMPLE','EXPERIMENT','SUBMISSION','RUN_SET'): continue
             if c['tag']=='Contact':self.contact_index=ci;ci+=1
-            v=self.xml(c,kind,acc,provider,(*path,i),owner,actor,file)
+            v=self.xml(c,kind,acc,provider,(*path,i),owner,actor,file,citation)
             if v:remaining.append(v)
         if remaining:out['children']=remaining
         if text and not mapped_text:out['text']=node['text']
@@ -379,6 +404,30 @@ def finalize(data, records=None):
                 project=next(iter(children(metadata,'Project')),{}); acc=next(iter(children(next(iter(children(project,'ProjectID')),{}),'ArchiveID')),{}).get('attributes',{}).get('accession')
             left=projection.xml(metadata,kind,acc,record['provider'])
             if left and set(left)=={'tag'}:left=None
+        elif kind=='publication_reference':
+            candidates=projection.citations(acc)
+            candidate=next((p for p in candidates if any(metadata.get(k) and metadata[k]==p.get(k) for k in ('pubmed_id','doi','pmcid'))),{})
+            left=diff(metadata,candidate)
+        elif kind=='cross_references':
+            from ..sources.archive_publications import citation_identifier
+            left=[]
+            for row in metadata:
+                item=deepcopy(row)
+                pubs=projection.citations(acc)
+                mapped=False
+                for key in ('Source Primary Accession','Source Secondary Accession','Source URL','Source Secondary URL','url'):
+                    value=row.get(key)
+                    if not value: item.pop(key,None); continue
+                    wanted=citation_identifier('pmc' if key=='Source Primary Accession' else 'pubmed' if key=='Source Secondary Accession' else 'url',value)
+                    represented=bool(wanted and any(contains(wanted,p) for p in pubs))
+                    represented |= acc in projection.ids and (value in projection.ids or
+                        (row.get('Source') in ('ArrayExpress','GEO') and row.get('Source Primary Accession') in projection.ids and key=='Source URL'))
+                    if represented: item.pop(key,None); mapped=True
+                if mapped:
+                    for key in ('Source','Target','Target Primary Accession','Target Secondary Accession','Target URL'):
+                        item.pop(key,None)
+                item={k:v for k,v in item.items() if v not in ('',None,[],{})}
+                if item:left.append(item)
         elif kind in ('study','sample','read_run','read_experiment') and record['provider']!='biosamples':
             left=projection.indexed(metadata,kind,acc)
         elif record['provider']=='biosamples' and kind=='sample':

@@ -18,6 +18,64 @@ class SRASource:
     def __init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None):
         self.http = http or ArchiveHTTP('ncbi_eutils', requester, resource_profile, evidence_dir)
         self._projects = {}
+        self._publication_links = {}
+
+    def publication_links(self, dbfrom, db, ids, name):
+        key = (dbfrom, db, tuple(ids), name)
+        if key in self._publication_links: return self._publication_links[key]
+        root = self.http.get(self.base+'elink.fcgi', {'dbfrom':dbfrom,'db':db,
+            'id':list(ids),'linkname':name,'cmd':'neighbor'})
+        if any(n.tag.lower()=='error' for n in root.iter()): raise ValueError('Entrez link error')
+        result = {}
+        for item in root.findall('LinkSet'):
+            source_ids = [n.text for n in item.findall('IdList/Id')]
+            if item.findtext('DbFrom')!=dbfrom or len(source_ids)!=1 or source_ids[0] not in ids:
+                raise ValueError('Entrez link source mismatch')
+            values = []
+            for group in item.findall('LinkSetDb'):
+                if group.findtext('DbTo')!=db or group.findtext('LinkName')!=name:
+                    raise ValueError('Entrez link database or type mismatch')
+                for node in group.findall('Link/Id'):
+                    if not node.text or not node.text.isdigit(): raise ValueError('invalid linked UID')
+                    values.append(node.text)
+            if source_ids[0] in result: raise ValueError('duplicate link source')
+            result[source_ids[0]] = list(dict.fromkeys(values))
+        if set(result)!=set(ids): raise ValueError('missing Entrez link source')
+        self._publication_links[key] = result
+        return result
+
+    def linked_publications(self, records, sra_ids):
+        from ..xml_safety import parse_xml
+        targets = {'sra': {uid:None for uid in sra_ids}, 'bioproject':{}, 'biosample':{}}
+        for root in records.xml:
+            for node in root.findall('.//ProjectID/ArchiveID'):
+                if node.get('id'): targets['bioproject'][node.get('id')] = node.get('accession')
+            for node in root.findall('.//BioSample'):
+                if node.get('id'): targets['biosample'][node.get('id')] = node.get('accession')
+        experiments = {identifier(n) for root in records.xml for n in root.findall('.//EXPERIMENT')}
+        for dbfrom, members in targets.items():
+            for db in (('pubmed',) if dbfrom=='biosample' else ('pubmed','pmc')):
+                for batch in chunks(sorted(members)):
+                    links = attempt(records, dbfrom+' publication links', lambda: self.publication_links(dbfrom,db,batch,dbfrom+'_'+db)) or {}
+                    for uid, values in links.items():
+                        if not values: continue
+                        if dbfrom=='sra' and not members[uid]:
+                            summary = attempt(records, 'SRA citation owner', lambda: self.http.get(self.base+'esummary.fcgi',
+                                {'db':'sra','id':uid,'retmode':'json'}, 'json'))
+                            entry = (summary or {}).get('result',{}).get(uid,{})
+                            fragment = entry.get('expxml') or entry.get('ExpXml')
+                            if fragment and str(entry.get('uid',uid))==uid:
+                                xml = attempt(records, 'SRA citation experiment', lambda: parse_xml('<ROOT>'+fragment+'</ROOT>', max_bytes=getattr(getattr(self.http,'profile',None),'max_xml_bytes',32*1024*1024)))
+                                node = xml.find('.//Experiment') if xml is not None else None
+                                acc = node.get('acc') if node is not None else None
+                                if acc in experiments: members[uid] = acc
+                            if not members[uid]:
+                                records.issues.append(f'SRA {uid}: unresolved publication owner')
+                                continue
+                        for value in values:
+                            metadata = {'pubmed_id':value} if db=='pubmed' else {'pmcid':'PMC'+value}
+                            record = {'provider':'sra','kind':'publication_reference','accession':members[uid],'metadata':metadata}
+                            if record not in records.linked: records.linked.append(record)
 
     def search(self, term, db='sra'):
         ids, issues, start, count = [], [], 0, None
@@ -212,8 +270,7 @@ class SRASource:
                     if db == 'bioproject':
                         linked['pubmed'].update(n.get('id') for n in root.findall('.//Publication') if n.get('id') and n.findtext('DbType') == 'ePubmed')
         from .archive_support import publication_ids
-        linked['pubmed'].update(publication_ids(records))
-        for db in ('taxonomy', 'pubmed'):
+        for db in ('taxonomy',):
             for batch in chunks(sorted(linked[db])):
                 root = self.linked_xml(db, batch, records)
                 if root is not None:
@@ -234,6 +291,12 @@ class SRASource:
                         records.linked.append({'provider': 'sra', 'kind': 'assembly', 'accession': item.get('assemblyaccession'), 'metadata': item})
                     else:
                         records.issues.append(f'assembly {uid}: missing summary')
+        self.linked_publications(records, ids)
+        from .archive_publications import resolve_identifiers
+        resolve_identifiers(records, self.http, 'sra')
+        for batch in chunks(sorted(publication_ids(records))):
+            root = self.linked_xml('pubmed', batch, records)
+            if root is not None: records.xml.append(root)
         return records
 
     def _pool_samples(self, records):

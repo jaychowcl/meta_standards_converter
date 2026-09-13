@@ -15,12 +15,43 @@ from .archive_support import ArchiveHTTP, Resolution, StudyRecords, StudySeed, a
 
 
 class ENASource:
+    xref_page_size = 1000
     portal = 'https://www.ebi.ac.uk/ena/portal/api/'
     browser = 'https://www.ebi.ac.uk/ena/browser/api/xml/'
 
     def __init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None):
         self.http = http or ArchiveHTTP('ena_portal', requester, resource_profile, evidence_dir)
         self._catalogues = {}
+        self._xrefs = {}
+
+    def cross_references(self, accession, records):
+        """Fetch bounded JSON pages; TSV has no header and loses its first row."""
+        if accession not in self._xrefs:
+            rows, issues, offset = [], [], 0
+            seen_pages = set()
+            while True:
+                try:
+                    page = self.http.get('https://www.ebi.ac.uk/ena/xref/rest/json/search',
+                        {'accession':accession,'limit':self.xref_page_size,'offset':offset}, 'json')
+                    if not isinstance(page, list): raise ValueError('expected cross-reference array')
+                    signature = repr(page)
+                    if page and signature in seen_pages: raise ValueError('repeated cross-reference page')
+                    seen_pages.add(signature)
+                    for row in page:
+                        if not isinstance(row, dict) or accession not in {row.get('Target Primary Accession'),row.get('Target Secondary Accession')}:
+                            issues.append(f'ENA cross references {accession}: mismatched target')
+                            continue
+                        rows.append(row)
+                    if len(page) < self.xref_page_size: break
+                    offset += len(page)
+                except Exception as error:
+                    issues.append(f'ENA cross references {accession}: {type(error).__name__}')
+                    break
+            self._xrefs[accession] = rows, issues
+        rows, issues = self._xrefs[accession]
+        records.issues.extend(i for i in issues if i not in records.issues)
+        record = {'provider':'ena','kind':'cross_references','accession':accession,'metadata':rows}
+        if rows and record not in records.linked: records.linked.append(record)
 
     def search(self, result, query, fields='all'):
         rows = self.http.get(self.portal + 'search', {'result': result, 'query': query,
@@ -215,16 +246,15 @@ class ENASource:
                 records.issues.append('ENA run count response unrecognized')
         if not inventory['read_run']:
             records.issues.append(f'{seed.study}: no public run records')
-        xrefs = attempt(records, 'ENA cross references', lambda: self.http.get('https://www.ebi.ac.uk/ena/xref/rest/tsv/search',
-            {'accession': seed.study}, 'text'))
-        if xrefs:
-            records.linked.append({'provider': 'ena', 'kind': 'cross_references', 'accession': seed.study,
-                                   'metadata': list(csv.DictReader(io.StringIO(xrefs), delimiter='\t'))})
+        references = {seed.study, seed.primary}
+        for root in records.xml:
+            references.update(identifier(n) for n in root.iter() if n.tag in
+                              ('STUDY','PROJECT','SAMPLE','EXPERIMENT','RUN','ANALYSIS','ASSEMBLY') and identifier(n))
+        for accession in sorted(references): self.cross_references(accession, records)
         from .archive_support import publication_ids
-        taxa, pmids = set(), publication_ids(records)
+        taxa = set()
         for root in records.xml:
             taxa.update(n.text for n in root.findall('.//SAMPLE_NAME/TAXON_ID') if n.text)
-            pmids.update(n.findtext('ID') for n in root.findall('.//XREF_LINK') if n.findtext('DB', '').lower() == 'pubmed' and n.findtext('ID'))
         for acc in inventory['sample']:
             if acc.startswith('SAM'):
                 obj = self.linked_json('https://www.ebi.ac.uk/biosamples/samples/' + acc, acc, 'accession', records)
@@ -234,7 +264,9 @@ class ENASource:
             obj = self.linked_json('https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/' + taxid, taxid, 'taxId', records)
             if obj is not None:
                 records.linked.append({'provider': 'ena', 'kind': 'taxonomy', 'accession': taxid, 'metadata': obj})
-        for batch in chunks(sorted(pmids)):
+        from .archive_publications import resolve_identifiers
+        resolve_identifiers(records, self.http, 'ena')
+        for batch in chunks(sorted(publication_ids(records))):
             root = self.publications(batch, records)
             if root is not None:
                 records.xml.append(root)

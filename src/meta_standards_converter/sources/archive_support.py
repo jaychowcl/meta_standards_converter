@@ -64,39 +64,9 @@ def chunks(values, size=100):
 
 
 def publication_ids(records):
-    """Read explicit PubMed identifiers/URLs from already associated records."""
-    from urllib.parse import urlsplit
-    found = set()
-    def add(value):
-        value = str(value or '').strip()
-        if re.fullmatch(r'[1-9]\d*', value): found.add(value)
-    def url(value):
-        try:
-            parsed = urlsplit(str(value or ''))
-        except ValueError:
-            return
-        if parsed.hostname == 'pubmed.ncbi.nlm.nih.gov': add(parsed.path.strip('/'))
-        elif parsed.hostname in ('www.ncbi.nlm.nih.gov', 'ncbi.nlm.nih.gov') and parsed.path.startswith('/pubmed/'):
-            add(parsed.path.removeprefix('/pubmed/').strip('/'))
-    for root in records.xml:
-        for node in root.iter('XREF_LINK'):
-            if node.findtext('DB', '').strip().lower() == 'pubmed': add(node.findtext('ID'))
-        for node in root.iter('EXTERNAL_ID'):
-            if node.get('namespace', '').lower() == 'pubmed': add(node.text)
-        for node in root.iter('Publication'):
-            if node.findtext('DbType') == 'ePubmed': add(node.get('id'))
-        for node in root.iter('URL_LINK'): url(node.findtext('URL'))
-    for row in records.indexed.get('study', []):
-        add(row.get('pubmed_id'))
-    def urls(value):
-        if isinstance(value, dict):
-            for child in value.values(): urls(child)
-        elif isinstance(value, list):
-            for child in value: urls(child)
-        elif isinstance(value, str) and value.startswith(('https://', 'http://')): url(value)
-    for record in records.linked:
-        if record['kind'] == 'cross_references': urls(record['metadata'])
-    return found
+    """All explicitly linked PMIDs, including entity-scoped retrieval targets."""
+    from .archive_publications import references
+    return {r['pubmed_id'] for r in references(records) if r.get('pubmed_id')}
 
 
 class ArchiveHTTP:
@@ -111,7 +81,7 @@ class ArchiveHTTP:
 
     def get(self, url, params=None, fmt='xml'):
         params = dict(params or {})
-        if url.startswith('https://eutils.ncbi.nlm.nih.gov/'):
+        if url.startswith(('https://eutils.ncbi.nlm.nih.gov/', 'https://pmc.ncbi.nlm.nih.gov/tools/idconv/')):
             params.update(self.identity.params())
         remaining = self.profile.max_aggregate_download_bytes - self.downloaded_bytes
         if remaining <= 0:

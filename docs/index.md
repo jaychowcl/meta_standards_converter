@@ -439,7 +439,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Native archive converters, metadata and enrichment
   anchor: native-archive-imports
   purpose: Native SRA/ENA discovery, parsing, preservation and conversion contracts.
-  keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc, native identity, custom factor names, explicit protocols, PubMed hydration, publication-only enrichment, publication status, final IDF comment order, protocol deduplication, P-MTAB, protocol block, unused protocols, native FASTQ rows, file aliases, repeated processed relationships, SRF, SUBMITTED_FILE, ARCHIVE_FILE, index reads, archive alternatives, ArrayExpress accession comments, administrative sample status, INSDC center, organization relationships, BioSample access, no-enrich cleanup, native date precision, scoped protocol enrichment, enrichment precedence, CLI reports
+  keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc, native identity, custom factor names, explicit protocols, BioSample Owner, Contacts, contact_ref, secondary_email, JSON cross-references, ELink, DOI verification, PMCID, scoped publications, PubMed hydration, publication-only enrichment, publication status, final IDF comment order, protocol deduplication, P-MTAB, protocol block, unused protocols, native FASTQ rows, file aliases, repeated processed relationships, SRF, SUBMITTED_FILE, ARCHIVE_FILE, index reads, archive alternatives, ArrayExpress accession comments, administrative sample status, INSDC center, organization relationships, BioSample access, no-enrich cleanup, native date precision, scoped protocol enrichment, enrichment precedence, CLI reports
   link: [Open section](codebase.md#native-archive-imports)
 
 - id: native-archive-contract
@@ -512,5 +512,3 @@ PYCODE
 
 Preserve stable anchors when reorganizing material. Update this index and the
 canonical guide together when an interface, workflow, or contract changes.
-
-- BioSample owners and scoped contacts: [Native archive imports](codebase.md#native-archive-imports); keywords: Owner, Contacts, contact_ref, secondary_email, contact residuals.

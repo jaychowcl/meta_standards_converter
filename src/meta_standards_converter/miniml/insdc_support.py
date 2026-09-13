@@ -342,8 +342,8 @@ def study_record(node, seed):
 
 def fill_linked_metadata(records, series, samples, protocols, paths):
     """Project linked fields only when their entity binding is explicit."""
-    from ..sources.archive_support import publication_ids
-    series['pubmed_id'] = list(dict.fromkeys([*series.get('pubmed_id', []), *sorted(publication_ids(records))]))
+    from .archive_publications import project_publications
+    project_publications(records, series, samples)
     by_id = {a['value']: s for s in samples for a in s['accession']}
     seen_contacts = set()
     for root in records.xml:
@@ -372,25 +372,6 @@ def fill_linked_metadata(records, series, samples, protocols, paths):
                 series['title'] = text(desc, 'Title')
             if not series.get('summary'):
                 series['summary'] = text(desc, 'Description')
-            for pub in project.findall('.//Publication'):
-                if pub.findtext('DbType') == 'ePubmed' and pub.get('id') not in series['pubmed_id']:
-                    series['pubmed_id'].append(pub.get('id'))
-        for article in root.findall('.//PubmedArticle'):
-            pmid = text(article, 'MedlineCitation/PMID')
-            if not pmid or pmid not in series['pubmed_id']:
-                continue
-            authors = []
-            for author in article.findall('MedlineCitation/Article/AuthorList/Author'):
-                authors.append(text(author, 'CollectiveName') or ' '.join(filter(None, [text(author, 'ForeName'), text(author, 'LastName')])))
-            pub = {'pubmed_id': pmid, 'title': text(article, 'MedlineCitation/Article/ArticleTitle'),
-                   'author_list': ', '.join(authors)}
-            from ..metadata.ontology_mappings import Harmonizer
-            status = Harmonizer().pubstatus2efo(text(article, 'PubmedData/PublicationStatus'))
-            pub.update(zip(('status', 'status_term_source_ref', 'status_term_accession_number'), status))
-            for aid in article.findall('PubmedData/ArticleIdList/ArticleId'):
-                if aid.get('IdType') == 'doi':
-                    pub['doi'] = aid.text
-            series.setdefault('pubmed_publication', []).append(pub)
     # EBI BioSamples supplies repeated values and optional ontology URLs.
     for record in records.linked:
         if record['provider'] != 'biosamples':

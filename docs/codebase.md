@@ -4083,7 +4083,22 @@ Malformed emails and unknown contact siblings remain in INSDC residual metadata;
 mapped names, contact values and owner URLs are removed from residuals.
 
 Native sources collect explicitly linked PubMed IDs from supplied XML identifiers,
-project publications and PubMed URLs in retrieved cross-references. Parsers map
+project publications and named fields/URLs in retrieved cross-references. ENA uses
+`/ena/xref/rest/json/search` with validated targets, cached requests and pages of
+1,000; the TSV service is headerless. Associated study/project, sample, experiment,
+run, analysis and assembly XML identities bound these requests. SRA uses validated
+`sra_pubmed`, `bioproject_pubmed`, `biosample_pubmed`, `sra_pmc` and `bioproject_pmc`
+ELinks, preserving each UID's owner. Nonempty SRA links resolve their experiment
+accession through verified ESummary metadata. Explicit PMCIDs resolve through
+NCBI ID Conversion; explicit DOIs use exact PubMed `[AID]` queries and DOI-verified
+EFetch responses. There is no accession-based literature discovery.
+
+`pubmed_publication` may retain a DOI/title with an empty PMID. Sample/run citations
+remain on those entities; experiment/analysis/assembly citations use scoped core
+relations with their reference and citation details. Only study/project citations
+populate the study's publication block. Native hydration covers these scopes and
+caches each PMID once per operation. Root INSDC residuals keep only unmatched
+citation fields; source-reference identifiers and mapped details disappear. Parsers map
 already fetched citation status with the shared `Harmonizer.pubstatus2efo` mapping.
 Each converter calls its optional `publication_enricher` collaborator after peer
 and GEO/AE enrichment; the default `MINiMLEnricher` hydrates missing native citation
@@ -4192,7 +4207,7 @@ export. Operational diagnostics stay in logs and optional import reports.
 | Explicit library construction text | `series.protocols[]` and protocol applications | No manufactured extraction/treatment sequence |
 | Run statistics and read averages | Run `statistics`, `indexed_statistics`, `read_lengths` | ENA indexed `read_count` and `base_count` retain their original field names and values in `indexed_statistics`; spot/base totals and nominal insert length are not read lengths |
 | File reports / SRA file alternatives | Run `files`, `fastq_files`, sample `raw_data`, assay-file nodes | Parallel ENA lists align by position, including gaps; archive files retain actual formats; alternatives are not deduplicated |
-| Publications and known contributor details | `pubmed_id`, `pubmed_publication`, `contact` | Unknown roles/organization content stays in structured records |
+| Explicit publications and contacts | Scoped `pubmed_id`/`pubmed_publication`, publication relations; root `contributor`/`organization` and `contact_ref` | Source-linked identifiers only; BioSample owners and contacts remain sample-scoped; valid secondary emails use contributor extensions; unmapped details stay residual |
 | Indexed and submitted dates | Entity status where semantics match; complete source records retained | Original date precision is retained in JSON |
 | Analysis/assembly files, protocols and associations | `supplementary_data`, additional assay branches, `protocols`, `relation` | Explicit sample/run associations only; assembly FTP directories are relations, never invented file URLs |
 | Experimental factors / replicates | `series.variable`, factor values / repeat metadata from explicit linked declarations | Original factor `name` survives normalization; varying attributes alone do not declare factors |
@@ -4472,13 +4487,23 @@ Residual projection and entity helpers:
 | `meta_standards_converter.miniml.archive_residuals.Projection.character` | `character(self, sample, name, value, unit=None, terms=None)` |
 | `meta_standards_converter.miniml.archive_residuals.Projection.relations` | `relations(self, entity)` |
 | `meta_standards_converter.miniml.archive_residuals.Projection.reference` | `reference(self, value, kind, acc)` |
-| `meta_standards_converter.miniml.archive_residuals.Projection.xml` | `xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.xml` | `xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None, citation=None)` |
 | `meta_standards_converter.miniml.archive_residuals.Projection.indexed` | `indexed(self, metadata, kind, acc)` |
 | `meta_standards_converter.miniml.archive_residuals.source_records` | `source_records(package)` |
 | `meta_standards_converter.miniml.archive_residuals.finalize` | `finalize(data, records=None)` |
 | `meta_standards_converter.miniml.insdc_support.result_file` | `result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=True)` |
 | `meta_standards_converter.sources.ena.ENASource.fetch_reference_ranges` | `fetch_reference_ranges(self, records)` |
 | `meta_standards_converter.sources.ena.ENASource.fetch_associated_analyses` | `fetch_associated_analyses(self, records)` |
+
+| `meta_standards_converter.sources.archive_publications.citation_identifier` | `citation_identifier(namespace, value)` |
+| `meta_standards_converter.sources.archive_publications.references` | `references(records)` |
+| `meta_standards_converter.sources.archive_publications.study_accessions` | `study_accessions(records)` |
+| `meta_standards_converter.sources.archive_publications.resolve_identifiers` | `resolve_identifiers(records, http, provider)` |
+| `meta_standards_converter.miniml.archive_publications.project_publications` | `project_publications(records, series, samples)` |
+| `meta_standards_converter.sources.ena.ENASource.cross_references` | `cross_references(self, accession, records)` |
+| `meta_standards_converter.sources.sra.SRASource.publication_links` | `publication_links(self, dbfrom, db, ids, name)` |
+| `meta_standards_converter.sources.sra.SRASource.linked_publications` | `linked_publications(self, records, sra_ids)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.citations` | `citations(self, acc)` |
 
 <a id="native-archive-validation"></a>
 ### Native import validation

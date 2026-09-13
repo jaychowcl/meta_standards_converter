@@ -69,9 +69,18 @@ class MINiMLEnricher:
         self._sra_failures = 0
         self.publication_issues = []
         if mutable.get("source", {}).get("format") in {"SRA", "ENA"}:
+            self._publication_cache = {}
             from meta_standards_converter.miniml.archive_entities import declare_ontologies
             from meta_standards_converter.miniml.archive_residuals import finalize, source_records
             self.enrich_pubmed(data=mutable, fill_missing=True)
+            for sample in mutable.get('sample', []):
+                for entity in [sample, *sample.get('sra_run', [])]:
+                    if entity.get('pubmed_publication') or entity.get('pubmed_id'):
+                        self.enrich_pubmed({'series':entity}, fill_missing=True)
+            for relation in mutable.get('series', {}).get('relation', []):
+                if relation.get('publication'):
+                    self.enrich_pubmed({'series':{'pubmed_publication':[relation['publication']]}}, fill_missing=True)
+            del self._publication_cache
             declare_ontologies(mutable)
             return finalize(mutable, source_records(package))
         self.enrich_pubmed(data=mutable)
@@ -172,6 +181,8 @@ class MINiMLEnricher:
         return data
 
     def _pubmed_publication(self, pubmed_id: str) -> dict:
+        cache = getattr(self, '_publication_cache', None)
+        if cache is not None and pubmed_id in cache: return dict(cache[pubmed_id])
         try:
             doi, authors, title, status, source_ref, accession = self.pubmed_fetcher.pubmed_summary(
                 pubmed_id=pubmed_id
@@ -185,7 +196,7 @@ class MINiMLEnricher:
             logger.warning('%s', issue)
             doi, authors, title, status, source_ref, accession = (None, None, None, None, None, None)
 
-        return {
+        result = {
             "pubmed_id": pubmed_id,
             "doi": doi,
             "author_list": authors,
@@ -194,6 +205,8 @@ class MINiMLEnricher:
             "status_term_source_ref": source_ref,
             "status_term_accession_number": accession,
         }
+        if cache is not None: cache[pubmed_id] = result
+        return result
 
     def _as_list(self, value):
         if value is None:
