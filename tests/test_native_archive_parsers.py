@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Native metadata contracts using the independently vendored provider responses."""
 from pathlib import Path
 import copy
@@ -119,3 +127,106 @@ def test_analysis_files_are_sample_scoped_only_with_explicit_references():
     assert link['value'].endswith('assembly.fasta')
     assert 'checksum' not in link
     assert data['series']['protocols'][0]['software'] == ['assembler']
+
+
+def test_ena_missing_file_position_is_not_dropped_or_shifted():
+    from meta_standards_converter.miniml.insdc_support import files_from_ena
+    files = files_from_ena({'fastq_ftp': 'host/a;;host/c', 'fastq_md5': 'a;b;c', 'fastq_bytes': '1;2;3;4'})
+    assert len(files) == 4
+    assert files[1].get('uri') is None and files[1]['md5'] == 'b'
+    assert files[2]['uri'].endswith('/c') and files[2]['bytes'] == '3'
+    assert files[3].get('uri') is None and files[3]['bytes'] == '4'
+
+
+def test_parser_scope_excludes_unrelated_study_samples_and_runs():
+    records = fixture_records('sra')
+    extra = copy.deepcopy(records.xml[0].find('EXPERIMENT_PACKAGE'))
+    extra.find('EXPERIMENT/STUDY_REF').set('accession', 'SRP999')
+    extra.find('EXPERIMENT').set('accession', 'SRX999')
+    extra.find('SAMPLE').set('accession', 'SRS999')
+    extra.find('RUN_SET/RUN').set('accession', 'SRR999')
+    records.xml[0].append(extra)
+    assert len(SRAParser().parse(records).samples) == 1
+    records = fixture_records('ena')
+    records.xml[2].find('.//EXPERIMENT/STUDY_REF').set('accession', 'SRP999')
+    parsed = ENAParser().parse(records)
+    assert not any(s.sra_runs for s in parsed.samples)
+    assert records.issues
+
+
+def test_sra_explicit_experiment_pool_members_receive_same_run():
+    records = fixture_records('sra')
+    package = records.xml[0].find('EXPERIMENT_PACKAGE')
+    second = copy.deepcopy(package.find('SAMPLE')); second.set('accession', 'SRS2')
+    second.find('IDENTIFIERS/PRIMARY_ID').text = 'SRS2'
+    records.xml.append(ET.fromstring('<SAMPLE_SET/>')); records.xml[-1].append(second)
+    desc = package.find('EXPERIMENT/DESIGN/SAMPLE_DESCRIPTOR')
+    pool = ET.SubElement(desc, 'POOL')
+    for accession in ('SRS6225446', 'SRS2'):
+        ET.SubElement(pool, 'MEMBER', accession=accession)
+    package.find('RUN_SET/RUN').remove(package.find('RUN_SET/RUN/Pool'))
+    data = SRAParser().parse(records).to_mapping()
+    assert {s['iid'] for s in data['sample']} == {'SRS6225446', 'SRS2'}
+    assert all(s['sra_run'][0]['run'] == 'SRR11192680' for s in data['sample'])
+
+
+def test_analysis_portal_files_and_run_associations_project_to_paths():
+    records = fixture_records('ena')
+    records.indexed['analysis'] = [{'analysis_accession': 'ERZ1', 'study_accession': 'PRJNA609050', 'run_accession': 'SRR11192680', 'submitted_ftp': 'host/assembly.fa.gz', 'submitted_format': 'fasta'}]
+    records.xml.append(ET.fromstring('<ANALYSIS_SET><ANALYSIS accession="ERZ1"><STUDY_REF accession="SRP250911"/><RUN_REF accession="SRR11192680"/><DESCRIPTION>Assembly pipeline</DESCRIPTION><FILES><FILE filename="relative/assembly.fa.gz" filetype="fasta"/></FILES></ANALYSIS></ANALYSIS_SET>'))
+    data = ENAParser().parse(records).to_mapping()
+    assert data['sample'][0]['supplementary_data'][0]['value'] == 'ftp://host/assembly.fa.gz'
+    paths = data['series']['assay_paths']
+    assert any(s.get('link', {}).get('value') == 'ftp://host/assembly.fa.gz' for p in paths for s in p['steps'])
+    assert any(s.get('protocol_ref') == 'ERZ1:analysis' for p in paths for s in p['steps'])
+
+
+def test_retained_records_have_entity_accessions():
+    from meta_standards_converter.miniml.insdc_support import retained
+    records = fixture_records('sra')
+    records.indexed['read_run'] = [{'run_accession': 'SRR1'}]
+    data = retained('sra', records)
+    assert any(r['kind'] == 'RUN' and r['accession'] == 'SRR11192680' for r in data['records'])
+    assert next(r for r in data['records'] if r['kind'] == 'read_run')['accession'] == 'SRR1'
+
+
+def test_ena_indexed_evidence_survives_missing_browser_records():
+    records = fixture_records('ena')
+    records.xml = records.xml[:1]
+    records.indexed['read_experiment'] = [{'experiment_accession': 'SRX7812918', 'study_accession': 'PRJNA609050', 'secondary_study_accession': 'SRP250911', 'sample_accession': 'SAMN14218700', 'secondary_sample_accession': 'SRS6225446', 'library_layout': 'PAIRED', 'library_strategy': 'AMPLICON', 'instrument_model': 'MiSeq'}]
+    records.indexed['sample'] = [{'sample_accession': 'SAMN14218700', 'secondary_sample_accession': 'SRS6225446', 'scientific_name': 'human gut metagenome', 'tax_id': '408170', 'sample_title': 'sample'}]
+    records.indexed['read_run'][0]['experiment_accession'] = 'SRX7812918'
+    records.issues.append('Browser unavailable')
+    data = ENAParser().parse(records).to_mapping()
+    assert len(data['sample']) == 1
+    assert data['sample'][0]['sra_run'][0]['run'] == 'SRR11192680'
+    assert data['sample'][0]['channel'][0]['organism'][0]['taxid'] == '408170'
+    assert data['series']['assay_paths']
+
+
+def test_explicit_molecule_host_taxon_and_indexed_dates():
+    records = fixture_records('ena')
+    attrs = records.xml[1].find('.//SAMPLE_ATTRIBUTES')
+    for name, value in [('molecule', 'total RNA'), ('host_taxid', '9606')]:
+        attr = ET.SubElement(attrs, 'SAMPLE_ATTRIBUTE')
+        ET.SubElement(attr, 'TAG').text = name
+        ET.SubElement(attr, 'VALUE').text = value
+    records.indexed['study'] = [{'study_accession': 'PRJNA609050', 'first_public': '2020-03', 'last_updated': '2024-03-01'}]
+    data = ENAParser().parse(records).to_mapping()
+    channel = data['sample'][0]['channel'][0]
+    assert channel['molecule']['value'] == 'total RNA'
+    host = next(c for c in channel['characteristics'] if c['name'] == 'host')
+    assert host['term_accession_number'] == '9606'
+    assert data['series']['status'][0]['release_date'] == '2020-03'
+
+
+def test_pool_default_member_and_unresolved_member_are_not_silent():
+    records = fixture_records('sra')
+    package = records.xml[0].find('EXPERIMENT_PACKAGE')
+    run = package.find('RUN_SET/RUN'); run.remove(run.find('Pool'))
+    pool = ET.SubElement(package.find('EXPERIMENT/DESIGN/SAMPLE_DESCRIPTOR'), 'POOL')
+    ET.SubElement(pool, 'MEMBER', accession='SRS999')
+    ET.SubElement(pool, 'DEFAULT_MEMBER', accession='SRS6225446')
+    data = SRAParser().parse(records).to_mapping()
+    assert data['sample'][0]['sra_run'][0]['run'] == 'SRR11192680'
+    assert any('SRS999' in issue for issue in records.issues)

@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 import copy
 import json
 from meta_standards_converter.miniml import MINiMLCodec
@@ -76,3 +84,22 @@ def test_custom_factor_original_name_is_preserved():
     assert variable['factor'] == 'other'
     rendered = AEConstructor().miniml2magetab(typed, platform_handler='generic')
     assert next(r[1] for r in rendered if r[0] == 'Experimental Factor Name') == 'custom exposure'
+
+
+def test_native_export_does_not_invent_protocols_from_library_fields():
+    typed = SRAParser().parse(fixture_records('sra', 'SRX017289'))
+    assert not typed.series.protocols
+    rows = AEConstructor().miniml2magetab(typed)
+    assert not any(next(r[1:] for r in rows if r[0] == 'Protocol Name'))
+    table = next(r[1] for r in rows if r[0] == 'SDRF File')
+    assert 'Protocol REF' not in table[0]
+
+
+def test_native_date_comments_preserve_provider_and_partial_precision():
+    data = package()
+    data['series']['status'] = [{'release_date': '2020-03', 'last_update_date': '2024-03-01'}]
+    rows = AEConstructor().miniml2magetab(MINiMLCodec().decode(data).package)
+    values = {r[0]: r[1:] for r in rows}
+    assert values['Comment[SRAReleaseDate]'] == ['2020-03']
+    assert 'Comment[GEOReleaseDate]' not in values
+    assert not any(values['Public Release Date'])

@@ -12,6 +12,8 @@ read Atlas documents without installing ThematicAtlases.
 
 | Command | Use it to… |
 | --- | --- |
+| `sra2json` | Resolve SRA accessions and import native read-study metadata |
+| `ena2json` | Resolve ENA accessions and import native read-study metadata |
 | `geo2json` | Fetch a GEO Series and produce MSC MINiML JSON |
 | `geo2ae` | Fetch a GEO Series and produce MAGE-TAB IDF/SDRF files |
 | `ae2json` | Read local or remote MAGE-TAB and produce MSC MINiML JSON |
@@ -127,6 +129,10 @@ may still resolve missing publication or sequencing evidence. Use
 `--replacement-profile-file policy.json` to activate an export replacement profile.
 Expression outputs are protected unless `--overwrite` is supplied; output
 behavior varies by command, so consult its reference before reusing a destination.
+
+Native imports support `--enrich-from-geo-ae` (ArrayExpress then GEO priority),
+`--include-peer`, optional reports/evidence, and protected study-named outputs.
+See [native archive imports](docs/codebase.md#native-archive-imports).
 
 See [configuration and precedence](docs/codebase.md#configuration).
 

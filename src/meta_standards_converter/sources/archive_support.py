@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Transport and result containers; no shared archive discovery workflow."""
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -8,7 +16,7 @@ import re
 import xml.etree.ElementTree as ET
 
 from meta_standards_converter.helpers.request_helper import RateLimitedRequester, RequestSettings, NCBIApplicationIdentity
-from meta_standards_converter.runtime_contracts import get_resource_profile
+from meta_standards_converter.runtime_contracts import get_resource_profile, require_disk_headroom
 from meta_standards_converter.xml_safety import parse_xml, read_limited_response
 
 
@@ -62,19 +70,26 @@ class ArchiveHTTP:
             settings=RequestSettings.from_resource_profile(self.profile,
                 request_delay=0.5 if service == 'ncbi_eutils' else 1.0))
         self.identity = NCBIApplicationIdentity()
+        self.downloaded_bytes = 0
         self.evidence_dir = Path(evidence_dir) if evidence_dir else None
 
     def get(self, url, params=None, fmt='xml'):
         params = dict(params or {})
         if url.startswith('https://eutils.ncbi.nlm.nih.gov/'):
             params.update(self.identity.params())
+        remaining = self.profile.max_aggregate_download_bytes - self.downloaded_bytes
+        if remaining <= 0:
+            raise ValueError("Archive aggregate download budget exhausted")
         response = self.requester.get(url, params=params, stream=True)
         try:
             response.raise_for_status()
-            raw = read_limited_response(response, max_bytes=self.profile.max_xml_bytes)
+            raw = read_limited_response(response, max_bytes=min(self.profile.max_xml_bytes, remaining))
+            self.downloaded_bytes += len(raw)
         finally:
             response.close()
         if self.evidence_dir:
+            require_disk_headroom(self.evidence_dir, required_bytes=max(1, len(raw)),
+                                  headroom_fraction=self.profile.disk_headroom_fraction)
             self.evidence_dir.mkdir(parents=True, exist_ok=True)
             # No credentials, request URLs or field-level provenance in the evidence names.
             digest = hashlib.sha256(raw).hexdigest()

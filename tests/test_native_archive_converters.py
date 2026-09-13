@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from pathlib import Path
 import json
 import pytest
@@ -74,3 +82,62 @@ def test_primary_filename_collisions_are_qualified():
     from meta_standards_converter.converters.archive_results import output_name
     seeds = [StudySeed('SRP1', 'PRJNA1'), StudySeed('SRP2', 'PRJNA1')]
     assert output_name(seeds[0], seeds) == 'PRJNA1__SRP1.json'
+
+
+def test_cli_qualifies_shared_primary_across_separate_inputs(tmp_path):
+    from meta_standards_converter.cli.archive import parser_for, run_cli
+    class MultiSource:
+        def resolve(self, accession):
+            return Resolution([StudySeed(accession, 'PRJNA1')])
+        def fetch(self, seed):
+            records = fixture_records('ena'); records.seed = seed
+            return records
+    class Converter(ENA2JSONConverter):
+        def __init__(self, **kwargs):
+            super().__init__(source=MultiSource(), **kwargs)
+    run_cli(parser_for('ENA'), Converter, ['SRP250911', 'SRP2', '--out', str(tmp_path), '--overwrite'])
+    assert (tmp_path / 'PRJNA1__SRP250911.json').exists()
+    assert (tmp_path / 'PRJNA1__SRP2.json').exists()
+
+
+def test_optional_evidence_contains_original_bytes_only_when_requested(tmp_path):
+    from meta_standards_converter.sources.archive_support import ArchiveHTTP
+    class Response:
+        headers = {}
+        content = b'<STUDY_SET/>'
+        def raise_for_status(self): pass
+        def close(self): pass
+        def iter_content(self, **kwargs): yield self.content
+    class Requester:
+        def get(self, *args, **kwargs): return Response()
+    http = ArchiveHTTP('ena_portal', requester=Requester())
+    http.get('https://www.ebi.ac.uk/ena/browser/api/xml/ERP1')
+    assert not list(tmp_path.iterdir())
+    http.evidence_dir = tmp_path
+    http.get('https://www.ebi.ac.uk/ena/browser/api/xml/ERP1')
+    assert next(tmp_path.iterdir()).read_bytes() == b'<STUDY_SET/>'
+
+
+def test_optional_service_failure_does_not_discard_native_package():
+    class Broken:
+        def convert(self, *args, **kwargs): raise OSError('unavailable')
+        def enrich(self, *args, **kwargs): raise OSError('unavailable')
+    converter = SRA2JSONConverter(source=Source(), peer_converter=Broken(), linked_enricher=Broken())
+    result = converter.convert('SRR11192680', include_peer=True, enrich_from_geo_ae=True)
+    assert result.studies[0].status == 'partial'
+    assert result.packages[0].series.iid == 'SRP250911'
+
+
+def test_cli_evidence_flag_also_covers_accession_resolution(tmp_path):
+    from types import SimpleNamespace
+    from meta_standards_converter.cli.archive import parser_for, run_cli
+    evidence = tmp_path / 'evidence'
+    class EvidenceSource(Source):
+        http = SimpleNamespace(evidence_dir=None)
+        def resolve(self, accession):
+            assert self.http.evidence_dir == evidence
+            return super().resolve(accession)
+    class Converter(SRA2JSONConverter):
+        def __init__(self, **kwargs): super().__init__(source=EvidenceSource(), **kwargs)
+    run_cli(parser_for('SRA'), Converter, ['SRR11192680', '--out', str(tmp_path), '--evidence-dir', str(evidence)])
+    assert (tmp_path / 'SRP250911.json').exists()

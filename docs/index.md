@@ -439,8 +439,43 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Native archive converters, metadata and enrichment
   anchor: native-archive-imports
   purpose: Native SRA/ENA discovery, parsing, preservation and conversion contracts.
-  keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc, native identity, custom factor names, enrichment precedence, CLI reports
+  keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc, native identity, custom factor names, explicit protocols, native date precision, scoped protocol enrichment, enrichment precedence, CLI reports
   link: [Open section](codebase.md#native-archive-imports)
+
+- id: native-archive-contract
+  title: Archive extension and field mappings
+  anchor: native-archive-contract
+  purpose: Documents archive extension and field mappings.
+  keywords: extensions.insdc, files, pool, host, dates, statistics, analysis, assembly
+  link: [Open section](codebase.md#native-archive-contract)
+
+- id: native-archive-workflows
+  title: Independent native provider workflows
+  anchor: native-archive-workflows
+  purpose: Documents independent native provider workflows.
+  keywords: SRASource, ENASource, History, Portal, Browser, umbrella, sample expansion
+  link: [Open section](codebase.md#native-archive-workflows)
+
+- id: native-archive-cli
+  title: Native command flags and outcomes
+  anchor: native-archive-cli
+  purpose: Documents native command flags and outcomes.
+  keywords: sra2json, ena2json, include-peer, enrich-from-geo-ae, evidence, accession-resolution evidence, report, overwrite
+  link: [Open section](codebase.md#native-archive-cli)
+
+- id: native-archive-api
+  title: Native Python interfaces
+  anchor: native-archive-api
+  purpose: Documents native python interfaces.
+  keywords: ArchiveImportResult, StudyImportOutcome, SRA2JSONConverter, ENA2JSONConverter, pure parser
+  link: [Open section](codebase.md#native-archive-api)
+
+- id: native-archive-validation
+  title: Native import tests
+  anchor: native-archive-validation
+  purpose: Documents native import tests.
+  keywords: TDD, offline, live_api, accession joins, downstream exports
+  link: [Open section](codebase.md#native-archive-validation)
 
 ## Stable aliases and supporting documents
 

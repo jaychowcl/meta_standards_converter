@@ -411,31 +411,37 @@ class IDFConstructor():
         Extracts date-related fields from MINiML JSON using JSONHandler.
         """
         handler = JSONHandler()
+        native = data.get("source", {}).get("format") in {"SRA", "ENA"}
+        provider = data["source"]["format"] if native else "GEO"
+        normalize = (lambda value: value) if native else self._normalized_idf_date
 
         submission_dates = [
-            self._normalized_idf_date(value)
+            normalize(value)
             for value in handler._from_path(data, "series.status.*.submission_date")
         ]
         experiment_dates = [
-            self._normalized_idf_date(value)
+            normalize(value)
             for value in handler._from_path(data, "series.experiment_date")
             if value not in (None, "")
         ]
         release_dates = [
-            self._normalized_idf_date(value)
+            normalize(value)
             for value in handler._from_path(data, "series.status.*.release_date")
         ]
         last_update_dates = [
-            self._normalized_idf_date(value)
+            normalize(value)
             for value in handler._from_path(data, "series.status.*.last_update_date")
         ]
-        public_release_date = self._earliest_idf_date(values=release_dates)
+        public_release_date = self._earliest_idf_date(values=[
+            value[:10] if native and isinstance(value, str) and re.match(r"^\d{4}-\d{2}-\d{2}T", value) else value
+            for value in release_dates
+        ])
 
         return [
             ["Date of Experiment", *(experiment_dates or submission_dates)],
             ["Public Release Date", public_release_date],
-            ["Comment[GEOReleaseDate]", *release_dates],
-            ["Comment[GEOLastUpdateDate]", *last_update_dates],
+            [f"Comment[{provider}ReleaseDate]", *release_dates],
+            [f"Comment[{provider}LastUpdateDate]", *last_update_dates],
             ["Comment[ArrayExpressSubmissionDate]", self._current_idf_date()],
         ]
 

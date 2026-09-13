@@ -534,12 +534,14 @@
       "variable": [
         {
           "factor": "agent",
+          "name": "compound",
           "type": {
             "value": "compound"
           }
         },
         {
           "factor": "dose",
+          "name": "dose",
           "type": {
             "value": "dose",
             "term_source_ref": "EFO",

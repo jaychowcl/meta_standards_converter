@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Independent sra native metadata conversion workflow."""
 import logging
 from pathlib import Path
@@ -19,55 +27,68 @@ class SRA2JSONConverter:
         self.peer_converter = peer_converter
 
     def convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False,
-                report_path=None, evidence_dir=None, overwrite=False, seen_studies=None):
+                report_path=None, evidence_dir=None, overwrite=False, seen_studies=None,
+                _resolution=None, _filename_seeds=None) -> ArchiveImportResult:
         result = ArchiveImportResult(str(accession))
         seen = seen_studies if seen_studies is not None else set()
         if hasattr(self.source, 'http'):
             self.source.http.evidence_dir = Path(evidence_dir) if evidence_dir else None
         try:
-            resolution = self.source.resolve(accession)
+            resolution = _resolution if _resolution is not None else self.source.resolve(accession)
         except Exception as error:
             result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=[type(error).__name__]))
+            logger.warning('%s: resolution failed (%s)', accession, type(error).__name__)
             resolution = None
         if resolution is not None:
             if not resolution.studies:
                 result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=resolution.issues))
+                logger.warning('%s: no study resolved (%s)', accession, '; '.join(resolution.issues))
             for seed in resolution.studies:
                 key = ('sra', seed.study)
                 if key in seen:
+                    if resolution.issues:
+                        result.studies.append(StudyImportOutcome(seed.study, seed.primary, 'partial', issues=list(resolution.issues)))
+                        for issue in resolution.issues:
+                            logger.warning('%s: %s', accession, issue)
                     continue
                 seen.add(key)
                 outcome = StudyImportOutcome(seed.study, seed.primary, 'failed', issues=list(resolution.issues))
                 result.studies.append(outcome)
                 try:
                     records = self.source.fetch(seed)
-                    if not records.xml:
+                    if not records.xml and not any(records.indexed.values()):
                         raise ValueError('No native metadata records retrieved')
                     package = self.parser.parse(records)
                     outcome.issues.extend(records.issues)
                     from meta_standards_converter.metadata.archive_enrichment import LinkedArchiveEnricher, merge_archive_metadata, linked_accessions
                     if include_peer:
-                        if self.peer_converter is None:
-                            from .ena2json import ENA2JSONConverter
-                            peer = ENA2JSONConverter(resource_profile=self.profile)
-                        else:
-                            peer = self.peer_converter
-                        peer_result = peer.convert(seed.study, evidence_dir=evidence_dir)
-                        for peer_outcome in peer_result.studies:
-                            outcome.issues.extend(peer_outcome.issues)
-                        for extra in peer_result.packages:
-                            package, issues = merge_archive_metadata(package, extra, prefer=False)
-                            outcome.issues.extend(issues)
+                        try:
+                            if self.peer_converter is None:
+                                from .ena2json import ENA2JSONConverter
+                                peer = ENA2JSONConverter(resource_profile=self.profile)
+                            else:
+                                peer = self.peer_converter
+                            peer_result = peer.convert(seed.study, evidence_dir=evidence_dir)
+                            for peer_outcome in peer_result.studies:
+                                outcome.issues.extend(peer_outcome.issues)
+                            for extra in peer_result.packages:
+                                package, issues = merge_archive_metadata(package, extra, prefer=False)
+                                outcome.issues.extend(issues)
+                        except Exception as error:
+                            outcome.issues.append(f'peer enrichment unavailable: {type(error).__name__}')
                     if enrich_from_geo_ae:
-                        enricher = self.linked_enricher or LinkedArchiveEnricher(resource_profile=self.profile)
-                        package, issues = enricher.enrich(package)
-                        outcome.issues.extend(issues)
+                        try:
+                            enricher = self.linked_enricher or LinkedArchiveEnricher(resource_profile=self.profile)
+                            package, issues = enricher.enrich(package)
+                            outcome.issues.extend(issues)
+                        except Exception as error:
+                            outcome.issues.append(f'GEO/ArrayExpress enrichment unavailable: {type(error).__name__}')
                     else:
                         links = linked_accessions(package)
                         if links:
                             logger.warning('%s: linked GEO/ArrayExpress metadata may be richer; use --enrich-from-geo-ae (%s)', seed.primary, ', '.join(links))
                     if out is not None:
-                        path = Path(out) / output_name(seed, resolution.studies)
+                        path = Path(out) / output_name(seed, _filename_seeds or resolution.studies)
                         publish_json(path, package.to_mapping(), overwrite)
                         outcome.output = str(path)
                     outcome.package = package

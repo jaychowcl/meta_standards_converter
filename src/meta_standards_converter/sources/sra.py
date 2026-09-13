@@ -1,4 +1,13 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Native Entrez discovery and retrieval; never implicitly calls ENA."""
+import xml.etree.ElementTree as ET
 from .archive_support import ArchiveHTTP, Resolution, StudyRecords, StudySeed, accession_kind, attempt, chunks, identifier
 
 
@@ -11,10 +20,14 @@ class SRASource:
 
     def search(self, term, db='sra'):
         ids, issues, start, count = [], [], 0, None
+        history = {}
         while count is None or start < count:
             try:
-                result = self.http.get(self.base + 'esearch.fcgi', {'db': db, 'term': term,
-                    'retmode': 'json', 'usehistory': 'y', 'retstart': start, 'retmax': self.page_size}, 'json')['esearchresult']
+                params = {'db': db, 'term': term, 'retmode': 'json', 'usehistory': 'y',
+                          'retstart': start, 'retmax': self.page_size, **history}
+                result = self.http.get(self.base + 'esearch.fcgi', params, 'json')['esearchresult']
+                if not history and result.get('webenv') and result.get('querykey'):
+                    history = {'WebEnv': result['webenv'], 'term': '#' + str(result['querykey'])}
                 if result.get('errorlist', {}).get('fieldsnotfound'):
                     raise ValueError('Unsupported Entrez search field')
                 count = int(result['count'])
@@ -94,8 +107,12 @@ class SRASource:
                 records.xml.append(root)
                 if len(root.findall('.//EXPERIMENT_PACKAGE')) != len(batch):
                     records.issues.append(f'{seed.study}: incomplete experiment package batch')
+        observed = {identifier(n) for root in records.xml for n in root.findall('.//EXPERIMENT') if identifier(n)}
+        if len(observed) != len(ids):
+            records.issues.append(f'{seed.study}: experiment inventory mismatch')
         if not ids:
             records.issues.append(f'{seed.study}: no public experiment records')
+        self._pool_samples(records)
         linked = {'biosample': set(), 'bioproject': set(), 'pubmed': set(), 'taxonomy': set()}
         for root in records.xml:
             for node in root.findall('.//EXTERNAL_ID'):
@@ -122,6 +139,9 @@ class SRASource:
         assembly_ids = []
         for batch in chunks(ids):
             assembly_ids.extend(attempt(records, 'linked assemblies', lambda: self.links('sra', 'assembly', batch, 'sra_assembly')) or [])
+        project_uids = {n.get('id') for root in records.xml for n in root.findall('.//ProjectID/ArchiveID') if n.get('id')}
+        for batch in chunks(sorted(project_uids)):
+            assembly_ids.extend(attempt(records, 'project assemblies', lambda: self.links('bioproject', 'assembly', batch, 'bioproject_assembly_all')) or [])
         for batch in chunks(list(dict.fromkeys(assembly_ids))):
             data = attempt(records, 'assembly metadata', lambda: self.http.get(self.base + 'esummary.fcgi',
                 {'db': 'assembly', 'id': ','.join(batch), 'retmode': 'json', 'report': 'full'}, 'json'))
@@ -133,3 +153,26 @@ class SRASource:
                     else:
                         records.issues.append(f'assembly {uid}: missing summary')
         return records
+
+    def _pool_samples(self, records):
+        present = {identifier(n) for root in records.xml for n in root.findall('.//SAMPLE')}
+        required = {identifier(n) for root in records.xml for path in ('.//Pool/Member', './/SAMPLE_DESCRIPTOR/POOL/*') for n in root.findall(path) if identifier(n)}
+        for accession in sorted(required - present):
+            ids, issues = self.search(accession + '[ACCN]')
+            records.issues.extend(issues)
+            found = False
+            for batch in chunks(ids):
+                root = attempt(records, f'pool sample {accession}', lambda: self.xml('sra', batch))
+                if root is not None:
+                    # Only explicitly referenced sample records enter this dataset.
+                    sample_set = ET.Element('SAMPLE_SET')
+                    for node in root.findall('.//SAMPLE'):
+                        aliases = {identifier(node)} | {n.text for n in node.findall('IDENTIFIERS/*')}
+                        if accession in aliases and identifier(node) not in present:
+                            sample_set.append(node)
+                            present.add(identifier(node))
+                            found = True
+                    if len(sample_set):
+                        records.xml.append(sample_set)
+            if not found:
+                records.issues.append(f'{accession}: unresolved pool sample')

@@ -421,7 +421,7 @@ failure behavior are detailed in
 ## Public API reference
 
 The public facade is distributed across owning packages. `converters` exports
-seven converter classes lazily; `miniml`, `sources`, `expression`, `metadata`,
+nine converter classes and two archive result types lazily; `miniml`, `sources`, `expression`, `metadata`,
 `metadata.projection`, `magetab`, and `atlas_v1` expose their own contracts.
 The [package export table](#package-exports) enumerates their current names.
 The [source inventory](#public-api-and-callable-reference) lists every public-named
@@ -4055,7 +4055,9 @@ and the standard logging/resource options. CLI reports contain batch outcomes;
 evidence export contains optional original responses. Neither is required in
 MINiML. Linked enrichment applies informative GEO then ArrayExpress values only
 on identifier-bound entities. Native IDs and membership remain authoritative;
-peer additions require an explicitly shared read study. Retained structured
+peer additions require an explicitly shared read study. Experiment/run-scoped
+protocol applications require matching archive identifiers; sample processing
+text becomes a scoped protocol with coupled priority updates. Retained structured
 records preserve native values displaced in the core projection.
 
 Converter/publication contracts are covered by
@@ -4064,8 +4066,237 @@ values by `tests/test_native_archive_enrichment.py`.
 
 Native `source.format` (`SRA`/`ENA`) narrowly disables the legacy automatic remote
 enricher and publication fallback at export, and characteristic-to-factor
-inference in IDF/SDRF. Explicit factors still export. Native study/sample identity
+inference in IDF/SDRF. The semantic overlay also clears inferred IDF protocols
+when a native import declares none. Explicit factors and protocols still export. Native study/sample identity
 wins over GEO aliases. Actual ArrayExpress identifiers are exported separately
-from GEO secondary accessions. MAGE-TAB ingestion retains original factor names
+from GEO secondary accessions. Native date comments carry their provider name and
+retain partial precision instead of inferring a calendar day. MAGE-TAB ingestion retains original factor names
 in `series.variable[].name`, alongside the existing normalized `factor` category;
 consumers prefer `name`. The `json2ae` orchestration remains unchanged.
+
+
+<a id="native-archive-contract"></a>
+### Archive extension and mapping contract
+
+`extensions.insdc` has `version: "1.0"` and an ordered `records` array. Each
+record contains `provider`, `kind`, `accession`, and `metadata`. XML metadata is
+represented by `tag`, `attributes`, ordered `children`, optional `text` and
+meaningful `tail`; indexed JSON retains provider keys and literal values. An
+Entrez experiment package retains its complete wrapper and separately identified
+study/sample/experiment/run records. Linked BioSamples, taxonomy, assembly and
+cross-reference records retain their original structured payloads. Optional
+raw-response files use content-addressed names and are separate from this model.
+Native accession-resolution responses are captured as well as study retrieval.
+The extension is source evidence, not a completeness or per-field provenance log.
+
+| Source evidence | Core MINiML projection | Scope / transformation |
+| --- | --- | --- |
+| Native primary and verified equivalent identifiers | `iid`, `accession[]`, root `database[]` | ENA project/BioSample primary; SRA read-study/archive-sample primary; explicit linked entities remain relations |
+| Study title, abstract, project description | `series.title`, `series.summary` | Project text fills absent study text; experiment design text stays on assay nodes |
+| Sample title, description, attributes | `sample.title`, `description`, `channel.characteristics[]` | Attribute occurrences, units and missing literals stay distinct |
+| Sample taxon, host and explicit molecule | `channel.organism[]`, host characteristic with taxon annotation, `channel.molecule` | TRANSCRIPTOMIC does not imply total RNA; organism and host stay separate |
+| Experiment library fields / platform | `sample.sra_run[]` and assay comments | Sample scalar library fields require consistency across runs |
+| Explicit library construction text | `series.protocols[]` and protocol applications | No manufactured extraction/treatment sequence |
+| Run statistics and read averages | Run `statistics`, `read_lengths` | Spot/base totals and nominal insert length are not read lengths |
+| File reports / SRA file alternatives | Run `files`, `fastq_files`, sample `raw_data`, assay-file nodes | Parallel ENA lists align by position, including gaps; archive files retain actual formats; alternatives are not deduplicated |
+| Publications and known contributor details | `pubmed_id`, `pubmed_publication`, `contact` | Unknown roles/organization content stays in structured records |
+| Indexed and submitted dates | Entity status where semantics match; complete source records retained | Original date precision is retained in JSON |
+| Analysis/assembly files, protocols and associations | `supplementary_data`, additional assay branches, `protocols`, `relation` | Explicit sample/run associations only; assembly FTP directories are relations, never invented file URLs |
+| Experimental factors / replicates | `series.variable`, factor values / repeat metadata from explicit linked declarations | Original factor `name` survives normalization; varying attributes alone do not declare factors |
+
+Incomplete Browser retrieval can use available ENA indexed fields for a partial
+package. Full-record failures and identifier/count mismatches remain in logs and
+reports. A missing optional field or empty optional inventory does not itself
+make an import incomplete. Requested but unavailable linked metadata does.
+
+<a id="native-archive-workflows"></a>
+### Provider workflows and boundaries
+
+```text
+sra2json / SRA2JSONConverter
+  SRASource.resolve: exact accession -> ESearch/EFetch -> read studies
+    umbrella input only -> BioProject u2d children (recursive, cycle guarded)
+  for each study independently:
+    ESearch History inventory -> batched SRA experiment packages
+    -> referenced pool samples / BioSample / BioProject / taxonomy / PubMed
+    -> SRA and BioProject assembly links -> full Assembly ESummary
+    SRAParser.parse -> typed native MINiML package
+    optional peer representation -> optional GEO then AE enrichment
+    atomic study JSON -> per-study outcome
+
+ena2json / ENA2JSONConverter
+  ENASource.resolve: exact Portal identity -> read studies + primary project
+    umbrella input only -> Browser CHILD_PROJECT records
+  for each study independently:
+    Portal catalogues + inventories + read-run file report + count
+    -> batched Browser study/project/sample/experiment/run/analysis/assembly XML
+    -> ENA cross references / BioSamples / taxonomy / PubMed
+    ENAParser.parse -> typed native MINiML package
+    optional peer representation -> optional GEO then AE enrichment
+    atomic study JSON -> per-study outcome
+```
+
+Sources own their provider's discovery and retrieval; parsers perform no network
+access. `StudyRecords` is a transport container, not an archive entity graph.
+Supporting mapping functions project field meanings without deciding retrieval
+order. Each converter independently owns the optional retrieval sequence,
+exception boundary and publication. CLI argument/report handling is reusable.
+The existing compact `INSDCWebfetcher` remains a separate legacy enrichment API.
+
+An archive sample or BioSample input may identify several read studies. Run and
+experiment inputs expand only to their containing read studies, never through a
+parent umbrella into sibling studies. Batch resolution precedes publication so
+read studies sharing a primary project receive `<primary>__<read-study>.json`.
+Repeated references to the same study are processed once per CLI batch.
+
+<a id="native-archive-cli"></a>
+### Native command reference
+
+#### `sra2json`
+
+```bash
+sra2json SRR037073 --out native-sra --report sra-report.json
+```
+
+#### `ena2json`
+
+```bash
+ena2json ERX005932 --out native-ena --enrich-from-geo-ae
+```
+
+Both commands have the following interface:
+
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `accession` | required; one or more | INSDC study/project/archive-sample/BioSample/experiment/run accessions |
+| `--out` | `.` | Destination directory for one package object per resolved study |
+| `--enrich-from-geo-ae` | false | Informative ArrayExpress > GEO > native values on explicitly matched entities; retain native IDs and membership |
+| `--include-peer` | false | Retrieve the other archive's representation of the same read study; allow explicitly linked peer-only entities |
+| `--report` | none | Batch JSON with per-study status, output path and issues |
+| `--evidence-dir` | none | Export original responses as SHA-256-named XML/JSON/text files |
+| `--overwrite` | false | Replace existing output/report files; otherwise atomic no-replace publication |
+| `--resource-profile` | standard | Existing standard/large resource policy |
+| `--resource-override` | none; repeatable | Existing `FIELD=VALUE` resource overrides |
+| `-v`, `--verbose`; `-q`, `--quiet`; `--log-file` | warning level | Standard logging controls |
+| `-h`, `--help` | — | Show installed command help |
+
+Exit 0 means every processed resolution/import completed. Failed or partial
+studies produce exit 1 while successful files remain. Argument validation uses
+argparse's exit 2. A protected output/report file is a publication failure.
+Enrichment links are retained with a warning when the enrichment flag is absent.
+Unavailable/ambiguous enrichment retains the native package and marks the outcome
+partial. `--include-peer` is opt-in; native retrieval has no implicit peer dependency.
+
+<a id="native-archive-api"></a>
+### Native Python interfaces
+
+```python
+from meta_standards_converter.converters import SRA2JSONConverter, ENA2JSONConverter
+
+result = SRA2JSONConverter().convert("SRR037073")
+for outcome in result.studies:
+    print(outcome.study, outcome.status, outcome.issues)
+for package in result.packages:
+    mapping = package.to_mapping()
+```
+
+`convert(accession, *, out=None, enrich_from_geo_ae=False, include_peer=False,
+report_path=None, evidence_dir=None, overwrite=False, seen_studies=None)` returns
+`ArchiveImportResult`. `packages` includes produced complete and partial packages;
+`studies` contains `StudyImportOutcome(study, primary, status, package, output,
+issues)`. `ok` requires all outcomes to be complete. Supplying no `out` performs
+retrieval and conversion in memory. A `report_path` is optional and is a single
+import report for Python calls; the CLI wraps individual imports in `imports`.
+
+Constructors accept injected source/parser/enricher/peer converter collaborators
+and existing resource profiles. Sources expose `resolve(accession)` and
+`fetch(StudySeed)`; parsers expose `parse(StudyRecords)`. Internal CLI-preflight
+arguments beginning with `_` are not public API. `seen_studies` enables explicit
+batch reuse; use a fresh set for retries. The default CLI checks filename
+collisions across its entire requested batch.
+
+Formal exports:
+
+| Import | Owning implementation |
+| --- | --- |
+| `meta_standards_converter.converters.SRA2JSONConverter` | `meta_standards_converter.converters.sra2json.SRA2JSONConverter` |
+| `meta_standards_converter.converters.ENA2JSONConverter` | `meta_standards_converter.converters.ena2json.ENA2JSONConverter` |
+| `meta_standards_converter.converters.ArchiveImportResult` | `meta_standards_converter.converters.archive_results.ArchiveImportResult` |
+| `meta_standards_converter.converters.StudyImportOutcome` | `meta_standards_converter.converters.archive_results.StudyImportOutcome` |
+| `meta_standards_converter.sources.SRASource` | `meta_standards_converter.sources.sra.SRASource` |
+| `meta_standards_converter.sources.ENASource` | `meta_standards_converter.sources.ena.ENASource` |
+| `meta_standards_converter.miniml.SRAParser` | `meta_standards_converter.miniml.sra_parser.SRAParser` |
+| `meta_standards_converter.miniml.ENAParser` | `meta_standards_converter.miniml.ena_parser.ENAParser` |
+
+Importable support definitions are implementation utilities rather than stable
+facades. Their ownership and signatures are listed here for source retrieval:
+
+| Qualified definition | Signature / public operations |
+| --- | --- |
+| `meta_standards_converter.cli.archive.parser_for` | `parser_for(provider)` |
+| `meta_standards_converter.cli.archive.run_cli` | `run_cli(parser, converter_type, argv)` |
+| `meta_standards_converter.cli.sra2json.main` | `main(argv=None)` |
+| `meta_standards_converter.cli.ena2json.main` | `main(argv=None)` |
+| `meta_standards_converter.converters.archive_results.StudyImportOutcome` | `to_mapping(self)` |
+| `meta_standards_converter.converters.archive_results.ArchiveImportResult` | `packages(self); ok(self); to_mapping(self)` |
+| `meta_standards_converter.converters.archive_results.publish_json` | `publish_json(path, value, overwrite=False)` |
+| `meta_standards_converter.converters.archive_results.output_name` | `output_name(seed, seeds)` |
+| `meta_standards_converter.converters.sra2json.SRA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |
+| `meta_standards_converter.converters.ena2json.ENA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |
+| `meta_standards_converter.metadata.archive_enrichment.linked_accessions` | `linked_accessions(package)` |
+| `meta_standards_converter.metadata.archive_enrichment.informative` | `informative(value)` |
+| `meta_standards_converter.metadata.archive_enrichment.entity_ids` | `entity_ids(entity, *, sample=False)` |
+| `meta_standards_converter.metadata.archive_enrichment.merge_archive_metadata` | `merge_archive_metadata(package, other, *, prefer=False, linked_accession=None)` |
+| `meta_standards_converter.metadata.archive_enrichment.LinkedArchiveEnricher` | `__init__(self, resource_profile='standard', geo_converter=None, ae_converter=None); enrich(self, package)` |
+| `meta_standards_converter.sources.archive_support.StudySeed` | `Dataclass transport record` |
+| `meta_standards_converter.sources.archive_support.Resolution` | `Dataclass transport record` |
+| `meta_standards_converter.sources.archive_support.StudyRecords` | `Dataclass transport record` |
+| `meta_standards_converter.sources.archive_support.accession_kind` | `accession_kind(value)` |
+| `meta_standards_converter.sources.archive_support.identifier` | `identifier(node)` |
+| `meta_standards_converter.sources.archive_support.chunks` | `chunks(values, size=100)` |
+| `meta_standards_converter.sources.archive_support.ArchiveHTTP` | `__init__(self, service, requester=None, resource_profile='standard', evidence_dir=None); get(self, url, params=None, fmt='xml')` |
+| `meta_standards_converter.sources.archive_support.attempt` | `attempt(records, label, call)` |
+| `meta_standards_converter.sources.sra.SRASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, term, db='sra'); xml(self, db, ids); links(self, dbfrom, db, ids, name); resolve(self, accession); fetch(self, seed)` |
+| `meta_standards_converter.sources.ena.ENASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, result, query, fields='all'); xml(self, accessions); resolve(self, accession); fetch(self, seed)` |
+| `meta_standards_converter.miniml.insdc_support.text` | `text(node, path, default=None)` |
+| `meta_standards_converter.miniml.insdc_support.tree` | `tree(node)` |
+| `meta_standards_converter.miniml.insdc_support.retained` | `retained(provider, records)` |
+| `meta_standards_converter.miniml.insdc_support.database_for` | `database_for(value)` |
+| `meta_standards_converter.miniml.insdc_support.accessions` | `accessions(node, primary)` |
+| `meta_standards_converter.miniml.insdc_support.relations` | `relations(node)` |
+| `meta_standards_converter.miniml.insdc_support.attributes` | `attributes(node, kind='SAMPLE')` |
+| `meta_standards_converter.miniml.insdc_support.sample_record` | `sample_record(node, primary)` |
+| `meta_standards_converter.miniml.insdc_support.library` | `library(experiment)` |
+| `meta_standards_converter.miniml.insdc_support.files_from_ena` | `files_from_ena(row)` |
+| `meta_standards_converter.miniml.insdc_support.files_from_sra` | `files_from_sra(run)` |
+| `meta_standards_converter.miniml.insdc_support.attach_run` | `attach_run(sample, experiment, run, study, files)` |
+| `meta_standards_converter.miniml.insdc_support.protocol_for` | `protocol_for(experiment)` |
+| `meta_standards_converter.miniml.insdc_support.assay_paths` | `assay_paths(sample, run, experiment, files, protocol)` |
+| `meta_standards_converter.miniml.insdc_support.finish` | `finish(provider, records, series, samples, protocols, paths)` |
+| `meta_standards_converter.miniml.insdc_support.study_record` | `study_record(node, seed)` |
+| `meta_standards_converter.miniml.insdc_support.fill_linked_metadata` | `fill_linked_metadata(records, series, samples, protocols, paths)` |
+| `meta_standards_converter.miniml.insdc_support.project_results` | `project_results(records, series, samples, protocols, paths)` |
+| `meta_standards_converter.miniml.sra_parser.SRAParser` | `parse(self, records)` |
+| `meta_standards_converter.miniml.ena_parser.ENAParser` | `parse(self, records)` |
+
+<a id="native-archive-validation"></a>
+### Native import validation
+
+Deterministic tests cover provider-specific expansion, History paging, count/ID
+reconciliation, partial retrieval, native identity, pooled/multiple/heterogeneous
+libraries, repeated attributes and file alternatives, positional file gaps,
+non-MD5 checksums, analysis associations, exact enrichment joins, missing-value
+priority, peer-only records, duplicate batch references and protected outputs.
+JSON-to-TSV and JSON-to-MAGE-TAB tests assert sample IDs, organisms, protocols,
+factors and files. Live provider contracts are separately opt-in:
+
+```bash
+python -m pytest tests/test_native_archive_sources.py tests/test_native_archive_parsers.py tests/test_native_archive_converters.py tests/test_native_archive_enrichment.py tests/test_native_archive_exports.py -q
+RUN_LIVE_API_TESTS=1 python -m pytest tests/live_api/test_native_archive_contracts.py -q
+```
+
+Source fixtures were retrieved independently and are retained under `docs/sra`
+and `docs/ena`. Live checks rely on public-provider availability and may differ
+from deterministic fixtures as records change. Full native imports of the small
+SRP002056 study were also exercised manually against both providers during
+implementation; development outputs stay outside version control.

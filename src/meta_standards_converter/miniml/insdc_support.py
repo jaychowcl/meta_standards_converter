@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Small MINiML mapping primitives shared by the two native XML parsers."""
 from copy import deepcopy
 from pathlib import PurePosixPath
@@ -32,10 +40,14 @@ def retained(provider, records):
     values = []
     for root in records.xml:
         for node in list(root) if root.tag.endswith('_SET') or root.tag in ('BioSampleSet', 'RecordSet', 'PubmedArticleSet') else [root]:
-            values.append({'provider': provider, 'kind': node.tag, 'accession': identifier(node), 'metadata': tree(node)})
+            values.append({'provider': provider, 'kind': node.tag, 'accession': identifier(node) or identifier(node.find('EXPERIMENT')), 'metadata': tree(node)})
+            if node.tag == 'EXPERIMENT_PACKAGE':
+                for entity in node.iter():
+                    if entity.tag in ('STUDY', 'SAMPLE', 'EXPERIMENT', 'RUN', 'SUBMISSION'):
+                        values.append({'provider': provider, 'kind': entity.tag, 'accession': identifier(entity), 'metadata': tree(entity)})
     for kind, rows in records.indexed.items():
         for row in rows:
-            values.append({'provider': provider, 'kind': kind, 'accession': row.get(kind + '_accession') or row.get('accession'), 'metadata': deepcopy(row)})
+            values.append({'provider': provider, 'kind': kind, 'accession': row.get(kind.removeprefix('read_') + '_accession') or row.get('accession'), 'metadata': deepcopy(row)})
     values.extend(deepcopy(records.linked))
     return {'version': '1.0', 'records': values}
 
@@ -92,6 +104,17 @@ def sample_record(node, primary):
     taxid = text(node, 'SAMPLE_NAME/TAXON_ID')
     attrs = attributes(node)
     channel = {'characteristics': attrs}
+    explicit = {}
+    for attr in attrs:
+        explicit.setdefault(attr['name'].casefold(), []).append(attr['value'])
+    molecules = set(explicit.get('molecule', []))
+    if len(molecules) == 1:
+        channel['molecule'] = {'value': next(iter(molecules))}
+    host_ids = set(explicit.get('host_taxid', []) + explicit.get('host_tax_id', []))
+    if len(host_ids) == 1:
+        for attr in attrs:
+            if attr['name'].casefold() == 'host':
+                attr.update(term_source_ref='NCBITaxon', term_accession_number=next(iter(host_ids)))
     if organism or taxid:
         channel['organism'] = [{'value': organism or '', 'taxid': taxid}]
     source = next((a['value'] for a in attrs if a['name'] == 'source_name'), None)
@@ -123,19 +146,20 @@ def library(experiment):
 def files_from_ena(row):
     files = []
     for family in ('fastq', 'submitted', 'sra', 'bam'):
-        paths = (row.get(family + '_ftp') or '').split(';')
-        columns = {key: (row.get(family + '_' + key) or '').split(';') for key in ('md5', 'bytes', 'file_role', 'format')}
-        for i, path in enumerate(paths):
-            if not path:
-                continue
-            uri = path if '://' in path else 'ftp://' + path
-            item = {'uri': uri, 'filename': PurePosixPath(urlsplit(uri).path).name,
-                    'format': family, 'role': columns['file_role'][i] if i < len(columns['file_role']) else ''}
-            for key in ('md5', 'bytes'):
-                if i < len(columns[key]) and columns[key][i]:
-                    item[key] = columns[key][i]
-            if family == 'submitted' and i < len(columns['format']):
-                item['format'] = columns['format'][i] or 'submitted'
+        columns = {key: str(row.get(family + '_' + key) or '').split(';')
+                   for key in ('ftp', 'md5', 'bytes', 'file_role', 'format', 'aspera', 'galaxy')}
+        if not any(any(v) for v in columns.values()):
+            continue
+        for i in range(max(map(len, columns.values()))):
+            value = lambda key: columns[key][i] if i < len(columns[key]) else ''
+            path = value('ftp')
+            uri = (path if '://' in path else 'ftp://' + path) if path else None
+            item = {'uri': uri, 'format': value('format') or family, 'role': value('file_role')}
+            if uri:
+                item['filename'] = PurePosixPath(urlsplit(uri).path).name
+            for key in ('md5', 'bytes', 'aspera', 'galaxy'):
+                if value(key):
+                    item[key] = value(key)
             files.append(item)
     return files
 
@@ -150,7 +174,7 @@ def files_from_sra(run):
             files.append({**base, **alternative, 'uri': alternative.get('url')})
     # Some partners retain submitted file descriptors instead of SRAFiles.
     for node in run.findall('.//DATA_BLOCK/FILES/FILE'):
-        item = {'filename': node.get('filename'), 'format': node.get('filetype', ''), 'role': 'submitted'}
+        item = {'filename': node.get('filename'), 'format': node.get('filetype', ''), 'role': 'submitted', 'checksum_method': node.get('checksum_method'), 'checksum': node.get('checksum')}
         if node.get('checksum_method', '').upper() == 'MD5':
             item['md5'] = node.get('checksum')
         if '://' in (node.get('filename') or ''):
@@ -169,6 +193,9 @@ def attach_run(sample, experiment, run, study, files):
     fastqs = [f for f in files if 'fastq' in str(f.get('format', '')).lower()]
     if fastqs:
         record['fastq_files'] = fastqs
+    record['files'] = deepcopy(files)
+    if run.find('Statistics') is not None:
+        record['statistics'] = tree(run.find('Statistics'))
     sample['sra_run'].append(record)
     for f in files:
         if f.get('uri'):
@@ -223,7 +250,7 @@ def assay_paths(sample, run, experiment, files, protocol):
             node = {'kind': 'array_data_file', 'name': file.get('filename') or file['uri'], 'comments': []}
             if file.get('uri'):
                 node['link'] = {'value': file['uri'], 'type': file.get('format') or 'raw'}
-            for key in ('md5', 'bytes', 'format', 'role'):
+            for key in ('md5', 'bytes', 'format', 'role', 'checksum_method', 'checksum'):
                 if file.get(key):
                     node['comments'].append({'name': key.upper(), 'value': str(file[key])})
             steps.append(node)
@@ -232,7 +259,7 @@ def assay_paths(sample, run, experiment, files, protocol):
 
 
 def finish(provider, records, series, samples, protocols, paths):
-    fill_linked_metadata(records, series, samples, protocols)
+    fill_linked_metadata(records, series, samples, protocols, paths)
     for sample in samples:
         runs = sample['sra_run']
         sample['sra_accession'] = list(dict.fromkeys(r['experiment'] for r in runs))
@@ -248,6 +275,15 @@ def finish(provider, records, series, samples, protocols, paths):
                 channel = by_sample[step['sample_ref']]['channel'][0]
                 organism = [v for v in step.get('characteristics', []) if v['name'] == 'organism']
                 step['characteristics'] = deepcopy(channel['characteristics']) + organism
+    for row in records.indexed.get('study', []):
+        if row.get('study_accession') not in (records.seed.primary, records.seed.study):
+            continue
+        status = {key: row[source] for key, source in (('release_date', 'first_public'), ('last_update_date', 'last_updated')) if row.get(source)}
+        if status:
+            series.setdefault('status', []).append(status)
+        for key, source in (('title', 'study_title'), ('summary', 'study_description')):
+            if not series.get(key) and row.get(source):
+                series[key] = row[source]
     series.update(sample_ref=[{'ref': s['iid']} for s in samples], protocols=protocols, assay_paths=paths)
     data = {'miniml_schema_version': '3.0', 'source': {'format': provider.upper()}, 'series': series,
             'sample': samples, 'extensions': {'insdc': retained(provider, records)}}
@@ -270,7 +306,7 @@ def study_record(node, seed):
     return result
 
 
-def fill_linked_metadata(records, series, samples, protocols):
+def fill_linked_metadata(records, series, samples, protocols, paths):
     """Project linked fields only when their entity binding is explicit."""
     by_id = {a['value']: s for s in samples for a in s['accession']}
     seen_contacts = set()
@@ -329,28 +365,6 @@ def fill_linked_metadata(records, series, samples, protocols):
                 if address is not None:
                     value['address'] = {'lines': [n.text for n in address if n.text]}
                 series.setdefault('contact', []).append(value)
-        for analysis in root.findall('.//ANALYSIS'):
-            study_ref = identifier(analysis.find('STUDY_REF'))
-            if study_ref and study_ref not in (records.seed.study, records.seed.primary):
-                continue
-            refs = [identifier(n) for n in analysis.findall('SAMPLE_REF')]
-            targets = list({by_id[a]['iid']: by_id[a] for a in refs if a in by_id}.values()) if refs else [series]
-            # Unmatched sample-specific files are retained only in the extension.
-            software = [n.text for n in analysis.findall('.//PROGRAM') if n.text]
-            description = text(analysis, 'DESCRIPTION')
-            if description or software:
-                protocols.append({'name': identifier(analysis) + ':analysis',
-                    'type': {'value': 'data analysis protocol'}, 'description': description,
-                    'software': software})
-            for file in analysis.findall('.//FILES/FILE'):
-                uri = file.get('filename', '')
-                if not urlsplit(uri).scheme:
-                    continue
-                link = {'value': uri, 'type': file.get('filetype', 'analysis')}
-                if file.get('checksum_method', '').upper() == 'MD5':
-                    link['checksum'] = file.get('checksum')
-                for target in targets:
-                    target.setdefault('supplementary_data', []).append(deepcopy(link))
     # EBI BioSamples supplies repeated values and optional ontology URLs.
     for record in records.linked:
         if record['provider'] != 'biosamples':
@@ -369,3 +383,86 @@ def fill_linked_metadata(records, series, samples, protocols):
                 if len(terms) == 1:
                     value['term_accession_number'] = terms[0]
                 attrs.append(value)
+
+    project_results(records, series, samples, protocols, paths)
+
+
+def project_results(records, series, samples, protocols, paths):
+    """Analysis/assembly links use explicit sample/run bindings; directories stay relations."""
+    by_sample = {a['value']: s for s in samples for a in s['accession']}
+    by_run = {}
+    for sample in samples:
+        for run in sample['sra_run']:
+            by_run.setdefault(run['run'], []).append(sample)
+    entries = {}
+    for root in records.xml:
+        for node in root.iter():
+            if node.tag in ('ANALYSIS', 'ASSEMBLY'):
+                entries.setdefault(identifier(node), {'rows': [], 'node': None})['node'] = node
+    for kind in ('analysis', 'assembly'):
+        for row in records.indexed.get(kind, []):
+            acc = row.get(kind + '_accession') or row.get('accession')
+            if acc:
+                entries.setdefault(acc, {'rows': [], 'node': None})['rows'].append(row)
+    for record in records.linked:
+        if record['kind'] == 'assembly':
+            acc = record['accession']
+            series.setdefault('relation', []).append({'type': 'assembly', 'target': acc})
+            metadata = record['metadata']
+            for field in ('ftppath_genbank', 'ftppath_refseq'):
+                if metadata.get(field):
+                    series['relation'].append({'type': 'assembly directory', 'target': metadata[field]})
+    for acc, entry in entries.items():
+        node, rows = entry['node'], entry['rows']
+        sample_refs, run_refs, files = [], [], []
+        study_ref = identifier(node.find('STUDY_REF')) if node is not None else None
+        if study_ref and study_ref not in (records.seed.study, records.seed.primary):
+            continue
+        if node is not None:
+            sample_refs.extend(identifier(n) for n in node.findall('SAMPLE_REF') if identifier(n))
+            run_refs.extend(identifier(n) for n in node.findall('RUN_REF') if identifier(n))
+            for f in node.findall('.//FILES/FILE'):
+                uri = f.get('filename', '')
+                if urlsplit(uri).scheme:
+                    files.append({'uri': uri, 'format': f.get('filetype', 'analysis'),
+                        'checksum_method': f.get('checksum_method'), 'checksum': f.get('checksum')})
+        for row in rows:
+            sample_refs.extend(v for v in (row.get('sample_accession') or '').split(';') if v)
+            run_refs.extend(v for v in (row.get('run_accession') or '').split(';') if v)
+            files.extend(files_from_ena(row))
+        selected = {by_sample[r]['iid']: by_sample[r] for r in sample_refs if r in by_sample}
+        run_selected = {s['iid']: s for r in run_refs for s in by_run.get(r, [])}
+        if sample_refs and run_refs:
+            selected = {k: s for k, s in selected.items() if k in run_selected}
+        elif run_refs:
+            selected = run_selected
+        targets = list(selected.values()) if sample_refs or run_refs else [series]
+        series.setdefault('relation', []).append({'type': 'analysis' if acc.startswith(('ERZ', 'SRZ', 'DRZ')) else 'assembly', 'target': acc})
+        description = text(node, 'DESCRIPTION')
+        software = [n.text for n in node.findall('.//PROGRAM') if n.text] if node is not None else []
+        protocol = None
+        if description or software:
+            protocol = {'name': acc + ':analysis', 'type': {'value': 'data analysis protocol'},
+                        'description': description, 'software': software}
+            protocols.append(protocol)
+        for f in files:
+            if not f.get('uri'):
+                continue
+            link = {'value': f['uri'], 'type': f.get('format') or 'analysis'}
+            checksum = f.get('md5') or (f.get('checksum') if (f.get('checksum_method') or '').upper() == 'MD5' else None)
+            if checksum:
+                link['checksum'] = checksum
+            for target in targets:
+                target.setdefault('supplementary_data', []).append(deepcopy(link))
+                if target is series:
+                    continue
+                # A result is an additional branch, never an expression matrix.
+                bases = [p for p in paths if any(s.get('sample_ref') == target['iid'] for s in p['steps'])
+                         and (not run_refs or any(s.get('kind') == 'scan' and s.get('name') in run_refs for s in p['steps']))]
+                if bases:
+                    steps = deepcopy([s for s in bases[0]['steps'] if s.get('kind') not in ('array_data_file', 'derived_array_data_file')])
+                    if protocol:
+                        steps.append({'kind': 'protocol_application', 'protocol_ref': protocol['name']})
+                    steps.append({'kind': 'derived_array_data_file', 'name': PurePosixPath(urlsplit(f['uri']).path).name,
+                                  'link': deepcopy(link), 'comments': [{'name': k.upper(), 'value': str(f[k])} for k in ('format', 'bytes', 'checksum_method', 'checksum') if f.get(k)]})
+                    paths.append({'steps': steps})

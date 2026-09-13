@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """ENA Portal membership discovery and full Browser record retrieval."""
 import csv
 import io
@@ -83,13 +91,18 @@ class ENASource:
         for kind, field in [('sample', 'sample_accession'), ('read_experiment', 'experiment_accession'),
                             ('read_run', 'run_accession'), ('analysis', 'analysis_accession'), ('assembly', 'assembly_accession')]:
             accessions = list(dict.fromkeys(r[field] for r in records.indexed.get(kind, []) if r.get(field)))
+            if kind == 'sample':
+                members = {r.get('sample_accession') for k in ('read_experiment', 'read_run') for r in records.indexed.get(k, []) if r.get('sample_accession')}
+                if members:
+                    accessions = sorted(members)
             inventory[kind] = accessions
             for batch in chunks(accessions):
                 root = attempt(records, f'{kind} XML', lambda: self.xml(batch))
                 if root is not None:
                     records.xml.append(root)
-                    if len(root) < len(batch):
-                        records.issues.append(f'{kind}: incomplete XML batch')
+                    returned = {identifier(n) for n in root} | {n.text for n in root.findall('.//IDENTIFIERS/*')}
+                    for missing in sorted(set(batch) - returned):
+                        records.issues.append(f'{kind}: missing XML record {missing}')
         count = attempt(records, 'ENA run count', lambda: self.http.get(self.portal + 'count',
             {'result': 'read_run', 'query': query, 'format': 'json', 'includeMetagenomes': 'true'}, 'json'))
         if count is not None:
@@ -101,6 +114,11 @@ class ENASource:
                 records.issues.append('ENA run count response unrecognized')
         if not inventory['read_run']:
             records.issues.append(f'{seed.study}: no public run records')
+        xrefs = attempt(records, 'ENA cross references', lambda: self.http.get('https://www.ebi.ac.uk/ena/xref/rest/tsv/search',
+            {'accession': seed.study}, 'text'))
+        if xrefs:
+            records.linked.append({'provider': 'ena', 'kind': 'cross_references', 'accession': seed.study,
+                                   'metadata': list(csv.DictReader(io.StringIO(xrefs), delimiter='\t'))})
         taxa, pmids = set(), set()
         for root in records.xml:
             taxa.update(n.text for n in root.findall('.//SAMPLE_NAME/TAXON_ID') if n.text)
