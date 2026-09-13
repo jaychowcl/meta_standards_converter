@@ -1,0 +1,371 @@
+"""Small MINiML mapping primitives shared by the two native XML parsers."""
+from copy import deepcopy
+from pathlib import PurePosixPath
+import re
+import xml.etree.ElementTree as ET
+from urllib.parse import urlsplit
+
+from .codec import MINiMLCodec
+from ..sources.archive_support import identifier
+
+
+def text(node, path, default=None):
+    if node is None:
+        return default
+    item = node.find(path)
+    if item is None:
+        return default
+    value = ''.join(item.itertext()).strip()
+    return value or default
+
+
+def tree(node):
+    result = {'tag': node.tag, 'attributes': dict(node.attrib), 'children': [tree(c) for c in node]}
+    if node.text is not None:
+        result['text'] = node.text
+    if node.tail and node.tail.strip():
+        result['tail'] = node.tail
+    return result
+
+
+def retained(provider, records):
+    values = []
+    for root in records.xml:
+        for node in list(root) if root.tag.endswith('_SET') or root.tag in ('BioSampleSet', 'RecordSet', 'PubmedArticleSet') else [root]:
+            values.append({'provider': provider, 'kind': node.tag, 'accession': identifier(node), 'metadata': tree(node)})
+    for kind, rows in records.indexed.items():
+        for row in rows:
+            values.append({'provider': provider, 'kind': kind, 'accession': row.get(kind + '_accession') or row.get('accession'), 'metadata': deepcopy(row)})
+    values.extend(deepcopy(records.linked))
+    return {'version': '1.0', 'records': values}
+
+
+def database_for(value):
+    for prefix, db in [('GSE', 'GEO'), ('GSM', 'GEO'), ('E-', 'ArrayExpress'),
+                       ('PRJ', 'BioProject'), ('SAM', 'BioSample'), ('SR', 'SRA'), ('ER', 'ENA'), ('DR', 'DRA')]:
+        if value.startswith(prefix):
+            return db
+    return 'INSDC'
+
+
+def accessions(node, primary):
+    values = [primary] if primary else []
+    if node is not None:
+        for item in node.findall('IDENTIFIERS/*'):
+            value = (item.text or '').strip()
+            if re.fullmatch(r'(?:[SED]R[PSXR]\d+|PRJ(?:NA|EB|DB)\d+|SAM(?:N|EA|D)\d+|GS[EM]\d+|E-[A-Z]+-\d+)', value):
+                if value not in values:
+                    values.append(value)
+    return [{'value': v, 'database': database_for(v)} for v in values]
+
+
+def relations(node):
+    values = []
+    if node is not None:
+        for link in node.findall('.//XREF_LINK'):
+            db, target = text(link, 'DB'), text(link, 'ID')
+            if db and target:
+                values.append({'type': db, 'target': target})
+        for link in node.findall('.//URL_LINK'):
+            target = text(link, 'URL')
+            if target:
+                values.append({'type': text(link, 'LABEL', 'external'), 'target': target})
+    return values
+
+
+def attributes(node, kind='SAMPLE'):
+    result = []
+    if node is not None:
+        for attr in node.findall(f'{kind}_ATTRIBUTES/{kind}_ATTRIBUTE'):
+            name = text(attr, 'TAG')
+            value = text(attr, 'VALUE', '')
+            if name:
+                item = {'name': name, 'value': value}
+                if text(attr, 'UNITS'):
+                    item['unit'] = {'value': text(attr, 'UNITS')}
+                result.append(item)
+    return result
+
+
+def sample_record(node, primary):
+    organism = text(node, 'SAMPLE_NAME/SCIENTIFIC_NAME')
+    taxid = text(node, 'SAMPLE_NAME/TAXON_ID')
+    attrs = attributes(node)
+    channel = {'characteristics': attrs}
+    if organism or taxid:
+        channel['organism'] = [{'value': organism or '', 'taxid': taxid}]
+    source = next((a['value'] for a in attrs if a['name'] == 'source_name'), None)
+    if source is None:
+        source = next((a['value'] for a in attrs if a['name'] == 'isolation_source'), None)
+    if source:
+        channel['source'] = {'value': source}
+    return {'iid': primary, 'accession': accessions(node, primary), 'title': text(node, 'TITLE'),
+            'description': text(node, 'DESCRIPTION'), 'type': 'SRA', 'channel_count': '1',
+            'channel': [channel], 'relation': relations(node), 'sra_run': []}
+
+
+def library(experiment):
+    descriptor = experiment.find('DESIGN/LIBRARY_DESCRIPTOR') if experiment is not None else None
+    result = {}
+    for name in ('strategy', 'source', 'selection'):
+        value = text(descriptor, 'LIBRARY_' + name.upper())
+        if value:
+            result['library_' + name] = value
+    layout = descriptor.find('LIBRARY_LAYOUT') if descriptor is not None else None
+    if layout is not None and len(layout):
+        result['library_layout'] = layout[0].tag
+    instrument = text(experiment, 'PLATFORM/*/INSTRUMENT_MODEL')
+    if instrument:
+        result['instrument_model'] = instrument
+    return result
+
+
+def files_from_ena(row):
+    files = []
+    for family in ('fastq', 'submitted', 'sra', 'bam'):
+        paths = (row.get(family + '_ftp') or '').split(';')
+        columns = {key: (row.get(family + '_' + key) or '').split(';') for key in ('md5', 'bytes', 'file_role', 'format')}
+        for i, path in enumerate(paths):
+            if not path:
+                continue
+            uri = path if '://' in path else 'ftp://' + path
+            item = {'uri': uri, 'filename': PurePosixPath(urlsplit(uri).path).name,
+                    'format': family, 'role': columns['file_role'][i] if i < len(columns['file_role']) else ''}
+            for key in ('md5', 'bytes'):
+                if i < len(columns[key]) and columns[key][i]:
+                    item[key] = columns[key][i]
+            if family == 'submitted' and i < len(columns['format']):
+                item['format'] = columns['format'][i] or 'submitted'
+            files.append(item)
+    return files
+
+
+def files_from_sra(run):
+    files = []
+    for node in run.findall('SRAFiles/SRAFile'):
+        base = {'filename': node.get('filename'), 'bytes': node.get('size'), 'md5': node.get('md5'),
+                'format': node.get('semantic_name', ''), 'role': node.get('supertype', '')}
+        urls = ([{'url': node.get('url')}] if node.get('url') else []) + [dict(x.attrib) for x in node.findall('Alternatives')]
+        for alternative in urls or [{}]:
+            files.append({**base, **alternative, 'uri': alternative.get('url')})
+    # Some partners retain submitted file descriptors instead of SRAFiles.
+    for node in run.findall('.//DATA_BLOCK/FILES/FILE'):
+        item = {'filename': node.get('filename'), 'format': node.get('filetype', ''), 'role': 'submitted'}
+        if node.get('checksum_method', '').upper() == 'MD5':
+            item['md5'] = node.get('checksum')
+        if '://' in (node.get('filename') or ''):
+            item['uri'] = node.get('filename')
+        files.append(item)
+    return files
+
+
+def attach_run(sample, experiment, run, study, files):
+    expt_id, run_id = identifier(experiment), identifier(run)
+    biosample = next((a['value'] for a in sample['accession'] if a['database'] == 'BioSample'), None)
+    archive_sample = next((a['value'] for a in sample['accession'] if a['value'].startswith(('SRS', 'ERS', 'DRS'))), sample['iid'])
+    record = {'run': run_id, 'study': study, 'experiment': expt_id, 'sample': archive_sample,
+              'biosample': biosample, 'scan_name': run.get('alias') or run_id, **library(experiment),
+              'read_lengths': [r.get('average') for r in run.findall('Statistics/Read') if r.get('average')]}
+    fastqs = [f for f in files if 'fastq' in str(f.get('format', '')).lower()]
+    if fastqs:
+        record['fastq_files'] = fastqs
+    sample['sra_run'].append(record)
+    for f in files:
+        if f.get('uri'):
+            link = {'value': f['uri'], 'type': f.get('format') or 'raw'}
+            if re.fullmatch('[a-fA-F0-9]{32}', f.get('md5') or ''):
+                link['checksum'] = f['md5']
+            sample.setdefault('raw_data', []).append(link)
+    return record
+
+
+def protocol_for(experiment):
+    description = text(experiment, 'DESIGN/LIBRARY_DESCRIPTOR/LIBRARY_CONSTRUCTION_PROTOCOL')
+    if not description:
+        return None
+    result = {'name': identifier(experiment) + ':library', 'description': description,
+              'type': {'value': 'library construction protocol'}}
+    hardware = library(experiment).get('instrument_model')
+    if hardware:
+        result['hardware'] = [hardware]
+    return result
+
+
+def assay_paths(sample, run, experiment, files, protocol):
+    # Repeating attributes remain occurrences rather than a dict keyed by name.
+    channel = sample['channel'][0]
+    attrs = deepcopy(channel.get('characteristics', []))
+    for organism in channel.get('organism', []):
+        value = {'name': 'organism', 'value': organism['value']}
+        if organism.get('taxid'):
+            value.update(term_source_ref='NCBITaxon', term_accession_number=organism['taxid'])
+        attrs.append(value)
+    source = {'kind': 'source', 'name': sample['iid'], 'sample_ref': sample['iid'], 'characteristics': attrs}
+    if channel.get('source'):
+        source['description'] = channel['source']['value']
+    assay = {'kind': 'assay', 'name': run['experiment'], 'sample_ref': sample['iid'],
+             'technology_type': {'value': 'sequencing assay'}, 'comments': []}
+    if text(experiment, 'DESIGN/DESIGN_DESCRIPTION'):
+        assay['description'] = text(experiment, 'DESIGN/DESIGN_DESCRIPTION')
+    for key in ('library_strategy', 'library_source', 'library_selection', 'library_layout', 'instrument_model'):
+        if run.get(key):
+            assay['comments'].append({'name': key.upper(), 'value': run[key]})
+    scan = {'kind': 'scan', 'name': run['run'], 'comments': [
+        {'name': 'ENA_RUN', 'value': run['run']}, {'name': 'ENA_EXPERIMENT', 'value': run['experiment']},
+        {'name': 'ENA_SAMPLE', 'value': run['sample']}]}
+    result = []
+    for file in files or [None]:
+        steps = [deepcopy(source)]
+        if protocol:
+            steps.append({'kind': 'protocol_application', 'protocol_ref': protocol['name']})
+        steps.extend([deepcopy(assay), deepcopy(scan)])
+        if file and (file.get('uri') or file.get('filename')):
+            node = {'kind': 'array_data_file', 'name': file.get('filename') or file['uri'], 'comments': []}
+            if file.get('uri'):
+                node['link'] = {'value': file['uri'], 'type': file.get('format') or 'raw'}
+            for key in ('md5', 'bytes', 'format', 'role'):
+                if file.get(key):
+                    node['comments'].append({'name': key.upper(), 'value': str(file[key])})
+            steps.append(node)
+        result.append({'steps': steps})
+    return result
+
+
+def finish(provider, records, series, samples, protocols, paths):
+    fill_linked_metadata(records, series, samples, protocols)
+    for sample in samples:
+        runs = sample['sra_run']
+        sample['sra_accession'] = list(dict.fromkeys(r['experiment'] for r in runs))
+        sample['ena_accession'] = list(dict.fromkeys(r['study'] for r in runs))
+        for key in ('library_strategy', 'library_source', 'library_selection'):
+            values = {r[key] for r in runs if r.get(key)}
+            if len(values) == 1 and all(r.get(key) for r in runs):
+                sample[key] = values.pop()
+    by_sample = {s['iid']: s for s in samples}
+    for path in paths:
+        for step in path['steps']:
+            if step.get('kind') == 'source' and step.get('sample_ref') in by_sample:
+                channel = by_sample[step['sample_ref']]['channel'][0]
+                organism = [v for v in step.get('characteristics', []) if v['name'] == 'organism']
+                step['characteristics'] = deepcopy(channel['characteristics']) + organism
+    series.update(sample_ref=[{'ref': s['iid']} for s in samples], protocols=protocols, assay_paths=paths)
+    data = {'miniml_schema_version': '3.0', 'source': {'format': provider.upper()}, 'series': series,
+            'sample': samples, 'extensions': {'insdc': retained(provider, records)}}
+    dbs = {a['database'] for entity in [series, *samples] for a in entity.get('accession', [])}
+    data['database'] = [{'iid': db, 'name': db} for db in sorted(dbs)]
+    return MINiMLCodec().decode(data).package
+
+
+def study_record(node, seed):
+    result = {'iid': seed.primary, 'accession': accessions(node, seed.primary),
+              'title': text(node, 'DESCRIPTOR/STUDY_TITLE') or text(node, 'TITLE'),
+              'summary': text(node, 'DESCRIPTOR/STUDY_ABSTRACT') or text(node, 'DESCRIPTION'),
+              'relation': relations(node)}
+    if seed.study not in [a['value'] for a in result['accession']]:
+        result['accession'].append({'value': seed.study, 'database': database_for(seed.study)})
+    kind = node.find('DESCRIPTOR/STUDY_TYPE') if node is not None else None
+    if kind is not None and kind.get('existing_study_type'):
+        result['type'] = [{'value': kind.get('existing_study_type')}]
+    result['pubmed_id'] = [r['target'] for r in result['relation'] if r['type'].lower() == 'pubmed']
+    return result
+
+
+def fill_linked_metadata(records, series, samples, protocols):
+    """Project linked fields only when their entity binding is explicit."""
+    by_id = {a['value']: s for s in samples for a in s['accession']}
+    seen_contacts = set()
+    for root in records.xml:
+        for bio in root.findall('.//BioSample'):
+            sample = by_id.get(bio.get('accession'))
+            if sample is None:
+                continue
+            channel = sample['channel'][0]
+            names = {a['name'] for a in channel['characteristics']}
+            for a in bio.findall('Attributes/Attribute'):
+                name = a.get('attribute_name') or a.get('display_name')
+                if name and name not in names:
+                    value = {'name': name, 'value': ''.join(a.itertext())}
+                    if a.get('unit'):
+                        value['unit'] = {'value': a.get('unit')}
+                    channel['characteristics'].append(value)
+            sample.setdefault('status', []).append({k: bio.get(v) for k, v in [
+                ('submission_date', 'submission_date'), ('release_date', 'publication_date'),
+                ('last_update_date', 'last_update')] if bio.get(v)})
+        for project in root.findall('.//Project'):
+            desc = project.find('ProjectDescr')
+            if not series.get('title'):
+                series['title'] = text(desc, 'Title')
+            if not series.get('summary'):
+                series['summary'] = text(desc, 'Description')
+            for pub in project.findall('.//Publication'):
+                if pub.findtext('DbType') == 'ePubmed' and pub.get('id') not in series['pubmed_id']:
+                    series['pubmed_id'].append(pub.get('id'))
+        for article in root.findall('.//PubmedArticle'):
+            pmid = text(article, 'MedlineCitation/PMID')
+            if not pmid or pmid not in series['pubmed_id']:
+                continue
+            authors = []
+            for author in article.findall('MedlineCitation/Article/AuthorList/Author'):
+                authors.append(text(author, 'CollectiveName') or ' '.join(filter(None, [text(author, 'ForeName'), text(author, 'LastName')])))
+            pub = {'pubmed_id': pmid, 'title': text(article, 'MedlineCitation/Article/ArticleTitle'),
+                   'author_list': ', '.join(authors)}
+            for aid in article.findall('PubmedData/ArticleIdList/ArticleId'):
+                if aid.get('IdType') == 'doi':
+                    pub['doi'] = aid.text
+            series.setdefault('pubmed_publication', []).append(pub)
+        for organization in root.findall('.//Organization'):
+            for contact in organization.findall('Contact'):
+                key = ET.tostring(contact)
+                if key in seen_contacts:
+                    continue
+                seen_contacts.add(key)
+                value = {'organization': text(organization, 'Name')}
+                person = {k: text(contact, 'Name/' + v) for k, v in [('first', 'First'), ('middle', 'Middle'), ('last', 'Last')]}
+                if any(person.values()):
+                    value['person'] = {k: v for k, v in person.items() if v}
+                if contact.get('email'):
+                    value['email'] = contact.get('email')
+                address = contact.find('Address')
+                if address is not None:
+                    value['address'] = {'lines': [n.text for n in address if n.text]}
+                series.setdefault('contact', []).append(value)
+        for analysis in root.findall('.//ANALYSIS'):
+            study_ref = identifier(analysis.find('STUDY_REF'))
+            if study_ref and study_ref not in (records.seed.study, records.seed.primary):
+                continue
+            refs = [identifier(n) for n in analysis.findall('SAMPLE_REF')]
+            targets = list({by_id[a]['iid']: by_id[a] for a in refs if a in by_id}.values()) if refs else [series]
+            # Unmatched sample-specific files are retained only in the extension.
+            software = [n.text for n in analysis.findall('.//PROGRAM') if n.text]
+            description = text(analysis, 'DESCRIPTION')
+            if description or software:
+                protocols.append({'name': identifier(analysis) + ':analysis',
+                    'type': {'value': 'data analysis protocol'}, 'description': description,
+                    'software': software})
+            for file in analysis.findall('.//FILES/FILE'):
+                uri = file.get('filename', '')
+                if not urlsplit(uri).scheme:
+                    continue
+                link = {'value': uri, 'type': file.get('filetype', 'analysis')}
+                if file.get('checksum_method', '').upper() == 'MD5':
+                    link['checksum'] = file.get('checksum')
+                for target in targets:
+                    target.setdefault('supplementary_data', []).append(deepcopy(link))
+    # EBI BioSamples supplies repeated values and optional ontology URLs.
+    for record in records.linked:
+        if record['provider'] != 'biosamples':
+            continue
+        sample = by_id.get(record['accession'])
+        if sample is None:
+            continue
+        attrs = sample['channel'][0]['characteristics']
+        names = {a['name'].replace('_', ' ').casefold() for a in attrs}
+        for name, values in record['metadata'].get('characteristics', {}).items():
+            if name.casefold() in names or name.casefold() in ('organism', 'title', 'description'):
+                continue
+            for item in values:
+                value = {'name': name, 'value': item.get('text', '')}
+                terms = item.get('ontologyTerms', [])
+                if len(terms) == 1:
+                    value['term_accession_number'] = terms[0]
+                attrs.append(value)

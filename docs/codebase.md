@@ -4021,3 +4021,24 @@ assay export 3.0, and unrelated status-v2 contracts keep their versions. GSK
 scientific selection policy is unchanged. Boundary rejection, fresh ingestion,
 semantic export/reparse, source preservation, profiles, and consumer integration
 are covered by the maintained v3 fixtures and `test_miniml_v3_only.py` tests.
+
+<a id="native-archive-imports"></a>
+## Native archive metadata imports
+
+`SRASource` and `ENASource` independently resolve INSDC accessions and retrieve
+study-scoped records. `SRAParser` and `ENAParser` interpret supplied records without
+network access, producing MSC MINiML 3.0 packages. Entrez owns SRA discovery,
+BioSample/BioProject/PubMed metadata and assembly links; ENA uses Portal inventories
+and Browser XML with linked BioSamples/taxonomy metadata. Sources report incomplete
+retrieval separately from scientific metadata.
+
+The version 1.0 `extensions.insdc` container retains structured provider records,
+including original XML attributes and repeated children. It contains no import
+completeness diagnostics. Core mapping preserves sample/run relationships, native
+identity, repeated characteristics, library scope, file alternatives and full
+assay paths. Shared modules provide transport/result containers and mapping
+primitives, not a shared discovery orchestrator.
+
+Offline contracts: `tests/test_native_archive_sources.py` and
+`tests/test_native_archive_parsers.py`; provider fixtures come from the vendored
+SRA/ENA reference material.

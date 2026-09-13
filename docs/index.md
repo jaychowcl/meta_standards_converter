@@ -435,6 +435,13 @@ canonical handoff by stable anchor, purpose and search keywords.
   keywords: MSC 8, v3 only, v2 rejection, migration, saved input, checkpoint separation
   link: [Open section](codebase.md#miniml-v3-only-cutover)
 
+- id: native-archive-imports
+  title: Native archive metadata imports
+  anchor: native-archive-imports
+  purpose: Native SRA/ENA discovery, parsing, preservation and conversion contracts.
+  keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc
+  link: [Open section](codebase.md#native-archive-imports)
+
 ## Stable aliases and supporting documents
 
 - [H5AD metadata schema](codebase.md#h5ad-metadata-schema-v1): historical anchor retained; current metadata schema is 2.0.
