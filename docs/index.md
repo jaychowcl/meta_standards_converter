@@ -446,7 +446,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Archive extension and field mappings
   anchor: native-archive-contract
   purpose: Documents archive extension and field mappings.
-  keywords: extensions.insdc, residual v2, Projection, study descriptions, archive-date attributes, source occurrences, multiplicity, private evidence, files, pool, host, dates, statistics, analysis, assembly, library_description, method sentences, library preparation, enzyme motifs, protocol hardware
+  keywords: extensions.insdc, residual v2, Projection, study descriptions, archive-date attributes, source occurrences, multiplicity, private evidence, files, pool, host, dates, statistics, analysis, assembly, library_description, prepare_native_protocols, method sentences, library preparation, enzyme motifs, protocol hardware, saved JSON method recovery
   link: [Open section](codebase.md#native-archive-contract)
 
 - id: native-archive-fidelity

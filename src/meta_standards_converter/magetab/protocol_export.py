@@ -44,6 +44,8 @@ def _registered(name):
 
 def prepare_protocols(data):
     """Retain all definitions, coalesce compatible equivalents and rewrite references."""
+    from meta_standards_converter.miniml.archive_protocols import prepare_native_protocols
+    prepare_native_protocols(data)
     series = data.get('series', {})
     protocols = series.get('protocols', [])
     if not protocols:

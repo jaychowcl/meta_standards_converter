@@ -4226,6 +4226,14 @@ qualifying sentence can supply an otherwise absent library protocol; unrelated
 design prose cannot. Sequencing instruments remain on runs/assays rather than
 being copied into library-construction hardware. Residual matching recognizes
 the combined dedicated text and method sentences at the same experiment scope.
+For saved native packages, `prepare_native_protocols` runs inside shared protocol
+export preparation on the in-memory copy. Method recovery requires a generated
+`<experiment>:library` definition and a unique matching assay description through
+explicit protocol references. Ambiguous/shared references and GEO/AE definitions
+are skipped. Legacy generated library hardware is removed only when its sole
+value equals a sequencer explicitly recorded on a run of that experiment; other
+hardware survives. Existing naming/deduplication then runs and rewrites references.
+No additional requests occur, including during `json2ae --no-enrich`.
 
 Incomplete Browser retrieval can use available ENA indexed fields for a partial
 package. Full-record failures and identifier/count mismatches remain in logs and
