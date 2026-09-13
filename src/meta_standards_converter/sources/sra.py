@@ -78,7 +78,7 @@ class SRASource:
         root = attempt(result, db, lambda: self.xml(db, ids))
         if root is None:
             return None
-        paths = {'biosample': './/BioSample', 'taxonomy': './/Taxon', 'pubmed': './/PubmedArticle'}
+        paths = {'biosample': 'BioSample', 'taxonomy': 'Taxon', 'pubmed': 'PubmedArticle'}
         clean = ET.Element(root.tag)
         found = set()
         for node in root.findall(paths[db]):
@@ -152,7 +152,16 @@ class SRASource:
         for batch in chunks(ids):
             root = attempt(records, f'{seed.study} experiments', lambda: self.xml('sra', batch))
             if root is not None:
-                records.xml.append(root)
+                accepted = ET.Element(root.tag)
+                for package in root.findall('EXPERIMENT_PACKAGE'):
+                    study = identifier(package.find('EXPERIMENT/STUDY_REF'))
+                    if study in (seed.study, seed.primary):
+                        accepted.append(package)
+                    else:
+                        records.issues.append(f'{seed.study}: missing or mismatched experiment study identity')
+                root = accepted
+                if len(root):
+                    records.xml.append(root)
                 if len(root.findall('.//EXPERIMENT_PACKAGE')) != len(batch):
                     records.issues.append(f'{seed.study}: incomplete experiment package batch')
         observed = {identifier(n) for root in records.xml for n in root.findall('.//EXPERIMENT') if identifier(n)}

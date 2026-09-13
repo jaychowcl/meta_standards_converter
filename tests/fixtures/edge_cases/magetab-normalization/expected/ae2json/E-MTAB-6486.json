@@ -87,8 +87,8 @@
       ],
       "variable": [
         {
-          "factor": "agent",
           "name": "compound",
+          "factor": "agent",
           "type": {
             "value": "compound"
           }
@@ -116,6 +116,7 @@
             {
               "kind": "source",
               "name": "Sample 1",
+              "sample_ref": "Sample 1",
               "material_type": {
                 "value": "cell"
               }
@@ -135,7 +136,8 @@
             },
             {
               "kind": "assay",
-              "name": "Assay 1"
+              "name": "Assay 1",
+              "sample_ref": "Sample 1"
             }
           ],
           "document": "E-MTAB-6486.sdrf.txt"

@@ -449,6 +449,13 @@ canonical handoff by stable anchor, purpose and search keywords.
   keywords: extensions.insdc, files, pool, host, dates, statistics, analysis, assembly
   link: [Open section](codebase.md#native-archive-contract)
 
+- id: native-archive-fidelity
+  title: Native retrieval and enrichment fidelity
+  anchor: native-archive-fidelity
+  purpose: Identity validation, structured workflow merging and file URI export contracts.
+  keywords: PRJA, BioProject UID, PRJDA, assembly version, File URI, qualified units, contributor, database, sample_ref, indexed_statistics, harmonization decoding
+  link: [Open section](codebase.md#native-archive-fidelity)
+
 - id: native-archive-workflows
   title: Independent native provider workflows
   anchor: native-archive-workflows

@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Regressions from the six-study archive fidelity evaluation."""
 import xml.etree.ElementTree as ET
 import pytest
@@ -51,3 +59,16 @@ def test_assembly_version_reconciliation(requested,version,missing):
         return []
     records=ENASource(http=HTTP(handler)).fetch(StudySeed('DRP000001','PRJDA38027'))
     assert any('missing XML record '+requested in x for x in records.issues)==missing
+
+
+def test_wrong_study_package_cannot_trigger_linked_project_discovery():
+    calls=[]
+    def handler(url,p,fmt):
+        calls.append((url,p))
+        if 'esearch' in url:return {'esearchresult':{'count':'1','idlist':['1']}}
+        if 'elink' in url:return ET.fromstring('<eLinkResult/>')
+        return ET.fromstring('<EXPERIMENT_PACKAGE_SET><EXPERIMENT_PACKAGE><STUDY accession="SRP99"><IDENTIFIERS><EXTERNAL_ID namespace="BioProject">PRJNA99</EXTERNAL_ID></IDENTIFIERS></STUDY><EXPERIMENT accession="SRX99"><STUDY_REF accession="SRP99"/></EXPERIMENT></EXPERIMENT_PACKAGE></EXPERIMENT_PACKAGE_SET>')
+    records=SRASource(http=HTTP(handler)).fetch(StudySeed('SRP1','SRP1'))
+    assert records.issues
+    assert not records.xml
+    assert not any(p.get('db')=='bioproject' for _,p in calls)

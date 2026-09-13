@@ -45,9 +45,9 @@ Do not infer hierarchy only from prefixes. Resolve explicit `STUDY_REF`, `SAMPLE
 
 Publication is optional. `SRX017289` demonstrates a PubMed link on the study and a separate ESummary response. `SRX7812918` deliberately has no PubMed fixture; absence is represented by the missing file and must not be converted into an empty publication record or a failed required join.
 
-## Fields MSC consumes today
+## Compact GEO enrichment subset
 
-MSC does not currently accept SRA as a top-level converter input. During GEO conversion, `MINiMLEnricher` extracts SRA accessions only from GEO sample relations of type `SRA`, then calls NCBI EFetch. It consumes the following subset:
+The separate compact GEO enrichment route has a narrower contract than native `sra2json`. During GEO conversion, `MINiMLEnricher` extracts SRA accessions only from GEO sample relations of type `SRA`, then calls NCBI EFetch. It consumes the following subset:
 
 | Current MSC value | Provider source | Use |
 |---|---|---|
@@ -61,9 +61,9 @@ MSC does not currently accept SRA as a top-level converter input. During GEO con
 | `read_lengths` | run `Statistics/Read/@average` | Preserved in enriched JSON; not a core GEO characteristic |
 | PubMed publication tuple | GEO `series.pubmed_id` followed by PubMed ESummary | IDF publication ID, DOI, authors, title and harmonized publication status |
 
-MSC does **not** currently fetch the separate BioSample or BioProject responses, parse sample attributes such as `geo_loc_name`/`lat_lon`, consume study abstract/type, or discover PubMed IDs from the SRA study link. Those records are vendored for future converter work.
+That compact route does **not** fetch the separate BioSample or BioProject responses, parse sample attributes such as `geo_loc_name`/`lat_lon`, consume study abstract/type, or discover PubMed IDs from the SRA study link. Native `sra2json` retrieves and maps these records.
 
-## Precedence and GEO overwrite behavior
+## Compact GEO precedence and overwrite behavior
 
 SRA/ENA enrichment does not overwrite GEO biological, geographic, or characteristic fields. It writes only `sample.sra_accession`, `sample.sra_run`, and `sample.ena_accession`; invoking enrichment on a package already containing those three enrichment slots replaces those slots, but it does not rewrite the GEO sample object.
 
@@ -72,3 +72,21 @@ For MAGE-TAB rendering, existing GEO sample-level library fields and instrument 
 ## Future `sra2json`/MAGE-TAB coverage
 
 Together, the SRA composite, BioSample, BioProject, and optional PubMed response contain enough information to construct a useful sequencing MAGE-TAB package: study description/publications for IDF; sample organism and attributes for SDRF source characteristics; library/platform information for protocols and assays; and run/file information for scans and data files. They do not guarantee complete experimental protocols, ontology identifiers, factors, or publication links. A converter must preserve free-form attributes and provenance, apply package/checklist rules, model missing publications, and define conflict resolution before claiming a lossless mapping.
+
+## Native converter field contract
+
+The current [native field mapping](../codebase.md#native-archive-contract) and
+[fidelity rules](../codebase.md#native-archive-fidelity) govern native imports.
+They preserve full structured records in `extensions.insdc` 1.0 with MINiML 3.0.
+BioProject accession retrieval uses exact PRJA-to-UID resolution and validated
+ArchiveID identity, including legacy PRJDA identifiers. Explicit assembly
+versions stay distinct. ENA indexed read/base counts stay in run-level
+`indexed_statistics`; they are not inferred read lengths. Literal FTP filename
+characters survive usable URI encoding.
+
+Optional GEO/ArrayExpress enrichment preserves matched material/protocol paths,
+scoped factors and units, native membership and additive file branches. Database,
+contributor and organization references are reconciled with their declarations.
+Files export their explicit links as `Comment[File URI]`. Operational diagnostics
+belong only in logs and optional reports; absent metadata never justifies an
+invented molecule, date, overall design or protocol step.

@@ -4097,7 +4097,7 @@ The extension is source evidence, not a completeness or per-field provenance log
 | Sample taxon, host and explicit molecule | `channel.organism[]`, host characteristic with taxon annotation, `channel.molecule` | TRANSCRIPTOMIC does not imply total RNA; organism and host stay separate |
 | Experiment library fields / platform | `sample.sra_run[]` and assay comments | Sample scalar library fields require consistency across runs |
 | Explicit library construction text | `series.protocols[]` and protocol applications | No manufactured extraction/treatment sequence |
-| Run statistics and read averages | Run `statistics`, `read_lengths` | Spot/base totals and nominal insert length are not read lengths |
+| Run statistics and read averages | Run `statistics`, `indexed_statistics`, `read_lengths` | ENA indexed `read_count` and `base_count` retain their original field names and values in `indexed_statistics`; spot/base totals and nominal insert length are not read lengths |
 | File reports / SRA file alternatives | Run `files`, `fastq_files`, sample `raw_data`, assay-file nodes | Parallel ENA lists align by position, including gaps; archive files retain actual formats; alternatives are not deduplicated |
 | Publications and known contributor details | `pubmed_id`, `pubmed_publication`, `contact` | Unknown roles/organization content stays in structured records |
 | Indexed and submitted dates | Entity status where semantics match; complete source records retained | Original date precision is retained in JSON |
@@ -4109,12 +4109,66 @@ package. Full-record failures and identifier/count mismatches remain in logs and
 reports. A missing optional field or empty optional inventory does not itself
 make an import incomplete. Requested but unavailable linked metadata does.
 
+<a id="native-archive-fidelity"></a>
+### Retrieval and enrichment fidelity
+
+`SRASource.project_xml` resolves BioProject accessions with exact Entrez
+`ESearch(db=bioproject, term="<accession>[PRJA]")`, then fetches the unique UID.
+The returned `ProjectID/ArchiveID` must match both that UID and the accession.
+This applies to linked projects and umbrella expansion, including legacy
+`PRJDA` identifiers. Embedded errors, missing records and identity mismatches
+produce partial outcomes; rejected records cannot supply metadata or links.
+BioSample, taxonomy and publication batches reconcile requested identifiers.
+ENA Browser batches retain only matched records. Assembly requests prefer
+`assembly_set_accession`; unversioned accessions may match a returned version,
+while explicitly different versions remain distinct.
+
+Portal FTP fields are file paths. Literal reserved characters such as `#` stay
+in filenames and are percent-encoded in usable file URIs; the original indexed
+value remains in `extensions.insdc`. File-node `link.value` exports alongside
+its filename as `Comment[File URI]` and parses back into that link. This works
+for CRAM, BAM, archive and derived files without calling them FASTQ.
+
+MAGE-TAB parsing carries each row's exact sample assignment into source,
+sample, assay and scan `sample_ref` fields. `Unit` and `Unit[TimeUnit]` retain
+unit ontology companions separately from value ontology companions. Material
+nodes remain ordered; extract material types are not flattened into biological
+sample characteristics. Broker spellings such as `Comment [ENA_RUN]` and
+`FactorValue [age]` are normalized as headers, preserving their values.
+
+Enrichment uses unique accession joins and compatible experiment/run scope.
+Older paths lacking sample references can recover them through explicit run or
+experiment IDs, never descriptive similarity. A matched explicit workflow
+replaces the native material/protocol workflow, keeping native identities and
+file branches. Factors stay on their original nodes with names, units and term
+identifiers. Native displaced paths and full incoming packages remain structured
+records in `extensions.insdc`; ambiguous workflows remain there with report/log
+diagnostics. Alternative FASTQ links do not make an otherwise identical
+workflow ambiguous. Sample-scoped processed files get sample-scoped branches,
+without assigning them to the first run. Run file lists remain additive.
+
+Incoming protocols and references are namespaced together. Contributors and
+organizations receive deterministic study-prefixed IDs and remapped references;
+people are never joined by name. Compatible database declarations merge by
+`iid`; conflicting local declarations are namespaced and their references
+rewritten. Organism enrichment retains an existing taxid only when the same
+scientific name remains and no replacement taxid is supplied. Informative
+ArrayExpress > GEO > native priority and native membership remain unchanged.
+
+Retained harmonization export returns immediately without an extension.
+Otherwise it decodes and groups operations once, then applies the correct
+sample's comments to each of its SDRF rows. No converter orchestration changes
+are involved. Source: [archive workflows](../src/meta_standards_converter/metadata/archive_workflows.py),
+[enrichment](../src/meta_standards_converter/metadata/archive_enrichment.py),
+[MAGE-TAB semantics](../src/meta_standards_converter/magetab/semantics.py).
+
 <a id="native-archive-workflows"></a>
 ### Provider workflows and boundaries
 
 ```text
 sra2json / SRA2JSONConverter
   SRASource.resolve: exact accession -> ESearch/EFetch -> read studies
+    BioProject accession -> ESearch <accession>[PRJA] -> UID -> verified EFetch
     umbrella input only -> BioProject u2d children (recursive, cycle guarded)
   for each study independently:
     ESearch History inventory -> batched SRA experiment packages
@@ -4256,8 +4310,8 @@ facades. Their ownership and signatures are listed here for source retrieval:
 | `meta_standards_converter.sources.archive_support.chunks` | `chunks(values, size=100)` |
 | `meta_standards_converter.sources.archive_support.ArchiveHTTP` | `__init__(self, service, requester=None, resource_profile='standard', evidence_dir=None); get(self, url, params=None, fmt='xml')` |
 | `meta_standards_converter.sources.archive_support.attempt` | `attempt(records, label, call)` |
-| `meta_standards_converter.sources.sra.SRASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, term, db='sra'); xml(self, db, ids); links(self, dbfrom, db, ids, name); resolve(self, accession); fetch(self, seed)` |
-| `meta_standards_converter.sources.ena.ENASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, result, query, fields='all'); xml(self, accessions); resolve(self, accession); fetch(self, seed)` |
+| `meta_standards_converter.sources.sra.SRASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, term, db='sra'); xml(self, db, ids); project_xml(self, accession, result); linked_xml(self, db, ids, result); links(self, dbfrom, db, ids, name); resolve(self, accession); fetch(self, seed)` |
+| `meta_standards_converter.sources.ena.ENASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, result, query, fields='all'); xml(self, accessions); verified_xml(self, accessions, result, kind='record'); resolve(self, accession); fetch(self, seed)` |
 | `meta_standards_converter.miniml.insdc_support.text` | `text(node, path, default=None)` |
 | `meta_standards_converter.miniml.insdc_support.tree` | `tree(node)` |
 | `meta_standards_converter.miniml.insdc_support.retained` | `retained(provider, records)` |
@@ -4279,6 +4333,18 @@ facades. Their ownership and signatures are listed here for source retrieval:
 | `meta_standards_converter.miniml.sra_parser.SRAParser` | `parse(self, records)` |
 | `meta_standards_converter.miniml.ena_parser.ENAParser` | `parse(self, records)` |
 
+Supporting mapping helpers (no network or shared converter orchestration):
+
+| Qualified callable | Signature |
+| --- | --- |
+| `meta_standards_converter.metadata.archive_workflows.remap_references` | `remap_references(value, mappings)` |
+| `meta_standards_converter.metadata.archive_workflows.merge_declarations` | `merge_declarations(data, extra, namespace)` |
+| `meta_standards_converter.metadata.archive_workflows.path_ids` | `path_ids(path)` |
+| `meta_standards_converter.metadata.archive_workflows.compatible` | `compatible(scope, native)` |
+| `meta_standards_converter.metadata.archive_workflows.is_file` | `is_file(step)` |
+| `meta_standards_converter.metadata.archive_workflows.file_node` | `file_node(file, kind='array_data_file')` |
+| `meta_standards_converter.metadata.archive_workflows.merge_workflows` | `merge_workflows(data, extra, matched, proto_names, prefer, issues)` |
+
 <a id="native-archive-validation"></a>
 ### Native import validation
 
@@ -4288,7 +4354,10 @@ libraries, repeated attributes and file alternatives, positional file gaps,
 non-MD5 checksums, analysis associations, exact enrichment joins, missing-value
 priority, peer-only records, duplicate batch references and protected outputs.
 JSON-to-TSV and JSON-to-MAGE-TAB tests assert sample IDs, organisms, protocols,
-factors and files. Live provider contracts are separately opt-in:
+factors and files. `tests/test_archive_fidelity_*.py` additionally covers exact
+BioProject UIDs, rejected records, legacy identifiers, assembly versions, reserved
+filenames, two extract stages, units, contributors, local database conflicts,
+taxonomy compatibility and bounded harmonization decoding. Live provider contracts are separately opt-in:
 
 ```bash
 python -m pytest tests/test_native_archive_sources.py tests/test_native_archive_parsers.py tests/test_native_archive_converters.py tests/test_native_archive_enrichment.py tests/test_native_archive_exports.py -q

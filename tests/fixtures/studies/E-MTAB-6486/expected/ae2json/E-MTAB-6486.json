@@ -305,7 +305,11 @@
               },
               {
                 "name": "dose",
-                "value": "500"
+                "value": "500",
+                "unit": {
+                  "value": "nanomolar"
+                },
+                "unit_type": "dose unit"
               }
             ],
             "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
@@ -377,7 +381,11 @@
               },
               {
                 "name": "dose",
-                "value": "500"
+                "value": "500",
+                "unit": {
+                  "value": "nanomolar"
+                },
+                "unit_type": "dose unit"
               }
             ],
             "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
@@ -449,7 +457,11 @@
               },
               {
                 "name": "dose",
-                "value": "500"
+                "value": "500",
+                "unit": {
+                  "value": "nanomolar"
+                },
+                "unit_type": "dose unit"
               }
             ],
             "treatment_protocol": "Cells in log phase growth were treated with 500nM Neratinib or DMSO vehicle control for 20 hrs, commencing less than 24 hrs after reseeding in fresh media",
@@ -533,15 +545,15 @@
       ],
       "variable": [
         {
-          "factor": "agent",
           "name": "compound",
+          "factor": "agent",
           "type": {
             "value": "compound"
           }
         },
         {
-          "factor": "dose",
           "name": "dose",
+          "factor": "dose",
           "type": {
             "value": "dose",
             "term_source_ref": "EFO",
@@ -644,6 +656,7 @@
             {
               "kind": "source",
               "name": "Sample 1",
+              "sample_ref": "Sample 1",
               "characteristics": [
                 {
                   "name": "organism",
@@ -751,6 +764,7 @@
             {
               "kind": "assay",
               "name": "Sample 1",
+              "sample_ref": "Sample 1",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -764,6 +778,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S13_R1_fastq.gz",
+              "sample_ref": "Sample 1",
               "factor_values": [
                 {
                   "name": "compound",
@@ -809,6 +824,7 @@
             {
               "kind": "source",
               "name": "Sample 1",
+              "sample_ref": "Sample 1",
               "characteristics": [
                 {
                   "name": "organism",
@@ -916,6 +932,7 @@
             {
               "kind": "assay",
               "name": "Sample 1",
+              "sample_ref": "Sample 1",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -929,6 +946,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S13_R2_fastq.gz",
+              "sample_ref": "Sample 1",
               "factor_values": [
                 {
                   "name": "compound",
@@ -974,6 +992,7 @@
             {
               "kind": "source",
               "name": "Sample 2",
+              "sample_ref": "Sample 2",
               "characteristics": [
                 {
                   "name": "organism",
@@ -1081,6 +1100,7 @@
             {
               "kind": "assay",
               "name": "Sample 2",
+              "sample_ref": "Sample 2",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -1094,6 +1114,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S14_R1_fastq.gz",
+              "sample_ref": "Sample 2",
               "factor_values": [
                 {
                   "name": "compound",
@@ -1139,6 +1160,7 @@
             {
               "kind": "source",
               "name": "Sample 2",
+              "sample_ref": "Sample 2",
               "characteristics": [
                 {
                   "name": "organism",
@@ -1246,6 +1268,7 @@
             {
               "kind": "assay",
               "name": "Sample 2",
+              "sample_ref": "Sample 2",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -1259,6 +1282,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S14_R2_fastq.gz",
+              "sample_ref": "Sample 2",
               "factor_values": [
                 {
                   "name": "compound",
@@ -1304,6 +1328,7 @@
             {
               "kind": "source",
               "name": "Sample 3",
+              "sample_ref": "Sample 3",
               "characteristics": [
                 {
                   "name": "organism",
@@ -1411,6 +1436,7 @@
             {
               "kind": "assay",
               "name": "Sample 3",
+              "sample_ref": "Sample 3",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -1424,6 +1450,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S15_R1_fastq.gz",
+              "sample_ref": "Sample 3",
               "factor_values": [
                 {
                   "name": "compound",
@@ -1469,6 +1496,7 @@
             {
               "kind": "source",
               "name": "Sample 3",
+              "sample_ref": "Sample 3",
               "characteristics": [
                 {
                   "name": "organism",
@@ -1576,6 +1604,7 @@
             {
               "kind": "assay",
               "name": "Sample 3",
+              "sample_ref": "Sample 3",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -1589,6 +1618,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S15_R2_fastq.gz",
+              "sample_ref": "Sample 3",
               "factor_values": [
                 {
                   "name": "compound",
@@ -1634,6 +1664,7 @@
             {
               "kind": "source",
               "name": "Sample 4",
+              "sample_ref": "Sample 4",
               "characteristics": [
                 {
                   "name": "organism",
@@ -1741,6 +1772,7 @@
             {
               "kind": "assay",
               "name": "Sample 4",
+              "sample_ref": "Sample 4",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -1754,6 +1786,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S16_R1_fastq.gz",
+              "sample_ref": "Sample 4",
               "factor_values": [
                 {
                   "name": "compound",
@@ -1799,6 +1832,7 @@
             {
               "kind": "source",
               "name": "Sample 4",
+              "sample_ref": "Sample 4",
               "characteristics": [
                 {
                   "name": "organism",
@@ -1906,6 +1940,7 @@
             {
               "kind": "assay",
               "name": "Sample 4",
+              "sample_ref": "Sample 4",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -1919,6 +1954,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S16_R2_fastq.gz",
+              "sample_ref": "Sample 4",
               "factor_values": [
                 {
                   "name": "compound",
@@ -1964,6 +2000,7 @@
             {
               "kind": "source",
               "name": "Sample 5",
+              "sample_ref": "Sample 5",
               "characteristics": [
                 {
                   "name": "organism",
@@ -2071,6 +2108,7 @@
             {
               "kind": "assay",
               "name": "Sample 5",
+              "sample_ref": "Sample 5",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -2084,6 +2122,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S17_R1_fastq.gz",
+              "sample_ref": "Sample 5",
               "factor_values": [
                 {
                   "name": "compound",
@@ -2129,6 +2168,7 @@
             {
               "kind": "source",
               "name": "Sample 5",
+              "sample_ref": "Sample 5",
               "characteristics": [
                 {
                   "name": "organism",
@@ -2236,6 +2276,7 @@
             {
               "kind": "assay",
               "name": "Sample 5",
+              "sample_ref": "Sample 5",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -2249,6 +2290,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S17_R2_fastq.gz",
+              "sample_ref": "Sample 5",
               "factor_values": [
                 {
                   "name": "compound",
@@ -2294,6 +2336,7 @@
             {
               "kind": "source",
               "name": "Sample 6",
+              "sample_ref": "Sample 6",
               "characteristics": [
                 {
                   "name": "organism",
@@ -2401,6 +2444,7 @@
             {
               "kind": "assay",
               "name": "Sample 6",
+              "sample_ref": "Sample 6",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -2414,6 +2458,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S18_R1_fastq.gz",
+              "sample_ref": "Sample 6",
               "factor_values": [
                 {
                   "name": "compound",
@@ -2459,6 +2504,7 @@
             {
               "kind": "source",
               "name": "Sample 6",
+              "sample_ref": "Sample 6",
               "characteristics": [
                 {
                   "name": "organism",
@@ -2566,6 +2612,7 @@
             {
               "kind": "assay",
               "name": "Sample 6",
+              "sample_ref": "Sample 6",
               "technology_type": {
                 "value": "sequencing assay"
               },
@@ -2579,6 +2626,7 @@
             {
               "kind": "scan",
               "name": "BKM10160511_S18_R2_fastq.gz",
+              "sample_ref": "Sample 6",
               "factor_values": [
                 {
                   "name": "compound",

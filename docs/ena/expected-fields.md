@@ -73,16 +73,34 @@ ENA represents multiple files within a run by semicolon-delimited sibling column
 
 Portal primary/secondary accession columns and Browser XML references establish most joins. Xref results are supplementary and can be empty, as both fixtures demonstrate. Publication discovery must inspect study XML links and, when present, fetch a publication provider such as PubMed; ENA does not guarantee a PMID for every study. Taxonomy resolution enriches the sample tax ID but must not replace the submitted sample attribute values.
 
-## Fields MSC consumes today
+## Compact GEO enrichment subset
 
-MSC currently calls only ENA Portal `/filereport` with `result=read_run` and fields `run_accession,fastq_ftp,fastq_md5,fastq_bytes`. It groups non-empty files by run and prefers that ENA file list over NCBI `SRAFile` entries. MSC does not currently call ENA Portal search/catalogue endpoints, Browser XML, Xref, Taxonomy, analysis, assembly, or checklist endpoints during conversion.
+The compact GEO enrichment route calls ENA Portal `/filereport` with `result=read_run` and fields `run_accession,fastq_ftp,fastq_md5,fastq_bytes`. It groups non-empty files by run and prefers that ENA file list over NCBI `SRAFile` entries. Native `ena2json` additionally uses Portal search/catalogues, Browser XML, Xref, taxonomy, analysis and assembly retrieval. Checklist definitions remain reference material.
 
 The rest of the current enrichment comes from NCBI SRA EFetch. Current sequencing SDRF rendering uses accessions, BioSample/GEO links, library values, instrument model, run alias, FASTQ URI/hash, and read length. PubMed ESummary is driven by PubMed IDs already parsed from GEO MINiML, not discovered through ENA.
 
-## Precedence and GEO overwrite behavior
+## Compact GEO precedence and overwrite behavior
 
 No ENA response writes GEO country, latitude/longitude, organism, source characteristics, title, or protocols. GEO sample-level library fields and instrument model win over conflicting SRA-derived values and produce audit warnings. A differing SRA `geo_sample` link also leaves the GEO accession in place. The sole active ENA precedence rule is a non-empty ENA FASTQ report replacing the NCBI-derived file list for the same run.
 
 ## Future `ena2json`/MAGE-TAB coverage
 
 Browser XML plus Portal file reports, taxonomy, optional cross-references, and PubMed lookup can supply the structural content for sequencing MAGE-TAB: study/publication IDF rows, sample SDRF characteristics, experiment/library protocols, assay hardware, and run/files. Portal search alone is insufficient because only indexed fields are returned. Even full XML may omit publication, factors, ontology IDs, or detailed wet-lab protocols, so a future converter needs explicit absent-value handling, lossless extension storage, provenance, and conflict rules rather than assuming every MAGE-TAB field is derivable.
+
+## Native converter field contract
+
+The current [native field mapping](../codebase.md#native-archive-contract) and
+[fidelity rules](../codebase.md#native-archive-fidelity) govern native imports.
+They preserve full structured records in `extensions.insdc` 1.0 with MINiML 3.0.
+BioProject accession retrieval uses exact PRJA-to-UID resolution and validated
+ArchiveID identity, including legacy PRJDA identifiers. Explicit assembly
+versions stay distinct. ENA indexed read/base counts stay in run-level
+`indexed_statistics`; they are not inferred read lengths. Literal FTP filename
+characters survive usable URI encoding.
+
+Optional GEO/ArrayExpress enrichment preserves matched material/protocol paths,
+scoped factors and units, native membership and additive file branches. Database,
+contributor and organization references are reconciled with their declarations.
+Files export their explicit links as `Comment[File URI]`. Operational diagnostics
+belong only in logs and optional reports; absent metadata never justifies an
+invented molecule, date, overall design or protocol step.
