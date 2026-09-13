@@ -75,16 +75,33 @@ class SRASource:
 
     def linked_xml(self, db, ids, result):
         """Keep only requested, identifiable linked entities from a batch."""
-        root = attempt(result, db, lambda: self.xml(db, ids))
-        if root is None:
-            return None
+        fetch_ids = list(ids)
+        if db == 'biosample':
+            accessions = [a for a in ids if not a.isdigit()]
+            fetch_ids = [a for a in ids if a.isdigit()]
+            if accessions:
+                resolved, issues = self.search(' OR '.join(a + '[Accession]' for a in accessions), db=db)
+                result.issues.extend(issues)
+                fetch_ids.extend(resolved)
+            fetch_ids = list(dict.fromkeys(fetch_ids))
+            if not fetch_ids:
+                result.issues.append('biosample: no requested accession resolved to a UID')
+                return None
+        root = ET.Element({'biosample': 'BioSampleSet', 'taxonomy': 'TaxaSet', 'pubmed': 'PubmedArticleSet'}[db])
+        for batch in chunks(fetch_ids):
+            response = attempt(result, db, lambda: self.xml(db, batch))
+            if response is not None:
+                root.extend(response)
         paths = {'biosample': 'BioSample', 'taxonomy': 'Taxon', 'pubmed': 'PubmedArticle'}
         clean = ET.Element(root.tag)
         found = set()
         for node in root.findall(paths[db]):
             if any(n.tag.lower() == 'error' for n in node.iter()):
                 continue
-            aliases = ({node.get('accession'), node.get('id')} if db == 'biosample' else
+            if db == 'biosample' and node.get('id') not in fetch_ids:
+                continue
+            aliases = ({node.get('accession'), node.get('id')} |
+                       {n.text for n in node.findall('Ids/Id') if n.get('db') == 'BioSample'} if db == 'biosample' else
                        {node.findtext('TaxId')} if db == 'taxonomy' else
                        {node.findtext('MedlineCitation/PMID')})
             matched = set(ids) & aliases

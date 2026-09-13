@@ -4118,7 +4118,10 @@ The returned `ProjectID/ArchiveID` must match both that UID and the accession.
 This applies to linked projects and umbrella expansion, including legacy
 `PRJDA` identifiers. Embedded errors, missing records and identity mismatches
 produce partial outcomes; rejected records cannot supply metadata or links.
-BioSample, taxonomy and publication batches reconcile requested identifiers.
+BioSample accessions likewise resolve through batched exact `[Accession]` searches
+before UID-based EFetch; numeric BioSample UIDs are accepted directly. Returned
+BioSample, taxonomy and publication records reconcile requested identifiers.
+ENA validates linked JSON identities and PubMed PMIDs before retaining records.
 ENA Browser batches retain only matched records. Assembly requests prefer
 `assembly_set_accession`; unversioned accessions may match a returned version,
 while explicitly different versions remain distinct.
@@ -4311,7 +4314,7 @@ facades. Their ownership and signatures are listed here for source retrieval:
 | `meta_standards_converter.sources.archive_support.ArchiveHTTP` | `__init__(self, service, requester=None, resource_profile='standard', evidence_dir=None); get(self, url, params=None, fmt='xml')` |
 | `meta_standards_converter.sources.archive_support.attempt` | `attempt(records, label, call)` |
 | `meta_standards_converter.sources.sra.SRASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, term, db='sra'); xml(self, db, ids); project_xml(self, accession, result); linked_xml(self, db, ids, result); links(self, dbfrom, db, ids, name); resolve(self, accession); fetch(self, seed)` |
-| `meta_standards_converter.sources.ena.ENASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, result, query, fields='all'); xml(self, accessions); verified_xml(self, accessions, result, kind='record'); resolve(self, accession); fetch(self, seed)` |
+| `meta_standards_converter.sources.ena.ENASource` | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None); search(self, result, query, fields='all'); xml(self, accessions); verified_xml(self, accessions, result, kind='record'); linked_json(self, url, accession, id_field, result); publications(self, ids, result); resolve(self, accession); fetch(self, seed)` |
 | `meta_standards_converter.miniml.insdc_support.text` | `text(node, path, default=None)` |
 | `meta_standards_converter.miniml.insdc_support.tree` | `tree(node)` |
 | `meta_standards_converter.miniml.insdc_support.retained` | `retained(provider, records)` |

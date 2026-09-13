@@ -93,7 +93,9 @@ The current [native field mapping](../codebase.md#native-archive-contract) and
 [fidelity rules](../codebase.md#native-archive-fidelity) govern native imports.
 They preserve full structured records in `extensions.insdc` 1.0 with MINiML 3.0.
 BioProject accession retrieval uses exact PRJA-to-UID resolution and validated
-ArchiveID identity, including legacy PRJDA identifiers. Explicit assembly
+ArchiveID identity, including legacy PRJDA identifiers. SRA BioSample retrieval
+resolves exact `[Accession]` search results to UIDs before EFetch. ENA checks
+BioSamples and taxonomy JSON identities and linked PubMed PMIDs. Explicit assembly
 versions stay distinct. ENA indexed read/base counts stay in run-level
 `indexed_statistics`; they are not inferred read lengths. Literal FTP filename
 characters survive usable URI encoding.

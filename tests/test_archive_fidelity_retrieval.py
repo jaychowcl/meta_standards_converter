@@ -72,3 +72,35 @@ def test_wrong_study_package_cannot_trigger_linked_project_discovery():
     assert records.issues
     assert not records.xml
     assert not any(p.get('db')=='bioproject' for _,p in calls)
+
+
+def test_biosample_batch_resolves_accessions_before_fetching_uids():
+    def handler(url,p,fmt):
+        if 'esearch' in url:
+            assert p['db']=='biosample'
+            assert p['term']=='SAMEA7520545[Accession] OR SAMEA7524342[Accession]'
+            return {'esearchresult':{'count':'2','idlist':['16695373','16699556']}}
+        assert p['id']=='16695373,16699556'
+        return ET.fromstring('<BioSampleSet><BioSample id="16695373" accession="SAMEA7520545"/><BioSample id="16699556" accession="SAMEA7524342"/></BioSampleSet>')
+    result=Resolution();root=SRASource(http=HTTP(handler)).linked_xml('biosample',['SAMEA7520545','SAMEA7524342'],result)
+    assert not result.issues
+    assert [n.get('accession') for n in root]==['SAMEA7520545','SAMEA7524342']
+
+
+def test_biosample_mismatch_is_rejected_after_uid_resolution():
+    def handler(url,p,fmt):
+        if 'esearch' in url:return {'esearchresult':{'count':'1','idlist':['16695373']}}
+        return ET.fromstring('<BioSampleSet><BioSample id="16695373" accession="SAMN07520545"/></BioSampleSet>')
+    result=Resolution()
+    assert SRASource(http=HTTP(handler)).linked_xml('biosample',['SAMEA7520545'],result) is None
+    assert result.issues
+
+
+def test_ena_linked_json_and_publication_identity_validation():
+    source=ENASource(http=HTTP(lambda u,p,f: {'taxId':'99'}))
+    result=Resolution()
+    assert source.linked_json('url','1','taxId',result) is None
+    assert result.issues
+    source.http=HTTP(lambda u,p,f:ET.fromstring('<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>99</PMID></MedlineCitation></PubmedArticle></PubmedArticleSet>'))
+    assert source.publications(['1'],result) is None
+    assert len(result.issues)==2

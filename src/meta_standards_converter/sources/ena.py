@@ -49,6 +49,28 @@ class ENASource:
             result.issues.append(f'{kind}: missing XML record {missing}')
         return clean if len(clean) else None
 
+    def linked_json(self, url, accession, id_field, result):
+        obj = attempt(result, f'linked {accession}', lambda: self.http.get(url, fmt='json'))
+        if obj is not None and (not isinstance(obj, dict) or str(obj.get(id_field)) != accession):
+            result.issues.append(f'linked {accession}: missing or mismatched identity')
+            return None
+        return obj
+
+    def publications(self, ids, result):
+        root = attempt(result, 'PubMed', lambda: self.http.get('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
+                {'db': 'pubmed', 'id': ','.join(ids), 'retmode': 'xml'}))
+        if root is None:
+            return None
+        clean, found = ET.Element('PubmedArticleSet'), set()
+        for article in root.findall('PubmedArticle'):
+            pmid = article.findtext('MedlineCitation/PMID')
+            if pmid in ids and not any(n.tag.lower() == 'error' for n in article.iter()):
+                clean.append(article)
+                found.add(pmid)
+        for missing in sorted(set(ids) - found):
+            result.issues.append(f'PubMed {missing}: missing or mismatched identity')
+        return clean if len(clean) else None
+
     def resolve(self, accession):
         accession, kind = accession_kind(accession)
         result, visited, queries = Resolution(), set(), []
@@ -142,19 +164,15 @@ class ENASource:
             pmids.update(n.findtext('ID') for n in root.findall('.//XREF_LINK') if n.findtext('DB', '').lower() == 'pubmed' and n.findtext('ID'))
         for acc in inventory['sample']:
             if acc.startswith('SAM'):
-                obj = attempt(records, f'BioSamples {acc}', lambda: self.http.get('https://www.ebi.ac.uk/biosamples/samples/' + acc, fmt='json'))
-                if obj is not None and obj.get('accession') != acc:
-                    records.issues.append(f'BioSamples {acc}: mismatched identity')
-                    obj = None
+                obj = self.linked_json('https://www.ebi.ac.uk/biosamples/samples/' + acc, acc, 'accession', records)
                 if obj is not None:
                     records.linked.append({'provider': 'biosamples', 'kind': 'sample', 'accession': acc, 'metadata': obj})
         for taxid in sorted(taxa):
-            obj = attempt(records, f'taxonomy {taxid}', lambda: self.http.get('https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/' + taxid, fmt='json'))
+            obj = self.linked_json('https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/' + taxid, taxid, 'taxId', records)
             if obj is not None:
                 records.linked.append({'provider': 'ena', 'kind': 'taxonomy', 'accession': taxid, 'metadata': obj})
         for batch in chunks(sorted(pmids)):
-            root = attempt(records, 'PubMed', lambda: self.http.get('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
-                {'db': 'pubmed', 'id': ','.join(batch), 'retmode': 'xml'}))
+            root = self.publications(batch, records)
             if root is not None:
                 records.xml.append(root)
         return records
