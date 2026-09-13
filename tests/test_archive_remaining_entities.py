@@ -64,3 +64,12 @@ def test_declared_archive_centers_are_organizations_without_invented_people():
     data=ENAParser().parse(records).to_mapping()
     assert any(o['name']=='Declared sequencing centre' and o.get('role')=='center_name' for o in data['organization'])
     assert not data['contributor']
+
+
+def test_known_address_fields_are_projected_as_address_fields():
+    records=fixture_records('sra')
+    data=SRAParser().parse(records).to_mapping()
+    person=next(c for c in data['contributor'] if c.get('email')=='bdaisley@uwo.ca')
+    assert person['address']['postal_code']=='N6A3K7'
+    assert person['address']['city']=='London'
+    assert person['address']['country']=='Canada'

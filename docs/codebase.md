@@ -4122,9 +4122,9 @@ make an import incomplete. Requested but unavailable linked metadata does.
 <a id="native-archive-fidelity"></a>
 ### Retrieval and enrichment fidelity
 
-Statuses preserve database and entity scope; native IDF dates never substitute submission for experiment dates. Sample-bound assembly reports use source-to-file branches. Explicit ENA sample/run analysis links are fetched one hop and reconciled without expanding read membership. Assembly descriptions do not define protocols.
+Statuses preserve database and entity scope; native IDF dates never substitute submission for experiment dates. Sample-bound assembly reports use source-to-file branches. Explicit ENA sample/run analysis links are fetched one hop and reconciled without expanding read membership. Their indexed analysis rows supply verified file locations for Browser records with relative filenames; file roles, sizes and delivery alternatives remain on scoped links. Assembly descriptions do not define protocols.
 
-Native imports project explicit organizations and contacts with source-bound IDs.
+Native imports project explicit organizations, declared study/project centres and contacts with source-bound IDs. Known address components populate city, country and postal-code fields.
 Enrichment imports registered platforms and rewrites sample/contact references.
 IDF person rows include inline study contacts, organization affiliations and supplied roles.
 Ontology references receive database declarations; explicit identifier namespaces take precedence over inconsistent source labels, which remain retained.

@@ -77,7 +77,10 @@ Together, the SRA composite, BioSample, BioProject, and optional PubMed response
 
 The current [native field mapping](../codebase.md#native-archive-contract) and
 [fidelity rules](../codebase.md#native-archive-fidelity) govern native imports.
-They preserve full structured records in `extensions.insdc` 1.0 with MINiML 3.0.
+They emit MINiML 3.0 with unmapped structured metadata in `extensions.insdc` 2.0.
+Mapped fields are removed from the extension after enrichment; displaced or unmatched
+values remain scoped to their source records. Version 1.0 packages still decode.
+Original response bytes are available separately with `--evidence-dir`.
 BioProject accession retrieval uses exact PRJA-to-UID resolution and validated
 ArchiveID identity, including legacy PRJDA identifiers. SRA BioSample retrieval
 resolves exact `[Accession]` search results to UIDs before EFetch. ENA checks

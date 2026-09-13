@@ -12,6 +12,19 @@ import logging
 import re
 
 
+def _address(node):
+    value = {}
+    lines = []
+    for child in node:
+        text = ''.join(child.itertext()).strip()
+        if not text: continue
+        if child.tag in ('City','Country'): value[child.tag.lower()] = text
+        else: lines.append(text)
+    if lines: value['line'] = lines
+    if node.get('postal_code'): value['postal_code'] = node.get('postal_code')
+    return value
+
+
 def actors(records, provider):
     from .insdc_support import text
     organizations, contributors = [], []
@@ -37,7 +50,7 @@ def actors(records, provider):
             for source, target in [('url', 'web_link'), ('role', 'role'), ('type', 'type')]:
                 if org.get(source): value[target] = org.get(source)
             address = org.find('Address')
-            if address is not None: value['address'] = {'lines': list(address.itertext())}
+            if address is not None: value['address'] = _address(address)
             organizations.append(value)
             for ci, contact in enumerate(org.findall('Contact')):
                 person = {k: text(contact, 'Name/' + v) for k, v in [('first','First'), ('middle','Middle'), ('last','Last')]}
@@ -49,7 +62,7 @@ def actors(records, provider):
                     if contact.get(source): item[target] = contact.get(source)
                 if contact.get('role'): item['roles'] = [{'value': contact.get('role')}]
                 address = contact.find('Address')
-                if address is not None: item['address'] = {'lines': [v.strip() for v in address.itertext() if v.strip()]}
+                if address is not None: item['address'] = _address(address)
                 if len(item) > 2: contributors.append(item)
     centers = set()
     for root in records.xml:

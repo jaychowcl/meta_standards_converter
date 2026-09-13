@@ -469,7 +469,8 @@ def project_results(records, series, samples, protocols, paths):
         for f in files:
             if not f.get('uri'):
                 continue
-            link = {'value': f['uri'], 'type': f.get('format') or 'analysis'}
+            link = {'value': f['uri'], 'type': f.get('format') or 'analysis', **{k:f[k] for k in ('role','bytes','aspera','galaxy','checksum_method') if f.get(k)}}
+            if f.get('checksum') and (f.get('checksum_method') or '').upper() != 'MD5': link['file_checksum'] = f['checksum']
             checksum = f.get('md5') or (f.get('checksum') if (f.get('checksum_method') or '').upper() == 'MD5' else None)
             if checksum:
                 link['checksum'] = checksum
@@ -482,7 +483,9 @@ def project_results(records, series, samples, protocols, paths):
 
 def result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=True):
     """A sample result without run evidence is a source-to-file branch."""
-    link = {'value': file['uri'], 'type': file.get('format') or 'analysis'}
+    link = {'value': file['uri'], 'type': file.get('format') or 'analysis', **{k:file[k] for k in ('role','bytes','aspera','galaxy','checksum_method') if file.get(k)}}
+    if file.get('checksum'):
+        link['checksum' if (file.get('checksum_method') or '').upper() == 'MD5' else 'file_checksum'] = file['checksum']
     if file.get('md5'): link['checksum'] = file['md5']
     if add_link: target.setdefault('supplementary_data', []).append(deepcopy(link))
     if 'channel' not in target:
@@ -499,5 +502,5 @@ def result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=Tru
         steps = deepcopy([s for s in base['steps'] if (s.get('kind') not in ('array_data_file','derived_array_data_file') if run_refs else s.get('kind') == 'source')])
         if protocol: steps.append({'kind':'protocol_application', 'protocol_ref':protocol['name']})
         steps.append({'kind':'derived_array_data_file', 'name':unquote(PurePosixPath(urlsplit(file['uri']).path).name), 'link':deepcopy(link),
-                      'comments':[{'name':k.upper(),'value':str(file[k])} for k in ('format','bytes','checksum_method','checksum') if file.get(k)]})
+                      'comments':[{'name':k.upper(),'value':str(file[k])} for k in ('format','bytes','role','checksum_method','checksum','aspera','galaxy') if file.get(k)]})
         paths.append({'steps':steps})

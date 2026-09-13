@@ -150,7 +150,17 @@ class ENASource:
                     accepted.append(node)
                 else:
                     records.issues.append(f'{identifier(node)}: associated analysis has no verified dataset binding')
-            if len(accepted): records.xml.append(accepted)
+            if len(accepted):
+                records.xml.append(accepted)
+                for node in accepted:
+                    acc = identifier(node)
+                    rows = attempt(records, f'{acc} indexed analysis', lambda: self.search('analysis', f'analysis_accession="{acc}"'))
+                    for row in rows or []:
+                        refs = {v for key in ('sample_accession','run_accession') for v in str(row.get(key) or '').split(';') if v}
+                        if row.get('analysis_accession') == acc and (not refs or refs & members):
+                            records.indexed.setdefault('analysis', []).append(row)
+                        else:
+                            records.issues.append(f'{acc}: mismatched indexed analysis identity or membership')
 
     def fetch(self, seed):
         records = StudyRecords(seed)

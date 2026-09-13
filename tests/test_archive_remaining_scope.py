@@ -76,9 +76,10 @@ def test_analysis_reference_fetch_is_bounded_and_validates_sample_binding():
     calls=[]
     def handler(url,p,fmt):
         calls.append(url)
+        if p.get('result')=='analysis': return []
         return ET.fromstring(f'<ANALYSIS_SET><ANALYSIS accession="ERZ1"><STUDY_REF accession="ERP999"/><SAMPLE_REF accession="{sample.get("accession")}"/></ANALYSIS></ANALYSIS_SET>')
     source=ENASource(http=HTTP(handler));source.fetch_associated_analyses(records)
-    assert len(calls)==1 and calls[0].endswith('/ERZ1')
+    assert len(calls)==2 and calls[0].endswith('/ERZ1') and calls[1].endswith('/search')
     assert any(n.tag=='ANALYSIS' for r in records.xml for n in r)
     assert not records.issues
 
@@ -103,3 +104,22 @@ def test_ena_range_links_are_resolved_before_individual_relations():
     assert all({'type':'ENA-RUN','target':a} in refs for a in ['ERR000001','ERR000002','ERR000004'])
     assert not any('-ERR' in r.get('target','') for r in refs)
     assert len(data['sample'][0]['sra_run'])==1
+
+
+def test_associated_analysis_portal_files_project_without_inventing_urls():
+    from meta_standards_converter.sources.ena import ENASource
+    from tests.test_native_archive_sources import HTTP
+    records=fixture_records('ena');sample=records.xml[1].find('SAMPLE');acc=sample.get('accession')
+    link=ET.SubElement(sample,'XREF_LINK');ET.SubElement(link,'DB').text='ENA-ANALYSIS';ET.SubElement(link,'ID').text='ERZ1'
+    def handler(url,p,fmt):
+        if p.get('result')=='analysis':
+            assert p['query']=='analysis_accession="ERZ1"'
+            return [{'analysis_accession':'ERZ1','sample_accession':acc,'run_accession':'SRR11192680','submitted_ftp':'host/vol1/analysis/ERZ1/result.fa.gz','submitted_format':'FASTA','submitted_md5':'a'*32}]
+        return ET.fromstring(f'<ANALYSIS_SET><ANALYSIS accession="ERZ1"><STUDY_REF accession="ERP999"/><SAMPLE_REF accession="{acc}"/><RUN_REF accession="SRR11192680"/><FILES><FILE filename="ERZ1/result.fa.gz" filetype="fasta" checksum_method="MD5" checksum="'+ 'a'*32 +'"/></FILES></ANALYSIS></ANALYSIS_SET>')
+    ENASource(http=HTTP(handler)).fetch_associated_analyses(records)
+    data=ENAParser().parse(records).to_mapping()
+    assert any(f['value']=='ftp://host/vol1/analysis/ERZ1/result.fa.gz' for f in data['sample'][0].get('supplementary_data',[]))
+    from tests.test_archive_residuals import nodes
+    assert not any(n.get('tag')=='FILE' for n in nodes(data['extensions']))
+    row=next((r['metadata'] for r in data['extensions']['insdc']['records'] if r['kind']=='analysis'),{})
+    assert 'submitted_ftp' not in row

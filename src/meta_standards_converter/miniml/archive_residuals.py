@@ -15,6 +15,7 @@ package-wide collection of equal strings.
 from copy import deepcopy
 import json
 import re
+from urllib.parse import urlsplit, unquote
 
 
 def children(node, tag):
@@ -222,7 +223,12 @@ class Projection:
             if any(r.get('target')==acc for r in self.series.get('relation',[])): links.extend(self.series.get('supplementary_data',[]))
             for source,target in [('filename','filename'),('filetype','format'),('checksum','checksum'),('checksum_method','checksum_method')]:
                 if attrs.get(source) and any(f.get('filename')==attrs.get('filename') and f.get(target)==attrs[source] for f in files):mapped_attrs.add(source)
-            if any(l.get('value')==attrs.get('filename') for l in links):mapped_attrs.add('filename')
+            matching_links = [l for l in links if l.get('value')==attrs.get('filename') or
+                              (attrs.get('filename') and unquote(urlsplit(l.get('value','')).path).endswith('/'+attrs['filename']))]
+            if len({l.get('value') for l in matching_links}) == 1:
+                mapped_attrs.add('filename')
+                if any(str(l.get('type','')).casefold()==str(attrs.get('filetype','')).casefold() for l in matching_links): mapped_attrs.add('filetype')
+                if attrs.get('checksum_method','').upper()=='MD5' and any(l.get('checksum')==attrs.get('checksum') for l in matching_links):mapped_attrs.update(('checksum','checksum_method'))
         if tag in ('STUDY_REF','SAMPLE_REF','EXPERIMENT_REF','RUN_REF','SAMPLE_DESCRIPTOR'):
             value=accession(node)
             if self.reference(value,kind,acc):mapped_attrs.add('accession')
@@ -239,7 +245,9 @@ class Projection:
             if tag=='Name' and actor.get('name')==text:mapped_text=True
             if tag in ('First','Middle','Last') and actor.get('person',{}).get(tag.lower())==text:mapped_text=True
             address = actor.get('address')
-            if isinstance(address, dict) and text and text in address.get('lines', []): mapped_text=True
+            if isinstance(address, dict):
+                if text and (text in address.get('line',address.get('lines',[])) or (tag in ('City','Country') and address.get(tag.lower())==text)): mapped_text=True
+                if tag=='Address' and attrs.get('postal_code') and address.get('postal_code')==attrs['postal_code']: mapped_attrs.add('postal_code')
         # Identity is carried by the record envelope, not counted as residual data.
         if not path: mapped_attrs.update(('accession','uid'))
         out={'tag':tag}; left={k:v for k,v in attrs.items() if k not in mapped_attrs}
@@ -321,6 +329,20 @@ def finalize(data, records=None):
             left['characteristics']=attrs
             for key,field in [('name','title'),('description','description')]:
                 if sample.get(field)==metadata.get(key):left.pop(key,None)
+        elif kind in ('analysis','assembly') and record['provider']=='ena':
+            from .insdc_support import files_from_ena
+            left=deepcopy(metadata)
+            for key in ('analysis_accession','assembly_set_accession','assembly_accession','accession'):
+                if any(r.get('target')==metadata.get(key) for r in projection.series.get('relation',[])):left.pop(key,None)
+            targets=[s for s in data.get('sample',[]) if any(r.get('target')==acc for r in s.get('relation',[]))]
+            links=[l for s in targets for l in s.get('supplementary_data',[])]
+            files=files_from_ena(metadata)
+            if files and all(any(l.get('value')==f.get('uri') for l in links) for f in files):
+                for family in ('fastq','submitted','sra','bam'):
+                    for suffix in ('ftp','md5','bytes','file_role','format','aspera','galaxy'):
+                        left.pop(family+'_'+suffix,None)
+            if metadata.get('sample_accession') in projection.samples and targets: left.pop('sample_accession',None)
+            left={k:v for k,v in left.items() if v not in ('',None,[],{})}
         elif kind=='accession_range':
             entity=projection.samples.get(acc,{})
             left=None if all({'type':metadata['database'],'target':a} in entity.get('relation',[]) for a in metadata['accessions']) else deepcopy(metadata)
