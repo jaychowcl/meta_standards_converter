@@ -4029,7 +4029,11 @@ are covered by the maintained v3 fixtures and `test_miniml_v3_only.py` tests.
 study-scoped records. `SRAParser` and `ENAParser` interpret supplied records without
 network access, producing MSC MINiML 3.0 packages. Entrez owns SRA discovery,
 BioSample/BioProject/PubMed metadata and assembly links; ENA uses Portal inventories
-and Browser XML with linked BioSamples/taxonomy metadata. Sources report incomplete
+and Browser XML with linked BioSamples/taxonomy metadata. ENA also retrieves the
+explicitly associated NCBI BioSample XML for owner/contact evidence omitted by
+the EBI representation. Both sources use `EntrezRecords` for batched UID
+resolution and linked-record reconciliation; this does not enable peer read-archive
+enrichment or alter native membership. Sources report incomplete
 retrieval separately from scientific metadata.
 
 The version 2.0 `extensions.insdc` container retains residual provider fields,

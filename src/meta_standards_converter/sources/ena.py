@@ -97,6 +97,15 @@ class ENASource:
             return None
         return obj
 
+    def fetch_biosamples(self, accessions, records):
+        """Retrieve owner/contact evidence for the explicitly bound BioSamples."""
+        from .entrez_records import EntrezRecords
+        client = EntrezRecords(self.http)
+        for batch in chunks(sorted(set(accessions))):
+            root = client.linked_xml('biosample', batch, records)
+            if root is not None:
+                records.xml.append(root)
+
     def publications(self, ids, result):
         root = attempt(result, 'PubMed', lambda: self.http.get('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
                 {'db': 'pubmed', 'id': ','.join(ids), 'retmode': 'xml'}))
@@ -270,6 +279,7 @@ class ENASource:
                 obj = self.linked_json('https://www.ebi.ac.uk/biosamples/samples/' + acc, acc, 'accession', records)
                 if obj is not None:
                     records.linked.append({'provider': 'biosamples', 'kind': 'sample', 'accession': acc, 'metadata': obj})
+        self.fetch_biosamples([acc for acc in inventory['sample'] if acc.startswith('SAM')], records)
         for taxid in sorted(taxa):
             obj = self.linked_json('https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/' + taxid, taxid, 'taxId', records)
             if obj is not None:
