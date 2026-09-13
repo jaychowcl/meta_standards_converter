@@ -13,6 +13,7 @@ MINiML keeps every file occurrence. Derived files remain explicit workflow nodes
 """
 from copy import deepcopy
 import json
+import re
 
 
 _FIELDS = ('NAME', 'URI', 'FORMAT', 'ROLE', 'BYTES', 'MD5', 'CHECKSUM', 'CHECKSUM_METHOD')
@@ -50,15 +51,46 @@ def _record(step):
     return result
 
 
+def _checksums(record):
+    values = {}
+    pairs = [('MD5', record.get('MD5'))]
+    if record.get('CHECKSUM'):
+        pairs.append((record.get('CHECKSUM_METHOD', ''), record['CHECKSUM']))
+    for algorithm, value in pairs:
+        if not value:
+            continue
+        algorithm = str(algorithm).upper().replace('-', '')
+        length = {'MD5': 32, 'SHA1': 40, 'SHA256': 64, 'SHA512': 128}.get(algorithm)
+        if not length or not re.fullmatch(r'[0-9a-fA-F]{%d}' % length, str(value)):
+            return {}
+        value = str(value).lower()
+        if algorithm in values and values[algorithm] != value:
+            return {}
+        values[algorithm] = value
+    return values
+
+
 def _combine(records, candidate):
-    """Complete one verified file identity only when populated fields agree."""
+    """Complete explicit identities or checksum-verified, compatible mirrors."""
     for record in records:
-        identity = (candidate.get('URI') and candidate.get('URI') == record.get('URI'))
-        # A supplied filename can complete a name-only archive reference.
+        locations = {r.get('URI') for r in [record, *record.get('_alternatives', [])]} - {None, ''}
+        identity = bool(candidate.get('URI') and candidate['URI'] in locations)
         identity = identity or (candidate.get('NAME') and candidate.get('NAME') == record.get('NAME')
                                 and (not candidate.get('URI') or not record.get('URI')))
-        if identity and all(not record.get(k) or not v or record[k] == v for k, v in candidate.items()):
-            record.update({k: v for k, v in candidate.items() if v and not record.get(k)})
+        left, right = _checksums(record), _checksums(candidate)
+        common = left.keys() & right.keys()
+        mirror = (_fastq(record) and _fastq(candidate) and bool(common) and all(left[k] == right[k] for k in common)
+                  and candidate.get('NAME') and candidate['NAME'] == record.get('NAME'))
+        ignored = {'URI', '_alternatives'}
+        if mirror:
+            ignored |= {'MD5', 'CHECKSUM', 'CHECKSUM_METHOD'}
+        compatible = all(k in ignored or not record.get(k) or not v or record[k] == v
+                         for k, v in candidate.items())
+        if (identity or mirror) and compatible:
+            if candidate.get('URI') and locations and candidate['URI'] not in locations:
+                record.setdefault('_alternatives', []).append(deepcopy(candidate))
+            record.update({k: v for k, v in candidate.items()
+                           if k != '_alternatives' and v and not record.get(k)})
             return
     records.append(deepcopy(candidate))
 
@@ -145,6 +177,8 @@ def project_native_files(data):
             scan = next(s for s in row['steps'] if s.get('kind') == 'scan')
             comments = scan.setdefault('comments', [])
             comments.extend(_comments(read, 'FASTQ_'))
+            for alternative in read.get('_alternatives', []):
+                comments.extend(_comments(alternative, 'FASTQ_ALTERNATIVE_', fixed=True))
             # Use the established URI header and an explicit filename label.
             for comment in comments:
                 if comment['name'] == 'FASTQ_NAME':

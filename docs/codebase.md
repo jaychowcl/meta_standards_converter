@@ -4079,6 +4079,19 @@ in `series.variable[].name`, alongside the existing normalized `factor` category
 consumers prefer `name`. The `json2ae` orchestration remains unchanged.
 
 
+Supporting interfaces: `meta_standards_converter.sources.entrez_records.EntrezRecords`
+provides validated Entrez inventory/record retrieval.
+`meta_standards_converter.miniml.file_references.is_file_placeholder` recognizes
+the provider sentinel, and
+`meta_standards_converter.miniml.file_references.clean_native_file_placeholders`
+cleans the native export copy.
+
+Native FASTQ export recognizes mirrors only within the same workflow/run and
+with matching validated checksums (MD5, SHA1, SHA256 or SHA512), the same supplied
+filename and compatible metadata. The first supplied URI remains `FASTQ_URI`;
+additional locations and their associated metadata use repeated
+`FASTQ_ALTERNATIVE_*` comments. Stored file occurrences are unchanged.
+
 GEO file-reference fields containing the standalone `NONE` sentinel produce no file
 objects; biological missing-value characteristics and actual filenames are unchanged.
 Native saved-JSON export removes legacy phantom file paths on its private copy.

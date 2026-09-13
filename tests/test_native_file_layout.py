@@ -135,3 +135,36 @@ def test_repeated_sample_processed_relationship_is_not_an_extra_workflow():
     data['series']['assay_paths'].extend([result,deepcopy(result),different])
     paths=projected(data)
     assert len(paths)==5 and paths.count(result)==1 and different in paths
+
+
+def test_checksum_verified_mirrors_keep_alternate_metadata_without_extra_rows():
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    one=file('https://ebi/reads.fastq.gz',MD5='a'*32,BYTES=100,ROLE='GENERATED_FILE')
+    mirror=file('s3://bucket/reads.fastq.gz.1',CHECKSUM='a'*32,CHECKSUM_METHOD='MD5',BYTES=100,ROLE='GENERATED_FILE')
+    mirror['name']=one['name']
+    alias=deepcopy(one);alias['comments']=[];alias['link'].pop('type')
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in [one,mirror,alias]]
+    before=deepcopy(data);table=next(r[1] for r in render(data) if r[0]=='SDRF File')
+    assert len(table)==2
+    row=list(zip(table[0],table[1]))
+    assert ('Comment[FASTQ_URI]','https://ebi/reads.fastq.gz') in row
+    assert ('Comment[FASTQ_ALTERNATIVE_URI]','s3://bucket/reads.fastq.gz.1') in row
+    assert ('Comment[FASTQ_ALTERNATIVE_CHECKSUM_METHOD]','MD5') in row
+    assert data==before
+
+
+@pytest.mark.parametrize('change', ['checksum','algorithm','size','name','workflow','run','invalid'])
+def test_mirror_matching_rejects_conflicts_and_different_scopes(change):
+    data=package();first=deepcopy(data['series']['assay_paths'][0]);first['steps'][-1]=file('https://ebi/one.fastq.gz',MD5='a'*32,BYTES=100)
+    second=deepcopy(first);second['steps'][-1]['link']['value']='s3://bucket/one.fastq.gz'
+    node=second['steps'][-1]
+    if change=='checksum':node['comments'][1]['value']='b'*32
+    if change=='algorithm':node['comments'][1]={'name':'CHECKSUM','value':'a'*32};node['comments'].append({'name':'CHECKSUM_METHOD','value':'unknown'})
+    if change=='size':node['comments'][2]['value']='101'
+    if change=='name':node['name']='one.v2.fastq.gz'
+    if change=='workflow':second['steps'][0]['description']='different'
+    if change=='run':next(s for s in second['steps'] if s['kind']=='scan')['name']='SRR999999'
+    if change=='invalid':
+        first['steps'][-1]['comments'][1]['value']='abc';node['comments'][1]['value']='abc'
+    data['series']['assay_paths']=[first,second]
+    assert len(projected(data))==2
