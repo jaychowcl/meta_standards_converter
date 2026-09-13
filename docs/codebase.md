@@ -4042,3 +4042,22 @@ primitives, not a shared discovery orchestrator.
 Offline contracts: `tests/test_native_archive_sources.py` and
 `tests/test_native_archive_parsers.py`; provider fixtures come from the vendored
 SRA/ENA reference material.
+
+The independent `SRA2JSONConverter.convert` and `ENA2JSONConverter.convert`
+methods return `ArchiveImportResult`: typed `packages` plus per-study outcomes.
+Without `out`, they do not publish JSON. With `out`, each study is published as
+one package object, using its resolved primary accession. Existing files are
+protected unless `overwrite=True`. Failures are isolated to individual studies.
+
+The `sra2json` and `ena2json` commands accept several accessions and `--out`,
+`--enrich-from-geo-ae`, `--include-peer`, `--report`, `--evidence-dir`, `--overwrite`,
+and the standard logging/resource options. CLI reports contain batch outcomes;
+evidence export contains optional original responses. Neither is required in
+MINiML. Linked enrichment applies informative GEO then ArrayExpress values only
+on identifier-bound entities. Native IDs and membership remain authoritative;
+peer additions require an explicitly shared read study. Retained structured
+records preserve native values displaced in the core projection.
+
+Converter/publication contracts are covered by
+`tests/test_native_archive_converters.py`; precedence, ambiguous joins and missing
+values by `tests/test_native_archive_enrichment.py`.

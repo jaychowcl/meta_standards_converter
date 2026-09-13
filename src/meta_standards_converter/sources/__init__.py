@@ -9,7 +9,7 @@
 
 from importlib import import_module
 
-_EXPORTS = {'GEOXMLParser': 'contracts', 'MAGETabSourceResolver': 'contracts', 'PackageLoader': 'contracts', 'INSDCClient': 'contracts', 'PubMedClient': 'contracts', 'MetricsProvider': 'contracts', 'RequestMetrics': 'contracts', 'JSONPackageSource': 'json', 'DatasetPackageGroup': 'json', 'SourceLoadResult': 'json', 'GEOSource': 'geo', 'GEOWebFetcher': 'geo', 'AEWebFetcher': 'magetab', 'MAGETabInput': 'magetab', 'TextResource': 'magetab'}
+_EXPORTS = {'ENASource': 'ena', 'SRASource': 'sra', 'GEOXMLParser': 'contracts', 'MAGETabSourceResolver': 'contracts', 'PackageLoader': 'contracts', 'INSDCClient': 'contracts', 'PubMedClient': 'contracts', 'MetricsProvider': 'contracts', 'RequestMetrics': 'contracts', 'JSONPackageSource': 'json', 'DatasetPackageGroup': 'json', 'SourceLoadResult': 'json', 'GEOSource': 'geo', 'GEOWebFetcher': 'geo', 'AEWebFetcher': 'magetab', 'MAGETabInput': 'magetab', 'TextResource': 'magetab'}
 __all__ = list(_EXPORTS)
 
 def __getattr__(name):

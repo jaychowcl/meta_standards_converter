@@ -436,7 +436,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   link: [Open section](codebase.md#miniml-v3-only-cutover)
 
 - id: native-archive-imports
-  title: Native archive metadata imports
+  title: Native archive converters, metadata and enrichment
   anchor: native-archive-imports
   purpose: Native SRA/ENA discovery, parsing, preservation and conversion contracts.
   keywords: sra2json, ena2json, SRASource, ENASource, SRAParser, ENAParser, extensions.insdc
