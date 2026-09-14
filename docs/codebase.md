@@ -3974,6 +3974,33 @@ Automatic construction retrieves run evidence once using the operation cache (in
 
 Spatial construction names Visium only from applicable sample/library evidence; general shared study descriptions cannot name a particular library. Existing explicitly spatial barcode presets remain unchanged. Imported explicit metadata still overlays generated annotations through the existing semantic retention path. No MINiML schema, consumer API, matrix-processing or live-run change is involved.
 
+GEO and native routes use the same affirmative preparation rules. A single-cell
+suspension or purified population does not establish a single-cell assay; generic
+10x/Chromium mentions also require single-cell context. Explicit Dropseq/Drop-seq
+library identities establish droplet preparation, including underscore-delimited
+titles. Named method identity scopes shared alternative-method protocols: the CITE
+panel's eight Drop-seq libraries cannot acquire the four 10x libraries' manufacturer
+or kits. Generic droplet format is compatible with a named droplet method, and
+explicit vendor exclusions remain constraints independently of the selected format.
+Contradictory same-scope methods remain unresolved. Explicit bulk or Chromium-genomic
+identity blocks lower-level shared single-cell method inference; higher-priority
+single-cell run identity is respected. Plate routing requires affirmative plate/well
+preparation evidence, not culture plates or the absence of droplet evidence.
+Unspecified single-cell format uses `single_cell_sequencing`. Sequencer models and
+platform families never establish chemistry or kit versions.
+Chemistry compares applicable alternative methods across sentences after applying
+library-role scope; punctuation cannot make a shared plate/10x or Drop-seq/10x
+alternative specific to the current library. Explicit matched method identity or
+documented chemistry identifiers may narrow those alternatives.
+
+`tests/magetab/test_preparation_classification.py` covers these direct decisions,
+rendered chemistry, negative and conflicting evidence, and immutable offline export.
+Shared pure support functions are
+`meta_standards_converter.magetab.preparation.clauses` (bounded source clauses),
+`meta_standards_converter.magetab.preparation.single_cell_signal` (affirmative assay evidence),
+`meta_standards_converter.magetab.preparation.methods` (named methods, formats and exclusions), and
+`meta_standards_converter.magetab.preparation.scoped_method` (identity precedence).
+
 Public types and service:
 
 - `meta_standards_converter.magetab.technology.resolve_technology`: pure scoped routing with the signature above.
@@ -4236,12 +4263,18 @@ expands each secondary accession into its own row followed immediately by its
 source row, retaining core accession order. Import accepts this repeated-row
 layout and legacy multi-column rows; it pairs physical occurrences and column
 positions before filtering blanks, so a missing source never shifts later labels.
-Conflicting supplied source labels for an otherwise unclassified accession remain
-distinct coupled accession/source values through import and export.
+Conflicting supplied source labels remain distinct coupled accession/source values
+through import and export. Supplied labels take priority; prefix classification is
+a fallback only when the source label is missing.
 These corrections cover all routes through the constructor,
 without changing `json2ae` orchestration or saved input files. Publication and
 export acceptance tests live in `tests/test_archive_publications.py` and
 `tests/test_archive_export_cleanup.py` and `tests/magetab/test_accession_rows.py`.
+
+The pure `meta_standards_converter.magetab.accession_rows.secondary_accession_pairs`
+reads physical row groups;
+`meta_standards_converter.magetab.accession_rows.expand_secondary_accession_rows`
+performs idempotent final presentation after overlays.
 
 
 <a id="native-archive-contract"></a>
@@ -4270,7 +4303,7 @@ scoped instrument comments. XML PLATFORM child names and ENA indexed
 Indexed values fill only uniquely determined missing facts; conflicting values
 remain residual. A family alone may declare a local platform without inventing a
 model. Compatible existing local declarations complete in place, preserving their
-IDs; conflicting families never choose an arbitrary shared declaration. Registered
+IDs; conflicting families never choose an arbitrary shared declaration. Local
 declarations shared with a run whose family is unknown are not completed from a
 different run's family; the richer run gets a separate local reference. Registered
 GPL references remain intact. Saved residual family evidence is recoverable only

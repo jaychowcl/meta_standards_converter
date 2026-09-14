@@ -115,7 +115,7 @@ def test_vendor_in_compatibility_clause_does_not_claim_other_kit():
 
 
 def test_unknown_kit_reports_uncertainty():
-    r=resolve('Chromium unsupported library kit v2')
+    r=resolve('Chromium Single Cell unsupported library kit v2')
     assert r.manufacturer=='10x Genomics'
     assert r.family is None
     assert r.versions==()

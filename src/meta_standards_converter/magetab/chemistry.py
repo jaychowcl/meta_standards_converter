@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
+from .preparation import scoped_method, single_cell_signal, methods, TENX
 
 
 @dataclass(frozen=True)
@@ -54,7 +55,7 @@ def _list(value):
     return value if isinstance(value, list) else [value] if value else []
 
 
-_VENDOR = re.compile(r'\b(?:10[x×](?:\s+genomics)?|chromium)\b')
+_VENDOR = TENX
 # A family marker must be part of a library/kit phrase, not a molecular end.
 _KIT = re.compile(r"(?:single[- ]cell\s+|10[x×](?:\s+genomics)?\s+)([35])'|\b(?:gem[- ]x\s+)?flex\b|\bmultiome\b")
 _VERSION = re.compile(r'\bv\.?\s*(\d+(?:\.\d+)*)\b')
@@ -111,11 +112,11 @@ def _sources(sample, channel, run, series):
         for key in ('extract_protocol',):
             if item.get(key):
                 sources.append((f'sample[{iid}].channel[{original_index}].{key}', str(item[key])))
-    for key in ('title', 'description'):
+    for key in ('title', 'description', 'library_name'):
         if sample.get(key):
             sources.append((f'sample[{iid}].{key}', str(sample[key])))
     if run:
-        for key in ('library_construction_protocol', 'library_protocol', 'description'):
+        for key in ('library_construction_protocol', 'library_protocol', 'description', 'library_name'):
             if run.get(key):
                 sources.append((f'sample[{iid}].run.{key}', str(run[key])))
     for i, item in enumerate(_list(series)):
@@ -129,6 +130,25 @@ def _sources(sample, channel, run, series):
     return sources
 
 
+def _preparation_clauses(sources, selected_role):
+    """Apply library-role scope before comparing method alternatives across sentences."""
+    for path, original in sources:
+        normalized = _normalize(original)
+        if '://' in normalized and not re.search(r'\s', normalized):
+            continue
+        active_roles = set()
+        for clause in re.split(r'(?<!\d)\.(?!\d)|\n|;|\bor fixed\b|\bbut\b', normalized):
+            clause = clause.strip()
+            if not clause or _NON_PREP.search(clause):
+                continue
+            roles = _roles(clause)
+            if re.search(r'(?:libraries|library)\s*:', clause):
+                active_roles = roles
+            if selected_role and active_roles and selected_role not in active_roles:
+                continue
+            yield path, original, clause, roles, active_roles.copy()
+
+
 def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | None = None,
                       series: dict | list | None = None) -> ChemistryResult:
     """Resolve applicable facts for one sample/channel and optional library/run.
@@ -140,11 +160,30 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
     sources = _sources(sample, channel, run, series)
     facts: list[ChemistryEvidence] = []
     diagnostics: list[ChemistryDiagnostic] = []
+    method, method_evidence = scoped_method(sample, channel, run)
+    single_cell = (any(single_cell_signal(text) for _, text in sources)
+                   or str(sample.get('library_source', '')).casefold() == 'single cell'
+                   or any(single_cell_signal(str(s.get(key) or '')) for s in _list(series)
+                          if isinstance(s, dict) for key in ('title', 'summary')))
+    vendor_allowed = method not in {'bulk', 'dropseq', 'plate', 'ambiguous', 'not_10x'}
+    excluded_tenx = any('not_10x' in values for _, _, values in method_evidence)
+    vendor_allowed = vendor_allowed and not excluded_tenx
 
     def add(field, value, path, text):
         fact = ChemistryEvidence(field, value, path, text)
         if fact not in facts:
             facts.append(fact)
+
+    for path, text, values in method_evidence:
+        for value in values:
+            add('preparation_method', value, path, text)
+    if method == 'ambiguous':
+        diagnostics.append(ChemistryDiagnostic('ambiguous_preparation', 'manufacturer', tuple(p for p, _, _ in method_evidence)))
+    if excluded_tenx:
+        diagnostics.append(ChemistryDiagnostic('excluded_preparation', 'manufacturer', tuple(p for p, _, _ in method_evidence)))
+    if method == '10x' and single_cell:
+        for path, text, _ in method_evidence:
+            add('manufacturer', '10x Genomics', path, text)
 
     candidates: list[_ChemistryCandidate] = []
     for path, original in _structured_sources(sample, channel):
@@ -154,6 +193,9 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
         if identity is None:
             if identifier and identifier != 'auto':
                 diagnostics.append(ChemistryDiagnostic('unknown_identifier', 'identifier', (path,)))
+            continue
+        if not vendor_allowed:
+            diagnostics.append(ChemistryDiagnostic('conflicting_preparation', 'identifier', (path,)))
             continue
         family, versions = identity
         candidates.append(_ChemistryCandidate(family, versions, path, structured=True))
@@ -165,47 +207,41 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
     # A library label supplies scope, never a kit version or read recipe.
     selected_roles = _roles(_normalize(str((run or {}).get('library_name') or sample.get('library_name') or sample.get('title') or '')))
     selected_role = next(iter(selected_roles)) if len(selected_roles) == 1 else None
+    scoped_clauses = list(_preparation_clauses(sources, selected_role))
+    alternatives = {m for _, _, clause, _, _ in scoped_clauses
+                    for m in methods(clause) if m in {'10x', 'dropseq', 'plate'}}
+    if len(alternatives) > 1 and method not in alternatives and not any(c.structured for c in candidates):
+        vendor_allowed = False
+        diagnostics.append(ChemistryDiagnostic('alternative_preparations', 'manufacturer',
+                           tuple(dict.fromkeys(path for path, _, _, _, _ in scoped_clauses))))
     recipe_segments = []
-    for path, original in sources:
-        normalized = _normalize(original)
-        if '://' in normalized and not re.search(r'\s', normalized):
+    for path, original, clause, roles, active_roles in scoped_clauses:
+        if not vendor_allowed:
             continue
-        # Explicit preparation scopes end before unrelated fixation clauses.
-        clauses = re.split(r'(?<!\d)\.(?!\d)|\n|;|\bor fixed\b|\bbut\b', normalized)
-        active_roles = set()
-        for clause in clauses:
-            clause = clause.strip()
-            if not clause or _NON_PREP.search(clause):
+        vendor = bool(_VENDOR.search(clause))
+        if vendor and single_cell:
+            add('manufacturer', '10x Genomics', path, original)
+        matches = list(_KIT.finditer(clause)) if vendor and single_cell else []
+        for i, match in enumerate(matches):
+            # Stop before the next named chemistry; don't borrow its version.
+            end = matches[i+1].start() if i+1 < len(matches) else len(clause)
+            phrase = clause[match.start():end]
+            if not re.search(r'\b(?:kit|reagent|protocol|gene expression|library|libraries)\b', phrase):
                 continue
-            roles = _roles(clause)
-            if re.search(r'(?:libraries|library)\s*:', clause):
-                active_roles = roles
-            if selected_role and active_roles and selected_role not in active_roles:
-                continue
-            vendor = bool(_VENDOR.search(clause))
-            if re.search(r'\b(?:chromium|10[x×]\s+genomics)\b', clause):
-                add('manufacturer', '10x Genomics', path, original)
-            matches = list(_KIT.finditer(clause)) if vendor else []
-            for i, match in enumerate(matches):
-                # Stop before the next named chemistry; don't borrow its version.
-                end = matches[i+1].start() if i+1 < len(matches) else len(clause)
-                phrase = clause[match.start():end]
-                if not re.search(r'\b(?:kit|reagent|protocol|gene expression|library|libraries)\b', phrase):
-                    continue
-                family = f'{match[1]} prime' if match[1] else ('flex' if 'flex' in match[0] else 'multiome')
-                add('manufacturer', '10x Genomics', path, original)
-                add('family', family, path, original)
-                phrase_versions = tuple(sorted(set(_VERSION.findall(phrase))))
-                candidates.append(_ChemistryCandidate(family, phrase_versions, path))
-                for version in phrase_versions:
-                    add('version', version, path, original)
-                for role in sorted(roles):
-                    add('library_role', role, path, original)
-                if 'dual index' in phrase or 'dual-index' in phrase:
-                    add('index_configuration', 'dual', path, original)
-                elif 'single index' in phrase or 'single-index' in phrase:
-                    add('index_configuration', 'single', path, original)
-            recipe_segments.append((path, original, clause, active_roles.copy()))
+            family = f'{match[1]} prime' if match[1] else ('flex' if 'flex' in match[0] else 'multiome')
+            add('manufacturer', '10x Genomics', path, original)
+            add('family', family, path, original)
+            phrase_versions = tuple(sorted(set(_VERSION.findall(phrase))))
+            candidates.append(_ChemistryCandidate(family, phrase_versions, path))
+            for version in phrase_versions:
+                add('version', version, path, original)
+            for role in sorted(roles):
+                add('library_role', role, path, original)
+            if 'dual index' in phrase or 'dual-index' in phrase:
+                add('index_configuration', 'dual', path, original)
+            elif 'single index' in phrase or 'single-index' in phrase:
+                add('index_configuration', 'single', path, original)
+        recipe_segments.append((path, original, clause, active_roles.copy()))
 
     # Narrow a compatible alternative within one preparation phrase, not the
     # union of independent, potentially contradictory preparation statements.

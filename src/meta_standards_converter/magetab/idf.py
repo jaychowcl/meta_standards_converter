@@ -204,6 +204,9 @@ class IDFConstructor():
         pairs.append((accession, source))
 
     def _secondary_accession_source(self, accession: str, declared_source=None):
+        supplied = self._clean_secondary_accession_value(declared_source)
+        if supplied:
+            return supplied
         prefix_sources = {
             "GSE": "GEO",
             "ERP": "ENA",

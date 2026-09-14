@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 import copy
 
 import pytest
@@ -63,10 +71,11 @@ def test_final_accession_partition_is_idempotent_and_preserves_conflicting_label
 
 
 @pytest.mark.parametrize('sources', [('SourceA', 'SourceB'), ('SourceB', 'SourceA')])
-def test_conflicting_sources_survive_complete_parse_export(sources):
-    comments = ''.join(f'{VALUE}\tCUSTOM\n{SOURCE}\t{source}\n' for source in sources)
+@pytest.mark.parametrize('accession', ['CUSTOM', 'SRP123'])
+def test_conflicting_sources_survive_complete_parse_export(sources, accession):
+    comments = ''.join(f'{VALUE}\t{accession}\n{SOURCE}\t{source}\n' for source in sources)
     data = AEParser().parse(resolved_input(idf='Investigation Accession\tE-MTAB-1\n' + comments))
-    pairs = [(a['value'], a.get('database')) for a in data.to_mapping()['series']['accession'] if a['value'] == 'CUSTOM']
-    assert pairs == [('CUSTOM', source) for source in sources]
+    pairs = [(a['value'], a.get('database')) for a in data.to_mapping()['series']['accession'] if a['value'] == accession]
+    assert pairs == [(accession, source) for source in sources]
     from meta_standards_converter.magetab.accession_rows import secondary_accession_pairs
     assert secondary_accession_pairs(AEConstructor().miniml2magetab(data)) == pairs

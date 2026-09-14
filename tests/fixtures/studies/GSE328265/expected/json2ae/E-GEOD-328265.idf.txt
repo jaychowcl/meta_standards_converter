@@ -40,8 +40,10 @@ Term Source Name	EFO	GEO
 Term Source File	http://www.ebi.ac.uk/efo/efo.owl	http://www.ncbi.nlm.nih.gov/geo
 Term Source Version	3.90.0	
 Investigation Accession	GSE328265
-Comment[SecondaryAccession]	GSE328265	SRP689887
-Comment[SecondaryAccessionTermSourceRef]	GEO	SRA
+Comment[SecondaryAccession]	GSE328265
+Comment[SecondaryAccessionTermSourceRef]	GEO
+Comment[SecondaryAccession]	SRP689887
+Comment[SecondaryAccessionTermSourceRef]	SRA
 Comment[ArrayExpressAccession]	E-GEOD-328265
 Comment[RelatedExperiment]	GSE327243	GSE328264
 Comment[GEOReleaseDate]	2026-05-17

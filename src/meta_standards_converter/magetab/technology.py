@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 from .chemistry import resolve_chemistry
+from .preparation import single_cell_signal, scoped_method, methods, clauses, NON_PREP
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
 import os
 from urllib.parse import urlparse
@@ -113,24 +114,18 @@ def _items(value):
     return value if isinstance(value, list) else [value] if value else []
 
 
-_SINGLE = re.compile(r'(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|single[- ](?:cell|nucleus)|single[- ]nuclei', re.I)
-_SPATIAL = re.compile(r'\bvisium\b|\bspatial\b', re.I)
-_DROPLET = re.compile(r'\b(?:10x|chromium|droplet)\b', re.I)
-_NATIVE_SINGLE = re.compile(r"(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|\bcite[- ]seq\b|single[- ](?:cell|nucleus|nuclei)\s+(?:rna|transcriptom|sequenc|atac|[35]['′’])", re.I)
-_NATIVE_SPATIAL = re.compile(r'\bvisium\b|\bspatial\s+(?:transcriptom|rna|gene expression|sequenc)', re.I)
+_SPATIAL = re.compile(r'\bvisium\b|\bspatial\s+(?:transcriptom|rna|gene expression|sequenc)', re.I)
 
 
-def _signals(text, *, native=False):
+def _signals(text):
     signals = set()
-    for clause in re.split(r'[.;\n]', text):
-        if re.search(r'\b(?:not|without|compatible|compatibility)\b', clause, re.I):
+    for clause in clauses(text):
+        if NON_PREP.search(clause):
             continue
-        spatial = bool((_NATIVE_SPATIAL if native else _SPATIAL).search(clause))
+        spatial = bool(_SPATIAL.search(clause))
         if spatial:
             signals.add('spatial')
-        explicit_rna = re.search(r"(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|single[- ]cell\s+(?:rna|[35]['′’])", clause, re.I)
-        if (_NATIVE_SINGLE.search(clause) if native else
-                explicit_rna or (not spatial and (_SINGLE.search(clause) or _DROPLET.search(clause)))):
+        if single_cell_signal(clause):
             signals.add('single_cell')
     return tuple(sorted(signals))
 
@@ -143,7 +138,6 @@ def resolve_technology(sample: dict, channel: dict | None = None,
     conflicting identities produce generic sequencing and an auditable warning.
     """
     data = data or {}
-    native = data.get('source', {}).get('format') in {'ENA', 'SRA'}
     # Preserve array/platform routing before interpreting sequencing methods.
     scoped = dict(data, sample=[sample], series={})
     if sample.get('platform_ref'):
@@ -158,7 +152,8 @@ def resolve_technology(sample: dict, channel: dict | None = None,
 
     def add(level, path, text):
         if text:
-            levels[level].append(TechnologyEvidence(path, str(text), _signals(str(text), native=native)))
+            signals = ('single_cell',) if level == 3 and str(text).casefold() == 'single cell' else _signals(str(text))
+            levels[level].append(TechnologyEvidence(path, str(text), signals))
 
     for key in ('library_name', 'description'):
         add(0, prefix+'.run.'+key, (run or {}).get(key))
@@ -177,7 +172,10 @@ def resolve_technology(sample: dict, channel: dict | None = None,
             if tag in {'assay', 'assay_type', 'library_type', 'library_name', 'technology'}:
                 add(0, f'{path}.characteristics[{j}].value', characteristic.get('value'))
         add(2, path+'.extract_protocol', item.get('extract_protocol'))
-    chemistry = resolve_chemistry(sample, channel=channel, run=run)
+    method, method_evidence = scoped_method(sample, channel, run)
+    if method == 'bulk':
+        return TechnologyDecision('bulk_sequencing', tuple(TechnologyEvidence(p, t, ('bulk',)) for p, t, _ in method_evidence))
+    chemistry = resolve_chemistry(sample, channel=channel, run=run, series=data.get('series'))
     for fact in chemistry.evidence:
         if fact.field == 'identifier' and any(f.path == fact.path and f.field == 'manufacturer' for f in chemistry.evidence):
             levels[0].append(TechnologyEvidence(fact.path, fact.text, ('single_cell',)))
@@ -211,11 +209,20 @@ def resolve_technology(sample: dict, channel: dict | None = None,
         supporting = tuple(e for group in levels[level:] for e in group if e.candidates == (selected,))
         if selected == 'spatial':
             return TechnologyDecision('spatial_sequencing', supporting)
-        preparation = ' '.join(e.text for e in levels[2])
-        droplet = chemistry.manufacturer == '10x Genomics' or any(_DROPLET.search(e.text) for e in supporting)
-        # Mixed shared methods may still explicitly identify a Chromium library.
-        droplet = droplet or bool(re.search(r'\bchromium\b', preparation, re.I))
-        return TechnologyDecision('droplet_single_cell_sequencing' if droplet else 'plate_single_cell_sequencing', supporting)
+        method_support = tuple(TechnologyEvidence(p, t, (selected,)) for p, t, _ in method_evidence)
+        if method == 'ambiguous':
+            return TechnologyDecision('single_cell_sequencing', supporting + method_support,
+                (TechnologyDiagnostic('ambiguous_preparation', tuple(p for p, _, _ in method_evidence)),))
+        if method in {'dropseq', '10x', 'droplet'} or chemistry.manufacturer == '10x Genomics':
+            return TechnologyDecision('droplet_single_cell_sequencing', supporting + method_support)
+        formats = {m for group in levels[level:] for e in group for m in methods(e.text) if m != 'bulk'}
+        if method == 'not_10x':
+            formats.discard('10x')
+        if method == 'plate' or formats == {'plate'}:
+            return TechnologyDecision('plate_single_cell_sequencing', supporting + method_support)
+        if formats and formats <= {'10x', 'dropseq', 'droplet'}:
+            return TechnologyDecision('droplet_single_cell_sequencing', supporting)
+        return TechnologyDecision('single_cell_sequencing', supporting)
 
     return TechnologyDecision(base_technology)
 

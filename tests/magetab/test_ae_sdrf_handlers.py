@@ -902,7 +902,8 @@ class TestSDRFGraphHandlers(unittest.TestCase):
                 "library_strategy": title,
             }
 
-            self.assertEqual("bulk_sequencing", Parent()._detect_sdrf_technology(base_data(sample)))
+            expected = "single_cell_sequencing" if title in ("scATAC sample", "sc-ATAC sample") else "bulk_sequencing"
+            self.assertEqual(expected, Parent()._detect_sdrf_technology(base_data(sample)))
 
     def test_assay_terms_do_not_create_array_tech_types(self):
         for title in (
@@ -925,7 +926,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
         for text in ("10x Chromium", "droplet single-cell", "Chromium single cell"):
             sample = {
                 "iid": "GSM1",
-                "title": "single-cell sample",
+                "title": "single-cell RNA-seq sample",
                 "description": text,
                 "accession": [{"value": "GSM1"}],
                 "platform_ref": {"ref": "GPL1"},

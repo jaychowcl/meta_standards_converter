@@ -280,7 +280,7 @@ def test_native_preparation_context_does_not_assert_single_cell_or_spatial_assay
     assert detect_ae_technology(data)=='bulk_sequencing'
 
 
-@pytest.mark.parametrize('text,expected',[('scRNA-seq','plate_single_cell_sequencing'),('snRNA-seq','plate_single_cell_sequencing'),("Chromium Single Cell 3\u2032 RNA library",'droplet_single_cell_sequencing'),('single-cell RNA sequencing','plate_single_cell_sequencing'),('Visium spatial transcriptomics','spatial_sequencing')])
+@pytest.mark.parametrize('text,expected',[('scRNA-seq','single_cell_sequencing'),('snRNA-seq','single_cell_sequencing'),("Chromium Single Cell 3\u2032 RNA library",'droplet_single_cell_sequencing'),('single-cell RNA sequencing','single_cell_sequencing'),('Visium spatial transcriptomics','spatial_sequencing')])
 def test_native_explicit_assay_evidence_remains_supported(text,expected):
     s=sample(text)
     assert detect_ae_technology({'source':{'format':'SRA'},'sample':[s]})==expected
