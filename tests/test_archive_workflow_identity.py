@@ -160,7 +160,7 @@ def test_filename_only_result_projection_reuses_complete_explicit_path():
     files=[(p,s) for p in result.to_mapping()['series']['assay_paths'] for s in p['steps'] if s.get('name')=='counts.tsv']
     assert len(files)==1
     assert any(s['kind']=='assay' for s in files[0][0]['steps'])
-    assert files[0][1]['link']=={'value':'counts.tsv','type':'TXT'}
+    assert files[0][1]['link']=={'value':'counts.tsv','type':'TXT', 'repository':'ArrayExpress', 'source_accession':'E-MTAB-1'}
 
 
 @pytest.mark.parametrize('change',['kind','uri','format','compressed','container'])

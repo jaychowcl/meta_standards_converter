@@ -104,7 +104,13 @@ class AEConstructor:
         if sdrf_index is None:
             raise ValueError("IDF does not contain an SDRF File row.")
         idf[sdrf_index] = ["SDRF File", sdrf, *idf[sdrf_index][2:]]
-        return IDFConstructor()._move_comment_rows_to_bottom(overlay_miniml_semantics(data, idf))
+        result = IDFConstructor()._move_comment_rows_to_bottom(overlay_miniml_semantics(data, idf))
+        if data.get('source', {}).get('format') in ('ENA', 'SRA'):
+            from .native_file_selection import prune_empty_file_columns
+            for row in result:
+                if row and row[0] == 'SDRF File':
+                    row[1] = prune_empty_file_columns(row[1])
+        return result
 
     def _detect_ae_technology(self, data: dict) -> str:
         return detect_ae_technology(data)

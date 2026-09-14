@@ -149,6 +149,9 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     if 'insdc' not in extra.get('extensions', {}) or prefer:
         extension['records'].append({'provider': extra.get('source', {}).get('format', 'linked'),
             'kind': 'MINiML', 'accession': extra['series'].get('iid'), 'metadata': deepcopy(extra)})
+    from .archive_workflows import mark_file_origins
+    if prefer:
+        mark_file_origins(extra)
     from .archive_workflows import merge_declarations, merge_workflows
     namespace = str(extra['series'].get('iid') or 'linked') + ':'
     declaration_mappings = merge_declarations(data, extra, namespace)

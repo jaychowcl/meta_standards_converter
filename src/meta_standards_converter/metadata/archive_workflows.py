@@ -104,6 +104,26 @@ def is_file(step):
     return step.get('kind', '').endswith('_file') or step.get('kind') == 'image_file'
 
 
+def mark_file_origins(data):
+    """Record-level source identity supports read-set selection without URL guesses."""
+    repository = {'MAGE-TAB': 'ArrayExpress', 'GEO MINiML': 'GEO', 'GEO': 'GEO'}.get(data.get('source', {}).get('format'))
+    if not repository:
+        return
+    origin = {'repository': repository, 'source_accession': data['series']['iid']}
+    for path in data['series'].get('assay_paths', []):
+        for node in path.get('steps', []):
+            if is_file(node) and node.get('link'):
+                node['link'].update(origin)
+    for entity in [data['series'], *data.get('sample', [])]:
+        for field in ('raw_data', 'supplementary_data'):
+            for file in entity.get(field, []):
+                file.update(origin)
+        for run in entity.get('sra_run', []):
+            for field in ('files', 'fastq_files'):
+                for file in run.get(field, []):
+                    file.update(origin)
+
+
 def file_node(file, kind='array_data_file'):
     uri = _file_uri(file.get('uri') or file.get('value'))
     node = {'kind': kind, 'name': file.get('filename') or unquote(PurePosixPath(urlsplit(uri or '').path).name) or uri or ''}
@@ -111,6 +131,7 @@ def file_node(file, kind='array_data_file'):
         node['link'] = {'value': uri}
         if file.get('format') or file.get('type'):
             node['link']['type'] = file.get('format') or file['type']
+        node['link'].update({k: deepcopy(file[k]) for k in ('repository', 'source_accession', 'companion_files') if k in file})
     node['comments'] = [{'name': label, 'value': str(file[key])} for key, label in
                         [('md5', 'MD5'), ('bytes', 'File size'), ('format', 'File format'),
                          ('checksum', 'Checksum'), ('checksum_method', 'Checksum method')]
@@ -270,6 +291,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
         target = next(iter(targets))
         try:
             prepared = _prepare_path(path, target, proto_names)
+            if prefer:
+                mark_file_origins({'source': extra.get('source', {}),
+                                   'series': {'iid': extra['series']['iid'], 'assay_paths': [prepared]}})
         except ValueError as error:
             issues.append(f'{target}: {error}')
             continue

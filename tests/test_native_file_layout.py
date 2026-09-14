@@ -73,8 +73,9 @@ def test_processed_paths_and_multiple_runs_remain_scoped():
     another=deepcopy(data['series']['assay_paths'][0]);next(s for s in another['steps'] if s['kind']=='scan')['name']='SRR999999'
     next(s for s in another['steps'] if s['kind']=='scan')['comments']=[];data['series']['assay_paths'].append(another)
     paths=projected(data)
-    assert len(paths)==5  # The complete counts branch also represents its raw prefix.
-    assert sum('counts.h5' in str(p) for p in paths)==1 and sample_result in paths
+    assert len(paths)==4  # Sample-only data annotate the source, not another acquisition.
+    assert sum('counts.h5' in str(p) for p in paths)==1 and sample_result not in paths
+    assert all(('SAMPLE_FILE_URI','https://results/sample.tsv') in comments(p) for p in paths)
     other=next(p for p in paths if 'SRR999999' in str(p));assert not any(k.startswith('SUBMITTED_FILE') for k,v in comments(other))
 
 
@@ -134,7 +135,9 @@ def test_repeated_sample_processed_relationship_is_not_an_extra_workflow():
     different=deepcopy(result);different['steps'].insert(1,{'kind':'protocol_application','protocol_ref':'different-processing'})
     data['series']['assay_paths'].extend([result,deepcopy(result),different])
     paths=projected(data)
-    assert len(paths)==5 and paths.count(result)==1 and different in paths
+    assert len(paths)==3
+    assert all([v for k,v in comments(p) if k=='SAMPLE_FILE_URI']==['https://results/sample.tsv']*2 for p in paths)
+    assert all('different-processing' in str(p['steps'][0]['comments']) for p in paths)
 
 
 def test_checksum_verified_mirrors_keep_alternate_metadata_without_extra_rows():
@@ -193,11 +196,14 @@ def test_sparse_sample_result_requires_unique_file_identity_and_same_processing(
     sparse={'steps':[source,deepcopy(proc),{'kind':'derived_array_data_file','name':'counts.tsv','link':{'value':'counts.tsv'}}]}
     compressed={'steps':[source,deepcopy(proc),{'kind':'derived_array_data_file','name':'counts.tsv.gz','link':{'value':'https://results/counts.tsv.gz'}}]}
     data['series']['assay_paths']=[deepcopy(sparse),deepcopy(full),compressed]
-    paths=projected(data);assert len(paths)==2 and compressed in paths
+    paths=projected(data);assert len(paths)==1 and compressed not in paths
+    assert ('SAMPLE_FILE_URI','https://results/counts.tsv.gz') in comments(paths[0])
     other=deepcopy(full);other['steps'][-1]['link']['value']='https://results/v2/counts.tsv'
     for sequence in ([sparse,full,other],[other,full,sparse]):
         data['series']['assay_paths']=deepcopy(sequence)
-        assert len(projected(data))==3
+        paths=projected(data)
+        assert len(paths)==2
+        assert all(('SAMPLE_FILE_URI','counts.tsv') in comments(p) for p in paths)
 
 
 @pytest.mark.parametrize('change',['checksum','processing','sample','workflow'])

@@ -4361,6 +4361,11 @@ make an import incomplete. Requested but unavailable linked metadata does.
 
 IDF people are selected through study/sample/protocol associations (including inline sample contacts); platform-only contacts and the explicitly identified GEO repository service contact are excluded. Legacy unscoped root people remain eligible. Export columns coalesce identical facts and only unambiguously compatible named contacts with a matching non-generic email. Departments/laboratories and secondary emails remain visible; opaque facts, conflicting affiliations and source contributor occurrences are preserved. Protocol export recognizes the library-construction and treatment type aliases, but sparse definitions cannot choose between conflicting hardware, ontology or registered accessions. Definition consolidation never deletes distinct applications.
 
+Native read-file presentation selects one complete source set per explicitly matching acquisition: ArrayExpress, GEO, native generated, then submitted reads. Enrichment labels file records with `link.repository` and `link.source_accession`; these identify the file record source, not a per-field provenance ledger. Known missing locations or explicit mate/index/lane roles prevent preferred subsets from replacing complete alternatives. Saved records without origin retain a conservative unlabelled-set fallback. Different same-priority sources and genuinely different processing branches remain separate. All original MINiML records remain; other representations appear as run archive annotations.
+
+Sample-only results export as `SAMPLE_FILE_*` source-node comments, with aligned filename/URI/format/checksum fields and explicit upstream processing/input/context metadata. They are attached only where supplied biological-source facts agree. An independently described aliquot retains its own biological annotation row; no run is invented. Study files stay in IDF study comments. Globally empty optional file-field labels are omitted; all occurrences of any populated label remain aligned.
+
+
 
 With GEO/AE enrichment enabled, exact GSE identifiers also probe the corresponding
 legacy E-GEOD accession. This is a lookup candidate until the returned study shares

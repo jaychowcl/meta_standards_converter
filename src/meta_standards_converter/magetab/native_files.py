@@ -29,6 +29,8 @@ def _key(value):
 def _record(step):
     link = step.get('link') or {}
     result = {'NAME': step.get('name', ''), 'URI': link.get('value', '')}
+    if link.get('repository'): result['_repository'] = link['repository']
+    if link.get('source_accession'): result['_source'] = link['source_accession']
     for comment in step.get('comments', []):
         name = str(comment.get('name', '')).upper()
         name = _ALIASES.get(name, name)
@@ -46,8 +48,8 @@ def _record(step):
     extra = {k: v for k, v in step.items() if k not in {'kind', 'name', 'link', 'comments'}}
     if extra:
         result['_node'] = extra
-    if set(link) - {'value', 'type'}:
-        result['_link'] = {k: v for k, v in link.items() if k not in {'value', 'type'}}
+    if set(link) - {'value', 'type', 'repository', 'source_accession'}:
+        result['_link'] = {k: v for k, v in link.items() if k not in {'value', 'type', 'repository', 'source_accession'}}
     return result
 
 
@@ -75,18 +77,33 @@ def _combine(records, candidate):
     for record in records:
         locations = {r.get('URI') for r in [record, *record.get('_alternatives', [])]} - {None, ''}
         identity = bool(candidate.get('URI') and candidate['URI'] in locations)
-        identity = identity or (candidate.get('NAME') and candidate.get('NAME') == record.get('NAME')
+        same_repository = not (candidate.get('_repository') and record.get('_repository')
+                               and candidate['_repository'] != record['_repository'])
+        identity = identity or (same_repository and candidate.get('NAME') and candidate.get('NAME') == record.get('NAME')
                                 and (not candidate.get('URI') or not record.get('URI')))
         left, right = _checksums(record), _checksums(candidate)
         common = left.keys() & right.keys()
         mirror = (_fastq(record) and _fastq(candidate) and bool(common) and all(left[k] == right[k] for k in common)
                   and candidate.get('NAME') and candidate['NAME'] == record.get('NAME'))
-        ignored = {'URI', '_alternatives'}
+        ignored = {'URI', '_alternatives', '_repository', '_source'}
         if mirror:
             ignored |= {'MD5', 'CHECKSUM', 'CHECKSUM_METHOD'}
         compatible = all(k in ignored or not record.get(k) or not v or record[k] == v
                          for k, v in candidate.items())
         if (identity or mirror) and compatible:
+            from .native_file_selection import _set
+            if _set(candidate) < _set(record) and candidate.get('URI'):
+                previous = deepcopy(record)
+                record.clear()
+                record.update(deepcopy(candidate))
+                for k, v in previous.items():
+                    if k != '_alternatives' and v and not record.get(k): record[k] = v
+                alternatives = previous.pop('_alternatives', [])
+                if previous.get('URI') != record.get('URI'):
+                    alternatives.insert(0, previous)
+                if alternatives:
+                    record.setdefault('_alternatives', []).extend(alternatives)
+                return
             if candidate.get('URI') and locations and candidate['URI'] not in locations:
                 record.setdefault('_alternatives', []).append(deepcopy(candidate))
             record.update({k: v for k, v in candidate.items()
@@ -206,6 +223,8 @@ def project_native_files(data):
         return
     series = data.get('series', {})
     paths = _complete_branches(series.get('assay_paths', []), {s['iid'] for s in data.get('sample', [])})
+    from .native_file_selection import source_annotations, primary_sets
+    paths = source_annotations(paths, {s['iid'] for s in data.get('sample', [])}, _record, _comments)
     groups, order, archives = {}, [], {}
     for original in paths:
         path = deepcopy(original)
@@ -237,13 +256,16 @@ def project_native_files(data):
         for record in files:
             if not _fastq(record):
                 _combine(archives[scope], record)
+    selected = primary_sets(groups, _key, _fastq, _combine, archives)
     result = []
     for identity, original in order:
         if identity is None:
             result.append(original)
             continue
         path, scope, files = groups[identity]
-        reads = [record for record in files if _fastq(record)]
+        if identity in selected and selected[identity] is None:
+            continue
+        reads = selected.get(identity, [record for record in files if _fastq(record)])
         for read in reads or [{}]:
             row = deepcopy(path)
             scan = next(s for s in row['steps'] if s.get('kind') == 'scan')
@@ -258,7 +280,7 @@ def project_native_files(data):
             if not read:
                 comments.append({'name': 'FASTQ_URI', 'value': ''})
             for record in archives[scope]:
-                prefix = 'SUBMITTED_FILE_' if record.get('ROLE') == 'SUBMISSION_FILE' else 'ARCHIVE_FILE_'
+                prefix = 'SUBMITTED_FILE_' if record.get('ROLE', '').upper() in ('SUBMISSION_FILE', 'ORIGINAL') else 'ARCHIVE_FILE_'
                 comments.extend(_comments(record, prefix, fixed=True))
             result.append(row)
     if paths:
