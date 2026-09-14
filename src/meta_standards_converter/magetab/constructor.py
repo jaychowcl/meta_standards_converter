@@ -66,6 +66,8 @@ class AEConstructor:
             data.setdefault('extensions', {}).setdefault('insdc', {'version': '2.0', 'records': []})['records'].extend(declarations)
         from ..miniml.archive_paths import complete_native_paths
         complete_native_paths(data)
+        from meta_standards_converter.miniml.archive_results import normalize_result_bundles
+        normalize_result_bundles(data)
         from meta_standards_converter.magetab.protocol_export import prepare_protocols
         prepare_protocols(data)
         from meta_standards_converter.magetab.native_files import project_native_files

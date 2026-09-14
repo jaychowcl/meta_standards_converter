@@ -403,6 +403,8 @@ def finalize(data, records=None):
     from .archive_administration import normalize_administration
     normalize_administration(data)
     records=deepcopy(records if records is not None else data.get('extensions',{}).get('insdc',{}).get('records',[]))
+    from .archive_results import normalize_result_bundles, comparison_view
+    records.extend(r for r in normalize_result_bundles(data) if r not in records)
     from .archive_entities import local_platforms, coalesce_organizations, repository_databases
     local_platforms(data)
     coalesce_organizations(data)
@@ -412,6 +414,7 @@ def finalize(data, records=None):
         if acc not in {a['value'] for a in data['series'].get('accession', [])} and not any(r.get('target')==acc for r in data['series'].get('relation', [])):
             data['series'].setdefault('relation', []).append({'type': 'GEO' if acc.startswith('GSE') else 'ArrayExpress', 'target': acc})
     projection=Projection(data, records);residual=[];seen=set()
+    comparison = comparison_view(data)
     for record in records:
         # One destination occurrence can represent at most one occurrence within
         # this source record. Independent records keep their own matching scope.
@@ -420,7 +423,7 @@ def finalize(data, records=None):
         if kind in ('MINiML','MINiML_workflows'):
             # Incoming identifiers have been remapped by the merger before this
             # snapshot is made. Saved packages are compared by those exact IDs.
-            left=diff(metadata,data if kind=='MINiML' else data['series'])
+            left=diff(metadata,comparison if kind=='MINiML' else comparison['series'])
         elif isinstance(metadata,dict) and 'tag' in metadata:
             if kind=='PubmedArticle' and not acc:
                 acc=child_text(metadata,'MedlineCitation/PMID') or None

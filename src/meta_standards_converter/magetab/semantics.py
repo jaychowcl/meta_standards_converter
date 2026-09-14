@@ -498,6 +498,13 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
         result.append((header, step.get("name", "")))
         if step.get('link', {}).get('value'):
             result.append(('Comment[File URI]', step['link']['value']))
+        members = step.get('link', {}).get('companion_files', [])
+        from ..miniml.archive_results import companion_node
+        for member in members if isinstance(members, list) else []:
+            if isinstance(member, dict) and member.get('role') in ('barcodes', 'features') and companion_node(member.get('node')):
+                from .native_files import _record, _comments
+                result.extend((f"Comment[{c['name']}]", c['value']) for c in
+                              _comments(_record(member['node']), 'MATRIX_' + member['role'].upper() + '_'))
         result.extend(_named_values_columns("Characteristics", step.get("characteristics", [])))
         result.extend(_named_values_columns("Factor Value", step.get("factor_values", [])))
         for field, field_header in (

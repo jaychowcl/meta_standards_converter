@@ -130,6 +130,14 @@ class _BaseSDRFHandler(SDRFRenderer):
         # Legacy greedy GEO fallback:
         # attrs.extend(_GEOFallbackComments(self).geo_fallback_attrs(sample=sample, channel=channel))
         attrs.extend(self.extra_source_attrs(sample=sample, channel=channel))
+        if self.data.get('source', {}).get('format') in ('ENA', 'SRA'):
+            from ...native_files import _record, _comments
+            from urllib.parse import unquote, urlsplit
+            for link in sample.get('supplementary_data', []):
+                if link.get('type') == 'assembly report' and link.get('value'):
+                    node = {'kind': 'derived_array_data_file', 'name': unquote(urlsplit(link['value']).path.rsplit('/', 1)[-1]), 'link': link}
+                    attrs.extend(SDRFAttr(label=f"Comment[{c['name']}]", value=c['value']) for c in
+                                 _comments(_record(node), 'SAMPLE_FILE_', fixed=True))
         return SDRFNode(kind="Source Name", key=f"source:{accession}", value=value, attrs=attrs)
 
     def sample_comment_attrs(self, sample: dict, channel: dict) -> list[SDRFAttr]:
@@ -363,6 +371,7 @@ class _BaseSDRFHandler(SDRFRenderer):
                 data_file.get("value")
                 for data_file in sample.get(key, []) or []
                 if isinstance(data_file, dict) and data_file.get("value")
+                and not (self.data.get('source', {}).get('format') in ('ENA', 'SRA') and data_file.get('type') == 'assembly report')
             )
 
         platform = self.platform(sample=sample)

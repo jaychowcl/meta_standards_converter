@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from copy import deepcopy
 
 from tests.test_native_file_layout import package, file, projected, comments
@@ -102,3 +110,16 @@ def test_verified_mirror_promotion_keeps_repository_with_its_location():
     assert len(records)==1
     assert records[0]['URI']=='https://ae/R1.fastq' and records[0]['_repository']=='ArrayExpress'
     assert records[0]['_alternatives'][0]['URI']=='https://ena/R1.fastq'
+
+
+def test_excluded_set_keeps_nested_verified_mirrors_in_run_annotations():
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    files=[with_origin('https://ena/reads.fastq','ENA',MD5='a'*32,ROLE='GENERATED_FILE'),
+           with_origin('https://sra/reads.fastq','SRA',MD5='a'*32,ROLE='GENERATED_FILE'),
+           with_origin('https://ae/reads.fastq','ArrayExpress',MD5='b'*32)]
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in files]
+    paths=projected(data)
+    assert len(paths)==1
+    c=comments(paths[0])
+    assert ('FASTQ_URI','https://ae/reads.fastq') in c
+    assert {v for k,v in c if k=='ARCHIVE_FILE_URI'}=={'https://ena/reads.fastq','https://sra/reads.fastq'}

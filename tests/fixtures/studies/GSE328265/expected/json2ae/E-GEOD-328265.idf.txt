@@ -8,17 +8,17 @@ Experimental Factor Name
 Experimental Factor Type
 Experimental Factor Term Source REF
 Experimental Factor Term Accession Number
-Person Last Name	Börsch	
-Person First Name	Anna-Lena	
-Person Mid Initials		
-Person Email	a_boer11@uni-muenster.de	
-Person Phone		
-Person Fax		
-Person Address	University Hospital Münster, Domagkstraße 24, Münster, 48149, Germany	GEO, USA
-Person Affiliation	University Hospital Münster	GEO
-Person Roles		
-Person Roles Term Source Ref		
-Person Roles Term Accession Number		
+Person Last Name	Börsch
+Person First Name	Anna-Lena
+Person Mid Initials	
+Person Email	a_boer11@uni-muenster.de
+Person Phone	
+Person Fax	
+Person Address	University Hospital Münster, Domagkstraße 24, Münster, 48149, Germany
+Person Affiliation	University Hospital Münster
+Person Roles	
+Person Roles Term Source Ref	
+Person Roles Term Accession Number	
 Date of Experiment	2026-04-16
 Public Release Date	2026-05-17
 PubMed ID	42129775

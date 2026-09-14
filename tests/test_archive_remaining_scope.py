@@ -63,7 +63,12 @@ def test_ncbi_assembly_reports_and_synonyms_are_sample_scoped():
     assert {'type':'assembly','target':'GCA_1.2'} in data['series']['relation']
     assert {'type':'assembly','target':'GCF_1.2'} in data['sample'][0]['relation']
     paths=[p for p in data['series']['assay_paths'] if any(s.get('link',{}).get('value')=='ftp://example.org/stats.txt' for s in p['steps'])]
-    assert paths and all(not any(s['kind'] in ('assay','scan') for s in p['steps']) for p in paths)
+    assert not paths  # Assembly documentation is a supporting link, not a measurement node.
+    link=next(f for f in data['sample'][0]['supplementary_data'] if f['value']=='ftp://example.org/stats.txt')
+    assert link['assembly_accession']=='GCF_1.2' and link['type']=='assembly report'
+    from tests.test_protocol_export import render
+    table=next(r[1] for r in render(data) if r[0]=='SDRF File')
+    assert 'ftp://example.org/stats.txt' in str(table)
 
 
 def test_analysis_reference_fetch_is_bounded_and_validates_sample_binding():

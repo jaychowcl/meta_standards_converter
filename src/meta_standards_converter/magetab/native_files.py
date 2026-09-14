@@ -142,6 +142,9 @@ def _comments(record, prefix, *, fixed=False):
     for field in ('_extra', '_node', '_link'):
         if record.get(field):
             result.append({'name': prefix + field[1:].upper(), 'value': _key(record[field])})
+    if prefix in ('ARCHIVE_FILE_', 'SUBMITTED_FILE_'):
+        for alternative in record.get('_alternatives', []):
+            result.extend(_comments(alternative, prefix, fixed=fixed))
     return result
 
 
@@ -223,6 +226,23 @@ def project_native_files(data):
         return
     series = data.get('series', {})
     paths = _complete_branches(series.get('assay_paths', []), {s['iid'] for s in data.get('sample', [])})
+    from urllib.parse import unquote, urlsplit
+    for sample in data.get('sample', []):
+        sources = [s for p in paths for s in p['steps'] if s['kind'] in ('source', 'sample') and s.get('sample_ref') == sample['iid']]
+        for link in sample.get('supplementary_data', []):
+            if link.get('type') != 'assembly report' or not link.get('value') or not sources:
+                continue
+            if any(s.get('link', {}).get('value') == link['value'] for p in paths for s in p['steps']
+                   if any(n.get('sample_ref') == sample['iid'] for n in p['steps'])):
+                continue
+            node = {'kind': 'derived_array_data_file', 'name': unquote(urlsplit(link['value']).path.rsplit('/', 1)[-1]), 'link': deepcopy(link)}
+            annotation = _comments(_record(node), 'SAMPLE_FILE_', fixed=True)
+            if any(any(s.get('comments', [])[i:i+len(annotation)] == annotation for i in range(len(s.get('comments', [])))) for s in sources):
+                continue
+            # A sample-level report cannot inherit an arbitrary aliquot's facts.
+            source = deepcopy(sources[0]) if all(s == sources[0] for s in sources) else {
+                'kind': 'source', 'name': sample['iid'], 'sample_ref': sample['iid']}
+            paths.append({'steps': [source, node]})
     from .native_file_selection import source_annotations, primary_sets
     paths = source_annotations(paths, {s['iid'] for s in data.get('sample', [])}, _record, _comments)
     groups, order, archives = {}, [], {}

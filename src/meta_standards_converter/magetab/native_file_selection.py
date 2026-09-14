@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Submission presentation policies for explicitly bound native file inventories."""
 from copy import deepcopy
 import json
@@ -57,7 +65,7 @@ def source_annotations(paths, sample_ids, record, comments):
                         step.setdefault('comments', []).extend(comments(value, 'SAMPLE_FILE_', fixed=True))
                     attached.add(binding)
     # A sample with no acquisition retains a biological row, not an invented run.
-    for binding in annotations.keys() - attached:
+    for binding in (k for k in annotations if k not in attached):
         _, source, values = annotations[binding]
         for value in values:
             source.setdefault('comments', []).extend(comments(value, 'SAMPLE_FILE_', fixed=True))

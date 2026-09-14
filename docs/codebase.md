@@ -4359,13 +4359,25 @@ make an import incomplete. Requested but unavailable linked metadata does.
 <a id="native-archive-fidelity"></a>
 ### Retrieval and enrichment fidelity
 
+Native semantic helpers (internal implementation contracts):
+
+- `meta_standards_converter.miniml.archive_results.companion_node`
+- `meta_standards_converter.miniml.archive_results.normalize_result_bundles`
+- `meta_standards_converter.miniml.archive_results.comparison_view`
+- `meta_standards_converter.magetab.people.contributors`
+- `meta_standards_converter.magetab.people.unique_people`
+- `meta_standards_converter.magetab.native_file_selection.source_annotations`
+- `meta_standards_converter.magetab.native_file_selection.primary_sets`
+- `meta_standards_converter.magetab.native_file_selection.prune_empty_file_columns`
+- `meta_standards_converter.metadata.archive_workflows.mark_file_origins`
+
 IDF people are selected through study/sample/protocol associations (including inline sample contacts); platform-only contacts and the explicitly identified GEO repository service contact are excluded. Legacy unscoped root people remain eligible. Export columns coalesce identical facts and only unambiguously compatible named contacts with a matching non-generic email. Departments/laboratories and secondary emails remain visible; opaque facts, conflicting affiliations and source contributor occurrences are preserved. Protocol export recognizes the library-construction and treatment type aliases, but sparse definitions cannot choose between conflicting hardware, ontology or registered accessions. Definition consolidation never deletes distinct applications.
 
 Native read-file presentation selects one complete source set per explicitly matching acquisition: ArrayExpress, GEO, native generated, then submitted reads. Enrichment labels file records with `link.repository` and `link.source_accession`; these identify the file record source, not a per-field provenance ledger. Known missing locations or explicit mate/index/lane roles prevent preferred subsets from replacing complete alternatives. Saved records without origin retain a conservative unlabelled-set fallback. Different same-priority sources and genuinely different processing branches remain separate. All original MINiML records remain; other representations appear as run archive annotations.
 
 Sample-only results export as `SAMPLE_FILE_*` source-node comments, with aligned filename/URI/format/checksum fields and explicit upstream processing/input/context metadata. They are attached only where supplied biological-source facts agree. An independently described aliquot retains its own biological annotation row; no run is invented. Study files stay in IDF study comments. Globally empty optional file-field labels are omitted; all occurrences of any populated label remain aligned.
 
-
+Native result normalization recognizes a terminal three-member Cell Ranger MEX object only with one sample/run, common literal member identity and directory, affirmative method evidence and equal complete processing application blocks. The matrix remains a result node; `link.companion_files` contains `{role: "barcodes" | "features", node: <complete original file node>}`. The exporter emits associated `MATRIX_BARCODES_*` and `MATRIX_FEATURES_*` comments, without serial transformations. Existing companions, different application parameters/performers and ambiguous groups remain unchanged. Untyped malformed extras are retained without interpreting them as nodes. Minimal original topology remains in `extensions.insdc` `result_layout` records; represented file/method leaves do not duplicate complete source workflows in residuals.
 
 With GEO/AE enrichment enabled, exact GSE identifiers also probe the corresponding
 legacy E-GEOD accession. This is a lookup candidate until the returned study shares
@@ -4385,7 +4397,7 @@ MAGE-TAB protocol parsing ignores wholly empty padded IDF slots while retaining
 unnamed populated definitions at their original positions, including fields beyond
 a shorter Protocol Name row.
 
-Statuses preserve database and entity scope; native IDF dates never substitute submission for experiment dates. Sample-bound assembly reports use source-to-file branches. Explicit ENA sample/run analysis links are fetched one hop and reconciled without expanding read membership. Their indexed analysis rows supply verified file locations for Browser records with relative filenames; file roles, sizes and delivery alternatives remain on scoped links. Assembly descriptions do not define protocols.
+Statuses preserve database and entity scope; native IDF dates never substitute submission for experiment dates. Sample-bound assembly reports are supplementary links carrying `assembly_accession`; their source annotations describe supporting documents, not measured results. Conflicting aliquot sources cannot lend their facts to a sample-level report. Explicit ENA sample/run analysis links are fetched one hop and reconciled without expanding read membership. Their indexed analysis rows supply verified file locations for Browser records with relative filenames; file roles, sizes and delivery alternatives remain on scoped links. Assembly descriptions do not define protocols.
 
 Native imports project explicit organizations, declared study/project centres and contacts with source-bound IDs. Known address components populate city, country and postal-code fields.
 Enrichment imports registered platforms and rewrites sample/contact references.

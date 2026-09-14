@@ -428,7 +428,8 @@ def project_results(records, series, samples, protocols, paths):
                 if metadata.get(field): series['relation'].append({'type': 'assembly directory', 'target': metadata[field]})
             for field in ('ftppath_stats_rpt', 'ftppath_regions_rpt', 'ftppath_assembly_rpt'):
                 if metadata.get(field):
-                    result_file(sample or series, {'uri': metadata[field], 'format': 'assembly report'}, paths)
+                    result_file(sample or series, {'uri': metadata[field], 'format': 'assembly report',
+                                                   'assembly_accession': record['accession']}, paths)
     for acc, entry in entries.items():
         node, rows = entry['node'], entry['rows']
         sample_refs, run_refs, files = [], [], []
@@ -482,11 +483,13 @@ def project_results(records, series, samples, protocols, paths):
 
 def result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=True):
     """A sample result without run evidence is a source-to-file branch."""
-    link = {'value': file['uri'], 'type': file.get('format') or 'analysis', **{k:file[k] for k in ('role','bytes','aspera','galaxy','checksum_method') if file.get(k)}}
+    link = {'value': file['uri'], 'type': file.get('format') or 'analysis', **{k:file[k] for k in ('role','bytes','aspera','galaxy','checksum_method','assembly_accession') if file.get(k)}}
     if file.get('checksum'):
         link['checksum' if (file.get('checksum_method') or '').upper() == 'MD5' else 'file_checksum'] = file['checksum']
     if file.get('md5'): link['checksum'] = file['md5']
     if add_link: target.setdefault('supplementary_data', []).append(deepcopy(link))
+    if file.get('format') == 'assembly report':
+        return  # Supporting documentation has no asserted experimental processing edge.
     if 'channel' not in target:
         return
     bases = [p for p in paths if any(s.get('sample_ref') == target['iid'] for s in p['steps'])
