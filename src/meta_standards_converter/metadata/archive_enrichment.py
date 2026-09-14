@@ -64,7 +64,11 @@ def informative(value):
 def entity_ids(entity, *, sample=False):
     """Only identifier-bearing fields participate in joins, never descriptions."""
     values = [entity.get('iid', '')] + [a.get('value', '') for a in entity.get('accession', [])]
-    values += [a.get('target', '') for a in entity.get('relation', [])]
+    identity_relations = {'geo', 'arrayexpress', 'biosample', 'bioproject', 'sra', 'ena', 'dra', 'ddbj'}
+    identity_relations.update(provider + '-' + kind for provider in ('ena','sra','dra','ddbj')
+                              for kind in ('study','sample','experiment','run'))
+    values += [a.get('target', '') for a in entity.get('relation', [])
+               if str(a.get('type', '')).casefold() in identity_relations]
     if sample:
         values += entity.get('sra_accession', [])
         for run in entity.get('sra_run', []):
@@ -142,14 +146,12 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     if (not prefer and not shared_read) or (prefer and not (native_ids & extra_ids or linked_match)):
         return package, ['enrichment: unresolved study identity']
     extension = data.setdefault('extensions', {}).setdefault('insdc', {'version': '1.0', 'records': []})
-    if 'insdc' in extra.get('extensions', {}) and not prefer:
-        extension['records'].extend(deepcopy(extra['extensions']['insdc']['records']))
-    else:
+    if 'insdc' not in extra.get('extensions', {}) or prefer:
         extension['records'].append({'provider': extra.get('source', {}).get('format', 'linked'),
             'kind': 'MINiML', 'accession': extra['series'].get('iid'), 'metadata': deepcopy(extra)})
     from .archive_workflows import merge_declarations, merge_workflows
     namespace = str(extra['series'].get('iid') or 'linked') + ':'
-    merge_declarations(data, extra, namespace)
+    declaration_mappings = merge_declarations(data, extra, namespace)
     _merge_entity(data['series'], extra['series'], prefer,
                   {'iid', 'sample_ref', 'assay_paths', 'protocols', 'contact_ref'})
     native_samples, extra_samples = data.get('sample', []), extra.get('sample', [])
@@ -158,6 +160,8 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     reverse = {j: [i for i, js in joins.items() if j in js] for j in range(len(extra_samples))}
     matched = {}
     original_channels = {s['iid']: deepcopy(s.get('channel', [])) for s in native_samples}
+    workflow_fields = ('scan_protocol', 'hybridization_protocol', 'data_processing')
+    original_protocols = {s['iid']: {k:deepcopy(s[k]) for k in workflow_fields if k in s} for s in native_samples}
     for i, candidates in joins.items():
         if len(candidates) != 1 or len(reverse[candidates[0]]) != 1:
             if candidates:
@@ -205,10 +209,20 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     paths = data['series'].setdefault('assay_paths', [])
     explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues)
     if prefer and extra.get('source', {}).get('format') == 'MAGE-TAB':
+        uncovered = [s['iid'] for s in native_samples if s['iid'] in set(matched.values()) - explicit]
         # AE sample scalars are projections of its workflows. Rejected paths
         # cannot supply a material/protocol for an unrelated native acquisition.
+        from ..miniml.archive_paths import complete_native_paths
+        # Supplied methods remain unused definitions even when their application
+        # cannot be projected onto all acquisitions of the matched sample.
+        complete_native_paths({'source': data.get('source', {}),
+            'series': {'iid': data['series']['iid'], 'protocols': data['series'].setdefault('protocols', []), 'assay_paths': []},
+            'sample': [sample_map[target] for target in uncovered]})
         scoped_fields = ('molecule', 'growth_protocol', 'treatment_protocol', 'extract_protocol', 'label_protocol')
-        for target in set(matched.values()) - explicit:
+        for target in uncovered:
+            for field in workflow_fields:
+                if field in original_protocols[target]: sample_map[target][field] = deepcopy(original_protocols[target][field])
+                else: sample_map[target].pop(field, None)
             current = sample_map[target].get('channel', [])
             previous = original_channels.get(target, [])
             if len(current) == len(previous) == 1:
@@ -242,7 +256,12 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     snapshot['series']['iid'] = data['series']['iid']
     evidence.append({'provider':extra.get('source',{}).get('format'), 'kind':'MINiML', 'accession':extra['series']['iid'],
                      'metadata':{k:v for k,v in snapshot.items() if k not in ('extensions','source','miniml_schema_version')}})
-    if not prefer: evidence.extend(source_records(other))
+    if not prefer:
+        for record in source_records(other):
+            if record['kind'] == 'term_source_declaration':
+                old = record['metadata']['iid']
+                record['metadata']['iid'] = declaration_mappings.get(old, old)
+            evidence.append(record)
     evidence.extend(r for r in data['extensions']['insdc']['records'] if r['kind']=='annotation' and r not in evidence)
     return finalize(data, evidence), issues
 
@@ -276,9 +295,11 @@ class LinkedArchiveEnricher:
                 if len(candidates) != 1:
                     issues.append(f'{accession}: ambiguous or unavailable enrichment study')
                     continue
-                if accession in probes and not (entity_ids(package.to_mapping()['series']) & entity_ids(candidates[0].to_mapping()['series'])):
-                    issues.append(f'{accession}: unresolved enrichment study identity')
-                    continue
+                if accession in probes:
+                    common = entity_ids(package.to_mapping()['series']) & entity_ids(candidates[0].to_mapping()['series'])
+                    if 'GSE' + accession.removeprefix('E-GEOD-') not in common and not any(re.fullmatch(r'[SED]RP\d+', a) for a in common):
+                        issues.append(f'{accession}: unresolved enrichment study identity')
+                        continue
                 package, merge_issues = merge_archive_metadata(package, candidates[0], prefer=True, linked_accession=accession)
                 issues.extend(merge_issues)
             except Exception as error:

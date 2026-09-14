@@ -75,3 +75,48 @@ def test_missing_instrument_markers_do_not_create_platforms():
         assert not data['platform']
         assert not data['sample'][0].get('platform_ref')
         assert data['sample'][0]['sra_run'][0]['instrument_model']==literal
+
+
+def test_saved_native_vocabulary_conflict_is_namespaced_during_enrichment():
+    from tests.test_native_archive_enrichment import linked
+    from meta_standards_converter.miniml import MINiMLCodec
+    from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
+    data=native().to_mapping();data['database'].append({'iid':'LOCAL','name':'Native vocabulary','url':'https://native/vocab'})
+    data['sample'][0]['channel'][0]['characteristics'].append({'name':'native trait','value':'a','term_source_ref':'LOCAL'})
+    package=finalize(data,[]);extra=linked(package,'E-MTAB-1','title').to_mapping()
+    extra['source']['format']='MAGE-TAB';extra['database']=[{'iid':'LOCAL','name':'Incoming vocabulary','url':'https://incoming/vocab'}]
+    extra['sample'][0]['channel'][0]['characteristics']=[{'name':'incoming trait','value':'b','term_source_ref':'LOCAL'}]
+    result,issues=merge_archive_metadata(package,MINiMLCodec().decode(extra).package,prefer=True);assert not issues
+    data=result.to_mapping();traits={c['name']:c for c in data['sample'][0]['channel'][0]['characteristics']}
+    assert traits['native trait']['term_source_ref']=='LOCAL'
+    assert traits['incoming trait']['term_source_ref']=='E-MTAB-1:LOCAL'
+    rows={r[0]:r[1:] for r in render(data)}
+    assert len(rows['Term Source Name'])==len(set(rows['Term Source Name']))
+
+
+def test_compatible_persisted_vocabulary_details_complete_once():
+    from tests.test_native_archive_enrichment import linked
+    from meta_standards_converter.miniml import MINiMLCodec
+    from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
+    data=native().to_mapping();data['database'].append({'iid':'LOCAL','name':'Supplied vocabulary'})
+    data['sample'][0]['channel'][0]['characteristics'].append({'name':'trait','value':'a','term_source_ref':'LOCAL'})
+    package=finalize(data,[]);extra=linked(package,'E-MTAB-1','title').to_mapping()
+    extra['database']=[{'iid':'LOCAL','name':'Supplied vocabulary','url':'https://supplied/vocab'}]
+    result,_=merge_archive_metadata(package,MINiMLCodec().decode(extra).package,prefer=True)
+    records=[r for r in result.to_mapping()['extensions']['insdc']['records'] if r['kind']=='term_source_declaration' and r['accession']=='LOCAL']
+    assert len(records)==1 and records[0]['metadata']['url']=='https://supplied/vocab'
+
+
+def test_saved_peer_vocabulary_conflicts_remap_both_core_and_retained_declarations():
+    from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
+    packages=[]
+    for label in ('Native','Peer'):
+        data=native().to_mapping();data['database'].append({'iid':'LOCAL','name':label+' vocabulary','url':'https://'+label.lower()+'/vocab'})
+        data['sample'][0]['channel'][0]['characteristics'].append({'name':label+' trait','value':label,'term_source_ref':'LOCAL'})
+        packages.append(finalize(data,[]))
+    result,issues=merge_archive_metadata(*packages,prefer=False);assert not issues
+    data=result.to_mapping();traits={c['name']:c for c in data['sample'][0]['channel'][0]['characteristics']}
+    assert traits['Native trait']['term_source_ref']=='LOCAL'
+    assert traits['Peer trait']['term_source_ref']==data['series']['iid']+':LOCAL'
+    rows={r[0]:r[1:] for r in render(data)}
+    assert len(rows['Term Source Name'])==len(set(rows['Term Source Name']))

@@ -191,3 +191,29 @@ def test_unrelated_egeod_candidate_cannot_redefine_native_study():
     result,issues=LinkedArchiveEnricher(geo_converter=Geo(),ae_converter=AE()).enrich(package)
     assert result.series.title=='GEO'
     assert any('identity' in i for i in issues)
+
+
+def test_egeod_probe_cannot_join_sibling_read_study_by_project_alone():
+    package=native().to_mapping();package['series']['relation']=[{'type':'GEO','target':'GSE1'}]
+    package=MINiMLCodec().decode(package).package
+    class Geo:
+        def convert(self,*a,**k):return []
+    class AE:
+        def convert(self,accession):
+            other=linked(package,accession,'wrong sibling').to_mapping()
+            project=[a for a in package.to_mapping()['series']['accession'] if a['database']=='BioProject']
+            other['series']['accession']=[*project,{'value':accession,'database':'ArrayExpress'},{'value':'SRP999999','database':'SRA'}]
+            other['series']['relation']=[]
+            return [MINiMLCodec().decode(other).package]
+    result,issues=LinkedArchiveEnricher(geo_converter=Geo(),ae_converter=AE()).enrich(package)
+    assert result.series.title==package.series.title
+    assert any('identity' in i for i in issues)
+
+
+def test_shared_organization_ids_do_not_create_sample_identity_matches():
+    from meta_standards_converter.metadata.archive_enrichment import entity_ids
+    data=native().to_mapping();sample=data['sample'][0]
+    sample.setdefault('relation',[]).extend([
+        {'type':'archive center','target':'ena:BioSample:SAMN999:organization-2'},
+        {'type':'derived from','target':'SAMN998'}])
+    assert not {'SAMN999','SAMN998'} & entity_ids(sample,sample=True)

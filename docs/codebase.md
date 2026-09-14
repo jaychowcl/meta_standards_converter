@@ -4207,8 +4207,9 @@ pure, native-only projection used after source mapping/enrichment and on the
 constructor copy before protocol naming. It exposes final sample titles, source
 descriptions and platform titles at their own nodes; explicit channel molecules
 become extract materials, with supplied field-scoped methods retained intact.
-Complete accepted AE material workflows take priority. Rejected AE paths cannot
-supply flattened material/protocol fields to unrelated acquisitions. Processing
+Complete accepted AE material workflows take priority. Rejected or partially covering AE paths cannot
+supply flattened channel or sample protocol fields to unrelated acquisitions;
+explicit supplied methods remain unused definitions when their application is unproved. Processing
 methods remain definitions and apply only to result branches. Native study-wide
 supplementary links export as aligned IDF `Comment[Study supplementary file]` and
 `Comment[Study supplementary file type]`, without an invented run association.
@@ -4222,12 +4223,21 @@ identical complete organization facts and remaps references, retaining independe
 source IDs and sample bindings in `source_occurrences`. Conflicting organizations
 and separately supplied contributors remain distinct.
 `meta_standards_converter.miniml.archive_entities.repository_databases` keeps
-repository/accession namespaces in native `database[]`. Source vocabulary names,
+repository/accession namespaces in native `database[]`. Retained vocabulary
+identities still participate in enrichment collision checks, including saved JSON.
+Compatible declarations complete once, including persisted peer declarations;
+conflicting local declarations and references
+are namespaced together. Source vocabulary names,
 URLs and versions remain residual declarations; IDF lists only term sources actually
 referenced by emitted metadata. INSDC administrative statuses keep their scope without
 becoming a repository declaration. These operations also run on private export copies.
 `tests/test_archive_final_entities.py` covers platform ambiguity, missing instruments,
 organization scope and repository/vocabulary separation.
+
+Identity joins use repository identifier relations; organization links and derived-from
+relationships do not establish sample equivalence. An E-GEOD lookup probe requires
+the corresponding GSE or a shared read-study accession; a shared BioProject alone
+is insufficient.
 
 `extensions.insdc` version **2.0** retains only source metadata not represented
 by the final MINiML mapping. Version 1.0 whole-record packages still decode.

@@ -504,6 +504,12 @@ def finalize(data, records=None):
         else:left=deepcopy(metadata)
         if not left:continue
         item={**record,'accession':acc,'metadata':left}
+        if kind == 'term_source_declaration':
+            compatible = next((r for r in residual if r['kind'] == kind and r.get('accession') == acc
+                              and all(not r['metadata'].get(k) or not v or r['metadata'][k] == v for k,v in left.items())), None)
+            if compatible is not None:
+                compatible['metadata'].update({k:v for k,v in left.items() if v and not compatible['metadata'].get(k)})
+                continue
         key=json.dumps(item,sort_keys=True)
         if key not in seen:seen.add(key);residual.append(item)
     data.setdefault('extensions',{})['insdc']={'version':'2.0','records':residual}

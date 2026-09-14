@@ -31,6 +31,14 @@ def merge_declarations(data, extra, namespace):
     """Global database IDs agree by identity; conflicting local IDs are scoped."""
     mappings = {}
     global_ids = {'GEO', 'ArrayExpress', 'BioProject', 'BioSample', 'ENA', 'SRA', 'DRA', 'INSDC', 'NCBITaxon'}
+    for document in (data, extra):
+        known = {d['iid'] for d in document.get('database', [])}
+        for record in document.get('extensions', {}).get('insdc', {}).get('records', []):
+            if record['kind'] == 'term_source_declaration':
+                declaration = record['metadata']
+                if declaration['iid'] not in known:
+                    document.setdefault('database', []).append(deepcopy(declaration))
+                    known.add(declaration['iid'])
     existing = {d['iid']: d for d in data.get('database', [])}
     for incoming in extra.get('database', []):
         iid = incoming['iid']
@@ -62,6 +70,7 @@ def merge_declarations(data, extra, namespace):
     # IDF contributors are study-scoped even when the input omitted explicit refs.
     if extra.get('contributor') and not extra['series'].get('contributor_ref'):
         extra['series']['contributor_ref'] = [{'ref': p['iid']} for p in extra['contributor']]
+    return mappings
 
 
 def path_ids(path):

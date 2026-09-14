@@ -85,3 +85,20 @@ def test_explicit_scan_protocol_is_retained_at_acquisition_scope():
     for p in data['series']['assay_paths']:
         if any(s['kind']=='scan' for s in p['steps']):
             assert any(protocols.get(s.get('protocol_ref'),{}).get('description')=='Sequenced on supplied instrument.' for s in p['steps'])
+
+
+def test_partial_ae_workflow_does_not_project_sample_protocols_onto_other_experiment():
+    from tests.test_archive_fidelity_enrichment import workflow, enriched_native
+    package=enriched_native().to_mapping();second=deepcopy(package['series']['assay_paths'][0])
+    for s in second['steps']:
+        if s['kind']=='assay':s['name']='SRX99'
+        if s['kind']=='scan':s['name']='SRR99';s['comments']=[]
+    second['steps'].append({'kind':'derived_array_data_file','name':'second.tsv'})
+    package['series']['assay_paths'].append(second)
+    run=deepcopy(package['sample'][0]['sra_run'][0]);run.update(run='SRR99',experiment='SRX99');package['sample'][0]['sra_run'].append(run)
+    extra=workflow().to_mapping();extra['sample'][0].update(scan_protocol='First experiment sequencing only',data_processing='First experiment processing only')
+    result,issues=merge_archive_metadata(MINiMLCodec().decode(package).package,MINiMLCodec().decode(extra).package,prefer=True);assert not issues
+    data=result.to_mapping();protocols={p['name']:p for p in data['series']['protocols']}
+    for path in data['series']['assay_paths']:
+        if any(s.get('name')=='SRX99' for s in path['steps']):
+            assert not any('First experiment' in protocols.get(s.get('protocol_ref'),{}).get('description','') for s in path['steps'])
