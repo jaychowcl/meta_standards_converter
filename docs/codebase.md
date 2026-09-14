@@ -4210,6 +4210,22 @@ methods remain definitions and apply only to result branches. Native study-wide
 supplementary links export as aligned IDF `Comment[Study supplementary file]` and
 `Comment[Study supplementary file type]`, without an invented run association.
 
+`meta_standards_converter.miniml.archive_entities.local_platforms` declares local
+platforms from explicit informative instrument facts. Runs reference those records;
+samples reference a platform only when all their runs agree. Mixed experiments retain
+scoped instrument comments. No GPL accession or manufacturer is inferred.
+`meta_standards_converter.miniml.archive_entities.coalesce_organizations` shares
+identical complete organization facts and remaps references, retaining independent
+source IDs and sample bindings in `source_occurrences`. Conflicting organizations
+and separately supplied contributors remain distinct.
+`meta_standards_converter.miniml.archive_entities.repository_databases` keeps
+repository/accession namespaces in native `database[]`. Source vocabulary names,
+URLs and versions remain residual declarations; IDF lists only term sources actually
+referenced by emitted metadata. INSDC administrative statuses keep their scope without
+becoming a repository declaration. These operations also run on private export copies.
+`tests/test_archive_final_entities.py` covers platform ambiguity, missing instruments,
+organization scope and repository/vocabulary separation.
+
 `extensions.insdc` version **2.0** retains only source metadata not represented
 by the final MINiML mapping. Version 1.0 whole-record packages still decode.
 Each ordered record has `provider`, `kind`, `accession`, and residual `metadata`.

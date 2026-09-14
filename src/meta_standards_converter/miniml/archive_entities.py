@@ -115,3 +115,112 @@ def declare_ontologies(data, issues=None):
     visit(data)
     if residuals:
         data.setdefault('extensions', {}).setdefault('insdc', {'version':'1.0','records':[]})['records'].extend(residuals)
+
+
+def local_platforms(data):
+    """Declare local sequencing platforms from exact explicit instrument facts."""
+    if data.get('source', {}).get('format') not in ('ENA', 'SRA'):
+        return
+    import hashlib
+    import json
+    from ..metadata.archive_enrichment import informative
+    provider = data['source']['format'].lower()
+    platforms = data.setdefault('platform', [])
+    known = {p['iid'] for p in platforms}
+    by_experiment = {}
+    for sample in data.get('sample', []):
+        refs = []
+        for run in sample.get('sra_run', []):
+            model = run.get('instrument_model')
+            if not informative(model):
+                refs.append(None)
+                continue
+            facts = {'instrument_model': model}
+            if informative(run.get('instrument_platform')):
+                facts['instrument_platform'] = run['instrument_platform']
+            iid = provider + ':platform:' + hashlib.sha256(json.dumps(facts, sort_keys=True).encode()).hexdigest()[:16]
+            if iid not in known:
+                platforms.append({'iid': iid, 'title': model, 'technology': 'high-throughput sequencing', **facts})
+                known.add(iid)
+            run['platform_ref'] = {'ref': iid}
+            refs.append(iid)
+            by_experiment.setdefault((sample['iid'], run.get('experiment')), set()).add(iid)
+        old = sample.get('platform_ref', {}).get('ref', '')
+        if not old or old.startswith(provider + ':platform:'):
+            if refs and None not in refs and len(set(refs)) == 1:
+                sample['platform_ref'] = {'ref': refs[0]}
+            else:
+                sample.pop('platform_ref', None)
+    for path in data.get('series', {}).get('assay_paths', []):
+        for step in path['steps']:
+            if step['kind'] == 'assay':
+                refs = by_experiment.get((step.get('sample_ref'), step.get('name')), set())
+                if len(refs) == 1:
+                    platform = next(p for p in platforms if p['iid'] == next(iter(refs)))
+                    if not any(c.get('name') == 'Platform_title' for c in step.get('comments', [])):
+                        step.setdefault('comments', []).append({'name': 'Platform_title', 'value': platform['title']})
+
+
+def coalesce_organizations(data):
+    """Share identical organization facts, retaining independent source occurrences."""
+    if data.get('source', {}).get('format') not in ('ENA', 'SRA'):
+        return
+    import json
+    groups, mappings = {}, {}
+    for organization in data.get('organization', []):
+        facts = {k: v for k, v in organization.items() if k not in ('iid', 'sample_accession', 'source_occurrences')}
+        # Unknown unnamed entities have no sufficient factual identity to share.
+        identity = json.dumps(facts, sort_keys=True) if facts.get('name') or facts.get('alias') else organization['iid']
+        occurrences = deepcopy(organization.get('source_occurrences') or [
+            {k: v for k, v in organization.items() if k in ('iid', 'sample_accession')}])
+        if identity not in groups:
+            groups[identity] = {**deepcopy(organization), 'source_occurrences': []}
+        target = groups[identity]
+        for occurrence in occurrences:
+            mappings[occurrence['iid']] = target['iid']
+            if occurrence not in target['source_occurrences']:
+                target['source_occurrences'].append(occurrence)
+        mappings[organization['iid']] = target['iid']
+    data['organization'] = list(groups.values())
+    for organization in data['organization']:
+        occurrences = organization['source_occurrences']
+        if len(occurrences) == 1:
+            organization.pop('source_occurrences')
+        elif len({v.get('sample_accession') for v in occurrences}) > 1:
+            organization.pop('sample_accession', None)
+    def rewrite(value):
+        if isinstance(value, list):
+            for child in value: rewrite(child)
+        elif isinstance(value, dict):
+            for key, child in value.items():
+                if key in ('extensions', 'source_occurrences'): continue
+                if key in ('ref', 'target') and isinstance(child, str): value[key] = mappings.get(child, child)
+                else: rewrite(child)
+    rewrite(data)
+
+
+def repository_databases(data):
+    """Separate participating repositories from source vocabulary declarations."""
+    if data.get('source', {}).get('format') not in ('ENA', 'SRA'):
+        return []
+    repositories = {'ENA', 'SRA', 'DRA', 'DDBJ', 'GEO', 'ArrayExpress', 'BioProject', 'BioSample', 'PubMed', 'PMC', 'DOI'}
+    used = set()
+    def visit(value):
+        if isinstance(value, list):
+            for child in value: visit(child)
+        elif isinstance(value, dict):
+            for accession in value.get('accession', []) if isinstance(value.get('accession'), list) else []:
+                if isinstance(accession, dict) and accession.get('database'): used.add(accession['database'])
+            for key, child in value.items():
+                if key not in ('extensions', 'database'): visit(child)
+    visit(data)
+    kept, records = [], []
+    for declaration in data.get('database', []):
+        iid = declaration['iid']
+        if iid != 'INSDC' and (iid in repositories or iid in used):
+            kept.append(declaration)
+        elif set(declaration) - {'iid', 'name'} or declaration.get('name', iid) != iid:
+            records.append({'provider': data['source']['format'], 'kind': 'term_source_declaration',
+                            'accession': iid, 'metadata': deepcopy(declaration)})
+    data['database'] = kept
+    return records

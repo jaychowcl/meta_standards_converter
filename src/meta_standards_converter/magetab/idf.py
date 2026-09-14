@@ -728,7 +728,10 @@ class IDFConstructor():
                 for field in ("characteristics", "factor_values", "parameter_values"):
                     groups.extend(iter_harmonized_values(value.get(field)))
                 sources.update(item.term_source_ref for item in groups if item.term_source_ref)
-                for child in value.values():
+                for key, child in value.items():
+                    if key == 'extensions': continue
+                    if (key == 'term_source_ref' or key.endswith('_term_source_ref')) and isinstance(child, str) and child:
+                        sources.add(child)
                     collect_harmonized_sources(child)
             elif isinstance(value, list):
                 for child in value:
@@ -739,6 +742,10 @@ class IDFConstructor():
         if isinstance(raw_databases, dict):
             raw_databases = [raw_databases]
         raw_databases = [d for d in raw_databases if isinstance(d, dict)]
+        native = (data or {}).get('source', {}).get('format') in {'ENA', 'SRA'}
+        if native:
+            raw_databases += [r['metadata'] for r in (data or {}).get('extensions', {}).get('insdc', {}).get('records', [])
+                              if r.get('kind') == 'term_source_declaration']
         by_name = {}
         for database in raw_databases:
             if database.get("name"):
@@ -752,7 +759,8 @@ class IDFConstructor():
             declared_name = name if len(by_name.get(name, ())) > 1 else database.get("iid") or name
             if not declared_name:
                 continue
-            sources.add(declared_name)
+            if not native:
+                sources.add(declared_name)
             declared.setdefault(declared_name, []).append(database)
             keys = {str(key).casefold() for key in (database.get("iid"), name, declared_name) if key}
             for key in keys:

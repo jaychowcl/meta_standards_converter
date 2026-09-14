@@ -1,0 +1,77 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+from copy import deepcopy
+from tests.test_native_archive_enrichment import native
+from tests.test_protocol_export import render
+from meta_standards_converter.miniml.archive_residuals import finalize
+
+
+def test_native_platforms_follow_explicit_instruments_and_mixed_scope():
+    data=native().to_mapping();sample=data['sample'][0]
+    assert data['platform']
+    platform={p['iid']:p for p in data['platform']}[sample['platform_ref']['ref']]
+    assert platform['title']==sample['sra_run'][0]['instrument_model']
+    assert not platform.get('accession')
+    run=deepcopy(sample['sra_run'][0]);run.update(run='SRR99',experiment='SRX99',instrument_model='Sequel II')
+    sample['sra_run'].append(run)
+    data=finalize(data,[]).to_mapping();sample=data['sample'][0]
+    assert len(data['platform'])==2
+    assert not sample.get('platform_ref')
+    assert len({r['platform_ref']['ref'] for r in sample['sra_run']})==2
+
+
+def test_native_database_is_repository_only_and_used_ontologies_export():
+    data=native().to_mapping()
+    assert not {'INSDC','NCBITaxon','EFO','UO'} & {d['iid'] for d in data['database']}
+    data['database'].extend([{'iid':'UBERON','name':'UBERON','url':'https://example.org/uberon.owl','version':'source-version'}, {'iid':'UNUSED','name':'UNUSED','version':'do not export'}])
+    data['series']['assay_paths'][0]['steps'][0]['characteristics'].append({'name':'tissue','value':'cortex','term_source_ref':'UBERON','term_accession_number':'UBERON:0000956'})
+    data=finalize(data,[]).to_mapping()
+    assert 'UBERON' not in {d['iid'] for d in data['database']}
+    rows={r[0]:r[1:] for r in render(data)}
+    assert 'UBERON' in rows['Term Source Name']
+    assert 'UNUSED' not in rows['Term Source Name']
+    assert 'SRA' not in rows['Term Source Name']
+    i=rows['Term Source Name'].index('UBERON')
+    assert rows['Term Source Version'][i]=='source-version'
+
+
+def test_identical_organizations_coalesce_without_merging_contacts_or_scopes():
+    data=native().to_mapping();sid=data['sample'][0]['iid']
+    data['organization']=[{'iid':'o1','name':'Lab','role':'owner','sample_accession':sid},
+                          {'iid':'o2','name':'Lab','role':'owner','sample_accession':'SAMN2'},
+                          {'iid':'o3','name':'Lab','role':'owner','address':{'city':'Elsewhere'}}]
+    data['contributor']=[{'iid':'c1','person':{'last':'Contact'},'organization_ref':{'ref':'o1'}},
+                         {'iid':'c2','person':{'last':'Contact'},'organization_ref':{'ref':'o2'}}]
+    data['series']['contributor_ref']=[{'ref':'c2'}];data['sample'][0]['contact_ref']=[{'ref':'c1'}]
+    data=finalize(data,[]).to_mapping()
+    assert len(data['organization'])==2
+    assert len(data['contributor'])==2
+    assert data['contributor'][0]['organization_ref']==data['contributor'][1]['organization_ref']
+    assert data['sample'][0]['contact_ref']==[{'ref':'c1'}]
+    assert data['series']['contributor_ref']==[{'ref':'c2'}]
+    org=next(o for o in data['organization'] if o['iid']=='o1')
+    assert {o['iid'] for o in org['source_occurrences']}=={'o1','o2'}
+    assert finalize(data,[]).to_mapping()==data
+
+
+def test_local_vocabulary_name_survives_repository_separation():
+    data=native().to_mapping();data['database'].append({'iid':'local-vocabulary','name':'Supplied vocabulary label'})
+    data['sample'][0]['channel'][0]['characteristics'].append({'name':'condition','value':'x','term_source_ref':'local-vocabulary'})
+    data=finalize(data,[]).to_mapping()
+    assert any(r['kind']=='term_source_declaration' and r['metadata']['name']=='Supplied vocabulary label' for r in data['extensions']['insdc']['records'])
+
+
+def test_missing_instrument_markers_do_not_create_platforms():
+    from meta_standards_converter.miniml.archive_entities import local_platforms
+    for literal in ('not provided', 'unspecified', 'missing: not reported'):
+        data={'source':{'format':'ENA'},'sample':[{'iid':'SAM1','sra_run':[{'run':'ERR1','instrument_model':literal}]}]}
+        local_platforms(data)
+        assert not data['platform']
+        assert not data['sample'][0].get('platform_ref')
+        assert data['sample'][0]['sra_run'][0]['instrument_model']==literal

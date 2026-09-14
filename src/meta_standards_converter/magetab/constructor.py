@@ -58,6 +58,12 @@ class AEConstructor:
         normalize_archive_dates(data)
         from meta_standards_converter.miniml.archive_administration import normalize_administration
         normalize_administration(data)
+        from ..miniml.archive_entities import local_platforms, coalesce_organizations, repository_databases
+        local_platforms(data)
+        coalesce_organizations(data)
+        declarations = repository_databases(data)
+        if declarations:
+            data.setdefault('extensions', {}).setdefault('insdc', {'version': '2.0', 'records': []})['records'].extend(declarations)
         from ..miniml.archive_paths import complete_native_paths
         complete_native_paths(data)
         from meta_standards_converter.magetab.protocol_export import prepare_protocols

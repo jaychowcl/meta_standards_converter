@@ -99,6 +99,9 @@ class Projection:
                 self.experiments.setdefault(run.get('experiment'), []).append(run)
         self.paths = self.series.get('assay_paths', [])
         self.actors = {v['iid']: v for k in ('organization','contributor') for v in data.get(k, [])}
+        for organization in data.get('organization', []):
+            for occurrence in organization.get('source_occurrences', []):
+                self.actors[occurrence['iid']] = {**organization, **occurrence}
         self.publications = {str(p['pubmed_id']): p for p in self.series.get('pubmed_publication', [])}
         self.ids = {a['value'] for a in self.series.get('accession', [])}
         self._mapped_characters = set()
@@ -393,6 +396,10 @@ def finalize(data, records=None):
     from .archive_administration import normalize_administration
     normalize_administration(data)
     records=deepcopy(records if records is not None else data.get('extensions',{}).get('insdc',{}).get('records',[]))
+    from .archive_entities import local_platforms, coalesce_organizations, repository_databases
+    local_platforms(data)
+    coalesce_organizations(data)
+    records.extend(r for r in repository_databases(data) if r not in records)
     from ..metadata.archive_enrichment import linked_accessions
     for acc in linked_accessions(data):
         if acc not in {a['value'] for a in data['series'].get('accession', [])} and not any(r.get('target')==acc for r in data['series'].get('relation', [])):

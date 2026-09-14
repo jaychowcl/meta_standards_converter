@@ -37,7 +37,7 @@ def test_platform_declarations_and_all_sample_references_are_imported():
     data, issues = merge_archive_metadata(enriched_native(), MINiMLCodec().decode(extra).package, prefer=True)
     data = data.to_mapping()
     assert not issues
-    platform = data['platform'][0]
+    platform = next(p for p in data['platform'] if p['iid'].endswith(':GPL13112'))
     assert data['sample'][0]['platform_ref'] == {'ref': platform['iid']}
     assert platform['accession'][0]['value'] == 'GPL13112'
     assert platform['contact_ref'][0]['ref'] in {c['iid'] for c in data['contributor']}
@@ -54,7 +54,9 @@ def test_idf_inline_contacts_affiliations_and_roles():
 
 def test_native_ontology_references_have_declarations():
     data = SRAParser().parse(fixture_records('sra')).to_mapping()
-    assert 'NCBITaxon' in {d['iid'] for d in data['database']}
+    assert 'NCBITaxon' not in {d['iid'] for d in data['database']}
+    from tests.test_protocol_export import render
+    assert 'NCBITaxon' in {r[0]: r[1:] for r in render(data)}['Term Source Name']
 
 
 def test_declared_archive_centers_are_organizations_without_invented_people():
