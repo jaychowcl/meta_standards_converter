@@ -4383,6 +4383,9 @@ Sample-only results export as `SAMPLE_FILE_*` source-node comments, with aligned
 
 Native result normalization recognizes a terminal three-member Cell Ranger MEX object only with one sample/run, common literal member identity and directory, affirmative method evidence and equal complete processing application blocks. The matrix remains a result node; `link.companion_files` contains `{role: "barcodes" | "features", node: <complete original file node>}`. The exporter emits associated `MATRIX_BARCODES_*` and `MATRIX_FEATURES_*` comments, without serial transformations. Existing companions, different application parameters/performers and ambiguous groups remain unchanged. Untyped malformed extras are retained without interpreting them as nodes. Minimal original topology remains in `extensions.insdc` `result_layout` records; represented file/method leaves do not duplicate complete source workflows in residuals.
 
+Aliased AE workflow residuals use a private inverse projection after final enrichment. A single native sample, experiment and run, an exact raw-file URI and the complete ordered material/protocol/file identities must establish a unique source-to-target path match. Full file facts and qualifiers must be represented before moved scan comments are pruned. Source document and descriptive names remain with ordered identity scaffolds whenever residual siblings exist. Filename-only MEX members are comparable only inside the same positively revalidated final companion bundle; ordinary filename-only outputs, conflicting checksums, unknown qualifiers, changed chronology and ambiguous source/target occurrences remain untouched. Only the documented biological `Organism` label can match canonical `organism`, with an identical complete value/ontology group; values and identifiers are not casefolded. This comparison changes neither core workflows nor saved input bytes.
+
+
 With GEO/AE enrichment enabled, exact GSE identifiers also probe the corresponding
 legacy E-GEOD accession. This is a lookup candidate until the returned study shares
 a verified core identifier; absent or mismatched records do not redefine native
@@ -4671,6 +4674,7 @@ Residual projection and entity helpers:
 | `meta_standards_converter.miniml.archive_residuals.Projection.xml` | `xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None, citation=None)` |
 | `meta_standards_converter.miniml.archive_residuals.Projection.indexed` | `indexed(self, metadata, kind, acc)` |
 | `meta_standards_converter.miniml.archive_residuals.source_records` | `source_records(package)` |
+| `meta_standards_converter.miniml.archive_workflow_residuals.prune_bound_workflows` | `prune_bound_workflows(source, target, residual, provider, accession)` |
 | `meta_standards_converter.miniml.archive_residuals.finalize` | `finalize(data, records=None)` |
 | `meta_standards_converter.miniml.insdc_support.result_file` | `result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=True)` |
 | `meta_standards_converter.sources.ena.ENASource.fetch_reference_ranges` | `fetch_reference_ranges(self, records)` |

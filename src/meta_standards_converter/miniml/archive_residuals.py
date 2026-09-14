@@ -507,6 +507,9 @@ def finalize(data, records=None):
             # snapshot is made. Saved packages are compared by those exact IDs.
             view = _mapped_date_view(metadata, comparison, workflows=kind=='MINiML_workflows')
             left=diff(view,comparison if kind=='MINiML' else comparison['series'])
+            if kind == 'MINiML':
+                from .archive_workflow_residuals import prune_bound_workflows
+                left = prune_bound_workflows(view, data, left, record['provider'], acc)
         elif isinstance(metadata,dict) and 'tag' in metadata:
             if kind=='PubmedArticle' and not acc:
                 acc=child_text(metadata,'MedlineCitation/PMID') or None
