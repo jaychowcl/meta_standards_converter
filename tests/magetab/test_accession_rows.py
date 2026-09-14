@@ -60,3 +60,13 @@ def test_final_accession_partition_is_idempotent_and_preserves_conflicting_label
     expanded = [[VALUE, 'CUSTOM'], [SOURCE, 'A'], [VALUE, 'CUSTOM'], [SOURCE, 'B']]
     assert expand_secondary_accession_rows(rows) == expanded
     assert expand_secondary_accession_rows(expanded) == expanded
+
+
+@pytest.mark.parametrize('sources', [('SourceA', 'SourceB'), ('SourceB', 'SourceA')])
+def test_conflicting_sources_survive_complete_parse_export(sources):
+    comments = ''.join(f'{VALUE}\tCUSTOM\n{SOURCE}\t{source}\n' for source in sources)
+    data = AEParser().parse(resolved_input(idf='Investigation Accession\tE-MTAB-1\n' + comments))
+    pairs = [(a['value'], a.get('database')) for a in data.to_mapping()['series']['accession'] if a['value'] == 'CUSTOM']
+    assert pairs == [('CUSTOM', source) for source in sources]
+    from meta_standards_converter.magetab.accession_rows import secondary_accession_pairs
+    assert secondary_accession_pairs(AEConstructor().miniml2magetab(data)) == pairs

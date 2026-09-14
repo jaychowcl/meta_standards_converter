@@ -4236,6 +4236,8 @@ expands each secondary accession into its own row followed immediately by its
 source row, retaining core accession order. Import accepts this repeated-row
 layout and legacy multi-column rows; it pairs physical occurrences and column
 positions before filtering blanks, so a missing source never shifts later labels.
+Conflicting supplied source labels for an otherwise unclassified accession remain
+distinct coupled accession/source values through import and export.
 These corrections cover all routes through the constructor,
 without changing `json2ae` orchestration or saved input files. Publication and
 export acceptance tests live in `tests/test_archive_publications.py` and
@@ -4269,6 +4271,8 @@ Indexed values fill only uniquely determined missing facts; conflicting values
 remain residual. A family alone may declare a local platform without inventing a
 model. Compatible existing local declarations complete in place, preserving their
 IDs; conflicting families never choose an arbitrary shared declaration. Registered
+declarations shared with a run whose family is unknown are not completed from a
+different run's family; the richer run gets a separate local reference. Registered
 GPL references remain intact. Saved residual family evidence is recoverable only
 through an explicit experiment/run identity, without network access. No family,
 GPL accession or manufacturer is inferred from an instrument model.

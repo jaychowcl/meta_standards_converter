@@ -187,7 +187,7 @@ class IDFConstructor():
     def _append_secondary_accession(
         self,
         pairs: list[tuple[str, str | None]],
-        seen: set[str],
+        seen: set[tuple[str, str | None]],
         accession,
         declared_source=None,
     ) -> None:
@@ -195,18 +195,13 @@ class IDFConstructor():
         if not accession or re.fullmatch(r"E-[A-Z]+-\d+", accession, re.IGNORECASE):
             return
 
-        dedupe_key = accession.upper()
+        source = self._secondary_accession_source(accession=accession, declared_source=declared_source)
+        dedupe_key = (accession.upper(), source)
         if dedupe_key in seen:
             return
 
         seen.add(dedupe_key)
-        pairs.append((
-            accession,
-            self._secondary_accession_source(
-                accession=accession,
-                declared_source=declared_source,
-            ),
-        ))
+        pairs.append((accession, source))
 
     def _secondary_accession_source(self, accession: str, declared_source=None):
         prefix_sources = {

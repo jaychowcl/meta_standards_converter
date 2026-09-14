@@ -179,7 +179,8 @@ def local_platforms(data):
                 # family when its associated runs explicitly disagree.
                 associated = [r for r in original_runs if r.get('platform_ref', {}).get('ref') == p['iid']
                               or (not r.get('platform_ref') and all(r.get(k) == v for k, v in existing.items()))]
-                if any(k not in existing and len({r[k] for r in associated if informative(r.get(k))}) > 1 for k in facts):
+                if any(k not in existing and any(r.get(k) != value for r in associated)
+                       for k, value in facts.items()):
                     continue
                 candidates.append(p)
             exact_ref = [p for p in candidates if p['iid'] == old_ref]

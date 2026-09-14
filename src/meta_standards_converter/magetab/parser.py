@@ -281,26 +281,22 @@ class AEParser:
         investigation = self._nonblank(idf, "Investigation Accession")
         arrayexpress = self._nonblank(idf, "Comment[ArrayExpressAccession]")
         pairs = secondary_accession_pairs(idf_rows)
-        secondary = [value for value, _ in pairs]
-        source_by_secondary = {
-            accession.casefold(): source for accession, source in pairs if source
-        }
         candidates = [
-            *[value for value in secondary if value.upper().startswith("GSE")],
-            *investigation,
-            *arrayexpress,
-            *secondary,
+            *[pair for pair in pairs if pair[0].upper().startswith("GSE")],
+            *[(value, self._accession_database(value)) for value in [*investigation, *arrayexpress]],
+            *pairs,
         ]
         accessions = []
         seen = set()
-        for value in candidates:
-            key = value.casefold()
+        for value, source in candidates:
+            database = source or self._accession_database(value)
+            key = (value.casefold(), database)
             if key in seen:
                 continue
             seen.add(key)
             accessions.append({
                 "value": value,
-                "database": source_by_secondary.get(key) or self._accession_database(value),
+                "database": database,
             })
         if not accessions:
             raise ValueError("MAGE-TAB IDF contains no usable investigation or secondary accession.")

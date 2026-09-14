@@ -117,3 +117,15 @@ def test_two_explicit_families_cannot_mutate_one_existing_model_declaration():
     before = deepcopy(data)
     local_platforms(data)
     assert data == before
+
+
+def test_completing_one_run_family_cannot_assign_it_to_unknown_runs():
+    data = {'source': {'format': 'SRA'}, 'platform': [{'iid': 'sra:platform:old', 'title': 'Model', 'instrument_model': 'Model'}],
+        'sample': [{'iid': 'SRS1', 'sra_run': [
+            {'run': 'SRR1', 'instrument_model': 'Model', 'instrument_platform': 'ILLUMINA', 'platform_ref': {'ref': 'sra:platform:old'}},
+            {'run': 'SRR2', 'instrument_model': 'Model', 'platform_ref': {'ref': 'sra:platform:old'}}]}]}
+    local_platforms(data)
+    assert not data['platform'][0].get('instrument_platform')
+    assert data['sample'][0]['sra_run'][1]['platform_ref']['ref'] == 'sra:platform:old'
+    assert data['sample'][0]['sra_run'][0]['platform_ref']['ref'] != 'sra:platform:old'
+    assert not data['sample'][0].get('platform_ref')
