@@ -16,6 +16,7 @@ import os
 import re
 from urllib.parse import urlparse
 from meta_standards_converter.magetab.semantics import build_model, validate_model
+from meta_standards_converter.magetab.accession_rows import secondary_accession_pairs
 from meta_standards_converter.sources.magetab import MAGETabInput
 from meta_standards_converter.miniml import MINiMLV1Migrator
 
@@ -131,7 +132,7 @@ class AEParser:
             raise ValueError(f"MAGE-TAB IDF {source.idf.name} is empty.")
         idf = self._idf_index(idf_rows)
         protocols = self._protocols(idf)
-        series = self._series(idf)
+        series = self._series(idf, idf_rows)
         idf_comments = self._idf_comments(idf_rows)
         if idf_comments:
             series["comments"] = idf_comments
@@ -276,15 +277,13 @@ class AEParser:
     def _first(self, idf: dict, label: str):
         return next(iter(self._nonblank(idf, label)), None)
 
-    def _series(self, idf: dict) -> dict:
+    def _series(self, idf: dict, idf_rows: list) -> dict:
         investigation = self._nonblank(idf, "Investigation Accession")
         arrayexpress = self._nonblank(idf, "Comment[ArrayExpressAccession]")
-        secondary = self._nonblank(idf, "Comment[SecondaryAccession]")
-        secondary_sources = self._values(idf, "Comment[SecondaryAccessionTermSourceRef]")
+        pairs = secondary_accession_pairs(idf_rows)
+        secondary = [value for value, _ in pairs]
         source_by_secondary = {
-            accession.casefold(): secondary_sources[index].strip()
-            for index, accession in enumerate(secondary)
-            if index < len(secondary_sources) and secondary_sources[index].strip()
+            accession.casefold(): source for accession, source in pairs if source
         }
         candidates = [
             *[value for value in secondary if value.upper().startswith("GSE")],

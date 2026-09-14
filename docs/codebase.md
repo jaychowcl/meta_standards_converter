@@ -4231,11 +4231,15 @@ evidence; original supplied definitions and authored ordering remain intact.
 The final `AEConstructor` boundary applies the existing stable comment partition
 **after** the semantic overlay, so no ordinary IDF row follows a comment.
 Verified `E-...` ArrayExpress accessions appear only in
-`Comment[ArrayExpressAccession]`; other secondary accession/value-source pairs
-remain aligned. These corrections cover all routes through the constructor,
+`Comment[ArrayExpressAccession]`. After semantic overlays, `accession_rows`
+expands each secondary accession into its own row followed immediately by its
+source row, retaining core accession order. Import accepts this repeated-row
+layout and legacy multi-column rows; it pairs physical occurrences and column
+positions before filtering blanks, so a missing source never shifts later labels.
+These corrections cover all routes through the constructor,
 without changing `json2ae` orchestration or saved input files. Publication and
 export acceptance tests live in `tests/test_archive_publications.py` and
-`tests/test_archive_export_cleanup.py`.
+`tests/test_archive_export_cleanup.py` and `tests/magetab/test_accession_rows.py`.
 
 
 <a id="native-archive-contract"></a>

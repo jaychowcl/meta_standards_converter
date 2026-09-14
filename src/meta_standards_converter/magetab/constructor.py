@@ -106,7 +106,9 @@ class AEConstructor:
         if sdrf_index is None:
             raise ValueError("IDF does not contain an SDRF File row.")
         idf[sdrf_index] = ["SDRF File", sdrf, *idf[sdrf_index][2:]]
-        result = IDFConstructor()._move_comment_rows_to_bottom(overlay_miniml_semantics(data, idf))
+        from .accession_rows import expand_secondary_accession_rows
+        result = IDFConstructor()._move_comment_rows_to_bottom(
+            expand_secondary_accession_rows(overlay_miniml_semantics(data, idf)))
         if data.get('source', {}).get('format') in ('ENA', 'SRA'):
             from .native_file_selection import prune_empty_file_columns
             for row in result:
