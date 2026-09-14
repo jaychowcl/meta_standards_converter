@@ -150,3 +150,53 @@ def test_linked_document_names_do_not_split_native_export():
     extra['series']['assay_paths'][0]['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv','link':{'value':'https://example.org/counts.tsv'}})
     result,issues=merge(extra);assert not issues
     render(result.to_mapping())
+
+
+def test_filename_only_result_projection_reuses_complete_explicit_path():
+    extra=workflow().to_mapping();path=extra['series']['assay_paths'][0]
+    path['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv'})
+    extra['sample'][0]['supplementary_data']=[{'value':'counts.tsv','type':'TXT'}]
+    result,issues=merge(extra);assert not issues
+    files=[(p,s) for p in result.to_mapping()['series']['assay_paths'] for s in p['steps'] if s.get('name')=='counts.tsv']
+    assert len(files)==1
+    assert any(s['kind']=='assay' for s in files[0][0]['steps'])
+    assert files[0][1]['link']=={'value':'counts.tsv','type':'TXT'}
+
+
+@pytest.mark.parametrize('change',['kind','uri','format','compressed','container'])
+def test_filename_result_coverage_does_not_conflate_distinct_file_evidence(change):
+    extra=workflow().to_mapping();node={'kind':'derived_array_data_file','name':'counts.tsv'}
+    link={'value':'counts.tsv','type':'TXT'}
+    if change=='kind':node['kind']='array_data_file'
+    if change=='uri':link['value']='https://results/counts.tsv'
+    if change=='format':node['link']={'value':'counts.tsv','type':'HDF5'}
+    if change=='compressed':link['value']='counts.tsv.gz'
+    if change=='container':link['value']='results.zip'
+    extra['series']['assay_paths'][0]['steps'].append(node)
+    extra['sample'][0]['supplementary_data']=[link]
+    result,issues=merge(extra);assert not issues
+    files=[s for p in result.to_mapping()['series']['assay_paths'] for s in p['steps'] if s.get('name') in {'counts.tsv',link['value'].rsplit('/',1)[-1]}]
+    assert len(files)==2
+
+
+@pytest.mark.parametrize('comment',[{'name':'File format','value':'HDF5'},{'name':'File URI','value':'https://results/counts.tsv'}])
+def test_filename_only_projection_respects_existing_comment_metadata(comment):
+    extra=workflow().to_mapping();extra['series']['assay_paths'][0]['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv','comments':[comment]})
+    extra['sample'][0]['supplementary_data']=[{'value':'counts.tsv','type':'TXT'}]
+    result,issues=merge(extra);assert not issues
+    files=[s for p in result.to_mapping()['series']['assay_paths'] for s in p['steps'] if s.get('name')=='counts.tsv']
+    assert len(files)==2
+
+
+@pytest.mark.parametrize('details,link',[
+ ({'link':{'value':'counts.tsv','checksum':'a'*32,'checksum_method':'MD5'}},{'value':'counts.tsv','checksum':'b'*32,'checksum_method':'MD5'}),
+ ({'comments':[{'name':'FASTQ_MD5','value':'a'*32}]},{'value':'counts.tsv','md5':'b'*32}),
+ ({'comments':[{'name':'BYTES','value':'123'}]},{'value':'counts.tsv','bytes':'456'}),
+ ({'comments':[{'name':'Checksum method','value':'SHA256'}]},{'value':'counts.tsv','checksum_method':'MD5'}),
+])
+def test_filename_projection_preserves_cross_representation_file_conflicts(details,link):
+    extra=workflow().to_mapping();extra['series']['assay_paths'][0]['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv',**details})
+    extra['sample'][0]['supplementary_data']=[link]
+    result,issues=merge(extra);assert not issues
+    files=[s for p in result.to_mapping()['series']['assay_paths'] for s in p['steps'] if s.get('name')=='counts.tsv']
+    assert len(files)==2

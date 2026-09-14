@@ -120,3 +120,30 @@ def test_saved_peer_vocabulary_conflicts_remap_both_core_and_retained_declaratio
     assert traits['Peer trait']['term_source_ref']==data['series']['iid']+':LOCAL'
     rows={r[0]:r[1:] for r in render(data)}
     assert len(rows['Term Source Name'])==len(set(rows['Term Source Name']))
+    peer=rows['Term Source Name'].index(data['series']['iid']+':LOCAL')
+    assert rows['Term Source File'][peer]=='https://peer/vocab'
+
+
+def test_repeated_enrichment_namespaces_changed_vocabulary_versions_without_collision():
+    from tests.test_native_archive_enrichment import linked
+    from meta_standards_converter.miniml import MINiMLCodec
+    from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
+    data=native().to_mapping();data['database'].append({'iid':'LOCAL','name':'Native vocabulary'})
+    package=finalize(data,[])
+    refs=[]
+    for version in ('1','2','2'):
+        extra=linked(native(),'E-MTAB-1','title').to_mapping()
+        extra['database']=[{'iid':'LOCAL','name':'Incoming vocabulary','url':'https://incoming/vocab','version':version}]
+        extra['sample'][0]['channel'][0]['characteristics']=[{'name':'trait version '+version,'value':version,'term_source_ref':'LOCAL'}]
+        package,issues=merge_archive_metadata(package,MINiMLCodec().decode(extra).package,prefer=True)
+        assert not issues
+        data=package.to_mapping();traits={c['name']:c for c in data['sample'][0]['channel'][0]['characteristics']}
+        refs.append(traits['trait version '+version]['term_source_ref'])
+    assert refs[0]!=refs[1] and refs[1]==refs[2]
+    records=[r['metadata'] for r in data['extensions']['insdc']['records'] if r['kind']=='term_source_declaration']
+    assert len({r['iid'] for r in records})==len(records)
+    rows={r[0]:r[1:] for r in render(data)}
+    for ref,version in zip(refs[:2],('1','2')):
+        i=rows['Term Source Name'].index(ref)
+        assert rows['Term Source Version'][i]==version
+        assert rows['Term Source File'][i]=='https://incoming/vocab'

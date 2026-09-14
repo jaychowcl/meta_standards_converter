@@ -11,11 +11,37 @@ from collections import OrderedDict
 from .model import SDRFPath, ColumnGroup, SDRFEdge, SDRFAttr
 
 class SDRFRenderer:
+    preserve_order = False
+
+    def __init__(self, *, preserve_order=False):
+        self.preserve_order = preserve_order
+
     def plan_columns(self, paths: list[SDRFPath]) -> list[ColumnGroup]:
         columns = OrderedDict()
+        constraints = set()
         for path in paths:
-            for group, values in self.path_groups(path=path):
+            groups = self.path_groups(path=path)
+            for group, values in groups:
                 self.merge_column_group(columns=columns, group=group)
+            constraints.update((a[0].main_key,b[0].main_key) for a,b in zip(groups,groups[1:]))
+        if self.preserve_order:
+            import heapq
+            position = {key:i for i,key in enumerate(columns)}
+            edges = {key:set() for key in columns}
+            degree = {key:0 for key in columns}
+            for before,after in constraints:
+                edges[before].add(after); degree[after] += 1
+            ready = [(position[key],key) for key in columns if not degree[key]]
+            heapq.heapify(ready); ordered = []
+            while ready:
+                _,key = heapq.heappop(ready); ordered.append(columns[key])
+                for after in edges[key]:
+                    degree[after] -= 1
+                    if not degree[after]: heapq.heappush(ready,(position[after],after))
+            if len(ordered) != len(columns):
+                blocked = ', '.join(key for key in columns if degree[key])
+                raise ValueError('Incompatible native SDRF path ordering: ' + blocked)
+            return ordered
         return list(columns.values())
 
 
@@ -67,9 +93,15 @@ class SDRFRenderer:
     def path_groups(self, path: SDRFPath) -> list[tuple[ColumnGroup, dict]]:
         groups = []
         counts = {}
-        for part in path.parts:
+        node_keys = []
+        if self.preserve_order:
+            for part in path.parts:
+                node_keys.append(None if isinstance(part, SDRFEdge) else self.occurrence_key(counts=counts, label=part.kind))
+            counts = {}
+        for index, part in enumerate(path.parts):
             if isinstance(part, SDRFEdge):
-                key = self.occurrence_key(counts=counts, label="Protocol REF")
+                anchor = next((k for k in node_keys[index+1:] if k is not None), 'END') if self.preserve_order else None
+                key = self.occurrence_key(counts=counts, label="Protocol REF" + ('@' + anchor if anchor else ''))
                 groups.append(self.group_with_values(
                     key=key,
                     label="Protocol REF",
@@ -78,7 +110,7 @@ class SDRFRenderer:
                 ))
                 continue
 
-            key = self.occurrence_key(counts=counts, label=part.kind)
+            key = node_keys[index] if self.preserve_order else self.occurrence_key(counts=counts, label=part.kind)
             groups.append(self.group_with_values(
                 key=key,
                 label=part.kind,

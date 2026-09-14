@@ -40,16 +40,23 @@ def merge_declarations(data, extra, namespace):
                     document.setdefault('database', []).append(deepcopy(declaration))
                     known.add(declaration['iid'])
     existing = {d['iid']: d for d in data.get('database', [])}
+    def conflicts(old, incoming):
+        return old and any(old.get(k) and incoming.get(k) and old[k] != incoming[k]
+                           for k in ('name', 'url', 'uri', 'version'))
     for incoming in extra.get('database', []):
         iid = incoming['iid']
         old = existing.get(iid)
-        conflicts = old and any(old.get(k) and incoming.get(k) and old[k] != incoming[k]
-                                for k in ('name', 'url', 'uri', 'version'))
-        if conflicts and iid not in global_ids:
-            incoming['iid'] = mappings[iid] = namespace + iid
-            old = None
+        if conflicts(old, incoming) and iid not in global_ids:
+            candidate, suffix = namespace + iid, 2
+            while conflicts(existing.get(candidate), incoming):
+                candidate = namespace + iid + ':' + str(suffix)
+                suffix += 1
+            incoming['iid'] = mappings[iid] = candidate
+            old = existing.get(candidate)
         if old is None:
-            data.setdefault('database', []).append(deepcopy(incoming))
+            new = deepcopy(incoming)
+            data.setdefault('database', []).append(new)
+            existing[new['iid']] = new
         else:
             for key, value in incoming.items():
                 if value and not old.get(key):
@@ -116,6 +123,36 @@ def _file_uri(value):
     if isinstance(value, str) and value.startswith('ftp.sra.ebi.ac.uk/'):
         return 'ftp://ftp.sra.ebi.ac.uk/' + quote(value.split('/', 1)[1], safe="/%:@!$&'()*+,;=-._~")
     return value
+
+
+def _file_projection_facts(node):
+    """Comparable file annotations, independent of link/comment spelling."""
+    aliases = {'file format': 'type', 'format': 'type', 'file uri': 'value',
+               'uri': 'value', 'fastq uri': 'value', 'file size': 'bytes',
+               'size': 'bytes', 'fastq bytes': 'bytes', 'fastq md5': 'md5',
+               'checksum algorithm': 'checksum method'}
+    facts = {}
+    entries = list(node.get('link', {}).items()) + [
+        (c.get('name', ''), c.get('value')) for c in node.get('comments', [])]
+    for name, value in entries:
+        if value in (None, ''):
+            continue
+        key = name.lower().replace('_', ' ')
+        key = aliases.get(key, key)
+        if key == 'md5':
+            facts.setdefault('checksum method', set()).add('md5')
+            key = 'checksum'
+        text = str(value)
+        if key == 'checksum method':
+            text = text.lower()
+        facts.setdefault(key, set()).add(text)
+    return facts
+
+
+def _compatible_file_projection(existing, incoming):
+    """Decline consolidation when any shared annotation conflicts."""
+    old, new = _file_projection_facts(existing), _file_projection_facts(incoming)
+    return all(old[k] == new[k] and len(old[k]) == 1 for k in old.keys() & new.keys())
 
 
 def _prepare_path(path, target, proto_names):
@@ -305,12 +342,23 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
                     for file in run.get('files') or run.get('fastq_files', []):
                         if file.get('uri') or file.get('filename'):
                             paths.append({'steps': deepcopy(prefixes[0]) + [file_node(file)]})
-            represented = {s.get('link', {}).get('value') for p in paths
-                           if any(n.get('sample_ref') == target for n in p['steps']) for s in p['steps']}
             for field, kind in [('raw_data', 'array_data_file'), ('supplementary_data', 'derived_array_data_file')]:
                 for link in source.get(field, []):
-                    if link.get('value') and _file_uri(link['value']) not in represented:
-                        paths.append({'steps': [_biological_node(samples[target]), file_node(link, kind)]})
+                    if link.get('value'):
+                        node = file_node(link, kind)
+                        matches = [s for p in paths if {n.get('sample_ref') for n in p['steps'] if n.get('sample_ref')} == {target}
+                                   for s in p['steps'] if s['kind'] == kind and (
+                                       s.get('link', {}).get('value') == _file_uri(link['value'])
+                                       or (s.get('name') == node['name'] == link['value']
+                                           and not s.get('link', {}).get('value')))]
+                        compatible_files = matches and all(_compatible_file_projection(s, node) for s in matches)
+                        if compatible_files:
+                            for s in matches:
+                                s.setdefault('link', {}).update(node.get('link', {}))
+                                for comment in node.get('comments', []):
+                                    if comment not in s.setdefault('comments', []): s['comments'].append(deepcopy(comment))
+                        else:
+                            paths.append({'steps': [_biological_node(samples[target]), node]})
     for path in paths:
         for step in path['steps']:
             sample = samples.get(step.get('sample_ref'))

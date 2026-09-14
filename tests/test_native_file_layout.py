@@ -234,3 +234,41 @@ def test_sparse_explicit_uri_completes_filename_only_longer_branch():
         data['series']['assay_paths']=deepcopy(sequence)
         paths=projected(data)
         assert len(paths)==1 and ('FASTQ_URI','ftp://reads/one_1.fastq.gz') in comments(paths[0])
+
+
+@pytest.mark.parametrize('sparse_first',[False,True])
+def test_native_sdrf_columns_preserve_each_acquisition_and_result_path(sparse_first):
+    data=package();base=deepcopy(data['series']['assay_paths'][0]['steps']);source=deepcopy(base[0])
+    data['series']['protocols']=[{'name':'prep','description':'Prepare explicit material','type':{'value':'nucleic acid extraction protocol'}},
+                               {'name':'process','description':'Process explicit result','type':{'value':'normalization data transformation protocol'}}]
+    base=[s for s in base if s['kind']!='protocol_application']
+    base[1:1]=[{'kind':'protocol_application','protocol_ref':'prep'},{'kind':'extract','name':'explicit extract','material_type':{'value':'RNA'}}]
+    result={'kind':'derived_array_data_file','name':'counts.tsv','link':{'value':'https://results/counts.tsv'}}
+    processing={'kind':'protocol_application','protocol_ref':'process'}
+    full={'steps':base+[deepcopy(processing),deepcopy(result)]}
+    sparse={'steps':[source,processing,{**result,'name':'sample.tsv','link':{'value':'https://results/sample.tsv'}}]}
+    data['series']['assay_paths']=[sparse,full] if sparse_first else [full,sparse]
+    rows={r[0]:r[1:] for r in render(data)};table=rows['SDRF File'][0];header=table[0]
+    assert header.index('Extract Name')<header.index('Assay Name')<header.index('Scan Name')<header.index('Derived Array Data File')
+    descriptions=dict(zip(rows['Protocol Name'],rows['Protocol Description']))
+    for row in table[1:]:
+        methods=[descriptions[v] for k,v in zip(header,row) if k=='Protocol REF' and v]
+        if row[header.index('Assay Name')]:assert methods==['Prepare explicit material','Process explicit result']
+        else:assert methods==['Process explicit result']
+
+
+def test_ordered_native_renderer_keeps_protocol_blocks_repeated_materials_and_end():
+    from meta_standards_converter.magetab.semantics import render_miniml_assay_documents
+    paths=[{'steps':[{'kind':'source','name':'s'},{'kind':'protocol_application','protocol_ref':'a'},
+                     {'kind':'protocol_application','protocol_ref':'b'},{'kind':'extract','name':'e1'},
+                     {'kind':'protocol_application','protocol_ref':'c'},{'kind':'extract','name':'e2'},
+                     {'kind':'protocol_application','protocol_ref':'end'}]},
+           {'steps':[{'kind':'source','name':'s2'},{'kind':'protocol_application','protocol_ref':'only'},
+                     {'kind':'extract','name':'e3'}]}]
+    table=next(iter(render_miniml_assay_documents(paths,preserve_order=True).values()))
+    assert [v for v in table[1] if v]==['s','a','b','e1','c','e2','end']
+    assert [v for v in table[2] if v]==['s2','only','e3']
+    crossing=[{'steps':[{'kind':'source','name':'s'},{'kind':'assay','name':'a'},{'kind':'scan','name':'r'}]},
+              {'steps':[{'kind':'source','name':'s2'},{'kind':'scan','name':'r2'},{'kind':'assay','name':'a2'}]}]
+    with pytest.raises(ValueError,match='Incompatible native SDRF path ordering'):
+        render_miniml_assay_documents(crossing,preserve_order=True)

@@ -4189,6 +4189,20 @@ every matching branch; ambiguous filename-only locations and conflicting metadat
 remain separate. The projector creates no raw/processed cross-products. Stored MINiML file occurrences and GEO/AE layouts
 are unchanged. `tests/test_native_file_layout.py` covers these contracts.
 
+Native explicit SDRFs opt into `SDRFRenderer(preserve_order=True)`. Protocol
+column identities follow their destination node occurrence and position within an
+adjacent protocol block. Main column groups are topologically ordered from every
+path, keeping units and ontology companions attached. This prevents a sparse
+sample-result row from placing result columns before materials in complete rows.
+Incompatible ordering cycles produce an explicit error. Generic GEO/AE rendering
+retains its existing layout. Filename-only sample result projections reuse an
+already supplied same-sample/kind file node only when link/annotation metadata is
+compatible and completed together; full URI locations and archive containers remain
+distinct from unlocated members. Explicit URI, format, size and checksum aliases are
+compared across link fields and comments before consolidation. Repeated enrichment
+reuses a compatible vocabulary declaration or allocates a deterministic unused
+namespaced ID when its version or other identity details conflict.
+
 The final `AEConstructor` boundary applies the existing stable comment partition
 **after** the semantic overlay, so no ordinary IDF row follows a comment.
 Verified `E-...` ArrayExpress accessions appear only in

@@ -505,7 +505,7 @@ def finalize(data, records=None):
         if not left:continue
         item={**record,'accession':acc,'metadata':left}
         if kind == 'term_source_declaration':
-            compatible = next((r for r in residual if r['kind'] == kind and r.get('accession') == acc
+            compatible = next((r for r in residual if r['kind'] == kind and r['metadata'].get('iid') == left.get('iid')
                               and all(not r['metadata'].get(k) or not v or r['metadata'][k] == v for k,v in left.items())), None)
             if compatible is not None:
                 compatible['metadata'].update({k:v for k,v in left.items() if v and not compatible['metadata'].get(k)})

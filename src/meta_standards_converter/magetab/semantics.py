@@ -320,7 +320,8 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
             _replace_row(rows, 'Comment[Study supplementary file]', [v['value'] for v in files])
             _replace_row(rows, 'Comment[Study supplementary file type]', [v.get('type', '') for v in files])
     from .harmonized import bind_sample_groups
-    assay_table = _render_miniml_assay_paths(bind_sample_groups(package, series.get("assay_paths")))
+    assay_table = _render_miniml_assay_paths(bind_sample_groups(package, series.get("assay_paths")),
+        preserve_order=package.get('source', {}).get('format') in {'ENA', 'SRA'})
     if assay_table:
         _replace_row(rows, "SDRF File", [assay_table])
     _insert_retained_patch_comments(package, rows)
@@ -410,8 +411,8 @@ def _ontology_field(value, field):
     return value.get(field, "") if isinstance(value, dict) else ""
 
 
-def _render_miniml_assay_paths(paths) -> list | None:
-    documents = render_miniml_assay_documents(paths)
+def _render_miniml_assay_paths(paths, *, preserve_order=False) -> list | None:
+    documents = render_miniml_assay_documents(paths, preserve_order=preserve_order)
     if not documents:
         return None
     tables = list(documents.values())
@@ -423,15 +424,15 @@ def _render_miniml_assay_paths(paths) -> list | None:
     return [header, *(row for table in tables for row in table[1:])]
 
 
-def render_miniml_assay_documents(paths) -> dict[str, list[list]]:
+def render_miniml_assay_documents(paths, *, preserve_order=False) -> dict[str, list[list]]:
     grouped = {}
     for index, path in enumerate(paths if isinstance(paths, list) else []):
         if isinstance(path, dict):
             grouped.setdefault(str(path.get("document") or "study.sdrf.txt"), []).append(path)
-    return {name: _render_assay_path_group(values) for name, values in grouped.items()}
+    return {name: _render_assay_path_group(values, preserve_order=preserve_order) for name, values in grouped.items()}
 
 
-def _render_assay_path_group(paths) -> list[list]:
+def _render_assay_path_group(paths, *, preserve_order=False) -> list[list]:
     from .sdrf.model import SDRFPath, SDRFNode, SDRFEdge, SDRFAttr
     from .sdrf.renderer import SDRFRenderer
     rendered = []
@@ -464,7 +465,7 @@ def _render_assay_path_group(paths) -> list[list]:
                 last = attr
             parts.append(part)
         rendered.append(SDRFPath(parts))
-    renderer = SDRFRenderer()
+    renderer = SDRFRenderer(preserve_order=preserve_order)
     return renderer.render_paths(renderer.plan_columns(rendered), rendered)
 
 
