@@ -102,3 +102,49 @@ def test_partial_ae_workflow_does_not_project_sample_protocols_onto_other_experi
     for path in data['series']['assay_paths']:
         if any(s.get('name')=='SRX99' for s in path['steps']):
             assert not any('First experiment' in protocols.get(s.get('protocol_ref'),{}).get('description','') for s in path['steps'])
+
+
+def test_authored_extraction_and_scanning_are_not_projected_as_duplicate_methods():
+    from meta_standards_converter.miniml.archive_paths import complete_native_paths
+    data=native().to_mapping();sid=data['sample'][0]['iid'];steps=data['series']['assay_paths'][0]['steps']
+    definitions=[{'name':'P-MTAB-1','type':{'value':'nucleic_acid_extraction'},'description':'Extract RNA. '},
+                 {'name':'P-MTAB-2','type':{'value':'scanning'},'description':'Call bases.'}]
+    data['series']['assay_paths']=[data['series']['assay_paths'][0]]
+    data['series'].setdefault('protocols',[]).extend(definitions)
+    steps[1:1]=[{'kind':'protocol_application','protocol_ref':'P-MTAB-1'},{'kind':'extract','name':'authored','material_type':{'value':'RNA'},'sample_ref':sid},
+                {'kind':'protocol_application','protocol_ref':'P-MTAB-2'}]
+    data['sample'][0]['channel'][0]['extract_protocol']='Extract RNA.'
+    data['sample'][0]['scan_protocol']='Call bases.'
+    before=deepcopy(data['series']['protocols'])
+    complete_native_paths(data)
+    assert data['series']['protocols']==before
+    assert sum(s.get('protocol_ref')=='P-MTAB-2' for s in steps)==1
+    # Previously saved generated copies are safely removed only when authored
+    # applications already represent them on all relevant sample acquisitions.
+    duplicate=data['series']['iid']+':'+sid+':scan_protocol'
+    data['series']['protocols'].append({'name':duplicate,'type':{'value':'nucleic acid sequencing protocol'},'description':'Call bases.'})
+    steps.insert(next(i for i,s in enumerate(steps) if s['kind']=='scan'),{'kind':'protocol_application','protocol_ref':duplicate})
+    complete_native_paths(data)
+    assert data['series']['protocols']==before
+    assert not any(s.get('protocol_ref')==duplicate for s in steps)
+
+
+def test_authored_processing_does_not_hide_uncovered_derived_matrix_branch():
+    from meta_standards_converter.miniml.archive_paths import complete_native_paths
+    data=native().to_mapping();sid=data['sample'][0]['iid']
+    data['sample'][0]['data_processing']='Count reads.'
+    data['series'].setdefault('protocols',[]).append({'name':'P-MTAB-1','type':{'value':'normalization'},'description':'Count reads.'})
+    data['series']['assay_paths']=[
+        {'steps':[{'kind':'source','name':sid,'sample_ref':sid},
+                  {'kind':'protocol_application','protocol_ref':'P-MTAB-1'},
+                  {'kind':'derived_array_data_file','name':'counts.tsv'}]},
+        {'steps':[{'kind':'source','name':sid,'sample_ref':sid},
+                  {'kind':'derived_array_data_matrix_file','name':'counts.mtx'}]}]
+    complete_native_paths(data)
+    methods={p['name']:p for p in data['series']['protocols']}
+    for path in data['series']['assay_paths']:
+        applications=[s['protocol_ref'] for s in path['steps'] if s.get('protocol_ref')]
+        assert len(applications)==1
+        assert methods[applications[0]]['description']=='Count reads.'
+    assert data['series']['assay_paths'][0]['steps'][1]['protocol_ref']=='P-MTAB-1'
+    before=deepcopy(data);complete_native_paths(data);assert data==before

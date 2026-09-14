@@ -167,3 +167,12 @@ def test_native_non_rna_single_cell_libraries_do_not_assert_coding_rna_type():
     for run in data['sample'][0]['sra_run']:run['library_strategy']='OTHER'
     rows={r[0]:r[1:] for r in render(data)}
     assert not rows.get('Comment[AEExperimentType]')
+
+
+def test_native_sequence_data_links_do_not_span_unrelated_run_accessions():
+    data=native().to_mapping();template=data['sample'][0]['sra_run'][0]
+    accessions=['ERR6054545','ERR6054546','ERR6286716','ERR6548408','ERR10123638']
+    data['sample'][0]['sra_run']=[{**deepcopy(template),'run':acc} for acc in accessions]
+    rows={r[0]:r[1:] for r in render(data)}
+    assert rows['Comment[SequenceDataURI]']==['http://www.ebi.ac.uk/ena/data/view/'+s for s in
+        ['ERR6054545-ERR6054546','ERR6286716','ERR6548408','ERR10123638']]

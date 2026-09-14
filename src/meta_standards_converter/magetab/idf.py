@@ -875,10 +875,17 @@ class _SequencingPlatformIDFHandler(_BasePlatformIDFHandler):
         urls = []
         for prefix, values in grouped.items():
             values = sorted(values, key=lambda item: item[0])
-            first = values[0][1]
-            last = values[-1][1]
-            target = first if first == last else f"{first}-{last}"
-            urls.append(f"{self.ENA_DATA_VIEW_BASE}{target}")
+            blocks = [values]
+            if self.data.get('source', {}).get('format') in {'ENA', 'SRA'}:
+                blocks = []
+                for value in values:
+                    if not blocks or value[0] != blocks[-1][-1][0] + 1:
+                        blocks.append([])
+                    blocks[-1].append(value)
+            for block in blocks:
+                first, last = block[0][1], block[-1][1]
+                target = first if first == last else f"{first}-{last}"
+                urls.append(f"{self.ENA_DATA_VIEW_BASE}{target}")
         return urls
 
     def run_accessions(self) -> list:

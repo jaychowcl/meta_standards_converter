@@ -4219,6 +4219,12 @@ index reads, while archive-renamed URI filenames remain separate. Residual
 comparison can prune mapped siblings inside one uniquely matched channel;
 ambiguous multiple channels remain intact, and displaced biological channel sources
 are preserved independently of the package source-format marker.
+Native SequenceDataURI viewer links compress only consecutive explicitly present
+run accessions; gaps produce separate links and cannot broaden the dataset.
+Sample method scalars do not create a second definition/application when compatible
+authored methods with the same normalized description already cover every relevant
+acquisition. Saved deterministic helper duplicates are removed only with this
+evidence; original supplied definitions and authored ordering remain intact.
 
 The final `AEConstructor` boundary applies the existing stable comment partition
 **after** the semantic overlay, so no ordinary IDF row follows a comment.

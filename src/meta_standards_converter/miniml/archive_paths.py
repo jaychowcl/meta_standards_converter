@@ -21,6 +21,27 @@ def _comment(node, name, value):
         node['comments'].append({'name': name, 'value': str(value)})
 
 
+def _authored_method(steps, by_name, field, description, base):
+    families = {
+        'growth_protocol': {'grow', 'growth', 'growth protocol'},
+        'treatment_protocol': {'treatment', 'treatment protocol'},
+        'extract_protocol': {'nucleic acid extraction', 'nucleic acid extraction protocol', 'extraction'},
+        'label_protocol': {'labeling', 'labelling', 'labeling protocol'},
+        'scan_protocol': {'scanning', 'sequencing', 'nucleic acid sequencing protocol'},
+        'hybridization_protocol': {'hybridization', 'hybridization protocol'},
+        'data_processing': {'normalization', 'data processing', 'normalization data transformation protocol'},
+    }
+    for step in steps:
+        method = by_name.get(step.get('protocol_ref'), {})
+        name = method.get('name', '')
+        kind = str(_literal(method.get('type', ''))).lower().replace('_', ' ')
+        if (name and name != base and not name.startswith(base + ':')
+                and kind in families[field]
+                and ' '.join(str(method.get('description', '')).split()) == ' '.join(description.split())):
+            return True
+    return False
+
+
 def complete_native_paths(data):
     """Project explicit channel materials/protocols and scoped descriptive fields."""
     if data.get('source', {}).get('format') not in ('ENA', 'SRA'):
@@ -30,6 +51,12 @@ def complete_native_paths(data):
     platforms = {p['iid']: p for p in data.get('platform', [])}
     series = data['series']
     definitions = series.setdefault('protocols', [])
+    methods = {p['name']: p for p in definitions}
+    paths_by_sample = {}
+    for path in series.get('assay_paths', []):
+        bound = {s['sample_ref'] for s in path['steps'] if s.get('sample_ref')}
+        if len(bound) == 1:
+            paths_by_sample.setdefault(next(iter(bound)), []).append(path)
     types = {'growth_protocol': 'growth protocol', 'treatment_protocol': 'treatment protocol',
              'extract_protocol': 'nucleic acid extraction protocol', 'label_protocol': 'labeling protocol',
              'data_processing': 'normalization data transformation protocol',
@@ -44,6 +71,21 @@ def complete_native_paths(data):
             if not informative(description):
                 continue
             base = f"{series['iid']}:{sid}:{field}"
+            boundary = {'scan_protocol': 'scan', 'hybridization_protocol': 'hybridization',
+                        'data_processing': 'derived_array_data_file'}.get(field, 'assay')
+            relevant = [p for p in paths_by_sample.get(sid, [])
+                        if any(s['kind'].startswith('derived_') if field == 'data_processing'
+                               else s['kind'] == boundary for s in p['steps'])]
+            if relevant and all(_authored_method(p['steps'], methods, field, description, base) for p in relevant):
+                obsolete = {p['name'] for p in definitions
+                            if (p['name'] == base or p['name'].startswith(base + ':'))
+                            and set(p) <= {'name', 'type', 'description'}
+                            and ' '.join(str(p.get('description', '')).split()) == ' '.join(description.split())}
+                definitions[:] = [p for p in definitions if p['name'] not in obsolete]
+                for name in obsolete: methods.pop(name, None)
+                for path in series.get('assay_paths', []):
+                    path['steps'][:] = [s for s in path['steps'] if s.get('protocol_ref') not in obsolete]
+                continue
             old = next((p for p in definitions if p['name'].startswith(base) and p.get('description') == description), None)
             if old is None:
                 name = base
@@ -53,6 +95,7 @@ def complete_native_paths(data):
                     name = f'{base}:{count}'
                 old = {'name': name, 'description': description, 'type': {'value': kind}}
                 definitions.append(old)
+                methods[old['name']] = old
             refs[(sid, field)] = old['name']
     for path in series.get('assay_paths', []):
         steps = path['steps']
@@ -100,6 +143,9 @@ def complete_native_paths(data):
                 continue
             generated = {p['name'] for p in definitions if ':' + sid + ':' + field in p['name']}
             steps[:] = [s for s in steps if s.get('protocol_ref') not in generated]
+            base = f"{series['iid']}:{sid}:{field}"
+            if _authored_method(steps, methods, field, sample[field], base):
+                continue
             position = next(i for i, s in enumerate(steps) if s['kind'] == boundary)
             steps.insert(position, {'kind': 'protocol_application', 'protocol_ref': refs[(sid, field)]})
         if has_result and (sid, 'data_processing') in refs:
