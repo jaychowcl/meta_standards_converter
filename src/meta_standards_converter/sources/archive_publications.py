@@ -45,7 +45,11 @@ def references(records):
     result = []
     def add(acc, value):
         if value and any(value.get(k) for k in ('pubmed_id','pmcid','doi','title')):
-            item = {'accession': acc or records.seed.study, **value}
+            if not acc:
+                issue = 'publication reference: missing explicit source entity'
+                if issue not in records.issues: records.issues.append(issue)
+                return
+            item = {'accession': acc, **value}
             if item not in result: result.append(item)
     entity_tags = {'STUDY','PROJECT','Project','SAMPLE','BioSample','EXPERIMENT','RUN','ANALYSIS','ASSEMBLY'}
     def visit(node, acc):
@@ -76,12 +80,20 @@ def references(records):
         elif record['kind'] == 'cross_references':
             for row in record['metadata']:
                 value = {}
+                candidates = []
                 source = row.get('Source','').casefold()
                 if source in ('europepmc','pubmed','citation'):
-                    value.update(citation_identifier('pubmed', row.get('Source Secondary Accession')))
-                    value.update(citation_identifier('pmc' if source=='europepmc' else source, row.get('Source Primary Accession')))
+                    candidates.append(citation_identifier('pubmed', row.get('Source Secondary Accession')))
+                    candidates.append(citation_identifier('pmc' if source=='europepmc' else source, row.get('Source Primary Accession')))
                 for field in ('Source URL','Source Secondary URL','url'):
-                    value.update(citation_identifier('url',row.get(field)))
+                    candidates.append(citation_identifier('url',row.get(field)))
+                if any(len({c[k].casefold() if k == 'doi' else c[k] for c in candidates if k in c}) > 1
+                       for k in ('pubmed_id', 'pmcid', 'doi')):
+                    issue = f'{acc}: conflicting publication identifiers in {row.get("Source", "external")} cross-reference'
+                    if issue not in records.issues: records.issues.append(issue)
+                    continue
+                for candidate in candidates: value.update(candidate)
+                value.update(reference_type='literature cross-reference', reference_source=row.get('Source') or 'external')
                 add(acc,value)
         elif record['provider'] == 'biosamples' and record['kind'] == 'sample':
             for link in record['metadata'].get('externalReferences',[]):

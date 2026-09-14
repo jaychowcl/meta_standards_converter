@@ -27,7 +27,7 @@ def project_publications(records, series, samples):
             scoped[acc.rsplit('.',1)[0]] = 'assembly'
     articles = {}
     for root in records.xml:
-        for article in root.findall('.//PubmedArticle'):
+        for article in root.iter('PubmedArticle'):
             pmid = text(article,'MedlineCitation/PMID')
             if not pmid: continue
             authors = [text(a,'CollectiveName') or ' '.join(filter(None,[text(a,'ForeName'),text(a,'LastName')]))
@@ -49,11 +49,19 @@ def project_publications(records, series, samples):
     for ref in refs:
         acc = ref['accession']
         target = series if acc in aliases else entities.get(acc)
-        pub = {k:v for k,v in ref.items() if k!='accession'}
+        pub = {k:v for k,v in ref.items() if k not in ('accession','reference_type','reference_source')}
         pub.setdefault('pubmed_id','')
         for key,value in articles.get(pub['pubmed_id'],{}).items():
             if not pub.get(key): pub[key]=value
-        if target is not None:
+        if ref.get('reference_type') == 'literature cross-reference':
+            value = pub.get('pubmed_id') or pub.get('doi') or pub.get('pmcid')
+            if value and (target is not None or acc in scoped):
+                relation = {'type': 'literature cross-reference', 'target': value,
+                            'reference_source': ref['reference_source'], 'publication': pub}
+                if acc in scoped: relation[scoped[acc] + '_ref'] = acc
+                owner = target if target is not None else series
+                if relation not in owner.setdefault('relation', []): owner['relation'].append(relation)
+        elif target is not None:
             publications = target.setdefault('pubmed_publication',[])
             existing = next((p for p in publications if any(pub.get(k) and p.get(k)==pub[k] for k in ('pubmed_id','doi','pmcid'))),None)
             if existing is None: publications.append(deepcopy(pub))

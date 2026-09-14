@@ -40,7 +40,8 @@ def retained(provider, records):
     values = []
     for root in records.xml:
         for node in list(root) if root.tag.endswith('_SET') or root.tag in ('BioSampleSet', 'RecordSet', 'PubmedArticleSet') else [root]:
-            values.append({'provider': provider, 'kind': node.tag, 'accession': identifier(node) or identifier(node.find('EXPERIMENT')), 'metadata': tree(node)})
+            accession = node.findtext('MedlineCitation/PMID') if node.tag == 'PubmedArticle' else identifier(node) or identifier(node.find('EXPERIMENT'))
+            values.append({'provider': provider, 'kind': node.tag, 'accession': accession, 'metadata': tree(node)})
             if node.tag == 'EXPERIMENT_PACKAGE':
                 for entity in node.iter():
                     if entity.tag in ('STUDY', 'SAMPLE', 'EXPERIMENT', 'RUN', 'SUBMISSION'):

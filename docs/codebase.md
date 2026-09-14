@@ -4236,6 +4236,15 @@ remain occurrences; no package-wide string deduplication is performed. Residual
 list and characteristic matching consumes destination occurrences within each
 source record, so one output value cannot erase two supplied occurrences.
 
+Direct source publication assertions remain in scoped `pubmed_publication` lists.
+ENA external literature mappings instead use publication-bearing `relation[]` with
+type `literature cross-reference` and `reference_source`, preserving study, sample,
+run or associated-record scope. They are hydrated without being promoted to IDF
+study-publication rows. Contradictory identifiers and references without an explicit
+owner remain unresolved metadata with diagnostics. PubMed residual records retain
+their PMID in the envelope; residual cross-reference siblings retain identifying
+context. Exact DOI/PMCID resolution preserves the evidence category.
+
 `archive_residuals.Projection` binds source fields to their corresponding study,
 sample, experiment, run, publication, actor or file. Its field-specific rules
 recognize coherent value/unit groups, positional file projections, normalized study

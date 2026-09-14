@@ -50,7 +50,8 @@ def test_native_hydration_fills_only_missing_fields_without_sequencing_changes()
     assert data['sample']==original.to_mapping()['sample']
     assert data['series']['assay_paths']==original.to_mapping()['series']['assay_paths']
     assert original.to_mapping()['series']['pubmed_publication'][0].get('doi') is None
-    assert 'EFO' in {d['iid'] for d in data['database']}
+    assert 'EFO' not in {d['iid'] for d in data['database']}
+    assert pubs[0]['status_term_source_ref']=='EFO'
     service.enrich(MINiMLCodec().decode(data).package)
     assert client.calls==['123','456']
 

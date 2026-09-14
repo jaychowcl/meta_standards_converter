@@ -200,3 +200,74 @@ def test_versionless_assembly_citation_is_not_assigned_to_a_version_or_study():
     citation=next(r for r in data['series']['relation'] if r.get('publication'))
     assert citation['assembly_ref']=='GCA_123'
     assert citation['publication']['pubmed_id']=='123'
+
+
+def test_external_literature_is_distinct_from_direct_publications_and_hydrated():
+    from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+    from tests.test_archive_publications import PubMed, NoRuns
+    from tests.test_protocol_export import render
+    records=fixture_records('sra')
+    records.linked.extend([
+        {'provider':'sra','kind':'publication_reference','accession':records.seed.study,'metadata':{'pubmed_id':'456','title':'Direct study paper'}},
+        {'provider':'ena','kind':'cross_references','accession':records.seed.study,'metadata':[xref(records.seed.study)]}])
+    package=SRAParser().parse(records)
+    client=PubMed();result=MINiMLEnricher(pubmed_fetcher=client,insdc_fetcher=NoRuns()).enrich(package).to_mapping()
+    assert result['series']['pubmed_id']==['456']
+    relation=next(r for r in result['series']['relation'] if r['type']=='literature cross-reference')
+    assert relation['publication']['pubmed_id']=='123'
+    assert relation['publication']['title']=='Fetched title'
+    assert relation['reference_source']=='EuropePMC'
+    rows={r[0]:r[1:] for r in render(result)}
+    assert rows['PubMed ID']==['456']
+
+
+def test_sample_external_citation_hydrates_without_promoting_study_assertion():
+    from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+    from tests.test_archive_publications import PubMed, NoRuns
+    records=fixture_records('sra');acc=records.xml[1].find('.//BioSample').get('accession')
+    records.linked.append({'provider':'ena','kind':'cross_references','accession':acc,'metadata':[{**xref(acc),'Target':'sample'}]})
+    client=PubMed();result=MINiMLEnricher(pubmed_fetcher=client,insdc_fetcher=NoRuns()).enrich(SRAParser().parse(records)).to_mapping()
+    assert client.calls==['123']
+    assert not result['series'].get('pubmed_id')
+    assert not result['sample'][0].get('pubmed_id')
+    assert next(r['publication'] for r in result['sample'][0]['relation'] if r.get('publication'))['title']=='Fetched title'
+
+
+def test_unbound_or_conflicting_citations_remain_unmapped():
+    from meta_standards_converter.sources.archive_publications import references
+    records=fixture_records('sra')
+    records.linked.extend([
+        {'provider':'ena','kind':'publication_reference','accession':None,'metadata':{'pubmed_id':'999'}},
+        {'provider':'ena','kind':'cross_references','accession':records.seed.study,'metadata':[{**xref(records.seed.study),'Source Secondary URL':'https://pubmed.ncbi.nlm.nih.gov/456/'}]}])
+    assert not references(records)
+    data=SRAParser().parse(records).to_mapping()
+    assert not data['series'].get('pubmed_id')
+    assert records.issues
+    assert '456' in str(data['extensions']) and '999' in str(data['extensions'])
+
+
+def test_article_residual_identity_and_crossref_context_survive_pruning():
+    records=fixture_records('sra')
+    records.linked.append({'provider':'ena','kind':'cross_references','accession':records.seed.study,'metadata':[{**xref(records.seed.study),'Has Inferred':'N'}]})
+    records.xml.append(ET.fromstring('<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>123</PMID><Article><ArticleTitle>Supplied title</ArticleTitle><Language>eng</Language></Article></MedlineCitation></PubmedArticle></PubmedArticleSet>'))
+    data=SRAParser().parse(records).to_mapping();res=data['extensions']['insdc']['records']
+    article=next(r for r in res if r['kind']=='PubmedArticle')
+    assert article['accession']=='123'
+    assert 'Supplied title' not in str(article)
+    row=next(r for r in res if r['kind']=='cross_references')['metadata'][0]
+    assert row['Source Secondary Accession']=='123' and row['Has Inferred']=='N'
+
+
+def test_resolved_external_pmcid_keeps_category_and_same_pmid_can_have_two_roles():
+    from meta_standards_converter.sources.archive_publications import resolve_identifiers
+    records=fixture_records('sra');row=xref(records.seed.study);row['Source Secondary Accession']=''
+    records.linked.extend([
+        {'provider':'ena','kind':'cross_references','accession':records.seed.study,'metadata':[row]},
+        {'provider':'sra','kind':'publication_reference','accession':records.seed.study,'metadata':{'pubmed_id':'123'}}])
+    resolve_identifiers(records,HTTP(lambda *a:{'records':[{'requested-id':'PMC456','pmcid':'PMC456','pmid':'123'}]}),'ena')
+    generated=records.linked[-1]['metadata']
+    assert generated['reference_type']=='literature cross-reference'
+    data=SRAParser().parse(records).to_mapping()
+    assert data['series']['pubmed_id']==['123']
+    assert len(data['series']['pubmed_publication'])==1
+    assert any(r['type']=='literature cross-reference' and r['publication']['pubmed_id']=='123' for r in data['series']['relation'])

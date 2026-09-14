@@ -107,12 +107,14 @@ class Projection:
         self._mapped_characters = set()
         self.all_publications = [p for entity in [self.series, *data.get('sample', []), *self.runs.values()]
                                  for p in entity.get('pubmed_publication', [])]
-        self.all_publications.extend(r['publication'] for r in self.series.get('relation', []) if r.get('publication'))
+        self.all_publications.extend(r['publication'] for entity in [self.series, *data.get('sample', []), *self.runs.values()]
+                                     for r in entity.get('relation', []) if r.get('publication'))
         self.publications = {str(p['pubmed_id']):p for p in self.all_publications if p.get('pubmed_id')}
 
     def citations(self, acc):
         target = self.series if acc in self.ids else self.samples.get(acc, self.runs.get(acc, {}))
         values = list(target.get('pubmed_publication', []))
+        values.extend(r['publication'] for r in target.get('relation', []) if r.get('publication'))
         values.extend(r['publication'] for r in self.series.get('relation', []) if r.get('publication')
                       and acc in (r.get('experiment_ref'),r.get('assembly_ref'),r.get('analysis_ref')))
         return values
@@ -415,6 +417,8 @@ def finalize(data, records=None):
             # snapshot is made. Saved packages are compared by those exact IDs.
             left=diff(metadata,data if kind=='MINiML' else data['series'])
         elif isinstance(metadata,dict) and 'tag' in metadata:
+            if kind=='PubmedArticle' and not acc:
+                acc=child_text(metadata,'MedlineCitation/PMID') or None
             if kind=='DocumentSummary' and not acc:
                 project=next(iter(children(metadata,'Project')),{}); acc=next(iter(children(next(iter(children(project,'ProjectID')),{}),'ArchiveID')),{}).get('attributes',{}).get('accession')
             left=projection.xml(metadata,kind,acc,record['provider'])
@@ -442,6 +446,9 @@ def finalize(data, records=None):
                     for key in ('Source','Target','Target Primary Accession','Target Secondary Accession','Target URL'):
                         item.pop(key,None)
                 item={k:v for k,v in item.items() if v not in ('',None,[],{})}
+                if item and mapped:
+                    for key in ('Source','Source Primary Accession','Source Secondary Accession','Target','Target Primary Accession','Target Secondary Accession'):
+                        if row.get(key): item[key]=row[key]
                 if item:left.append(item)
         elif kind in ('study','sample','read_run','read_experiment') and record['provider']!='biosamples':
             left=projection.indexed(metadata,kind,acc)

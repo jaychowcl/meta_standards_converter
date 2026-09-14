@@ -77,9 +77,12 @@ class MINiMLEnricher:
                 for entity in [sample, *sample.get('sra_run', [])]:
                     if entity.get('pubmed_publication') or entity.get('pubmed_id'):
                         self.enrich_pubmed({'series':entity}, fill_missing=True)
-            for relation in mutable.get('series', {}).get('relation', []):
-                if relation.get('publication'):
-                    self.enrich_pubmed({'series':{'pubmed_publication':[relation['publication']]}}, fill_missing=True)
+            owners = [mutable.get('series', {})]
+            owners.extend(entity for sample in mutable.get('sample', []) for entity in [sample, *sample.get('sra_run', [])])
+            for owner in owners:
+                for relation in owner.get('relation', []):
+                    if relation.get('publication'):
+                        self.enrich_pubmed({'series':{'pubmed_publication':[relation['publication']]}}, fill_missing=True)
             del self._publication_cache
             declare_ontologies(mutable)
             return finalize(mutable, source_records(package))
