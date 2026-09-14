@@ -3992,6 +3992,10 @@ Chemistry compares applicable alternative methods across sentences after applyin
 library-role scope; punctuation cannot make a shared plate/10x or Drop-seq/10x
 alternative specific to the current library. Explicit matched method identity or
 documented chemistry identifiers may narrow those alternatives.
+The reviewed chemistry identifier table is shared by preparation and chemistry
+resolution: exact channel codes precede lower sample titles. A conflicting run
+identity at the same rank yields an explicit ambiguous technology decision;
+unknown codes cannot establish a method.
 
 `tests/magetab/test_preparation_classification.py` covers these direct decisions,
 rendered chemistry, negative and conflicting evidence, and immutable offline export.

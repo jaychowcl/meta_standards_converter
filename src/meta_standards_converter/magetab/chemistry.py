@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from .preparation import scoped_method, single_cell_signal, methods, TENX
+from .preparation import scoped_method, single_cell_signal, methods, TENX, CHEMISTRY_IDENTIFIERS as _IDENTIFIERS
 
 
 @dataclass(frozen=True)
@@ -61,17 +61,6 @@ _KIT = re.compile(r"(?:single[- ]cell\s+|10[x×](?:\s+genomics)?\s+)([35])'|\b(?
 _VERSION = re.compile(r'\bv\.?\s*(\d+(?:\.\d+)*)\b')
 _NON_PREP = re.compile(r'\b(?:not|without|compatible|compatibility|fixation|software|sequencer|recommended)\b')
 _ROLES = {'gene expression': r'gene expression|\bgex\b|\bcdna\b', 'vdj': r'v\(d\)j|\bvdj\b', 'feature barcode': r'feature barcod|antibody capture|cell surface protein|crispr'}
-
-
-# Exact identifiers, reviewed against Cell Ranger's documented chemistry options.
-# These identify chemistry only, never a sequencing recipe.
-_IDENTIFIERS = {
-    **{f'sc3pv{v}': ('3 prime', (str(v),)) for v in range(1, 5)},
-    'sc3pv3ht': ('3 prime', ('3.1',)),
-    'sc5p-pe': ('5 prime', ()), 'sc5p-r2': ('5 prime', ()),
-    'sc5p-pe-v3': ('5 prime', ('3',)), 'sc5p-r2-v3': ('5 prime', ('3',)),
-    'sc5pht': ('5 prime', ('2',)),
-}
 
 
 @dataclass(frozen=True)

@@ -192,3 +192,26 @@ def test_shared_alternative_preparations_are_scoped_across_sentences(alternative
     assert result.diagnostics
     s['title'] = 'scRNA-seq_10x'
     assert resolve_chemistry(s).versions == ('3.1',)
+
+
+def test_explicit_channel_chemistry_precedes_lower_bulk_title():
+    s = sample('bulk RNA-seq', code='SC3Pv3HT')
+    assert resolve_technology(s).handler == 'droplet_single_cell_sequencing'
+    result = resolve_chemistry(s)
+    assert (result.manufacturer, result.versions) == ('10x Genomics', ('3.1',))
+
+
+def test_explicit_channel_chemistry_conflicts_with_same_scope_bulk_run():
+    s = sample('RNA-seq', code='SC3Pv3HT')
+    run = {'library_name': 'bulk RNA-seq'}
+    result = resolve_technology(s, run=run)
+    assert result.handler == 'sequencing'
+    assert result.diagnostics
+    chemistry = resolve_chemistry(s, run=run)
+    assert chemistry.manufacturer is None
+    assert chemistry.diagnostics
+
+
+def test_unknown_chemistry_identifier_does_not_displace_bulk_evidence():
+    s = sample('bulk RNA-seq', code='SC3Pv3HT-unknown')
+    assert resolve_technology(s).handler == 'bulk_sequencing'

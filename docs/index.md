@@ -424,7 +424,7 @@ canonical handoff by stable anchor, purpose and search keywords.
 - id: sample-library-routing
   title: Sample and library technology routing
   anchor: sample-library-routing
-  purpose: Explains shared GEO/native affirmative assay detection, Dropseq/10x identity and exclusions, plate evidence, bulk suspensions, structured chemistry, mixed routing and complete output regressions.
+  purpose: Explains shared GEO/native affirmative assay detection, Dropseq/10x identity and exclusions, plate evidence, bulk suspensions, exact channel chemistry precedence, mixed routing and complete output regressions.
   keywords: GEO array categories, spotted DNA/cDNA, GSE100, preset preservation, SC3Pv2, singlecell_type, GSM5388031, GSM9254695, Visium, scRNA, TechnologyDecision, protocol registry, mixed libraries
   link: [Open section](codebase.md#sample-library-routing)
 

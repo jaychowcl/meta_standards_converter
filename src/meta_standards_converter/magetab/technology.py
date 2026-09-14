@@ -175,6 +175,9 @@ def resolve_technology(sample: dict, channel: dict | None = None,
     method, method_evidence = scoped_method(sample, channel, run)
     if method == 'bulk':
         return TechnologyDecision('bulk_sequencing', tuple(TechnologyEvidence(p, t, ('bulk',)) for p, t, _ in method_evidence))
+    if method == 'ambiguous' and any('bulk' in values for _, _, values in method_evidence):
+        return TechnologyDecision('sequencing', tuple(TechnologyEvidence(p, t, values) for p, t, values in method_evidence),
+            (TechnologyDiagnostic('ambiguous_technology', tuple(p for p, _, _ in method_evidence)),))
     chemistry = resolve_chemistry(sample, channel=channel, run=run, series=data.get('series'))
     for fact in chemistry.evidence:
         if fact.field == 'identifier' and any(f.path == fact.path and f.field == 'manufacturer' for f in chemistry.evidence):

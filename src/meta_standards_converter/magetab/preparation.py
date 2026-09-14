@@ -22,6 +22,17 @@ BULK = re.compile(r'\bbulk\s+(?:rna|dna|sequenc|librar)|\bnot\s+(?:a\s+)?single[
 GENOMIC = re.compile(r'\b(?:genome|genomic|wgs|whole[- ]genome)\b', re.I)
 
 
+# Exact identifiers, reviewed against Cell Ranger's documented chemistry options.
+# These identify chemistry only, never a sequencing recipe.
+CHEMISTRY_IDENTIFIERS = {
+    **{f'sc3pv{v}': ('3 prime', (str(v),)) for v in range(1, 5)},
+    'sc3pv3ht': ('3 prime', ('3.1',)),
+    'sc5p-pe': ('5 prime', ()), 'sc5p-r2': ('5 prime', ()),
+    'sc5p-pe-v3': ('5 prime', ('3',)), 'sc5p-r2-v3': ('5 prime', ('3',)),
+    'sc5pht': ('5 prime', ('2',)),
+}
+
+
 def clauses(text):
     if '://' in text and not re.search(r'\s', text):
         return []
@@ -58,24 +69,34 @@ def scoped_method(sample, channel=None, run=None):
     """Explicit run/channel identity precedes sample identity and description."""
     prefix = f"sample[{sample.get('iid') or 'unknown'}]"
     levels = [[], [], []]
+    structured_paths = set()
     for key in ('library_name', 'description'):
         if (run or {}).get(key):
             levels[0].append((prefix + '.run.' + key, str(run[key])))
     channels = [channel] if channel is not None else sample.get('channel', [])
     for i, c in enumerate(channels):
+        i = next((j for j, item in enumerate(sample.get('channel', [])) if item is c), i)
         for j, characteristic in enumerate(c.get('characteristics', [])):
             tag = re.sub(r'[\s_-]+', '_', str(characteristic.get('name') or characteristic.get('tag', '')).strip().casefold())
+            path = f'{prefix}.channel[{i}].characteristics[{j}].value'
+            value = str(characteristic.get('value') or '')
             if tag in {'assay', 'assay_type', 'library_type', 'library_name', 'technology'}:
-                levels[0].append((f'{prefix}.channel[{i}].characteristics[{j}].value', str(characteristic.get('value') or '')))
+                levels[0].append((path, value))
+            if tag in {'singlecell_type', 'chemistry', 'library_chemistry'} and value.strip().casefold() in CHEMISTRY_IDENTIFIERS:
+                levels[0].append((path, value))
+                structured_paths.add(path)
     for key in ('title', 'library_name'):
         if sample.get(key):
             levels[1].append((prefix + '.' + key, str(sample[key])))
     if sample.get('description'):
         levels[2].append((prefix + '.description', str(sample['description'])))
     for group in levels:
-        evidence = tuple((path, text, tuple(sorted(methods(text)))) for path, text in group if methods(text))
+        evidence = tuple((path, text, ('10x',) if path in structured_paths else tuple(sorted(methods(text))))
+                         for path, text in group if path in structured_paths or methods(text))
         values = {m for _, _, values in evidence for m in values}
         if values:
+            if 'bulk' in values and any(single_cell_signal(text) for _, text in group):
+                values.add('single_cell')
             if 'droplet' in values and values & {'dropseq', '10x'}:
                 values.remove('droplet')
             if 'not_10x' in values and values & {'dropseq', 'plate', 'droplet'} and '10x' not in values:
