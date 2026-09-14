@@ -148,3 +148,29 @@ def test_authored_processing_does_not_hide_uncovered_derived_matrix_branch():
         assert methods[applications[0]]['description']=='Count reads.'
     assert data['series']['assay_paths'][0]['steps'][1]['protocol_ref']=='P-MTAB-1'
     before=deepcopy(data);complete_native_paths(data);assert data==before
+
+
+def test_native_paths_export_all_explicit_biosample_aliases_without_changing_identity():
+    from meta_standards_converter.miniml.archive_paths import complete_native_paths
+    data=native().to_mapping();sample=data['sample'][0];sid=sample['iid']
+    sample['accession']=[{'value':sid,'database':'SRA'},
+                         {'value':'SAMN123','database':'BioSample'},
+                         {'value':'SAMEA456','database':'BioSample'}]
+    paths=data['series']['assay_paths'];source=paths[0]['steps'][0]
+    source.setdefault('comments',[]).append({'name':'BioSD_SAMPLE','value':'SAMN789'})
+    expected={c['value'] for c in source['comments'] if c['name']=='BioSD_SAMPLE'} | {'SAMN123','SAMEA456'}
+    pooled=deepcopy(paths[0]);pooled['steps'].insert(1,{'kind':'sample','name':'different','sample_ref':'different'})
+    paths.append(pooled);original_pool=deepcopy(pooled)
+    complete_native_paths(data)
+    assert {c['value'] for c in source['comments'] if c['name']=='BioSD_SAMPLE'}==expected
+    assert source['name']==sid and source['sample_ref']==sid
+    assert pooled==original_pool
+    paths.pop();before=deepcopy(data);complete_native_paths(data);assert data==before
+    # Rendering an existing native package projects aliases on its private copy.
+    for path in paths:
+        path['steps'][0]['comments']=[c for c in path['steps'][0].get('comments',[]) if c['name']!='BioSD_SAMPLE']
+    before=deepcopy(data)
+    rows=next(r[1] for r in render(data) if r[0]=='SDRF File')
+    values={r[i] for r in rows[1:] for i,h in enumerate(rows[0]) if h=='Comment[BioSD_SAMPLE]'}
+    assert {'SAMN123','SAMEA456'}<=values
+    assert data==before

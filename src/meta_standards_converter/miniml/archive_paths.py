@@ -108,6 +108,11 @@ def complete_native_paths(data):
         channel = sample['channel'][0]
         for step in steps:
             if step['kind'] in ('source', 'sample'):
+                for accession in sample.get('accession', []):
+                    if accession.get('database') == 'BioSample' and accession.get('value'):
+                        comment = {'name': 'BioSD_SAMPLE', 'value': accession['value']}
+                        if comment not in step.setdefault('comments', []):
+                            step['comments'].append(comment)
                 _comment(step, 'Sample_title', sample.get('title'))
                 _comment(step, 'Sample_source_name', channel.get('source'))
                 _comment(step, 'Sample_description', sample.get('description'))

@@ -4242,7 +4242,10 @@ export acceptance tests live in `tests/test_archive_publications.py` and
 `meta_standards_converter.miniml.archive_paths.complete_native_paths` (`data`) is a
 pure, native-only projection used after source mapping/enrichment and on the
 constructor copy before protocol naming. It exposes final sample titles, source
-descriptions and platform titles at their own nodes; explicit channel molecules
+descriptions and platform titles at their own nodes. Verified sample `BioSample`
+accessions become `BioSD_SAMPLE` comments on uniquely bound biological nodes,
+including saved imports; distinct existing references survive, identical projections
+do not multiply, and multisample paths are left unchanged. Explicit channel molecules
 become extract materials, with supplied field-scoped methods retained intact.
 Complete accepted AE material workflows take priority. Rejected or partially covering AE paths cannot
 supply flattened channel or sample protocol fields to unrelated acquisitions;
