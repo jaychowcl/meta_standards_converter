@@ -150,6 +150,9 @@ def library(experiment):
     instrument = text(experiment, 'PLATFORM/*/INSTRUMENT_MODEL')
     if instrument:
         result['instrument_model'] = instrument
+    platform = experiment.find('PLATFORM') if experiment is not None else None
+    if platform is not None and len(platform) == 1 and platform[0].tag != 'INDEXED':
+        result['instrument_platform'] = platform[0].tag
     return result
 
 
@@ -249,7 +252,7 @@ def assay_paths(sample, run, experiment, files, protocol):
              'technology_type': {'value': 'sequencing assay'}, 'comments': []}
     if text(experiment, 'DESIGN/DESIGN_DESCRIPTION'):
         assay['description'] = text(experiment, 'DESIGN/DESIGN_DESCRIPTION')
-    for key in ('library_strategy', 'library_source', 'library_selection', 'library_layout', 'instrument_model'):
+    for key in ('library_strategy', 'library_source', 'library_selection', 'library_layout', 'instrument_model', 'instrument_platform'):
         if run.get(key):
             assay['comments'].append({'name': key.upper(), 'value': run[key]})
     scan = {'kind': 'scan', 'name': run['run'], 'comments': [

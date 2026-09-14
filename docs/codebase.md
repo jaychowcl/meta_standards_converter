@@ -4263,7 +4263,15 @@ supplementary links export as aligned IDF `Comment[Study supplementary file]` an
 `meta_standards_converter.miniml.archive_entities.local_platforms` declares local
 platforms from explicit informative instrument facts. Runs reference those records;
 samples reference a platform only when all their runs agree. Mixed experiments retain
-scoped instrument comments. No GPL accession or manufacturer is inferred.
+scoped instrument comments. XML PLATFORM child names and ENA indexed
+`instrument_platform` supply the explicit family; synthetic `INDEXED` is excluded.
+Indexed values fill only uniquely determined missing facts; conflicting values
+remain residual. A family alone may declare a local platform without inventing a
+model. Compatible existing local declarations complete in place, preserving their
+IDs; conflicting families never choose an arbitrary shared declaration. Registered
+GPL references remain intact. Saved residual family evidence is recoverable only
+through an explicit experiment/run identity, without network access. No family,
+GPL accession or manufacturer is inferred from an instrument model.
 `meta_standards_converter.miniml.archive_entities.coalesce_organizations` shares
 identical complete organization facts and remaps references, retaining independent
 source IDs and sample bindings in `source_occurrences`. Conflicting organizations
@@ -4278,7 +4286,8 @@ URLs and versions remain residual declarations; IDF lists only term sources actu
 referenced by emitted metadata. INSDC administrative statuses keep their scope without
 becoming a repository declaration. These operations also run on private export copies.
 `tests/test_archive_final_entities.py` covers platform ambiguity, missing instruments,
-organization scope and repository/vocabulary separation.
+organization scope and repository/vocabulary separation;
+`tests/test_archive_platform_families.py` covers explicit families and saved references.
 
 Identity joins use repository identifier relations; organization links and derived-from
 relationships do not establish sample equivalence. An E-GEOD lookup probe requires

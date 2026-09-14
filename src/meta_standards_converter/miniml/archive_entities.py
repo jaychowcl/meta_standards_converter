@@ -117,6 +117,27 @@ def declare_ontologies(data, issues=None):
         data.setdefault('extensions', {}).setdefault('insdc', {'version':'1.0','records':[]})['records'].extend(residuals)
 
 
+def _retained_platform_families(data):
+    """Recover explicit family values from saved residuals by entity identity."""
+    result = {}
+    provider = data.get('source', {}).get('format', '').lower()
+    for record in data.get('extensions', {}).get('insdc', {}).get('records', []):
+        if record.get('provider') != provider:
+            continue
+        kind, acc, metadata = record.get('kind'), record.get('accession'), record.get('metadata', {})
+        values = set()
+        scope = 'run' if kind == 'read_run' else 'experiment'
+        if kind in ('read_run', 'read_experiment') and metadata.get('instrument_platform'):
+            values.add(metadata['instrument_platform'])
+        elif kind == 'EXPERIMENT':
+            for node in metadata.get('children', []):
+                if node.get('tag') == 'PLATFORM':
+                    values.update(n['tag'] for n in node.get('children', []) if n.get('tag') != 'INDEXED')
+        if values:
+            result.setdefault((scope, acc), set()).update(values)
+    return result
+
+
 def local_platforms(data):
     """Declare local sequencing platforms from exact explicit instrument facts."""
     if data.get('source', {}).get('format') not in ('ENA', 'SRA'):
@@ -126,22 +147,54 @@ def local_platforms(data):
     from ..metadata.archive_enrichment import informative
     provider = data['source']['format'].lower()
     platforms = data.setdefault('platform', [])
-    known = {p['iid'] for p in platforms}
+    known = {p['iid']: p for p in platforms}
+    keys = ('instrument_model', 'instrument_platform')
+    all_runs = [r for s in data.get('sample', []) for r in s.get('sra_run', [])]
+    retained = _retained_platform_families(data)
+    for run in all_runs:
+        families = retained.get(('run', run.get('run')), set()) | retained.get(('experiment', run.get('experiment')), set())
+        if not informative(run.get('instrument_platform')) and len(families) == 1:
+            run['instrument_platform'] = next(iter(families))
+    original_runs = deepcopy(all_runs)
     by_experiment = {}
     for sample in data.get('sample', []):
         refs = []
         for run in sample.get('sra_run', []):
-            model = run.get('instrument_model')
-            if not informative(model):
+            facts = {key: run[key] for key in keys if informative(run.get(key))
+                     and not (key == 'instrument_platform' and run[key] == 'INDEXED')}
+            if not facts:
                 refs.append(None)
                 continue
-            facts = {'instrument_model': model}
-            if informative(run.get('instrument_platform')):
-                facts['instrument_platform'] = run['instrument_platform']
-            iid = provider + ':platform:' + hashlib.sha256(json.dumps(facts, sort_keys=True).encode()).hexdigest()[:16]
+            old_ref = run.get('platform_ref', {}).get('ref')
+            candidates = []
+            for p in platforms:
+                if not p['iid'].startswith(provider + ':platform:'):
+                    continue
+                existing = {k: p[k] for k in keys if informative(p.get(k))}
+                if not existing or any(k in facts and facts[k] != v for k, v in existing.items()):
+                    continue
+                if p['iid'] != old_ref and not existing.items() <= facts.items():
+                    continue
+                # A model-only declaration cannot acquire one arbitrarily chosen
+                # family when its associated runs explicitly disagree.
+                associated = [r for r in original_runs if r.get('platform_ref', {}).get('ref') == p['iid']
+                              or (not r.get('platform_ref') and all(r.get(k) == v for k, v in existing.items()))]
+                if any(k not in existing and len({r[k] for r in associated if informative(r.get(k))}) > 1 for k in facts):
+                    continue
+                candidates.append(p)
+            exact_ref = [p for p in candidates if p['iid'] == old_ref]
+            chosen = exact_ref or candidates
+            if len(chosen) == 1:
+                p = chosen[0]
+                p.update({k: v for k, v in facts.items() if not informative(p.get(k))})
+                iid = p['iid']
+            else:
+                iid = provider + ':platform:' + hashlib.sha256(json.dumps(facts, sort_keys=True).encode()).hexdigest()[:16]
             if iid not in known:
-                platforms.append({'iid': iid, 'title': model, 'technology': 'high-throughput sequencing', **facts})
-                known.add(iid)
+                p = {'iid': iid, 'title': facts.get('instrument_model') or facts['instrument_platform'],
+                     'technology': 'high-throughput sequencing', **facts}
+                platforms.append(p)
+                known[iid] = p
             run['platform_ref'] = {'ref': iid}
             refs.append(iid)
             by_experiment.setdefault((sample['iid'], run.get('experiment')), set()).add(iid)

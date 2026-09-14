@@ -57,6 +57,12 @@ class ENAParser:
                     records.issues.append(f'{run_id}: unresolved sample {member}')
                     continue
                 value = m.attach_run(sample, experiment, run, records.seed.study, files)
+                indexed = [r for r in records.indexed.get('read_experiment', [])
+                           if r.get('experiment_accession') == value['experiment']] + rows.get(run_id, [])
+                for key in ('instrument_model', 'instrument_platform'):
+                    candidates = {r[key] for r in indexed if r.get(key)}
+                    if not value.get(key) and len(candidates) == 1:
+                        value[key] = candidates.pop()
                 statistics = {k: row[k] for row in rows.get(run_id, [])
                               for k in ('read_count', 'base_count') if row.get(k) not in (None, '')}
                 if statistics:

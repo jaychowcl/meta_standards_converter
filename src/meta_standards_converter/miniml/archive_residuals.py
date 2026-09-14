@@ -438,6 +438,10 @@ class Projection:
             if tag=='EXPERIMENT_PACKAGE' and c['tag'] in ('STUDY','SAMPLE','EXPERIMENT','SUBMISSION','RUN_SET'): continue
             if c['tag']=='Contact':self.contact_index=ci;ci+=1
             v=self.xml(c,kind,acc,provider,(*path,i),owner,actor,file,citation)
+            if tag == 'PLATFORM' and c['tag'] != 'INDEXED' and not (
+                    runs and all(r.get('instrument_platform') == c['tag'] for r in runs)):
+                # The XML element name itself is a supplied family value.
+                v = v or {'tag': c['tag']}
             if v:remaining.append(v)
         if remaining:out['children']=remaining
         if text and not mapped_text:out['text']=node['text']
@@ -454,7 +458,8 @@ class Projection:
         runs=self.experiments.get(acc,[]) if kind=='read_experiment' else [entity] if kind=='read_run' else []
         fields={'study_title':'title','study_description':'summary','sample_title':'title','sample_description':'description',
                 'library_strategy':'library_strategy','library_source':'library_source','library_selection':'library_selection',
-                'library_layout':'library_layout','instrument_model':'instrument_model'}
+                'library_layout':'library_layout','instrument_model':'instrument_model',
+                'instrument_platform':'instrument_platform'}
         for source,target in fields.items():
             if metadata.get(source) and (entity.get(target)==metadata[source] or (runs and all(r.get(target)==metadata[source] for r in runs))):result.pop(source,None)
         for field in ('study_accession','secondary_study_accession','sample_accession','secondary_sample_accession','experiment_accession','run_accession'):
