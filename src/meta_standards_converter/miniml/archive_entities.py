@@ -211,7 +211,12 @@ def repository_databases(data):
         elif isinstance(value, dict):
             for accession in value.get('accession', []) if isinstance(value.get('accession'), list) else []:
                 if isinstance(accession, dict) and accession.get('database'): used.add(accession['database'])
-            for key, child in value.items():
+            for key, child in list(value.items()):
+                if (key in ('term_source_ref', 'term_accession_number')
+                        or key.endswith(('_term_source_ref', '_term_accession_number'))):
+                    if isinstance(child, str) and not child.strip():
+                        value.pop(key)
+                        continue
                 if key not in ('extensions', 'database'): visit(child)
     visit(data)
     kept, records = [], []

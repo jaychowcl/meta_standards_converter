@@ -176,7 +176,10 @@ def _prepare_path(path, target, proto_names):
             step['sample_ref'] = target
         if step.get('protocol_ref') in proto_names:
             step['protocol_ref'] = proto_names[step['protocol_ref']]
-        if step.get('kind') == 'scan' and step.get('name') in file_names:
+        comments = step.get('comments', [])
+        submitted_alias = (any(c.get('name', '').upper() == 'SUBMITTED_FILE_NAME' and c.get('value') == step.get('name') for c in comments)
+                           and any(c.get('name', '').upper() == 'FASTQ_URI' and c.get('value') for c in comments))
+        if step.get('kind') == 'scan' and (step.get('name') in file_names or submitted_alias):
             runs = {v for v in scope if re.fullmatch(r'[SED]RR\d+', v)}
             if len(runs) == 1:
                 step['name'] = next(iter(runs))
@@ -187,7 +190,8 @@ def _prepare_path(path, target, proto_names):
                  if c.get('name', '').upper() == 'FASTQ_URI' and c.get('value')]
         fields = {'FASTQ_FILE_NAME': 'filename', 'FASTQ_MD5': 'MD5', 'FASTQ_BYTES': 'File size',
                   'FASTQ_FORMAT': 'File format', 'FASTQ_CHECKSUM': 'Checksum',
-                  'FASTQ_CHECKSUM_METHOD': 'Checksum method', 'READ_TYPE': 'READ_TYPE', 'READ_INDEX': 'READ_INDEX'}
+                  'FASTQ_CHECKSUM_METHOD': 'Checksum method', 'READ_TYPE': 'READ_TYPE', 'READ_INDEX': 'READ_INDEX',
+                  'SUBMITTED_FILE_NAME': 'SUBMITTED_FILE_NAME'}
         moved = set()
         for label, destination in fields.items():
             values = [(i, c) for i, c in enumerate(comments) if c.get('name', '').upper() == label]

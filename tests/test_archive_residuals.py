@@ -139,3 +139,26 @@ def test_residual_character_matching_does_not_reuse_one_destination_occurrence()
     projection = Projection({'series': {}, 'sample': [sample]})
     assert projection.character(sample, 'organism', 'Danio rerio')
     assert not projection.character(sample, 'organism', 'Danio rerio')
+
+
+def test_single_channel_residual_prunes_mapped_siblings_after_one_conflict():
+    from meta_standards_converter.miniml.archive_residuals import diff
+    source={'sample':[{'iid':'SRS1','channel':[{'organism':[{'value':'Mus musculus','taxid':'10090'}],
+        'molecule':{'value':'polyA RNA'},'extract_protocol':'supplied extraction',
+        'characteristics':[{'name':'strain','value':'FVN/Swiss'},{'name':'cell type','value':'Astrocyte'}]}]}]}
+    target=deepcopy(source)
+    target['sample'][0]['channel'][0]['characteristics'][1]={'name':'cell type','value':'astrocyte','term_source_ref':'CL','term_accession_number':'CL:0000127'}
+    residual=diff(source,target)
+    channel=residual['sample'][0]['channel'][0]
+    assert channel=={'characteristics':[{'name':'cell type','value':'Astrocyte'}]}
+    # Multiple channels without explicit identities remain ambiguous.
+    target['sample'][0]['channel'].append(deepcopy(target['sample'][0]['channel'][0]))
+    residual=diff(source,target)
+    assert residual['sample'][0]['channel'][0]['extract_protocol']=='supplied extraction'
+
+
+def test_residual_keeps_displaced_biological_source_but_not_package_source_marker():
+    from meta_standards_converter.miniml.archive_residuals import diff
+    source={'source':{'format':'GEO'},'sample':[{'iid':'SRS1','channel':[{'source':{'value':'liver'},'molecule':{'value':'RNA'}}]}]}
+    target=deepcopy(source);target['source']['format']='SRA';target['sample'][0]['channel'][0]['source']={'value':'brain'}
+    assert diff(source,target)=={'sample':[{'iid':'SRS1','channel':[{'source':{'value':'liver'}}]}]}

@@ -769,6 +769,8 @@ class IDFConstructor():
         harmonized = Harmonizer().ontologies
         names, files, versions = [], [], []
         for source in sorted(sources):
+            if not str(source).strip():
+                continue
             supplied = declared.get(source)
             if supplied is None:
                 candidates = aliases.get(str(source).casefold(), [])
@@ -831,6 +833,15 @@ class _SequencingPlatformIDFHandler(_BasePlatformIDFHandler):
         return rows
 
     def _set_ae_experiment_type(self, rows: list, value: str) -> None:
+        if self.data.get('source', {}).get('format') in {'ENA', 'SRA'}:
+            strategies = set()
+            for sample in self._as_list(self.data.get('sample')):
+                runs = self._as_list(sample.get('sra_run'))
+                strategies.update(str(r.get('library_strategy', '')).casefold() for r in runs)
+                if not runs:
+                    strategies.add(str(sample.get('library_strategy', '')).casefold())
+            if strategies != {'rna-seq'}:
+                return
         for row in rows:
             if row and row[0] == "Comment[AEExperimentType]":
                 row[:] = ["Comment[AEExperimentType]", value]

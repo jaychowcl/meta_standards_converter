@@ -4206,6 +4206,19 @@ Explicit contact and contributor references merge additively at their matched
 entity scope after namespacing. Native references survive; sample-only GEO or
 peer contacts are not promoted to study contributors. Only IDF-origin declarations
 may supply the existing implicit study-contributor fallback.
+Native technology routing requires explicit assay evidence: preparation prose about
+single-cell suspensions, a bare Chromium genome library, or anatomical spatial
+distribution cannot assert a single-cell/spatial assay. A generated coding-RNA
+experiment label additionally requires consistent explicit RNA-Seq strategies;
+supplied ArrayExpress classifications remain intact. Whitespace-only ontology
+identifiers are absent optional fields, not vocabulary declarations.
+Modern submitted-file scan aliases are canonicalized only through an exact
+same-scan submitted filename, an explicit single run and supplied FASTQ URI.
+Aligned submitted names stay attached to their individual raw-file nodes, including
+index reads, while archive-renamed URI filenames remain separate. Residual
+comparison can prune mapped siblings inside one uniquely matched channel;
+ambiguous multiple channels remain intact, and displaced biological channel sources
+are preserved independently of the package source-format marker.
 
 The final `AEConstructor` boundary applies the existing stable comment partition
 **after** the semantic overlay, so no ordinary IDF row follows a comment.

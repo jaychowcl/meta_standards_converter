@@ -147,3 +147,23 @@ def test_repeated_enrichment_namespaces_changed_vocabulary_versions_without_coll
         i=rows['Term Source Name'].index(ref)
         assert rows['Term Source Version'][i]==version
         assert rows['Term Source File'][i]=='https://incoming/vocab'
+
+
+def test_native_blank_term_references_do_not_declare_a_vocabulary():
+    data=native().to_mapping();data['database'].append({'iid':'  ','name':'  '})
+    node=data['series']['assay_paths'][0]['steps'][0]
+    node['factor_values']=[{'name':'mixture','value':'mix','term_source_ref':'  ','term_accession_number':'\t'}]
+    original=deepcopy(data)
+    rows={r[0]:r[1:] for r in render(data)}
+    assert all(str(v).strip() for v in rows['Term Source Name'])
+    assert data==original
+    result=finalize(data,[]).to_mapping()
+    assert 'term_source_ref' not in result['series']['assay_paths'][0]['steps'][0]['factor_values'][0]
+
+
+def test_native_non_rna_single_cell_libraries_do_not_assert_coding_rna_type():
+    data=native().to_mapping();data['sample'][0]['title']='single-cell RNA sequencing and ADT libraries'
+    data['sample'][0]['library_strategy']='OTHER'
+    for run in data['sample'][0]['sra_run']:run['library_strategy']='OTHER'
+    rows={r[0]:r[1:] for r in render(data)}
+    assert not rows.get('Comment[AEExperimentType]')

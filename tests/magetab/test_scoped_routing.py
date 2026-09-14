@@ -270,3 +270,17 @@ def test_mixed_array_does_not_suppress_sequencing_retrieval():
     assert provider.calls==['SRX1']
     table=next(r[1] for r in rows if r[0]=='SDRF File')
     assert table[1][table[0].index('Comment[ENA_RUN]')]=='SRR1'
+
+
+@pytest.mark.parametrize('provider',['ENA','SRA'])
+@pytest.mark.parametrize('text',['This yields a single cell suspension.','Dissociated cells make a suspension of single cells.','Cells were resuspended in single cell solution.','Chromium genome library.','Spatial distribution of cells in the cortex.'])
+def test_native_preparation_context_does_not_assert_single_cell_or_spatial_assay(provider,text):
+    s=sample('cortex bulk RNA',protocol='100ng total RNA. TruSeq RNA Sample Prep Kit.')
+    data={'source':{'format':provider},'sample':[s],'series':{'summary':text}}
+    assert detect_ae_technology(data)=='bulk_sequencing'
+
+
+@pytest.mark.parametrize('text,expected',[('scRNA-seq','plate_single_cell_sequencing'),('snRNA-seq','plate_single_cell_sequencing'),("Chromium Single Cell 3\u2032 RNA library",'droplet_single_cell_sequencing'),('single-cell RNA sequencing','plate_single_cell_sequencing'),('Visium spatial transcriptomics','spatial_sequencing')])
+def test_native_explicit_assay_evidence_remains_supported(text,expected):
+    s=sample(text)
+    assert detect_ae_technology({'source':{'format':'SRA'},'sample':[s]})==expected

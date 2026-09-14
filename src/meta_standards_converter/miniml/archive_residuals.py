@@ -52,14 +52,15 @@ def contains(expected, actual):
     return expected == actual
 
 
-def diff(source, target):
+def diff(source, target, *, field=None):
     """Residual MINiML fields, using scoped identities and coherent value groups."""
     if contains(source, target): return None
     if isinstance(source, dict):
         if any(k in source for k in ('value', 'protocol_ref', 'link', 'unit')):
             return deepcopy(source)
-        result = {k: delta for k,v in source.items() if k not in ('miniml_schema_version', 'source', 'extensions')
-                  and (delta := diff(v, target.get(k) if isinstance(target,dict) else None)) is not None}
+        result = {k: delta for k,v in source.items() if k not in ('miniml_schema_version', 'extensions')
+                  and not (k == 'source' and field is None)
+                  and (delta := diff(v, target.get(k) if isinstance(target,dict) else None, field=k)) is not None}
         if result:
             for k in ('iid', 'kind', 'name', 'sample_ref'):
                 if k in source: result.setdefault(k, source[k])
@@ -73,12 +74,16 @@ def diff(source, target):
                 available.pop(match)
                 continue
             candidate = None
+            # Native channel projection is unambiguous only for the single
+            # channel of an already matched sample, never by biological title.
+            if field == 'channel' and len(source) == len(available) == 1:
+                candidate = available[0]
             if isinstance(item,dict):
                 identity = next((k for k in ('iid','run','name') if item.get(k)), None)
                 if identity:
                     options = [x for x in available if isinstance(x,dict) and x.get(identity)==item[identity]]
                     if len(options)==1: candidate=options[0]
-            delta = diff(item, candidate)
+            delta = diff(item, candidate, field=field)
             if delta is not None: result.append(delta)
         return result or None
     return deepcopy(source) if source not in (None, '', [], {}) else None

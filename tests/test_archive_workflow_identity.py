@@ -200,3 +200,24 @@ def test_filename_projection_preserves_cross_representation_file_conflicts(detai
     result,issues=merge(extra);assert not issues
     files=[s for p in result.to_mapping()['series']['assay_paths'] for s in p['steps'] if s.get('name')=='counts.tsv']
     assert len(files)==2
+
+
+@pytest.mark.parametrize('verified',[True,False])
+def test_submitted_filename_scan_aliases_keep_modern_paired_and_index_workflows(verified):
+    extra=workflow().to_mapping();template=deepcopy(extra['series']['assay_paths'][0]);extra['series']['assay_paths']=[]
+    for index in (1,2,3):
+        path=deepcopy(template);scan=next(s for s in path['steps'] if s['kind']=='scan')
+        scan['name']=f'11814-2_R{index}.fastq.gz'
+        scan['comments'].extend([{'name':'SUBMITTED_FILE_NAME','value':scan['name'] if verified else 'unverified.fastq.gz'},
+                                 {'name':'FASTQ_URI','value':f'ftp.sra.ebi.ac.uk/vol1/SRR11192680_{index}.fastq.gz'}])
+        extra['series']['assay_paths'].append(path)
+    result,issues=merge(extra)
+    if not verified:
+        assert any('ambiguous' in issue for issue in issues)
+        return
+    assert not issues
+    paths=result.to_mapping()['series']['assay_paths']
+    for index in (1,2,3):
+        matches=[(p,s) for p in paths for s in p['steps'] if s.get('link',{}).get('value')==f'ftp://ftp.sra.ebi.ac.uk/vol1/SRR11192680_{index}.fastq.gz']
+        assert matches and any(s['kind']=='extract' for s in matches[0][0]['steps'])
+        assert {'name':'SUBMITTED_FILE_NAME','value':f'11814-2_R{index}.fastq.gz'} in matches[0][1]['comments']

@@ -116,18 +116,21 @@ def _items(value):
 _SINGLE = re.compile(r'(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|single[- ](?:cell|nucleus)|single[- ]nuclei', re.I)
 _SPATIAL = re.compile(r'\bvisium\b|\bspatial\b', re.I)
 _DROPLET = re.compile(r'\b(?:10x|chromium|droplet)\b', re.I)
+_NATIVE_SINGLE = re.compile(r"(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|\bcite[- ]seq\b|single[- ](?:cell|nucleus|nuclei)\s+(?:rna|transcriptom|sequenc|atac|[35]['′’])", re.I)
+_NATIVE_SPATIAL = re.compile(r'\bvisium\b|\bspatial\s+(?:transcriptom|rna|gene expression|sequenc)', re.I)
 
 
-def _signals(text):
+def _signals(text, *, native=False):
     signals = set()
     for clause in re.split(r'[.;\n]', text):
         if re.search(r'\b(?:not|without|compatible|compatibility)\b', clause, re.I):
             continue
-        spatial = bool(_SPATIAL.search(clause))
+        spatial = bool((_NATIVE_SPATIAL if native else _SPATIAL).search(clause))
         if spatial:
             signals.add('spatial')
         explicit_rna = re.search(r"(?<![a-z])(?:sc|sn)rna(?:[-_ ]?seq)?(?![a-z])|single[- ]cell\s+(?:rna|[35]['′’])", clause, re.I)
-        if explicit_rna or (not spatial and (_SINGLE.search(clause) or _DROPLET.search(clause))):
+        if (_NATIVE_SINGLE.search(clause) if native else
+                explicit_rna or (not spatial and (_SINGLE.search(clause) or _DROPLET.search(clause)))):
             signals.add('single_cell')
     return tuple(sorted(signals))
 
@@ -140,6 +143,7 @@ def resolve_technology(sample: dict, channel: dict | None = None,
     conflicting identities produce generic sequencing and an auditable warning.
     """
     data = data or {}
+    native = data.get('source', {}).get('format') in {'ENA', 'SRA'}
     # Preserve array/platform routing before interpreting sequencing methods.
     scoped = dict(data, sample=[sample], series={})
     if sample.get('platform_ref'):
@@ -154,7 +158,7 @@ def resolve_technology(sample: dict, channel: dict | None = None,
 
     def add(level, path, text):
         if text:
-            levels[level].append(TechnologyEvidence(path, str(text), _signals(str(text))))
+            levels[level].append(TechnologyEvidence(path, str(text), _signals(str(text), native=native)))
 
     for key in ('library_name', 'description'):
         add(0, prefix+'.run.'+key, (run or {}).get(key))
