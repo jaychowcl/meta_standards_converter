@@ -43,6 +43,108 @@ def test_incomplete_preferred_set_cannot_displace_available_reads():
     assert {v for p in paths for k,v in comments(p) if k=='FASTQ_URI'} == {'https://native/R1.fastq','https://native/R2.fastq'}
 
 
+@pytest.mark.parametrize('reverse',[False,True])
+def test_preferred_exact_subset_cannot_hide_native_set_membership(reverse):
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    files=[with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE'),
+           with_origin('https://ena/run_2.fastq.gz','ENA',ROLE='GENERATED_FILE'),
+           with_origin('https://ena/run_1.fastq.gz','ArrayExpress')]
+    if reverse:files.reverse()
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in files]
+    before=deepcopy(data);paths=projected(data)
+    assert {v for p in paths for k,v in comments(p) if k=='FASTQ_URI'}=={'https://ena/run_1.fastq.gz','https://ena/run_2.fastq.gz'}
+    assert not any(k=='ARCHIVE_FILE_URI' for p in paths for k,v in comments(p))
+    assert before['series']['assay_paths']!=paths
+
+
+def test_distinct_one_file_representation_is_not_a_proven_partial_pair():
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    files=[with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE'),
+           with_origin('https://ena/run_2.fastq.gz','ENA',ROLE='GENERATED_FILE'),
+           with_origin('https://ae/interleaved.fastq.gz','ArrayExpress')]
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in files]
+    paths=projected(data)
+    assert {v for p in paths for k,v in comments(p) if k=='FASTQ_URI'}=={'https://ae/interleaved.fastq.gz'}
+
+
+def test_subset_inventory_survives_raw_prefix_absorption_into_explicit_result():
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    files=[with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE'),
+           with_origin('https://ena/run_2.fastq.gz','ENA',ROLE='GENERATED_FILE'),
+           with_origin('https://ena/run_1.fastq.gz','ArrayExpress')]
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in files]
+    data['series']['assay_paths'][-1]['steps'] += [
+        {'kind':'protocol_application','protocol_ref':'analysis'},
+        {'kind':'derived_array_data_file','name':'result.tsv','link':{'value':'https://results/result.tsv'}}]
+    paths=projected(data)
+    assert {v for p in paths for k,v in comments(p) if k=='FASTQ_URI'}=={'https://ena/run_1.fastq.gz','https://ena/run_2.fastq.gz'}
+    results=[p for p in paths if any(s['kind']=='derived_array_data_file' for s in p['steps'])]
+    assert len(results)==1 and ('FASTQ_URI','https://ena/run_1.fastq.gz') in comments(results[0])
+
+
+@pytest.mark.parametrize('case',['complete','checksum_conflict','ambiguous'])
+def test_subset_requires_unique_compatible_file_correspondence(case):
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    files=[with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',MD5='a'*32),
+           with_origin('https://ena/run_2.fastq.gz','ENA',ROLE='GENERATED_FILE',MD5='b'*32),
+           with_origin('https://ena/run_1.fastq.gz','ArrayExpress')]
+    if case=='complete':files.append(with_origin('https://ena/run_2.fastq.gz','ArrayExpress'))
+    if case=='checksum_conflict':files[-1]['comments'].append({'name':'MD5','value':'c'*32})
+    if case=='ambiguous':files.insert(0,with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',MD5='c'*32))
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in files]
+    before=deepcopy(data);rows=render(data);table=next(r[1] for r in rows if r[0]=='SDRF File')
+    uri=table[0].index('Comment[FASTQ_URI]')
+    assert {r[uri] for r in table[1:]}==({'https://ena/run_1.fastq.gz','https://ena/run_2.fastq.gz'} if case=='complete' else {'https://ena/run_1.fastq.gz'})
+    if case=='ambiguous':
+        assert not any(r[i] for r in table[1:] for i,h in enumerate(table[0]) if h=='Comment[FASTQ_MD5]')
+        assert {'a'*32,'c'*32}<={r[i] for r in table[1:] for i,h in enumerate(table[0]) if h=='Comment[ARCHIVE_FILE_MD5]'}
+    assert data==before
+
+
+def test_sparse_occurrence_cannot_bridge_conflicting_versions_within_one_source_set():
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    files=[with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',MD5='a'*32),
+           with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',MD5='b'*32),
+           with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',READ_INDEX='1')]
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in files]
+    paths=projected(data)
+    facts={(dict(comments(p)).get('FASTQ_MD5'),dict(comments(p)).get('FASTQ_READ_INDEX')) for p in paths}
+    assert facts=={('a'*32,None),('b'*32,None),(None,'1')}
+
+
+@pytest.mark.parametrize('reverse',[False,True])
+def test_excluded_archive_versions_do_not_borrow_sparse_lane_by_order(reverse):
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    files=[with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',MD5='a'*32),
+           with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',MD5='b'*32),
+           with_origin('https://ena/run_1.fastq.gz','ENA',ROLE='GENERATED_FILE',LANE='1')]
+    if reverse:files.reverse()
+    files.append(with_origin('https://ae/other.fastq.gz','ArrayExpress'))
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[f]} for f in files]
+    paths=projected(data);records=[];current={}
+    for key,value in comments(paths[0]):
+        if key.startswith('ARCHIVE_FILE_'):
+            key=key.removeprefix('ARCHIVE_FILE_')
+            if key=='NAME' and current:records.append(current);current={}
+            current[key]=value
+    if current:records.append(current)
+    assert {(r.get('MD5') or None,r.get('LANE') or None) for r in records}=={('a'*32,None),('b'*32,None),(None,'1')}
+
+
+def test_sparse_prefix_cannot_supply_facts_to_conflicting_result_file_versions():
+    data=package();base=data['series']['assay_paths'][0]['steps'][:-1]
+    data['series']['assay_paths']=[{'steps':deepcopy(base)+[with_origin('https://ena/run.fastq.gz','ENA',LANE='1')]}]
+    for checksum in ('a'*32,'b'*32):
+        data['series']['assay_paths'].append({'steps':deepcopy(base)+[
+            with_origin('https://ena/run.fastq.gz','ENA',MD5=checksum),
+            {'kind':'derived_array_data_file','name':checksum+'.tsv','link':{'value':'https://results/'+checksum+'.tsv'}}]})
+    paths=projected(data)
+    results=[p for p in paths if any(s['kind']=='derived_array_data_file' for s in p['steps'])]
+    assert len(results)==2
+    assert not any(k=='FASTQ_LANE' for p in results for k,v in comments(p))
+    assert any(('FASTQ_LANE','1') in comments(p) for p in paths if p not in results)
+
+
 def test_sample_results_are_source_annotations_without_arbitrary_run_binding():
     data = package(); source = deepcopy(data['series']['assay_paths'][0]['steps'][0])
     result = {'kind':'derived_array_data_file','name':'counts.tsv','link':{'value':'https://results/counts.tsv','type':'tsv'},

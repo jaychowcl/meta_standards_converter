@@ -85,7 +85,48 @@ def _set(record):
     return rank, repository, record.get('_source', '')
 
 
-def primary_sets(groups, key, is_fastq, combine, archives):
+def _file_components(values, combine):
+    """Complete only pairwise-compatible components; sparse bridges stay apart."""
+    def compatible(a, b):
+        probe = [deepcopy(a)]
+        combine(probe, b, preserve_primary=True)
+        return len(probe) == 1
+
+    edges = {i: {i} for i in range(len(values))}
+    for i, a in enumerate(values):
+        for j in range(i):
+            if compatible(a, values[j]):
+                edges[i].add(j); edges[j].add(i)
+    remaining = set(edges)
+    result = []
+    while remaining:
+        members = {min(remaining)}
+        pending = list(members)
+        while pending:
+            neighbors = edges[pending.pop()] - members
+            members.update(neighbors); pending.extend(neighbors)
+        remaining -= members
+        result.append(([values[i] for i in sorted(members)], all(members <= edges[i] for i in members)))
+    return result
+
+
+def _coalesced(values, combine):
+    result = []
+    for members, coherent in _file_components(values, combine):
+        if coherent:
+            merged = []
+            for value in members:
+                combine(merged, value)
+            result.extend(merged)
+        else:
+            for value in members:
+                if value not in result:
+                    result.append(deepcopy(value))
+    return result
+
+
+def primary_sets(groups, key, is_fastq, combine, archives, inventories=None):
+    inventories = inventories if inventories is not None else {i: v[2] for i, v in groups.items()}
     families = {}
     for identity, (path, scope, files) in groups.items():
         scan = next(i for i, s in enumerate(path['steps']) if s['kind'] == 'scan')
@@ -94,15 +135,36 @@ def primary_sets(groups, key, is_fastq, combine, archives):
     selected = {}
     for family in families.values():
         sets = {}
-        for _, _, _, files in family:
-            for value in files:
+        for identity, _, _, files in family:
+            for value in inventories[identity]:
                 if str(value.get('FORMAT', '')).lower() in ('fastq', 'fastq.gz'):
                     sets.setdefault(_set(value), []).append(value)
+        sets = {k: _coalesced(v, combine) for k, v in sets.items()}
         def roles(values):
             return {(str(f.get('LANE', '')), str(f['READ_INDEX'])) for f in values if f.get('READ_INDEX')}
         required = set().union(*(roles(v) for v in sets.values())) if sets else set()
         complete = {k: v for k, v in sets.items() if v and all(is_fastq(f) for f in v)
                     and (not required or roles(v) >= required)}
+        def strict_subset(small, large):
+            if len(small) >= len(large):
+                return False
+            matched = []
+            for value in small:
+                candidates = []
+                for index, other in enumerate(large):
+                    if not is_fastq(value) or not is_fastq(other):
+                        continue
+                    probe = [deepcopy(other)]
+                    combine(probe, value)
+                    if len(probe) == 1:
+                        candidates.append(index)
+                if len(candidates) != 1:
+                    return False
+                matched.append(candidates[0])
+            return len(set(matched)) == len(matched)
+
+        complete = {k: v for k, v in complete.items()
+                    if not any(strict_subset(v, larger) for other, larger in complete.items() if other != k)}
         if not complete:
             continue
         priority = min(k[0] for k in complete)
@@ -115,10 +177,41 @@ def primary_sets(groups, key, is_fastq, combine, archives):
             logger.warning('Incomplete preferred read set; using complete %s inventory', chosen)
         logger.debug('Primary read set %s for %s', chosen, family[0][2])
         for identity, path, scope, files in family:
-            reads = [f for f in files if is_fastq(f) and _set(f) == chosen]
-            for value in files:
+            reads = []
+            for value in inventories[identity]:
+                if is_fastq(value) and _set(value) == chosen:
+                    reads.append(value)
+            reads = _coalesced(reads, combine)
+            components = _file_components(inventories[identity], combine)
+            for read in reads:
+                matching = []
+                for members, coherent in components:
+                    for original in members:
+                        probe = [deepcopy(read)]
+                        combine(probe, original, preserve_primary=True)
+                        if len(probe) == 1:
+                            matching.append((members, coherent)); break
+                coherent = len(matching) == 1 and matching[0][1]
+                compatible = matching[0][0] if coherent else []
+                if coherent:
+                    for original in compatible:
+                        pending = [original]
+                        while pending:
+                            other = deepcopy(pending.pop(0))
+                            pending.extend(other.pop('_alternatives', []))
+                            probe = [deepcopy(read)]
+                            combine(probe, other, preserve_primary=True)
+                            if len(probe) == 1:
+                                read.clear(); read.update(probe[0])
+            for value in inventories[identity]:
                 if is_fastq(value) and _set(value) != chosen:
-                    combine(archives[scope], value)
+                    represented = False
+                    for read in reads:
+                        probe = [deepcopy(read)]
+                        combine(probe, value, preserve_primary=True)
+                        represented |= probe == [read]
+                    if not represented:
+                        archives[scope].append(deepcopy(value))
             if reads:
                 selected[identity] = reads
             elif any(s['kind'].startswith('derived_') for s in path['steps']):

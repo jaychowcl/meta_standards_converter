@@ -62,7 +62,14 @@ def test_conflicting_files_and_different_workflows_are_not_collapsed():
     data=package();first=deepcopy(data['series']['assay_paths'][0]);first['steps'][-1]['comments'][1]['value']='different-checksum'
     data['series']['assay_paths'].append(first)
     other=deepcopy(first);other['steps'][0]['description']='different workflow';data['series']['assay_paths'].append(other)
-    assert len(projected(data))==5
+    paths=projected(data)
+    # An unqualified occurrence cannot choose between conflicting checksums.
+    # Keep it separate, and preserve the independently supplied workflow.
+    assert len(paths)==6
+    ordinary=[p for p in paths if p['steps'][0].get('description')!='different workflow']
+    same_uri=[dict(comments(p)) for p in ordinary if ('FASTQ_URI','ftp://reads/one_1.fastq.gz') in comments(p)]
+    assert {p.get('FASTQ_MD5') for p in same_uri}=={None,'abc','different-checksum'}
+    assert len([p for p in paths if p['steps'][0].get('description')=='different workflow'])==1
 
 
 def test_processed_paths_and_multiple_runs_remain_scoped():

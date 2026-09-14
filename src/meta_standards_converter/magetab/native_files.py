@@ -75,7 +75,7 @@ def _checksums(record):
     return values
 
 
-def _combine(records, candidate):
+def _combine(records, candidate, *, preserve_primary=False):
     """Complete explicit identities or checksum-verified, compatible mirrors."""
     for record in records:
         locations = {r.get('URI') for r in [record, *record.get('_alternatives', [])]} - {None, ''}
@@ -95,7 +95,7 @@ def _combine(records, candidate):
                          for k, v in candidate.items())
         if (identity or mirror) and compatible:
             from .native_file_selection import _set
-            if _set(candidate) < _set(record) and candidate.get('URI'):
+            if not preserve_primary and _set(candidate) < _set(record) and candidate.get('URI'):
                 previous = deepcopy(record)
                 record.clear()
                 record.update(deepcopy(candidate))
@@ -185,9 +185,10 @@ def _complete_file(long, short):
     return node
 
 
-def _complete_branches(paths, sample_ids):
+def _complete_branches(paths, sample_ids, raw_inventories=None):
     """Suppress only fully represented sparse prefixes or result suffixes."""
     paths = deepcopy(paths)
+    raw_records = [[_record(s) for s in p['steps'] if s['kind'] == 'array_data_file'] for p in paths]
     buckets = {}
     bound = {}
     for i, path in enumerate(paths):
@@ -217,10 +218,20 @@ def _complete_branches(paths, sample_ids):
         identities -= {None, '', steps[-1].get('name')}
         # An unlocated filename cannot choose between distinct file versions.
         if len(identities) > 1: continue
+        if any(_complete_file(a, b) is None for _,_,a in candidates for _,_,b in candidates): continue
         if candidates:
-            for k,j,node in candidates: paths[k]['steps'][j] = node
+            for k,j,node in candidates:
+                previous = _record(paths[k]['steps'][j])
+                originals = [r for r in raw_records[k] if r == previous]
+                if len(originals) == 1 and previous.get('URI') == previous.get('NAME') and node.get('link', {}).get('value'):
+                    originals[0]['URI'] = node['link']['value']
+                paths[k]['steps'][j] = node
+                raw_records[k].extend(deepcopy(raw_records[i]))
             removed.add(i)
-    return [p for i,p in enumerate(paths) if i not in removed]
+    retained = [p for i,p in enumerate(paths) if i not in removed]
+    if raw_inventories is not None:
+        raw_inventories.update({id(p): raw_records[i] for i,p in enumerate(paths) if i not in removed})
+    return retained
 
 
 def project_native_files(data):
@@ -228,7 +239,8 @@ def project_native_files(data):
     if str(data.get('source', {}).get('format', '')).upper() not in {'ENA', 'SRA'}:
         return
     series = data.get('series', {})
-    paths = _complete_branches(series.get('assay_paths', []), {s['iid'] for s in data.get('sample', [])})
+    original_inventory = {}
+    paths = _complete_branches(series.get('assay_paths', []), {s['iid'] for s in data.get('sample', [])}, original_inventory)
     from urllib.parse import unquote, urlsplit
     for sample in data.get('sample', []):
         sources = [s for p in paths for s in p['steps'] if s['kind'] in ('source', 'sample') and s.get('sample_ref') == sample['iid']]
@@ -246,9 +258,9 @@ def project_native_files(data):
             source = deepcopy(sources[0]) if all(s == sources[0] for s in sources) else {
                 'kind': 'source', 'name': sample['iid'], 'sample_ref': sample['iid']}
             paths.append({'steps': [source, node]})
-    from .native_file_selection import source_annotations, primary_sets
+    from .native_file_selection import source_annotations, primary_sets, _coalesced
     paths = source_annotations(paths, {s['iid'] for s in data.get('sample', [])}, _record, _comments)
-    groups, order, archives = {}, [], {}
+    groups, order, archives, inventories = {}, [], {}, {}
     for original in paths:
         path = deepcopy(original)
         steps = path.get('steps', [])
@@ -264,7 +276,7 @@ def project_native_files(data):
         pool = archives.setdefault(scope, [])
         for record in _scan_records(scan):
             record['ROLE'] = 'SUBMISSION_FILE'
-            _combine(pool, record)
+            pool.append(deepcopy(record))
         path['steps'] = [s for s in steps if s.get('kind') != 'array_data_file']
         identity = _key(path)
         if identity not in groups:
@@ -272,14 +284,19 @@ def project_native_files(data):
             order.append((identity, None))
         files = groups[identity][2]
         for step in raw:
-            _combine(files, _record(step))
+            record = _record(step)
+            files.append(deepcopy(record))
+        inventories.setdefault(identity, []).extend(deepcopy(original_inventory.get(id(original), [_record(s) for s in raw])))
     # Complete aliases before deciding their representation: an untyped copy of
     # an explicitly identified FASTQ is not a separate archival alternative.
     for path, scope, files in groups.values():
+        files[:] = _coalesced(files, _combine)
         for record in files:
             if not _fastq(record):
-                _combine(archives[scope], record)
-    selected = primary_sets(groups, _key, _fastq, _combine, archives)
+                archives[scope].append(deepcopy(record))
+    selected = primary_sets(groups, _key, _fastq, _combine, archives, inventories)
+    for scope, values in archives.items():
+        archives[scope] = _coalesced(values, _combine)
     result = []
     for identity, original in order:
         if identity is None:
