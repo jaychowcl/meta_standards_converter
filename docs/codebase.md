@@ -4359,6 +4359,9 @@ make an import incomplete. Requested but unavailable linked metadata does.
 <a id="native-archive-fidelity"></a>
 ### Retrieval and enrichment fidelity
 
+IDF people are selected through study/sample/protocol associations (including inline sample contacts); platform-only contacts and the explicitly identified GEO repository service contact are excluded. Legacy unscoped root people remain eligible. Export columns coalesce identical facts and only unambiguously compatible named contacts with a matching non-generic email. Departments/laboratories and secondary emails remain visible; opaque facts, conflicting affiliations and source contributor occurrences are preserved. Protocol export recognizes the library-construction and treatment type aliases, but sparse definitions cannot choose between conflicting hardware, ontology or registered accessions. Definition consolidation never deletes distinct applications.
+
+
 With GEO/AE enrichment enabled, exact GSE identifiers also probe the corresponding
 legacy E-GEOD accession. This is a lookup candidate until the returned study shares
 a verified core identifier; absent or mismatched records do not redefine native

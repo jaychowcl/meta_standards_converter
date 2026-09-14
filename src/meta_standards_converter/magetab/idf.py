@@ -351,20 +351,15 @@ class IDFConstructor():
         """
         Extracts person information from MINiML JSON using JSONHandler.
         """
-        from copy import deepcopy
-        contributors = deepcopy(data.get("contributor", []))
-        known = {c.get("iid") for c in contributors if c.get("iid")}
-        series = data.get("series") or {}
-        for contributor in [*series.get("contributor", []), *series.get("contact", [])]:
-            if contributor.get("iid") and contributor["iid"] in known:
-                continue
-            contributors.append(deepcopy(contributor))
-            if contributor.get("iid"): known.add(contributor["iid"])
+        from .people import contributors, unique_people
         organizations = {o['iid']: o for o in data.get('organization', [])}
         rows = {key: [] for key in ("Last Name", "First Name", "Mid Initials", "Email", "Phone", "Fax", "Address", "Affiliation", "Roles", "Roles Term Source Ref", "Roles Term Accession Number")}
-        for c in contributors:
+        columns = []
+        for c in contributors(data):
             org = organizations.get(c.get('organization_ref', {}).get('ref'), {})
             affiliation = c.get('organization') or org.get('name')
+            affiliation = ', '.join(dict.fromkeys(str(v) for v in (
+                c.get('laboratory'), c.get('department'), affiliation, c.get('company')) if v)) or None
             address = c.get('address') or org.get('address')
             parts = JSONHandler()._flatten_values(address) if address else []
             if address and not isinstance(address, str): parts = [affiliation, *parts]
@@ -372,8 +367,15 @@ class IDFConstructor():
                       'Mid Initials': c.get('person', {}).get('middle'), 'Affiliation': affiliation,
                       'Address': ', '.join(str(x) for x in parts if x) or None}
             for field in ('Email', 'Phone', 'Fax'): values[field] = c.get(field.lower())
+            secondary = c.get('extensions', {}).get('secondary_email')
+            if secondary:
+                values['Email'] = ';'.join(dict.fromkeys(v for v in (values['Email'], secondary) if v))
+            import json
+            values['_facts'] = json.dumps({'web_link': c.get('web_link'), 'extensions': c.get('extensions')}, sort_keys=True)
             for label, key in [('Roles','value'), ('Roles Term Source Ref','term_source_ref'), ('Roles Term Accession Number','term_accession_number')]:
                 values[label] = ';'.join(str(r.get(key) or '') for r in c.get('roles', [])) or None
+            columns.append(values)
+        for values in unique_people(columns):
             for key in rows: rows[key].append(values.get(key))
         return [['Person ' + key, *values] for key, values in rows.items()]
 

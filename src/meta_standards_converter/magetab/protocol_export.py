@@ -32,9 +32,21 @@ def _value(value, description=False):
 def _compatible(a, b):
     if not a.get('description') or not b.get('description'):
         return False
-    return all(_value(a[k], k == 'description') == _value(b[k], k == 'description')
+    return all((_type_compatible(a[k], b[k]) if k == 'type' else
+                _value(a[k], k == 'description') == _value(b[k], k == 'description'))
                for k in a.keys() & b.keys() if k != 'name'
                and a[k] not in (None, '', [], {}) and b[k] not in (None, '', [], {}))
+
+
+def _type_compatible(a, b):
+    aliases = {'nucleic acid library construction protocol': 'library construction protocol',
+               'sample treatment protocol': 'treatment protocol'}
+    a, b = (deepcopy(v) if isinstance(v, dict) else {'value': v} for v in (a, b))
+    for value in (a, b):
+        label = ' '.join(str(value.get('value', '')).split()).casefold()
+        value['value'] = aliases.get(label, label)
+    return all(_value(a[k]) == _value(b[k]) for k in a.keys() & b.keys()
+               if a[k] not in (None, '') and b[k] not in (None, ''))
 
 
 def _registered(name):
@@ -54,19 +66,30 @@ def prepare_protocols(data):
                 if _registered(p['name']) or p['name'].startswith('P-')}
     groups = []
     bindings = {}
+    # Compatibility is not transitive: an incomplete record must not choose
+    # arbitrarily between conflicting richer definitions.
+    neighbors = [{j for j, other in enumerate(protocols) if _compatible(source, other)}
+                 for source in protocols]
+    registered_choices = [{_registered(protocols[j]['name']) for j in neighborhood
+                           if _registered(protocols[j]['name'])} for neighborhood in neighbors]
     # Registered definitions have naming priority, regardless of source order.
     for position, source in sorted(enumerate(protocols), key=lambda item: not bool(_registered(item[1]['name']))):
         registered = _registered(source['name'])
         group = next((g for g in groups if not (registered and g['registered'] and registered != g['registered'])
-                      and _compatible(g['definition'], source)), None)
+                      and not (g['registered'] and not registered and len(registered_choices[position]) > 1)
+                      and neighbors[position] == g['neighbors'] and _compatible(g['definition'], source)), None)
         if group is None:
-            group = {'definition': deepcopy(source), 'registered': registered, 'position': position}
+            group = {'definition': deepcopy(source), 'registered': registered, 'position': position,
+                     'neighbors': neighbors[position]}
             groups.append(group)
         else:
             group['position'] = min(group['position'], position)
             for key, value in source.items():
                 if key != 'name' and group['definition'].get(key) in (None, '', [], {}):
                     group['definition'][key] = deepcopy(value)
+                elif key == 'type' and isinstance(value, dict) and isinstance(group['definition'].get(key), dict):
+                    group['definition'][key].update({k: deepcopy(v) for k, v in value.items()
+                                                     if v and not group['definition'][key].get(k)})
         bindings[source['name']] = group
     used = set()
     counter = 1
