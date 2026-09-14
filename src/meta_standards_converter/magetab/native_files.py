@@ -128,12 +128,84 @@ def _comments(record, prefix, *, fixed=False):
     return result
 
 
+def _complete_file(long, short):
+    """Combine an exact file occurrence; a bare member name is not a URI."""
+    left, right = _record(long), _record(short)
+    if left.get('_extra') or right.get('_extra'):
+        return None
+    for record in (left, right):
+        if record.get('URI') == record.get('NAME'):
+            record['URI'] = ''
+    # Mirrors are handled by run grouping, not by sparse workflow inference.
+    if left.get('URI') and right.get('URI') and left['URI'] != right['URI']:
+        return None
+    combined = [deepcopy(left)]
+    _combine(combined, right)
+    if len(combined) != 1:
+        return None
+    node = deepcopy(long)
+    for key, value in short.get('link', {}).items():
+        if not node.setdefault('link', {}).get(key) or (key == 'value' and node['link'][key] == node.get('name')):
+            node['link'][key] = value
+    for comment in short.get('comments', []):
+        key = str(comment.get('name', '')).upper()
+        key = _ALIASES.get(key, key)
+        if not left.get(key):
+            empty = next((c for c in node.get('comments', []) if not c.get('value')
+                          and _ALIASES.get(str(c.get('name', '')).upper(), str(c.get('name', '')).upper()) == key), None)
+            if empty is not None:
+                empty['value'] = comment['value']
+                continue
+            node.setdefault('comments', []).append(deepcopy(comment))
+    for key, value in short.items():
+        if key not in ('link', 'comments') and key not in node: node[key] = deepcopy(value)
+    return node
+
+
+def _complete_branches(paths, sample_ids):
+    """Suppress only fully represented sparse prefixes or result suffixes."""
+    paths = deepcopy(paths)
+    buckets = {}
+    bound = {}
+    for i, path in enumerate(paths):
+        refs = {s['sample_ref'] for s in path.get('steps', []) if s.get('sample_ref')}
+        if len(refs) != 1 or not refs <= sample_ids: continue
+        bound[i] = next(iter(refs))
+        for j, step in enumerate(path['steps']):
+            if step['kind'] in ('array_data_file', 'derived_array_data_file'):
+                buckets.setdefault((bound[i], step['kind'], step.get('name')), []).append((i, j))
+    removed = set()
+    for i in sorted(bound, key=lambda i: len(paths[i]['steps']), reverse=True):
+        short = paths[i]; steps = short['steps']
+        if not steps or steps[-1]['kind'] not in ('array_data_file', 'derived_array_data_file'): continue
+        if sum(s['kind'] in ('array_data_file', 'derived_array_data_file') for s in steps) != 1: continue
+        candidates = []
+        for k, j in buckets.get((bound[i], steps[-1]['kind'], steps[-1].get('name')), []):
+            long = paths[k]; full = long['steps']
+            if k in removed or len(full) <= len(steps): continue
+            if {key:v for key,v in short.items() if key != 'steps'} != {key:v for key,v in long.items() if key != 'steps'}: continue
+            prefix = j == len(steps)-1 and steps[:-1] == full[:j]
+            suffix = (steps[-1]['kind'] == 'derived_array_data_file' and len(steps) > 2 and j == len(full)-1
+                      and steps[0] == full[0] and steps[1:-1] == full[j-len(steps)+2:j])
+            if not (prefix or suffix): continue
+            node = _complete_file(full[j], steps[-1])
+            if node is not None: candidates.append((k,j,node))
+        identities = {paths[k]['steps'][j].get('link', {}).get('value') for k,j,_ in candidates}
+        identities -= {None, '', steps[-1].get('name')}
+        # An unlocated filename cannot choose between distinct file versions.
+        if len(identities) > 1: continue
+        if candidates:
+            for k,j,node in candidates: paths[k]['steps'][j] = node
+            removed.add(i)
+    return [p for i,p in enumerate(paths) if i not in removed]
+
+
 def project_native_files(data):
     """Consolidate native raw-file paths, keeping run-scoped archive annotations."""
     if str(data.get('source', {}).get('format', '')).upper() not in {'ENA', 'SRA'}:
         return
     series = data.get('series', {})
-    paths = series.get('assay_paths', [])
+    paths = _complete_branches(series.get('assay_paths', []), {s['iid'] for s in data.get('sample', [])})
     groups, order, archives = {}, [], {}
     for original in paths:
         path = deepcopy(original)

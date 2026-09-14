@@ -4182,8 +4182,11 @@ use repeated `SUBMITTED_FILE_*` comment groups; other archive alternatives use
 `ARCHIVE_FILE_*`. Each archive group includes empty slots for absent fields so
 filenames, URIs and checksums remain aligned. No FASTQ means a run row with an
 empty FASTQ URI and explicit archive references, without a peer lookup. Derived
-file nodes and sample-scoped paths remain explicit; the projector creates no
-raw/processed cross-products. Stored MINiML file occurrences and GEO/AE layouts
+file nodes and sample-scoped paths remain explicit. Sparse raw prefixes or explicit
+processing/result suffixes are suppressed only when an existing longer path for
+the same bound sample completely represents them. Compatible file details complete
+every matching branch; ambiguous filename-only locations and conflicting metadata
+remain separate. The projector creates no raw/processed cross-products. Stored MINiML file occurrences and GEO/AE layouts
 are unchanged. `tests/test_native_file_layout.py` covers these contracts.
 
 The final `AEConstructor` boundary applies the existing stable comment partition

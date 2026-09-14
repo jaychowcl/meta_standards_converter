@@ -73,7 +73,7 @@ def test_processed_paths_and_multiple_runs_remain_scoped():
     another=deepcopy(data['series']['assay_paths'][0]);next(s for s in another['steps'] if s['kind']=='scan')['name']='SRR999999'
     next(s for s in another['steps'] if s['kind']=='scan')['comments']=[];data['series']['assay_paths'].append(another)
     paths=projected(data)
-    assert len(paths)==6
+    assert len(paths)==5  # The complete counts branch also represents its raw prefix.
     assert sum('counts.h5' in str(p) for p in paths)==1 and sample_result in paths
     other=next(p for p in paths if 'SRR999999' in str(p));assert not any(k.startswith('SUBMITTED_FILE') for k,v in comments(other))
 
@@ -168,3 +168,69 @@ def test_mirror_matching_rejects_conflicts_and_different_scopes(change):
         first['steps'][-1]['comments'][1]['value']='abc';node['comments'][1]['value']='abc'
     data['series']['assay_paths']=[first,second]
     assert len(projected(data))==2
+
+
+def test_sparse_raw_path_is_subsumed_by_complete_result_branches_with_metadata():
+    data=package();raw=deepcopy(data['series']['assay_paths'][0])
+    complete=[]
+    for name in ('counts.tsv','abundance.tsv'):
+        p=deepcopy(raw);p['steps'][-1]['comments']=[{'name':'FORMAT','value':'fastq'}]
+        p['steps'] += [{'kind':'protocol_application','protocol_ref':'processing'},
+                       {'kind':'derived_array_data_file','name':name,'link':{'value':'https://results/'+name}}]
+        complete.append(p)
+    data['series']['assay_paths']=[raw,*complete]
+    paths=projected(data)
+    assert len(paths)==2
+    assert all(('FASTQ_MD5','abc') in comments(p) and ('FASTQ_BYTES','12') in comments(p) for p in paths)
+    once=deepcopy(data);projected(data);assert data==once
+
+
+def test_sparse_sample_result_requires_unique_file_identity_and_same_processing():
+    data=package();raw=deepcopy(data['series']['assay_paths'][0]);source=deepcopy(raw['steps'][0])
+    proc={'kind':'protocol_application','protocol_ref':'processing'}
+    result={'kind':'derived_array_data_file','name':'counts.tsv','link':{'value':'https://results/v1/counts.tsv'}}
+    full={'steps':raw['steps']+[proc,result]}
+    sparse={'steps':[source,deepcopy(proc),{'kind':'derived_array_data_file','name':'counts.tsv','link':{'value':'counts.tsv'}}]}
+    compressed={'steps':[source,deepcopy(proc),{'kind':'derived_array_data_file','name':'counts.tsv.gz','link':{'value':'https://results/counts.tsv.gz'}}]}
+    data['series']['assay_paths']=[deepcopy(sparse),deepcopy(full),compressed]
+    paths=projected(data);assert len(paths)==2 and compressed in paths
+    other=deepcopy(full);other['steps'][-1]['link']['value']='https://results/v2/counts.tsv'
+    for sequence in ([sparse,full,other],[other,full,sparse]):
+        data['series']['assay_paths']=deepcopy(sequence)
+        assert len(projected(data))==3
+
+
+@pytest.mark.parametrize('change',['checksum','processing','sample','workflow'])
+def test_sparse_consolidation_preserves_conflicts_and_boundaries(change):
+    data=package();raw=deepcopy(data['series']['assay_paths'][0]);full=deepcopy(raw)
+    full['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv'})
+    if change=='checksum':full['steps'][-2]['comments'][1]['value']='different'
+    if change=='processing':raw['steps'].insert(-1,{'kind':'protocol_application','protocol_ref':'different'})
+    if change=='sample':full['steps'][0]['sample_ref']='other-sample'
+    if change=='workflow':full['steps'][0]['description']='different'
+    data['series']['assay_paths']=[raw,full]
+    assert len(projected(data))==2
+
+
+@pytest.mark.parametrize('conflicting',[False,True])
+def test_sparse_file_completion_does_not_drop_empty_or_repeated_metadata(conflicting):
+    data=package();raw=deepcopy(data['series']['assay_paths'][0]);full=deepcopy(raw)
+    full['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv'})
+    if conflicting:raw['steps'][-1]['comments'].append({'name':'MD5','value':'contradiction'})
+    else:full['steps'][-2]['comments'][1]['value']=''
+    data['series']['assay_paths']=[raw,full]
+    paths=projected(data)
+    if conflicting:
+        assert len(paths)==2 and 'contradiction' in str(paths)
+    else:
+        assert len(paths)==1 and ('FASTQ_MD5','abc') in comments(paths[0])
+
+
+def test_sparse_explicit_uri_completes_filename_only_longer_branch():
+    data=package();raw=deepcopy(data['series']['assay_paths'][0]);full=deepcopy(raw)
+    full['steps'][-1]['link']['value']=full['steps'][-1]['name']
+    full['steps'].append({'kind':'derived_array_data_file','name':'counts.tsv'})
+    for sequence in ([raw,full],[full,raw]):
+        data['series']['assay_paths']=deepcopy(sequence)
+        paths=projected(data)
+        assert len(paths)==1 and ('FASTQ_URI','ftp://reads/one_1.fastq.gz') in comments(paths[0])
