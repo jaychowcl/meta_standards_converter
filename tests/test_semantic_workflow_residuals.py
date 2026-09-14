@@ -186,3 +186,38 @@ def test_organism_label_projection_requires_complete_unique_coupled_value():
     source['steps'][0]['characteristics'][0]['term_accession_number']='conflict'
     out=finalize(data,[record]).to_mapping()
     assert paths(out)[0]['steps'][0]['characteristics']==source['steps'][0]['characteristics']
+
+
+@pytest.mark.parametrize('qualified', [False, True])
+@pytest.mark.parametrize('reverse', [False, True])
+def test_organism_exact_group_precedes_richer_occurrence(qualified, reverse):
+    data=aliased();record=legacy_source(data)
+    bare={'name':'Organism','value':'Danio rerio'}
+    taxon={**bare,'term_source_ref':'NCBITaxon','term_accession_number':'7955'}
+    original=[bare,taxon] if qualified else [bare]
+    if reverse:original.reverse()
+    record['metadata']['series']['assay_paths'][0]['steps'][0]['characteristics']=original
+    for path in data['series']['assay_paths']:
+        path['steps'][0]['characteristics']=[{**bare,'name':'organism'},{**taxon,'name':'organism'}]
+    before=deepcopy(data)
+    out=finalize(data,[record]).to_mapping()
+    assert not paths(out)[0]['steps'][0].get('characteristics')
+    assert {k:v for k,v in out.items() if k!='extensions'}=={k:v for k,v in before.items() if k!='extensions'}
+    assert finalize(out).to_mapping()==out
+
+
+@pytest.mark.parametrize('case', ['duplicate_target','duplicate_source','value','unit','ontology','qualifier'])
+def test_organism_exact_preference_preserves_unrepresented_occurrences(case):
+    data=aliased();record=legacy_source(data)
+    original={'name':'Organism','value':'Danio rerio'}
+    wanted={**original,'name':'organism'}
+    if case=='unit':original['unit']={'value':'unknown'}
+    if case=='ontology':original['term_accession_number']='conflicting'
+    if case=='qualifier':original['qualification']='unmapped'
+    source=[original,deepcopy(original)] if case=='duplicate_source' else [original]
+    record['metadata']['series']['assay_paths'][0]['steps'][0]['characteristics']=source
+    for path in data['series']['assay_paths']:
+        path['steps'][0]['characteristics']=[wanted,deepcopy(wanted)] if case=='duplicate_target' else [wanted]
+        if case=='value':path['steps'][0]['characteristics'][0]['value']='Mus musculus'
+    out=finalize(data,[record]).to_mapping()
+    assert paths(out)[0]['steps'][0]['characteristics']==source

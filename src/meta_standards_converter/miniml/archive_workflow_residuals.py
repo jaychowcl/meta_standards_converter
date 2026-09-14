@@ -117,6 +117,11 @@ def prune_bound_workflows(source, target, residual, provider, accession):
                         continue
                     wanted = {**character, 'name': 'organism'}
                     candidates = [c for c in restored.get('characteristics', []) if contains(wanted, c)]
+                    # An exact occurrence remains identifiable beside an
+                    # independently supplied, richer taxonomy assertion.
+                    exact = [c for c in candidates if c == wanted]
+                    if exact:
+                        candidates = exact
                     if len(candidates) == 1 and sum(c == character for c in node['characteristics']) == 1:
                         candidates[0]['name'] = 'Organism'
             inverse['steps'].append(restored)
