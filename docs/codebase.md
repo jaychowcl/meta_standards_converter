@@ -4202,6 +4202,10 @@ distinct from unlocated members. Explicit URI, format, size and checksum aliases
 compared across link fields and comments before consolidation. Repeated enrichment
 reuses a compatible vocabulary declaration or allocates a deterministic unused
 namespaced ID when its version or other identity details conflict.
+Explicit contact and contributor references merge additively at their matched
+entity scope after namespacing. Native references survive; sample-only GEO or
+peer contacts are not promoted to study contributors. Only IDF-origin declarations
+may supply the existing implicit study-contributor fallback.
 
 The final `AEConstructor` boundary applies the existing stable comment partition
 **after** the semantic overlay, so no ordinary IDF row follows a comment.

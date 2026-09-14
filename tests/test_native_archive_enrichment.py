@@ -217,3 +217,50 @@ def test_shared_organization_ids_do_not_create_sample_identity_matches():
         {'type':'archive center','target':'ena:BioSample:SAMN999:organization-2'},
         {'type':'derived from','target':'SAMN998'}])
     assert not {'SAMN999','SAMN998'} & entity_ids(sample,sample=True)
+
+
+def test_enrichment_preserves_native_and_explicit_linked_contact_scope():
+    data=native().to_mapping();sid=data['sample'][0]['iid']
+    data['contributor']=[{'iid':'native-person','person':{'last':'Native'}}]
+    data['sample'][0]['contact_ref']=[{'ref':'native-person'}]
+    data['series']['contributor_ref']=[{'ref':'native-person'}]
+    package=MINiMLCodec().decode(data).package
+    extra=linked(package,'GSE1','linked').to_mapping()
+    extra['contributor']=[{'iid':'linked-person','person':{'last':'Linked'}}]
+    extra['sample'][0]['contact_ref']=[{'ref':'linked-person'}]
+    extra['series']['contact_ref']=[{'ref':'linked-person'}]
+    extra['series']['contributor_ref']=[{'ref':'linked-person'}]
+    result,issues=merge_archive_metadata(package,MINiMLCodec().decode(extra).package,prefer=True)
+    assert not issues
+    mapped=result.to_mapping()
+    assert {r['ref'] for r in mapped['sample'][0]['contact_ref']}=={'native-person','GSE1:linked-person'}
+    assert {r['ref'] for r in mapped['series']['contributor_ref']}=={'native-person','GSE1:linked-person'}
+    assert mapped['series']['contact_ref']==[{'ref':'GSE1:linked-person'}]
+    assert mapped['sample'][0]['iid']==sid
+
+
+def test_sample_only_geo_contact_is_not_promoted_to_study_and_repeated_join_is_idempotent():
+    package=native();extra=linked(package,'GSE1','linked').to_mapping()
+    extra['contributor']=[{'iid':'sample-person','person':{'last':'Sample only'}}]
+    extra['series'].pop('contributor_ref',None);extra['series'].pop('contact_ref',None)
+    extra['sample'][0]['contact_ref']=[{'ref':'sample-person'}]
+    incoming=MINiMLCodec().decode(extra).package
+    for _ in range(2):
+        package,issues=merge_archive_metadata(package,incoming,prefer=True);assert not issues
+        package=MINiMLCodec().decode(package.to_mapping()).package
+    d=package.to_mapping()
+    assert [r['ref'] for r in d['sample'][0]['contact_ref']].count('GSE1:sample-person')==1
+    assert not any(r['ref']=='GSE1:sample-person' for r in d['series'].get('contributor_ref',[]))
+    assert not d['series'].get('contact_ref')
+
+
+def test_ambiguous_sample_contacts_remain_unassigned_to_native_sample():
+    package=native();extra=linked(package,'GSE1','linked').to_mapping()
+    extra['contributor']=[{'iid':'linked-person','person':{'last':'Linked'}}]
+    extra['sample'][0]['contact_ref']=[{'ref':'linked-person'}]
+    extra['sample'].append(deepcopy(extra['sample'][0]));extra['sample'][1]['iid']='GSM2'
+    result,issues=merge_archive_metadata(package,MINiMLCodec().decode(extra).package,prefer=True)
+    assert any('ambiguous' in x for x in issues)
+    d=result.to_mapping()
+    assert not any(r['ref']=='GSE1:linked-person' for r in d['sample'][0]['contact_ref'])
+    assert any('GSE1:linked-person' in str(r['metadata']) for r in d['extensions']['insdc']['records'])

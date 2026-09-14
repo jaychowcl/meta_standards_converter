@@ -82,7 +82,7 @@ def entity_ids(entity, *, sample=False):
 
 def _merge_entity(target, extra, prefer, protected=()):
     from copy import deepcopy
-    additive = {'raw_data', 'supplementary_data', 'relation', 'accession'}
+    additive = {'raw_data', 'supplementary_data', 'relation', 'accession', 'contact_ref', 'contributor_ref'}
     for key, value in extra.items():
         if key in protected:
             continue
@@ -153,7 +153,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     namespace = str(extra['series'].get('iid') or 'linked') + ':'
     declaration_mappings = merge_declarations(data, extra, namespace)
     _merge_entity(data['series'], extra['series'], prefer,
-                  {'iid', 'sample_ref', 'assay_paths', 'protocols', 'contact_ref'})
+                  {'iid', 'sample_ref', 'assay_paths', 'protocols'})
     native_samples, extra_samples = data.get('sample', []), extra.get('sample', [])
     joins = {i: [j for j, s in enumerate(extra_samples) if entity_ids(n, sample=True) & entity_ids(s, sample=True)]
              for i, n in enumerate(native_samples)}
@@ -170,7 +170,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
         j = candidates[0]
         target, source = native_samples[i], extra_samples[j]
         matched[source['iid']] = target['iid']
-        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'contact_ref', 'platform_ref'})
+        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'platform_ref'})
         runs = {r['run']: r for r in target.get('sra_run', [])}
         for run in source.get('sra_run', []):
             if run['run'] in runs:

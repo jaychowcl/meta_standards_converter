@@ -75,7 +75,8 @@ def merge_declarations(data, extra, namespace):
             else:
                 data[kind].append(deepcopy(incoming))
     # IDF contributors are study-scoped even when the input omitted explicit refs.
-    if extra.get('contributor') and not extra['series'].get('contributor_ref'):
+    if (extra.get('source', {}).get('format') == 'MAGE-TAB'
+            and extra.get('contributor') and not extra['series'].get('contributor_ref')):
         extra['series']['contributor_ref'] = [{'ref': p['iid']} for p in extra['contributor']]
     return mappings
 
