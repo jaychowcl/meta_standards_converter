@@ -4148,7 +4148,7 @@ precision and conflicting occurrences survive; copied assay-path attributes do
 not multiply status occurrences. Qualified annotations remain beside the status.
 Collection dates remain characteristics. Unbound paths are not assigned to samples
 by descriptive similarity. Status enrichment combines compatible records and
-retains conflicting records even within the same archive.
+retains conflicting records even within the same archive. Residual comparison removes an original date characteristic only against an exact, same-sample status occurrence, including its qualified annotations. Unrepresented dates keep their original source shape. Uniquely matched ordered paths prune mapped siblings but retain step identity skeletons when residual information needs event-position context; ambiguous paths remain intact.
 
 `archive_administration.normalize_administration` projects explicit INSDC status
 attributes into sample status comments and center names/aliases into source-scoped
@@ -4359,6 +4359,8 @@ make an import incomplete. Requested but unavailable linked metadata does.
 <a id="native-archive-fidelity"></a>
 ### Retrieval and enrichment fidelity
 
+Linked EBI BioSamples characteristics fill absent attribute names. Exact casefolded names and the existing underscore-to-space aliases are both recognized, preventing the same underscore-named field from being copied twice. Independently repeated native attributes and repeated values of new linked fields remain; conflicting linked evidence stays residual.
+
 Native semantic helpers (internal implementation contracts):
 
 - `meta_standards_converter.miniml.archive_results.companion_node`
@@ -4371,9 +4373,9 @@ Native semantic helpers (internal implementation contracts):
 - `meta_standards_converter.magetab.native_file_selection.prune_empty_file_columns`
 - `meta_standards_converter.metadata.archive_workflows.mark_file_origins`
 
-IDF people are selected through study/sample/protocol associations (including inline sample contacts); platform-only contacts and the explicitly identified GEO repository service contact are excluded. Legacy unscoped root people remain eligible. Export columns coalesce identical facts and only unambiguously compatible named contacts with a matching non-generic email. Departments/laboratories and secondary emails remain visible; opaque facts, conflicting affiliations and source contributor occurrences are preserved. Protocol export recognizes the library-construction and treatment type aliases, but sparse definitions cannot choose between conflicting hardware, ontology or registered accessions. Definition consolidation never deletes distinct applications.
+IDF people are selected through study/sample/protocol associations (including inline sample contacts); platform-only contacts and the explicitly identified GEO repository service contact are excluded. Legacy unscoped root people remain eligible. Export columns coalesce identical facts and only unambiguously compatible named contacts with a matching non-generic email. Departments/laboratories and secondary emails remain visible; opaque facts, conflicting affiliations and source contributor occurrences are preserved. Protocol export recognizes the library-construction and treatment type aliases, but sparse definitions cannot choose between conflicting hardware, ontology or registered accessions. Definition consolidation never deletes distinct applications. In generated native material paths only, an exact compound extraction/library description reuses the single plain native library application bound to the same experiment and run. The generated Extract follows that application; authored procedure order, decorated applications, ambiguous bindings and authored material workflows are preserved. Both supplied type-specific definitions remain declared.
 
-Native read-file presentation selects one complete source set per explicitly matching acquisition: ArrayExpress, GEO, native generated, then submitted reads. Enrichment labels file records with `link.repository` and `link.source_accession`; these identify the file record source, not a per-field provenance ledger. Known missing locations or explicit mate/index/lane roles prevent preferred subsets from replacing complete alternatives. Saved records without origin retain a conservative unlabelled-set fallback. Different same-priority sources and genuinely different processing branches remain separate. All original MINiML records remain; other representations appear as run archive annotations.
+Native read-file presentation selects one complete source set per explicitly matching acquisition: ArrayExpress, GEO, native generated, then submitted reads. Enrichment labels file records with `link.repository` and `link.source_accession`; these string fields identify the file record source, not a per-field provenance ledger. Legacy structured values remain opaque annotations and cannot participate in source ranking. Known missing locations or explicit mate/index/lane roles prevent preferred subsets from replacing complete alternatives. Saved records without origin retain a conservative unlabelled-set fallback. Different same-priority sources and genuinely different processing branches remain separate. All original MINiML records remain; other representations appear as run archive annotations.
 
 Sample-only results export as `SAMPLE_FILE_*` source-node comments, with aligned filename/URI/format/checksum fields and explicit upstream processing/input/context metadata. They are attached only where supplied biological-source facts agree. An independently described aliquot retains its own biological annotation row; no run is invented. Study files stay in IDF study comments. Globally empty optional file-field labels are omitted; all occurrences of any populated label remain aligned.
 

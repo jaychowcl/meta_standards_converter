@@ -29,8 +29,11 @@ def _key(value):
 def _record(step):
     link = step.get('link') or {}
     result = {'NAME': step.get('name', ''), 'URI': link.get('value', '')}
-    if link.get('repository'): result['_repository'] = link['repository']
-    if link.get('source_accession'): result['_source'] = link['source_accession']
+    interpreted = {'value', 'type'}
+    for field, target in (('repository', '_repository'), ('source_accession', '_source')):
+        if isinstance(link.get(field), str):
+            result[target] = link[field]
+            interpreted.add(field)
     for comment in step.get('comments', []):
         name = str(comment.get('name', '')).upper()
         name = _ALIASES.get(name, name)
@@ -48,8 +51,8 @@ def _record(step):
     extra = {k: v for k, v in step.items() if k not in {'kind', 'name', 'link', 'comments'}}
     if extra:
         result['_node'] = extra
-    if set(link) - {'value', 'type', 'repository', 'source_accession'}:
-        result['_link'] = {k: v for k, v in link.items() if k not in {'value', 'type', 'repository', 'source_accession'}}
+    if set(link) - interpreted:
+        result['_link'] = {k: v for k, v in link.items() if k not in interpreted}
     return result
 
 

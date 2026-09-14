@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from copy import deepcopy
+import pytest
 
 from tests.test_native_file_layout import package, file, projected, comments
 from tests.test_protocol_export import render
@@ -123,3 +124,11 @@ def test_excluded_set_keeps_nested_verified_mirrors_in_run_annotations():
     c=comments(paths[0])
     assert ('FASTQ_URI','https://ae/reads.fastq') in c
     assert {v for k,v in c if k=='ARCHIVE_FILE_URI'}=={'https://ena/reads.fastq','https://sra/reads.fastq'}
+
+
+@pytest.mark.parametrize('key,value',[('repository',{'name':'legacy repository'}),('repository',['legacy']),('source_accession',{'accession':'legacy'}),('source_accession',['legacy'])])
+def test_legacy_record_origin_extras_are_opaque_not_ranked(key,value):
+    data=package();data['series']['assay_paths'][0]['steps'][-1]['link'][key]=value
+    before=deepcopy(data);rows=render(data)
+    assert str(value.get('name','legacy') if isinstance(value,dict) else 'legacy') in str(rows)
+    assert data==before

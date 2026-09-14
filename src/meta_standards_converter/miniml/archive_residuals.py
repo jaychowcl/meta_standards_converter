@@ -40,7 +40,11 @@ def accession(node):
 def contains(expected, actual):
     """A coupled source value is represented by a compatible richer value."""
     if isinstance(expected, dict):
-        return isinstance(actual, dict) and all(k in actual and contains(v, actual[k]) for k,v in expected.items() if v not in (None, '', [], {}))
+        return isinstance(actual, dict) and all(k in actual and
+            (isinstance(actual[k], list) and len(v) == len(actual[k])
+             and all(contains(a, b) for a, b in zip(v, actual[k]))
+             if k == 'steps' and isinstance(v, list) else contains(v, actual[k]))
+            for k,v in expected.items() if v not in (None, '', [], {}))
     if isinstance(expected, list):
         if not isinstance(actual, list): return False
         available = list(actual)
@@ -50,6 +54,72 @@ def contains(expected, actual):
             available.pop(match)
         return True
     return expected == actual
+
+
+def _path_signature(path):
+    if not isinstance(path, dict) or not isinstance(path.get('steps'), list):
+        return None
+    return json.dumps([{k: s[k] for k in ('kind', 'name', 'sample_ref', 'protocol_ref') if k in s}
+                       | ({'uri': s['link']['value']} if isinstance(s.get('link'), dict) and 'value' in s['link'] else {})
+                       for s in path['steps']], sort_keys=True)
+
+
+def _path_diff(source, target):
+    # Equal ordered identities establish occurrence position, including repeated
+    # applications. Keep the skeleton only when an unmapped sibling remains.
+    steps = []
+    changed = False
+    for item, other in zip(source['steps'], target['steps']):
+        delta = diff(item, other)
+        changed |= delta is not None
+        steps.append(delta if delta is not None else
+                     {k: deepcopy(item[k]) for k in ('kind', 'name', 'sample_ref', 'protocol_ref') if k in item})
+    result = {k: delta for k, value in source.items() if k != 'steps'
+              and (delta := diff(value, target.get(k), field=k)) is not None}
+    if changed or result:
+        result['steps'] = steps
+    return result or None
+
+
+def _mapped_date_view(metadata, target, workflows=False):
+    """Prune only original occurrences proved by final same-sample statuses."""
+    from .archive_dates import _date_key
+    view = deepcopy(metadata)
+    samples = {s['iid']: s for s in target.get('sample', [])}
+
+    def clean(owner, sample, used):
+        retained = []
+        for item in owner.get('characteristics', []):
+            key = _date_key(item.get('name'), item.get('value'))
+            match = None
+            if key:
+                database, field, value = key
+                wanted = {'database': database, field: value}
+                extra = {k: v for k, v in item.items() if k not in ('name', 'value')}
+                if extra:
+                    wanted['attribute_annotations'] = [{**extra, 'attribute_name': item['name']}]
+                match = next(((i, field) for i, status in enumerate(sample.get('status', []))
+                              if (i, field) not in used and contains(wanted, status)), None)
+            if match is None:
+                retained.append(item)
+            else:
+                used.add(match)
+        if 'characteristics' in owner:
+            owner['characteristics'] = retained
+
+    if not workflows:
+        for sample in view.get('sample', []):
+            used = set()
+            for channel in sample.get('channel', []):
+                clean(channel, samples.get(sample.get('iid'), {}), used)
+    series = view if workflows else view.get('series', {})
+    for path in series.get('assay_paths', []):
+        bound = {s.get('sample_ref') for s in path.get('steps', [])} - {None}
+        for step in path.get('steps', []):
+            ref = step.get('sample_ref') or (next(iter(bound)) if len(bound) == 1 else None)
+            if ref in samples:
+                clean(step, samples[ref], set())
+    return view
 
 
 def diff(source, target, *, field=None):
@@ -68,11 +138,21 @@ def diff(source, target, *, field=None):
     if isinstance(source, list):
         result = []
         available = list(target) if isinstance(target,list) else []
+        source_paths = [_path_signature(p) for p in source] if field == 'assay_paths' else []
+        target_paths = [_path_signature(p) for p in available] if field == 'assay_paths' else []
         for item in source:
             match = next((i for i,x in enumerate(available) if contains(item,x)), None)
             if match is not None:
                 available.pop(match)
                 continue
+            if field == 'assay_paths':
+                signature = _path_signature(item)
+                if signature is not None and source_paths.count(signature) == target_paths.count(signature) == 1:
+                    match = next((i for i, p in enumerate(available) if _path_signature(p) == signature), None)
+                    if match is not None:
+                        delta = _path_diff(item, available.pop(match))
+                        if delta is not None: result.append(delta)
+                        continue
             candidate = None
             # Native channel projection is unambiguous only for the single
             # channel of an already matched sample, never by biological title.
@@ -85,6 +165,8 @@ def diff(source, target, *, field=None):
                     if len(options)==1: candidate=options[0]
             delta = diff(item, candidate, field=field)
             if delta is not None: result.append(delta)
+            if candidate is not None:
+                available.remove(candidate)
         return result or None
     return deepcopy(source) if source not in (None, '', [], {}) else None
 
@@ -423,7 +505,8 @@ def finalize(data, records=None):
         if kind in ('MINiML','MINiML_workflows'):
             # Incoming identifiers have been remapped by the merger before this
             # snapshot is made. Saved packages are compared by those exact IDs.
-            left=diff(metadata,comparison if kind=='MINiML' else comparison['series'])
+            view = _mapped_date_view(metadata, comparison, workflows=kind=='MINiML_workflows')
+            left=diff(view,comparison if kind=='MINiML' else comparison['series'])
         elif isinstance(metadata,dict) and 'tag' in metadata:
             if kind=='PubmedArticle' and not acc:
                 acc=child_text(metadata,'MedlineCitation/PMID') or None

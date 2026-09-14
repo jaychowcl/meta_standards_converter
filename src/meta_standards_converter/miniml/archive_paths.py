@@ -42,6 +42,33 @@ def _authored_method(steps, by_name, field, description, base):
     return False
 
 
+def _compound_application(steps, sample, methods, description):
+    """Recognize duplicate scalar projection at an unambiguous native boundary."""
+    assays = [s for s in steps if s['kind'] == 'assay']
+    scans = [s for s in steps if s['kind'] == 'scan']
+    if not description or len(assays) != 1 or len(scans) != 1:
+        return None
+    experiment = assays[0].get('name')
+    matches = [r for r in sample.get('sra_run', [])
+               if r.get('experiment') == experiment and r.get('run') == scans[0].get('name')]
+    if len(matches) != 1 or not experiment:
+        return None
+    ref = experiment + ':library'
+    applications = [s for s in steps if s.get('protocol_ref') == ref]
+    method = methods.get(ref, {})
+    kind = str(_literal(method.get('type', ''))).lower().replace('_', ' ')
+    if (len(applications) != 1 or set(applications[0]) != {'kind', 'protocol_ref'}
+            or method.get('description') != description
+            or kind not in {'library construction protocol', 'nucleic acid library construction protocol'}):
+        return None
+    application = applications[0]
+    # Never move an application across an authored procedure. Insert the
+    # generated material only at the native library-to-assay boundary.
+    if steps.index(application) + 1 != steps.index(assays[0]):
+        return None
+    return application
+
+
 def complete_native_paths(data):
     """Project explicit channel materials/protocols and scoped descriptive fields."""
     if data.get('source', {}).get('format') not in ('ENA', 'SRA'):
@@ -134,15 +161,21 @@ def complete_native_paths(data):
             fields = ('growth_protocol', 'treatment_protocol', 'extract_protocol', 'label_protocol')
             generated = {p['name'] for p in definitions if any(':' + sid + ':' + field in p['name'] for field in fields)}
             steps[:] = [s for s in steps if s.get('protocol_ref') not in generated]
+            compound = _compound_application(steps, sample, methods, channel.get('extract_protocol'))
             position = next((i for i, s in enumerate(steps) if s['kind'] not in ('source', 'sample')), len(steps))
             addition = []
+            after_compound = []
             for field in fields:
-                if (sid, field) in refs:
-                    addition.append({'kind': 'protocol_application', 'protocol_ref': refs[(sid, field)]})
+                destination = after_compound if compound is not None and field in ('extract_protocol', 'label_protocol') else addition
+                if (sid, field) in refs and not (compound is not None and field == 'extract_protocol'):
+                    destination.append({'kind': 'protocol_application', 'protocol_ref': refs[(sid, field)]})
                 if field == 'extract_protocol' and informative(channel.get('molecule')):
-                    addition.append({'kind': 'extract', 'name': sid + ':extract', 'sample_ref': sid,
+                    destination.append({'kind': 'extract', 'name': sid + ':extract', 'sample_ref': sid,
                                      'material_type': deepcopy(channel['molecule'])})
             steps[position:position] = addition
+            if compound is not None:
+                position = steps.index(compound) + 1
+                steps[position:position] = after_compound
         for field, boundary in (('scan_protocol', 'scan'), ('hybridization_protocol', 'hybridization')):
             if (sid, field) not in refs or not any(s['kind'] == boundary for s in steps):
                 continue

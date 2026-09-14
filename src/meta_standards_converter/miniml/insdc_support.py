@@ -385,7 +385,7 @@ def fill_linked_metadata(records, series, samples, protocols, paths):
         if record['metadata'].get('status'):
             sample.setdefault('status', []).append({'database':'BioSamples', 'comment':[{'name':'status','value':record['metadata']['status']}]})
         attrs = sample['channel'][0]['characteristics']
-        names = {a['name'].replace('_', ' ').casefold() for a in attrs}
+        names = {key for a in attrs for key in (a['name'].casefold(), a['name'].replace('_', ' ').casefold())}
         for name, values in record['metadata'].get('characteristics', {}).items():
             if name.casefold() in names or name.casefold() in ('organism', 'title', 'description'):
                 continue
