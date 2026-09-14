@@ -481,7 +481,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Native import tests
   anchor: native-archive-validation
   purpose: Documents native import tests.
-  keywords: TDD, offline, live_api, accession joins, downstream exports
+  keywords: TDD, offline, live_api, accession joins, downstream exports, saved run refresh, citation preservation, partial retrieval
   link: [Open section](codebase.md#native-archive-validation)
 
 ## Stable aliases and supporting documents

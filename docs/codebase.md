@@ -3876,6 +3876,8 @@ source hosts require `ae2json --source-host HOST` or an injected policy.
 <a id="msc6-source-services"></a>
 ## Source services
 
+Saved GEO/JSON enrichment is additive: failed, empty or partial SRA refreshes retain resolved runs and accession inventories. Completion is local to the owning sample and requires an unambiguous run ID with compatible experiment/sample/BioSample/study identities. FASTQ entries merge only through exact URI and compatible complete facts; conflicting occurrences remain separate. Existing citation values and coupled publication-status annotations are preserved, with missing details filled through the same hydration contract as native imports. A failed lookup cannot erase a known citation. `--no-enrich` still performs no remote enrichment.
+
 `GEOSource` owns retrieval and related-series traversal; `GEOParser` parses supplied
 XML without network calls. Converter-specific enrichment defaults and guarded
 parent-publication inheritance remain unchanged. `JSONPackageSource` owns JSON
