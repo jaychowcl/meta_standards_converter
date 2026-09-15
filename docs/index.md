@@ -418,7 +418,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Scoped library chemistry
   anchor: scoped-library-chemistry
   purpose: Explain scoped library chemistry and its implementation boundaries.
-  keywords: scoped library chemistry
+  keywords: scoped library chemistry, sci-RNA-seq, empty control, bulk control, plate, C1, incompatible preparation
   link: [Open section](codebase.md#scoped-library-chemistry)
 
 - id: sample-library-routing

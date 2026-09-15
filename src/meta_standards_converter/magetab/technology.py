@@ -7,10 +7,10 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import re
 from .chemistry import resolve_chemistry
-from .preparation import single_cell_signal, scoped_method, methods, clauses, NON_PREP
+from .preparation import single_cell_signal, scoped_method, methods, clauses, NON_PREP, control_role, incompatible_preparation
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
 import os
 from urllib.parse import urlparse
@@ -108,6 +108,7 @@ class TechnologyDecision:
     handler: str
     evidence: tuple[TechnologyEvidence, ...] = ()
     diagnostics: tuple[TechnologyDiagnostic, ...] = ()
+    control_role: str | None = None
 
 
 def _items(value):
@@ -132,6 +133,21 @@ def _signals(text):
 
 def resolve_technology(sample: dict, channel: dict | None = None,
                        run: dict | None = None, *, data: dict | None = None) -> TechnologyDecision:
+    role = control_role(sample, channel, run)
+    incompatible = incompatible_preparation(sample, channel, run)
+    if incompatible:
+        evidence = tuple(TechnologyEvidence(p, t, ('incompatible_rna_preparation',)) for p, t in incompatible)
+        identity = str((run or {}).get('library_name') or sample.get('title') or '')
+        explicit_chip = bool(re.search(r'(?:single[- ]cell\s+|\bsc[- ]?)chip', identity, re.I))
+        handler = 'single_cell_sequencing' if explicit_chip else 'sequencing'
+        return TechnologyDecision(handler, evidence, (TechnologyDiagnostic('incompatible_preparation_evidence',
+                                  tuple(p for p, _ in incompatible)),), role)
+    decision = _resolve_technology(sample, channel, run, data=data)
+    return replace(decision, control_role=role)
+
+
+def _resolve_technology(sample: dict, channel: dict | None = None,
+                       run: dict | None = None, *, data: dict | None = None) -> TechnologyDecision:
     """Route one sample/library using identity before shared method descriptions.
 
     Input dictionaries and source objects are never modified. Equally applicable
@@ -152,14 +168,14 @@ def resolve_technology(sample: dict, channel: dict | None = None,
 
     def add(level, path, text):
         if text:
-            signals = ('single_cell',) if level == 3 and str(text).casefold() == 'single cell' else _signals(str(text))
+            signals = ('single_cell',) if level == 3 and str(text).casefold() in {'single cell', 'transcriptomic single cell'} else _signals(str(text))
             levels[level].append(TechnologyEvidence(path, str(text), signals))
 
     for key in ('library_name', 'description'):
         add(0, prefix+'.run.'+key, (run or {}).get(key))
     for key in ('title', 'description', 'library_name'):
         add(1, prefix+'.'+key, sample.get(key))
-    add(3, prefix+'.library_source', sample.get('library_source'))
+    add(3, prefix+'.library_source', (run or {}).get('library_source') or sample.get('library_source'))
     for i, item in enumerate(channels):
         if not isinstance(item, dict):
             continue
@@ -185,6 +201,8 @@ def resolve_technology(sample: dict, channel: dict | None = None,
     for key in ('library_construction_protocol', 'library_protocol'):
         add(2, prefix+'.run.'+key, (run or {}).get(key))
     for i, series in enumerate(_items(data.get('series'))):
+        if control_role(sample, channel, run) == 'empty control':
+            break
         if isinstance(series, dict):
             for key in ('title','summary','overall_design'):
                 text = str(series.get(key) or '')
@@ -227,7 +245,7 @@ def resolve_technology(sample: dict, channel: dict | None = None,
             return TechnologyDecision('droplet_single_cell_sequencing', supporting)
         return TechnologyDecision('single_cell_sequencing', supporting)
 
-    return TechnologyDecision(base_technology)
+    return TechnologyDecision('sequencing' if control_role(sample, channel, run) == 'empty control' else base_technology)
 
 
 def detect_ae_technology(data: dict) -> str:

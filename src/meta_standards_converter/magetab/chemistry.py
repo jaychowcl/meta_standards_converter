@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from .preparation import scoped_method, single_cell_signal, methods, TENX, CHEMISTRY_IDENTIFIERS as _IDENTIFIERS
+from .preparation import scoped_method, single_cell_signal, methods, TENX, incompatible_preparation, CHEMISTRY_IDENTIFIERS as _IDENTIFIERS
 
 
 @dataclass(frozen=True)
@@ -146,6 +146,11 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
     universal library-preparation statement. An unlabelled read_lengths list is
     deliberately ignored. Supplied imported SDRF attributes remain source data.
     """
+    incompatible = incompatible_preparation(sample, channel, run)
+    if incompatible:
+        return ChemistryResult(None, None, (), None, None, (),
+            tuple(ChemistryEvidence('incompatible_preparation', 'RNA', p, t) for p, t in incompatible),
+            (ChemistryDiagnostic('incompatible_preparation_evidence', 'manufacturer', tuple(p for p, _ in incompatible)),))
     sources = _sources(sample, channel, run, series)
     facts: list[ChemistryEvidence] = []
     diagnostics: list[ChemistryDiagnostic] = []

@@ -3997,6 +3997,18 @@ resolution: exact channel codes precede lower sample titles. A conflicting run
 identity at the same rank yields an explicit ambiguous technology decision;
 unknown codes cannot establish a method.
 
+Explicit sci-RNA-seq/combinatorial single-cell identities use generic single-cell
+routing unless preparation establishes a narrower format. Cell deposition into
+wells establishes plate preparation; Smart-Seq2 alone and culture plates do not.
+`TechnologyDecision.control_role` independently records an evidenced bulk or empty
+control. Empty controls retain their documented preparation, but cannot acquire
+single-cell routing from a study title alone. Source control text remains intact.
+`magetab.preparation.control_role` resolves that identity without mutation.
+`magetab.preparation.incompatible_preparation` detects the narrow contradiction
+between genomic ChIP library identity and RNA-specific preparation, preserving
+source evidence and returning diagnostics instead of manufacturing a chemistry.
+Explicit single-cell ChIP identity remains supported.
+
 `tests/magetab/test_preparation_classification.py` covers these direct decisions,
 rendered chemistry, negative and conflicting evidence, and immutable offline export.
 Shared pure support functions are
