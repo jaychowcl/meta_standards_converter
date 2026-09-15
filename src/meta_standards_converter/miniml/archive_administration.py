@@ -89,10 +89,38 @@ def normalize_administration(data):
                         sample['relation'].append(relation)
         accessions = {sample['iid'], *[a['value'] for a in sample.get('accession', [])]}
         for organization in organizations:
-            if organization.get('sample_accession') in accessions:
-                relation = {'type': 'archive center', 'target': organization['iid']}
-                if relation not in sample.setdefault('relation', []):
-                    sample['relation'].append(relation)
+            occurrences = [o for o in organization.get('source_occurrences') or [organization]
+                           if o.get('sample_accession') in accessions]
+            if not occurrences:
+                continue
+            types = set()
+            for occurrence in occurrences:
+                roles = [occurrence.get('role'), *occurrence.get('roles', [])]
+                if not any(roles):
+                    # Early coalesced packages omitted roles on occurrences.
+                    # Only a sole aggregate role is safe to recover at this scope.
+                    aggregate = [r for r in [organization.get('role'), *organization.get('roles', [])] if r]
+                    if len(aggregate) == 1:
+                        roles = aggregate
+                for role in roles:
+                    literal = role.get('value') if isinstance(role, dict) else role
+                    literal = str(literal or '').strip().lower()
+                    if literal == 'owner':
+                        types.add('sample owner')
+                    elif literal in {'center', 'centre', 'center_name', 'centre_name', 'insdc center name', 'insdc center alias'}:
+                        types.add('archive center')
+                    elif literal in {'broker', 'broker name'}:
+                        types.add('archive broker')
+            relations = sample.setdefault('relation', [])
+            old = {'type': 'archive center', 'target': organization['iid']}
+            # Repair the exact legacy projection, without discarding independently
+            # annotated relationships or applying another sample's centre role.
+            if 'archive center' not in types:
+                relations[:] = [r for r in relations if r != old]
+            for kind in sorted(types or {'organization'}):
+                relation = {'type': kind, 'target': organization['iid']}
+                if relation not in relations:
+                    relations.append(relation)
     declared = {d['iid'] for d in data.get('database', [])}
     for sample in data.get('sample', []):
         for status in sample.get('status', []):

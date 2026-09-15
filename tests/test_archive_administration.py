@@ -43,3 +43,34 @@ def test_fresh_independent_center_and_status_sources_remain_scoped():
     assert any(s.get('database')=='BioSamples' and s.get('comment')==[{'name':'status','value':'PUBLIC'}] for s in sample['status'])
     assert 'keep' in str(data['extensions'])
     assert not any(c['name']=='INSDC status' for c in sample['channel'][0]['characteristics'])
+
+
+def test_owner_and_center_relations_follow_scoped_source_roles_on_saved_json():
+    from meta_standards_converter.miniml.archive_administration import normalize_administration
+    data=legacy(); sample=data['sample'][0]; sid=sample['iid']
+    data['organization']=[
+        {'iid':'owner','name':'Owner','role':'owner','sample_accession':sid},
+        {'iid':'center','name':'Center','role':'center_name','sample_accession':sid},
+        {'iid':'shared','name':'Shared','roles':['owner','center'], 'source_occurrences':[
+            {'iid':'shared-owner','role':'owner','sample_accession':sid},
+            {'iid':'other-center','role':'center','sample_accession':'SAMN999'}]}]
+    sample['relation']=[{'type':'archive center','target':'owner'},
+                        {'type':'archive center','target':'shared'}]
+    normalize_administration(data)
+    assert {'type':'sample owner','target':'owner'} in sample['relation']
+    assert {'type':'sample owner','target':'shared'} in sample['relation']
+    assert {'type':'archive center','target':'center'} in sample['relation']
+    assert not any(r['type']=='archive center' and r['target'] in {'owner','shared'} for r in sample['relation'])
+    before=deepcopy(data); normalize_administration(data); assert data==before
+
+
+def test_legacy_roleless_occurrences_recover_only_a_sole_aggregate_role():
+    from meta_standards_converter.miniml.archive_administration import normalize_administration
+    data=legacy();sample=data['sample'][0];sid=sample['iid']
+    data['organization']=[
+        {'iid':'old','role':'owner','source_occurrences':[{'iid':'a','sample_accession':sid}]},
+        {'iid':'mixed','roles':['owner','center'],'source_occurrences':[{'iid':'b','sample_accession':sid}]}]
+    normalize_administration(data)
+    assert {'type':'sample owner','target':'old'} in sample['relation']
+    assert {'type':'organization','target':'mixed'} in sample['relation']
+    assert not any(r['target']=='mixed' and r['type']!='organization' for r in sample['relation'])

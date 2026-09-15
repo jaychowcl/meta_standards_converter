@@ -4817,6 +4817,16 @@ evidence support complementary merges; conflicting facts remain separate.
 Organization consolidation requires matching location/identifier evidence and
 descriptive facts, not a name alone. Owner/centre/broker roles remain attached to
 their original source occurrences and do not define organization identity.
+Sample organization relations use those scoped roles: BioSample owners remain
+`sample owner`, centers remain `archive center`, and brokers remain `archive broker`.
+Saved native JSON cleanup corrects the prior owner-as-center projection without
+borrowing a center role from another sample's organization occurrence.
+
+Explicitly joined BioSamples annotations can complete a uniquely matching literal
+characteristic with compatible units and ontology identifiers. Repeated or
+conflicting candidates remain residual. New characteristic occurrences retain
+supplied repetitions and units; mapped leaves are pruned while unknown siblings
+retain their identifying literal. Source-node projections receive the completed groups.
 
 Reference import and residual pruning share `parse_reference_targets`: URLs are
 opaque, only declared accession-list fields split, and ranges expand only from

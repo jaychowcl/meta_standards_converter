@@ -598,15 +598,69 @@ def finalize(data, records=None):
             left=deepcopy(metadata);sample=projection.samples.get(acc,{})
             attrs={}
             for name,values in metadata.get('characteristics',{}).items():
-                rest=[v for v in values if not projection.character(sample,name,v.get('text',''),v.get('unit'), {'term_accession_number':v['ontologyTerms'][0]} if len(v.get('ontologyTerms',[]))==1 and v['ontologyTerms'][0] else None)]
+                from .insdc_support import biosample_characteristic
+                rest=[]
+                for value in values:
+                    mapped = biosample_characteristic(name, value)
+                    terms = {k:v for k,v in mapped.items() if k not in ('name','value','unit')}
+                    # Alias recognition is limited to the import's explicit
+                    # underscore/space name rule, within this resolved sample.
+                    names = {a['name'] for c in sample.get('channel', []) for a in c.get('characteristics', [])
+                             if a['name'].replace('_',' ').casefold() == name.replace('_',' ').casefold()}
+                    resolved_name = next(iter(names)) if len(names) == 1 else name
+                    if projection.character(sample,resolved_name,mapped['value'],value.get('unit'),terms or None):
+                        remaining=deepcopy(value)
+                        for key in ('text','unit'):
+                            remaining.pop(key,None)
+                        if 'term_accession_number' in terms:
+                            remaining.pop('ontologyTerms',None)
+                        if remaining:
+                            # This literal identifies which occurrence owns the
+                            # residual siblings (including multiple ontology terms).
+                            if 'text' in value:
+                                remaining['text'] = value['text']
+                            rest.append(remaining)
+                    else:
+                        rest.append(deepcopy(value))
                 if name=='organism':
-                    rest=[v for v in rest if not any(o.get('value')==v.get('text') for c in sample.get('channel',[]) for o in c.get('organism',[]))]
+                    remaining=[]
+                    for value in rest:
+                        candidates=[(ci,oi,o) for ci,c in enumerate(sample.get('channel',[]))
+                                    for oi,o in enumerate(c.get('organism',[]))
+                                    if o.get('value')==value.get('text') and
+                                    (sample.get('iid'),'organism',ci,oi) not in projection._mapped_characters]
+                        if candidates and not value.get('unit'):
+                            ci,oi,organism=candidates[0]
+                            projection._mapped_characters.add((sample.get('iid'),'organism',ci,oi))
+                            matches=[organism]
+                            item=deepcopy(value)
+                            item.pop('text',None)
+                            terms=value.get('ontologyTerms',[])
+                            identifiers={str(o[k]) for o in matches for k in ('term_accession_number','taxid') if o.get(k)}
+                            for o in matches:
+                                if o.get('taxid'):
+                                    identifiers.update(f'{prefix}{o["taxid"]}' for prefix in (
+                                        'http://purl.obolibrary.org/obo/NCBITaxon_',
+                                        'https://purl.obolibrary.org/obo/NCBITaxon_', 'NCBITaxon:'))
+                            if len(terms)==1 and terms[0] in identifiers:
+                                item.pop('ontologyTerms',None)
+                            if item:
+                                item['text']=value.get('text','')
+                                remaining.append(item)
+                        else:
+                            remaining.append(value)
+                    rest=remaining
                 if rest:attrs[name]=rest
-            left['characteristics']=attrs
+            if attrs:
+                left['characteristics']=attrs
+            else:
+                left.pop('characteristics',None)
             if any(s.get('database') == 'BioSamples' and {'name':'status','value':metadata.get('status')} in s.get('comment', []) for s in sample.get('status', [])):
                 left.pop('status', None)
             for key,field in [('name','title'),('description','description')]:
                 if sample.get(field)==metadata.get(key):left.pop(key,None)
+            if set(left) <= {'accession'} and left.get('accession',acc) == acc:
+                left = {}
         elif kind in ('analysis','assembly') and record['provider']=='ena':
             from .insdc_support import files_from_ena
             left=deepcopy(metadata)

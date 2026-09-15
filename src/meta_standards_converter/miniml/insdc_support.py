@@ -343,6 +343,19 @@ def study_record(node, seed):
     return result
 
 
+def biosample_characteristic(name, item):
+    """Project the declared BioSamples value/unit and singleton ontology group."""
+    value = {'name': name, 'value': item.get('text', '')}
+    if item.get('unit'):
+        value['unit'] = {'value': item['unit']}
+    terms = item.get('ontologyTerms', [])
+    if len(terms) == 1 and terms[0]:
+        value['term_accession_number'] = terms[0]
+        if re.fullmatch(r'https?://www\.ebi\.ac\.uk/efo/EFO_\d+', terms[0]):
+            value['term_source_ref'] = 'EFO'
+    return value
+
+
 def fill_linked_metadata(records, series, samples, protocols, paths):
     """Project linked fields only when their entity binding is explicit."""
     from .archive_publications import project_publications
@@ -385,16 +398,26 @@ def fill_linked_metadata(records, series, samples, protocols, paths):
         if record['metadata'].get('status'):
             sample.setdefault('status', []).append({'database':'BioSamples', 'comment':[{'name':'status','value':record['metadata']['status']}]})
         attrs = sample['channel'][0]['characteristics']
-        names = {key for a in attrs for key in (a['name'].casefold(), a['name'].replace('_', ' ').casefold())}
         for name, values in record['metadata'].get('characteristics', {}).items():
-            if name.casefold() in names or name.casefold() in ('organism', 'title', 'description'):
+            if name.casefold() in ('organism', 'title', 'description'):
                 continue
-            for item in values:
-                value = {'name': name, 'value': item.get('text', '')}
-                terms = item.get('ontologyTerms', [])
-                if len(terms) == 1:
-                    value['term_accession_number'] = terms[0]
-                attrs.append(value)
+            supplied = [biosample_characteristic(name, item) for item in values]
+            existing = [a for a in attrs if a['name'].replace('_', ' ').casefold() == name.replace('_', ' ').casefold()]
+            if not existing:
+                attrs.extend(supplied)
+                continue
+            for value in supplied:
+                # An occurrence is completed only when both sources identify a
+                # unique literal value. Repetitions/conflicts remain residual.
+                candidates = [a for a in existing if a.get('value') == value['value']]
+                if len(candidates) != 1 or sum(v['value'] == value['value'] for v in supplied) != 1:
+                    continue
+                current = candidates[0]
+                group = {k:v for k,v in value.items() if k not in ('name', 'value')}
+                if all(not current.get(k) or current[k] == v for k,v in group.items()):
+                    for key, literal in group.items():
+                        current.setdefault(key, deepcopy(literal))
+
 
     project_results(records, series, samples, protocols, paths)
 
