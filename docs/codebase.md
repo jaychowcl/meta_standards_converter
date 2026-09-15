@@ -4798,6 +4798,12 @@ Supporting audited mapping and export callables:
 | `meta_standards_converter.miniml.reference_targets.parse_reference_targets` | `parse_reference_targets(database, literal, verified_ranges=())` |
 | `meta_standards_converter.sources.archive_publications.resolve_identifier` | `resolve_identifier(kind, value, http)` |
 
+| `meta_standards_converter.miniml.archive_factors.declared_factor` | `declared_factor(name, value, unit=None)` |
+| `meta_standards_converter.miniml.archive_factors.ExperimentBindings` | Operation-local sample/experiment/run identity index shared by restoration and residual matching; `experiment(path)` rejects incompatible supplied scan identities and permits assay-only paths. |
+| `meta_standards_converter.miniml.archive_factors.restore_native_factors` | `restore_native_factors(data, records=None)` |
+| `meta_standards_converter.miniml.factor_terms.normalized_factor_category` | `normalized_factor_category(value)` |
+| `meta_standards_converter.miniml.archive_residuals.Projection.factor` | `factor(self, experiment, wanted)` |
+
 <a id="native-archive-validation"></a>
 ### Native import validation
 
@@ -4872,6 +4878,26 @@ whitespace, typographic quote and microgram comparisons to both declaration
 consolidation and source-bound compound-method reuse. The latter still requires
 a unique native experiment/run and an undecorated application at its material
 boundary; text similarity alone never establishes a repeated application.
+
+Native experiment attributes explicitly labelled `Experimental Factor: <name>`
+are projected as assay-scoped factor occurrences and `series.variable`
+declarations. Ordinary attributes never establish factors. Factor names and
+repetitions survive; supplied `UNITS` remain coupled to values, and literals such
+as `2 d` are not split without separately supplied unit evidence. Archive and
+MAGE-TAB imports share the existing factor-category normalizer. Saved native
+JSON can recover remaining experiment factors by exact assay and sample/run
+identity. Informative accepted workflow factors retain priority; missing-value
+groups may use native evidence. Repeated experiment wrappers do not multiply
+occurrences, and residual matching uses multiplicity within a scoped node rather
+than counting copies across runs and files. Equivalent literal and value/unit
+projections share occurrence capacity. Unknown attributes and nested content on
+mapped factor fields survive pruning, with the factor name retained as context.
+
+Ontology-source correction also recognizes legacy
+`http://purl.org/obo/owl/NCBITaxon#NCBITaxon_4932` identifiers. Exact hosts and
+matching namespace prefixes are required; identifier literals remain unchanged
+and displaced inconsistent annotations remain residual. Native export-copy
+cleanup applies this correction before filtering repository declarations.
 
 Reference import and residual pruning share `parse_reference_targets`: URLs are
 opaque, only declared accession-list fields split, and ranges expand only from

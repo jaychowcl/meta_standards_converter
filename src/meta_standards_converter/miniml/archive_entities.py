@@ -95,7 +95,8 @@ def declare_ontologies(data, issues=None):
             for i, v in enumerate(value): visit(v, (*path, i))
         elif isinstance(value, dict):
             term = value.get('term_accession_number', '')
-            match = re.fullmatch(r'https?://purl.obolibrary.org/obo/([A-Za-z][A-Za-z0-9]*)_\d+', str(term))
+            match = (re.fullmatch(r'https?://purl\.obolibrary\.org/obo/([A-Za-z][A-Za-z0-9]*)_\d+', str(term))
+                     or re.fullmatch(r'https?://purl\.org/obo/owl/([A-Za-z][A-Za-z0-9]*)#\1_\d+', str(term)))
             if match and value.get('term_source_ref') != match[1]:
                 if value.get('term_source_ref'):
                     residuals.append({'provider': data.get('source', {}).get('format'), 'kind': 'annotation',

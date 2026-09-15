@@ -64,7 +64,12 @@ class AEConstructor:
         normalize_archive_dates(data)
         from meta_standards_converter.miniml.archive_administration import normalize_administration
         normalize_administration(data)
+        from ..miniml.archive_factors import restore_native_factors
+        restore_native_factors(data)
         from ..miniml.archive_entities import local_platforms, coalesce_organizations, repository_databases
+        if data.get("source", {}).get("format") in {"ENA", "SRA"}:
+            from ..miniml.archive_entities import declare_ontologies
+            declare_ontologies(data)
         local_platforms(data)
         coalesce_organizations(data)
         declarations = repository_databases(data)

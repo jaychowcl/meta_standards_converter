@@ -194,6 +194,14 @@ class Projection:
                 self.runs[run['run']] = run
                 self.experiments.setdefault(run.get('experiment'), []).append(run)
         self.paths = self.series.get('assay_paths', [])
+        from .archive_factors import ExperimentBindings
+        bindings = ExperimentBindings(data)
+        self.factor_nodes = {}
+        for assay_path in self.paths:
+            experiment = bindings.experiment(assay_path)
+            if experiment:
+                self.factor_nodes.setdefault(experiment, []).extend(
+                    node['factor_values'] for node in assay_path['steps'] if node.get('factor_values'))
         self.actors = {v['iid']: v for k in ('organization','contributor') for v in data.get(k, [])}
         self.organizations = {v['iid']:v for v in data.get('organization', [])}
         for organization in data.get('organization', []):
@@ -283,6 +291,41 @@ class Projection:
                     return True
         return False
 
+    def factor(self, experiment, wanted):
+        def matches(expected, actual):
+            if contains(expected, actual):
+                return True
+            return (expected.get('name') == actual.get('name') and not expected.get('unit')
+                    and bool(actual.get('unit', {}).get('value'))
+                    and expected.get('value') == str(actual.get('value')) + ' ' + actual['unit']['value'])
+
+        def facts(value):
+            # Definition annotations can enrich a projection; source factors here
+            # supply only their name, value and optional literal unit.
+            return {k: value[k] for k in ('name', 'value') if k in value} | (
+                {'unit': {'value': value['unit']['value']}} if value.get('unit', {}).get('value') else {})
+
+        def available(node_index, values):
+            return [(i, value) for i, value in enumerate(values)
+                    if (experiment, 'factor', node_index, i) not in self._mapped_characters]
+
+        nodes = self.factor_nodes.get(experiment, [])
+        candidates = [(not contains(wanted, value), facts(value))
+                      for ni, values in enumerate(nodes) for _, value in available(ni, values)
+                      if matches(wanted, value)]
+        if not candidates:
+            return False
+        # Prefer exact facts before a literal/value+unit projection. Reserve one
+        # equivalent occurrence on each node, so copies never multiply capacity.
+        witness = min(candidates, key=lambda item: item[0])[1]
+        for ni, values in enumerate(nodes):
+            equivalent = [(facts(value) != witness, i) for i, value in available(ni, values)
+                          if matches(witness, facts(value)) or matches(facts(value), witness)]
+            if equivalent:
+                _, index = min(equivalent)
+                self._mapped_characters.add((experiment, 'factor', ni, index))
+        return True
+
     def relations(self, entity):
         return entity.get('relation', [])
 
@@ -361,6 +404,27 @@ class Projection:
                     node=deepcopy(node);node['children']=[c for c in node.get('children',[]) if c['tag'] not in ('TAG','VALUE','UNITS')]
                     drop=not node['children'] and not attrs
                 else: mapped_text=True;mapped_attrs.update(('attribute_name','display_name','unit'))
+        if tag == 'EXPERIMENT_ATTRIBUTE' and owner[0] == 'EXPERIMENT':
+            from .archive_factors import declared_factor
+            wanted = declared_factor(child_text(node, 'TAG'), child_text(node, 'VALUE'), child_text(node, 'UNITS'))
+            if wanted and self.factor(owner[1], wanted):
+                node = deepcopy(node)
+                left = []
+                for child in node.get('children', []):
+                    if child['tag'] in ('TAG', 'VALUE', 'UNITS'):
+                        child.pop('text', None)
+                        if not child.get('attributes') and not child.get('children') and not child.get('tail', '').strip():
+                            continue
+                    left.append(child)
+                # Keep the factor name to interpret unmapped occurrence siblings.
+                if left or attrs:
+                    identity = next((c for c in left if c['tag'] == 'TAG'), None)
+                    if identity is None:
+                        identity = {'tag': 'TAG'}
+                        left.insert(0, identity)
+                    identity['text'] = 'Experimental Factor: ' + wanted['name']
+                node['children'] = left
+                drop = not node['children'] and not attrs
         if tag == 'STUDY_ATTRIBUTE':
             name, value = child_text(node, 'TAG'), child_text(node, 'VALUE')
             date_field = {'ENA-FIRST-PUBLIC': 'release_date', 'ENA-LAST-UPDATE': 'last_update_date'}.get(name)
@@ -531,6 +595,8 @@ def finalize(data, records=None):
     from .archive_administration import normalize_administration
     normalize_administration(data)
     records=deepcopy(records if records is not None else data.get('extensions',{}).get('insdc',{}).get('records',[]))
+    from .archive_factors import restore_native_factors
+    restore_native_factors(data, records)
     from .publication_identifiers import clean_publication_identifiers
     records.extend(r for r in clean_publication_identifiers(data) if r not in records)
     from .archive_results import normalize_result_bundles, comparison_view

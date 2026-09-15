@@ -36,22 +36,7 @@ MINIML_MOLECULES = {
     "protein",
     "other",
 }
-MINIML_VARIABLE_FACTORS = {
-    "dose", "time", "tissue", "strain", "gender", "cell line",
-    "development stage", "age", "agent", "cell type", "infection",
-    "isolate", "metabolism", "shock", "stress", "temperature",
-    "speciman", "disease state", "protocol", "growth protocol", "other",
-    "genotype/variation", "species", "individual",
-}
-FACTOR_NORMALIZATION = {
-    "compound": "agent",
-    "treatment": "agent",
-    "drug": "agent",
-    "disease": "disease state",
-    "organism": "species",
-    "sex": "gender",
-    "genotype": "genotype/variation",
-}
+from ..miniml.factor_terms import MINIML_VARIABLE_FACTORS, FACTOR_NORMALIZATION, normalized_factor_category
 
 
 def normalized_label(value: str) -> str:
@@ -873,9 +858,7 @@ class AEParser:
 
     @staticmethod
     def _normalized_variable_factor(value: str) -> str:
-        normalized = " ".join(value.strip().casefold().split())
-        mapped = FACTOR_NORMALIZATION.get(normalized, normalized)
-        return mapped if mapped in MINIML_VARIABLE_FACTORS else "other"
+        return normalized_factor_category(value)
 
     def _series_iid(self, investigation, arrayexpress, accessions):
         if arrayexpress:
