@@ -222,11 +222,13 @@ def coalesce_organizations(data):
     import json
     groups, mappings = {}, {}
     for organization in data.get('organization', []):
-        facts = {k: v for k, v in organization.items() if k not in ('iid', 'sample_accession', 'source_occurrences')}
-        # Unknown unnamed entities have no sufficient factual identity to share.
-        identity = json.dumps(facts, sort_keys=True) if facts.get('name') or facts.get('alias') else organization['iid']
+        facts = {k: v for k, v in organization.items() if k not in ('iid', 'sample_accession', 'source_occurrences', 'role', 'roles')}
+        # A label alone is not organization identity. Explicit locations or
+        # identifiers must agree alongside all other supplied descriptive facts.
+        established = any(facts.get(k) for k in ('accession', 'web_link', 'address'))
+        identity = json.dumps(facts, sort_keys=True) if established and (facts.get('name') or facts.get('alias')) else organization['iid']
         occurrences = deepcopy(organization.get('source_occurrences') or [
-            {k: v for k, v in organization.items() if k in ('iid', 'sample_accession')}])
+            {k: v for k, v in organization.items() if k in ('iid', 'sample_accession', 'role', 'roles')}])
         if identity not in groups:
             groups[identity] = {**deepcopy(organization), 'source_occurrences': []}
         target = groups[identity]
@@ -238,6 +240,14 @@ def coalesce_organizations(data):
     data['organization'] = list(groups.values())
     for organization in data['organization']:
         occurrences = organization['source_occurrences']
+        roles = []
+        for occurrence in occurrences:
+            for role in [occurrence.get('role'), *occurrence.get('roles', [])]:
+                if role and role not in roles:
+                    roles.append(deepcopy(role))
+        if len(roles) > 1:
+            organization.pop('role', None)
+            organization['roles'] = roles
         if len(occurrences) == 1:
             organization.pop('source_occurrences')
         elif len({v.get('sample_accession') for v in occurrences}) > 1:

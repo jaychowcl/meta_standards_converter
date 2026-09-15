@@ -108,6 +108,35 @@ def test_opaque_contacts_and_unscoped_saved_native_people_survive():
     assert len(people(data)) == 2
 
 
+def test_explicit_person_identity_survives_column_construction():
+    data = {'series':{}, 'contributor':[
+        {'iid':'one','person':{'first':'Jane','last':'Doe'}, 'accession':[{'database':'ORCID','value':'0000-0001-2345-6789'}]},
+        {'iid':'two','person':{'first':'Jane','last':'Doe'}, 'organization':'Lab',
+         'accession':[{'database':'ORCID','value':'0000-0001-2345-6789'}]}]}
+    assert len(people(data)) == 1
+    assert people(data)[0]['Person Affiliation'] == 'Lab'
+    data['contributor'][1]['accession'][0]['value'] = '0000-0002-2345-6789'
+    assert len(people(data)) == 2
+
+
+def test_complementary_contact_extras_do_not_block_reliable_person_join():
+    data = {'series':{}, 'contributor':[
+        {'iid':'a', 'person':{'first':'Jane','last':'Doe'}, 'email':'jane@lab.org'},
+        {'iid':'b', 'person':{'first':'Jane','last':'Doe'}, 'email':'jane@lab.org', 'web_link':'https://lab.org/jane'}]}
+    assert len(people(data)) == 1
+
+
+def test_display_deduplication_cannot_bridge_distinct_person_identities():
+    from meta_standards_converter.magetab.people import unique_people
+    common = {'First Name':'Alex','Last Name':'Kim','Affiliation':'Lab'}
+    rows = [{**common,'_identity':{('iid','a')}}, {**common,'_identity':{('iid','b')}},
+            {**common,'_identity':{('iid','a')},'Email':'alex.a@example.org'},
+            {**common,'_identity':{('iid','b')},'Phone':'2222'}]
+    result = unique_people(rows)
+    assert len(result) == 2
+    assert not any(r.get('Email') and r.get('Phone') for r in result)
+
+
 @pytest.mark.parametrize('reverse', [False, True])
 def test_local_protocol_cannot_choose_between_registered_identities(reverse):
     data = package()

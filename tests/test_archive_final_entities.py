@@ -43,8 +43,8 @@ def test_native_database_is_repository_only_and_used_ontologies_export():
 
 def test_identical_organizations_coalesce_without_merging_contacts_or_scopes():
     data=native().to_mapping();sid=data['sample'][0]['iid']
-    data['organization']=[{'iid':'o1','name':'Lab','role':'owner','sample_accession':sid},
-                          {'iid':'o2','name':'Lab','role':'owner','sample_accession':'SAMN2'},
+    data['organization']=[{'iid':'o1','name':'Lab','web_link':'https://lab.example.org','role':'owner','sample_accession':sid},
+                          {'iid':'o2','name':'Lab','web_link':'https://lab.example.org','role':'owner','sample_accession':'SAMN2'},
                           {'iid':'o3','name':'Lab','role':'owner','address':{'city':'Elsewhere'}}]
     data['contributor']=[{'iid':'c1','person':{'last':'Contact'},'organization_ref':{'ref':'o1'}},
                          {'iid':'c2','person':{'last':'Contact'},'organization_ref':{'ref':'o2'}}]
@@ -58,6 +58,29 @@ def test_identical_organizations_coalesce_without_merging_contacts_or_scopes():
     org=next(o for o in data['organization'] if o['iid']=='o1')
     assert {o['iid'] for o in org['source_occurrences']}=={'o1','o2'}
     assert finalize(data,[]).to_mapping()==data
+
+
+def test_organization_roles_do_not_define_identity_and_names_alone_do_not_merge():
+    from meta_standards_converter.miniml.archive_entities import coalesce_organizations
+    data = {'source':{'format':'ENA'}, 'organization':[
+        {'iid':'a','name':'Lab','web_link':'https://lab.org','role':'owner'},
+        {'iid':'b','name':'Lab','web_link':'https://lab.org','role':'center'},
+        {'iid':'c','name':'Unknown lab'}, {'iid':'d','name':'Unknown lab'}]}
+    coalesce_organizations(data)
+    assert len(data['organization']) == 3
+    shared = data['organization'][0]
+    assert {v['role'] for v in shared['source_occurrences']} == {'owner','center'}
+    assert set(shared['roles']) == {'owner','center'}
+    before = deepcopy(data); coalesce_organizations(data); assert data == before
+
+
+def test_list_organization_roles_survive_consolidation():
+    from meta_standards_converter.miniml.archive_entities import coalesce_organizations
+    data = {'source':{'format':'ENA'}, 'organization':[
+        {'iid':'a','name':'Lab','web_link':'https://lab.org','roles':['owner']},
+        {'iid':'b','name':'Lab','web_link':'https://lab.org','roles':['centre']}]}
+    coalesce_organizations(data)
+    assert set(data['organization'][0]['roles']) == {'owner','centre'}
 
 
 def test_local_vocabulary_name_survives_repository_separation():

@@ -558,6 +558,17 @@ class AEParser:
             identity = self._row_identity(header, row)
             if not identity:
                 continue
+            # Legacy sample projections must use the same attachment boundaries
+            # as canonical migration. Preserve the original row in the model.
+            from .semantics import NODE_HEADERS, FILE_HEADERS
+            from ..miniml.cells import has_cell_value
+            bound_row, active = list(row), False
+            for index, label in enumerate(header):
+                if label in NODE_HEADERS or label in FILE_HEADERS or normalized_label(label) == normalized_label('Protocol REF'):
+                    active = has_cell_value(row[index])
+                elif not active:
+                    bound_row[index] = ''
+            row = bound_row
             state = samples.setdefault(identity, self._new_sample(identity))
             sample = state["sample"]
             source_name = self._cell(header, row, "Source Name") or identity

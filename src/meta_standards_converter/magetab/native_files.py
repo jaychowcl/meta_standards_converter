@@ -82,7 +82,7 @@ def file_metadata_columns(step):
         if value and not any(_ALIASES.get(str(c.get('name', '')).upper(), str(c.get('name', '')).upper()) in aliases
                              and str(c.get('value', '')) == str(value) for c in comments):
             result.append((f'Comment[{key}]', value))
-    if record.get('MD5') and record.get('CHECKSUM_METHOD') != 'MD5':
+    if record.get('MD5') and (record.get('CHECKSUM_METHOD') != 'MD5' or record.get('CHECKSUM') != record['MD5']):
         if not any(c.get('name', '').upper() == 'MD5' and c.get('value') == record['MD5'] for c in comments):
             result.append(('Comment[MD5]', record['MD5']))
     return result

@@ -349,7 +349,7 @@ class IDFConstructor():
         """
         Extracts person information from MINiML JSON using JSONHandler.
         """
-        from .people import contributors, unique_people
+        from .people import contributors, unique_people, identity_evidence
         organizations = {o['iid']: o for o in data.get('organization', [])}
         rows = {key: [] for key in ("Last Name", "First Name", "Mid Initials", "Email", "Phone", "Fax", "Address", "Affiliation", "Roles", "Roles Term Source Ref", "Roles Term Accession Number")}
         columns = []
@@ -372,6 +372,7 @@ class IDFConstructor():
             values['_facts'] = json.dumps({'web_link': c.get('web_link'), 'extensions': c.get('extensions')}, sort_keys=True)
             for label, key in [('Roles','value'), ('Roles Term Source Ref','term_source_ref'), ('Roles Term Accession Number','term_accession_number')]:
                 values[label] = ';'.join(str(r.get(key) or '') for r in c.get('roles', [])) or None
+            values['_identity'] = identity_evidence(c)
             columns.append(values)
         for values in unique_people(columns):
             for key in rows: rows[key].append(values.get(key))

@@ -73,16 +73,13 @@ def accessions(node, primary):
 
 
 def relations(node):
+    from .reference_targets import parse_reference_targets
     values = []
     if node is not None:
         for link in node.findall('.//XREF_LINK'):
             db, target = text(link, 'DB'), text(link, 'ID')
             if db and target:
-                parts = target.split(',')
-                if db in {'ENA-STUDY','ENA-SAMPLE','ENA-EXPERIMENT','ENA-RUN','ENA-ANALYSIS','ENA-SUBMISSION'} and all(re.fullmatch(r'[SED]R[PSXRZA]\d+', p.strip()) for p in parts):
-                    values.extend({'type': db, 'target': p.strip()} for p in parts)
-                else:
-                    values.append({'type': db, 'target': target})
+                values.extend({'type': db, 'target': part} for part in parse_reference_targets(db, target))
         for link in node.findall('.//URL_LINK'):
             target = text(link, 'URL')
             if target:

@@ -9,6 +9,7 @@
 """Conservative native result-object normalization; no retrieval or text rewriting."""
 from copy import deepcopy
 import re
+import logging
 from urllib.parse import urlsplit
 
 
@@ -87,7 +88,7 @@ def normalize_result_bundles(data):
     return layouts
 
 
-def normalize_index_companions(data):
+def normalize_index_companions(data, *, issues=None, check_only=False):
     """An explicitly indexed CRAM and its CRAI share one analysis acquisition."""
     paths = data.get('series', {}).get('assay_paths', [])
     groups = {}
@@ -106,20 +107,33 @@ def normalize_index_companions(data):
         key = (next(iter(samples)), next(iter(runs)), link['analysis_accession'])
         groups.setdefault(key, {}).setdefault(fmt, []).append((path, node))
     removed = set()
-    for group in groups.values():
+    def report(key):
+        message = f'{key[0]}/{key[1]}/{key[2]}: ambiguous CRAM/CRAI association; keeping separate source result branches.'
+        if issues is None:
+            logging.getLogger(__name__).warning(message)
+        elif message not in issues:
+            issues.append(message)
+    for key, group in groups.items():
         if len(group.get('CRAM', [])) != 1 or len(group.get('CRAI', [])) != 1:
+            if group.get('CRAI'):
+                report(key)
             continue
         result_path, result = group['CRAM'][0]
         index_path, index = group['CRAI'][0]
         # Full acquisition/protocol identity, not filenames, establishes the
         # shared event. Original independently supplied links remain retained.
         if result_path['steps'][:-1] != index_path['steps'][:-1]:
+            report(key)
             continue
         if {k:v for k,v in result_path.items() if k != 'steps'} != {k:v for k,v in index_path.items() if k != 'steps'}:
+            report(key)
+            continue
+        if check_only:
             continue
         result['link']['companion_files'] = [{'role':'index', 'node':deepcopy(index)}]
         removed.add(id(index_path))
-    paths[:] = [p for p in paths if id(p) not in removed]
+    if not check_only:
+        paths[:] = [p for p in paths if id(p) not in removed]
 
 
 def comparison_view(data):

@@ -4801,6 +4801,32 @@ assigned to preceding materials. Preparation lookups share an operation-local
 sample/run/experiment index during MAGE-TAB construction; the cache is discarded
 after export and never written into input metadata.
 
+The administrative field registry in `archive_administration` maps recognized
+sample repository IDs to labelled accessions, submitter IDs to namespace-bearing
+relations, brokers/centres to scoped organizations, and checklist/model/package
+fields to sample comments. Biological characteristics, including independently
+supplied repetitions, remain unchanged. XML and saved-MINiML residual projection
+use the same destination contract with occurrence counting. Incoming unbound AE
+cells become `magetab_unbound_annotation` residual records carrying their original
+document/row/column and explicitly remapped sample reference.
+
+IDF people retain internal identity tokens until compatible identity components
+are resolved; exact display deduplication happens afterward and cannot create an
+identity bridge. Explicit contributor identities or personal-email/full-name
+evidence support complementary merges; conflicting facts remain separate.
+Organization consolidation requires matching location/identifier evidence and
+descriptive facts, not a name alone. Owner/centre/broker roles remain attached to
+their original source occurrences and do not define organization identity.
+
+Reference import and residual pruning share `parse_reference_targets`: URLs are
+opaque, only declared accession-list fields split, and ranges expand only from
+verified range records. Pruning removes represented target/database leaves while
+retaining unknown reference attributes, siblings and unmatched list members.
+Native converter outcome issues include explicit genomic-ChIP/RNA-preparation
+conflicts, explicit antibody/ChIP-target discrepancies and ambiguous index
+associations. These diagnostics never rewrite source methods or enter metadata
+JSON as operational status.
+
 Deterministic tests cover provider-specific expansion, History paging, count/ID
 reconciliation, partial retrieval, native identity, pooled/multiple/heterogeneous
 libraries, repeated attributes and file alternatives, positional file gaps,

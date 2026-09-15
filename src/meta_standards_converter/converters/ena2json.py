@@ -95,6 +95,8 @@ class ENA2JSONConverter:
                         outcome.issues.extend(getattr(publication_enricher, 'publication_issues', []))
                     except Exception as error:
                         outcome.issues.append(f'publication enrichment unavailable: {type(error).__name__}')
+                    from ..metadata.archive_diagnostics import consistency_issues
+                    outcome.issues.extend(consistency_issues(package.to_mapping()))
                     if out is not None:
                         path = Path(out) / output_name(seed, _filename_seeds or resolution.studies)
                         publish_json(path, package.to_mapping(), overwrite)

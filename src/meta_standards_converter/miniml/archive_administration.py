@@ -11,8 +11,28 @@ from collections import Counter
 from copy import deepcopy
 import hashlib
 import json
+import re
 
-_NAMES = {'insdc status', 'insdc center name', 'insdc center alias'}
+_CENTERS = {'insdc center name', 'insdc center alias', 'broker name'}
+_IDS = {'external id', 'sra accession', 'insdc secondary accession'}
+_COMMENTS = {'ena-checklist', 'biosamplemodel', 'ncbi submission model', 'ncbi submission package',
+             'ena-submission-tool', 'submission model', 'submission package'}
+_NAMES = {'insdc status', 'submitter id'} | _CENTERS | _IDS | _COMMENTS
+
+
+def administrative_destination(item, provider):
+    """The same explicit field contract is used by mapping and residual matching."""
+    name = str(item.get('name') or '').strip().lower()
+    value = str(item.get('value') or '')
+    annotations = {k:deepcopy(v) for k,v in item.items() if k not in {'name','value'}}
+    if name in _IDS and re.fullmatch(r'(?:SAM(?:N|EA|D)\d+|[SED]RS\d+)', value):
+        from .insdc_support import database_for
+        return 'accession', {'value':value, 'database':database_for(value), 'label':item['name'], **annotations}
+    if name == 'submitter id':
+        return 'relation', {'type':item['name'], 'target':value, 'namespace':f'{provider} submitter', **annotations}
+    if name in _COMMENTS | _IDS:
+        return 'comments', deepcopy(item)
+    return None
 
 
 def normalize_administration(data):
@@ -44,7 +64,12 @@ def normalize_administration(data):
                     wanted |= clean(step)
         for literal, count in wanted.items():
             item = json.loads(literal)
-            if item['name'].strip().lower() == 'insdc status':
+            destination = administrative_destination(item, provider)
+            if destination:
+                field, record = destination
+                values = sample.setdefault(field, [])
+                values.extend(deepcopy(record) for _ in range(max(0, count - values.count(record))))
+            elif item['name'].strip().lower() == 'insdc status':
                 statuses = sample.setdefault('status', [])
                 status = {'database': 'INSDC', 'comment': [item]}
                 statuses.extend(deepcopy(status) for _ in range(max(0, count - statuses.count(status))))
@@ -59,7 +84,7 @@ def normalize_administration(data):
                             organization['attribute_annotations'] = extras
                         organizations.append(organization)
                         org_ids.add(iid)
-                    relation = {'type': 'archive center', 'target': iid}
+                    relation = {'type': 'archive broker' if item['name'].strip().lower() == 'broker name' else 'archive center', 'target': iid}
                     if relation not in sample.setdefault('relation', []):
                         sample['relation'].append(relation)
         accessions = {sample['iid'], *[a['value'] for a in sample.get('accession', [])]}

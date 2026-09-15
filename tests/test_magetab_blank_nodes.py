@@ -33,6 +33,15 @@ def test_blank_reference_does_not_redirect_parameters_to_preceding_material():
     assert data['extensions']['magetab']['unbound_annotations'][0]['value'] == '20'
 
 
+def test_unbound_material_and_description_do_not_populate_sample_scalars():
+    data = parse(['Source Name','Extract Name','Material Type','Description','Assay Name'],
+                 [['s1',' ','total RNA','orphan description','a1']])
+    sample = data['sample'][0]
+    assert not sample.get('description')
+    assert not sample['channel'][0].get('molecule')
+    assert len(data['extensions']['magetab']['unbound_annotations']) == 2
+
+
 def test_catalogue_resolves_registered_path_and_unique_filename_without_guessing():
     catalog = ({'path': 'results/a.txt', 'uri': 'https://example.org/Files/results/a.txt'},
                {'path': 'one/b.txt', 'uri': 'https://example.org/Files/one/b.txt'},

@@ -45,6 +45,16 @@ def test_equal_text_in_unrelated_field_is_not_removed():
     assert any(n.get('tag')=='CUSTOM_UNMAPPED' and n.get('text')==text for n in nodes(data['extensions']))
 
 
+def test_unbound_magetab_annotations_survive_native_enrichment():
+    extra = workflow().to_mapping()
+    occurrence = {'sdrf':'source.sdrf','row_index':1,'column_index':4,'header':'Characteristics[note]',
+                  'value':'ORPHAN-SENTINEL', 'sample_ref':extra['sample'][0]['iid']}
+    extra['extensions'] = {'magetab':{'unbound_annotations':[occurrence]}}
+    merged, issues = merge_archive_metadata(enriched_native(), MINiMLCodec().decode(extra).package, prefer=True)
+    assert 'ORPHAN-SENTINEL' in str(merged.to_mapping()['extensions'])
+    assert any('Unbound' in i for i in issues)
+
+
 def test_enrichment_residual_keeps_displaced_values_not_complete_packages():
     original=enriched_native();extra=workflow().to_mapping()
     old=original.to_mapping()['series']['title']

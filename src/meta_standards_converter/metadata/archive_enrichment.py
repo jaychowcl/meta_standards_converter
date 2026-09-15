@@ -275,6 +275,13 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     snapshot['series']['iid'] = data['series']['iid']
     evidence.append({'provider':extra.get('source',{}).get('format'), 'kind':'MINiML', 'accession':extra['series']['iid'],
                      'metadata':{k:v for k,v in snapshot.items() if k not in ('extensions','source','miniml_schema_version')}})
+    for occurrence in extra.get('extensions', {}).get('magetab', {}).get('unbound_annotations', []):
+        retained = deepcopy(occurrence)
+        rewrite(retained)
+        evidence.append({'provider':'ArrayExpress', 'kind':'magetab_unbound_annotation',
+                         'accession':extra['series']['iid'], 'metadata':retained})
+        issues.append(f"Unbound {occurrence.get('header')} at {occurrence.get('sdrf')} row "
+                      f"{occurrence.get('row_index')}, column {occurrence.get('column_index')}; occurrence retained in residual metadata.")
     if not prefer:
         for record in source_records(other):
             if record['kind'] == 'term_source_declaration':
@@ -319,6 +326,8 @@ class LinkedArchiveEnricher:
                     if 'GSE' + accession.removeprefix('E-GEOD-') not in common and not any(re.fullmatch(r'[SED]RP\d+', a) for a in common):
                         issues.append(f'{accession}: unresolved enrichment study identity')
                         continue
+                from .archive_diagnostics import consistency_issues
+                issues.extend(f'{accession}: {issue}' for issue in consistency_issues(candidates[0].to_mapping()))
                 package, merge_issues = merge_archive_metadata(package, candidates[0], prefer=True, linked_accession=accession)
                 issues.extend(merge_issues)
             except Exception as error:

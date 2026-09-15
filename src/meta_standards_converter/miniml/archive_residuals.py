@@ -82,14 +82,21 @@ def _path_diff(source, target):
 
 
 def _mapped_date_view(metadata, target, workflows=False):
-    """Prune only original occurrences proved by final same-sample statuses."""
+    """Prune original occurrences proved by same-sample administrative projections."""
     from .archive_dates import _date_key
+    from .archive_administration import _NAMES
+    projection = Projection(target)
     view = deepcopy(metadata)
     samples = {s['iid']: s for s in target.get('sample', [])}
 
     def clean(owner, sample, used):
         retained = []
         for item in owner.get('characteristics', []):
+            if str(item.get('name') or '').strip().lower() in _NAMES:
+                unit = item.get('unit', {}).get('value') if isinstance(item.get('unit'), dict) else item.get('unit')
+                terms = {k:v for k,v in item.items() if k not in {'name','value','unit'}}
+                if projection.character(sample, item.get('name'), item.get('value'), unit, terms):
+                    continue
             key = _date_key(item.get('name'), item.get('value'))
             match = None
             if key:
@@ -110,6 +117,7 @@ def _mapped_date_view(metadata, target, workflows=False):
     if not workflows:
         for sample in view.get('sample', []):
             used = set()
+            projection._mapped_characters.clear()
             for channel in sample.get('channel', []):
                 clean(channel, samples.get(sample.get('iid'), {}), used)
     series = view if workflows else view.get('series', {})
@@ -118,6 +126,7 @@ def _mapped_date_view(metadata, target, workflows=False):
         for step in path.get('steps', []):
             ref = step.get('sample_ref') or (next(iter(bound)) if len(bound) == 1 else None)
             if ref in samples:
+                projection._mapped_characters.clear()
                 clean(step, samples[ref], set())
     return view
 
@@ -186,6 +195,7 @@ class Projection:
                 self.experiments.setdefault(run.get('experiment'), []).append(run)
         self.paths = self.series.get('assay_paths', [])
         self.actors = {v['iid']: v for k in ('organization','contributor') for v in data.get(k, [])}
+        self.organizations = {v['iid']:v for v in data.get('organization', [])}
         for organization in data.get('organization', []):
             for occurrence in organization.get('source_occurrences', []):
                 self.actors[occurrence['iid']] = {**organization, **occurrence}
@@ -216,6 +226,18 @@ class Projection:
         return [o for s in self.data.get('sample', []) for c in s.get('channel', []) for o in c.get('organism', [])]
 
     def character(self, sample, name, value, unit=None, terms=None):
+        from .archive_administration import administrative_destination, _CENTERS
+        wanted = {'name':name, 'value':value}
+        if unit: wanted['unit'] = {'value':unit}
+        if terms: wanted.update(terms)
+        destination = administrative_destination(wanted, self.data.get('source', {}).get('format'))
+        if destination:
+            field, record = destination
+            for index, actual in enumerate(sample.get(field, [])):
+                occurrence = (sample.get('iid'), 'administration', field, index)
+                if contains(record, actual) and occurrence not in self._mapped_characters:
+                    self._mapped_characters.add(occurrence)
+                    return True
         from .archive_dates import _date_key
         date_key = _date_key(name, value)
         if date_key and not unit and not terms:
@@ -231,14 +253,19 @@ class Projection:
                 if status.get('database') == 'INSDC' and {'name':name, 'value':value} in status.get('comment', []) and occurrence not in self._mapped_characters:
                     self._mapped_characters.add(occurrence)
                     return True
-        if name and name.strip().lower() in {'insdc center name', 'insdc center alias'} and not unit and not terms:
+        if name and name.strip().lower() in _CENTERS and not unit and not terms:
             for relation in sample.get('relation', []):
-                actor = self.actors.get(relation.get('target'), {})
-                occurrence = ('administration', actor.get('iid'))
-                field = 'alias' if name.strip().lower().endswith('alias') else 'name'
-                if actor.get('role') == name and actor.get(field) == value and occurrence not in self._mapped_characters:
-                    self._mapped_characters.add(occurrence)
-                    return True
+                organization = self.organizations.get(relation.get('target'), {})
+                for index, original in enumerate(organization.get('source_occurrences') or [organization]):
+                    actor = {**organization, **original}
+                    scope = actor.get('sample_accession')
+                    if scope and scope not in {sample.get('iid'), *[a['value'] for a in sample.get('accession', [])]}:
+                        continue
+                    occurrence = ('administration', organization.get('iid'), index)
+                    field = 'alias' if name.strip().lower().endswith('alias') else 'name'
+                    if name in [original.get('role'), *original.get('roles', [])] and actor.get(field) == value and occurrence not in self._mapped_characters:
+                        self._mapped_characters.add(occurrence)
+                        return True
         wanted = {'name': name, 'value': value}
         if unit: wanted['unit'] = {'value': unit}
         if terms: wanted.update(terms)
@@ -345,12 +372,26 @@ class Projection:
                 node['children'] = [c for c in node.get('children', []) if c['tag'] not in ('TAG', 'VALUE')]
                 drop = not node['children'] and not attrs
         if tag in ('XREF_LINK','URL_LINK'):
+            from .reference_targets import parse_reference_targets
             db=child_text(node,'DB') if tag=='XREF_LINK' else child_text(node,'LABEL') or 'external'
             value=child_text(node,'ID') if tag=='XREF_LINK' else child_text(node,'URL')
-            parts=value.split(',') if db.startswith('ENA-') and ',' in value else [value]
-            for record in self.ranges:
-                if record['accession']==acc and record['metadata']['database']==db and record['metadata']['literal']==value: parts=record['metadata']['accessions']
-            if all({'type':db,'target':p.strip()} in self.relations(entity) for p in parts): return None
+            ranges = [r['metadata'] for r in self.ranges if r['accession'] == acc]
+            parts = parse_reference_targets(db, value, ranges)
+            unmapped = [p for p in parts if not any(r.get('type') == db and r.get('target') == p for r in self.relations(entity))]
+            if len(unmapped) < len(parts):
+                node = deepcopy(node)
+                kept = []
+                for child in node.get('children', []):
+                    if child['tag'] in (('DB','ID') if tag == 'XREF_LINK' else ('LABEL','URL')):
+                        if child['tag'] in ('ID','URL') and unmapped:
+                            child['text'] = ','.join(unmapped)
+                        elif not unmapped:
+                            child.pop('text', None)
+                        if not child.get('text') and not child.get('attributes') and not child.get('children') and not child.get('tail', '').strip():
+                            continue
+                    kept.append(child)
+                node['children'] = kept
+                drop = not kept and not attrs
         if tag in ('PRIMARY_ID','SECONDARY_ID','EXTERNAL_ID') and self.reference(text,kind,acc): mapped_text=True;mapped_attrs.update(('namespace','label'))
         field={'STUDY_TITLE':'title','STUDY_ABSTRACT':'summary','STUDY_DESCRIPTION':'summary','TITLE':'title','DESCRIPTION':'description'}.get(tag)
         if kind in ('PROJECT','STUDY','DocumentSummary','study') and tag in ('DESCRIPTION','Description'): field='summary'

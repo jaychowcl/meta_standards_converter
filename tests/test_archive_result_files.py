@@ -91,6 +91,11 @@ def test_two_explicit_checksum_algorithms_remain_associated_and_exported():
     assert ('Comment[MD5]', 'a'*32) in columns
     assert ('Comment[CHECKSUM]', 'b'*64) in columns
     assert ('Comment[CHECKSUM_METHOD]', 'SHA256') in columns
+    node['link'].update(file_checksum='b'*32, checksum_method='MD5')
+    columns = _miniml_path_columns([node])
+    assert ('Comment[MD5]', 'a'*32) in columns
+    assert ('Comment[CHECKSUM]', 'b'*32) in columns
+    assert not _checksums(_record(node))
 
 
 def test_index_comparison_restores_parallel_branches_for_occurrence_pruning():
@@ -100,3 +105,14 @@ def test_index_comparison_restores_parallel_branches_for_occurrence_pruning():
     view = comparison_view(data)
     assert view['series']['assay_paths'] == original['series']['assay_paths']
     assert len(data['series']['assay_paths']) == 2
+
+
+def test_ambiguous_companion_reports_without_modifying_paths(caplog):
+    from meta_standards_converter.miniml.archive_results import normalize_index_companions
+    data = companion_data()
+    other = deepcopy(data['series']['assay_paths'][1]); other['steps'][-1]['name'] = 'b.cram'
+    data['series']['assay_paths'].append(other)
+    before = deepcopy(data); issues = []
+    normalize_index_companions(data, issues=issues, check_only=True)
+    assert issues and 'ambiguous' in issues[0] and 'ERZ1' in issues[0]
+    assert data == before
