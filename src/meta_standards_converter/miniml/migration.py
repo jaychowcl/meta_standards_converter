@@ -341,6 +341,17 @@ class MINiMLV1Migrator:
                         unbound.append(deepcopy(dict(step)))
                     last_named = last_ontology = None
                     continue
+                if unbound is not None and not has_cell_value(step.get('unit')) and any(
+                    has_cell_value(step.get(key)) for key in ('unit_term_source_ref', 'unit_term_accession_number')
+                ):
+                    columns = {k:v for k,v in step.get('companion_columns', {}).items() if k.startswith('unit')}
+                    unbound.append({
+                        'kind':'unbound_unit', 'header':'Unit' + (f"[{step['unit_type']}]" if step.get('unit_type') else ''),
+                        'value':deepcopy(step.get('unit', '')), 'column_index':columns.get('unit'),
+                        'companion_columns':columns,
+                        'parent_attribute':{k:deepcopy(step[k]) for k in ('kind','attribute_type','header','name','value','column_index') if k in step},
+                        **{k:deepcopy(v) for k,v in step.items() if k.startswith('unit_')},
+                    })
                 last_named = attribute
                 last_ontology = attribute
                 continue
@@ -403,6 +414,7 @@ class MINiMLV1Migrator:
 
     @classmethod
     def _legacy_attribute(cls, item: Mapping[str, Any]) -> dict[str, Any]:
+        from .cells import has_cell_value
         result = {
             "name": str(item.get("name", "")),
             "value": str(item.get("value", "")),
@@ -411,7 +423,7 @@ class MINiMLV1Migrator:
             result["term_source_ref"] = item["term_source_ref"]
         if item.get("term_accession_number"):
             result["term_accession_number"] = item["term_accession_number"]
-        if item.get("unit"):
+        if has_cell_value(item.get("unit")):
             unit: dict[str, Any] = {"value": str(item["unit"])}
             if item.get("unit_term_source_ref"):
                 unit["term_source_ref"] = item["unit_term_source_ref"]
@@ -421,7 +433,7 @@ class MINiMLV1Migrator:
             if harmonized:
                 unit.update(harmonized.to_mapping())
             result["unit"] = unit
-        if item.get("unit_type"):
+        if has_cell_value(item.get("unit")) and item.get("unit_type"):
             result["unit_type"] = str(item["unit_type"])
         if item.get("qualifier"):
             result["qualifier"] = str(item["qualifier"])

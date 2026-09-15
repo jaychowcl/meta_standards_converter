@@ -65,3 +65,44 @@ def test_catalogue_resolves_registered_path_and_unique_filename_without_guessing
     assert {'value':catalog[0]['uri']} in data['sample'][0]['supplementary_data']
     biological = parse(['Source Name','Characteristics[label]'], [['s1','a.txt']], file_catalogue=catalog)
     assert biological['sample'][0]['channel'][0]['characteristics'][0]['value'] == 'a.txt'
+
+
+def test_blank_units_preserve_companions_without_assigning_them_to_value():
+    for blank in ('', '   '):
+        for label, prefix, destination in [
+            ('Characteristics[dose]', ['Source Name'], 'characteristics'),
+            ('Factor Value[dose]', ['Source Name'], 'factor_values'),
+            ('Parameter Value[dose]', ['Source Name','Protocol REF'], 'parameter_values'),
+        ]:
+            header = [*prefix, label, 'Unit[TimeUnit]', 'Term Source REF', 'Term Accession Number']
+            row = ['s1', *(['P-1'] if len(prefix) == 2 else []), '5', blank, 'UO', 'UO:0000027']
+            data = parse(header, [row])
+            step = data['series']['assay_paths'][0]['steps'][-1]
+            assert step[destination] == [{'name':'dose','value':'5'}]
+            chars = data['sample'][0]['channel'][0].get('characteristics', [])
+            if destination == 'characteristics': assert chars == [{'name':'dose','value':'5'}]
+            unbound = data['extensions']['magetab']['unbound_annotations']
+            assert len(unbound) == 1
+            unit = unbound[0]
+            assert unit['kind'] == 'unbound_unit' and unit['value'] == blank
+            assert unit['column_index'] == len(prefix) + 1
+            assert unit['unit_term_source_ref'] == 'UO' and unit['unit_term_accession_number'] == 'UO:0000027'
+            assert unit['parent_attribute']['value'] == '5'
+            assert unit['row_index'] == 1 and unit['sample_ref'] == 's1'
+            assert parse(header, [row]) == data
+
+
+def test_meaningful_unit_remains_a_coupled_core_and_path_group():
+    data = parse(['Source Name','Characteristics[dose]','Unit[TimeUnit]','Term Source REF','Term Accession Number'],
+                 [['s1','5','second','UO','UO:0000010']])
+    expected = {'name':'dose','value':'5','unit':{'value':'second','term_source_ref':'UO','term_accession_number':'UO:0000010'},'unit_type':'TimeUnit'}
+    assert data['sample'][0]['channel'][0]['characteristics'] == [expected]
+    assert data['series']['assay_paths'][0]['steps'][0]['characteristics'] == [expected]
+    assert not data.get('extensions',{}).get('magetab',{}).get('unbound_annotations')
+
+
+def test_optional_blank_unit_header_alone_does_not_create_orphan_diagnostics():
+    data = parse(['Source Name','Characteristics[dose]','Unit[TimeUnit]','Term Source REF','Term Accession Number'],
+                 [['s1','5',' ','','']])
+    assert not data.get('extensions',{}).get('magetab',{}).get('unbound_annotations')
+    assert data['sample'][0]['channel'][0]['characteristics'] == [{'name':'dose','value':'5'}]

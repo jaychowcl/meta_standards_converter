@@ -683,8 +683,11 @@ class AEParser:
                 companion = normalized_label(header[companion_index])
                 unit_match = re.fullmatch(r"\s*Unit(?:\[([^]]*)])?\s*", header[companion_index], re.I)
                 if unit_match:
-                    companion_target = companions.setdefault("unit", {"value": row[companion_index].strip()})
-                    if unit_match.group(1):
+                    value_unit = row[companion_index].strip()
+                    # An absent unit clears the ontology attachment context.
+                    # The canonical semantic path retains these unbound cells.
+                    companion_target = companions.setdefault("unit", {"value": value_unit}) if value_unit else {}
+                    if value_unit and unit_match.group(1):
                         companions["unit_type"] = unit_match.group(1).strip()
                     continue
                 if companion == normalized_label("Term Source REF"):
