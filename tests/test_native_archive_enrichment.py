@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from copy import deepcopy
+import pytest
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.sra_parser import SRAParser
 from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata, LinkedArchiveEnricher
@@ -30,6 +31,11 @@ def linked(package, accession, title):
         for step in path['steps']:
             if step.get('sample_ref') == old_iid: step['sample_ref'] = 'GSM1'
     data['sample'][0]['channel'][0]['characteristics'] = [{'name': 'host', 'value': title, 'term_accession_number': 'ONT:1', 'term_source_ref': 'ONT'}]
+    # This fixture clones generated native paths: update their same host projection too.
+    for path in data['series'].get('assay_paths', []):
+        for step in path['steps']:
+            if step['kind'] in ('source', 'sample'):
+                step['characteristics'] = [c for c in step.get('characteristics', []) if c['name'] != 'host'] + deepcopy(data['sample'][0]['channel'][0]['characteristics'])
     return MINiMLCodec().decode(data).package
 
 
@@ -264,3 +270,143 @@ def test_ambiguous_sample_contacts_remain_unassigned_to_native_sample():
     d=result.to_mapping()
     assert not any(r['ref']=='GSE1:linked-person' for r in d['sample'][0]['contact_ref'])
     assert any('GSE1:linked-person' in str(r['metadata']) for r in d['extensions']['insdc']['records'])
+
+
+def test_plain_enrichment_completes_unique_native_characteristic_groups_and_paths():
+    from meta_standards_converter.miniml import MINiMLCodec
+    original=native().to_mapping();other=linked(native(),'GSE1','linked').to_mapping()
+    item={'name':'tissue','value':'brain','term_source_ref':'UBERON','term_accession_number':'UBERON:0000955',
+          'unit':{'value':'mg','term_source_ref':'UO','term_accession_number':'UO:0000022'}}
+    original['sample'][0]['channel'][0]['characteristics']=[item]
+    other['sample'][0]['channel'][0]['characteristics']=[{'name':'tissue','value':'brain'}]
+    package,issues=merge_archive_metadata(MINiMLCodec().decode(original).package,MINiMLCodec().decode(other).package,prefer=True,linked_accession='GSE1')
+    data=package.to_mapping()
+    assert data['sample'][0]['channel'][0]['characteristics']==[item]
+    for p in data['series']['assay_paths']:
+        assert item in p['steps'][0]['characteristics']
+
+
+@pytest.mark.parametrize('old,new', [
+    ([{'name':'x','value':'brain','term_accession_number':'U:1'}],[{'name':'x','value':'heart'}]),
+    ([{'name':'x','value':'brain','term_accession_number':'U:1'}]*2,[{'name':'x','value':'brain'}]),
+    ([{'name':'x','value':'brain','term_accession_number':'U:1'}],[{'name':'x','value':'brain'}]*2),
+    ([{'name':'x','value':'5','unit':{'value':'mg'},'term_accession_number':'U:1'}],[{'name':'x','value':'5','unit':{'value':'g'}}]),
+    ([{'name':'x','value':'brain','term_source_ref':'U','term_accession_number':'U:1'}],[{'name':'x','value':'brain','term_accession_number':'V:2'}]),
+])
+def test_characteristic_completion_never_bridges_conflicting_or_ambiguous_groups(old,new):
+    from meta_standards_converter.metadata.archive_enrichment import _merge_entity
+    target={'characteristics':deepcopy(old)}
+    _merge_entity(target,{'characteristics':deepcopy(new)},True)
+    assert target['characteristics']==new
+
+
+def test_characteristic_completion_preserves_compatible_unit_ontology():
+    from meta_standards_converter.metadata.archive_enrichment import _merge_entity
+    target={'characteristics':[{'name':'dose','value':'2','unit':{'value':'mg','term_source_ref':'UO','term_accession_number':'UO:0000022'}}]}
+    _merge_entity(target,{'characteristics':[{'name':'dose','value':'2','unit':{'value':'mg'}}]},True)
+    assert target['characteristics'][0]['unit']['term_accession_number']=='UO:0000022'
+
+
+def test_disjoint_partial_ontology_groups_do_not_create_namespace_pairs():
+    from meta_standards_converter.metadata.archive_enrichment import _merge_entity
+    target={'characteristics':[{'name':'x','value':'same','term_source_ref':'U'}]}
+    incoming={'characteristics':[{'name':'x','value':'same','term_accession_number':'V:2'}]}
+    _merge_entity(target,incoming,True)
+    assert target==incoming
+
+
+@pytest.mark.parametrize('where', ['native_path','native_path_conflict','preferred_path','preferred_path_conflict','preferred_channel'])
+def test_workflow_only_annotations_survive_at_their_explicit_biological_scope(where):
+    original=native().to_mapping();other=linked(native(),'E-MTAB-1','linked').to_mapping()
+    plain={'name':'tissue','value':'brain'};term={**plain,'term_source_ref':'UBERON','term_accession_number':'UBERON:0000955'}
+    original['sample'][0]['channel'][0]['characteristics']=[deepcopy(plain)]
+    other['sample'][0]['channel'][0]['characteristics']=[deepcopy(plain)]
+    for d in (original,other):
+        for path in d['series']['assay_paths']:
+            path['steps'][0]['characteristics']=[deepcopy(plain)]
+    if where in ('native_path','native_path_conflict'):
+        if where=='native_path_conflict':original['sample'][0]['channel'][0]['characteristics']=[{**plain,'term_source_ref':'OTHER','term_accession_number':'OTHER:2'}]
+        for path in original['series']['assay_paths']:path['steps'][0]['characteristics']=[deepcopy(term)]
+    elif where=='preferred_channel':
+        other['sample'][0]['channel'][0]['characteristics']=[deepcopy(term)]
+        for path in original['series']['assay_paths']:path['steps'][0]['characteristics']=[{**plain,'term_source_ref':'OTHER','term_accession_number':'OTHER:2'}]
+    else:
+        for path in other['series']['assay_paths']:path['steps'][0]['characteristics']=[deepcopy(term)]
+        if where=='preferred_path_conflict':original['sample'][0]['channel'][0]['characteristics']=[{**plain,'term_source_ref':'OTHER','term_accession_number':'OTHER:2'}]
+    package,issues=merge_archive_metadata(MINiMLCodec().decode(original).package,MINiMLCodec().decode(other).package,prefer=True)
+    assert not issues
+    for path in package.to_mapping()['series']['assay_paths']:
+        value=next(v for v in path['steps'][0]['characteristics'] if v['name']=='tissue')
+        assert value==term
+
+
+def test_bound_biological_fallback_preserves_names_but_not_ambiguous_or_extract_annotations():
+    from meta_standards_converter.metadata.archive_workflows import _bind_native
+    plain={'name':'tissue','value':'brain'}
+    term={**plain,'term_source_ref':'UBERON','term_accession_number':'UBERON:0000955'}
+    old={'kind':'source','name':'native','characteristics':[term,{'name':'sex','value':'female'}]}
+    for incoming in ([],[plain]):
+        node={'kind':'source','name':'linked','characteristics':deepcopy(incoming)}
+        result=_bind_native([node],'sample',[old])
+        assert sorted(result[0]['characteristics'],key=lambda v:v['name'])==[{'name':'sex','value':'female'},term]
+    for native_nodes in ([old,deepcopy(old)],[{**old,'kind':'extract'}]):
+        node={'kind':'source','name':'linked','characteristics':[deepcopy(plain)]}
+        assert _bind_native([node],'sample',native_nodes)[0]['characteristics']==[plain]
+
+
+def test_missing_biological_workflow_values_do_not_displace_informative_fallback():
+    from meta_standards_converter.metadata.archive_workflows import _biological_characteristics
+    fallback=[{'name':'tissue','value':'brain','term_source_ref':'UBERON','term_accession_number':'UBERON:0000955'}]
+    assert _biological_characteristics([{'name':'tissue','value':'not provided'}],fallback)==fallback
+
+
+def test_explicit_preferred_workflow_annotation_takes_priority_over_channel_copy():
+    original=native();other=linked(original,'E-MTAB-1','linked').to_mapping()
+    term={'name':'tissue','value':'brain','term_source_ref':'UBERON','term_accession_number':'UBERON:0000955'}
+    other['sample'][0]['channel'][0]['characteristics']=[{**term,'term_source_ref':'OTHER','term_accession_number':'OTHER:2'}]
+    for path in other['series']['assay_paths']:
+        path['steps'][0]['characteristics']=[deepcopy(term)]
+    package,issues=merge_archive_metadata(original,MINiMLCodec().decode(other).package,prefer=True)
+    assert not issues
+    for path in package.to_mapping()['series']['assay_paths']:
+        assert term in path['steps'][0]['characteristics']
+
+
+@pytest.mark.parametrize('separate', [False,True])
+def test_accepted_taxonomy_updates_generated_nodes_and_preserves_separate_occurrences(separate):
+    from tests.test_protocol_export import render
+    original=native().to_mapping()
+    old=deepcopy(original['sample'][0]['channel'][0]['organism'][0])
+    literal={'name':'organism','value':old['value']}
+    if separate:
+        original['sample'][0]['channel'][0]['characteristics'].append(literal)
+        for path in original['series']['assay_paths']:
+            path['steps'][0]['characteristics'].insert(-1,deepcopy(literal))
+    package=MINiMLCodec().decode(original).package
+    other=linked(package,'GSE1','linked').to_mapping();other['series']['assay_paths']=[]
+    other['sample'][0]['channel'][0]['organism']=[{'value':'Mus musculus','taxid':'10090'}]
+    merged,issues=merge_archive_metadata(package,MINiMLCodec().decode(other).package,prefer=True)
+    assert not issues
+    mapped=merged.to_mapping()
+    for path in mapped['series']['assay_paths']:
+        groups=[v for v in path['steps'][0]['characteristics'] if v['name']=='organism']
+        assert {'name':'organism','value':'Mus musculus','term_source_ref':'NCBITaxon','term_accession_number':'10090'} in groups
+        assert not any(v.get('term_accession_number')==old['taxid'] for v in groups)
+        assert (literal in groups)==separate
+    table=next(row[1] for row in render(mapped) if row[0]=='SDRF File')
+    for row in table[1:]:
+        values=[row[i] for i,h in enumerate(table[0]) if h=='Characteristics[organism]']
+        assert any('Mus musculus' in v for v in values)
+    assert package.to_mapping()==original
+
+
+def test_authored_workflow_taxonomy_is_not_replaced_by_generated_sample_projection():
+    package=native();other=linked(package,'E-MTAB-1','linked').to_mapping()
+    other['sample'][0]['channel'][0]['organism']=[{'value':'Mus musculus','taxid':'10090'}]
+    supplied={'name':'organism','value':'Danio rerio','term_source_ref':'NCBITaxon','term_accession_number':'7955'}
+    for path in other['series']['assay_paths']:
+        path['steps'][0]['characteristics']=[deepcopy(supplied)]
+    merged,issues=merge_archive_metadata(package,MINiMLCodec().decode(other).package,prefer=True)
+    assert not issues
+    for path in merged.to_mapping()['series']['assay_paths']:
+        assert [v for v in path['steps'][0]['characteristics'] if v['name']=='organism']==[supplied]

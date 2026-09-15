@@ -14,9 +14,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
-def _text(value):
-    value = " ".join(value.split()).translate(str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'}))
-    return re.sub(r"(?<=\d)\s*[uµμ]g\b", " µg", value)
+from ..miniml.protocol_text import comparable_protocol_text as _text
 
 
 def _value(value, description=False):

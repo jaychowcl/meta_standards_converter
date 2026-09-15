@@ -248,10 +248,21 @@ def _acquisition(steps):
     return deepcopy(prefix)
 
 
+def _biological_characteristics(preferred, fallback):
+    from .archive_enrichment import _merge_entity
+    result = {'characteristics': deepcopy(fallback)}
+    _merge_entity(result, {'characteristics': preferred}, True)
+    return result['characteristics']
+
+
 def _bind_native(steps, target, native):
     for step in steps:
         if step.get('kind') in ('source', 'sample', 'assay', 'scan'):
-            old = next((s for s in native if s.get('kind') == step['kind']), None)
+            candidates = [s for s in native if s.get('kind') == step['kind']]
+            old = next(iter(candidates), None)
+            if len(candidates) == 1 and step['kind'] in ('source', 'sample'):
+                step['characteristics'] = _biological_characteristics(
+                    step.get('characteristics', []), old.get('characteristics', []))
             if old:
                 step['name'] = old['name']
                 step['sample_ref'] = target
@@ -271,11 +282,34 @@ def _biological_node(sample):
     return node
 
 
-def merge_workflows(data, extra, matched, proto_names, prefer, issues):
+def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None):
     """Bind complete ordered branches and acquisition prefixes by explicit identity."""
     paths = data['series'].setdefault('assay_paths', [])
-    originals = deepcopy(paths)
     samples = {s['iid']: s for s in data['sample']}
+    source_samples = {matched[s['iid']]: s for s in extra.get('sample', []) if s['iid'] in matched}
+    # Refresh native biological projections before accepting authored workflows.
+    # The actual incoming channel has priority; a scoped path can retain its own
+    # compatible annotations when that channel supplies only a plain literal.
+    from .archive_enrichment import _merge_entity
+    for path in paths:
+        for step in path['steps']:
+            target = step.get('sample_ref')
+            sample = samples.get(target)
+            if sample and step['kind'] in ('source', 'sample'):
+                old_channels = (original_channels or {}).get(target, [])
+                if len(old_channels) == len(sample.get('channel', [])) == 1:
+                    old = _biological_node({'iid': target, 'channel': old_channels})
+                    if step.get('characteristics', []) == old.get('characteristics', []):
+                        # Only a complete generated projection establishes which
+                        # occurrence is taxonomy versus a supplied characteristic.
+                        step['characteristics'] = _biological_node(sample).get('characteristics', [])
+                        continue
+                step['characteristics'] = _biological_characteristics(
+                    step.get('characteristics', []), _biological_node(sample).get('characteristics', []))
+                channels = source_samples.get(target, {}).get('channel', [])
+                if len(channels) == 1:
+                    _merge_entity(step, {'characteristics': channels[0].get('characteristics', [])}, prefer)
+    originals = deepcopy(paths)
     templates, incoming, explicit = {}, [], set()
     for path in extra['series'].get('assay_paths', []):
         refs = {s['sample_ref'] for s in path['steps'] if s.get('sample_ref')}
@@ -291,6 +325,11 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
         target = next(iter(targets))
         try:
             prepared = _prepare_path(path, target, proto_names)
+            channels = source_samples.get(target, {}).get('channel', [])
+            for step in prepared['steps']:
+                if step['kind'] in ('source', 'sample') and len(channels) == 1:
+                    step['characteristics'] = _biological_characteristics(
+                        step.get('characteristics', []), channels[0].get('characteristics', []))
             if prefer:
                 mark_file_origins({'source': extra.get('source', {}),
                                    'series': {'iid': extra['series']['iid'], 'assay_paths': [prepared]}})
@@ -409,11 +448,14 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
                                     if comment not in s.setdefault('comments', []): s['comments'].append(deepcopy(comment))
                         else:
                             paths.append({'steps': [_biological_node(samples[target]), node]})
+    # Complete channel fallbacks only after binding scoped workflow evidence.
+    # Never replace an authored biological-node annotation with a sample copy.
     for path in paths:
         for step in path['steps']:
             sample = samples.get(step.get('sample_ref'))
-            if sample and step.get('kind') in ('source', 'sample'):
-                step.update({k: v for k, v in _biological_node(sample).items() if k == 'characteristics'})
+            if sample and step['kind'] in ('source', 'sample'):
+                step['characteristics'] = _biological_characteristics(
+                    step.get('characteristics', []), _biological_node(sample).get('characteristics', []))
     # Scalar material fields are safe only when every native acquisition for
     # that sample received the explicit incoming workflow.
     return {target for target in samples if any(t == target for t, _ in explicit)

@@ -80,6 +80,43 @@ def entity_ids(entity, *, sample=False):
     return result
 
 
+def complete_characteristic_groups(preferred, fallback):
+    """Complete annotations only on unique, exact, compatible value occurrences."""
+    from copy import deepcopy
+    result = deepcopy(preferred)
+    term_keys = {'term_source_ref', 'term_accession_number'}
+
+    def compatible(a, b):
+        if isinstance(a, dict) and isinstance(b, dict):
+            left = {k for k in term_keys if informative(a.get(k))}
+            right = {k for k in term_keys if informative(b.get(k))}
+            if left and right and not left & right:
+                return False
+            return all(compatible(a[k], b[k]) for k in a.keys() & b.keys())
+        return not informative(a) or not informative(b) or a == b
+
+    def complete(a, b):
+        for key, value in b.items():
+            if isinstance(a.get(key), dict) and isinstance(value, dict):
+                complete(a[key], value)
+            elif not informative(a.get(key)) and informative(value):
+                a[key] = deepcopy(value)
+
+    for value in result:
+        same = lambda v: v.get('name') == value.get('name') and v.get('value') == value.get('value')
+        candidates = [v for v in fallback if same(v)]
+        if len(candidates) != 1 or sum(same(v) for v in result) != 1:
+            continue
+        if not informative(value.get('value')):
+            continue
+        group = {k:deepcopy(v) for k,v in value.items() if k in term_keys | {'unit'}}
+        old = {k:v for k,v in candidates[0].items() if k in term_keys | {'unit'}}
+        if compatible(group, old):
+            complete(group, old)
+            value.update(group)
+    return result
+
+
 def _merge_entity(target, extra, prefer, protected=()):
     from copy import deepcopy
     additive = {'raw_data', 'supplementary_data', 'relation', 'accession', 'contact_ref', 'contributor_ref'}
@@ -108,7 +145,7 @@ def _merge_entity(target, extra, prefer, protected=()):
             for name, group in groups.items():
                 old = [v for v in current if v['name'] == name]
                 if informative(group) and (prefer or not informative(old)):
-                    current[:] = [v for v in current if v['name'] != name] + deepcopy(group)
+                    current[:] = [v for v in current if v['name'] != name] + complete_characteristic_groups(group, old)
                 elif not old:
                     current.extend(deepcopy(group))
         elif key == 'organism' and informative(value) and (prefer or not informative(target.get(key))):
@@ -214,7 +251,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
             data['series']['protocols'].append(protocol)
     sample_map = {s['iid']: s for s in native_samples}
     paths = data['series'].setdefault('assay_paths', [])
-    explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues)
+    explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues, original_channels=original_channels)
     from ..miniml.archive_libraries import synchronize_library_facts, resolve_library_facts, apply_library_facts
     if prefer and not extra['series'].get('assay_paths') and extra.get('source', {}).get('format') in {'GEO', 'GEO MINiML'}:
         for source in extra_samples:

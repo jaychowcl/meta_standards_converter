@@ -4725,7 +4725,7 @@ Supporting mapping helpers (no network or shared converter orchestration):
 | `meta_standards_converter.metadata.archive_workflows.compatible` | `compatible(scope, native)` |
 | `meta_standards_converter.metadata.archive_workflows.is_file` | `is_file(step)` |
 | `meta_standards_converter.metadata.archive_workflows.file_node` | `file_node(file, kind='array_data_file')` |
-| `meta_standards_converter.metadata.archive_workflows.merge_workflows` | `merge_workflows(data, extra, matched, proto_names, prefer, issues)` |
+| `meta_standards_converter.metadata.archive_workflows.merge_workflows` | `merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None)` |
 
 ENA accession ranges are expanded only within a 1000-record bound and validated through Browser XML before individual relations are emitted. Returned range records do not expand read membership.
 
@@ -4770,6 +4770,34 @@ Residual projection and entity helpers:
 | `meta_standards_converter.sources.sra.SRASource.linked_publications` | `linked_publications(self, records, sra_ids)` |
 | `meta_standards_converter.miniml.archive_residuals.Projection.citations` | `citations(self, acc)` |
 
+Supporting audited mapping and export callables:
+
+| Qualified callable | Signature |
+| --- | --- |
+| `meta_standards_converter.magetab.native_files.file_metadata_columns` | `file_metadata_columns(step)` |
+| `meta_standards_converter.magetab.people.identity_evidence` | `identity_evidence(contributor)` |
+| `meta_standards_converter.magetab.preparation.control_role` | `control_role(sample, channel=None, run=None)` |
+| `meta_standards_converter.magetab.preparation.preparation_operation` | `preparation_operation(function)` |
+| `meta_standards_converter.magetab.preparation.bound_protocols` | `bound_protocols(sample, run, series)` |
+| `meta_standards_converter.magetab.preparation.control_preparation` | `control_preparation(text, role)` |
+| `meta_standards_converter.magetab.preparation.incompatible_preparation` | `incompatible_preparation(sample, channel=None, run=None, series=None)` |
+| `meta_standards_converter.metadata.archive_diagnostics.consistency_issues` | `consistency_issues(data)` |
+| `meta_standards_converter.metadata.archive_enrichment.complete_characteristic_groups` | `complete_characteristic_groups(preferred, fallback)` |
+| `meta_standards_converter.miniml.archive_administration.administrative_destination` | `administrative_destination(item, provider)` |
+| `meta_standards_converter.miniml.archive_libraries.field_name` | `field_name(value)` |
+| `meta_standards_converter.miniml.archive_libraries.path_facts` | `path_facts(steps)` |
+| `meta_standards_converter.miniml.archive_libraries.resolve_library_facts` | `resolve_library_facts(native, incoming, issues, identity)` |
+| `meta_standards_converter.miniml.archive_libraries.apply_library_facts` | `apply_library_facts(run, steps, facts, *, preserve=())` |
+| `meta_standards_converter.miniml.archive_libraries.synchronize_library_facts` | `synchronize_library_facts(data, issues=None)` |
+| `meta_standards_converter.miniml.archive_results.normalize_index_companions` | `normalize_index_companions(data, *, issues=None, check_only=False)` |
+| `meta_standards_converter.miniml.cells.has_cell_value` | `has_cell_value(value)` |
+| `meta_standards_converter.miniml.insdc_support.biosample_characteristic` | `biosample_characteristic(name, item)` |
+| `meta_standards_converter.miniml.protocol_text.comparable_protocol_text` | `comparable_protocol_text(value)` |
+| `meta_standards_converter.miniml.publication_identifiers.valid_pubmed_ids` | `valid_pubmed_ids(values)` |
+| `meta_standards_converter.miniml.publication_identifiers.clean_publication_identifiers` | `clean_publication_identifiers(data)` |
+| `meta_standards_converter.miniml.reference_targets.parse_reference_targets` | `parse_reference_targets(database, literal, verified_ranges=())` |
+| `meta_standards_converter.sources.archive_publications.resolve_identifier` | `resolve_identifier(kind, value, http)` |
+
 <a id="native-archive-validation"></a>
 ### Native import validation
 
@@ -4777,7 +4805,8 @@ Audited publication, file and optional-node repairs are covered by
 `test_archive_identifier_cleanup.py`, `test_archive_result_files.py` and
 `test_magetab_blank_nodes.py`. Null PMIDs remain empty. Lookup and export validate
 legacy identifiers; useful scoped citations survive invalid relation targets.
-Post-enrichment DOI/PMCID resolution uses the exact identifier service and an
+Local identifier cleanup preserves valid repeated source occurrences; lookup
+requests remain deduplicated. Post-enrichment DOI/PMCID resolution uses the exact identifier service and an
 operation cache. Conflicting resolved identifiers retain the original citation
 and issue a warning instead of selecting an arbitrary article. Local export
 cleanup performs no identifier lookup.
@@ -4827,6 +4856,22 @@ characteristic with compatible units and ontology identifiers. Repeated or
 conflicting candidates remain residual. New characteristic occurrences retain
 supplied repetitions and units; mapped leaves are pruned while unknown siblings
 retain their identifying literal. Source-node projections receive the completed groups.
+
+Informative GEO/ArrayExpress characteristic values retain missing compatible
+native unit/ontology groups only through unique exact name/value occurrences on
+both sides. Changed values, repetitions, conflicting units and disjoint partial
+ontology identifiers do not acquire native annotations. Explicitly bound
+biological workflow nodes preserve their explicit annotations, then complete gaps
+from the actual incoming channel, a unique bound native biological node, and
+finally the merged sample. Missing-value groups cannot displace informative
+values; ambiguous counterparts and downstream materials cannot donate annotations.
+A complete match to the original generated biological projection permits its
+taxonomy to follow the accepted channel organism. This guard retains separately
+supplied organism characteristics and leaves authored workflow taxonomy scoped. `protocol_text.comparable_protocol_text` supplies the existing
+whitespace, typographic quote and microgram comparisons to both declaration
+consolidation and source-bound compound-method reuse. The latter still requires
+a unique native experiment/run and an undecorated application at its material
+boundary; text similarity alone never establishes a repeated application.
 
 Reference import and residual pruning share `parse_reference_targets`: URLs are
 opaque, only declared accession-list fields split, and ranges expand only from

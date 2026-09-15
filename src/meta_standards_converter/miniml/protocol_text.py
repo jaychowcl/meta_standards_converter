@@ -6,8 +6,11 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Presence of table identities without rewriting meaningful source text."""
+"""Permitted protocol-description equivalences; original source text is unchanged."""
+import re
 
 
-def has_cell_value(value):
-    return value is not None and bool(str(value).strip())
+def comparable_protocol_text(value):
+    value = " ".join(value.split()).translate(str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'}))
+    return re.sub(r"(?<=\d)\s*[uµμ]g\b", " µg", value)
+

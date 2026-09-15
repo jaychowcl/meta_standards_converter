@@ -73,3 +73,13 @@ def test_native_method_does_not_cross_an_authored_treatment():
     for p in data['series']['assay_paths']:
         refs=[s['protocol_ref'] for s in p['steps'] if s.get('protocol_ref')]
         assert refs.index('P-MTAB-99')<refs.index(ref)
+
+
+@pytest.mark.parametrize('incoming', ['Use kit,  then extract 20 ug RNA.', 'Use kit, then extract 20 µg RNA.', 'Use kit, then extract 20 μg RNA.'])
+def test_compound_projection_uses_permitted_description_normalization(incoming):
+    data,ref=compound()
+    data['series']['protocols'][0]['description']='Use kit, then extract 20 ug RNA.'
+    data['sample'][0]['channel'][0]['extract_protocol']=incoming
+    complete_native_paths(data)
+    assert all([s['protocol_ref'] for s in p['steps'] if s.get('protocol_ref')]==[ref] for p in data['series']['assay_paths'])
+    assert data['series']['protocols'][0]['description']=='Use kit, then extract 20 ug RNA.'

@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from copy import deepcopy
 
 from meta_standards_converter.miniml import MINiMLCodec
@@ -77,3 +85,12 @@ def test_conflicting_doi_and_pmcid_do_not_select_an_arbitrary_pmid():
     assert not client.calls
     assert output['series']['pubmed_publication'][0]['pubmed_id'] == ''
     assert service.publication_issues
+
+
+def test_local_identifier_cleanup_preserves_valid_repeated_source_occurrences():
+    from meta_standards_converter.miniml.publication_identifiers import clean_publication_identifiers
+    data={'source':{'format':'GEO'},'series':{'iid':'GSE1','pubmed_id':['123','None','123',' 456 ']}}
+    records=clean_publication_identifiers(data)
+    assert data['series']['pubmed_id']==['123','123','456']
+    assert records[0]['metadata']['pubmed_id']=='None'
+    before=deepcopy(data);assert not clean_publication_identifiers(data);assert data==before

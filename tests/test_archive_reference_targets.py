@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 from meta_standards_converter.miniml.archive_residuals import Projection
 from meta_standards_converter.miniml.insdc_support import relations, tree
 import xml.etree.ElementTree as ET

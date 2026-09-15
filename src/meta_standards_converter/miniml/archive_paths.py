@@ -8,6 +8,7 @@
 # =============================================================================
 """Complete native paths from explicit sample fields without inferring methods."""
 from copy import deepcopy
+from .protocol_text import comparable_protocol_text
 
 
 def _literal(value):
@@ -58,7 +59,7 @@ def _compound_application(steps, sample, methods, description):
     method = methods.get(ref, {})
     kind = str(_literal(method.get('type', ''))).lower().replace('_', ' ')
     if (len(applications) != 1 or set(applications[0]) != {'kind', 'protocol_ref'}
-            or method.get('description') != description
+            or comparable_protocol_text(method.get('description') or '') != comparable_protocol_text(description)
             or kind not in {'library construction protocol', 'nucleic acid library construction protocol'}):
         return None
     application = applications[0]

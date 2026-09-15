@@ -45,7 +45,7 @@
   "edge_cases/magetab-normalization/inputs/E-MTAB-6486.sdrf.txt": "9d0bfaed2220b187a067d7d86de7d29fd361d4a358c81d4f2ed922cf992358b5",
   "edge_cases/magetab-normalization/provenance.json": "e5a539a9fbbca97138e93ae05bd22f9732225c0426e3a70249cd3ce49561e4cf",
   "studies/E-MTAB-6486/diagnostics.json": "52e7cbdfdf71614520420c4b48fefa4683011e11f2fc3c7be99822ee7c8e0526",
-  "studies/E-MTAB-6486/expected/ae2json/E-MTAB-6486.json": "b92b3315bc3ba9d1a4b27c5b9844138a8fd07851bf4fc78199f168ce7cf098eb",
+  "studies/E-MTAB-6486/expected/ae2json/E-MTAB-6486.json": "01696f45bf0378932a43e9dd0048b31d95ee4ea7019c889f5ca0d7233c6b2beb",
   "studies/E-MTAB-6486/inputs/E-MTAB-6486.idf.txt": "ccd865ba301d9abc29925d9389c275063f4acdc63a2970c5aaa3c3ec8ecd12a5",
   "studies/E-MTAB-6486/inputs/E-MTAB-6486.sdrf.txt": "c9d368a6f38b034ed74ee2ce14148fbf6ec18cc9b9069589075a6ea3eab5c3c0",
   "studies/E-MTAB-6486/provenance.json": "4245280675bc849e8428b6a230e03cab670814d1485f31d041f0cb2ca178e859",

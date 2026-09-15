@@ -57,12 +57,12 @@ def test_real_routing_regressions(case,workspace,monkeypatch):
     retained_protocols=[c.get('extract_protocol') for sample in retained['sample'] for c in sample['channel']]
     for protocol in original_protocols:
         assert ' '.join(protocol.split()) in retained_protocols
-    # The real MAGE-TAB parser retains every extract comment, including repeated
+    # The real MAGE-TAB parser retains populated extract comments, including repeated
     # index attributes, independently for each source row.
     for row, path in zip(rows[1:],retained['series']['assay_paths']):
         extract=next(step for step in path['steps'] if step['kind']=='extract')
         start=rows[0].index('Extract Name');end=rows[0].index('Assay Name')
-        expected=[(h[8:-1],v) for h,v in list(zip(rows[0],row))[start:end] if h.startswith('Comment[')]
+        expected=[(h[8:-1],v) for h,v in list(zip(rows[0],row))[start:end] if h.startswith('Comment[') and v.strip()]
         assert [(c['name'],c['value']) for c in extract.get('comments',[])]==expected
     assert len(retained['series']['assay_paths'])==len(rows)-1
     for conversion in (converter,json_converter):

@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Local publication identifier cleanup; no lookup or citation reassignment."""
 from copy import deepcopy
 from ..sources.archive_publications import citation_identifier
@@ -35,7 +43,7 @@ def clean_publication_identifiers(data):
             values = values if isinstance(values, list) else [values]
             for value in values:
                 if not valid_pubmed_ids([value]): retain(value)
-            entity['pubmed_id'] = valid_pubmed_ids(values)
+            entity['pubmed_id'] = [pmid for value in values for pmid in valid_pubmed_ids([value])]
         pubs = [*entity.get('pubmed_publication', []),
                 *[r['publication'] for r in entity.get('relation', []) if isinstance(r.get('publication'), dict)]]
         for publication in pubs:
