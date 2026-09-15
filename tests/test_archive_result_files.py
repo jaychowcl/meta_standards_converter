@@ -124,3 +124,12 @@ def test_ambiguous_companion_reports_without_modifying_paths(caplog):
     normalize_index_companions(data, issues=issues, check_only=True)
     assert issues and 'ambiguous' in issues[0] and 'ERZ1' in issues[0]
     assert data == before
+
+
+def test_saved_explicit_filename_hash_is_encoded_in_export_without_mutation():
+    node = {'kind':'array_data_file','name':'18858_6#91_1.fastq.gz',
+            'link':{'value':'https://files.example.org/18858_6#91_1.fastq.gz','type':'fastq'}}
+    original = deepcopy(node)
+    assert _record(node)['URI'] == 'https://files.example.org/18858_6%2391_1.fastq.gz'
+    assert ('Comment[File URI]', 'https://files.example.org/18858_6%2391_1.fastq.gz') in _miniml_path_columns([node])
+    assert node == original

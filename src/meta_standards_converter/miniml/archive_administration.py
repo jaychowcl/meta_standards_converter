@@ -17,17 +17,25 @@ _CENTERS = {'insdc center name', 'insdc center alias', 'broker name'}
 _IDS = {'external id', 'sra accession', 'insdc secondary accession'}
 _COMMENTS = {'ena-checklist', 'biosamplemodel', 'ncbi submission model', 'ncbi submission package',
              'ena-submission-tool', 'submission model', 'submission package'}
-_NAMES = {'insdc status', 'submitter id'} | _CENTERS | _IDS | _COMMENTS
+_BIOLOGICAL_IDS = {'sample name', 'alias'}
+_NAMES = {'insdc status', 'submitter id'} | _CENTERS | _IDS | _COMMENTS | _BIOLOGICAL_IDS
 
 
-def administrative_destination(item, provider):
+def administrative_destination(item, provider, sample=None):
     """The same explicit field contract is used by mapping and residual matching."""
     name = str(item.get('name') or '').strip().lower()
     value = str(item.get('value') or '')
     annotations = {k:deepcopy(v) for k,v in item.items() if k not in {'name','value'}}
-    if name in _IDS and re.fullmatch(r'(?:SAM(?:N|EA|D)\d+|[SED]RS\d+)', value):
+    verified_name = name == 'sample name' and sample is not None and value in {
+        sample.get('iid'), *[a.get('value') for a in sample.get('accession', [])]}
+    if (name in _IDS or verified_name) and re.fullmatch(r'(?:SAM(?:N|EA|D)\d+|[SED]RS\d+)', value):
         from .insdc_support import database_for
         return 'accession', {'value':value, 'database':database_for(value), 'label':item['name'], **annotations}
+    if name == 'alias':
+        namespace = re.fullmatch(r'(GSE\d+|E-(?:MTAB|GEOD)-\d+):(.+)', value)
+        if namespace:
+            return 'relation', {'type':item['name'], 'target':value, 'namespace':namespace[1], **annotations}
+        return 'comments', deepcopy(item)
     if name == 'submitter id':
         return 'relation', {'type':item['name'], 'target':value, 'namespace':f'{provider} submitter', **annotations}
     if name in _COMMENTS | _IDS:
@@ -43,11 +51,14 @@ def normalize_administration(data):
     organizations = data.setdefault('organization', [])
     org_ids = {o['iid'] for o in organizations}
     for sample in data.get('sample', []):
-        def clean(node):
+        def clean(node, *, biological=True):
             wanted = Counter()
             kept = []
             for item in node.get('characteristics', []):
-                if item.get('name', '').strip().lower() in _NAMES:
+                name = item.get('name', '').strip().lower()
+                recognized = (name in _CENTERS or name == 'insdc status'
+                              or administrative_destination(item, provider, sample) is not None)
+                if recognized and (biological or name not in _BIOLOGICAL_IDS):
                     wanted[json.dumps(item, sort_keys=True)] += 1
                 else:
                     kept.append(item)
@@ -61,10 +72,10 @@ def normalize_administration(data):
             refs = {s.get('sample_ref') for s in path['steps']} - {None}
             for step in path['steps']:
                 if step.get('sample_ref') == sample['iid'] or (not step.get('sample_ref') and refs == {sample['iid']}):
-                    wanted |= clean(step)
+                    wanted |= clean(step, biological=step.get('kind') in {'source', 'sample'})
         for literal, count in wanted.items():
             item = json.loads(literal)
-            destination = administrative_destination(item, provider)
+            destination = administrative_destination(item, provider, sample)
             if destination:
                 field, record = destination
                 values = sample.setdefault(field, [])

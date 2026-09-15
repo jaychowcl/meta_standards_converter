@@ -179,6 +179,15 @@ def files_from_ena(row):
     return files
 
 
+def _filename_uri(uri, filename):
+    """A supplied literal filename can prove that a trailing # is a path byte."""
+    if (isinstance(uri, str) and isinstance(filename, str) and '#' in filename
+            and '/' not in filename and '://' in uri and uri.endswith('/' + filename)
+            and not any(c in uri[:-len(filename)].split('://', 1)[1] for c in '?#')):
+        return uri[:-len(filename)] + filename.replace('#', '%23')
+    return uri
+
+
 def files_from_sra(run):
     files = []
     for node in run.findall('SRAFiles/SRAFile'):
@@ -186,7 +195,7 @@ def files_from_sra(run):
                 'format': node.get('semantic_name', ''), 'role': node.get('supertype', '')}
         urls = ([{'url': node.get('url')}] if node.get('url') else []) + [dict(x.attrib) for x in node.findall('Alternatives')]
         for alternative in urls or [{}]:
-            files.append({**base, **alternative, 'uri': alternative.get('url')})
+            files.append({**base, **alternative, 'uri': _filename_uri(alternative.get('url'), base['filename'])})
     # Some partners retain submitted file descriptors instead of SRAFiles.
     for node in run.findall('.//DATA_BLOCK/FILES/FILE'):
         item = {'filename': node.get('filename'), 'format': node.get('filetype', ''), 'role': 'submitted', 'checksum_method': node.get('checksum_method'), 'checksum': node.get('checksum')}

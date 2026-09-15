@@ -172,3 +172,20 @@ def test_residual_keeps_displaced_biological_source_but_not_package_source_marke
     source={'source':{'format':'GEO'},'sample':[{'iid':'SRS1','channel':[{'source':{'value':'liver'},'molecule':{'value':'RNA'}}]}]}
     target=deepcopy(source);target['source']['format']='SRA';target['sample'][0]['channel'][0]['source']={'value':'brain'}
     assert diff(source,target)=={'sample':[{'iid':'SRS1','channel':[{'source':{'value':'liver'}}]}]}
+
+
+def test_filename_uri_transform_prunes_only_represented_source_attributes():
+    records = fixture_records('sra')
+    run = records.xml[0].find('.//RUN')
+    existing = run.find('SRAFiles')
+    if existing is not None: run.remove(existing)
+    group = ET.SubElement(run, 'SRAFiles')
+    file = ET.SubElement(group, 'SRAFile', filename='a#1.fastq.gz', url='https://files.example.org/a#1.fastq.gz', semantic_name='fastq')
+    ET.SubElement(file, 'Alternatives', url='https://mirror.example.org/a#1.fastq.gz')
+    ET.SubElement(file, 'UNMAPPED_NOTE').text='source-only sibling'
+    data = SRAParser().parse(records).to_mapping()
+    files = [f for s in data['sample'] for r in s.get('sra_run', []) for f in r.get('files', []) if f.get('filename') == 'a#1.fastq.gz']
+    assert len(files) == 2 and all('%231.fastq.gz' in f['uri'] for f in files)
+    residual = data['extensions']['insdc']
+    assert 'source-only sibling' in str(residual)
+    assert not any(n.get('attributes', {}).get('url') in {'https://files.example.org/a#1.fastq.gz','https://mirror.example.org/a#1.fastq.gz'} for n in nodes(residual))

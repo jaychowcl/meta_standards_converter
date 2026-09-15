@@ -104,3 +104,23 @@ def test_ena_linked_json_and_publication_identity_validation():
     source.http=HTTP(lambda u,p,f:ET.fromstring('<PubmedArticleSet><PubmedArticle><MedlineCitation><PMID>99</PMID></MedlineCitation></PubmedArticle></PubmedArticleSet>'))
     assert source.publications(['1'],result) is None
     assert len(result.issues)==2
+
+
+@pytest.mark.parametrize('url,expected', [
+    ('https://files.example.org/18858_6#91_1.fastq.gz','https://files.example.org/18858_6%2391_1.fastq.gz'),
+    ('https://files.example.org/18858_6%2391_1.fastq.gz','https://files.example.org/18858_6%2391_1.fastq.gz'),
+])
+def test_sra_file_uri_preserves_explicit_filename_hash(url, expected):
+    from meta_standards_converter.miniml.insdc_support import files_from_sra
+    root = ET.fromstring(f'<RUN><SRAFiles><SRAFile filename="18858_6#91_1.fastq.gz" url="{url}" semantic_name="fastq"><Alternatives url="{url}"/></SRAFile></SRAFiles></RUN>')
+    files = files_from_sra(root)
+    assert len(files) == 2
+    assert all(f['filename'] == '18858_6#91_1.fastq.gz' and f['uri'] == expected for f in files)
+    assert all(f['url'] == url for f in files)
+
+
+def test_filename_uri_normalization_does_not_reinterpret_actual_query_or_fragment():
+    from meta_standards_converter.miniml.insdc_support import files_from_sra
+    for url in ['https://files.example.org/a.txt#section','https://files.example.org/a.txt?download=1']:
+        root=ET.fromstring(f'<RUN><SRAFiles><SRAFile filename="a.txt" url="{url}"/></SRAFiles></RUN>')
+        assert files_from_sra(root)[0]['uri'] == url

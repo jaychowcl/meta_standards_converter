@@ -84,16 +84,21 @@ def _path_diff(source, target):
 def _mapped_date_view(metadata, target, workflows=False):
     """Prune original occurrences proved by same-sample administrative projections."""
     from .archive_dates import _date_key
-    from .archive_administration import _NAMES
+    from .archive_administration import _NAMES, _BIOLOGICAL_IDS, administrative_destination
     projection = Projection(target)
     view = deepcopy(metadata)
     samples = {s['iid']: s for s in target.get('sample', [])}
 
-    def clean(owner, sample, used):
+    def clean(owner, sample, used, *, biological=True):
         retained = []
         for item in owner.get('characteristics', []):
-            if str(item.get('name') or '').strip().lower() in _NAMES:
-                unit = item.get('unit', {}).get('value') if isinstance(item.get('unit'), dict) else item.get('unit')
+            if not biological and str(item.get('name') or '').strip().lower() in _BIOLOGICAL_IDS:
+                retained.append(item)
+                continue
+            name = str(item.get('name') or '').strip().lower()
+            if name in _NAMES and (name not in _BIOLOGICAL_IDS or administrative_destination(
+                    item, target.get('source', {}).get('format'), sample)):
+                unit = item.get('unit')
                 terms = {k:v for k,v in item.items() if k not in {'name','value','unit'}}
                 if projection.character(sample, item.get('name'), item.get('value'), unit, terms):
                     continue
@@ -127,7 +132,7 @@ def _mapped_date_view(metadata, target, workflows=False):
             ref = step.get('sample_ref') or (next(iter(bound)) if len(bound) == 1 else None)
             if ref in samples:
                 projection._mapped_characters.clear()
-                clean(step, samples[ref], set())
+                clean(step, samples[ref], set(), biological=step.get('kind') in {'source', 'sample'})
     return view
 
 
@@ -250,9 +255,9 @@ class Projection:
     def character(self, sample, name, value, unit=None, terms=None):
         from .archive_administration import administrative_destination, _CENTERS
         wanted = {'name':name, 'value':value}
-        if unit: wanted['unit'] = {'value':unit}
+        if unit: wanted['unit'] = deepcopy(unit) if isinstance(unit, dict) else {'value':unit}
         if terms: wanted.update(terms)
-        destination = administrative_destination(wanted, self.data.get('source', {}).get('format'))
+        destination = administrative_destination(wanted, self.data.get('source', {}).get('format'), sample)
         if destination:
             field, record = destination
             for index, actual in enumerate(sample.get(field, [])):
@@ -506,13 +511,15 @@ class Projection:
                 if any(p.get('description') in combined and p['name'] == acc + ':library'
                        for p in self.series.get('protocols', [])):
                     mapped_text = True
+        from .insdc_support import _filename_uri
         if tag=='SRAFile':
             file=[f for r in runs for f in r.get('files',[]) if f.get('filename')==attrs.get('filename')]
             for source,target in [('filename','filename'),('size','bytes'),('md5','md5'),('semantic_name','format'),('supertype','role'),('url','uri')]:
-                if attrs.get(source) and any(f.get(target)==attrs[source] for f in file):mapped_attrs.add(source)
+                value = _filename_uri(attrs.get(source), attrs.get('filename')) if source == 'url' else attrs.get(source)
+                if value and any(f.get(target)==value for f in file):mapped_attrs.add(source)
         if tag=='Alternatives' and file:
             for key,value in attrs.items():
-                if any(f.get('uri')==attrs.get('url') and f.get(key)==value for f in file):mapped_attrs.add(key)
+                if any(f.get('uri')==_filename_uri(attrs.get('url'), f.get('filename')) and f.get(key)==value for f in file):mapped_attrs.add(key)
         if tag=='FILE':
             files=[f for r in runs for f in r.get('files',[])]
             targets={s['iid'] for s in self.data.get('sample',[]) if any(r.get('target')==acc for r in s.get('relation',[]))}

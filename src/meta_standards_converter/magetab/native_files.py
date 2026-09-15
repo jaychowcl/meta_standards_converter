@@ -66,6 +66,8 @@ def _record(step):
         result['_node'] = extra
     if set(link) - interpreted:
         result['_link'] = {k: v for k, v in link.items() if k not in interpreted}
+    from ..miniml.insdc_support import _filename_uri
+    result['URI'] = _filename_uri(result.get('URI', ''), result.get('NAME'))
     return result
 
 
