@@ -11,6 +11,16 @@ from copy import deepcopy
 from ..sources.archive_publications import citation_identifier
 
 
+def publication_identity(publication):
+    """Validated citation identifiers for local joins; no descriptive matching."""
+    result = {}
+    for field, namespace in (('pubmed_id', 'pubmed'), ('doi', 'doi'), ('pmcid', 'pmc')):
+        value = citation_identifier(namespace, publication.get(field)).get(field)
+        if value:
+            result[field] = value.casefold() if field == 'doi' else value
+    return result
+
+
 def valid_pubmed_ids(values):
     result = []
     for value in values:

@@ -117,13 +117,148 @@ def complete_characteristic_groups(preferred, fallback):
     return result
 
 
-def _merge_entity(target, extra, prefer, protected=()):
+def _merge_publications(current, incoming, prefer, *, issues=None, scope='entity'):
+    """Retain scoped papers and complete only compatible identifier-bound groups."""
+    from collections import Counter
     from copy import deepcopy
-    additive = {'raw_data', 'supplementary_data', 'relation', 'accession', 'contact_ref', 'contributor_ref'}
+    from itertools import combinations
+    import json
+    import logging
+    from ..miniml.publication_identifiers import publication_identity
+
+    result = deepcopy(current)
+    status_fields = {'status', 'status_term_source_ref', 'status_term_accession_number'}
+    signature = lambda value: json.dumps(value, sort_keys=True)
+    counts = Counter(signature(v) for v in result)
+    occurrences = Counter()
+    inventory = [publication_identity(v) for v in [*current, *incoming]]
+    identities = inventory[len(current):]
+
+    def compatible(left, right):
+        return all(left[k] == right[k] for k in left.keys() & right.keys())
+
+    def retain(value, component):
+        key = signature(value)
+        occurrences[key] += 1
+        if counts[key] < occurrences[key]:
+            result.append(deepcopy(value))
+            result_components.append(component)
+            counts[key] += 1
+
+    def conflict(identifier):
+        message = f'{scope}: conflicting publication evidence for {identifier}; retaining separate source citations'
+        if issues is not None and message not in issues:
+            issues.append(message)
+        logging.getLogger(__name__).warning(message)
+
+    # Validate the original inventory before accepting any new identity. Two
+    # individually compatible rows can otherwise bridge different native papers.
+    parents = list(range(len(inventory)))
+
+    def root(index):
+        while parents[index] != index:
+            parents[index] = parents[parents[index]]
+            index = parents[index]
+        return index
+
+    owners = {}
+    for index, identity in enumerate(inventory):
+        for identifier in identity.items():
+            if identifier in owners:
+                parents[root(index)] = root(owners[identifier])
+            else:
+                owners[identifier] = index
+    components = {}
+    for index in range(len(inventory)):
+        components.setdefault(root(index), []).append(index)
+
+    def details_conflict(i, j):
+        left, right = incoming[i], incoming[j]
+        differing = any(informative(left[k]) and informative(right[k]) and left[k] != right[k]
+                        for k in left.keys() & right.keys() - {'pubmed_id', 'doi', 'pmcid'})
+        terms = status_fields - {'status'}
+        a = {k for k in terms if informative(left.get(k))}
+        b = {k for k in terms if informative(right.get(k))}
+        return differing or bool(a and b and not a & b)
+
+    conflicted = set()
+    for members in components.values():
+        added = [i - len(current) for i in members if i >= len(current)]
+        identifiers = {}
+        for i in members:
+            for kind, literal in inventory[i].items():
+                identifiers.setdefault(kind, set()).add(literal)
+        if (any(len(values) > 1 for values in identifiers.values())
+                or any(details_conflict(i, j) for i, j in combinations(added, 2))):
+            conflicted.update(added)
+    incoming_counts = Counter()
+    result_components = [root(index) for index in range(len(current))]
+    for index, value in enumerate(incoming):
+        identity = identities[index]
+        component = root(len(current) + index)
+        incoming_counts[component] += 1
+        matches = [(i, old, publication_identity(old)) for i, old in enumerate(result)
+                   if identity and result_components[i] == component]
+        groups = [identity, *[ids for _, _, ids in matches]]
+        if index in conflicted or any(not compatible(a, b) for a, b in combinations(groups, 2)):
+            conflict(identity)
+            retain(value, component)
+            continue
+        if not matches:
+            retain(value, component)
+            continue
+        for position, old, old_ids in matches:
+            primary, secondary = (value, old) if prefer else (old, value)
+            primary_ids, secondary_ids = (identity, old_ids) if prefer else (old_ids, identity)
+            merged = deepcopy(primary)
+            for field, fallback in secondary.items():
+                if field in status_fields:
+                    continue
+                present = field in primary_ids if field in {'pubmed_id', 'doi', 'pmcid'} else informative(primary.get(field))
+                supplied = field in secondary_ids if field in {'pubmed_id', 'doi', 'pmcid'} else informative(fallback)
+                if not present and supplied:
+                    merged[field] = deepcopy(fallback)
+            selected = {k: deepcopy(primary[k]) for k in status_fields if informative(primary.get(k))}
+            fallback = {k: deepcopy(secondary[k]) for k in status_fields if informative(secondary.get(k))}
+            if not informative(selected.get('status')) and informative(fallback.get('status')):
+                selected, fallback = fallback, selected
+            terms = status_fields - {'status'}
+            a, b = terms & selected.keys(), terms & fallback.keys()
+            if compatible(selected, fallback) and not (a and b and not a & b):
+                selected.update({k: v for k, v in fallback.items() if k not in selected})
+            for field in status_fields:
+                merged.pop(field, None)
+            merged.update(selected)
+            result[position] = merged
+        # Matching an earlier incoming row does not consume another supplied
+        # occurrence. Retain the larger multiplicity across source lists. Only
+        # unanimous completed facts may fill a newly retained occurrence.
+        if len(matches) < incoming_counts[component]:
+            completed = [result[position] for position, _, _ in matches]
+            added = deepcopy(value)
+            common = {k: deepcopy(v) for k, v in completed[0].items()
+                      if k not in status_fields and all(k in other and other[k] == v for other in completed[1:])}
+            statuses = [{k: v for k, v in item.items() if k in status_fields} for item in completed]
+            if all(group == statuses[0] for group in statuses[1:]):
+                for field in status_fields:
+                    added.pop(field, None)
+                common.update(deepcopy(statuses[0]))
+            added.update(common)
+            result.append(added)
+            result_components.append(component)
+    return result
+
+
+def _merge_entity(target, extra, prefer, protected=(), *, issues=None):
+    from copy import deepcopy
+    additive = {'raw_data', 'supplementary_data', 'relation', 'accession', 'contact_ref', 'contributor_ref', 'pubmed_id'}
     for key, value in extra.items():
         if key in protected:
             continue
-        if key in additive:
+        if key == 'pubmed_publication':
+            target[key] = _merge_publications(target.get(key, []), value, prefer, issues=issues,
+                                             scope=target.get('iid') or target.get('run') or 'entity')
+        elif key in additive:
             # Files retain all alternatives. Identity declarations need no duplicates.
             target.setdefault(key, [])
             target[key].extend(deepcopy(v) for v in value if key in {'raw_data', 'supplementary_data'} or v not in target[key])
@@ -193,7 +328,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     namespace = str(extra['series'].get('iid') or 'linked') + ':'
     declaration_mappings = merge_declarations(data, extra, namespace)
     _merge_entity(data['series'], extra['series'], prefer,
-                  {'iid', 'sample_ref', 'assay_paths', 'protocols'})
+                  {'iid', 'sample_ref', 'assay_paths', 'protocols'}, issues=issues)
     native_samples, extra_samples = data.get('sample', []), extra.get('sample', [])
     joins = {i: [j for j, s in enumerate(extra_samples) if entity_ids(n, sample=True) & entity_ids(s, sample=True)]
              for i, n in enumerate(native_samples)}
@@ -211,7 +346,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
         j = candidates[0]
         target, source = native_samples[i], extra_samples[j]
         matched[source['iid']] = target['iid']
-        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'platform_ref'} | library_fields)
+        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'platform_ref'} | library_fields, issues=issues)
         runs = {r['run']: r for r in target.get('sra_run', [])}
         for run in source.get('sra_run', []):
             if run['run'] in runs:
@@ -219,7 +354,9 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
                 if run.get('experiment') and current.get('experiment') and run['experiment'] != current['experiment']:
                     issues.append(f"{run['run']}: conflicting enrichment experiment identity")
                     continue
-                _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'} | (library_fields if prefer else set()))
+                publication_fields = {'pubmed_id', 'pubmed_publication'}
+                _merge_entity(current, {k: v for k, v in run.items() if k in publication_fields}, prefer, issues=issues)
+                _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'} | publication_fields | (library_fields if prefer else set()), issues=issues)
                 for key in ('files', 'fastq_files'):
                     current.setdefault(key, []).extend(deepcopy(run.get(key, [])))
             elif not prefer:

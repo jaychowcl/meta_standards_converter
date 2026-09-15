@@ -143,6 +143,12 @@ def diff(source, target, *, field=None):
         if result:
             for k in ('iid', 'kind', 'name', 'sample_ref'):
                 if k in source: result.setdefault(k, source[k])
+            if field == 'pubmed_publication':
+                from .publication_identifiers import publication_identity
+                identity = publication_identity(source)
+                if identity:
+                    key = next(iter(identity))
+                    result.setdefault(key, source[key])
         return result or None
     if isinstance(source, list):
         result = []
@@ -168,6 +174,14 @@ def diff(source, target, *, field=None):
             if field == 'channel' and len(source) == len(available) == 1:
                 candidate = available[0]
             if isinstance(item,dict):
+                if field == 'pubmed_publication':
+                    from .publication_identifiers import publication_identity
+                    identity = publication_identity(item)
+                    options = [x for x in available if isinstance(x, dict)
+                               and identity.items() & publication_identity(x).items()
+                               and all(identity[k] == publication_identity(x)[k] for k in identity.keys() & publication_identity(x).keys())]
+                    if len(options) == 1 or (options and all(x == options[0] for x in options)):
+                        candidate = options[0]
                 identity = next((k for k in ('iid','run','name') if item.get(k)), None)
                 if identity:
                     options = [x for x in available if isinstance(x,dict) and x.get(identity)==item[identity]]

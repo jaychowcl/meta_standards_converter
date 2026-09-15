@@ -4193,6 +4193,20 @@ lookups. `archive_residuals.finalize` then removes mapped status and other citat
 fields from residuals while retaining unmapped siblings. No title-based publication
 search or implicit GEO/AE traversal is performed.
 
+Native linked enrichment merges citation lists within their explicitly matched
+study, sample or run. Validated PMID, DOI or PMCID overlap establishes the paper;
+the complete original identifier inventory is checked before merging so even
+indirect conflicting groups cannot bridge papers. Distinct native papers and
+the larger native/incoming occurrence count survive. Informative AE/GEO citation fields take
+priority while compatible missing identifiers/details complete from native
+evidence. Status and ontology annotations remain coherent groups. Conflicting
+same-priority incoming citations are retained separately and reported rather
+than resolved by list order. Identifier-less citations cannot donate fields by
+title; exact equality makes their retention idempotent. Scoped publication-ID
+lists remain additive, and run citation preference never replaces native run
+measurements. Residual matching uses the same validated identifiers to remove
+mapped citation fields while retaining displaced text and an identifying key.
+
 
 `archive_dates.normalize_archive_dates` runs at native residual finalization and
 on the private MAGE-TAB construction copy, including `json2ae --no-enrich`.
@@ -4794,6 +4808,7 @@ Supporting audited mapping and export callables:
 | `meta_standards_converter.miniml.insdc_support.biosample_characteristic` | `biosample_characteristic(name, item)` |
 | `meta_standards_converter.miniml.protocol_text.comparable_protocol_text` | `comparable_protocol_text(value)` |
 | `meta_standards_converter.miniml.publication_identifiers.valid_pubmed_ids` | `valid_pubmed_ids(values)` |
+| `meta_standards_converter.miniml.publication_identifiers.publication_identity` | `publication_identity(publication)` returns validated PMID/DOI/PMCID keys for local citation joins without retrieval or descriptive matching. |
 | `meta_standards_converter.miniml.publication_identifiers.clean_publication_identifiers` | `clean_publication_identifiers(data)` |
 | `meta_standards_converter.miniml.reference_targets.parse_reference_targets` | `parse_reference_targets(database, literal, verified_ranges=())` |
 | `meta_standards_converter.sources.archive_publications.resolve_identifier` | `resolve_identifier(kind, value, http)` |
