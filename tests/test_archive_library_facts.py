@@ -133,3 +133,74 @@ def test_shared_experiment_path_does_not_take_last_runs_layout():
     synchronize_library_facts(data, issues); synchronize_library_facts(reverse, [])
     assert issues
     assert data['series']['assay_paths'] == reverse['series']['assay_paths']
+
+
+def shared_library(native_values, field='library_layout', incoming='not provided'):
+    data = native_layout().to_mapping()
+    sample = data['sample'][0]
+    sample['sra_run'] = [dict(deepcopy(sample['sra_run'][0]), run=f'SRR{111 + i}', **{field: value})
+                         for i, value in enumerate(native_values)]
+    data['series']['assay_paths'] = data['series']['assay_paths'][:1]
+    for path in data['series']['assay_paths']:
+        path['steps'] = [s for s in path['steps'] if s['kind'] not in ('scan', 'array_data_file')]
+        for step in path['steps']:
+            step['comments'] = [c for c in step.get('comments', []) if c['name'].lower() != field]
+    extra = linked_layout(incoming)
+    extra['sample'][0]['accession'] = deepcopy(sample['accession'])
+    extra['sample'][0]['sra_run'] = []
+    for path in extra['series']['assay_paths']:
+        path['steps'] = [s for s in path['steps'] if s['kind'] != 'scan']
+        for step in path['steps']:
+            for comment in step.get('comments', []):
+                if comment['name'] == 'LIBRARY_LAYOUT': comment['name'] = field.upper()
+    return data, extra
+
+
+def test_missing_shared_workflow_fact_preserves_each_native_run_and_reports_disagreement():
+    from meta_standards_converter.miniml.archive_libraries import synchronize_library_facts
+    for field, values in [('library_layout', ['SINGLE', 'PAIRED']),
+                          ('library_strategy', ['RNA-Seq', 'WGS']),
+                          ('library_source', ['TRANSCRIPTOMIC', 'GENOMIC']),
+                          ('library_selection', ['cDNA', 'RANDOM'])]:
+        data, extra = shared_library(values, field)
+        data['sample'][0]['sra_run'][1]['nominal_length'] = '350'
+        for reverse in (False, True):
+            current = deepcopy(data)
+            if reverse: current['sample'][0]['sra_run'].reverse()
+            original = deepcopy(current)
+            result, issues = merge_archive_metadata(MINiMLCodec().decode(current).package,
+                MINiMLCodec().decode(extra).package, prefer=True)
+            result = result.to_mapping()
+            assert {r['run']: r[field] for r in result['sample'][0]['sra_run']} == dict(zip(['SRR111','SRR112'], values))
+            assert any('shared workflow' in issue and field in issue for issue in issues)
+            assert field not in result['sample'][0]
+            extract_values = [c['value'] for p in result['series']['assay_paths'] for s in p['steps']
+                              if s['kind'] == 'extract' for c in s.get('comments', []) if c['name'].lower() == field]
+            assert not (set(extract_values) & set(values))
+            if field == 'library_layout':
+                assert next(r for r in result['sample'][0]['sra_run'] if r['run'] == 'SRR112')['nominal_length'] == '350'
+            saved = deepcopy(result)
+            synchronize_library_facts(result, [])
+            assert result == saved
+            assert current == original
+
+
+def test_explicit_shared_workflow_fact_may_override_both_runs_without_stale_geometry():
+    data, extra = shared_library(['SINGLE', 'PAIRED'], incoming='SINGLE')
+    data['sample'][0]['sra_run'][1]['nominal_length'] = '350'
+    result, issues = merge_archive_metadata(MINiMLCodec().decode(data).package,
+        MINiMLCodec().decode(extra).package, prefer=True)
+    runs = result.to_mapping()['sample'][0]['sra_run']
+    assert {r['library_layout'] for r in runs} == {'SINGLE'}
+    assert all('nominal_length' not in r for r in runs)
+    assert not issues
+
+
+def test_missing_authored_fact_does_not_become_native_consensus_in_disguise():
+    data, extra = shared_library(['PAIRED', 'PAIRED'])
+    result, _ = merge_archive_metadata(MINiMLCodec().decode(data).package,
+        MINiMLCodec().decode(extra).package, prefer=True)
+    result = result.to_mapping()
+    assert {r['library_layout'] for r in result['sample'][0]['sra_run']} == {'PAIRED'}
+    assert all(c['value'] != 'PAIRED' for p in result['series']['assay_paths'] for s in p['steps']
+               if s['kind'] == 'extract' for c in s.get('comments', []) if c['name'] == 'LIBRARY_LAYOUT')

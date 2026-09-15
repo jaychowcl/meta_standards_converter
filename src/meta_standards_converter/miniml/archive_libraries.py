@@ -56,6 +56,7 @@ def resolve_library_facts(native, incoming, issues, identity):
 
 
 def apply_library_facts(run, steps, facts, *, preserve=()):
+    from ..metadata.archive_enrichment import informative
     for key in FIELDS:
         run.pop(key, None)
     run.update(deepcopy(facts))
@@ -64,7 +65,10 @@ def apply_library_facts(run, steps, facts, *, preserve=()):
         rewritten = []
         for comment in comments:
             key = field_name(comment.get('name'))
-            if key is None or key in preserve:
+            if key is None or key in preserve or (key in LIBRARY_FIELDS and step.get('kind') in {'extract', 'labeled_extract'}
+                               and not informative(comment.get('value'))):
+                # Missing authored preparation cells must not become native
+                # fallback facts that saved-JSON recovery treats as AE evidence.
                 rewritten.append(comment)
             elif key in facts:
                 value = {**deepcopy(comment), 'value': str(facts[key])}
@@ -72,6 +76,26 @@ def apply_library_facts(run, steps, facts, *, preserve=()):
                     rewritten.append(value)
         if 'comments' in step:
             step['comments'] = rewritten
+
+
+def _shared_facts(choices, issues, identity):
+    """Project a shared workflow only where every explicitly bound run agrees."""
+    common, conflicts = {}, set()
+    for key in FIELDS:
+        values = [c.get(key) for c in choices]
+        if values and len({str(v) for v in values}) == 1:
+            if values[0] is not None:
+                common[key] = deepcopy(values[0])
+        elif values:
+            conflicts.add(key)
+    if 'library_layout' not in common:
+        for key in GEOMETRY_FIELDS:
+            common.pop(key, None)
+    if conflicts:
+        message = f'{identity}: shared workflow has conflicting run library facts: {sorted(conflicts)}'
+        if message not in issues:
+            issues.append(message)
+    return common
 
 
 def synchronize_library_facts(data, issues=None):
@@ -127,19 +151,8 @@ def synchronize_library_facts(data, issues=None):
                 else:
                     sample.pop(key, None)
     for path, choices in assignments.values():
-        common, conflicts = {}, set()
-        for key in FIELDS:
-            values = [c.get(key) for c in choices]
-            if len({str(v) for v in values}) == 1:
-                if values[0] is not None:
-                    common[key] = values[0]
-            else:
-                conflicts.add(key)
-        if conflicts:
-            message = f'{sorted(path_ids(path))}: shared workflow has conflicting run library facts: {sorted(conflicts)}'
-            if message not in issues:
-                issues.append(message)
-        apply_library_facts({}, path['steps'], common, preserve=conflicts)
+        common = _shared_facts(choices, issues, str(sorted(path_ids(path))))
+        apply_library_facts({}, path['steps'], common)
     if log_issues:
         import logging
         for message in issues:

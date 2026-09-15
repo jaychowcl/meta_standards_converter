@@ -362,11 +362,12 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                 templates[identity].append(prefix)
             incoming.append((identity, prepared))
     if prefer:
-        from ..miniml.archive_libraries import path_facts, resolve_library_facts, apply_library_facts
+        from ..miniml.archive_libraries import path_facts, resolve_library_facts, apply_library_facts, _shared_facts
         selections = {}
         for (target, key), choices in templates.items():
             if len(choices) != 1:
                 continue
+            selected_runs = []
             for run in samples[target].get('sra_run', []):
                 if not compatible(set(key), {run.get('run'), run.get('experiment')}):
                     continue
@@ -375,8 +376,10 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                     if matched.get(source['iid']) == target:
                         supplied.extend(r for r in source.get('sra_run', []) if r.get('run') == run['run']
                                         and (not r.get('experiment') or r['experiment'] == run.get('experiment')))
-                selections[(target, key)] = resolve_library_facts(run, supplied, issues, run['run'])
-                apply_library_facts(run, [], selections[(target, key)])
+                facts = resolve_library_facts(run, supplied, issues, run['run'])
+                selected_runs.append(facts)
+                apply_library_facts(run, [], facts)
+            selections[(target, key)] = _shared_facts(selected_runs, issues, f'{target} {list(key)}')
         for path in paths:
             target = next((s.get('sample_ref') for s in path['steps'] if s.get('sample_ref')), None)
             choices = templates.get((target, tuple(sorted(path_ids(path)))), [])
