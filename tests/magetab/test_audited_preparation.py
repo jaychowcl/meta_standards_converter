@@ -122,3 +122,33 @@ def test_bound_protocol_index_is_operation_local_and_shared(monkeypatch):
     operation()
     assert len(builds) == 2
     assert series == original
+
+
+@pytest.mark.parametrize('protocol,expected', [
+    ('Single mES cells were FACS sorted (BD Influx; BD Biosciences) to each well. Subsequent steps used Smart-Seq2.', 'plate_single_cell_sequencing'),
+    ('Smart-Seq2 library preparation on a Fluidigm C1 microfluidic device.', 'single_cell_sequencing'),
+    ('Single mES cells were sorted into wells. Other libraries used Drop-seq.', 'single_cell_sequencing'),
+])
+def test_scoped_preparation_specializes_single_cell_source_without_title_signal(protocol, expected):
+    s = sample('sample 17', protocol)
+    run = {'library_strategy':'RNA-Seq', 'library_source':'TRANSCRIPTOMIC SINGLE CELL'}
+    original = deepcopy(s)
+    assert resolve_technology(s, run=run).handler == expected
+    assert s == original
+
+
+def test_bound_plate_preparation_can_specialize_source_signal_without_shared_study_override():
+    s = sample('sample 17'); run = {'run':'SRR1','experiment':'SRX1','library_source':'TRANSCRIPTOMIC SINGLE CELL'}
+    data = {'series':{'title':'A study also discusses Drop-seq',
+        'protocols':[{'name':'P1','type':{'value':'nucleic acid extraction protocol'},
+                     'description':'Single mES cells were FACS sorted to each well.'}],
+        'assay_paths':[{'steps':[{'kind':'source','name':s['iid'],'sample_ref':s['iid']},
+            {'kind':'protocol_application','protocol_ref':'P1'}, {'kind':'assay','name':'SRX1'}, {'kind':'scan','name':'SRR1'}]}]}}
+    assert resolve_technology(s, run=run, data=data).handler == 'plate_single_cell_sequencing'
+
+
+def test_conflicting_bound_preparation_formats_report_ambiguity():
+    s = sample('sample 17', 'Single cells were FACS sorted into wells. These libraries used Drop-seq.')
+    result = resolve_technology(s, run={'library_source':'TRANSCRIPTOMIC SINGLE CELL'})
+    assert result.handler == 'single_cell_sequencing'
+    assert any(d.code == 'ambiguous_preparation' for d in result.diagnostics)

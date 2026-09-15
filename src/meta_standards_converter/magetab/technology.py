@@ -240,14 +240,22 @@ def _resolve_technology(sample: dict, channel: dict | None = None,
                 (TechnologyDiagnostic('ambiguous_preparation', tuple(p for p, _, _ in method_evidence)),))
         if method in {'dropseq', '10x', 'droplet'} or chemistry.manufacturer == '10x Genomics':
             return TechnologyDecision('droplet_single_cell_sequencing', supporting + method_support)
-        formats = {m for group in levels[level:] for e in group for m in methods(e.text) if m != 'bulk'}
+        # A library-source field can establish single-cell identity after its
+        # bound preparation supplied the format without an explicit SC keyword.
+        # Applicable preparation precedes unrelated study-wide method fallback.
+        preparations = tuple(e for e in levels[2] if methods(e.text) - {'bulk'})
+        format_evidence = preparations or tuple(e for group in levels[level:] for e in group)
+        formats = {m for e in format_evidence for m in methods(e.text) if m != 'bulk'}
+        supporting += tuple(e for e in preparations if e not in supporting)
         if method == 'not_10x':
             formats.discard('10x')
         if method == 'plate' or formats == {'plate'}:
             return TechnologyDecision('plate_single_cell_sequencing', supporting + method_support)
         if formats and formats <= {'10x', 'dropseq', 'droplet'}:
             return TechnologyDecision('droplet_single_cell_sequencing', supporting)
-        return TechnologyDecision('single_cell_sequencing', supporting)
+        diagnostics = ((TechnologyDiagnostic('ambiguous_preparation', tuple(e.path for e in format_evidence)),)
+                       if len(formats) > 1 else ())
+        return TechnologyDecision('single_cell_sequencing', supporting, diagnostics)
 
     return TechnologyDecision('sequencing' if control_role(sample, channel, run) == 'empty control' else base_technology)
 

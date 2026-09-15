@@ -4080,6 +4080,17 @@ join. Saved native exports may recover higher-priority material facts only from
 explicitly bound workflows bearing a verified linked accession. Sample library
 scalars are present only when all relevant runs have the same informative value.
 
+When an explicit library source establishes single-cell sequencing, uniquely
+scoped preparation can still supply plate/droplet format without a redundant
+single-cell keyword in the title. Applicable preparation precedes study-wide
+method fallback. Conflicting bound formats retain generic single-cell routing
+and an `ambiguous_preparation` diagnostic; bulk/control/genomic guards remain.
+
+Shared experiment workflows retain per-run selections and expose only common
+facts; disagreement is reported without selecting the final run's value. Missing
+authored extract cells remain missing and cannot become higher-priority evidence
+through a native fallback projection.
+
 `SRASource` and `ENASource` independently resolve INSDC accessions and retrieve
 study-scoped records. `SRAParser` and `ENAParser` interpret supplied records without
 network access, producing MSC MINiML 3.0 packages. Entrez owns SRA discovery,
@@ -4797,7 +4808,7 @@ Supporting audited mapping and export callables:
 | `meta_standards_converter.magetab.preparation.incompatible_preparation` | `incompatible_preparation(sample, channel=None, run=None, series=None)` |
 | `meta_standards_converter.metadata.archive_diagnostics.consistency_issues` | `consistency_issues(data)` |
 | `meta_standards_converter.metadata.archive_enrichment.complete_characteristic_groups` | `complete_characteristic_groups(preferred, fallback)` |
-| `meta_standards_converter.miniml.archive_administration.administrative_destination` | `administrative_destination(item, provider)` |
+| `meta_standards_converter.miniml.archive_administration.administrative_destination` | `administrative_destination(item, provider, sample=None)` |
 | `meta_standards_converter.miniml.archive_libraries.field_name` | `field_name(value)` |
 | `meta_standards_converter.miniml.archive_libraries.path_facts` | `path_facts(steps)` |
 | `meta_standards_converter.miniml.archive_libraries.resolve_library_facts` | `resolve_library_facts(native, incoming, issues, identity)` |
@@ -4840,6 +4851,13 @@ Residual comparison expands that companion as a parallel branch. Independent
 analysis products begin from their supported acquisition prefix, not a previously
 appended result's processing chain.
 
+Native file URI normalization may encode a literal filename `#` only when the
+separately supplied complete filename establishes the trailing path component.
+It does not reinterpret a real query or fragment or guess a missing location.
+SRA source parsing and saved export projection share this rule; residual matching
+recognizes the transformation and preserves unrelated source siblings.
+
+
 `MAGETabInput.file_catalogue` defaults to an empty tuple. BioStudies retrieval
 supplies its registered paths and download locations; the network-free parser
 resolves exact paths or unique filenames within that catalogue. Unknown or
@@ -4850,13 +4868,23 @@ in `extensions.magetab.unbound_annotations`, with parser warnings. They are not
 assigned to preceding materials. Preparation lookups share an operation-local
 sample/run/experiment index during MAGE-TAB construction; the cache is discarded
 after export and never written into input metadata.
+An empty or whitespace Unit cell does not create a unit on either the sample or
+its path. Populated unit ontology companions remain an `unbound_unit` occurrence
+with the parent attribute and original row/column context. An optional Unit
+header with no populated companion cells does not create a warning.
 
 The administrative field registry in `archive_administration` maps recognized
 sample repository IDs to labelled accessions, submitter IDs to namespace-bearing
 relations, brokers/centres to scoped organizations, and checklist/model/package
 fields to sample comments. Biological characteristics, including independently
 supplied repetitions, remain unchanged. XML and saved-MINiML residual projection
-use the same destination contract with occurrence counting. Incoming unbound AE
+use the same destination contract with occurrence counting and complete unit
+annotation groups. A `Sample Name` attribute becomes a labelled accession only
+when it matches that same sample's verified archive identity. A supplied
+`GSE*:`/`E-MTAB-*:`/`E-GEOD-*:` Alias becomes a namespace-bearing local relation;
+other aliases remain labelled comments. These rules apply to biological sample
+nodes; free-text sample names and downstream material aliases remain unchanged.
+Incoming unbound AE
 cells become `magetab_unbound_annotation` residual records carrying their original
 document/row/column and explicitly remapped sample reference.
 
