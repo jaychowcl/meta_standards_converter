@@ -496,15 +496,17 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
         if not header:
             continue
         result.append((header, step.get("name", "")))
-        if step.get('link', {}).get('value'):
-            result.append(('Comment[File URI]', step['link']['value']))
+        if step.get('link'):
+            from .native_files import file_metadata_columns
+            result.extend(file_metadata_columns(step))
         members = step.get('link', {}).get('companion_files', [])
         from ..miniml.archive_results import companion_node
         for member in members if isinstance(members, list) else []:
-            if isinstance(member, dict) and member.get('role') in ('barcodes', 'features') and companion_node(member.get('node')):
+            if isinstance(member, dict) and member.get('role') in ('barcodes', 'features', 'index') and companion_node(member.get('node')):
                 from .native_files import _record, _comments
+                prefix = 'INDEX_' if member['role'] == 'index' else 'MATRIX_' + member['role'].upper() + '_'
                 result.extend((f"Comment[{c['name']}]", c['value']) for c in
-                              _comments(_record(member['node']), 'MATRIX_' + member['role'].upper() + '_'))
+                              _comments(_record(member['node']), prefix))
         result.extend(_named_values_columns("Characteristics", step.get("characteristics", [])))
         result.extend(_named_values_columns("Factor Value", step.get("factor_values", [])))
         for field, field_header in (
@@ -642,11 +644,12 @@ def _columns(header: list[str]) -> list[dict]:
 
 
 def _assay_path(sdrf_name: str, row_index: int, header: list[str], row: list[str]) -> dict:
+    from meta_standards_converter.miniml.cells import has_cell_value
     binding = {
         _snake(label): row[index]
         for label in ("Source Name", "Sample Name", "Assay Name", "Comment[ENA_RUN]")
         for index, candidate in enumerate(header)
-        if _normalized(candidate) == _normalized(label) and index < len(row) and row[index]
+        if _normalized(candidate) == _normalized(label) and index < len(row) and has_cell_value(row[index])
     }
     steps = []
     occurrences = {}

@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 import re
 from .chemistry import resolve_chemistry
-from .preparation import single_cell_signal, scoped_method, methods, clauses, NON_PREP, control_role, incompatible_preparation
+from .preparation import single_cell_signal, scoped_method, methods, clauses, NON_PREP, control_role, incompatible_preparation, bound_protocols, control_preparation
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
 import os
 from urllib.parse import urlparse
@@ -168,6 +168,8 @@ def _resolve_technology(sample: dict, channel: dict | None = None,
 
     def add(level, path, text):
         if text:
+            if level == 2:
+                text = control_preparation(str(text), control_role(sample, channel, run))
             signals = ('single_cell',) if level == 3 and str(text).casefold() in {'single cell', 'transcriptomic single cell'} else _signals(str(text))
             levels[level].append(TechnologyEvidence(path, str(text), signals))
 
@@ -200,6 +202,8 @@ def _resolve_technology(sample: dict, channel: dict | None = None,
             levels[0].append(TechnologyEvidence(fact.path, fact.text, ('single_cell',)))
     for key in ('library_construction_protocol', 'library_protocol'):
         add(2, prefix+'.run.'+key, (run or {}).get(key))
+    for path, text in bound_protocols(sample, run, data.get('series')):
+        add(2, path, text)
     for i, series in enumerate(_items(data.get('series'))):
         if control_role(sample, channel, run) == 'empty control':
             break

@@ -79,3 +79,38 @@ def test_reduced_actual_archive_preparation_scopes(case):
     result = resolve_technology(s, run=s['sra_run'][0], data=data)
     assert result.handler == case['expected']
     assert data == before
+
+
+def test_empty_control_uses_uniquely_bound_library_preparation():
+    s = sample('no cell control'); run = {'run':'SRR1', 'experiment':'SRX1'}
+    series = {'protocols':[{'name':'P1','type':{'value':'library construction protocol'},
+                           'description':'Single-cell RNA sequencing libraries were prepared using Drop-seq.'}],
+              'assay_paths':[{'steps':[{'kind':'source','name':'GSM1','sample_ref':'GSM1'},
+                {'kind':'protocol_application','protocol_ref':'P1'},
+                {'kind':'assay','name':'SRX1','sample_ref':'GSM1'}, {'kind':'scan','name':'SRR1'}]}]}
+    result = resolve_technology(s, run=run, data={'series':series})
+    assert result.handler == 'droplet_single_cell_sequencing' and result.control_role == 'empty control'
+    series['protocols'][0]['description'] = ('Single-cell RNA sequencing used Drop-seq. '
+        'A no cell control was separately prepared in a PCR tube without any cell input.')
+    assert resolve_technology(s, run=run, data={'series':series}).handler == 'sequencing'
+def test_bound_protocol_index_is_operation_local_and_shared(monkeypatch):
+    from meta_standards_converter.magetab import preparation
+    from copy import deepcopy
+    series = {'protocols':[{'name':'p', 'type':{'value':'library preparation'}, 'description':'Dropseq'}],
+              'assay_paths':[{'steps':[{'kind':'source','name':'s','sample_ref':'s'},
+                {'kind':'assay','name':'e'}, {'kind':'scan','name':'r'}, {'kind':'protocol_application','protocol_ref':'p'}]}]}
+    original = deepcopy(series)
+    builds = []
+    builder = preparation._bound_protocol_index
+    def counted(value):
+        builds.append(value); return builder(value)
+    monkeypatch.setattr(preparation, '_bound_protocol_index', counted)
+    @preparation.preparation_operation
+    def operation():
+        for _ in range(10):
+            assert preparation.bound_protocols({'iid':'s'}, {'run':'r','experiment':'e'}, series)
+    operation()
+    assert len(builds) == 1
+    operation()
+    assert len(builds) == 2
+    assert series == original

@@ -127,6 +127,7 @@ class AEParser:
 
     def parse(self, source: MAGETabInput) -> dict:
         self.warnings = []
+        self.file_catalogue = source.file_catalogue
         idf_rows = self._table(source.idf.text, source.idf.name, rectangular=False)
         if not idf_rows:
             raise ValueError(f"MAGE-TAB IDF {source.idf.name} is empty.")
@@ -231,12 +232,20 @@ class AEParser:
                        for i, row in enumerate(table[1:], 1)}
         for path in package["mage_tab"]["model"]["assay_paths"]:
             path["sample_ref"] = row_samples.get((path["sdrf"], path["row_index"]))
+            for step in path['steps']:
+                if step.get('kind') == 'file':
+                    uri = self._catalogue_uri(step.get('value'))
+                    if uri:
+                        step['link'] = {'value': uri}
         retained_hz = {
             (sample["iid"], i): channel.pop("_msc_hz", [])
             for sample in sample_values for i, channel in enumerate(sample.get("channel", []))
         }
         typed = MINiMLV1Migrator().migrate(package).package
         mapping = typed.to_mapping()
+        for occurrence in mapping.get('extensions', {}).get('magetab', {}).get('unbound_annotations', []):
+            self._warn(f"Unbound annotation {occurrence.get('header')} at {occurrence.get('sdrf')} "
+                       f"row {occurrence.get('row_index')}, column {occurrence.get('column_index')}; preserved without assigning it to another node.")
         from meta_standards_converter.miniml import MINiMLCodec
         for sample in mapping.get("sample", []):
             for i, channel in enumerate(sample.get("channel", [])):
@@ -784,7 +793,7 @@ class AEParser:
         for index, label in enumerate(header):
             if label not in file_headers or not row[index].strip():
                 continue
-            value = row[index].strip()
+            value = self._catalogue_uri(row[index]) or row[index].strip()
             for j in range(index + 1, len(header)):
                 if header[j] in file_headers or header[j] in {'Source Name', 'Sample Name', 'Assay Name', 'Scan Name', 'Protocol REF'}:
                     break
@@ -795,6 +804,15 @@ class AEParser:
             item = {'value': value}
             if item not in sample.setdefault(key, []):
                 sample[key].append(item)
+
+    def _catalogue_uri(self, value):
+        name = str(value or '').strip()
+        if not name or urlparse(name).scheme:
+            return None
+        exact = [item for item in self.file_catalogue if item.get('path') == name]
+        matches = exact or [item for item in self.file_catalogue if os.path.basename(item.get('path', '')) == name]
+        uris = {item['uri'] for item in matches if item.get('uri')}
+        return next(iter(uris)) if len(uris) == 1 else None
 
     def _set_scalar(self, target, key, value, context):
         value = value.strip()

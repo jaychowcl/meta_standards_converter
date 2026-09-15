@@ -48,6 +48,7 @@ class MINiMLEnricher:
         insdc_fetcher=None,
         resource_profile: str | ResourceProfile = "standard",
         resource_overrides=None,
+        *, publication_identifier_resolver=None,
     ):
         profile = get_resource_profile(
             resource_profile,
@@ -60,6 +61,8 @@ class MINiMLEnricher:
             resource_profile=profile
         )
         self.publication_issues = []
+        self.profile = profile
+        self.publication_identifier_resolver = publication_identifier_resolver
 
     def enrich(self, data: MINiMLPackage) -> MINiMLPackage:
         started = time.monotonic()
@@ -69,6 +72,10 @@ class MINiMLEnricher:
         self._pubmed_failures = 0
         self._sra_failures = 0
         self.publication_issues = []
+        self._identifier_cache = {}
+        self._identifier_http = None
+        from ..miniml.publication_identifiers import clean_publication_identifiers
+        invalid_records = clean_publication_identifiers(mutable)
         if mutable.get("source", {}).get("format") in {"SRA", "ENA"}:
             self._publication_cache = {}
             from meta_standards_converter.miniml.archive_entities import declare_ontologies
@@ -86,7 +93,7 @@ class MINiMLEnricher:
                         self.enrich_pubmed({'series':{'pubmed_publication':[relation['publication']]}}, fill_missing=True)
             del self._publication_cache
             declare_ontologies(mutable)
-            return finalize(mutable, source_records(package))
+            return finalize(mutable, source_records(package) + invalid_records)
         self.enrich_pubmed(data=mutable)
         self.enrich_sra(data=mutable)
         series = mutable.get("series") if isinstance(mutable.get("series"), dict) else {}
@@ -111,7 +118,23 @@ class MINiMLEnricher:
         if not isinstance(series, dict):
             return data
 
-        pubmed_ids = self._dedupe(self._as_list(series.get("pubmed_id")))
+        from ..miniml.publication_identifiers import valid_pubmed_ids
+        from ..sources.archive_publications import citation_identifier
+        for publication in series.get('pubmed_publication', []):
+            if valid_pubmed_ids([publication.get('pubmed_id')]):
+                continue
+            supplied = [(kind, identifier) for kind in ('pmcid','doi')
+                        if (identifier := citation_identifier(kind, publication.get(kind)).get(kind))]
+            resolved = {pmid for kind, value in supplied
+                        if (pmid := self._resolve_publication_identifier(kind, value))}
+            if len(resolved) > 1:
+                message = f"Conflicting publication identifiers for {series.get('iid')}: {supplied} resolve to different PMIDs; retaining the source citation without hydration."
+                if message not in self.publication_issues:
+                    self.publication_issues.append(message)
+                    logger.warning(message)
+            elif resolved:
+                publication['pubmed_id'] = resolved.pop()
+        pubmed_ids = valid_pubmed_ids(self._as_list(series.get("pubmed_id")))
         if not fill_missing and series.get('pubmed_publication'):
             # Refresh a saved citation through the same conservative hydration
             # contract used by native imports, preserving legacy ID occurrences.
@@ -122,7 +145,7 @@ class MINiMLEnricher:
             return data
         if fill_missing:
             publications = series.setdefault('pubmed_publication', [])
-            pubmed_ids = self._dedupe([*pubmed_ids, *[p.get('pubmed_id') for p in publications],
+            pubmed_ids = valid_pubmed_ids([*pubmed_ids, *[p.get('pubmed_id') for p in publications],
                 *[r.get('target') for r in series.get('relation', []) if str(r.get('type', '')).lower() == 'pubmed']])
             if not pubmed_ids:
                 return data
@@ -155,6 +178,31 @@ class MINiMLEnricher:
             for pubmed_id in pubmed_ids
         ]
         return data
+
+    def _resolve_publication_identifier(self, kind, value):
+        from ..sources.archive_publications import resolve_identifier, citation_identifier
+        from ..sources.archive_support import ArchiveHTTP
+        cache = getattr(self, '_identifier_cache', None)
+        if cache is None:
+            self._identifier_cache = cache = {}
+        key = (kind, value.casefold() if kind == 'doi' else value)
+        if key not in cache:
+            try:
+                if self.publication_identifier_resolver is not None:
+                    resolved = self.publication_identifier_resolver(kind, value)
+                else:
+                    if getattr(self, '_identifier_http', None) is None:
+                        self._identifier_http = ArchiveHTTP('ncbi_eutils', resource_profile=self.profile)
+                    resolved = resolve_identifier(kind, value, self._identifier_http)
+                cache[key] = citation_identifier('pubmed', resolved).get('pubmed_id')
+                if resolved and not cache[key]:
+                    raise ValueError('invalid resolved PMID')
+            except (requests.RequestException, ET.ParseError, ValueError, KeyError) as error:
+                cache[key] = None
+                issue = f'{kind} {value}: {type(error).__name__}'
+                self.publication_issues.append(issue)
+                logger.warning('%s', issue)
+        return cache[key]
 
     def enrich_sra(self, data: dict) -> dict:
         for sample in self._as_list(data.get("sample")):
@@ -254,6 +302,9 @@ class MINiMLEnricher:
             saved.append(deepcopy(file))
 
     def _pubmed_publication(self, pubmed_id: str) -> dict:
+        from ..miniml.publication_identifiers import valid_pubmed_ids
+        if not valid_pubmed_ids([pubmed_id]):
+            return {'pubmed_id': ''}
         cache = getattr(self, '_publication_cache', None)
         if cache is not None and pubmed_id in cache: return dict(cache[pubmed_id])
         try:
@@ -310,8 +361,9 @@ class MAGETabEvidenceResolver:
         handler = JSONHandler()
         if any(isinstance(p, dict) for p in handler._from_path(data, "series.pubmed_publication.*")):
             return []
+        from ..miniml.publication_identifiers import valid_pubmed_ids
         return [self.pubmed.pubmed_summary(pubmed_id=value)
-                for value in handler._from_path(data, "series.pubmed_id.*") if value]
+                for value in valid_pubmed_ids(handler._from_path(data, "series.pubmed_id.*"))]
 
     def sample_runs(self, handler, technology_type):
         import requests

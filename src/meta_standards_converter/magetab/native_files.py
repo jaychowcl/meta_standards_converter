@@ -30,6 +30,19 @@ def _record(step):
     link = step.get('link') or {}
     result = {'NAME': step.get('name', ''), 'URI': link.get('value', '')}
     interpreted = {'value', 'type'}
+    for field, target in (('bytes', 'BYTES'), ('role', 'ROLE'), ('checksum_method', 'CHECKSUM_METHOD'),
+                          ('file_checksum', 'CHECKSUM'), ('aspera', 'ASPERA'), ('galaxy', 'GALAXY')):
+        if link.get(field) not in (None, ''):
+            result[target] = str(link[field])
+            interpreted.add(field)
+    if link.get('checksum'):
+        result['MD5'] = str(link['checksum'])
+        interpreted.add('checksum')
+        if 'CHECKSUM' not in result:
+            result['CHECKSUM'] = result['MD5']
+            if result.get('CHECKSUM_METHOD', 'MD5').upper() != 'MD5':
+                result.setdefault('_extra', []).append({'name':'CHECKSUM_METHOD', 'value':result['CHECKSUM_METHOD']})
+            result['CHECKSUM_METHOD'] = 'MD5'
     for field, target in (('repository', '_repository'), ('source_accession', '_source')):
         if isinstance(link.get(field), str):
             result[target] = link[field]
@@ -56,7 +69,28 @@ def _record(step):
     return result
 
 
+def file_metadata_columns(step):
+    """Render structured link facts while retaining supplied comment spelling."""
+    record = _record(step)
+    comments = step.get('comments', [])
+    result = [('Comment[File URI]', record['URI'])] if record.get('URI') else []
+    # Preserve existing GEO/AE columns. Add represented link fields only where
+    # a supplied comment has not already carried the same semantic value.
+    for key in ('FORMAT', 'ROLE', 'BYTES', 'CHECKSUM', 'CHECKSUM_METHOD', 'ASPERA', 'GALAXY'):
+        value = record.get(key)
+        aliases = {key, 'MD5'} if key == 'CHECKSUM' and record.get('CHECKSUM_METHOD') == 'MD5' else {key}
+        if value and not any(_ALIASES.get(str(c.get('name', '')).upper(), str(c.get('name', '')).upper()) in aliases
+                             and str(c.get('value', '')) == str(value) for c in comments):
+            result.append((f'Comment[{key}]', value))
+    if record.get('MD5') and record.get('CHECKSUM_METHOD') != 'MD5':
+        if not any(c.get('name', '').upper() == 'MD5' and c.get('value') == record['MD5'] for c in comments):
+            result.append(('Comment[MD5]', record['MD5']))
+    return result
+
+
 def _checksums(record):
+    if any(str(c.get('name', '')).upper() in {'MD5','CHECKSUM','CHECKSUM_METHOD'} for c in record.get('_extra', [])):
+        return {}
     values = {}
     pairs = [('MD5', record.get('MD5'))]
     if record.get('CHECKSUM'):

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from .preparation import scoped_method, single_cell_signal, methods, TENX, incompatible_preparation, CHEMISTRY_IDENTIFIERS as _IDENTIFIERS
+from .preparation import scoped_method, single_cell_signal, methods, TENX, incompatible_preparation, bound_protocols, control_preparation, control_role, CHEMISTRY_IDENTIFIERS as _IDENTIFIERS
 
 
 @dataclass(frozen=True)
@@ -116,7 +116,9 @@ def _sources(sample, channel, run, series):
             for sentence in re.split(r'(?<!\d)\.(?!\d)|\n', text):
                 if re.search(r'\ball (?:samples|libraries)\b.*\b(?:prepared|generated|constructed)\b', sentence, re.I) or (iid != 'unknown' and re.search(r'(?<!\w)'+re.escape(iid)+r'(?!\w)', sentence)):
                     sources.append((f'series[{i}].{key}', sentence))
-    return sources
+    sources.extend(bound_protocols(sample, run, series))
+    role = control_role(sample, channel, run)
+    return [(path, control_preparation(text, role)) for path, text in sources]
 
 
 def _preparation_clauses(sources, selected_role):

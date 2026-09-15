@@ -46,6 +46,7 @@ class MAGETabInput:
     sdrfs: tuple[TextResource, ...]
     source: str
     source_kind: str
+    file_catalogue: tuple[dict, ...] = ()
 
 
 class AEWebFetcher:
@@ -148,7 +149,11 @@ class AEWebFetcher:
 
         idf = self._fetch_api_file(base_url, idf_rows[0])
         sdrfs = tuple(self._fetch_api_file(base_url, row) for row in sdrf_rows)
-        return MAGETabInput(idf, sdrfs, accession, "accession")
+        catalogue = tuple({
+            **row, 'path': path,
+            'uri': f"{base_url.rstrip('/')}/Files/{quote(path, safe='/')}",
+        } for row in rows if (path := str(row.get('path') or row.get('Name') or '').lstrip('/')))
+        return MAGETabInput(idf, sdrfs, accession, "accession", catalogue)
 
     def _biostudies_file_rows(self, files_url: str) -> list[dict]:
         rows: list[dict] = []

@@ -446,7 +446,8 @@ def project_results(records, series, samples, protocols, paths):
                 uri = f.get('filename', '')
                 if urlsplit(uri).scheme:
                     files.append({'uri': uri, 'format': f.get('filetype', 'analysis'),
-                        'checksum_method': f.get('checksum_method'), 'checksum': f.get('checksum')})
+                        'checksum_method': f.get('checksum_method'), 'checksum': f.get('checksum'),
+                        'role': f.get('role'), 'bytes': f.get('bytes')})
         for row in rows:
             sample_refs.extend(v for v in (row.get('sample_accession') or '').split(';') if v)
             run_refs.extend(v for v in (row.get('run_accession') or '').split(';') if v)
@@ -472,7 +473,9 @@ def project_results(records, series, samples, protocols, paths):
         for f in files:
             if not f.get('uri'):
                 continue
+            f['analysis_accession' if acc.startswith(('ERZ','SRZ','DRZ')) else 'assembly_accession'] = acc
             link = {'value': f['uri'], 'type': f.get('format') or 'analysis', **{k:f[k] for k in ('role','bytes','aspera','galaxy','checksum_method') if f.get(k)}}
+            link.update({k:f[k] for k in ('analysis_accession','assembly_accession') if f.get(k)})
             if f.get('checksum') and (f.get('checksum_method') or '').upper() != 'MD5': link['file_checksum'] = f['checksum']
             checksum = f.get('md5') or (f.get('checksum') if (f.get('checksum_method') or '').upper() == 'MD5' else None)
             if checksum:
@@ -486,7 +489,7 @@ def project_results(records, series, samples, protocols, paths):
 
 def result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=True):
     """A sample result without run evidence is a source-to-file branch."""
-    link = {'value': file['uri'], 'type': file.get('format') or 'analysis', **{k:file[k] for k in ('role','bytes','aspera','galaxy','checksum_method','assembly_accession') if file.get(k)}}
+    link = {'value': file['uri'], 'type': file.get('format') or 'analysis', **{k:file[k] for k in ('role','bytes','aspera','galaxy','checksum_method','assembly_accession','analysis_accession') if file.get(k)}}
     if file.get('checksum'):
         link['checksum' if (file.get('checksum_method') or '').upper() == 'MD5' else 'file_checksum'] = file['checksum']
     if file.get('md5'): link['checksum'] = file['md5']
@@ -496,15 +499,21 @@ def result_file(target, file, paths, run_refs=(), protocol=None, *, add_link=Tru
     if 'channel' not in target:
         return
     bases = [p for p in paths if any(s.get('sample_ref') == target['iid'] for s in p['steps'])
+             and not any(s.get('kind', '').startswith('derived_') for s in p['steps'])
              and (not run_refs or any(s.get('kind') == 'scan' and s.get('name') in run_refs for s in p['steps']))]
     if not bases:
         return
     if run_refs:
-        branches = {next((s['name'] for s in p['steps'] if s.get('kind') == 'scan'), ''): p for p in bases}.values()
+        branches = []
+        for base in bases:
+            end = next((i for i,s in enumerate(base['steps']) if s.get('kind') == 'array_data_file'), len(base['steps']))
+            prefix = base['steps'][:end]
+            if prefix not in branches:
+                branches.append(prefix)
     else:
-        branches = [bases[0]]
+        branches = [[s for s in bases[0]['steps'] if s['kind'] == 'source']]
     for base in branches:
-        steps = deepcopy([s for s in base['steps'] if (s.get('kind') not in ('array_data_file','derived_array_data_file') if run_refs else s.get('kind') == 'source')])
+        steps = deepcopy(base)
         if protocol: steps.append({'kind':'protocol_application', 'protocol_ref':protocol['name']})
         steps.append({'kind':'derived_array_data_file', 'name':unquote(PurePosixPath(urlsplit(file['uri']).path).name), 'link':deepcopy(link),
                       'comments':[{'name':k.upper(),'value':str(file[k])} for k in ('format','bytes','role','checksum_method','checksum','aspera','galaxy') if file.get(k)]})

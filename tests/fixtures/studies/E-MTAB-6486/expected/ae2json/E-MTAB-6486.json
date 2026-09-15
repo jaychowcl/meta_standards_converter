@@ -735,14 +735,6 @@
                 {
                   "name": "compound",
                   "value": "none"
-                },
-                {
-                  "name": "dose",
-                  "value": "  ",
-                  "unit": {
-                    "value": "        "
-                  },
-                  "unit_type": "dose unit"
                 }
               ],
               "comments": [
@@ -903,14 +895,6 @@
                 {
                   "name": "compound",
                   "value": "none"
-                },
-                {
-                  "name": "dose",
-                  "value": "  ",
-                  "unit": {
-                    "value": "        "
-                  },
-                  "unit_type": "dose unit"
                 }
               ],
               "comments": [
@@ -1071,14 +1055,6 @@
                 {
                   "name": "compound",
                   "value": "none"
-                },
-                {
-                  "name": "dose",
-                  "value": "  ",
-                  "unit": {
-                    "value": "        "
-                  },
-                  "unit_type": "dose unit"
                 }
               ],
               "comments": [
@@ -1239,14 +1215,6 @@
                 {
                   "name": "compound",
                   "value": "none"
-                },
-                {
-                  "name": "dose",
-                  "value": "  ",
-                  "unit": {
-                    "value": "        "
-                  },
-                  "unit_type": "dose unit"
                 }
               ],
               "comments": [
@@ -1407,14 +1375,6 @@
                 {
                   "name": "compound",
                   "value": "none"
-                },
-                {
-                  "name": "dose",
-                  "value": "  ",
-                  "unit": {
-                    "value": "        "
-                  },
-                  "unit_type": "dose unit"
                 }
               ],
               "comments": [
@@ -1575,14 +1535,6 @@
                 {
                   "name": "compound",
                   "value": "none"
-                },
-                {
-                  "name": "dose",
-                  "value": "  ",
-                  "unit": {
-                    "value": "        "
-                  },
-                  "unit_type": "dose unit"
                 }
               ],
               "comments": [

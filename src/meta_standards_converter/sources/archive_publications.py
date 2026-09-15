@@ -110,6 +110,28 @@ def study_accessions(records):
     return values - {None}
 
 
+def resolve_identifier(kind, value, http):
+    """Resolve one explicit DOI/PMCID and verify the returned identity."""
+    if kind == 'pmcid':
+        payload = http.get('https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/',
+                           {'ids':value,'idtype':'pmcid','format':'json'}, 'json')
+        matches = [r for r in payload.get('records',[]) if r.get('requested-id')==value
+                   and r.get('pmcid')==value and citation_identifier('pubmed',r.get('pmid'))]
+        if len(matches)!=1: raise ValueError('missing or mismatched PMCID mapping')
+        return str(matches[0]['pmid'])
+    payload = http.get(EUTILS+'esearch.fcgi', {'db':'pubmed','term':'"'+value+'"[AID]', 'retmode':'json','retmax':100},'json')
+    search = payload['esearchresult']; ids = search.get('idlist',[])
+    if int(search.get('count',len(ids))) > len(ids): raise ValueError('incomplete DOI lookup')
+    if not ids: return None
+    root = http.get(EUTILS+'efetch.fcgi', {'db':'pubmed','id':','.join(ids),'retmode':'xml'})
+    matches = {a.findtext('MedlineCitation/PMID') for a in root.findall('PubmedArticle')
+               if a.findtext('MedlineCitation/PMID') in ids and any(
+                   n.get('IdType')=='doi' and str(n.text).casefold()==value.casefold()
+                   for n in a.findall('PubmedData/ArticleIdList/ArticleId'))}
+    if len(matches)!=1: raise ValueError('ambiguous or mismatched DOI lookup')
+    return matches.pop()
+
+
 def resolve_identifiers(records, http, provider):
     """Resolve supplied PMCIDs/DOIs, verifying exact identifiers before acceptance."""
     cache = {}
@@ -118,27 +140,8 @@ def resolve_identifiers(records, http, provider):
         kind = 'pmcid' if ref.get('pmcid') else 'doi' if ref.get('doi') else None
         if not kind: continue
         value = ref[kind]
-        def resolve():
-            if kind == 'pmcid':
-                payload = http.get('https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/',
-                                   {'ids':value,'idtype':'pmcid','format':'json'}, 'json')
-                matches = [r for r in payload.get('records',[]) if r.get('requested-id')==value
-                           and r.get('pmcid')==value and citation_identifier('pubmed',r.get('pmid'))]
-                if len(matches)!=1: raise ValueError('missing or mismatched PMCID mapping')
-                return str(matches[0]['pmid'])
-            payload = http.get(EUTILS+'esearch.fcgi', {'db':'pubmed','term':'"'+value+'"[AID]', 'retmode':'json','retmax':100},'json')
-            search = payload['esearchresult']; ids = search.get('idlist',[])
-            if int(search.get('count',len(ids))) > len(ids): raise ValueError('incomplete DOI lookup')
-            if not ids: return None
-            root = http.get(EUTILS+'efetch.fcgi', {'db':'pubmed','id':','.join(ids),'retmode':'xml'})
-            matches = {a.findtext('MedlineCitation/PMID') for a in root.findall('PubmedArticle')
-                       if a.findtext('MedlineCitation/PMID') in ids and any(
-                           n.get('IdType')=='doi' and str(n.text).casefold()==value.casefold()
-                           for n in a.findall('PubmedData/ArticleIdList/ArticleId'))}
-            if len(matches)!=1: raise ValueError('ambiguous or mismatched DOI lookup')
-            return matches.pop()
         key = (kind,value)
-        if key not in cache: cache[key] = attempt(records, f'{kind} {value}', resolve)
+        if key not in cache: cache[key] = attempt(records, f'{kind} {value}', lambda: resolve_identifier(kind, value, http))
         if cache[key]:
             metadata = {k:v for k,v in ref.items() if k != 'accession'}
             metadata['pubmed_id'] = cache[key]

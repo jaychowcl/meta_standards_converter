@@ -231,10 +231,16 @@ class MINiMLV1Migrator:
                 if values:
                     series[new] = values
         paths = []
+        unbound_annotations = []
         for item in model.get("assay_paths", []) or []:
             if not isinstance(item, Mapping):
                 continue
-            steps = cls._assay_steps(item.get("steps"))
+            unbound = []
+            steps = cls._assay_steps(item.get("steps"), unbound=unbound)
+            unbound_annotations.extend({
+                **deepcopy(annotation),
+                **{key: deepcopy(item[key]) for key in ('sdrf', 'row_index', 'sample_ref') if key in item},
+            } for annotation in unbound)
             if item.get("sample_ref"):
                 for step in steps:
                     if step.get("kind") in {"source", "sample", "assay", "scan"}:
@@ -246,10 +252,14 @@ class MINiMLV1Migrator:
                 })
         if paths:
             series["assay_paths"] = paths
+        if unbound_annotations:
+            package.setdefault('extensions', {}).setdefault('magetab', {})['unbound_annotations'] = unbound_annotations
 
     @classmethod
-    def _assay_steps(cls, values: Any) -> list[dict[str, Any]]:
+    def _assay_steps(cls, values: Any, *, unbound=None) -> list[dict[str, Any]]:
+        from .cells import has_cell_value
         result: list[dict[str, Any]] = []
+        active_node = None
         current_application: dict[str, Any] | None = None
         last_named: dict[str, Any] | None = None
         last_ontology: dict[str, Any] | None = None
@@ -266,6 +276,7 @@ class MINiMLV1Migrator:
                 continue
             kind = step.get("kind")
             if kind in {"protocol", "protocol_ref"}:
+                active_node = None
                 reference = str(step.get("value") or step.get("protocol_ref") or "").strip()
                 if not reference:
                     current_application = None
@@ -280,6 +291,30 @@ class MINiMLV1Migrator:
                 last_named = None
                 last_ontology = None
                 continue
+            if kind in {'node', 'file'}:
+                active_node = current_application = last_named = last_ontology = None
+                label = str(step.get('name') or step.get('header') or '').strip().casefold()
+                node_kind = header_kinds.get(label)
+                if node_kind and has_cell_value(step.get('value')):
+                    active_node = {'kind': node_kind, 'name': str(step['value'])}
+                    if node_kind == 'sample':
+                        active_node['sample_ref'] = str(step['value'])
+                    if step.get('link'):
+                        active_node['link'] = deepcopy(step['link'])
+                    result.append(active_node)
+                continue
+            if not has_cell_value(step.get('value')) and kind != 'harmonized':
+                if kind == 'attribute':
+                    last_named = last_ontology = None
+                if unbound is not None and any(has_cell_value(step.get(key)) for key in (
+                    'unit', 'term_source_ref', 'term_accession_number', 'unit_term_source_ref', 'unit_term_accession_number',
+                )):
+                    unbound.append(deepcopy(dict(step)))
+                continue
+            if active_node is None and current_application is None:
+                if unbound is not None:
+                    unbound.append(deepcopy(dict(step)))
+                continue
             if kind == "harmonized":
                 from .harmonization import HarmonizedValue, named_harmonized_rows
                 item = dict(step["harmonized"])
@@ -291,16 +326,21 @@ class MINiMLV1Migrator:
                     last_named.update(HarmonizedValue(**item).to_mapping())
                 elif prefix == "comment" and last_ontology is not None:
                     last_ontology.update(HarmonizedValue(**item).to_mapping())
-                elif result and result[-1].get("kind") != "protocol_application":
-                    result[-1].setdefault("characteristics", []).extend(named_harmonized_rows([HarmonizedValue(**item)]))
+                elif active_node is not None:
+                    active_node.setdefault("characteristics", []).extend(named_harmonized_rows([HarmonizedValue(**item)]))
                 continue
             if kind == "attribute":
                 attribute = cls._legacy_attribute(step)
                 if step.get("attribute_type") == "parameter value" and current_application is not None:
                     current_application.setdefault("parameter_values", []).append(attribute)
-                elif result and result[-1].get("kind") != "protocol_application":
+                elif active_node is not None and step.get('attribute_type') != 'parameter value':
                     destination = "factor_values" if step.get("attribute_type") == "factor value" else "characteristics"
-                    result[-1].setdefault(destination, []).append(attribute)
+                    active_node.setdefault(destination, []).append(attribute)
+                else:
+                    if unbound is not None:
+                        unbound.append(deepcopy(dict(step)))
+                    last_named = last_ontology = None
+                    continue
                 last_named = attribute
                 last_ontology = attribute
                 continue
@@ -309,10 +349,10 @@ class MINiMLV1Migrator:
                     "name": str(step.get("name") or step.get("header") or "comment"),
                     "value": str(step.get("value", "")),
                 }
-                if comment['name'].casefold() == 'file uri' and result[-1].get('kind', '').endswith('_file'):
-                    result[-1]['link'] = {'value': comment['value']}
+                if comment['name'].casefold() == 'file uri' and active_node is not None and active_node.get('kind', '').endswith('_file'):
+                    active_node['link'] = {'value': comment['value']}
                     continue
-                target = result[-1] if comment["name"] == "msc_channel" else last_named or current_application or result[-1]
+                target = active_node if comment["name"] == "msc_channel" and active_node is not None else last_named or current_application or active_node
                 target.setdefault("comments", []).append(comment)
                 continue
             if kind == "field" and result:
@@ -325,20 +365,9 @@ class MINiMLV1Migrator:
                     last_ontology["term_source_ref"] = str(step.get("value", ""))
                 elif header == "term accession number" and last_ontology is not None:
                     last_ontology["term_accession_number"] = str(step.get("value", ""))
-                elif result[-1].get("kind") != "protocol_application":
-                    last_ontology = cls._attach_node_field(result[-1], step)
+                elif active_node is not None:
+                    last_ontology = cls._attach_node_field(active_node, step)
                 continue
-            if kind in {"node", "file"}:
-                label = str(step.get("name") or step.get("header") or "").strip().casefold()
-                node_kind = header_kinds.get(label)
-                if node_kind and step.get("value") not in (None, ""):
-                    node = {"kind": node_kind, "name": str(step["value"])}
-                    if node_kind == "sample":
-                        node["sample_ref"] = str(step["value"])
-                    result.append(node)
-                    current_application = None
-                    last_named = None
-                    last_ontology = None
         return result
 
     @classmethod

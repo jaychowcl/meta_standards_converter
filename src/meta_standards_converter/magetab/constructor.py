@@ -41,17 +41,23 @@ from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
 
+from .preparation import preparation_operation
+
+
 class AEConstructor:
     def __init__(self, idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None):
         self.evidence = evidence_resolver or MAGETabEvidenceResolver(pubmed_client, insdc_client)
         self.idf_constructor = idf_constructor or IDFConstructor()
         self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
 
+    @preparation_operation
     def miniml2magetab(self, data: MINiMLPackage, platform_handler: str | None = None) -> list:
         """
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
         data = MINiMLCodec().encode(MINiMLCodec().decode(data).package)
+        from ..miniml.publication_identifiers import clean_publication_identifiers
+        clean_publication_identifiers(data)
         from meta_standards_converter.miniml.file_references import clean_native_file_placeholders
         clean_native_file_placeholders(data)
         from meta_standards_converter.miniml.archive_dates import normalize_archive_dates

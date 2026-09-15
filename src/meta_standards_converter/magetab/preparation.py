@@ -69,26 +69,73 @@ def control_role(sample, channel=None, run=None):
     return None
 
 
+from contextvars import ContextVar
+from functools import wraps
+
+
+_preparation_indexes = ContextVar('msc_preparation_indexes', default=None)
+
+
+def preparation_operation(function):
+    """Share immutable preparation indexes only for one export operation."""
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        token = _preparation_indexes.set({})
+        try:
+            return function(*args, **kwargs)
+        finally:
+            _preparation_indexes.reset(token)
+    return wrapped
+
+
+def _bound_protocol_index(series):
+    definitions = {}
+    for protocol in series.get('protocols', []):
+        kind = protocol.get('type', '')
+        kind = kind.get('value', '') if isinstance(kind, dict) else kind
+        if protocol.get('description') and re.search(r'library|extract', str(kind), re.I):
+            definitions.setdefault(protocol.get('name'), []).append(
+                (f"series.protocols[{protocol['name']}].description", protocol['description']))
+    index = {}
+    for path in series.get('assay_paths', []):
+        steps = path['steps']
+        samples = {s['sample_ref'] for s in steps if s.get('sample_ref')}
+        if len(samples) != 1:
+            continue
+        sample = next(iter(samples))
+        runs = {s['name'] for s in steps if s.get('kind') == 'scan'}
+        experiments = {s['name'] for s in steps if s.get('kind') == 'assay'}
+        refs = {s['protocol_ref'] for s in steps if s.get('protocol_ref')}
+        values = [v for ref, texts in definitions.items() if ref in refs for v in texts]
+        for run in runs:
+            for experiment in [None, *experiments]:
+                bucket = index.setdefault((sample, run, experiment), [])
+                bucket.extend(v for v in values if v not in bucket)
+    return index
+
+
 def bound_protocols(sample, run, series):
     """Read preparation definitions through explicit sample/run applications."""
     if not run or not isinstance(series, dict):
         return ()
-    refs = set()
-    for path in series.get('assay_paths', []):
-        steps = path['steps']
-        if ({s['sample_ref'] for s in steps if s.get('sample_ref')} != {sample.get('iid')}
-                or not any(s.get('kind') == 'scan' and s.get('name') == run.get('run') for s in steps)
-                or (run.get('experiment') and not any(s.get('kind') == 'assay' and s.get('name') == run['experiment'] for s in steps))):
-            continue
-        refs.update(s['protocol_ref'] for s in steps if s.get('protocol_ref'))
-    values = []
-    for protocol in series.get('protocols', []):
-        kind = protocol.get('type', '')
-        kind = kind.get('value', '') if isinstance(kind, dict) else kind
-        if (protocol.get('name') in refs and protocol.get('description')
-                and re.search(r'library|extract', str(kind), re.I)):
-            values.append((f"series.protocols[{protocol['name']}].description", protocol['description']))
-    return tuple(values)
+    cache = _preparation_indexes.get()
+    if cache is None:
+        index = _bound_protocol_index(series)
+    else:
+        key = id(series)
+        if key not in cache:
+            # Retain the owner alongside the index to prevent Python id reuse.
+            cache[key] = (series, _bound_protocol_index(series))
+        index = cache[key][1]
+    return tuple(index.get((sample.get('iid'), run.get('run'), run.get('experiment') or None), ()))
+
+
+def control_preparation(text, role):
+    """An explicitly described no-cell alternative scopes a shared paragraph."""
+    if role != 'empty control':
+        return text
+    matches = [c for c in clauses(text) if re.search(r'\b(?:no[- ]cell|empty)\s+control\b', c, re.I)]
+    return '. '.join(matches) if matches else text
 
 
 def incompatible_preparation(sample, channel=None, run=None, series=None):

@@ -437,7 +437,9 @@ class PubMedPublication:
     def from_mapping(cls, value: Any) -> "PubMedPublication":
         data = _mapping(value, "pubmed_publication")
         known = {"pubmed_id", "doi", "author_list", "title", "status", "status_term_source_ref", "status_term_accession_number"}
-        return cls(str(data.get("pubmed_id", "")), data.get("doi"), data.get("author_list"), data.get("title"), data.get("status"), data.get("status_term_source_ref"), data.get("status_term_accession_number"), _extras(data, known))
+        raw = data.get('pubmed_id')
+        pmid = '' if raw is None else str(raw).strip()
+        return cls(pmid, data.get("doi"), data.get("author_list"), data.get("title"), data.get("status"), data.get("status_term_source_ref"), data.get("status_term_accession_number"), _extras(data, known))
 
     def to_mapping(self) -> dict[str, Any]:
         result: dict[str, Any] = {

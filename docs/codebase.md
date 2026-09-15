@@ -4773,6 +4773,34 @@ Residual projection and entity helpers:
 <a id="native-archive-validation"></a>
 ### Native import validation
 
+Audited publication, file and optional-node repairs are covered by
+`test_archive_identifier_cleanup.py`, `test_archive_result_files.py` and
+`test_magetab_blank_nodes.py`. Null PMIDs remain empty. Lookup and export validate
+legacy identifiers; useful scoped citations survive invalid relation targets.
+Post-enrichment DOI/PMCID resolution uses the exact identifier service and an
+operation cache. Conflicting resolved identifiers retain the original citation
+and issue a warning instead of selecting an arbitrary article. Local export
+cleanup performs no identifier lookup.
+
+File normalization reads core `link.checksum` as MD5 and non-MD5
+`file_checksum`/`checksum_method` extras. Export keeps checksums attached to their
+file URI and filename. A CRAM/CRAI pair becomes an index companion only with one
+unique pair, the same explicit analysis/sample/run and the same workflow prefix.
+Residual comparison expands that companion as a parallel branch. Independent
+analysis products begin from their supported acquisition prefix, not a previously
+appended result's processing chain.
+
+`MAGETabInput.file_catalogue` defaults to an empty tuple. BioStudies retrieval
+supplies its registered paths and download locations; the network-free parser
+resolves exact paths or unique filenames within that catalogue. Unknown or
+ambiguous filenames remain unresolved. Canonical migration treats whitespace-only
+optional identities/references as absent and clears their attachment context.
+Populated unbound cells retain row/column positions and ontology/unit companions
+in `extensions.magetab.unbound_annotations`, with parser warnings. They are not
+assigned to preceding materials. Preparation lookups share an operation-local
+sample/run/experiment index during MAGE-TAB construction; the cache is discarded
+after export and never written into input metadata.
+
 Deterministic tests cover provider-specific expansion, History paging, count/ID
 reconciliation, partial retrieval, native identity, pooled/multiple/heterogeneous
 libraries, repeated attributes and file alternatives, positional file gaps,

@@ -490,6 +490,8 @@ def finalize(data, records=None):
     from .archive_administration import normalize_administration
     normalize_administration(data)
     records=deepcopy(records if records is not None else data.get('extensions',{}).get('insdc',{}).get('records',[]))
+    from .publication_identifiers import clean_publication_identifiers
+    records.extend(r for r in clean_publication_identifiers(data) if r not in records)
     from .archive_results import normalize_result_bundles, comparison_view
     records.extend(r for r in normalize_result_bundles(data) if r not in records)
     from .archive_entities import local_platforms, coalesce_organizations, repository_databases
