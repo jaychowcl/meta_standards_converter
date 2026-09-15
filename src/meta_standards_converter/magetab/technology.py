@@ -134,7 +134,7 @@ def _signals(text):
 def resolve_technology(sample: dict, channel: dict | None = None,
                        run: dict | None = None, *, data: dict | None = None) -> TechnologyDecision:
     role = control_role(sample, channel, run)
-    incompatible = incompatible_preparation(sample, channel, run)
+    incompatible = incompatible_preparation(sample, channel, run, (data or {}).get('series'))
     if incompatible:
         evidence = tuple(TechnologyEvidence(p, t, ('incompatible_rna_preparation',)) for p, t in incompatible)
         identity = str((run or {}).get('library_name') or sample.get('title') or '')

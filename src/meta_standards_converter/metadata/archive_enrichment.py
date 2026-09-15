@@ -162,6 +162,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
              for i, n in enumerate(native_samples)}
     reverse = {j: [i for i, js in joins.items() if j in js] for j in range(len(extra_samples))}
     matched = {}
+    from ..miniml.archive_libraries import FIELDS as library_fields
     original_channels = {s['iid']: deepcopy(s.get('channel', [])) for s in native_samples}
     workflow_fields = ('scan_protocol', 'hybridization_protocol', 'data_processing')
     original_protocols = {s['iid']: {k:deepcopy(s[k]) for k in workflow_fields if k in s} for s in native_samples}
@@ -173,12 +174,15 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
         j = candidates[0]
         target, source = native_samples[i], extra_samples[j]
         matched[source['iid']] = target['iid']
-        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'platform_ref'})
+        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'platform_ref'} | library_fields)
         runs = {r['run']: r for r in target.get('sra_run', [])}
         for run in source.get('sra_run', []):
             if run['run'] in runs:
                 current = runs[run['run']]
-                _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'})
+                if run.get('experiment') and current.get('experiment') and run['experiment'] != current['experiment']:
+                    issues.append(f"{run['run']}: conflicting enrichment experiment identity")
+                    continue
+                _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'} | (library_fields if prefer else set()))
                 for key in ('files', 'fastq_files'):
                     current.setdefault(key, []).extend(deepcopy(run.get(key, [])))
             elif not prefer:
@@ -211,6 +215,18 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     sample_map = {s['iid']: s for s in native_samples}
     paths = data['series'].setdefault('assay_paths', [])
     explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues)
+    from ..miniml.archive_libraries import synchronize_library_facts, resolve_library_facts, apply_library_facts
+    if prefer and not extra['series'].get('assay_paths') and extra.get('source', {}).get('format') in {'GEO', 'GEO MINiML'}:
+        for source in extra_samples:
+            target = sample_map.get(matched.get(source['iid']))
+            if target is None:
+                continue
+            for run in target.get('sra_run', []):
+                incoming = [r for r in source.get('sra_run', []) if r.get('run') == run['run']
+                            and (not r.get('experiment') or r.get('experiment') == run.get('experiment'))]
+                if incoming:
+                    apply_library_facts(run, [], resolve_library_facts(run, incoming, issues, run['run']))
+    synchronize_library_facts(data, issues)
     if prefer and extra.get('source', {}).get('format') == 'MAGE-TAB':
         uncovered = [s['iid'] for s in native_samples if s['iid'] in set(matched.values()) - explicit]
         # AE sample scalars are projections of its workflows. Rejected paths

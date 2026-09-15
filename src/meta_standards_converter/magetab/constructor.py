@@ -65,6 +65,8 @@ class AEConstructor:
         if declarations:
             data.setdefault('extensions', {}).setdefault('insdc', {'version': '2.0', 'records': []})['records'].extend(declarations)
         from ..miniml.archive_paths import complete_native_paths
+        from ..miniml.archive_libraries import synchronize_library_facts
+        synchronize_library_facts(data)
         complete_native_paths(data)
         from meta_standards_converter.miniml.archive_results import normalize_result_bundles
         normalize_result_bundles(data)

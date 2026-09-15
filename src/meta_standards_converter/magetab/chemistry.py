@@ -146,7 +146,7 @@ def resolve_chemistry(sample: dict, channel: dict | None = None, run: dict | Non
     universal library-preparation statement. An unlabelled read_lengths list is
     deliberately ignored. Supplied imported SDRF attributes remain source data.
     """
-    incompatible = incompatible_preparation(sample, channel, run)
+    incompatible = incompatible_preparation(sample, channel, run, series)
     if incompatible:
         return ChemistryResult(None, None, (), None, None, (),
             tuple(ChemistryEvidence('incompatible_preparation', 'RNA', p, t) for p, t in incompatible),

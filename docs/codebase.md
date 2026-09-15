@@ -4070,6 +4070,16 @@ are covered by the maintained v3 fixtures and `test_miniml_v3_only.py` tests.
 <a id="native-archive-imports"></a>
 ## Native archive metadata imports
 
+Library facts are selected only after an explicitly matched enrichment workflow
+is accepted. `miniml.archive_libraries.resolve_library_facts` retains one coherent
+layout/paired-geometry group, reports same-source conflicts, and preserves native
+measurements outside the library-field whitelist. `apply_library_facts` and
+`synchronize_library_facts` keep run fields, authored material comments and generated
+assay comments consistent. GEO run-only evidence requires an exact compatible run
+join. Saved native exports may recover higher-priority material facts only from
+explicitly bound workflows bearing a verified linked accession. Sample library
+scalars are present only when all relevant runs have the same informative value.
+
 `SRASource` and `ENASource` independently resolve INSDC accessions and retrieve
 study-scoped records. `SRAParser` and `ENAParser` interpret supplied records without
 network access, producing MSC MINiML 3.0 packages. Entrez owns SRA discovery,

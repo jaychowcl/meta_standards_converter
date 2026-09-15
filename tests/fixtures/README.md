@@ -53,3 +53,12 @@ Seven additional [chemistry fixtures](chemistry/README.md) cover real source exc
 ## Test boundaries
 
 HTTP replay replaces only `RateLimitedRequester.get`, validates requested resources and fails on unexpected requests. Real archive extraction, parsers, enrichment, converters and writers execute. Raw processing uses an injected bounded command runner that emits a valid tiny count matrix; it verifies MSC dispatch and downstream reading, not nf-core's biological computation. Existing focused tests retain overwrite/refusal, failure recovery, memory limits, partial results, protocol variants and model/patch contracts.
+# Audited archive preparation excerpts
+
+`audited_preparations.json` contains reduced native ENA converter records from
+the frozen 82d2ef8 benchmark, retrieved on 2026-09-15. Each case carries its ENA
+study URL. Original sample title/description, selected run, and explicitly bound
+protocol text are retained for SRP106481 (bulk and combinatorial single-cell),
+ERP022096 (plate deposition with neighbouring controls), and SRP045775 (genomic
+ChIP with conflicting RNA preparation). Files and unrelated entities are omitted.
+Expected classifications are reviewed separately from source literals.

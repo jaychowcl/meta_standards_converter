@@ -323,6 +323,21 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
                 templates[identity].append(prefix)
             incoming.append((identity, prepared))
     if prefer:
+        from ..miniml.archive_libraries import path_facts, resolve_library_facts, apply_library_facts
+        selections = {}
+        for (target, key), choices in templates.items():
+            if len(choices) != 1:
+                continue
+            for run in samples[target].get('sra_run', []):
+                if not compatible(set(key), {run.get('run'), run.get('experiment')}):
+                    continue
+                supplied = path_facts(choices[0])
+                for source in extra.get('sample', []):
+                    if matched.get(source['iid']) == target:
+                        supplied.extend(r for r in source.get('sra_run', []) if r.get('run') == run['run']
+                                        and (not r.get('experiment') or r['experiment'] == run.get('experiment')))
+                selections[(target, key)] = resolve_library_facts(run, supplied, issues, run['run'])
+                apply_library_facts(run, [], selections[(target, key)])
         for path in paths:
             target = next((s.get('sample_ref') for s in path['steps'] if s.get('sample_ref')), None)
             choices = templates.get((target, tuple(sorted(path_ids(path)))), [])
@@ -334,6 +349,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
             if not choices:
                 continue
             prefix = _bind_native(deepcopy(choices[0]), target, path['steps'])
+            facts = selections.get((target, tuple(sorted(path_ids(path)))))
+            if facts is not None:
+                apply_library_facts({}, prefix, facts)
             # An experiment-level workflow does not delete the native run.
             for kind in ('assay', 'scan'):
                 if not any(s['kind'] == kind for s in prefix):
@@ -353,6 +371,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues):
                           and tuple(sorted(path_ids(p))) == key]
             # All candidates have the same verified sample/run identity.
             steps = _bind_native(deepcopy(prepared['steps']), target, candidates[0]['steps'])
+            facts = selections.get((target, key))
+            if facts is not None:
+                apply_library_facts({}, steps, facts)
             paths.append({**deepcopy(prepared), 'steps': steps})
         for source in extra.get('sample', []):
             target = matched.get(source['iid'])

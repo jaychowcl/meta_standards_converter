@@ -1,4 +1,6 @@
 from copy import deepcopy
+import json
+from pathlib import Path
 
 import pytest
 
@@ -61,3 +63,19 @@ def test_explicit_single_cell_chip_is_not_banned_by_genomic_library_source():
     s = sample('single-cell ChIP-seq', 'Individual cells were sorted into wells for ChIP library preparation.')
     run = {'library_strategy': 'ChIP-Seq', 'library_source': 'GENOMIC'}
     assert resolve_technology(s, run=run).handler == 'plate_single_cell_sequencing'
+
+
+def test_structured_bulk_control_identity_overrides_shared_preparation():
+    s = sample('control 1', 'Drop-seq libraries were prepared.')
+    s['channel'][0]['characteristics'] = [{'name': 'control type', 'value': '200 cell bulk control'}]
+    decision = resolve_technology(s)
+    assert decision.handler == 'bulk_sequencing' and decision.control_role == 'bulk control'
+
+
+@pytest.mark.parametrize('case', json.loads((Path(__file__).parents[1]/'fixtures/audited_preparations.json').read_text()))
+def test_reduced_actual_archive_preparation_scopes(case):
+    data = case['data']; s = data['sample'][0]
+    before = deepcopy(data)
+    result = resolve_technology(s, run=s['sra_run'][0], data=data)
+    assert result.handler == case['expected']
+    assert data == before

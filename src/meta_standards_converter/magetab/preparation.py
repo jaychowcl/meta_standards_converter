@@ -18,7 +18,7 @@ TENX = re.compile(r'(?<![a-z0-9])(?:10[x×](?:\s+genomics)?|chromium)(?![a-z0-9]
 SINGLE = re.compile(r"(?<![a-z])(?:sc|sn|sci)[- ]?(?:rna|atac|chip)(?:[-_ ]?seq)?(?![a-z])|(?<![a-z])cite[- ]seq(?![a-z0-9])|single[- ](?:cell|nucleus|nuclei)\s+(?:(?:plate|droplet)[- ](?:based\s+)?)?(?:rna|transcriptom|transcriptional\s+profiling|sequenc|atac|chip|librar|assay|auto\s+prep|[35]['′’])|single[- ]cell\s+combinatorial\s+indexing", re.I)
 PLATE = re.compile(r'\bplate[- ]based\b|\bsingle[- ]cell\s+plate\s+(?:assay|sequenc|librar)|\b(?:single[- ](?:[a-z0-9+-]+\s+){0,3}cells?|individual cells?)\b.{0,70}\b(?:sorted|deposited|dispensed)\b.{0,75}\b(?:wells?|plates?)\b', re.I)
 NON_PREP = re.compile(r'\b(?:not|without|compatible|compatibility|software|sequencer|recommended)\b', re.I)
-BULK = re.compile(r'\bbulk\s+(?:rna|dna|sequenc|librar|control)|\bnot\s+(?:a\s+)?single[- ]cell|\bwithout\s+single[- ]cell', re.I)
+BULK = re.compile(r'\bbulk\s+(?:rna|dna|sequenc|librar)|\bnot\s+(?:a\s+)?single[- ]cell|\bwithout\s+single[- ]cell', re.I)
 GENOMIC = re.compile(r'\b(?:genome|genomic|wgs|whole[- ]genome)\b', re.I)
 
 
@@ -60,6 +60,8 @@ def control_role(sample, channel=None, run=None):
                       in {'control', 'control type', 'sample type'}])
     for group in groups:
         for value in group:
+            if len(value) > 200 or re.search(r'\b(?:along with|other|including)\b', value, re.I):
+                continue
             if re.search(r'\bbulk control\b', value, re.I):
                 return 'bulk control'
             if re.search(r'\bno[- ]cell\s+control\b|\bempty\s+control\b|\bnegative\s+control\b.*(?<![a-z])empty(?![a-z])', value, re.I):
@@ -67,7 +69,29 @@ def control_role(sample, channel=None, run=None):
     return None
 
 
-def incompatible_preparation(sample, channel=None, run=None):
+def bound_protocols(sample, run, series):
+    """Read preparation definitions through explicit sample/run applications."""
+    if not run or not isinstance(series, dict):
+        return ()
+    refs = set()
+    for path in series.get('assay_paths', []):
+        steps = path['steps']
+        if ({s['sample_ref'] for s in steps if s.get('sample_ref')} != {sample.get('iid')}
+                or not any(s.get('kind') == 'scan' and s.get('name') == run.get('run') for s in steps)
+                or (run.get('experiment') and not any(s.get('kind') == 'assay' and s.get('name') == run['experiment'] for s in steps))):
+            continue
+        refs.update(s['protocol_ref'] for s in steps if s.get('protocol_ref'))
+    values = []
+    for protocol in series.get('protocols', []):
+        kind = protocol.get('type', '')
+        kind = kind.get('value', '') if isinstance(kind, dict) else kind
+        if (protocol.get('name') in refs and protocol.get('description')
+                and re.search(r'library|extract', str(kind), re.I)):
+            values.append((f"series.protocols[{protocol['name']}].description", protocol['description']))
+    return tuple(values)
+
+
+def incompatible_preparation(sample, channel=None, run=None, series=None):
     """Recognize explicit RNA preparation attached to a genomic ChIP assay.
 
     This is a narrow compatibility check, not a biological target guesser.
@@ -82,6 +106,7 @@ def incompatible_preparation(sample, channel=None, run=None):
     channels = [channel] if channel is not None else sample.get('channel', [])
     values += [(prefix+f'.channel[{i}].extract_protocol', str(c.get('extract_protocol') or ''))
                for i, c in enumerate(channels)]
+    values += list(bound_protocols(sample, run, series))
     rna = re.compile(r'single[- ]cell\s+rna|whole\s+transcriptome\s+amplif|reverse[- ]transcription\s+of\s+mrna', re.I)
     return tuple((path, value) for path, value in values
                  if any(not NON_PREP.search(c) and rna.search(c) for c in clauses(value)))
@@ -128,7 +153,7 @@ def scoped_method(sample, channel=None, run=None):
             tag = re.sub(r'[\s_-]+', '_', str(characteristic.get('name') or characteristic.get('tag', '')).strip().casefold())
             path = f'{prefix}.channel[{i}].characteristics[{j}].value'
             value = str(characteristic.get('value') or '')
-            if tag in {'assay', 'assay_type', 'library_type', 'library_name', 'technology'}:
+            if tag in {'assay', 'assay_type', 'library_type', 'library_name', 'technology', 'control', 'control_type'}:
                 levels[0].append((path, value))
             if tag in {'singlecell_type', 'chemistry', 'library_chemistry'} and value.strip().casefold() in CHEMISTRY_IDENTIFIERS:
                 levels[0].append((path, value))
@@ -139,8 +164,14 @@ def scoped_method(sample, channel=None, run=None):
     if sample.get('description'):
         levels[2].append((prefix + '.description', str(sample['description'])))
     for group in levels:
-        evidence = tuple((path, text, ('10x',) if path in structured_paths else tuple(sorted(methods(text))))
-                         for path, text in group if path in structured_paths or methods(text))
+        def identities(path, text):
+            found = methods(text)
+            if (len(text) <= 200 and not re.search(r'\b(?:along with|other|including)\b', text, re.I)
+                    and (re.match(r'^bulk\b', text, re.I) or re.search(r'\bbulk control\b', text, re.I))):
+                found.add('bulk')
+            return found
+        evidence = tuple((path, text, ('10x',) if path in structured_paths else tuple(sorted(identities(path, text))))
+                         for path, text in group if path in structured_paths or identities(path, text))
         values = {m for _, _, values in evidence for m in values}
         if values:
             if 'bulk' in values and any(single_cell_signal(text) for _, text in group):

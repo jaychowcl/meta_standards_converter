@@ -1,0 +1,3558 @@
+[
+  {
+    "study": "SRP106481",
+    "expected": "bulk_sequencing",
+    "source_url": "https://www.ebi.ac.uk/ena/browser/view/SRP106481",
+    "data": {
+      "sample": [
+        {
+          "iid": "SAMN06891879",
+          "accession": [
+            {
+              "value": "SAMN06891879",
+              "database": "BioSample"
+            },
+            {
+              "value": "SRS2166973",
+              "database": "SRA"
+            },
+            {
+              "value": "GSM2599702",
+              "database": "GEO"
+            }
+          ],
+          "status": [
+            {
+              "release_date": "2017-08-17",
+              "database": "ENA"
+            },
+            {
+              "last_update_date": "2017-08-17",
+              "database": "ENA"
+            },
+            {
+              "submission_date": "2017-05-04T15:31:07.013",
+              "release_date": "2017-08-17T00:00:00.000",
+              "last_update_date": "2017-08-17T01:16:23.657",
+              "database": "BioSample"
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "access",
+                  "value": "public"
+                }
+              ]
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "record status",
+                  "value": "live"
+                }
+              ]
+            },
+            {
+              "database": "BioSamples",
+              "comment": [
+                {
+                  "name": "status",
+                  "value": "PUBLIC"
+                }
+              ]
+            },
+            {
+              "release_date": "2017-08-17T00:00:00Z",
+              "database": "INSDC"
+            },
+            {
+              "database": "INSDC",
+              "comment": [
+                {
+                  "name": "INSDC status",
+                  "value": "live"
+                }
+              ]
+            }
+          ],
+          "title": "bulk 293T",
+          "type": "SRA",
+          "channel_count": "1",
+          "channel": [
+            {
+              "source": {
+                "value": "cell line"
+              },
+              "organism": [
+                {
+                  "value": "Homo sapiens",
+                  "taxid": "9606"
+                }
+              ],
+              "characteristics": [
+                {
+                  "name": "INSDC secondary accession",
+                  "value": "SRS2166973"
+                },
+                {
+                  "name": "NCBI submission package",
+                  "value": "Generic.1.0"
+                },
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "cell line",
+                  "value": "HEK293T"
+                },
+                {
+                  "name": "source_name",
+                  "value": "cell line"
+                },
+                {
+                  "name": "BioSampleModel",
+                  "value": "Generic"
+                },
+                {
+                  "name": "External Id",
+                  "value": "SAMN06891879"
+                },
+                {
+                  "name": "NCBI submission model",
+                  "value": "Generic"
+                },
+                {
+                  "name": "SRA accession",
+                  "value": "SRS2166973"
+                }
+              ]
+            }
+          ],
+          "platform_ref": {
+            "ref": "ena:platform:1db673c85899f5f8"
+          },
+          "library_strategy": "RNA-Seq",
+          "library_source": "TRANSCRIPTOMIC",
+          "library_selection": "cDNA",
+          "contact_ref": [
+            {
+              "ref": "ena:BioSample:SAMN06891879:organization-2:contact-0"
+            }
+          ],
+          "raw_data": [
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510665/SRR5510665_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "c4817806389edfec0c0679f559f57516"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510665/SRR5510665_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "c558bcbb2d1fde47d4ce9376b92fea2a"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510666/SRR5510666_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "76ecd5febeedd13c9990f3303d9b51eb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510666/SRR5510666_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "81cb6d24fb2bc3681030811342be1cdd"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510667/SRR5510667_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "3c4bf7dbc5f8b70b6ee8435650a887c3"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510667/SRR5510667_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "2290a695d8e9d29eb3ea471d7ff52db2"
+            }
+          ],
+          "relation": [
+            {
+              "type": "ENA-EXPERIMENT",
+              "target": "SRX2784962"
+            },
+            {
+              "type": "ENA-SUBMISSION",
+              "target": "SRA559826"
+            },
+            {
+              "type": "ENA-FASTQ-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS2166973&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+            },
+            {
+              "type": "ENA-SUBMITTED-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS2166973&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+            },
+            {
+              "type": "ENA-STUDY",
+              "target": "SRP106481"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510665"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510666"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510667"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:sample:SAMN06891875:center:a6a412a487ababdd:0"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:BioSample:SAMN06891880:organization-2"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:PROJECT:PRJNA385514:center_name"
+            }
+          ],
+          "sra_accession": [
+            "SRX2784962"
+          ],
+          "ena_accession": [
+            "SRP106481"
+          ],
+          "sra_run": [
+            {
+              "instrument_platform": "ILLUMINA",
+              "indexed_statistics": {
+                "read_count": "3559430",
+                "base_count": "526795640"
+              },
+              "platform_ref": {
+                "ref": "ena:platform:1db673c85899f5f8"
+              },
+              "run": "SRR5510665",
+              "study": "SRP106481",
+              "experiment": "SRX2784962",
+              "sample": "SRS2166973",
+              "biosample": "SAMN06891879",
+              "library_layout": "PAIRED",
+              "library_selection": "cDNA",
+              "library_source": "TRANSCRIPTOMIC",
+              "library_strategy": "RNA-Seq",
+              "scan_name": "GSM2599702_r1",
+              "instrument_model": "NextSeq 500"
+            }
+          ]
+        }
+      ],
+      "series": {
+        "iid": "PRJNA385514",
+        "title": "Comprehensive single cell transcriptional profiling of a multicellular organism by combinatorial indexing",
+        "summary": "We developed a combinatorial indexing strategy to profile the transcriptomes of large numbers of single cells or nuclei (Single cell Combinatorial Indexing RNA-seq or sci-RNA-seq). We applied sci-RNA-seq to profile nearly 50,000 cells from C. elegans at the L2 stage, effectively ~56-fold “shotgun cellular coverage” of its somatic cell composition. Overall design: human and mouse cell lines, C.elegans.",
+        "protocols": [
+          {
+            "name": "SRX2784962:library",
+            "type": {
+              "value": "library construction protocol"
+            },
+            "description": "All cell lines were trypsinized, spun down at 300xg for 5 min (4°C). and washed once in 1X PBS. L2 stage worms were disscociated with SDS-DTT solution and pronase to generate single cell suspension. Detailed protocol was described in \"J. Cao et al., Comprehensive single cell transcriptional profiling of a multicellular organism by combinatorial indexing. bioRxiv, 104844 (2017).\" library construction protocol was described in \"J. Cao et al., Comprehensive single cell transcriptional profiling of a multicellular organism by combinatorial indexing. bioRxiv, 104844 (2017).\""
+          }
+        ],
+        "assay_paths": [
+          {
+            "steps": [
+              {
+                "kind": "source",
+                "name": "SAMN06891879",
+                "sample_ref": "SAMN06891879",
+                "characteristics": [
+                  {
+                    "name": "INSDC secondary accession",
+                    "value": "SRS2166973"
+                  },
+                  {
+                    "name": "NCBI submission package",
+                    "value": "Generic.1.0"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Homo sapiens"
+                  },
+                  {
+                    "name": "cell line",
+                    "value": "HEK293T"
+                  },
+                  {
+                    "name": "source_name",
+                    "value": "cell line"
+                  },
+                  {
+                    "name": "BioSampleModel",
+                    "value": "Generic"
+                  },
+                  {
+                    "name": "External Id",
+                    "value": "SAMN06891879"
+                  },
+                  {
+                    "name": "NCBI submission model",
+                    "value": "Generic"
+                  },
+                  {
+                    "name": "SRA accession",
+                    "value": "SRS2166973"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Homo sapiens",
+                    "term_source_ref": "NCBITaxon",
+                    "term_accession_number": "9606"
+                  }
+                ],
+                "description": "cell line",
+                "comments": [
+                  {
+                    "name": "BioSD_SAMPLE",
+                    "value": "SAMN06891879"
+                  },
+                  {
+                    "name": "Sample_title",
+                    "value": "bulk 293T"
+                  },
+                  {
+                    "name": "Sample_source_name",
+                    "value": "cell line"
+                  }
+                ]
+              },
+              {
+                "kind": "protocol_application",
+                "protocol_ref": "SRX2784962:library"
+              },
+              {
+                "kind": "assay",
+                "name": "SRX2784962",
+                "sample_ref": "SAMN06891879",
+                "technology_type": {
+                  "value": "sequencing assay"
+                },
+                "comments": [
+                  {
+                    "name": "LIBRARY_STRATEGY",
+                    "value": "RNA-Seq"
+                  },
+                  {
+                    "name": "LIBRARY_SOURCE",
+                    "value": "TRANSCRIPTOMIC"
+                  },
+                  {
+                    "name": "LIBRARY_SELECTION",
+                    "value": "cDNA"
+                  },
+                  {
+                    "name": "LIBRARY_LAYOUT",
+                    "value": "PAIRED"
+                  },
+                  {
+                    "name": "INSTRUMENT_MODEL",
+                    "value": "NextSeq 500"
+                  },
+                  {
+                    "name": "INSTRUMENT_PLATFORM",
+                    "value": "ILLUMINA"
+                  },
+                  {
+                    "name": "Platform_title",
+                    "value": "NextSeq 500"
+                  }
+                ]
+              },
+              {
+                "kind": "scan",
+                "name": "SRR5510665",
+                "comments": [
+                  {
+                    "name": "ENA_RUN",
+                    "value": "SRR5510665"
+                  },
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "SRX2784962"
+                  },
+                  {
+                    "name": "ENA_SAMPLE",
+                    "value": "SRS2166973"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source": {
+        "format": "ENA"
+      }
+    }
+  },
+  {
+    "study": "SRP106481",
+    "expected": "single_cell_sequencing",
+    "source_url": "https://www.ebi.ac.uk/ena/browser/view/SRP106481",
+    "data": {
+      "sample": [
+        {
+          "iid": "SAMN06891875",
+          "accession": [
+            {
+              "value": "SAMN06891875",
+              "database": "BioSample"
+            },
+            {
+              "value": "SRS2166977",
+              "database": "SRA"
+            },
+            {
+              "value": "GSM2599706",
+              "database": "GEO"
+            }
+          ],
+          "status": [
+            {
+              "release_date": "2017-08-17",
+              "database": "ENA"
+            },
+            {
+              "last_update_date": "2017-08-17",
+              "database": "ENA"
+            },
+            {
+              "submission_date": "2017-05-04T15:31:04.110",
+              "release_date": "2017-08-17T00:00:00.000",
+              "last_update_date": "2017-08-17T01:16:24.360",
+              "database": "BioSample"
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "access",
+                  "value": "public"
+                }
+              ]
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "record status",
+                  "value": "live"
+                }
+              ]
+            },
+            {
+              "database": "BioSamples",
+              "comment": [
+                {
+                  "name": "status",
+                  "value": "PUBLIC"
+                }
+              ]
+            },
+            {
+              "release_date": "2017-08-17T00:00:00Z",
+              "database": "INSDC"
+            },
+            {
+              "database": "INSDC",
+              "comment": [
+                {
+                  "name": "INSDC status",
+                  "value": "live"
+                }
+              ]
+            }
+          ],
+          "title": "c.elegans cells (L2 stage) 2",
+          "type": "SRA",
+          "channel_count": "1",
+          "channel": [
+            {
+              "source": {
+                "value": "whole c.elegans (L2 stage)"
+              },
+              "organism": [
+                {
+                  "value": "Caenorhabditis elegans",
+                  "taxid": "6239"
+                }
+              ],
+              "characteristics": [
+                {
+                  "name": "strain",
+                  "value": "A C. elegans strain (RW12139 stIs11435(unc-120::H1-Wcherry; unc-119(+)); unc-119(tm4063)) carrying an integrated Punc-120::mCherry gene in a wild type background was used"
+                },
+                {
+                  "name": "INSDC secondary accession",
+                  "value": "SRS2166977"
+                },
+                {
+                  "name": "NCBI submission package",
+                  "value": "Generic.1.0"
+                },
+                {
+                  "name": "organism",
+                  "value": "Caenorhabditis elegans"
+                },
+                {
+                  "name": "source_name",
+                  "value": "whole c.elegans (L2 stage)"
+                },
+                {
+                  "name": "developmental stage",
+                  "value": "L2"
+                },
+                {
+                  "name": "BioSampleModel",
+                  "value": "Generic"
+                },
+                {
+                  "name": "External Id",
+                  "value": "SAMN06891875"
+                },
+                {
+                  "name": "NCBI submission model",
+                  "value": "Generic"
+                },
+                {
+                  "name": "SRA accession",
+                  "value": "SRS2166977"
+                }
+              ]
+            }
+          ],
+          "platform_ref": {
+            "ref": "ena:platform:1db673c85899f5f8"
+          },
+          "library_strategy": "RNA-Seq",
+          "library_source": "TRANSCRIPTOMIC",
+          "library_selection": "cDNA",
+          "contact_ref": [
+            {
+              "ref": "ena:BioSample:SAMN06891875:organization-2:contact-0"
+            }
+          ],
+          "raw_data": [
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510848/SRR5510848_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "25faf17a186b16ee0d7776a9cb8717b5"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510848/SRR5510848_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "d938c5ab287f634f0652bdf7a4317e06"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510850/SRR5510850_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "79c911348a096d033d4d933f0a748cca"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510850/SRR5510850_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "c0eff0f9e89e1573de23bda47328591b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510859/SRR5510859_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "6db5dd16e175c14b06165029427f5d26"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510859/SRR5510859_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "27ceb9d256f9ecc5d3a8d34c6705a2cd"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510860/SRR5510860_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9062c6da7da36c39e876fd0eb70255e4"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510860/SRR5510860_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "2c2311a8f4d0c0f8606f14abc245e5c6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510865/SRR5510865_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "f791e4bff4b02694c4a5bb9d1caac206"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510865/SRR5510865_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "df3f8e644250b87d925e51ceda59bc4c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510866/SRR5510866_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b3daff325ef0e09543ae1152ba312cb1"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510866/SRR5510866_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "ac308318e7a78e6542c56dad65b797a0"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510881/SRR5510881_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "883da56ebbe985d04a622bd9243d3953"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510881/SRR5510881_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "206e919cdf74487aba556aefa6519be0"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510888/SRR5510888_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "55af136137ba85a74eff4c87be59aaaf"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510888/SRR5510888_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "4ad653de45500163d0e5f5a42a593839"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510890/SRR5510890_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "dcc4aadf52562daeca13e73ff9c2d514"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510890/SRR5510890_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "a3957cd98d598b39c9bffe3ae51e6a2c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510893/SRR5510893_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "ebaba9688831ee1c5bb3b397ad3c61fb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510893/SRR5510893_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "dd38d23c552ce899d8ce7c3bf83cdd18"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510896/SRR5510896_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9aedc726cc85159f88884b38b1dc7f67"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510896/SRR5510896_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "81148ae3f71cd28aefabd2a0a7335193"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510903/SRR5510903_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "592ae4f58b5c8b40db22a580112bc007"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510903/SRR5510903_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "312d80270a6915f0eec96e82a4c83e8f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510916/SRR5510916_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "a21e25c3359fff51ee97c91249559ee2"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510916/SRR5510916_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "366dc5123d51851dbd70216f9261ddd3"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510918/SRR5510918_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "07ad8070bce83b2a42dc78c00b605d96"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510918/SRR5510918_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "5993def6bfbdf226af4617949f3db1e2"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510919/SRR5510919_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "68a5f432d2e7afa06519da68133bdea6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510919/SRR5510919_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "a0ecdbda04bbce0f8e4880d2f42a0bfd"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510921/SRR5510921_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "477fe21a6c152f05c58a83bbfdda4b3c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510921/SRR5510921_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "16c021c80e14b2729123b4104040e890"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510924/SRR5510924_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "3630f5f38321b7c13fbc276b7d1522d6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510924/SRR5510924_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "21551d8f6d87130a198870da850e2949"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510926/SRR5510926_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "abb4b629cbe735e0e0ef1881f0054a7f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510926/SRR5510926_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "1e4a7c37a33fefd02f146a445ba36c89"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510938/SRR5510938_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "4fdecd5c8d3abb845d1f7fd1ec99ea1e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510938/SRR5510938_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "af2190bcd1a168cebdae52e7d14960c3"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510943/SRR5510943_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "890e523034a6a27d151a8e57f6cfcbd3"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510943/SRR5510943_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "3e626da1cd8973506f59584c7d7f7dc1"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510975/SRR5510975_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "defd517a4c498b6780aae6aa094390bf"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510975/SRR5510975_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "6c9bc9416a0a434f77a95fda2c846abc"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510976/SRR5510976_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9574f6aedb39a2c8a7f83bb5116f3017"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510976/SRR5510976_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "e35a5431042655bc662f0721d2fac2ce"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510980/SRR5510980_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "fb227c7b0f240fe92cad155d4c6b8a19"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510980/SRR5510980_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "ef84ca749e88e6fdd27b7866812922aa"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510982/SRR5510982_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9fa8524c30d53848b2d7c52666557dea"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510982/SRR5510982_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "e95ddea40bc29b0492f370c46f1c2181"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510984/SRR5510984_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "90c731806b28b26acdac1bde7a58418e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510984/SRR5510984_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "401ef7bc9bfa1ef0a9b7675e788d9b80"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510849/SRR5510849_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "72d70d331dfd3767c4936acce1cb8d97"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510849/SRR5510849_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "8b1097ff664b0144f87bee2bb6d0df62"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510856/SRR5510856_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "58dc1dd5ba7495c5b8b800d5be66b580"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510856/SRR5510856_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "13051b91523137b6dae238b72bebe6eb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510863/SRR5510863_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "e3cd0b7b6f03164bd217c9d3dd88ffb7"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510863/SRR5510863_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "0235a024217be3b5b6a16606fe93608f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510864/SRR5510864_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9661bba0d8254fa91320981bb2ef69ef"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510864/SRR5510864_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "51183e6649f949dd04ad3e19f96896e5"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510889/SRR5510889_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "164840cac6e66f33c8a77b2c82de962e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510889/SRR5510889_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "6975d2480b1f6759633445bd47ea1400"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510894/SRR5510894_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "c60bfeb8b385043180ae85175dc7821b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510894/SRR5510894_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "4ca823fbf9c79e354408f12043c66d70"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510897/SRR5510897_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "e58f773437e6e11d12ed60eeb0f3c01c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510897/SRR5510897_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "420821e0f71f72ce8756008aa850e4ed"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510906/SRR5510906_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "3de363f94902dbfc15cc24d1f7e3dc2d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510906/SRR5510906_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "81a3efd5e24e2bf334e4c578d4ba2119"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510915/SRR5510915_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "0a2f2bb44c40ec8d63c309339550f4cb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510915/SRR5510915_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "1233643a328c965d93992950ebb8022b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510857/SRR5510857_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "5531871621ff23ec95719db9ea7ffc55"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510857/SRR5510857_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "c7004037a53751536a601aea56f83457"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510922/SRR5510922_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9ab12f94eecd41f4fd4f36da757685f8"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510922/SRR5510922_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "1710e12d5044548611e0f60415c62050"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510861/SRR5510861_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "6fbec715aa89223f7e1fcfc65bb4b54b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510861/SRR5510861_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "be3aaf4e9e9a83755e083f4dbf7e3509"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510928/SRR5510928_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "559f8f9a131d055809c738d88f920b72"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510928/SRR5510928_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "a870deea9bfec938124ec61d895d6589"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510867/SRR5510867_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "e0dcaaec1d08eb34057cdcf67477706a"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510867/SRR5510867_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "f08f6dae744e73d7640077991881fa48"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510930/SRR5510930_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "f6dc64877763fef779d748afcf74c65a"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510930/SRR5510930_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "900cae1509473a8a9e28923354b8ddd4"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510870/SRR5510870_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b74510698a7a398a9eb1b93d380a8c28"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510870/SRR5510870_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "bf7486d3ba1c03cab9d477dc708d30c4"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510931/SRR5510931_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "1a0668751a8cef640dc2d36c01f2fb50"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510931/SRR5510931_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "d159da38b953529d7b2717a28f50f980"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510871/SRR5510871_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "51619708ed4b0b79a665452b62d0fdd0"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510871/SRR5510871_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "f9f2bbb4aa277f6de6066922646e6c3f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510932/SRR5510932_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "ee1a765552c14688eee8c7d8f352c37d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510932/SRR5510932_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "7d7f708da97136c26f45689a24d85dc1"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510873/SRR5510873_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "ae3d5285742b44b64e96501d54acf757"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510873/SRR5510873_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "0748f018f1ce13f6792525d7f26a351f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510934/SRR5510934_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "6c7c0eb28907aeb947a00f7ef64092fb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510934/SRR5510934_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "89e817c405bf54f6d7cc4368dbb6ee1c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510875/SRR5510875_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "a2ae3820b2a26e96e283b2d598f05b00"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510875/SRR5510875_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "600144b2edf33c41a81f758ccee730c6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510876/SRR5510876_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "55a54469ce5c6f6f3038aab08cb147b8"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510876/SRR5510876_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "1c6e0a0615e35f8745def7d185a07498"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510950/SRR5510950_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9b45583a9c0f3c66e37864996acd9e79"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510950/SRR5510950_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "d946bc2bd47392c767ff6cce3e7753fd"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510952/SRR5510952_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "d008c9da3d0b5aa3f32ac1c602844497"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510952/SRR5510952_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "dd00544efcfdc1f4da66a6429eef047d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510877/SRR5510877_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "85163b61d62fa4381685decce2d7fb2a"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510877/SRR5510877_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "03c0c7cace3a091d4bff2aa2bbe6e424"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510953/SRR5510953_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "ccecc438dfb1ebc1ca41298b00c601ac"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510953/SRR5510953_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "9afd1b3ea94eab4f4af0569dfe974822"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510879/SRR5510879_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "324e0dcae7e55990f17e7caf9c9e69d1"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510879/SRR5510879_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "daa34e2eb74fed354110cffc6a3d6d76"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510880/SRR5510880_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "545206b852120f123463f6ace9758270"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510880/SRR5510880_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "ed499f07d40b594554616d712e3cce9a"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510882/SRR5510882_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "71ee63b52478a2dd7c010f36023cc798"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510882/SRR5510882_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "ca33ba7b3a956939b9aaa4a81152f899"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510956/SRR5510956_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "fd02cb85d401027898e774cf4c14e0b8"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510956/SRR5510956_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "c803555294a71d21c68c88b055d82b8e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510885/SRR5510885_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "0344af1528b107afdc5f20efb5359906"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510885/SRR5510885_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "20a198d9f206477a4f2e9bd7490e71ec"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510962/SRR5510962_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "7910c4e35c4fe6ebbdd010a38a0d6185"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510962/SRR5510962_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "447e67aeda488cc801ff4383de4b866d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510887/SRR5510887_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b8a9413c4e02381fb96cde5605f4a22b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510887/SRR5510887_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "e2f606471ace28347d2d485de2961d32"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510977/SRR5510977_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "0ffd20b9a10cfed482979f965d4892e6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510977/SRR5510977_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "b8d51cc8b4ffe4812b68b9967926b592"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510891/SRR5510891_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "e3840d7aef286f90702b806e045d125f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510891/SRR5510891_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "7b044f44fa0b12e2dc49569bdf719801"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510979/SRR5510979_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "c239cad815ed333a2ca196fa912e9600"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510979/SRR5510979_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "be745acf45a46ea9db3951b5b03f8e75"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510901/SRR5510901_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "8e78cb8db611c0bf35a02e6e35361a2d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510901/SRR5510901_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "3c934ab2c25334138fefb82c9f36e391"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510902/SRR5510902_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "25c433d99134d47a76d663d90ed92f21"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510902/SRR5510902_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "3cfd8242b042cbb46498ee7705cfee4c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510904/SRR5510904_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "c0590da0a1396bc4b680c9e24f63be7b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510904/SRR5510904_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "29207f8553eec1274c0fc1b5f92ab308"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510851/SRR5510851_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9671720d2bb0169ff41f6d51611e94a9"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510851/SRR5510851_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "28478af9dbc098c38244c641fe9159d9"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510907/SRR5510907_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "e7d16d7bd38fb6a1447f026f74e95f53"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510907/SRR5510907_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "b6d0b186b97d4c3008397963a5061584"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510853/SRR5510853_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "83aeb91fd3e0c0a2dbe97a5bc87c7d3b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510853/SRR5510853_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "617693c05c7e608d049477796b8d340d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510910/SRR5510910_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "94d6dc3ec80455d14ae4eea405cfe755"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510910/SRR5510910_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "fd71d0025fb2264fd4ea5187798fcc56"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510854/SRR5510854_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9f67ccf6d4246bb1e403d605b59183ed"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510854/SRR5510854_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "e7490b0b8d5f5c166d87834c78b99843"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510912/SRR5510912_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "923015753b1aa376c90e524a8049901e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510912/SRR5510912_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "ba4aae16160acb372bab3093fa7f738c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510855/SRR5510855_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b3ebff4a88bb6485b354773465d4e3c7"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510855/SRR5510855_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "ccc800418276bee7e20e2fa4bbe2b8b0"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510920/SRR5510920_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "59734e0c10a8dad66c0ac1adda3d0a5d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510920/SRR5510920_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "121a70c8f24bc5a19bec3de41e3b56e9"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510858/SRR5510858_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "eaf6e0d93a813939f5bec68f9ea8d008"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510858/SRR5510858_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "1fc0bdb0f31e22fccff53f0ed13003b4"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510923/SRR5510923_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b88c8a6e7d870a58bbf5ce7d7940e558"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510923/SRR5510923_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "caa7a0a6867bcfa2e9cc9e0812f71136"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510868/SRR5510868_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "7bddba4c0487c9115a4cda9038d7aae5"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510868/SRR5510868_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "6a019b743e8a68648571475bd3e276fd"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510869/SRR5510869_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "8e87cb703cbfe82bf12313f37e295b16"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510869/SRR5510869_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "7307409fcd54cd04708d57b0c6d3a6ab"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510925/SRR5510925_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9b2def639c6436f4fc8e3eaab4130995"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510925/SRR5510925_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "399a8f9329e8f2b342043cc39b9b242e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510872/SRR5510872_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "339362dc6b0d56822e2b7606d6edc24b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510872/SRR5510872_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "d55314e9fbbfba17d4e95d9ddb7cc469"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510933/SRR5510933_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "7dc42242d557f8dabcd8e36567ad979b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510933/SRR5510933_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "8b3e16c5211395fabd7b571aa6ae3b7a"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510874/SRR5510874_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "1529c230bd4f50e2364cb2cfd0c4e810"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510874/SRR5510874_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "853ab6724921ad3a8f29ce578b2e82fa"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510944/SRR5510944_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "ae5314d58cebd5053616ebd067293fd5"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510944/SRR5510944_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "31e1e8b2ce6c68fb6e71c4b245e4ccbb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510878/SRR5510878_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "899db04514415d96ba47b279c3eae7e2"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510878/SRR5510878_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "210eb22c5756058e9c5db13bd6a68e95"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510947/SRR5510947_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "fdf14b98faf9e4cad5e67510d4800a9a"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510947/SRR5510947_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "d4688502b4311c9fe623a65eefcfa853"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510892/SRR5510892_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "1278fd567adb36d424301af1b19e4b71"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510892/SRR5510892_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "fb01556099b2298b323e0e25e5c4add2"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510957/SRR5510957_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "8e7f6f556dd2ce5a4e5f86cb772d3b46"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510957/SRR5510957_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "0fcc349e28a6cc033c7fda42a0da67cc"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510900/SRR5510900_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "327f9e8310fa3982b367ac926d2d5925"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510900/SRR5510900_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "f34a5b59f1cd5c981be08f4b2de4b42e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510959/SRR5510959_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "5dd3793066d6d20d40746f8663f3f2b1"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510959/SRR5510959_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "68fa97072a2be940df83369bb4dbf00b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510905/SRR5510905_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "6b86dff25a38fc97cf110c14643fb381"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510905/SRR5510905_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "abe71dae34400dd8682e5eb69ecf71f6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510960/SRR5510960_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "c949bf53a095f5ab3b728b2a93972625"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510960/SRR5510960_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "14271c2af6d95d1d021694545e560e1f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510911/SRR5510911_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b29d5aed4529f903bc63cd7afe5b9385"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510911/SRR5510911_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "069e8c60d3334d783106b66601627da1"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510965/SRR5510965_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "ebff7a9d69d0c05e50315f4a9ac369f6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510965/SRR5510965_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "74bc59a39904d066bbadcab03a88defc"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510913/SRR5510913_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9c74196e1c02f7941441c5062f864f7d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510913/SRR5510913_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "56a8790830fab2289f4d9a923abbb905"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510917/SRR5510917_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "d61bf662d1940a9cf015e5ecb78e0477"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510917/SRR5510917_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "080fd6b674b2d4094169f179631fc004"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510966/SRR5510966_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "0533e6ab9b4d4a458ac265792e3ddb40"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510966/SRR5510966_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "39eab595984f1e2554bfe6c2e0bd2d50"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510935/SRR5510935_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "5daa3fa80413b4109057fa68c76fb89b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510935/SRR5510935_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "3ab55ae34797bc8cfb80639eba81ba50"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510967/SRR5510967_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "ab5ee0b8f1a0ab54b71c850ae1b18cef"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510967/SRR5510967_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "2fda2a6dc53b3744ddf1935c59944bb6"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510936/SRR5510936_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "515e41df7223d8195a057ccc337902e2"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510936/SRR5510936_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "05b1ae4cc09ade64a4419dc6f3186bc4"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510969/SRR5510969_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9a3ac54feafaec2ce6728fb99947b6c0"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510969/SRR5510969_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "3d542c065a9c4b54b896f6d2e775a3f7"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510940/SRR5510940_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "d68b589ff732d15e8bb40a09ffbe2698"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510940/SRR5510940_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "a9d508811361c6803f3b367320298d87"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510983/SRR5510983_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "225ff73e0df7434ba2b504be58ffe471"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510983/SRR5510983_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "20ad7f7e0b5e600ae9bf405001ccdb85"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510954/SRR5510954_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b469d6254dca691abe2a96f8cf9e3de7"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510954/SRR5510954_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "f42c9f3756439c7d36631fbf2e6fdd47"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510968/SRR5510968_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "7a63a49cd1c87bfa3addf76be4a2bfcc"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510968/SRR5510968_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "d923b4a96a4e76688b6f4987452c8350"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510970/SRR5510970_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "754c6a14e4bda0595f47947099076c50"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/000/SRR5510970/SRR5510970_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "86110ed43bf8100e92f9091702bb7cfb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510971/SRR5510971_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "8c6eb8883eab9fb56bda697065350e84"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510971/SRR5510971_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "e16b2d632591d3703a9fde9f94ba7a6e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510973/SRR5510973_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "acac5ad38a28c39fd08a8863bffa178e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510973/SRR5510973_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "c2fdf7c8c8c7952b24825ee4b0a06083"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510974/SRR5510974_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "bb098aa9de33397aadf2d474f9967ddb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510974/SRR5510974_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "f5e2d2a56a1e666f486c36b12d5bf617"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510978/SRR5510978_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "b79877de16243d3ac391be95b8f2661f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510978/SRR5510978_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "58fb59f9d48fe77b4cd053fded54e366"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510986/SRR5510986_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "a5e565f1c34dc6f36e1d5d62c0dfa349"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510986/SRR5510986_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "54c243e2086108ec25bd26574387871d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510852/SRR5510852_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "d3c2341989e304c69a60d60092d18a97"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510852/SRR5510852_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "516b2badcee04102f800adec39654741"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510862/SRR5510862_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "5f7cfb1a9316d9ff2af9457705ac5933"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510862/SRR5510862_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "4f0c3662159a47f0a2e0ab1615997c38"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510883/SRR5510883_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "756d918fdce00cac17bb977292e774fc"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510883/SRR5510883_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "93c605da2dcd9a281a0e2f8a9df9eb51"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510884/SRR5510884_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "3f57d822b8d0371263b7beb9d571e1ee"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510884/SRR5510884_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "e38f5e5f77bd82808203a614b05311fc"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510886/SRR5510886_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "563e6833561ac36aeaed82b3b3e32d74"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510886/SRR5510886_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "6d706c31233bb1d138cfe2abb6d3da36"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510895/SRR5510895_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "c84f378e8f9446d718eac6b31e52eef8"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510895/SRR5510895_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "3eb5b66047f8790c1187f976c084819f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510898/SRR5510898_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "486afdb346a06c4e109e99b0872a2545"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510898/SRR5510898_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "9433df53803a96b54cff240ac9d31489"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510899/SRR5510899_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "485f7188c89653d63223e44607fc74d4"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510899/SRR5510899_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "6db4c9d0a92876b237c610de1f98e874"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510908/SRR5510908_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "95979ffad97099d3962967e3c72380ea"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510908/SRR5510908_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "787c38f163d719e287fa33549f3c6f7b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510909/SRR5510909_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "67dfa23c05433ba8036fa6768d13e59c"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510909/SRR5510909_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "162087580e251fc1828a7c2e5e124e98"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510914/SRR5510914_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "59f03ac3facfc7e0c79229279cbe6462"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510914/SRR5510914_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "5cde7f4b96d731a73faebe483b039ea7"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510927/SRR5510927_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "cae98e1d7ef2cceccb61b3ed0f926a23"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510927/SRR5510927_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "00652ae119d3fb9a75cca2ce4daaa1db"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510929/SRR5510929_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "48852ad4c6ad200cf31ef74c7a5852eb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510929/SRR5510929_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "94716bfa24bdc6303cac1691ec891b08"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510937/SRR5510937_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "dcd22ba198930b9b86dfe11b6851c37d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510937/SRR5510937_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "2c657b52d3a3d1b345afbf28bee60071"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510939/SRR5510939_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "e35fb5cac928f10d2e0ae1d484a6c183"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510939/SRR5510939_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "ac84aadb3dcf7dd611de0ff7f156941d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510941/SRR5510941_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "07a8c14e0c61d470529155edd0d4ddb8"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510941/SRR5510941_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "df0600a88a4cdec638816782d0631800"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510942/SRR5510942_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "f7f87feeca6db3c6aebbfa39adbf5f89"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510942/SRR5510942_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "428c9e533a9b05abd4c7fba8bbaefb43"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510945/SRR5510945_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "adc5175987783b82e66eb129a7bcf9ff"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510945/SRR5510945_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "b602bb4a98a0d6c90a543eba99f1a23e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510946/SRR5510946_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "d8972cc9b3b4baeb33bc9c6ebda645a2"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/006/SRR5510946/SRR5510946_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "7dfceb2752574cafbf2195e23453a005"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510948/SRR5510948_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "04750a25be90df78a1edd4270023c87d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510948/SRR5510948_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "2dc7cf6bb8f7936def88846c2b12b0cd"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510949/SRR5510949_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "d0f30f53167c2d1c7413fb9c546539e5"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/009/SRR5510949/SRR5510949_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "3ff260eb84cbee2e8e3164c3b024e804"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510951/SRR5510951_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "fdfa6da7da842d30c450603153917db7"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510951/SRR5510951_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "07aed64f751acce0c4374759f012ad93"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510955/SRR5510955_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "0dbf137e5a9b171c8887652b8bb8449d"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510955/SRR5510955_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "52eba1dbe958461150b6338d56bf89c0"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510958/SRR5510958_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "87bd2a9f6ed7b27fadfd2ba6e2c2edd0"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/008/SRR5510958/SRR5510958_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "cdeea46e2f8a005f652b6bf96ceb5d8e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510961/SRR5510961_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "7c5c6a57885e6f0f0947f073d8602286"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510961/SRR5510961_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "71b7f19a12c864d99688b553c8c75c3b"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510963/SRR5510963_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "2f8862a2b359f0cbb6bc5b55abc07c51"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/003/SRR5510963/SRR5510963_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "23d45ea0a835f91d0ce922d5256b3ebd"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510964/SRR5510964_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "7c6b99384d36f69fdd3213e917cb94da"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/004/SRR5510964/SRR5510964_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "c685da1a4277a938fd91dcd8cf4283d3"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510972/SRR5510972_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "06b598cce2eb3da8748de719aa9f4647"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/002/SRR5510972/SRR5510972_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "94275c0995d48aa09927bffebfb0364f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510981/SRR5510981_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "65b174f29a49de3f7e212c21a0891cbe"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/001/SRR5510981/SRR5510981_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "47de569698fe4644a4fa1c42b0606624"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510985/SRR5510985_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "56e7a993390192eb925f4ce5b2a0bace"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/005/SRR5510985/SRR5510985_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "56e2cc7576c7bb97caae796b89d3ac5e"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510987/SRR5510987_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "378d1d5d3bb27de293476f23d059b20f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR551/007/SRR5510987/SRR5510987_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "516bfa48cd1cad378777c9ba88eac5c2"
+            }
+          ],
+          "relation": [
+            {
+              "type": "ENA-EXPERIMENT",
+              "target": "SRX2784966"
+            },
+            {
+              "type": "ENA-SUBMISSION",
+              "target": "SRA559826"
+            },
+            {
+              "type": "ENA-FASTQ-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS2166977&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+            },
+            {
+              "type": "ENA-SUBMITTED-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS2166977&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+            },
+            {
+              "type": "ENA-STUDY",
+              "target": "SRP106481"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510848"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510849"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510850"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510851"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510852"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510853"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510854"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510855"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510856"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510857"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510858"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510859"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510860"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510861"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510862"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510863"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510864"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510865"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510866"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510867"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510868"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510869"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510870"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510871"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510872"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510873"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510874"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510875"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510876"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510877"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510878"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510879"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510880"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510881"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510882"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510883"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510884"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510885"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510886"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510887"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510888"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510889"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510890"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510891"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510892"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510893"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510894"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510895"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510896"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510897"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510898"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510899"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510900"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510901"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510902"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510903"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510904"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510905"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510906"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510907"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510908"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510909"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510910"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510911"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510912"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510913"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510914"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510915"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510916"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510917"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510918"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510919"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510920"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510921"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510922"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510923"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510924"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510925"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510926"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510927"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510928"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510929"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510930"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510931"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510932"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510933"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510934"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510935"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510936"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510937"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510938"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510939"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510940"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510941"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510942"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510943"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510944"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510945"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510946"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510947"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510948"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510949"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510950"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510951"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510952"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510953"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510954"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510955"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510956"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510957"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510958"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510959"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510960"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510961"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510962"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510963"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510964"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510965"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510966"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510967"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510968"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510969"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510970"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510971"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510972"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510973"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510974"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510975"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510976"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510977"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510978"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510979"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510980"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510981"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510982"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510983"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510984"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510985"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510986"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR5510987"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:sample:SAMN06891875:center:a6a412a487ababdd:0"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:BioSample:SAMN06891880:organization-2"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:PROJECT:PRJNA385514:center_name"
+            }
+          ],
+          "sra_accession": [
+            "SRX2784966"
+          ],
+          "ena_accession": [
+            "SRP106481"
+          ],
+          "sra_run": [
+            {
+              "instrument_platform": "ILLUMINA",
+              "indexed_statistics": {
+                "read_count": "1296169",
+                "base_count": "90731830"
+              },
+              "platform_ref": {
+                "ref": "ena:platform:1db673c85899f5f8"
+              },
+              "run": "SRR5510848",
+              "study": "SRP106481",
+              "experiment": "SRX2784966",
+              "sample": "SRS2166977",
+              "biosample": "SAMN06891875",
+              "library_layout": "PAIRED",
+              "library_selection": "cDNA",
+              "library_source": "TRANSCRIPTOMIC",
+              "library_strategy": "RNA-Seq",
+              "scan_name": "GSM2599706_r1",
+              "instrument_model": "NextSeq 500"
+            }
+          ]
+        }
+      ],
+      "series": {
+        "iid": "PRJNA385514",
+        "title": "Comprehensive single cell transcriptional profiling of a multicellular organism by combinatorial indexing",
+        "summary": "We developed a combinatorial indexing strategy to profile the transcriptomes of large numbers of single cells or nuclei (Single cell Combinatorial Indexing RNA-seq or sci-RNA-seq). We applied sci-RNA-seq to profile nearly 50,000 cells from C. elegans at the L2 stage, effectively ~56-fold “shotgun cellular coverage” of its somatic cell composition. Overall design: human and mouse cell lines, C.elegans.",
+        "protocols": [
+          {
+            "name": "SRX2784966:library",
+            "type": {
+              "value": "library construction protocol"
+            },
+            "description": "All cell lines were trypsinized, spun down at 300xg for 5 min (4°C). and washed once in 1X PBS. L2 stage worms were disscociated with SDS-DTT solution and pronase to generate single cell suspension. Detailed protocol was described in \"J. Cao et al., Comprehensive single cell transcriptional profiling of a multicellular organism by combinatorial indexing. bioRxiv, 104844 (2017).\" library construction protocol was described in \"J. Cao et al., Comprehensive single cell transcriptional profiling of a multicellular organism by combinatorial indexing. bioRxiv, 104844 (2017).\""
+          }
+        ],
+        "assay_paths": [
+          {
+            "steps": [
+              {
+                "kind": "source",
+                "name": "SAMN06891875",
+                "sample_ref": "SAMN06891875",
+                "characteristics": [
+                  {
+                    "name": "strain",
+                    "value": "A C. elegans strain (RW12139 stIs11435(unc-120::H1-Wcherry; unc-119(+)); unc-119(tm4063)) carrying an integrated Punc-120::mCherry gene in a wild type background was used"
+                  },
+                  {
+                    "name": "INSDC secondary accession",
+                    "value": "SRS2166977"
+                  },
+                  {
+                    "name": "NCBI submission package",
+                    "value": "Generic.1.0"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Caenorhabditis elegans"
+                  },
+                  {
+                    "name": "source_name",
+                    "value": "whole c.elegans (L2 stage)"
+                  },
+                  {
+                    "name": "developmental stage",
+                    "value": "L2"
+                  },
+                  {
+                    "name": "BioSampleModel",
+                    "value": "Generic"
+                  },
+                  {
+                    "name": "External Id",
+                    "value": "SAMN06891875"
+                  },
+                  {
+                    "name": "NCBI submission model",
+                    "value": "Generic"
+                  },
+                  {
+                    "name": "SRA accession",
+                    "value": "SRS2166977"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Caenorhabditis elegans",
+                    "term_source_ref": "NCBITaxon",
+                    "term_accession_number": "6239"
+                  }
+                ],
+                "description": "whole c.elegans (L2 stage)",
+                "comments": [
+                  {
+                    "name": "BioSD_SAMPLE",
+                    "value": "SAMN06891875"
+                  },
+                  {
+                    "name": "Sample_title",
+                    "value": "c.elegans cells (L2 stage) 2"
+                  },
+                  {
+                    "name": "Sample_source_name",
+                    "value": "whole c.elegans (L2 stage)"
+                  }
+                ]
+              },
+              {
+                "kind": "protocol_application",
+                "protocol_ref": "SRX2784966:library"
+              },
+              {
+                "kind": "assay",
+                "name": "SRX2784966",
+                "sample_ref": "SAMN06891875",
+                "technology_type": {
+                  "value": "sequencing assay"
+                },
+                "comments": [
+                  {
+                    "name": "LIBRARY_STRATEGY",
+                    "value": "RNA-Seq"
+                  },
+                  {
+                    "name": "LIBRARY_SOURCE",
+                    "value": "TRANSCRIPTOMIC"
+                  },
+                  {
+                    "name": "LIBRARY_SELECTION",
+                    "value": "cDNA"
+                  },
+                  {
+                    "name": "LIBRARY_LAYOUT",
+                    "value": "PAIRED"
+                  },
+                  {
+                    "name": "INSTRUMENT_MODEL",
+                    "value": "NextSeq 500"
+                  },
+                  {
+                    "name": "INSTRUMENT_PLATFORM",
+                    "value": "ILLUMINA"
+                  },
+                  {
+                    "name": "Platform_title",
+                    "value": "NextSeq 500"
+                  }
+                ]
+              },
+              {
+                "kind": "scan",
+                "name": "SRR5510848",
+                "comments": [
+                  {
+                    "name": "ENA_RUN",
+                    "value": "SRR5510848"
+                  },
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "SRX2784966"
+                  },
+                  {
+                    "name": "ENA_SAMPLE",
+                    "value": "SRS2166977"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source": {
+        "format": "ENA"
+      }
+    }
+  },
+  {
+    "study": "ERP022096",
+    "expected": "plate_single_cell_sequencing",
+    "source_url": "https://www.ebi.ac.uk/ena/browser/view/ERP022096",
+    "data": {
+      "sample": [
+        {
+          "iid": "SAMEA103910997",
+          "accession": [
+            {
+              "value": "SAMEA103910997",
+              "database": "BioSample"
+            },
+            {
+              "value": "ERS1600165",
+              "database": "ENA"
+            }
+          ],
+          "status": [
+            {
+              "release_date": "2017-03-15T17:01:09Z",
+              "database": "ENA"
+            },
+            {
+              "last_update_date": "2017-03-14T21:38:38Z",
+              "database": "ENA"
+            },
+            {
+              "release_date": "2017-03-15",
+              "database": "ENA"
+            },
+            {
+              "last_update_date": "2017-03-14",
+              "database": "ENA"
+            },
+            {
+              "submission_date": "2017-03-16T16:30:38.723",
+              "release_date": "2017-03-15T00:00:00.000",
+              "last_update_date": "2024-02-03T08:31:14.000",
+              "database": "BioSample"
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "access",
+                  "value": "public"
+                }
+              ]
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "record status",
+                  "value": "live"
+                }
+              ]
+            },
+            {
+              "database": "BioSamples",
+              "comment": [
+                {
+                  "name": "status",
+                  "value": "PUBLIC"
+                }
+              ]
+            },
+            {
+              "release_date": "2017-03-15T17:01:09Z",
+              "database": "INSDC"
+            },
+            {
+              "last_update_date": "2017-03-14T21:38:38Z",
+              "database": "INSDC"
+            },
+            {
+              "database": "INSDC",
+              "comment": [
+                {
+                  "name": "INSDC status",
+                  "value": "public"
+                }
+              ]
+            }
+          ],
+          "title": "18858_6#1",
+          "type": "SRA",
+          "channel_count": "1",
+          "channel": [
+            {
+              "organism": [
+                {
+                  "value": "Mus musculus",
+                  "taxid": "10090"
+                }
+              ],
+              "characteristics": [
+                {
+                  "name": "strain",
+                  "value": "129/Ola"
+                },
+                {
+                  "name": "ENA-CHECKLIST",
+                  "value": "ERC000011"
+                },
+                {
+                  "name": "isolate",
+                  "value": "not applicable"
+                },
+                {
+                  "name": "organism",
+                  "value": "Mus musculus"
+                },
+                {
+                  "name": "growth condition",
+                  "value": "Serum + LIF condition"
+                },
+                {
+                  "name": "cell_line",
+                  "value": "ES-E14"
+                },
+                {
+                  "name": "scientific_name",
+                  "value": "Mus musculus"
+                },
+                {
+                  "name": "common name",
+                  "value": "house mouse"
+                },
+                {
+                  "name": "cell_type",
+                  "value": "mouse embryonic stem cell"
+                },
+                {
+                  "name": "External Id",
+                  "value": "SAMEA103910997"
+                },
+                {
+                  "name": "Submitter Id",
+                  "value": "E-MTAB-5481:18858_6#1"
+                },
+                {
+                  "name": "broker name",
+                  "value": "ArrayExpress"
+                },
+                {
+                  "name": "cell line",
+                  "value": "ES-E14"
+                },
+                {
+                  "name": "cell type",
+                  "value": "mouse embryonic stem cell"
+                },
+                {
+                  "name": "sample name",
+                  "value": "E-MTAB-5481:18858_6#1"
+                },
+                {
+                  "name": "SRA accession",
+                  "value": "ERS1600165"
+                }
+              ]
+            }
+          ],
+          "description": "Protocols: \"Wildtype E14 mESC were cultured under standard culture conditions in Knockout DMEM containing 15% Fetal Calf Serum, 1x Penicillin-Streptomycin-Glutamine, 1x NEAA 2-mercaptoethanol and 1000U Leukemia Inhibitory Factor. \" \"Trypisnised single mESC suspension is passed through 30micron filter to remove and clumps. A 96-well plate containing lysis buffer (0.2% Triton, 1:20 RNAse inbhibitor, 10mM Oligo-dT30VN, 10mM dNTPs) was prepared. Spike-ins (ERCCs and SIRVs; final 1:1000,000 dilution) are subjected to different freeze-thaw cycles (seven conditions) and 1ul of spike-in mix per condition was added to each well column-wise. Single mES cells were FACS sorted (BD Influx; BD Biosciences) to each well (along with bulk controls). Subsequent steps (Lysis, RT, PCR amplification and DNA purification) was performed as described in Smart-Seq2 publication (Picelli et al Nature Protocol 2014). \" \"The single cell cDNA across the 96-well plate was quantified, diluted and libraries were made using Nextera XT DNA sample preparation kit (Illumina) utilising 96 dual barcoded indices. Library pooling was performed post AMPure XP beads (Agencourt Biosciences) clean up and sequenced on HiSeq2500 (v4) using paired end sequencing (75 or 125bp) at the Wellcome Trust Sequencing facility following Wellcome Trust Sequencing guidelines.\"",
+          "platform_ref": {
+            "ref": "ena:platform:41459b18855e19fc"
+          },
+          "library_strategy": "RNA-Seq",
+          "library_source": "TRANSCRIPTOMIC SINGLE CELL",
+          "library_selection": "Oligo-dT",
+          "raw_data": [
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR188/007/ERR1883127/ERR1883127_1.fastq.gz",
+              "type": "fastq",
+              "checksum": "9b568a477b8217a6966bf9f2da374acb"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR188/007/ERR1883127/ERR1883127_2.fastq.gz",
+              "type": "fastq",
+              "checksum": "db5afae262d07c686503491ff13a905f"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR188/ERR1883127/18858_6%231_1.fastq.gz",
+              "type": "FASTQ",
+              "checksum": "5a284b1c7e6f463407e445e6e29007bc"
+            },
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR188/ERR1883127/18858_6%231_2.fastq.gz",
+              "type": "FASTQ",
+              "checksum": "e5f3e256861c88148119f0cb215b90d7"
+            }
+          ],
+          "relation": [
+            {
+              "type": "ENA-EXPERIMENT",
+              "target": "ERX1943628"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "ERR1883127"
+            },
+            {
+              "type": "ENA-SUBMISSION",
+              "target": "ERA845954"
+            },
+            {
+              "type": "ENA-FASTQ-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERS1600165&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+            },
+            {
+              "type": "ENA-SUBMITTED-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERS1600165&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+            },
+            {
+              "type": "ENA-STUDY",
+              "target": "ERP022096"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:sample:SAMEA103910997:center:47565f585f2bb737:0"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:BioSample:SAMEA103911052:organization-2"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:SAMPLE:SAMEA103910997:center_name"
+            }
+          ],
+          "sra_accession": [
+            "ERX1943628"
+          ],
+          "ena_accession": [
+            "ERP022096"
+          ],
+          "sra_run": [
+            {
+              "instrument_platform": "ILLUMINA",
+              "indexed_statistics": {
+                "read_count": "1514512",
+                "base_count": "378628000"
+              },
+              "platform_ref": {
+                "ref": "ena:platform:41459b18855e19fc"
+              },
+              "run": "ERR1883127",
+              "study": "ERP022096",
+              "experiment": "ERX1943628",
+              "sample": "ERS1600165",
+              "biosample": "SAMEA103910997",
+              "library_layout": "PAIRED",
+              "library_selection": "Oligo-dT",
+              "library_source": "TRANSCRIPTOMIC SINGLE CELL",
+              "library_strategy": "RNA-Seq",
+              "scan_name": "E-MTAB-5481:18858_6#1_",
+              "instrument_model": "Illumina HiSeq 2500"
+            }
+          ]
+        }
+      ],
+      "series": {
+        "iid": "PRJEB19995",
+        "title": "Single cell RNA-sequencing of Spike-ins and mESC using Smart-Seq2 on 96-well plates",
+        "summary": "\"In this study, we assess technical differences between commonly used single-cell RNA-Sequencing (scRNA-Seq) methods. We perform scRNA-seq on a homogenous population of mouse embryonic stem cells along with two kinds of control spike-in molecules to assess sensitivity and accuracy of these specific methods. In this dataset, we assess the RNA-degradation and decay rates by subjecting both spike-in molecules to range of repeated freezing and thawing (freeze-thaw) cycles. We manually add spike-in molecules across a 96-well plate (containing cells and reagents), perform Smart-Seq2 method manually and generate single-cell libraries using Nextera XT kit\"",
+        "protocols": [
+          {
+            "name": "ERX1943628:library",
+            "type": {
+              "value": "library construction protocol"
+            },
+            "description": "\"Wildtype E14 mESC were cultured under standard culture conditions in Knockout DMEM containing 15% Fetal Calf Serum, 1x Penicillin-Streptomycin-Glutamine, 1x NEAA 2-mercaptoethanol and 1000U Leukemia Inhibitory Factor. \" \"Trypisnised single mESC suspension is passed through 30micron filter to remove and clumps. A 96-well plate containing lysis buffer (0.2% Triton, 1:20 RNAse inbhibitor, 10mM Oligo-dT30VN, 10mM dNTPs) was prepared. Spike-ins (ERCCs and SIRVs; final 1:1000,000 dilution) are subjected to different freeze-thaw cycles (seven conditions) and 1ul of spike-in mix per condition was added to each well column-wise. Single mES cells were FACS sorted (BD Influx; BD Biosciences) to each well (along with bulk controls). Subsequent steps (Lysis, RT, PCR amplification and DNA purification) was performed as described in Smart-Seq2 publication (Picelli et al Nature Protocol 2014). \" \"The single cell cDNA across the 96-well plate was quantified, diluted and libraries were made using Nextera XT DNA sample preparation kit (Illumina) utilising 96 dual barcoded indices. Library pooling was performed post AMPure XP beads (Agencourt Biosciences) clean up and sequenced on HiSeq2500 (v4) using paired end sequencing (75 or 125bp) at the Wellcome Trust Sequencing facility following Wellcome Trust Sequencing guidelines.\""
+          }
+        ],
+        "assay_paths": [
+          {
+            "steps": [
+              {
+                "kind": "source",
+                "name": "SAMEA103910997",
+                "sample_ref": "SAMEA103910997",
+                "characteristics": [
+                  {
+                    "name": "strain",
+                    "value": "129/Ola"
+                  },
+                  {
+                    "name": "ENA-CHECKLIST",
+                    "value": "ERC000011"
+                  },
+                  {
+                    "name": "isolate",
+                    "value": "not applicable"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Mus musculus"
+                  },
+                  {
+                    "name": "growth condition",
+                    "value": "Serum + LIF condition"
+                  },
+                  {
+                    "name": "cell_line",
+                    "value": "ES-E14"
+                  },
+                  {
+                    "name": "scientific_name",
+                    "value": "Mus musculus"
+                  },
+                  {
+                    "name": "common name",
+                    "value": "house mouse"
+                  },
+                  {
+                    "name": "cell_type",
+                    "value": "mouse embryonic stem cell"
+                  },
+                  {
+                    "name": "External Id",
+                    "value": "SAMEA103910997"
+                  },
+                  {
+                    "name": "Submitter Id",
+                    "value": "E-MTAB-5481:18858_6#1"
+                  },
+                  {
+                    "name": "broker name",
+                    "value": "ArrayExpress"
+                  },
+                  {
+                    "name": "cell line",
+                    "value": "ES-E14"
+                  },
+                  {
+                    "name": "cell type",
+                    "value": "mouse embryonic stem cell"
+                  },
+                  {
+                    "name": "sample name",
+                    "value": "E-MTAB-5481:18858_6#1"
+                  },
+                  {
+                    "name": "SRA accession",
+                    "value": "ERS1600165"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Mus musculus",
+                    "term_source_ref": "NCBITaxon",
+                    "term_accession_number": "10090"
+                  }
+                ],
+                "comments": [
+                  {
+                    "name": "BioSD_SAMPLE",
+                    "value": "SAMEA103910997"
+                  },
+                  {
+                    "name": "Sample_title",
+                    "value": "18858_6#1"
+                  },
+                  {
+                    "name": "Sample_description",
+                    "value": "Protocols: \"Wildtype E14 mESC were cultured under standard culture conditions in Knockout DMEM containing 15% Fetal Calf Serum, 1x Penicillin-Streptomycin-Glutamine, 1x NEAA 2-mercaptoethanol and 1000U Leukemia Inhibitory Factor. \" \"Trypisnised single mESC suspension is passed through 30micron filter to remove and clumps. A 96-well plate containing lysis buffer (0.2% Triton, 1:20 RNAse inbhibitor, 10mM Oligo-dT30VN, 10mM dNTPs) was prepared. Spike-ins (ERCCs and SIRVs; final 1:1000,000 dilution) are subjected to different freeze-thaw cycles (seven conditions) and 1ul of spike-in mix per condition was added to each well column-wise. Single mES cells were FACS sorted (BD Influx; BD Biosciences) to each well (along with bulk controls). Subsequent steps (Lysis, RT, PCR amplification and DNA purification) was performed as described in Smart-Seq2 publication (Picelli et al Nature Protocol 2014). \" \"The single cell cDNA across the 96-well plate was quantified, diluted and libraries were made using Nextera XT DNA sample preparation kit (Illumina) utilising 96 dual barcoded indices. Library pooling was performed post AMPure XP beads (Agencourt Biosciences) clean up and sequenced on HiSeq2500 (v4) using paired end sequencing (75 or 125bp) at the Wellcome Trust Sequencing facility following Wellcome Trust Sequencing guidelines.\""
+                  }
+                ]
+              },
+              {
+                "kind": "protocol_application",
+                "protocol_ref": "ERX1943628:library"
+              },
+              {
+                "kind": "assay",
+                "name": "ERX1943628",
+                "sample_ref": "SAMEA103910997",
+                "description": "Single cell RNA-sequencing of Spike-ins and mESC using Smart-Seq2 on 96-well plates",
+                "technology_type": {
+                  "value": "sequencing assay"
+                },
+                "comments": [
+                  {
+                    "name": "LIBRARY_STRATEGY",
+                    "value": "RNA-Seq"
+                  },
+                  {
+                    "name": "LIBRARY_SOURCE",
+                    "value": "TRANSCRIPTOMIC SINGLE CELL"
+                  },
+                  {
+                    "name": "LIBRARY_SELECTION",
+                    "value": "Oligo-dT"
+                  },
+                  {
+                    "name": "LIBRARY_LAYOUT",
+                    "value": "PAIRED"
+                  },
+                  {
+                    "name": "INSTRUMENT_MODEL",
+                    "value": "Illumina HiSeq 2500"
+                  },
+                  {
+                    "name": "INSTRUMENT_PLATFORM",
+                    "value": "ILLUMINA"
+                  },
+                  {
+                    "name": "Platform_title",
+                    "value": "Illumina HiSeq 2500"
+                  }
+                ]
+              },
+              {
+                "kind": "scan",
+                "name": "ERR1883127",
+                "comments": [
+                  {
+                    "name": "ENA_RUN",
+                    "value": "ERR1883127"
+                  },
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX1943628"
+                  },
+                  {
+                    "name": "ENA_SAMPLE",
+                    "value": "ERS1600165"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source": {
+        "format": "ENA"
+      }
+    }
+  },
+  {
+    "study": "SRP045775",
+    "expected": "sequencing",
+    "source_url": "https://www.ebi.ac.uk/ena/browser/view/SRP045775",
+    "data": {
+      "sample": [
+        {
+          "iid": "SAMN03008576",
+          "accession": [
+            {
+              "value": "SAMN03008576",
+              "database": "BioSample"
+            },
+            {
+              "value": "SRS689291",
+              "database": "SRA"
+            },
+            {
+              "value": "GSM1487054",
+              "database": "GEO"
+            }
+          ],
+          "status": [
+            {
+              "release_date": "2014-12-04",
+              "database": "ENA"
+            },
+            {
+              "last_update_date": "2014-12-04",
+              "database": "ENA"
+            },
+            {
+              "submission_date": "2014-08-26T08:25:58.713",
+              "release_date": "2014-12-04T00:44:21.283",
+              "last_update_date": "2014-12-04T01:24:40.473",
+              "database": "BioSample"
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "access",
+                  "value": "public"
+                }
+              ]
+            },
+            {
+              "database": "BioSample",
+              "comment": [
+                {
+                  "name": "record status",
+                  "value": "live"
+                }
+              ]
+            },
+            {
+              "database": "BioSamples",
+              "comment": [
+                {
+                  "name": "status",
+                  "value": "PUBLIC"
+                }
+              ]
+            },
+            {
+              "release_date": "2014-12-04T00:44:21.283Z",
+              "database": "INSDC"
+            },
+            {
+              "last_update_date": "2014-12-04T01:24:40.473Z",
+              "database": "INSDC"
+            },
+            {
+              "database": "INSDC",
+              "comment": [
+                {
+                  "name": "INSDC status",
+                  "value": "live"
+                }
+              ]
+            }
+          ],
+          "title": "FBSLIF_H3K4me3",
+          "type": "SRA",
+          "channel_count": "1",
+          "channel": [
+            {
+              "source": {
+                "value": "v6.5 mouse embryonic stem cells"
+              },
+              "organism": [
+                {
+                  "value": "Mus musculus",
+                  "taxid": "10090"
+                }
+              ],
+              "characteristics": [
+                {
+                  "name": "INSDC secondary accession",
+                  "value": "SRS689291"
+                },
+                {
+                  "name": "NCBI submission package",
+                  "value": "Generic.1.0"
+                },
+                {
+                  "name": "antibody",
+                  "value": "H3K4me3 antibody: Millipore 07-473"
+                },
+                {
+                  "name": "culture conditions",
+                  "value": "serum+LIF"
+                },
+                {
+                  "name": "organism",
+                  "value": "Mus musculus"
+                },
+                {
+                  "name": "cell type",
+                  "value": "v6.5 mouse embryonic stem cells"
+                },
+                {
+                  "name": "source_name",
+                  "value": "v6.5 mouse embryonic stem cells"
+                },
+                {
+                  "name": "BioSampleModel",
+                  "value": "Generic"
+                },
+                {
+                  "name": "External Id",
+                  "value": "SAMN03008576"
+                },
+                {
+                  "name": "NCBI submission model",
+                  "value": "Generic"
+                },
+                {
+                  "name": "SRA accession",
+                  "value": "SRS689291"
+                }
+              ]
+            }
+          ],
+          "platform_ref": {
+            "ref": "ena:platform:4431867c9e387a40"
+          },
+          "library_strategy": "ChIP-Seq",
+          "library_source": "GENOMIC",
+          "library_selection": "ChIP",
+          "contact_ref": [
+            {
+              "ref": "ena:BioSample:SAMN03008576:organization-2:contact-0"
+            }
+          ],
+          "raw_data": [
+            {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR155/001/SRR1557681/SRR1557681.fastq.gz",
+              "type": "fastq",
+              "checksum": "df773d32907d73229033f3e536b9823f"
+            }
+          ],
+          "relation": [
+            {
+              "type": "ENA-EXPERIMENT",
+              "target": "SRX686471"
+            },
+            {
+              "type": "ENA-RUN",
+              "target": "SRR1557681"
+            },
+            {
+              "type": "ENA-SUBMISSION",
+              "target": "SRA180309"
+            },
+            {
+              "type": "ENA-FASTQ-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS689291&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+            },
+            {
+              "type": "ENA-SUBMITTED-FILES",
+              "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS689291&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+            },
+            {
+              "type": "ENA-STUDY",
+              "target": "SRP045775"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:sample:SAMN03008187:center:3685b9d24be01f24:0"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:BioSample:SAMN03008286:organization-2"
+            },
+            {
+              "type": "archive center",
+              "target": "ena:SAMPLE:SAMN03008187:center_name"
+            }
+          ],
+          "sra_accession": [
+            "SRX686471"
+          ],
+          "ena_accession": [
+            "SRP045775"
+          ],
+          "sra_run": [
+            {
+              "instrument_platform": "ILLUMINA",
+              "indexed_statistics": {
+                "read_count": "52625556",
+                "base_count": "1315638900"
+              },
+              "platform_ref": {
+                "ref": "ena:platform:4431867c9e387a40"
+              },
+              "run": "SRR1557681",
+              "study": "SRP045775",
+              "experiment": "SRX686471",
+              "sample": "SRS689291",
+              "biosample": "SAMN03008576",
+              "library_layout": "SINGLE",
+              "library_selection": "ChIP",
+              "library_source": "GENOMIC",
+              "library_strategy": "ChIP-Seq",
+              "scan_name": "GSM1487054_r1",
+              "instrument_model": "Illumina HiSeq 2000"
+            }
+          ]
+        }
+      ],
+      "series": {
+        "iid": "PRJNA259420",
+        "title": "Deconstructing the dynamic transcriptional program of pluripotent stem cells.",
+        "summary": "Pluripotent stem cells (PSCs) are capable of dynamic interconversion between distinct substates, but the regulatory circuits specifying these states and enabling transitions between them are not well understood. We set out to address this issue and map the landscape of gene expression variability in PSCs by single-cell expression profiling of PSCs under different chemical and genetic perturbations. We find that signaling factors and developmental regulators show highly variable expression in PSCs, with expression states for some variable genes heritable through multiple cell divisions. Expression variability and population heterogeneity can be influenced by perturbation of signaling pathways and chromatin regulators. Strikingly, either removal of mature miRNAs or pharmacologic blockage of external signaling pathways drives PSCs into a low-noise ground state characterized by a reconfigured pluripotency regulatory network, increased self-renewal efficiency, and a distinct chromatin state, an effect mediated by the action of opposing miRNA families on the c-myc / Lin28 / let-7 axis. These findings illuminate the causes of transcriptional heterogeneity in PSCs and their consequences for cellular decision-making. Overall design: Single-cell RNA-Seq on 183 individual v6.5 mouse embryonic stem cells (mESCs) cultured in serum+LIF media, 94 v6.5 mESCs cultured in 2i+LIF media (''ground state'' conditions), and 84 Dgcr8 -/- mESCs (constructed in a v6.5 background), that lack mature miRNAs due to knockout of a miRNA processing factor, cultured in serum+LIF. ChIP-Seq for RNA polymerase II, H3K4me3, H3K27me3, H3K27ac, H3K9me3, and H3K36me3 on the three populations of mESCs profiled by single-cell RNA-Seq. Single-cell RNA-Seq on 54 individual nestin-positive neural precursor cells derived from v6.5 mESCs.",
+        "protocols": [
+          {
+            "name": "SRX686471:library",
+            "type": {
+              "value": "library construction protocol"
+            },
+            "description": "mES or neural precursor cells were taken directly from culture, trypsinized, washed in PBS, spun down and resuspended at a concentration of 3 x 10^5 cell per mL of complete media, mixed 7:3 with C1 suspension reagent (Fluidigm), and loaded onto C1 Single-Cell Auto Prep chips (C1 chips; Fluidigm). After loading, each of the cell isolation chambers on the C1 chip was optically inspected for the presence of a cell.  Subsequently, these cells were lysed and SMART-Seq whole transcriptome amplified (WTA) products were prepared with the C1 System using the SMARTer Ultra Low RNA Kit for Illumina Sequencing (Clontech) and protocols provided by Fluidigm (full details available at www.fluidigm.com). WTA products were harvested from the C1 chip, diluted to a concentration of 0.15 ng/μL, and cDNA libraries were prepared using Nextera XT DNA Sample preparation reagents (Illumina) as per the manufacturer’s recommendations, with minor modifications. Specifically, reactions were run at ¼ the recommended volume, the tagmentation step was extended to 10 minutes, and the extension time during the PCR step was increased from 30s to 60s. After the PCR step, all 96 samples were pooled without library normalization, cleaned twice with 0.9x AMPure XP SPRI beads (Beckman Coulter), and eluted in buffer TE. The pooled libraries were quantified using Quant-IT DNA High-Sensitivity Assay Kit (Invitrogen) and examined using a high-sensitivity DNA chip (Agilent). Finally, samples were sequenced deeply using either a HiSeq 2000 or a HiSeq 2500 sequencer (25 bp paired-end reads)."
+          }
+        ],
+        "assay_paths": [
+          {
+            "steps": [
+              {
+                "kind": "source",
+                "name": "SAMN03008576",
+                "sample_ref": "SAMN03008576",
+                "characteristics": [
+                  {
+                    "name": "INSDC secondary accession",
+                    "value": "SRS689291"
+                  },
+                  {
+                    "name": "NCBI submission package",
+                    "value": "Generic.1.0"
+                  },
+                  {
+                    "name": "antibody",
+                    "value": "H3K4me3 antibody: Millipore 07-473"
+                  },
+                  {
+                    "name": "culture conditions",
+                    "value": "serum+LIF"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Mus musculus"
+                  },
+                  {
+                    "name": "cell type",
+                    "value": "v6.5 mouse embryonic stem cells"
+                  },
+                  {
+                    "name": "source_name",
+                    "value": "v6.5 mouse embryonic stem cells"
+                  },
+                  {
+                    "name": "BioSampleModel",
+                    "value": "Generic"
+                  },
+                  {
+                    "name": "External Id",
+                    "value": "SAMN03008576"
+                  },
+                  {
+                    "name": "NCBI submission model",
+                    "value": "Generic"
+                  },
+                  {
+                    "name": "SRA accession",
+                    "value": "SRS689291"
+                  },
+                  {
+                    "name": "organism",
+                    "value": "Mus musculus",
+                    "term_source_ref": "NCBITaxon",
+                    "term_accession_number": "10090"
+                  }
+                ],
+                "description": "v6.5 mouse embryonic stem cells",
+                "comments": [
+                  {
+                    "name": "BioSD_SAMPLE",
+                    "value": "SAMN03008576"
+                  },
+                  {
+                    "name": "Sample_title",
+                    "value": "FBSLIF_H3K4me3"
+                  },
+                  {
+                    "name": "Sample_source_name",
+                    "value": "v6.5 mouse embryonic stem cells"
+                  }
+                ]
+              },
+              {
+                "kind": "protocol_application",
+                "protocol_ref": "SRX686471:library"
+              },
+              {
+                "kind": "assay",
+                "name": "SRX686471",
+                "sample_ref": "SAMN03008576",
+                "technology_type": {
+                  "value": "sequencing assay"
+                },
+                "comments": [
+                  {
+                    "name": "LIBRARY_STRATEGY",
+                    "value": "ChIP-Seq"
+                  },
+                  {
+                    "name": "LIBRARY_SOURCE",
+                    "value": "GENOMIC"
+                  },
+                  {
+                    "name": "LIBRARY_SELECTION",
+                    "value": "ChIP"
+                  },
+                  {
+                    "name": "LIBRARY_LAYOUT",
+                    "value": "SINGLE"
+                  },
+                  {
+                    "name": "INSTRUMENT_MODEL",
+                    "value": "Illumina HiSeq 2000"
+                  },
+                  {
+                    "name": "INSTRUMENT_PLATFORM",
+                    "value": "ILLUMINA"
+                  },
+                  {
+                    "name": "Platform_title",
+                    "value": "Illumina HiSeq 2000"
+                  }
+                ]
+              },
+              {
+                "kind": "scan",
+                "name": "SRR1557681",
+                "comments": [
+                  {
+                    "name": "ENA_RUN",
+                    "value": "SRR1557681"
+                  },
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "SRX686471"
+                  },
+                  {
+                    "name": "ENA_SAMPLE",
+                    "value": "SRS689291"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source": {
+        "format": "ENA"
+      }
+    }
+  }
+]
