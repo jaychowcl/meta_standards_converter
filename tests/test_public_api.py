@@ -12,7 +12,7 @@ import importlib
 
 def test_supported_owning_package_exports_import():
     exports = {
-        "converters": ("GEO2JSONConverter", "GEO2AEConverter", "AE2JSONConverter", "JSON2AEConverter", "JSON2TSVConverter", "JSON2H5ADConverter", "JSON2OBSConverter"),
+        "converters": ("Converter", "InputSpec", "ConversionBatchResult", "GEO2JSONConverter", "GEO2AEConverter", "AE2JSONConverter", "JSON2AEConverter", "JSON2TSVConverter", "JSON2H5ADConverter", "JSON2OBSConverter"),
         "sources": ("GEOXMLParser", "MAGETabSourceResolver", "PackageLoader"),
         "sources.json": ("JSONPackageSource",),
         "sources.insdc": ("INSDCWebfetcher",),

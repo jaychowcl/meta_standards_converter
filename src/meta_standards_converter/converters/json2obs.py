@@ -8,27 +8,21 @@
 # =============================================================================
 from __future__ import annotations
 
-import json
-
 import tempfile
-
-from dataclasses import dataclass, replace
 
 from pathlib import Path
 
-from typing import Any, Mapping, Sequence
-
-from meta_standards_converter.artifact_bundle import (
-    DurableArtifactBundlePublisher,
-    PublishedArtifactBundle,
-)
+from typing import Any, Mapping
 
 from .json2h5ad import BatchConversionResult, ConversionResult, JSON2H5ADConverter
 
 
+from meta_standards_converter.expression.components import (
+    AnnDataComponentExporter,
+    AnnDataMetadataExportResult,
+    AnnDataMetadataBatchResult,
+)
 
-
-from meta_standards_converter.expression.components import (AnnDataComponentExporter, AnnDataMetadataExportResult, AnnDataMetadataBatchResult)
 
 class JSON2OBSConverter:
     def __init__(self, h5ad_converter=None, components=None):
@@ -60,26 +54,64 @@ class JSON2OBSConverter:
                 replacement_profile=replacement_profile,
                 **options,
             )
-            if isinstance(converted, BatchConversionResult):
-                results: dict[str, AnnDataMetadataExportResult] = {}
-                for dataset_id, conversion in converted.conversions.items():
-                    target = destination / dataset_id
-                    results[dataset_id] = self.components.export(
-                        conversion,
-                        target,
-                        include_var=include_var,
-                        include_uns=include_uns,
-                        overwrite=overwrite,
-                    )
-                return AnnDataMetadataBatchResult(
-                    conversions=results,
-                    failures=tuple(converted.failures),
-                    warnings=tuple(converted.warnings),
-                )
-            return self.components.export(
-                converted,
-                destination,
-                include_var=include_var,
-                include_uns=include_uns,
-                overwrite=overwrite,
+            return self._export_converted(
+                converted, destination, include_var, include_uns, overwrite
             )
+
+    def convert_loaded(
+        self,
+        loaded,
+        *,
+        outdir: str | Path,
+        include_var: bool = False,
+        include_uns: bool = False,
+        overwrite: bool = False,
+        replacement_profile: Mapping[str, Any] | None = None,
+        source_json: str | Path | None = None,
+        **options,
+    ) -> AnnDataMetadataExportResult | AnnDataMetadataBatchResult:
+        """Export decoded package groups without serializing an intermediate JSON file."""
+        destination = Path(outdir)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix=f".{destination.name}.json2obs-",
+            dir=destination.parent,
+        ) as temporary:
+            converted = self.h5ad_converter.convert_loaded(
+                loaded,
+                out=str(Path(temporary) / "assembly"),
+                source_json=source_json,
+                overwrite=True,
+                replacement_profile=replacement_profile,
+                **options,
+            )
+            return self._export_converted(
+                converted, destination, include_var, include_uns, overwrite
+            )
+
+    def _export_converted(
+        self, converted, destination, include_var, include_uns, overwrite
+    ):
+        if isinstance(converted, BatchConversionResult):
+            results = {
+                dataset_id: self.components.export(
+                    conversion,
+                    destination / dataset_id,
+                    include_var=include_var,
+                    include_uns=include_uns,
+                    overwrite=overwrite,
+                )
+                for dataset_id, conversion in converted.conversions.items()
+            }
+            return AnnDataMetadataBatchResult(
+                conversions=results,
+                failures=tuple(converted.failures),
+                warnings=tuple(converted.warnings),
+            )
+        return self.components.export(
+            converted,
+            destination,
+            include_var=include_var,
+            include_uns=include_uns,
+            overwrite=overwrite,
+        )

@@ -15,6 +15,48 @@ canonical handoff by stable anchor, purpose and search keywords.
 
 ## Canonical routes
 
+- id: unified-converter
+  title: Unified converter API
+  anchor: unified-converter
+  purpose: Common Python conversion API, explicit handler and route contracts, supported sources and destinations, and compatibility adapters.
+  keywords: Converter, InputSpec, ConversionBatchResult, force_in_type, loaded data, provider routing, superclass
+  link: [Open section](codebase.md#unified-converter)
+
+- id: unified-inputs
+  title: Unified input handlers and discovery
+  anchor: unified-inputs
+  purpose: Defensive accession, package, XML, record, MAGE-TAB, expression, directory and companion handling.
+  keywords: probe, validate, load, StudyRecords, ambiguity, symlinks, bounded, remote policy, INSDC, forced type
+  link: [Open section](codebase.md#unified-inputs)
+
+- id: unified-manifest
+  title: Versioned input manifest
+  anchor: unified-manifest
+  purpose: Version 1.0 schema, relative paths, ordered inputs, explicit bindings and option precedence.
+  keywords: input_manifest, sources, companions, metadata, input_options, output_options, overrides
+  link: [Open section](codebase.md#unified-manifest)
+
+- id: unified-routes
+  title: Unified routes and settings
+  anchor: unified-routes
+  purpose: Registered destination capabilities, stage-specific options, raw processing permission, reference requirements and scientific defaults.
+  keywords: ROUTES, allow_processing, orientation, partial, enrichment, replacement_profile, memory, no matrix combination
+  link: [Open section](codebase.md#unified-routes)
+
+- id: unified-results
+  title: Unified outcomes and publication
+  anchor: unified-results
+  purpose: In-memory payloads, status axes, exact outfile, bundle outdir, collisions, aggregation and failure continuation.
+  keywords: artifacts, payload, diagnostics, fail_fast, overwrite, atomic, completeness, validation, provenance
+  link: [Open section](codebase.md#unified-results)
+
+- id: unified-compatibility
+  title: Unified compatibility and tests
+  anchor: unified-compatibility
+  purpose: Loaded-data adapters, injected services, lazy dependencies, provenance identity and offline acceptance.
+  keywords: convert_loaded, project_loaded, decode, canonical SHA256, legacy CLI, TDD, fake pipeline
+  link: [Open section](codebase.md#unified-compatibility)
+
 - id: architecture
   title: Architecture
   anchor: architecture
@@ -103,7 +145,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Principal workflows
   anchor: principal-workflows
   purpose: Choose a conversion or legacy import flow and trace validation through terminal outcomes.
-  keywords: seven converters, eight commands, workflow, stages, failure, pseudocode
+  keywords: unified API, nine converters, ten commands, workflow, stages, failure, pseudocode
   link: [Open section](codebase.md#principal-workflows)
 
 - id: workflow-geo2ae

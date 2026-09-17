@@ -289,12 +289,34 @@ class JSON2H5ADConverter:
             allow_unverified_combination=allow_unverified_combination,
             **options,
         )
+        return self._run_loaded(loaded, source_json=json_path, out=out, **conversion_options)
+
+    def convert_loaded(self, loaded, out=None, *, source_json=None,
+                       replacement_profile=None, **options):
+        """Convert loaded package groups without an intermediate JSON file."""
+        if options.get("force_memory") and not options.get("resume"):
+            raise ValueError("force_memory requires resume=True")
+        if not loaded.groups:
+            raise ValueError("JSON source contains no convertible package groups.")
+        if source_json is None:
+            canonical = json.dumps([p.to_mapping() for g in loaded.groups for p in g.packages],
+                                   sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+            digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+            source_json = "urn:msc:miniml:sha256:" + digest
+            options["_source_content_id"] = digest
+        loaded = replace(loaded, groups=tuple(
+            group.resolved(replacement_profile=replacement_profile) for group in loaded.groups))
+        for group in loaded.groups:
+            self._validate_dataset_id(group.dataset_id)
+        return self._run_loaded(loaded, source_json=source_json, out=out, **options)
+
+    def _run_loaded(self, loaded, *, source_json, out, **options):
         if len(loaded.groups) > 1:
             return self._convert_groups(
                 loaded,
-                source_json=json_path,
+                source_json=source_json,
                 out=out,
-                **conversion_options,
+                **options,
             )
         group = loaded.groups[0]
         result = self._convert_packages(
@@ -302,9 +324,9 @@ class JSON2H5ADConverter:
             dataset_id=group.dataset_id,
             source_packages=list(group.source_packages or group.packages),
             harmonization_resolution=group.harmonization_resolution,
-            source_json=json_path,
+            source_json=source_json,
             out=out,
-            **conversion_options,
+            **options,
         )
         for warning in loaded.warnings:
             if warning not in result.warnings:
@@ -431,8 +453,9 @@ class JSON2H5ADConverter:
             self._validate_path_component(sample_id, "sample_id")
         sample_context = self._sample_context(packages)
         characteristic_columns = self.normalizer.characteristic_columns(packages)
-        source_json = os.path.abspath(source_json)
-        source_json_sha256 = self._sha256(source_json)
+        content_id = options.pop("_source_content_id", None)
+        source_json = source_json if content_id else os.path.abspath(source_json)
+        source_json_sha256 = content_id or self._sha256(source_json)
         checkpoint_root = (
             Path(processed_checkpoint_dir)
             if processed_checkpoint_dir

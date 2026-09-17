@@ -72,15 +72,20 @@ fetching expression assets. See the [CLI guide](#cli).
 ### Python API quickstart
 
 ```python
-from meta_standards_converter.converters import JSON2TSVConverter
+from meta_standards_converter.converters import Converter
 
-result = JSON2TSVConverter().export_manifest(
-    "output/GSE234602.json", outdir="tables"
+result = Converter().convert(
+    "output/GSE234602.json", out_type="tsv", outdir="tables"
 )
-print(result.output_path)
+for outcome in result.items:
+    print(outcome.status, outcome.artifacts, outcome.diagnostics)
 ```
 
-See the [Python API guide](#python-api).
+The [unified API](docs/codebase.md#unified-converter) accepts accessions, files,
+directories, package objects and expression inputs. It supports explicit input
+types, versioned manifests, in-memory results and consistent batch outcomes.
+Overwrite and raw processing are disabled by default. Existing converter APIs
+and CLIs remain available; see the [Python API guide](#python-api).
 
 ### Docker quickstart
 

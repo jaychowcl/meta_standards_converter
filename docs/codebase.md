@@ -9,14 +9,14 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 # meta_standards_converter Codebase Handoff
 
 This is the canonical handoff for the live package under
-`src/meta_standards_converter`. It covers seven conversion paths and the explicit legacy importer, their
+`src/meta_standards_converter`. It covers the unified Python API, nine legacy conversion paths and the explicit legacy importer, their
 runtime boundaries, extension contracts, and the evidence needed to change them
 safely.
 
 <a id="architecture"></a>
 ## Architecture
 
-`meta_standards_converter` is a Python library and eight-command toolkit for
+`meta_standards_converter` is a Python library and ten-command toolkit for
 moving study metadata and expression assets among GEO MINiML, the package's
 parsed JSON model, ArrayExpress MAGE-TAB, delimited sample tables, and AnnData
 H5AD. CLI modules are thin batch adapters. Converter classes own use-case
@@ -33,10 +33,10 @@ historical evidence, not a claim that external providers were retested.
 ```text
 Users: CLI / Python / Docker / rootless Compose
                          |
-                  seven converters
+            unified API / nine converters
        +-----------------+--------------------+
        |                 |                    |
- GEO/BioStudies      local JSON/files    explicit/discovered assets
+ GEO/AE/SRA/ENA     local JSON/files    explicit/discovered assets
        |                 |                    |
  fetch + parse       validate/group       plan/download/run nf-core
        |                 |                    |
@@ -341,10 +341,12 @@ state which rationale is documented.
 The supported public entrypoints are:
 
 <a id="interface-cli"></a>
-- eight console scripts registered in `pyproject.toml`: `geo2ae`, `geo2json`,
-  `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`, and `miniml-migrate`;
+- ten console scripts registered in `pyproject.toml`: `sra2json`, `ena2json`,
+  `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`,
+  and `miniml-migrate`;
 <a id="interface-python"></a>
-- seven lazy converter-class exports from `meta_standards_converter.converters`,
+- the unified `Converter`, `InputSpec`, `ConversionBatchResult` and nine legacy
+  converter-class exports from `meta_standards_converter.converters`,
   plus supported models, source services, projectors and expression collaborators
   from their [owning packages](#package-exports);
 <a id="interface-docker"></a>
@@ -421,7 +423,7 @@ failure behavior are detailed in
 ## Public API reference
 
 The public facade is distributed across owning packages. `converters` exports
-nine converter classes and two archive result types lazily; `miniml`, `sources`, `expression`, `metadata`,
+the unified API, nine legacy converter classes and two archive result types lazily; `miniml`, `sources`, `expression`, `metadata`,
 `metadata.projection`, `magetab`, and `atlas_v1` expose their own contracts.
 The [package export table](#package-exports) enumerates their current names.
 The [source inventory](#public-api-and-callable-reference) lists every public-named
@@ -430,7 +432,8 @@ implementation helpers are distinguished from explicitly exported interfaces;
 Python visibility alone is not a stability guarantee.
 
 The curated contracts below explain the most consequential integration points.
-Exact current signatures, including inherited dataclass fields, appear in the
+Unified and loaded-data contracts are listed under [Unified converter](#unified-converter).
+Other exact signatures, including inherited dataclass fields, appear in the
 source inventory; it supersedes historical call examples from preceding releases.
 
 <a id="atlas-v1-reader"></a>
@@ -676,6 +679,369 @@ They are documented implementation seams rather than additions to
 - **Side effects:** none required.
 - **Support:** formal export/injection extension point; not runtime-checkable.
 - **Source:** [tabular.py](../src/meta_standards_converter/metadata/projection/tabular.py).
+
+<a id="unified-converter"></a>
+## Unified converter API
+
+`Converter` is the common Python entrypoint. It composes registered input
+handlers and existing conversion services. Legacy converter classes retain
+their own public signatures and defaults; they do not inherit a new base class.
+This keeps provider retrieval, scientific decisions, protocol registries,
+metrics, and checkpoint ownership in their existing services.
+
+```python
+from pathlib import Path
+from meta_standards_converter.converters import Converter, InputSpec
+
+converter = Converter()
+result = converter.convert(
+    Path("study.json"),
+    out_type="csv",
+    outfile=Path("exports/samples.csv"),
+)
+for outcome in result.items:
+    print(outcome.id, outcome.status, outcome.dataset_ids, outcome.artifacts)
+    print([diagnostic.message for diagnostic in outcome.diagnostics])
+```
+
+The signature is:
+
+```python
+Converter(*, services=None, handlers=None).convert(
+    input=None, *, out_type, force_in_type=None, outfile=None, outdir=None,
+    input_manifest=None, input_options=None, output_options=None,
+    runtime_options=None,
+) -> ConversionBatchResult
+```
+
+`out_type` is one of `json`, `magetab`, `tsv`, `csv`, `h5ad`, or
+`obs`. JSON always denotes MSC MINiML **3.0**, including when the source is
+Atlas, Curator, GEO or an archive provider. It is not an Atlas/native-provider
+serializer. Saved older schemas require an explicit migration outside this API.
+
+<a id="unified-inputs"></a>
+### Inputs, detection and explicit binding
+
+| Input | Handler / binding |
+| --- | --- |
+| GEO Series accession | `geo_accession` (`geo` alias); GSE accessions |
+| ArrayExpress / BioStudies accession | `ae_accession`; E-… or supported S-… identifiers |
+| INSDC study/project/sample/experiment/run accession | `sra_accession` / `ena_accession` (`sra` / `ena` aliases) |
+| MINiMLPackage, package mapping, or collection of packages | `miniml` (`msc_miniml` alias) |
+| MINiML JSON document | `json`, or detected `miniml` |
+| Atlas v1 document / Curator `miniml_json` envelope | `atlas` (`atlas_v1` alias) / `curator` |
+| GEO MINiML XML / family .tgz or .tar.gz | `geo_xml` / `geo_archive` |
+| Native SRA experiment packages / ENA study, sample, experiment and run XML | `sra_xml` / `ena_xml`; one explicitly bound bundle or directory grouping |
+| Native `StudyRecords` object | `sra_records` / `ena_records`; verified study references are required |
+| IDF, SDRF, or IDF/SDRF bundle | `magetab`; SDRF alone requires a uniquely associated or explicit IDF |
+| H5AD (.h5ad or .h5ad.gz) / AnnData | `h5ad` / `anndata` |
+| Supported delimited count matrix, 10x HDF5 or MEX | `matrix`; MEX requires features and barcodes; delimited matrices require orientation |
+| FASTQ / explicitly bound read collection | `fastq`; metadata and processing requirements apply |
+
+Automatic INSDC accession routing uses SRA for SR*, PRJNA* and SAMN*; ENA for
+ER*, PRJEB* and SAMEA*. Other supported DDBJ/INSDC prefixes use
+`runtime_options["insdc_default"]` (`"ena"` by default; `"sra"` permitted).
+Forcing a provider overrides this choice, without fallback or automatic merging
+of peer evidence. Native peer/GEO-AE enrichment remains explicitly configurable.
+
+Use `InputSpec(sources, id=None, in_type=None, companions={}, metadata=None,
+input_options={}, output_options={})` for one logical source. A list/tuple of
+MINiML package objects or package mappings is one metadata source with dataset
+groups. Other lists/tuples are batches; wrapping a list in `InputSpec` explicitly
+binds a file/record bundle. Read bundles and standalone matrices with supplied
+metadata must bind to exactly one sample.
+
+```python
+result = converter.convert(
+    InputSpec(
+        "counts.mtx.gz",
+        id="library_a",
+        companions={"features": "features.tsv.gz", "barcodes": "barcodes.tsv.gz"},
+        metadata="study.json",
+    ),
+    out_type="h5ad",
+    outdir="catalogue",
+)
+```
+
+Companion roles are `idf`/`sdrf` for MAGE-TAB and `features`/`barcodes` for
+matrices. Unrelated companions or supplied metadata on a metadata-only handler
+are request errors. Explicit bindings take precedence and still undergo parser
+and relationship validation.
+
+Ordinary strings are paths, approved remote URLs, or accessions. Inline JSON/XML
+strings require an explicit `force_in_type` or `InputSpec.in_type`. A missing
+`Path`, including `Path("GSE1")`, is an input failure and never a retrieval
+request. `force_in_type` selects exactly one handler: it bypasses detection,
+not schema, companion, resource or retrieval-policy checks.
+
+Detection uses bounded document reads and structural signatures, without
+converting or publishing. XML uses the existing safe parser. GEO family
+archives reject traversal, links, duplicate members, excessive sizes and
+ambiguous XML payloads; they are read without extracting archive paths. Remote
+input localization delegates to the existing retrieval policy and temporary
+operation cache. Unknown remote filename formats need an explicit type.
+
+Directories are sorted and nonrecursive unless `recursive=True`. Directory
+symlinks are never traversed. Output locations and recognized cache/work
+directories are excluded. IDFs claim their SDRFs once; competing automatic
+associations are errors. 10x feature/barcode files bind to their matrix once;
+mixed directories retain their other logical inputs. Native XML records group
+by provider format, then verified study references. Conflicting native record
+identities fail validation. Unsupported entries remain visible as failed
+outcomes; exact duplicate paths are skipped, and conflicting settings for the
+same source are reported.
+
+<a id="unified-manifest"></a>
+### Versioned input manifests
+
+A manifest is a mapping or JSON path with exactly `schema_version: "1.0"` and
+an ordered, nonempty `inputs` array. Each entry requires a unique `id` and
+nonempty `sources` array. Optional fields are `in_type`, `companions`,
+`metadata`, `input_options`, and `output_options`. Unknown fields fail before
+execution. Relative source, companion, metadata and supported option paths
+resolve against the manifest directory; mapping manifests use the current
+directory.
+
+```json
+{
+  "schema_version": "1.0",
+  "inputs": [
+    {
+      "id": "study_a",
+      "sources": ["metadata/study.idf.txt"],
+      "in_type": "magetab",
+      "companions": {"sdrf": ["metadata/study.sdrf.txt"]}
+    },
+    {
+      "id": "library_b",
+      "sources": ["counts/library_b.tsv"],
+      "in_type": "matrix",
+      "metadata": "metadata/library_b.json",
+      "input_options": {"orientation": "genes-by-observations"}
+    }
+  ]
+}
+```
+
+`converter.convert(input_manifest="inputs.json", out_type="h5ad",
+outdir="catalogues")` processes entries in order. A supplied directory can add
+unbound sources; manifest-owned source and companion paths are excluded from
+automatic discovery. Manifest/per-input settings override call-level defaults.
+There are no silent coercions of misspelled or irrelevant options.
+
+<a id="unified-routes"></a>
+### Loaded data, routes and options
+
+The internal `LoadedInput` holds existing `SourceLoadResult` dataset groups,
+lazy expression/asset references, origins, companion bindings, source-file or
+canonical-content identity, and diagnostics. It does not invent an alternative
+scientific model. `routes.ROUTES` registers explicit content/destination pairs;
+there is no shortest-path search.
+
+```text
+convert request
+  -> validate settings and discover ordered logical inputs
+  -> probe/select exactly one handler (or force it)
+  -> handler.validate -> handler.load
+  -> validate typed groups and select explicit route
+     | metadata -> JSON / MAGE-TAB / sample TSV or CSV
+     | metadata + selected expression assets -> H5AD catalogue / OBS bundle
+     | AnnData/H5AD or bound matrix -> H5AD / OBS
+     | raw reads + metadata + permission + reference -> existing pipeline
+  -> preflight destination collisions -> existing publishers
+  -> outcome with payload/artifacts and independent status axes
+     failure -> retain diagnostics and earlier artifacts; continue next input
+```
+
+| Loaded content | Destinations and requirements |
+| --- | --- |
+| Metadata packages | JSON, MAGE-TAB, sample TSV/CSV |
+| Metadata with suitable expression assets | Above plus H5AD/OBS catalogues; require `outdir` |
+| Standalone H5AD/AnnData | H5AD copy or observation/component export; OBS reads files backed |
+| Supported matrix | H5AD/OBS; explicit orientation for delimited matrices, verified companions for MEX |
+| Raw reads | H5AD/OBS only after `allow_processing=True`, metadata binding and reference preflight |
+| Expression source with supplied or embedded MSC metadata | Metadata destinations additionally available; observation columns are never used to reconstruct a study |
+
+Metadata-only output from a read bundle does not run a pipeline. H5AD/OBS
+assembly preserves the existing per-sample catalogue policy and never combines
+expression matrices implicitly. Standalone full matrix loads use existing
+memory estimators and resource-profile limits. Caller-owned packages, mappings
+and AnnData objects are not mutated.
+
+Input option schemas:
+- GEO accessions: `enrich`, `related_series`, `remove_empty`.
+- Native archive accessions: `enrich_from_geo_ae`, `include_peer`, `evidence_dir`.
+- MAGE-TAB: `sdrf_sources`; GEO XML/archive: `remove_empty`.
+- Matrices: `orientation` (`auto`, `genes-by-observations`, `observations-by-genes`).
+- Other handlers accept no input options.
+
+Destination option schemas:
+- JSON: `aggregate`.
+- MAGE-TAB: `enrich`, `platform_handler`, `replacement_profile`.
+- Sample TSV/CSV: `aggregate`, `allow_invalid`, `replacement_profile`.
+- Metadata-backed H5AD/OBS: `explicit_assets`, `asset_manifest`, `asset_specs`,
+  `force_reprocess`, `matrix_orientation`, `pipeline`, `genome`, `fasta`,
+  `gtf`, `gff`, `accept_inferred_reference`, `profile`, `revision`,
+  `params_file`, `nextflow_config`, `work_dir`, `resume`, `force_memory`,
+  `processed_checkpoint_dir`, `allow_invalid`, `allow_unverified_combination`,
+  and `replacement_profile`. Existing scientific meanings are unchanged.
+- OBS additionally supports `include_var` and `include_uns`. Standalone
+  AnnData/H5AD accepts only these OBS flags; standalone matrices also accept
+  `matrix_orientation`. Processing/projector options on standalone expression
+  routes are rejected.
+
+Runtime options are `overwrite=False`, `fail_fast=False`, `recursive=False`,
+`allow_processing=False`, `resource_profile="standard"`,
+`resource_overrides=None`, `insdc_default="ena"`, and `allowed_hosts=()`.
+Host exceptions still obey the existing scheme/address/redirect/size policy.
+`force_memory` requires `resume=True`; `gtf` and `gff` are mutually
+exclusive. Reference inference requires explicit acceptance.
+
+GEO accession to MAGE-TAB uses the existing direct `GEO2AEConverter` and its
+enrichment behavior. Overrides that this route cannot honor are rejected; use
+saved JSON for independently configurable export enrichment. Native accession
+chains retain import-stage enrichment and do not enrich a second time by
+default. Local XML and MAGE-TAB loaders have not applied that enrichment, so
+their MAGE-TAB export retains the JSON exporter default. Explicit destination
+settings still apply at export. MAGE-TAB construction retains its existing
+publication/run evidence resolver, independently of the enrichment switch.
+
+<a id="unified-results"></a>
+### Outcomes and publication
+
+Every call returns `ConversionBatchResult`, including a single input.
+`items` preserves request order. Each outcome carries the input ID, source and
+origins, selected/forced type, provider, canonical metadata content ID, route,
+dataset identities, in-memory `payload`, published `artifacts`, and structured
+`Diagnostic(code, message, stage, severity)` values. `to_dict()` returns a
+JSON-compatible summary without embedding potentially large scientific payloads
+or secret URL query parameters.
+
+Execution (`succeeded`/`failed`/`skipped`), completeness
+(`complete`/`partial`/`unknown`) and validation
+(`valid`/`invalid`/`unknown`) are independent. Upstream native partial
+status and skipped Atlas dataset states survive successful downstream export.
+Valid partials may publish.
+`allow_invalid` is a separate, explicit projector permission. Request-level
+configuration errors raise before execution; operational input failures become
+outcomes. `fail_fast=True` marks later inputs skipped. Batch status is complete
+only when every input completes; failed/skipped-only batches are failed,
+otherwise mixed outcomes are partial.
+
+| Destination | No output path | With output path |
+| --- | --- | --- |
+| JSON | List of typed MINiML packages | Dataset JSON files, or one explicitly aggregated package list |
+| MAGE-TAB | Constructed table dictionaries | `<accession>.idf.txt` and `<accession>.sdrf.txt`, with bundle pointer |
+| TSV/CSV | Dataset-keyed `ProjectedTable` objects (rows, columns, identities, diagnostics) | `<dataset>.tsv/.csv` |
+| Standalone H5AD | Independent AnnData object | Exact `outfile` or `<input-name>.h5ad` |
+| Standalone OBS | Copied `obs`, optional `var`/`uns` | Exact OBS CSV `outfile`, or component bundle plus manifest |
+| Metadata-backed H5AD/OBS | Destination-required diagnostic | Existing per-sample catalogue or observation/component bundles |
+
+`outfile` is an exact single-file destination; `outdir` is required for
+published batches, MAGE-TAB pairs and catalogues. Both together are rejected.
+Multiple datasets need a directory unless JSON/table `aggregate=True` is
+explicit. Aggregation is within a logical metadata source; batches remain
+independent. Output names derived from identities must be safe path components.
+No destination means no implicit current-directory publication.
+
+Known collisions are checked before publishing each logical input. Duplicate
+destinations across inputs are rejected even with overwrite enabled. Existing
+atomic no-replace/replace primitives publish files or coherent bundles.
+Atomicity is per artifact bundle, not a batch-wide transaction. Earlier
+successful outcomes/artifacts remain recorded after later failures.
+
+<a id="unified-compatibility"></a>
+### Shared services, compatibility and tests
+
+`JSONPackageSource.decode(payload)` separates payload decoding from file I/O.
+`JSON2AEConverter.convert_loaded`, `JSON2TSVConverter.project_loaded` /
+`convert_loaded`, `JSON2H5ADConverter.convert_loaded`, and
+`JSON2OBSConverter.convert_loaded` reuse decoded groups without temporary JSON.
+Legacy file methods use the same conversion/projection implementation while
+retaining signatures, return types, filenames, overwrite defaults and exception
+behavior. Original file routes retain source-file hashes. In-memory metadata
+uses deterministic canonical JSON SHA-256 and a
+`urn:msc:miniml:sha256:…` provenance source.
+
+`Converter(services={...})` preserves injected collaborators by identity.
+Service keys include `package_source`, `geo_parser`, `geo2json`, `geo2ae`,
+`ae2json`, `sra2json`, `ena2json`, `json2ae`, `json2tsv`, `json2h5ad`,
+`reader`, `components`, `retrieval`, `available_memory` and
+`memory_estimator`. Default services are created per operation; injected
+instances retain their caller-owned lifecycle. Scientific imports remain lazy.
+The unified boundary adds no CLI command, ontology access, migration, provider
+failover, protocol registry sharing, or changes to legacy processing permission.
+
+The contract suites are `tests/converters/test_loaded_inputs.py` and
+`test_unified_{converter,sources,expression,defensive}.py`. They cover recorded
+provider fixtures, fake processing, format equivalence, malformed/forced inputs,
+versions, bounded archives/XML, manifests, ambiguous companions, directory
+recursion, duplicates, option scope, permission/reference/orientation/memory
+requirements, in-memory results, immutability, partials and publication failures.
+Existing converter, expression, CLI, e2e and public-service suites protect
+legacy and consumer interfaces. The complete offline suite is
+`python -m pytest -m "not live_api"`; it requires no live provider conversions,
+production pipeline or ontology cache.
+
+
+The following inventory distinguishes the public facade from internal routing helpers.
+Only the three owning-package exports form the unified public surface.
+
+| Definition | Contract |
+| --- | --- |
+| `meta_standards_converter.converters.unified.contracts.InputSpec` | `InputSpec`. Public facade; see API contract above. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
+| `meta_standards_converter.converters.unified.contracts.Diagnostic` | `Diagnostic`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
+| `meta_standards_converter.converters.unified.contracts.InputError` | `InputError`. A safe, actionable input or capability error. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
+| `meta_standards_converter.converters.unified.contracts.LoadedInput` | `LoadedInput`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
+| `meta_standards_converter.converters.unified.contracts.ConversionItemResult` | `ConversionItemResult`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
+| `meta_standards_converter.converters.unified.contracts.ConversionBatchResult` | `ConversionBatchResult`. Public facade; see API contract above. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
+| `meta_standards_converter.converters.unified.discovery.kind_name` | `kind_name(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.is_url` | `is_url(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.package_value` | `package_value(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.metadata_kind` | `metadata_kind(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.is_anndata` | `is_anndata(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.read_text` | `read_text(path, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.xml_kind` | `xml_kind(text)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.tenx_member` | `tenx_member(path)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.tenx_directory` | `tenx_directory(path)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.detect` | `detect(value, runtime, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.file_kind` | `file_kind(name)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.idf_references` | `idf_references(path, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.idf_candidates` | `idf_candidates(sdrf, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.manifest_specs` | `manifest_specs(value, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.discovery.expand` | `expand(value, runtime, excluded=())`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
+| `meta_standards_converter.converters.unified.engine.source_label` | `source_label(source)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/engine.py) |
+| `meta_standards_converter.converters.unified.engine.ExecutionContext` | `ExecutionContext`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/engine.py) |
+| `meta_standards_converter.converters.unified.engine.Converter` | `Converter`. Public facade; see API contract above. [Source](../src/meta_standards_converter/converters/unified/engine.py) |
+| `meta_standards_converter.converters.unified.expression.ExpressionInput` | `ExpressionInput`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/expression.py) |
+| `meta_standards_converter.converters.unified.expression.load_expression` | `load_expression(kind, spec, context)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/expression.py) |
+| `meta_standards_converter.converters.unified.expression.export_expression` | `export_expression(loaded, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/expression.py) |
+| `meta_standards_converter.converters.unified.handlers.values` | `values(source)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
+| `meta_standards_converter.converters.unified.handlers.safe_name` | `safe_name(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
+| `meta_standards_converter.converters.unified.handlers.canonical_identity` | `canonical_identity(loaded)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
+| `meta_standards_converter.converters.unified.handlers.InputHandler` | `InputHandler`. One registered format with recognition, validation and loading boundaries. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
+| `meta_standards_converter.converters.unified.handlers.default_handlers` | `default_handlers()`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
+| `meta_standards_converter.converters.unified.options.settings` | `settings(value, allowed, label)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/options.py) |
+| `meta_standards_converter.converters.unified.publication.reserve` | `reserve(paths, context)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
+| `meta_standards_converter.converters.unified.publication.atomic_write` | `atomic_write(path, writer, overwrite)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
+| `meta_standards_converter.converters.unified.publication.publish_jsons` | `publish_jsons(groups, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
+| `meta_standards_converter.converters.unified.publication.publish_tables` | `publish_tables(tables, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
+| `meta_standards_converter.converters.unified.publication.publish_magetab` | `publish_magetab(tables, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
+| `meta_standards_converter.converters.unified.routes.Route` | `Route`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/routes.py) |
+| `meta_standards_converter.converters.unified.routes.select_route` | `select_route(loaded, source_kind, destination)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/routes.py) |
+| `meta_standards_converter.metadata.projection.tabular.ProjectedTable` | `ProjectedTable`. A projected sample table before publication. [Source](../src/meta_standards_converter/metadata/projection/tabular.py) |
+
+Shared loaded-data methods:
+
+| Definition | Signature |
+| --- | --- |
+| `JSON2AEConverter.convert_loaded` | `convert_loaded(self, loaded, out=None, enrich=True, platform_handler=None, *, replacement_profile=None)` |
+| `JSON2DelimitedConverter.project_loaded` | `project_loaded(self, loaded, *, allow_invalid=False, replacement_profile=None)` |
+| `JSON2DelimitedConverter.convert_loaded` | `convert_loaded(self, loaded, destination, *, allow_invalid=False, overwrite=False, replacement_profile=None)` |
+| `JSON2H5ADConverter.convert_loaded` | `convert_loaded(self, loaded, out=None, *, source_json=None, replacement_profile=None, **options)` |
+| `JSON2OBSConverter.convert_loaded` | `convert_loaded(self, loaded, *, outdir: str | Path, include_var: bool=False, include_uns: bool=False, overwrite: bool=False, replacement_profile: Mapping[str, Any] | None=None, source_json: str | Path | None=None, **options)` |
+| `JSONPackageSource.decode` | `decode(payload, *, fallback="input") -> SourceLoadResult` |
 
 <a id="principal-workflows"></a>
 ## Principal workflows
@@ -1158,12 +1524,12 @@ See [profile validation and fallback](#harmonization-overrides).
 <a id="cli"></a>
 ## CLI reference
 
-All eight commands are registered in [pyproject.toml](../pyproject.toml).
+All ten commands are registered in [pyproject.toml](../pyproject.toml).
 The tables below are derived from their current `argparse` parsers.
 `None` denotes an omitted value; repeatable options accumulate unless a
 mutually exclusive group is noted. Use `COMMAND --help` for installed-version help.
 
-The seven conversion commands isolate failures per input and return nonzero on
+The nine conversion commands isolate failures per input and return nonzero on
 errors (H5AD/OBS also report partial results). `miniml-migrate` propagates
 read/validation/write failures directly. Python errors are described with each
 workflow.
@@ -3395,6 +3761,9 @@ The top-level `meta_standards_converter` package exports no converter facade.
 
 | Export | Definition or value |
 | --- | --- |
+| `meta_standards_converter.converters.Converter` | `meta_standards_converter.converters.unified.engine.Converter` |
+| `meta_standards_converter.converters.InputSpec` | `meta_standards_converter.converters.unified.contracts.InputSpec` |
+| `meta_standards_converter.converters.ConversionBatchResult` | `meta_standards_converter.converters.unified.contracts.ConversionBatchResult` |
 | `meta_standards_converter.converters.GEO2JSONConverter` | `meta_standards_converter.converters.geo2json.GEO2JSONConverter` |
 | `meta_standards_converter.converters.GEO2AEConverter` | `meta_standards_converter.converters.geo2ae.GEO2AEConverter` |
 | `meta_standards_converter.converters.AE2JSONConverter` | `meta_standards_converter.converters.ae2json.AE2JSONConverter` |

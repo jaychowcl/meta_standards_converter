@@ -9,8 +9,24 @@
 
 from importlib import import_module
 
-_EXPORTS = {'ArchiveImportResult': 'archive_results', 'StudyImportOutcome': 'archive_results', 'ENA2JSONConverter': 'ena2json', 'SRA2JSONConverter': 'sra2json', 'GEO2JSONConverter': 'geo2json', 'GEO2AEConverter': 'geo2ae', 'AE2JSONConverter': 'ae2json', 'JSON2AEConverter': 'json2ae', 'JSON2TSVConverter': 'json2tsv', 'JSON2H5ADConverter': 'json2h5ad', 'JSON2OBSConverter': 'json2obs'}
+_EXPORTS = {
+    "Converter": "unified",
+    "InputSpec": "unified",
+    "ConversionBatchResult": "unified",
+    "ArchiveImportResult": "archive_results",
+    "StudyImportOutcome": "archive_results",
+    "ENA2JSONConverter": "ena2json",
+    "SRA2JSONConverter": "sra2json",
+    "GEO2JSONConverter": "geo2json",
+    "GEO2AEConverter": "geo2ae",
+    "AE2JSONConverter": "ae2json",
+    "JSON2AEConverter": "json2ae",
+    "JSON2TSVConverter": "json2tsv",
+    "JSON2H5ADConverter": "json2h5ad",
+    "JSON2OBSConverter": "json2obs",
+}
 __all__ = list(_EXPORTS)
+
 
 def __getattr__(name):
     """Load an owning-package export only when requested."""
