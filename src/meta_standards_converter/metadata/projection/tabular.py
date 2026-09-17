@@ -75,6 +75,17 @@ class TabularConversionResult:
 class TabularProjectionError(ValueError):
     pass
 
+
+@dataclass(frozen=True)
+class ProjectedTable:
+    """A projected sample table before publication."""
+
+    rows: tuple[Mapping[str, Any], ...]
+    columns: tuple[str, ...]
+    dataset_ids: tuple[str, ...]
+    warnings: tuple[str, ...] = ()
+    errors: tuple[str, ...] = ()
+
 class MSCMetadataProjector:
     """Default canonical tabular view of MINiML sample metadata."""
 

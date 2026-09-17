@@ -45,6 +45,14 @@ class JSON2AEConverter(JSONHandler):
             json_path=json_path,
             replacement_profile=replacement_profile,
         )
+        return self._convert_packages(packages, json_path, out, enrich, platform_handler)
+
+    def convert_loaded(self, loaded, out=None, enrich=True, platform_handler=None, *, replacement_profile=None):
+        """Construct from loaded groups without serializing an intermediate file."""
+        packages = self._packages_from_loaded(loaded, replacement_profile=replacement_profile)
+        return self._convert_packages(packages, "loaded input", out, enrich, platform_handler)
+
+    def _convert_packages(self, packages, json_path, out, enrich, platform_handler):
         logger.debug("%s: loaded %d parsed package(s)", json_path, len(packages))
 
         magetabs = []
@@ -86,6 +94,9 @@ class JSON2AEConverter(JSONHandler):
                 f"MINiML JSON file not found: {json_path}"
             ) from error
 
+        return self._packages_from_loaded(loaded, replacement_profile=replacement_profile)
+
+    def _packages_from_loaded(self, loaded, *, replacement_profile=None):
         for warning in loaded.warnings:
             logger.warning("%s", warning)
         if not loaded.groups:

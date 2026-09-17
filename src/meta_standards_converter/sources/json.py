@@ -67,10 +67,18 @@ class JSONPackageSource:
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
         payload = json.loads(source.read_text(encoding="utf-8"))
+        return self.decode(payload, fallback=source.stem)
+
+    def decode(self, payload: Any, *, fallback: str = "input") -> SourceLoadResult:
+        """Decode supplied metadata using the same boundary as file loading."""
+        if isinstance(payload, MINiMLPackage):
+            payload = payload.to_mapping()
+        elif isinstance(payload, (list, tuple)):
+            payload = [p.to_mapping() if isinstance(p, MINiMLPackage) else p for p in payload]
         if isinstance(payload, Mapping) and "harmonization_overrides" in payload:
             raise ValueError("Embedded harmonization_overrides are no longer supported; pass replacement_profile or --replacement-profile-file to the converter.")
         if isinstance(payload, Mapping) and "miniml_json" in payload:
-            return self._validate_result(self._agentic_envelope(payload, source.stem))
+            return self._validate_result(self._agentic_envelope(payload, fallback))
         if isinstance(payload, Mapping) and (
             "schema_version" in payload or "accessions" in payload
         ):
@@ -84,7 +92,7 @@ class JSONPackageSource:
                     f"Parsed MINiML package {index} must be a JSON object."
                 )
         return self._validate_result(
-            self._source_result(self._group_packages(packages, source.stem))
+            self._source_result(self._group_packages(packages, fallback))
         )
 
     def _agentic_envelope(

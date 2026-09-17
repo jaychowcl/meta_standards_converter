@@ -29,7 +29,7 @@ from meta_standards_converter.metadata.projection.assay import _parameter_summar
 from meta_standards_converter.metadata.interpretation import MINiMLMetadataProvider, MINiMLMetadataService
 
 
-from meta_standards_converter.metadata.projection.tabular import (TabularMetadataContext, TabularMetadataProjection, TabularMetadataProjector, TabularConversionResult, TabularProjectionError, MSCMetadataProjector)
+from meta_standards_converter.metadata.projection.tabular import (ProjectedTable, TabularMetadataContext, TabularMetadataProjection, TabularMetadataProjector, TabularConversionResult, TabularProjectionError, MSCMetadataProjector)
 class JSON2DelimitedConverter:
     """Host one or more injected sample projectors and write one table."""
 
@@ -59,6 +59,11 @@ class JSON2DelimitedConverter:
         replacement_profile: Mapping[str, Any] | None = None,
     ) -> TabularConversionResult:
         loaded = self.package_source.load(source)
+        return self.convert_loaded(loaded, destination, allow_invalid=allow_invalid,
+                                   overwrite=overwrite, replacement_profile=replacement_profile)
+
+    def project_loaded(self, loaded, *, allow_invalid=False, replacement_profile=None):
+        """Project loaded metadata without filesystem side effects."""
         records: list[dict[str, Any]] = []
         preferred: list[str] = []
         warnings = list(loaded.warnings)
@@ -134,6 +139,16 @@ class JSON2DelimitedConverter:
             }
         )
         columns = (*preferred, *extra)
+        return ProjectedTable(tuple(records), tuple(columns),
+                              tuple(group.dataset_id for group in loaded.groups),
+                              tuple(dict.fromkeys(warnings)), tuple(dict.fromkeys(errors)))
+
+    def convert_loaded(self, loaded, destination, *, allow_invalid=False,
+                       overwrite=False, replacement_profile=None):
+        table = self.project_loaded(loaded, allow_invalid=allow_invalid,
+                                    replacement_profile=replacement_profile)
+        records, columns = table.rows, table.columns
+        warnings, errors = table.warnings, table.errors
         output = Path(destination)
         if output.exists() and not overwrite:
             raise FileExistsError(f"Output already exists: {output}")
