@@ -111,8 +111,7 @@ def normalize(*, target, in_type, enrichment, options, force_in_type, outfile,
         raise ValueError("Conflicting in_type and force_in_type")
     if enrichment is not STANDARD:
         inp = combine(inp, {"enrichment": preset(enrichment)}, "preparation options")
-    inp.setdefault("enrichment", preset(enrichment))
-    inp.setdefault("expand_studies", True)
+    inp.setdefault("enrichment", STANDARD)
     return (selected or old, paths["outfile"], paths["input_manifest"],
             input_settings(inp), output_settings(out, target),
             settings(runtime, RUNTIME_DEFAULTS, "runtime options"))
@@ -121,8 +120,26 @@ def normalize(*, target, in_type, enrichment, options, force_in_type, outfile,
 def preparation_options(inp, out):
     """Extract preparation flags before validating a reader's own settings."""
     inp, out = dict(inp), dict(out)
-    name = preset(inp.pop("enrichment", "standard"))
-    expand = inp.pop("expand_studies", True)
+    configured = inp.pop("enrichment", STANDARD)
+    name = preset(configured)
+    explicit = configured is not STANDARD
+    expand = inp.pop("expand_studies", None)
+    old_expand = inp.get("related_series")
+    if expand is not None and old_expand is not None and expand != old_expand:
+        raise ValueError("Conflicting expand_studies and related_series")
+    expand = expand if expand is not None else old_expand if old_expand is not None else True
     if not isinstance(expand, bool):
         raise TypeError("expand_studies must be a boolean")
-    return inp, out, PreparationPolicy(name, expand)
+    legacy = combine({k: v for k, v in inp.items() if k == "enrich"},
+                     {k: v for k, v in out.items() if k == "enrich"}, "enrichment options")
+    if "enrich" in legacy:
+        enabled = legacy["enrich"]
+        if explicit and enabled != (name != "off"):
+            raise ValueError("Conflicting enrichment and enrich")
+        if not explicit:
+            name = "standard" if enabled else "off"
+    linked, peer = inp.get("enrich_from_geo_ae"), inp.get("include_peer")
+    for value in (linked, peer):
+        if value is not None and explicit and value != (name == "standard"):
+            raise ValueError("Conflicting enrichment preset and repository override")
+    return inp, out, PreparationPolicy(name, expand, linked, peer)

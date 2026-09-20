@@ -65,6 +65,10 @@ class MINiMLEnricher:
         self.publication_identifier_resolver = publication_identifier_resolver
 
     def enrich(self, data: MINiMLPackage) -> MINiMLPackage:
+        return self.enrich_selected(data)
+
+    def enrich_selected(self, data: MINiMLPackage, *, publications=True, run_metadata=True) -> MINiMLPackage:
+        """Use the legacy normalization and merge rules with explicit retrieval selection."""
         started = time.monotonic()
         codec = MINiMLCodec()
         package = codec.decode(data).package
@@ -80,22 +84,25 @@ class MINiMLEnricher:
             self._publication_cache = {}
             from meta_standards_converter.miniml.archive_entities import declare_ontologies
             from meta_standards_converter.miniml.archive_residuals import finalize, source_records
-            self.enrich_pubmed(data=mutable, fill_missing=True)
+            if publications:
+                self.enrich_pubmed(data=mutable, fill_missing=True)
             for sample in mutable.get('sample', []):
                 for entity in [sample, *sample.get('sra_run', [])]:
-                    if entity.get('pubmed_publication') or entity.get('pubmed_id'):
+                    if publications and (entity.get('pubmed_publication') or entity.get('pubmed_id')):
                         self.enrich_pubmed({'series':entity}, fill_missing=True)
             owners = [mutable.get('series', {})]
             owners.extend(entity for sample in mutable.get('sample', []) for entity in [sample, *sample.get('sra_run', [])])
             for owner in owners:
                 for relation in owner.get('relation', []):
-                    if relation.get('publication'):
+                    if publications and relation.get('publication'):
                         self.enrich_pubmed({'series':{'pubmed_publication':[relation['publication']]}}, fill_missing=True)
             del self._publication_cache
             declare_ontologies(mutable)
             return finalize(mutable, source_records(package) + invalid_records)
-        self.enrich_pubmed(data=mutable)
-        self.enrich_sra(data=mutable)
+        if publications:
+            self.enrich_pubmed(data=mutable)
+        if run_metadata:
+            self.enrich_sra(data=mutable)
         series = mutable.get("series") if isinstance(mutable.get("series"), dict) else {}
         pubmed_ids = self._dedupe(self._as_list(series.get("pubmed_id")))
         samples = [item for item in self._as_list(mutable.get("sample")) if isinstance(item, dict)]
@@ -355,6 +362,9 @@ class MAGETabEvidenceResolver:
         self.insdc = insdc_client if insdc_client is not None else INSDCWebfetcher()
 
     def publications(self, data):
+        from .preparation_scope import exporter_retrieval_enabled
+        if not exporter_retrieval_enabled():
+            return []
         if data.get("source", {}).get("format") in {"SRA", "ENA"}:
             return []
         from meta_standards_converter.helpers.json_helper import JSONHandler
@@ -366,6 +376,9 @@ class MAGETabEvidenceResolver:
                 for value in valid_pubmed_ids(handler._from_path(data, "series.pubmed_id.*"))]
 
     def sample_runs(self, handler, technology_type):
+        from .preparation_scope import exporter_retrieval_enabled
+        if not exporter_retrieval_enabled():
+            return {}
         import requests
         import xml.etree.ElementTree as ET
         sequencing = technology_type not in {"array", "generic"}

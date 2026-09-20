@@ -53,6 +53,7 @@ class LoadedInput:
     content_id: str | None = None
     provider: str | None = None
     enrichment_applied: bool = False
+    preparation: list[dict] = field(default_factory=list)
     origins: tuple[str, ...] = ()
     companions: Mapping[str, Any] = field(default_factory=dict)
     diagnostics: list[Diagnostic] = field(default_factory=list)
@@ -77,6 +78,7 @@ class ConversionItemResult:
     payload: Any = None
     artifacts: dict[str, str] = field(default_factory=dict)
     diagnostics: list[Diagnostic] = field(default_factory=list)
+    preparation: list[dict] = field(default_factory=list)
 
     def to_dict(self):
         """Serialize a summary without embedding large or scientific payloads."""
@@ -98,6 +100,7 @@ class ConversionItemResult:
                 "completeness",
                 "validation",
                 "artifacts",
+                "preparation",
             )
         } | {"diagnostics": [vars(d).copy() for d in self.diagnostics]}
 

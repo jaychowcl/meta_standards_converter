@@ -345,31 +345,15 @@ class InputHandler:
         token = str(spec.sources).strip().upper()
         options = context.input_options
         if self.kind == "geo_accession":
-            if context.target == "magetab":
-                from meta_standards_converter.converters.geo2ae import GEO2AEConverter
-
-                if "enrich" in options:
-                    raise ValueError(
-                        "Direct GEO to MAGE-TAB does not accept an enrich switch"
-                    )
-                converter = context.service(
-                    "geo2ae", lambda: GEO2AEConverter(resource_profile=context.profile)
-                )
-                tables = converter.convert(
-                    token,
-                    **options,
-                    platform_handler=context.output_options.get("platform_handler"),
-                )
-                return LoadedInput(direct_magetab=tables, provider="geo")
             from meta_standards_converter.converters.geo2json import GEO2JSONConverter
 
             converter = context.service(
                 "geo2json", lambda: GEO2JSONConverter(resource_profile=context.profile)
             )
             return self._metadata(
-                converter.convert(token, **options),
+                converter.convert(token, **{**options, "enrich": False, "related_series": False}),
                 "geo",
-                enriched=options.get("enrich", True),
+                enriched=False,
             )
         if self.kind == "ae_accession":
             from meta_standards_converter.converters.ae2json import AE2JSONConverter
@@ -377,7 +361,7 @@ class InputHandler:
             converter = context.service(
                 "ae2json", lambda: AE2JSONConverter(resource_profile=context.profile)
             )
-            return self._metadata(converter.convert(token, **options), "biostudies")
+            return self._metadata(converter.convert(token, **{**options, "enrich": False, "related_series": False}), "biostudies")
         from meta_standards_converter.converters.sra2json import SRA2JSONConverter
         from meta_standards_converter.converters.ena2json import ENA2JSONConverter
 

@@ -235,12 +235,14 @@ class SRASource:
                         records.linked.append({'provider': 'sra', 'kind': 'assembly', 'accession': item.get('assemblyaccession'), 'metadata': item})
                     else:
                         records.issues.append(f'assembly {uid}: missing summary')
-        self.linked_publications(records, ids)
-        from .archive_publications import resolve_identifiers
-        resolve_identifiers(records, self.http, 'sra')
-        for batch in chunks(sorted(publication_ids(records))):
-            root = self.linked_xml('pubmed', batch, records)
-            if root is not None: records.xml.append(root)
+        from ..metadata.preparation_scope import source_publications_enabled
+        if source_publications_enabled():
+            self.linked_publications(records, ids)
+            from .archive_publications import resolve_identifiers
+            resolve_identifiers(records, self.http, 'sra')
+            for batch in chunks(sorted(publication_ids(records))):
+                root = self.linked_xml('pubmed', batch, records)
+                if root is not None: records.xml.append(root)
         return records
 
     def _pool_samples(self, records):

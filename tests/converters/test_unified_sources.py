@@ -95,6 +95,9 @@ def test_geo_accession_and_local_xml_produce_equivalent_artifact_bytes(
     }
     assert expected == actual
     assert len(expected) == (1 if target == "json" else 2)
+    if target == "magetab":
+        # The facade's composed route must preserve the legacy direct construction.
+        assert accession.items[0].payload == services["geo2ae"].convert("GSE100")
 
 
 def test_enrichment_is_applied_at_the_route_stage_that_owns_it():
@@ -114,12 +117,17 @@ def test_enrichment_is_applied_at_the_route_stage_that_owns_it():
         def convert(self, *args, **kwargs):
             return [MINiMLCodec().decode(package()).package]
 
-    converter = Converter(services={"json2ae": Exporter(), "geo2json": Importer()})
+    class Enricher:
+        def enrich_selected(self, data, **options):
+            calls.append("preparation")
+            return data
+
+    converter = Converter(services={"json2ae": Exporter(), "geo2json": Importer(), "enricher": Enricher()})
     local = converter.convert(
         ROOT / "tests/fixtures/studies/GSE100/inputs/geo.xml", out_type="magetab"
     )
     assert local.status == "complete"
-    assert calls == [True]
+    assert calls == ["preparation", False]
     from meta_standards_converter.converters.unified.handlers import InputHandler
     from meta_standards_converter.converters.unified.engine import ExecutionContext
     from meta_standards_converter.converters.unified.options import RUNTIME_DEFAULTS
@@ -130,7 +138,7 @@ def test_enrichment_is_applied_at_the_route_stage_that_owns_it():
             converter, RUNTIME_DEFAULTS.copy(), "json", None, None, stack
         )
         loaded = InputHandler("geo_accession").load(InputSpec("GSE1"), context)
-        assert loaded.enrichment_applied is True
+        assert loaded.enrichment_applied is False
 
 
 @pytest.mark.parametrize(
@@ -192,19 +200,19 @@ def test_missing_paths_never_reach_provider(tmp_path):
 def test_geo_xml_and_archive_have_same_packages(tmp_path):
     source = ROOT / "tests/fixtures/studies/GSE100/inputs/geo.xml"
     converter = Converter()
-    xml = converter.convert(source, out_type="json")
+    xml = converter.convert(source, out_type="json", enrichment="off", options={"expand_studies": False})
     assert xml.status == "complete", xml.to_dict()
     archive = tmp_path / "family.tgz"
     with tarfile.open(archive, "w:gz") as tar:
         tar.add(source, arcname="GSE100_family.xml")
-    packed = converter.convert(archive, out_type="json")
+    packed = converter.convert(archive, out_type="json", enrichment="off", options={"expand_studies": False})
     assert packed.status == "complete", packed.to_dict()
     assert packed.items[0].payload == xml.items[0].payload
     with tarfile.open(archive, "w:gz") as tar:
         member = tarfile.TarInfo("../escape.xml")
         member.size = 1
         tar.addfile(member, io.BytesIO(b"x"))
-    assert converter.convert(archive, out_type="json").status == "failed"
+    assert converter.convert(archive, out_type="json", enrichment="off", options={"expand_studies": False}).status == "failed"
     assert not (tmp_path.parent / "escape.xml").exists()
 
 
@@ -220,8 +228,7 @@ def test_native_record_bundle(provider):
         ]
     )
     result = Converter().convert(
-        InputSpec(paths, in_type=provider + "_xml"), out_type="json"
-    )
+        InputSpec(paths, in_type=provider + "_xml"), out_type="json", enrichment="off", options={"expand_studies": False})
     assert result.status in {"complete", "partial"}, result.to_dict()
     sample = result.items[0].payload[0].to_mapping()["sample"][0]
     assert sample["sra_run"][0]["run"] == "SRR11192680"
@@ -229,7 +236,7 @@ def test_native_record_bundle(provider):
 
 def test_magetab_directory_consumes_sdrf_once():
     directory = ROOT / "tests/fixtures/studies/E-MTAB-1/inputs"
-    result = Converter().convert(directory, out_type="json")
+    result = Converter().convert(directory, out_type="json", enrichment="off", options={"expand_studies": False})
     assert len(result.items) == 1, result.to_dict()
     assert result.status == "complete", result.to_dict()
     assert result.items[0].payload[0].samples
@@ -260,7 +267,7 @@ def test_discovery_groups_ena_companions_by_directory(tmp_path):
     original = ROOT / "docs/ena/fixtures/SRX7812918"
     for kind in ("study", "sample", "experiment", "run"):
         shutil.copyfile(original / (kind + ".xml"), tmp_path / (kind + ".xml"))
-    result = Converter().convert(tmp_path, out_type="json")
+    result = Converter().convert(tmp_path, out_type="json", enrichment="off", options={"expand_studies": False})
     assert len(result.items) == 1, result.to_dict()
     assert result.status in {"complete", "partial"}, result.to_dict()
     assert result.items[0].dataset_ids == ("PRJNA609050",)

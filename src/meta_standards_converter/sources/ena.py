@@ -284,10 +284,12 @@ class ENASource:
             obj = self.linked_json('https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/' + taxid, taxid, 'taxId', records)
             if obj is not None:
                 records.linked.append({'provider': 'ena', 'kind': 'taxonomy', 'accession': taxid, 'metadata': obj})
-        from .archive_publications import resolve_identifiers
-        resolve_identifiers(records, self.http, 'ena')
-        for batch in chunks(sorted(publication_ids(records))):
-            root = self.publications(batch, records)
-            if root is not None:
-                records.xml.append(root)
+        from ..metadata.preparation_scope import source_publications_enabled
+        if source_publications_enabled():
+            from .archive_publications import resolve_identifiers
+            resolve_identifiers(records, self.http, 'ena')
+            for batch in chunks(sorted(publication_ids(records))):
+                root = self.publications(batch, records)
+                if root is not None:
+                    records.xml.append(root)
         return records

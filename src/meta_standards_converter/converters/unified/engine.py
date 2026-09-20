@@ -76,15 +76,18 @@ class ExecutionContext:
             allowed_hosts=frozenset(runtime["allowed_hosts"]),
         )
         self._retrieval = None
+        self._services = {}
+        from .preparation import MetadataPreparation
+        self.preparer = MetadataPreparation(self)
         self.stage = "input"
 
     def service(self, key, factory):
         # Default instances are operation-local. Injected instances retain caller ownership.
-        return (
-            self.converter.services[key]
-            if key in self.converter.services
-            else factory()
-        )
+        if key in self.converter.services:
+            return self.converter.services[key]
+        if key not in self._services:
+            self._services[key] = factory()
+        return self._services[key]
 
     def localize(self, source):
         source = str(source)
@@ -273,17 +276,6 @@ class Converter:
                         raise ValueError(
                             f"Explicit metadata is not applicable to {kind}"
                         )
-                    if (
-                        kind == "geo_accession"
-                        and out_type == "magetab"
-                        and (
-                            "enrich" in inp
-                            or {"enrich", "replacement_profile"} & set(out)
-                        )
-                    ):
-                        raise ValueError(
-                            "Direct GEO to MAGE-TAB preserves its fixed enrichment policy; supply saved JSON for export overrides"
-                        )
                 if kind in {"h5ad", "anndata"} and out_type in {"h5ad", "obs"}:
                     settings(
                         out,
@@ -386,7 +378,9 @@ class Converter:
                         )
                     context.stage = "load"
                     self.handlers[kind].validate(spec, context)
-                    loaded = self.handlers[kind].load(spec, context)
+                    from meta_standards_converter.metadata.preparation_scope import loading_source
+                    with loading_source(preparation):
+                        loaded = self.handlers[kind].load(spec, context)
                     sources = (
                         spec.sources
                         if isinstance(spec.sources, (list, tuple))
@@ -435,8 +429,17 @@ class Converter:
                             for w in loaded.metadata.warnings
                             if not any(d.message == w for d in loaded.diagnostics)
                         )
+                    context.stage = "preparation"
+                    before = len(loaded.diagnostics)
+                    loaded = context.preparer.prepare(loaded)
+                    item.preparation = loaded.preparation
+                    item.diagnostics.extend(loaded.diagnostics[before:])
+                    if loaded.metadata is not None:
+                        item.dataset_ids = tuple(g.dataset_id for g in loaded.metadata.groups)
                     context.stage = "conversion"
-                    self._export(loaded, context, item, route)
+                    from meta_standards_converter.metadata.preparation_scope import exporting_prepared
+                    with exporting_prepared():
+                        self._export(loaded, context, item, route)
                     item.execution = "succeeded"
                     incomplete = any(
                         d.code
@@ -512,7 +515,7 @@ class Converter:
 
             converter = context.service("json2ae", JSON2AEConverter)
             # Accession chains have already applied their native import enrichment.
-            effective = {"enrich": not loaded.enrichment_applied, **options}
+            effective = {**options, "enrich": False}
             tables = converter.convert_loaded(loaded.metadata, **effective)
             publish_magetab(tables, context, item)
             return
