@@ -13,7 +13,7 @@ from .contracts import Diagnostic
 def provider_of(package, fallback=None):
     source = package.to_mapping().get("source", {})
     name = str(source.get("format", "")).lower()
-    provider = {"geo": "geo", "sra": "sra", "ena": "ena", "arrayexpress": "biostudies",
+    provider = {"geo miniml": "geo", "geo": "geo", "sra": "sra", "ena": "ena", "arrayexpress": "biostudies",
                 "ae": "biostudies", "mage-tab": "biostudies", "magetab": "biostudies",
                 "biostudies": "biostudies"}.get(name)
     # Secondary accessions alone do not identify the source repository.
@@ -29,10 +29,13 @@ class MetadataPreparation:
     def __init__(self, context):
         self.context = context
         self.cache = {}
+        from .families import StudyFamilies
+        self.families = StudyFamilies(context)
 
     def prepare(self, loaded):
         if loaded.metadata is None:
             return loaded
+        loaded = self.families.expand(loaded)
         groups = []
         for group in loaded.metadata.groups:
             packages = []
@@ -85,10 +88,11 @@ class MetadataPreparation:
         run("peer_provider", provider in {"sra", "ena"} and archive_id is not None,
             lambda p: self._peer(p, provider, archive_id))
         from meta_standards_converter.metadata.archive_enrichment import linked_accessions
-        links = linked_accessions(package)
+        from .families import recorded_neighbors
+        links = set(linked_accessions(package)) - set(recorded_neighbors(package, provider))
         own = {a.get("value") for a in package.to_mapping().get("series", {}).get("accession", [])} if provider in {"geo", "biostudies"} else set()
         linked_applicable = (provider in {"geo", "biostudies"} or (provider in {"sra", "ena"} and archive_id is not None))
-        run("linked_metadata", linked_applicable and bool(set(links) - own), lambda p: self._linked(p, provider))
+        run("linked_metadata", linked_applicable and bool(set(links) - own), lambda p: self._linked(p, provider, links))
         run("standard", True, lambda p: self._standard(p, provider))
         return package, records, diagnostics
 
@@ -112,7 +116,7 @@ class MetadataPreparation:
             issues.extend(found)
         return package, issues
 
-    def _linked(self, package, provider):
+    def _linked(self, package, provider, links):
         from meta_standards_converter.metadata.archive_enrichment import LinkedArchiveEnricher
         primary = self.context.converter.services.get((provider or "") + "2json")
         service = getattr(primary, "linked_enricher", None) or self.context.service(
@@ -120,7 +124,7 @@ class MetadataPreparation:
                 geo_converter=self.context.converter.services.get("geo2json"),
                 ae_converter=self.context.converter.services.get("ae2json")))
         with loading_source(self.context.preparation_policy):
-            return service.enrich(package)
+            return service.enrich_selected(package, accessions=links) if hasattr(service, "enrich_selected") else service.enrich(package)
 
     def _standard(self, package, provider):
         from meta_standards_converter.metadata.enrichment import MINiMLEnricher

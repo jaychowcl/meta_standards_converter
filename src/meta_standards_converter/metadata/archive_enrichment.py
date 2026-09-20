@@ -471,9 +471,12 @@ class LinkedArchiveEnricher:
         self.profile, self.geo, self.ae = resource_profile, geo_converter, ae_converter
 
     def enrich(self, package):
+        return self.enrich_selected(package)
+
+    def enrich_selected(self, package, *, accessions=None):
         issues = []
         # Stable ascending priority: informative AE values are applied last.
-        discovered = set(linked_accessions(package))
+        discovered = set(linked_accessions(package) if accessions is None else accessions)
         # The legacy E-GEOD namespace is an exact GEO accession lookup, not an
         # asserted identity. Accept it only after retrieving matching metadata.
         candidates = {'E-GEOD-' + acc[3:] for acc in discovered if acc.startswith('GSE')}

@@ -361,7 +361,7 @@ class InputHandler:
             converter = context.service(
                 "ae2json", lambda: AE2JSONConverter(resource_profile=context.profile)
             )
-            return self._metadata(converter.convert(token, **{**options, "enrich": False, "related_series": False}), "biostudies")
+            return self._metadata(converter.convert(token, **options), "biostudies")
         from meta_standards_converter.converters.sra2json import SRA2JSONConverter
         from meta_standards_converter.converters.ena2json import ENA2JSONConverter
 
