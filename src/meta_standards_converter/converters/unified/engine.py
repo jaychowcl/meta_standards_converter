@@ -38,6 +38,8 @@ from .handlers import default_handlers
 from .options import TARGETS, INPUT, OUTPUT, RUNTIME_DEFAULTS, settings
 from .publication import publish_jsons, publish_tables, publish_magetab
 from .routes import select_route
+from .requests import (AUTO, STANDARD, normalize, input_settings, output_settings,
+                       preparation_options)
 
 
 def source_label(source):
@@ -141,11 +143,14 @@ class Converter:
     def convert(
         self,
         input=None,
+        outdir=None,
         *,
         out_type,
+        in_type=AUTO,
+        enrichment=STANDARD,
+        options=None,
         force_in_type=None,
         outfile=None,
-        outdir=None,
         input_manifest=None,
         input_options=None,
         output_options=None,
@@ -153,7 +158,11 @@ class Converter:
     ):
         if out_type not in TARGETS:
             raise ValueError(f"Unsupported output type: {out_type}")
-        forced = kind_name(force_in_type)
+        forced, outfile, input_manifest, input_options, output_options, runtime_options = normalize(
+            target=out_type, in_type=in_type, enrichment=enrichment, options=options,
+            force_in_type=force_in_type, outfile=outfile, input_manifest=input_manifest,
+            input_options=input_options, output_options=output_options,
+            runtime_options=runtime_options)
         if outfile is not None and outdir is not None:
             raise ValueError("outfile and outdir are mutually exclusive")
         if outfile is not None and out_type == "magetab":
@@ -161,9 +170,7 @@ class Converter:
         runtime = RUNTIME_DEFAULTS | settings(
             runtime_options, RUNTIME_DEFAULTS, "runtime options"
         )
-        base_input = settings(
-            input_options, set().union(*INPUT.values()), "input options"
-        )
+        base_input = input_settings(input_options)
         base_output = settings(output_options, OUTPUT[out_type], "output options")
         result = ConversionBatchResult()
         with ExitStack() as stack:
@@ -235,14 +242,13 @@ class Converter:
                 if set(spec.companions) - allowed_companions:
                     raise ValueError("Unknown companion role")
                 chosen = kind_name(spec.in_type) or forced
-                inp = base_input | settings(
-                    spec.input_options, set().union(*INPUT.values()), "input options"
-                )
+                inp = base_input | input_settings(spec.input_options)
                 out = settings(
-                    base_output | dict(spec.output_options),
+                    base_output | output_settings(spec.output_options, out_type),
                     OUTPUT[out_type],
                     "output options",
                 )
+                inp, out, preparation = preparation_options(inp, out)
                 error = None
                 kind = chosen
                 if kind is None:
@@ -310,10 +316,10 @@ class Converter:
                 if not isinstance(item_id, str) or not item_id or item_id in ids:
                     raise ValueError("Input IDs must be unique nonempty strings")
                 ids.add(item_id)
-                planned.append((spec, kind, chosen, inp, out, error, item_id))
+                planned.append((spec, kind, chosen, inp, out, error, item_id, preparation))
             seen = {}
             stopped = False
-            for spec, kind, chosen, inp, out, error, item_id in planned:
+            for spec, kind, chosen, inp, out, error, item_id, preparation in planned:
                 item = ConversionItemResult(
                     item_id,
                     source_label(spec.sources),
@@ -334,6 +340,7 @@ class Converter:
                         Diagnostic("fail_fast", "Not attempted after previous failure")
                     )
                     continue
+                context.preparation_policy = preparation
                 context.input_options = inp
                 context.output_options = out
                 context.stage = "input"
