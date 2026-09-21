@@ -19,7 +19,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Unified converter API
   anchor: unified-converter
   purpose: Common Python conversion API, explicit handler and route contracts, supported sources and destinations, and compatibility adapters.
-  keywords: Converter, InputSpec, ConversionBatchResult, force_in_type, loaded data, provider routing, superclass
+  keywords: Converter, InputSpec, ConversionBatchResult, in_type, force_in_type, options, loaded data, provider routing, superclass
   link: [Open section](codebase.md#unified-converter)
 
 - id: unified-inputs
@@ -42,6 +42,20 @@ canonical handoff by stable anchor, purpose and search keywords.
   purpose: Registered destination capabilities, stage-specific options, raw processing permission, reference requirements and scientific defaults.
   keywords: ROUTES, allow_processing, orientation, partial, enrichment, replacement_profile, memory, no matrix combination
   link: [Open section](codebase.md#unified-routes)
+
+- id: unified-preparation
+  title: Enrichment presets and study expansion
+  anchor: unified-preparation
+  purpose: Simple options, standard/curators/off presets, independent family expansion, operation-scoped retrieval and legacy aliases.
+  keywords: enrichment, standard, curators, off, expand_studies, SuperSeries, BioProject, deduplication, execution_profile
+  link: [Open section](codebase.md#unified-preparation)
+
+- id: magetab-row-factors
+  title: Row factors and optional files
+  anchor: magetab-row-factors
+  purpose: Retain experimental factor values across blank optional nodes without inventing biological or assay identities.
+  keywords: Factor Value, optional file, row variables, round trip, Visium, GeoMx, ChIP-seq
+  link: [Open section](codebase.md#magetab-row-factors)
 
 - id: unified-results
   title: Unified outcomes and publication

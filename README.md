@@ -75,7 +75,8 @@ fetching expression assets. See the [CLI guide](#cli).
 from meta_standards_converter.converters import Converter
 
 result = Converter().convert(
-    "output/GSE234602.json", out_type="tsv", outdir="tables"
+    "output/GSE234602.json", "tables", out_type="tsv",
+    enrichment="curators", options={"expand_studies": False}
 )
 for outcome in result.items:
     print(outcome.status, outcome.artifacts, outcome.diagnostics)
@@ -84,6 +85,12 @@ for outcome in result.items:
 The [unified API](docs/codebase.md#unified-converter) accepts accessions, files,
 directories, package objects and expression inputs. It supports explicit input
 types, versioned manifests, in-memory results and consistent batch outcomes.
+Enrichment defaults to `standard`; `curators` allows native/publication preparation
+without other study repositories, and `off` disables supplementary enrichment.
+Study expansion defaults to **on** under all presets: `off` does not disable
+accession retrieval or family expansion. Use `options={"expand_studies": False}`
+to suppress additional family retrieval. Advanced settings use a flat `options`
+mapping; previous stage-specific keywords remain compatible aliases.
 Overwrite and raw processing are disabled by default. Existing converter APIs
 and CLIs remain available; see the [Python API guide](#python-api).
 

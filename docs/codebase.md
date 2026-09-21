@@ -697,22 +697,37 @@ converter = Converter()
 result = converter.convert(
     Path("study.json"),
     out_type="csv",
-    outfile=Path("exports/samples.csv"),
+    enrichment="curators",
+    options={"outfile": Path("exports/samples.csv")},
 )
 for outcome in result.items:
     print(outcome.id, outcome.status, outcome.dataset_ids, outcome.artifacts)
     print([diagnostic.message for diagnostic in outcome.diagnostics])
 ```
 
-The signature is:
+The primary signature is:
 
 ```python
 Converter(*, services=None, handlers=None).convert(
-    input=None, *, out_type, force_in_type=None, outfile=None, outdir=None,
-    input_manifest=None, input_options=None, output_options=None,
-    runtime_options=None,
+    input=None, outdir=None, *, out_type, in_type="auto",
+    enrichment="standard", options=None,
 ) -> ConversionBatchResult
 ```
+
+`outdir` may be the second positional argument. Accessions and approved URLs are
+retrieved automatically; supplied files and objects are loaded directly.
+`in_type="auto"` detects the reader; an explicit input type selects one reader
+but does not bypass structural, companion or retrieval-policy validation.
+`options` is a flat mapping of applicable advanced settings. Misspelled,
+irrelevant, incompatible and contradictory explicit settings raise before execution.
+
+The previous keyword-only arguments remain compatibility aliases:
+`force_in_type`, `outfile`, `input_manifest`, `input_options`, `output_options`,
+and `runtime_options`. Equivalent duplicate values are accepted; contradictions
+are rejected centrally. `InputSpec` and manifest mappings retain their existing
+fields and version 1.0 format; per-input settings override call-level defaults.
+Set `enrichment` and `expand_studies` in an input's `input_options` to override
+its preparation policy. No downstream caller migration is required.
 
 `out_type` is one of `json`, `magetab`, `tsv`, `csv`, `h5ad`, or
 `obs`. JSON always denotes MSC MINiML **3.0**, including when the source is
@@ -845,6 +860,7 @@ convert request
   -> probe/select exactly one handler (or force it)
   -> handler.validate -> handler.load
   -> validate typed groups and select explicit route
+  -> expand verified study families and apply one preparation policy
      | metadata -> JSON / MAGE-TAB / sample TSV or CSV
      | metadata + selected expression assets -> H5AD catalogue / OBS bundle
      | AnnData/H5AD or bound matrix -> H5AD / OBS
@@ -869,43 +885,115 @@ expression matrices implicitly. Standalone full matrix loads use existing
 memory estimators and resource-profile limits. Caller-owned packages, mappings
 and AnnData objects are not mutated.
 
-Input option schemas:
-- GEO accessions: `enrich`, `related_series`, `remove_empty`.
-- Native archive accessions: `enrich_from_geo_ae`, `include_peer`, `evidence_dir`.
-- MAGE-TAB: `sdrf_sources`; GEO XML/archive: `remove_empty`.
-- Matrices: `orientation` (`auto`, `genes-by-observations`, `observations-by-genes`).
-- Other handlers accept no input options.
+Use these names in the flat `options` mapping (each is accepted only on an
+applicable route):
 
-Destination option schemas:
-- JSON: `aggregate`.
-- MAGE-TAB: `enrich`, `platform_handler`, `replacement_profile`.
-- Sample TSV/CSV: `aggregate`, `allow_invalid`, `replacement_profile`.
-- Metadata-backed H5AD/OBS: `explicit_assets`, `asset_manifest`, `asset_specs`,
-  `force_reprocess`, `matrix_orientation`, `pipeline`, `genome`, `fasta`,
-  `gtf`, `gff`, `accept_inferred_reference`, `profile`, `revision`,
-  `params_file`, `nextflow_config`, `work_dir`, `resume`, `force_memory`,
-  `processed_checkpoint_dir`, `allow_invalid`, `allow_unverified_combination`,
-  and `replacement_profile`. Existing scientific meanings are unchanged.
-- OBS additionally supports `include_var` and `include_uns`. Standalone
-  AnnData/H5AD accepts only these OBS flags; standalone matrices also accept
-  `matrix_orientation`. Processing/projector options on standalone expression
-  routes are rejected.
+| Scope | Options |
+| --- | --- |
+| Preparation | `expand_studies=True` |
+| Destination and manifest | `outfile`, `input_manifest`; `outdir` remains a direct argument |
+| Reader | `remove_empty` for GEO, `sdrf_sources` for MAGE-TAB/AE, `evidence_dir` for native accession imports |
+| Matrix | `matrix_orientation`: `auto`, `genes-by-observations`, `observations-by-genes` |
+| JSON and sample tables | `aggregate=False`; no expression aggregation |
+| MAGE-TAB | `platform_handler`, `replacement_profile` |
+| Projection | `allow_invalid=False`, `replacement_profile` on tables/expression routes |
+| Expression asset selection | `explicit_assets`, `asset_manifest`, `asset_specs`, `force_reprocess` |
+| Processing/reference | `pipeline`, `genome`, `fasta`, `gtf`, `gff`, `accept_inferred_reference` |
+| Pipeline execution | `execution_profile` (legacy `profile`), `revision`, `params_file`, `nextflow_config`, `work_dir` |
+| Checkpoints/combination | `resume`, `force_memory`, `processed_checkpoint_dir`, `allow_unverified_combination` |
+| OBS components | `include_var`, `include_uns` |
+| Runtime | `overwrite=False`, `fail_fast=False`, `recursive=False`, `allow_processing=False`, `resource_profile="standard"`, `resource_overrides=None`, `insdc_default="ena"`, `allowed_hosts=()` |
 
-Runtime options are `overwrite=False`, `fail_fast=False`, `recursive=False`,
-`allow_processing=False`, `resource_profile="standard"`,
-`resource_overrides=None`, `insdc_default="ena"`, and `allowed_hosts=()`.
-Host exceptions still obey the existing scheme/address/redirect/size policy.
-`force_memory` requires `resume=True`; `gtf` and `gff` are mutually
-exclusive. Reference inference requires explicit acceptance.
+Companions and explicit metadata use `InputSpec(..., companions=..., metadata=...)`
+or manifest bindings. Standalone H5AD/AnnData accepts only the applicable OBS
+component flags; matrices additionally accept orientation. Processing/projector
+settings on standalone expression routes are rejected. Existing scientific,
+reference and matrix-combination defaults are unchanged. `force_memory` requires
+`resume=True`; `gtf` and `gff` are mutually exclusive. Host exceptions retain the
+existing scheme/address/redirect/size restrictions.
 
-GEO accession to MAGE-TAB uses the existing direct `GEO2AEConverter` and its
-enrichment behavior. Overrides that this route cannot honor are rejected; use
-saved JSON for independently configurable export enrichment. Native accession
-chains retain import-stage enrichment and do not enrich a second time by
-default. Local XML and MAGE-TAB loaders have not applied that enrichment, so
-their MAGE-TAB export retains the JSON exporter default. Explicit destination
-settings still apply at export. MAGE-TAB construction retains its existing
-publication/run evidence resolver, independently of the enrichment switch.
+Legacy stage dictionaries also accept `orientation` (matrix reader), `profile`
+(pipeline), `enrich`, `related_series`, `include_peer`, and
+`enrich_from_geo_ae` on their original routes. `related_series` aliases family
+expansion for a GEO accession. Legacy `enrich=False` maps an omitted preset to
+`off`; an explicitly conflicting preset is rejected. Repository overrides can
+restrict the implicit standard preset; explicit contradictory presets are errors.
+
+<a id="unified-preparation"></a>
+### Enrichment presets and study expansion
+
+The facade resolves one preparation policy for each input, independently of its
+destination. It uses the existing parsers, enrichers and precedence rules.
+
+| Preset | Supplementary retrieval |
+| --- | --- |
+| `standard` (default) | Applicable publication/run enrichment, linked GEO/AE metadata and SRA/ENA peer evidence. |
+| `curators` | Source-native preparation and publication enrichment; no supplementary retrieval from other study repositories. |
+| `off` | No supplementary enrichment; required source loading, structural preparation and separately enabled family expansion remain. |
+
+**`enrichment="off"` does not disable accession retrieval or study expansion.**
+All presets default to `expand_studies=True`. Set
+`options={"expand_studies": False}` to disable additional family expansion.
+The parent/child traversal follows typed GEO SuperSeries/SubSeries relations
+(including provider `SuperSeries of`/`SubSeries of` spelling), verified ENA
+project XML edges and verified NCBI BioProject hierarchy links. Study/project
+resolution required to interpret the requested accession is distinct from
+expansion into additional studies. General related links, citations and free
+text do not authorize family traversal. BioStudies generic related studies are
+not treated as a hierarchy.
+
+Original groups stay first; discovered neighbors are sorted and traversed
+breadth-first with visited identities. Each study remains a separate group.
+Expansion stays with the selected source repository under all presets; forced
+providers remain authoritative. Failed members leave completed groups available
+and report partial coverage. Standalone expression objects with no applicable
+metadata skip preparation and never acquire inferred study metadata.
+
+Source provenance is derived from the selected reader or recognized package
+`source.format`, including `GEO MINiML`. Ambiguous provenance cannot authorize
+cross-repository retrieval under `curators`. Existing evidence is retained even
+when its repository is excluded from new retrieval. Peer merges keep native
+priority; linked evidence uses the existing verified merge precedence.
+
+The execution flow is source loading → structural validation → family expansion
+→ peer/linked enrichment where applicable → standard preparation → export.
+Native import and MAGE-TAB evidence services honor operation-scoped policy using
+`ContextVar` scopes, restored even after errors. Export does not start a second
+supplementary retrieval pass. In the facade, GEO-to-MAGE-TAB now composes
+GEO2JSON and JSON2AE; recorded-evidence tests establish equal artifacts and
+retrieval calls to the legacy direct route under equivalent explicit settings.
+Legacy x2x methods/CLIs retain their own defaults and signatures.
+
+Preparation records report the operation, dataset/provider, target where relevant,
+and completed/partial/failed/skipped status with disabled or inapplicable reasons.
+Retrieval and package results are reused within a facade call; the next call has
+a fresh operation scope. There is no new persistent cache. Enrichment failures
+produce partial outcomes while retaining valid source metadata and successful
+prior operations. Default services are operation-local; injected services retain
+caller ownership and metrics. A selective custom enricher implements
+`enrich_selected(data, publications=..., run_metadata=...)`; an enrich-only
+collaborator cannot safely satisfy `curators` and yields a preparation diagnostic.
+
+```python
+# Public accession: enrichment plus verified study-family expansion.
+Converter().convert("GSE328265", "exports", out_type="magetab")
+
+# Saved metadata: publication/native preparation, excluding other repositories.
+Converter().convert("study.json", "tables", out_type="csv", enrichment="curators")
+
+# Deterministic source-only conversion: no supplementary lookup or family expansion.
+Converter().convert("study.idf.txt", out_type="json", enrichment="off",
+                    options={"expand_studies": False})
+
+# One exact matrix output with explicit axis interpretation.
+Converter().convert("counts.tsv", out_type="h5ad", enrichment="off",
+                    options={"outfile": "counts.h5ad",
+                             "matrix_orientation": "genes-by-observations"})
+
+# Ordered explicit bindings and per-input settings from a versioned manifest.
+Converter().convert(outdir="exports", out_type="json",
+                    options={"input_manifest": "inputs.json"})
+```
 
 <a id="unified-results"></a>
 ### Outcomes and publication
@@ -914,7 +1002,7 @@ Every call returns `ConversionBatchResult`, including a single input.
 `items` preserves request order. Each outcome carries the input ID, source and
 origins, selected/forced type, provider, canonical metadata content ID, route,
 dataset identities, in-memory `payload`, published `artifacts`, and structured
-`Diagnostic(code, message, stage, severity)` values. `to_dict()` returns a
+`Diagnostic(code, message, stage, severity)` values and `preparation` operation records. `to_dict()` returns a
 JSON-compatible summary without embedding potentially large scientific payloads
 or secret URL query parameters.
 
@@ -967,14 +1055,19 @@ uses deterministic canonical JSON SHA-256 and a
 `Converter(services={...})` preserves injected collaborators by identity.
 Service keys include `package_source`, `geo_parser`, `geo2json`, `geo2ae`,
 `ae2json`, `sra2json`, `ena2json`, `json2ae`, `json2tsv`, `json2h5ad`,
-`reader`, `components`, `retrieval`, `available_memory` and
+`enricher`, `linked_enricher`, `reader`, `components`, `retrieval`, `available_memory` and
 `memory_estimator`. Default services are created per operation; injected
-instances retain their caller-owned lifecycle. Scientific imports remain lazy.
+instances retain their caller-owned lifecycle. Injected `GEO2AEConverter`
+fetcher/parser/enricher/constructor collaborators are preserved when composing
+the facade route; explicit `geo2json`/`json2ae` injections take precedence.
+Scientific imports remain lazy.
 The unified boundary adds no CLI command, ontology access, migration, provider
 failover, protocol registry sharing, or changes to legacy processing permission.
 
 The contract suites are `tests/converters/test_loaded_inputs.py` and
-`test_unified_{converter,sources,expression,defensive}.py`. They cover recorded
+`test_unified_{converter,sources,expression,defensive}.py`,
+`test_converter_{presets_api,preparation,expansion}.py` and
+`tests/e2e/test_converter_presets_replay.py`. They cover recorded
 provider fixtures, fake processing, format equivalence, malformed/forced inputs,
 versions, bounded archives/XML, manifests, ambiguous companions, directory
 recursion, duplicates, option scope, permission/reference/orientation/memory
@@ -990,6 +1083,30 @@ Only the three owning-package exports form the unified public surface.
 
 | Definition | Contract |
 | --- | --- |
+| `meta_standards_converter.converters.unified.requests.PreparationPolicy` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.preset` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.combine` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.aliases` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.input_settings` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.output_settings` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.normalize` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.preparation_options` | Extract preparation flags before validating a reader's own settings. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.merge_input_options` | An input-local expansion alias overrides a call-level expansion default. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.preparation.provider_of` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
+| `meta_standards_converter.converters.unified.preparation.study_ids` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
+| `meta_standards_converter.converters.unified.preparation.MetadataPreparation` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
+| `meta_standards_converter.converters.unified.families.nodes` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
+| `meta_standards_converter.converters.unified.families.project_records` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
+| `meta_standards_converter.converters.unified.families.recorded_neighbors` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
+| `meta_standards_converter.converters.unified.families.StudyFamilies` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
+| `meta_standards_converter.metadata.preparation_scope.loading_source` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
+| `meta_standards_converter.metadata.preparation_scope.converter_enrichment_enabled` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
+| `meta_standards_converter.metadata.preparation_scope.source_publications_enabled` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
+| `meta_standards_converter.metadata.preparation_scope.exporting_prepared` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
+| `meta_standards_converter.metadata.preparation_scope.exporter_retrieval_enabled` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
+| `meta_standards_converter.metadata.preparation_scope.preparation_session` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
+| `meta_standards_converter.metadata.preparation_scope.retrieve_once` | Reuse evidence only within one facade invocation; legacy calls are unchanged. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
+| `meta_standards_converter.metadata.preparation_scope.convert_source` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
 | `meta_standards_converter.converters.unified.contracts.InputSpec` | `InputSpec`. Public facade; see API contract above. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
 | `meta_standards_converter.converters.unified.contracts.Diagnostic` | `Diagnostic`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
 | `meta_standards_converter.converters.unified.contracts.InputError` | `InputError`. A safe, actionable input or capability error. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
@@ -1022,7 +1139,7 @@ Only the three owning-package exports form the unified public surface.
 | `meta_standards_converter.converters.unified.handlers.canonical_identity` | `canonical_identity(loaded)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
 | `meta_standards_converter.converters.unified.handlers.InputHandler` | `InputHandler`. One registered format with recognition, validation and loading boundaries. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
 | `meta_standards_converter.converters.unified.handlers.default_handlers` | `default_handlers()`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
-| `meta_standards_converter.converters.unified.options.settings` | `settings(value, allowed, label)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/options.py) |
+| `meta_standards_converter.converters.unified.options.settings` | `settings(value, allowed, label, *, partial=False)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/options.py) |
 | `meta_standards_converter.converters.unified.publication.reserve` | `reserve(paths, context)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
 | `meta_standards_converter.converters.unified.publication.atomic_write` | `atomic_write(path, writer, overwrite)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
 | `meta_standards_converter.converters.unified.publication.publish_jsons` | `publish_jsons(groups, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
@@ -5343,3 +5460,24 @@ SRP002056 study were also exercised manually against both providers during
 implementation; development outputs stay outside version control.
 
 | `meta_standards_converter.sources.archive_support.publication_ids` | `publication_ids(records)` |
+
+
+<a id="magetab-row-factors"></a>
+## MAGE-TAB row factors and optional files
+
+Factor Value columns describe experimental variables for an SDRF row, as defined
+by the [MAGE-TAB 1.1 specification](https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf).
+A factor following a blank optional file/protocol node is retained on the row's
+last explicit assay or hybridization. No assay is invented, and characteristics
+or protocol parameters are not rebound by this rule. If optional nodes cause the
+same named factor to use different carriers across rows, semantic rendering uses
+a common assay placement, preserving separate occurrences and row values.
+Unresolved annotations without an assay remain explicit residual evidence.
+
+This source-backed repair was identified by comparing deposited 2024–2025 bulk
+RNA-seq, mixed Chromium/Visium, GeoMx and ChIP-seq MAGE-TAB. The regression also
+fails on the preceding baseline; it is not caused by the new facade. The
+`tests/test_magetab_blank_nodes.py` cases protect retained values, common columns
+and absence of invented assays. Existing populated-node parsing contracts remain.
+An entirely blank optional file column may be omitted by semantic export; MSC
+preserves scientific information rather than original spreadsheet byte layout.
