@@ -78,7 +78,7 @@ def normalize_archive_dates(data):
                 for extra in annotations[key]:
                     if extra not in saved:
                         saved.append(extra)
-    declarations = {d['iid'] for d in data.get('database', [])}
+    declarations = {d['iid'] for d in data.get('database', []) if d.get('iid')}
     for sample in samples.values():
         for status in sample.get('status', []):
             database = status.get('database')

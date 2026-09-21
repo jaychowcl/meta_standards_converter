@@ -269,10 +269,10 @@ def _apply_destination(channel: dict[str, Any], destination: str, values: list[d
         match = _DYNAMIC_DESTINATION.fullmatch(destination)
         tag = match.group(1) if match else destination
     rows = [item for item in _as_list(channel.get("characteristics")) if isinstance(item, dict)]
-    rows = [
-        item for item in rows
-        if str(item.get("name") or item.get("tag") or "").casefold() != tag.casefold()
-    ]
+    from .fields import BIOLOGICAL_ALIASES
+    aliases = BIOLOGICAL_ALIASES.get(destination, {tag.casefold().replace(" ", "_")})
+    rows = [item for item in rows if re.sub(r"[^a-z0-9]+", "_",
+            str(item.get("name") or item.get("tag") or "").casefold()).strip("_") not in aliases]
     rows.extend({"name": tag, **_ontology_container(item)} for item in values)
     channel["characteristics"] = rows
 

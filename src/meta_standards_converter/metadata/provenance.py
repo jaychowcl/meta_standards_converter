@@ -80,3 +80,23 @@ def patch_provenance_columns(
 
 
 __all__ = ["PROVENANCE_FIELDS", "patch_provenance_columns"]
+
+
+"""Repository identity from explicit provenance, without accession translation."""
+def repository_name(data):
+    fmt = str(data.get("source", {}).get("format", "")).casefold()
+    if fmt in {"sra", "ena"}:
+        return fmt.upper()
+    if fmt in {"geo", "geo miniml", "miniml"}:
+        return "GEO"
+    if fmt in {"arrayexpress", "biostudies"}:
+        return "ArrayExpress"
+    series = data.get("series", {})
+    series = series if isinstance(series, list) else [series]
+    identifiers = [v for item in series for v in [str(item.get("iid", "")),
+                   *[str(a.get("value", "")) for a in item.get("accession", [])]]]
+    if fmt == "mage-tab" and any(v.startswith(("E-MTAB-", "E-GEOD-")) for v in identifiers):
+        return "ArrayExpress"
+    if not fmt and any(v.startswith("GSE") and v[3:].isdigit() for v in identifiers):
+        return "GEO"
+    return None

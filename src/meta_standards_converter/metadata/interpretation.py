@@ -233,14 +233,12 @@ class MINiMLMetadataService:
             for slug, items in characteristic_values.items()
         }
         metadata["characteristics"] = characteristics
-        metadata["organism_part"] = (
-            characteristics.get("organism_part")
-            or characteristics.get("tissue")
-            or metadata["source"]
-        )
-        metadata["developmental_stage"] = characteristics.get(
-            "developmental_stage", ()
-        )
+        # Curated aliases affect only the canonical projection, never raw keys.
+        from .fields import BIOLOGICAL_ALIASES
+        for field, names in BIOLOGICAL_ALIASES.items():
+            metadata[field] = tuple(self.values(
+                value for key, values in characteristics.items() if key in names
+                for value in values))
         metadata["disease"] = characteristics.get("disease", ())
         metadata["genotype"] = characteristics.get("genotype", ())
 

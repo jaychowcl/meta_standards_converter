@@ -1238,7 +1238,7 @@ class TestIDFConstructor(unittest.TestCase):
         with patch.object(constructor, "_current_idf_date", return_value="2026-05-26"):
             rows = constructor._idf_dates(
                 {
-                    "series": {
+                    "source": {"format": "GEO MINiML"}, "series": {
                         "status": [
                             {
                                 "submission_date": "2026-05-18",
@@ -1281,7 +1281,7 @@ class TestIDFConstructor(unittest.TestCase):
         with patch.object(constructor, "_current_idf_date", return_value="2026-05-26"):
             rows = constructor._idf_dates(
                 {
-                    "series": [
+                    "source": {"format": "GEO MINiML"}, "series": [
                         {"status": [{"submission_date": "2026-05-18"}]},
                         {"status": [{"submission_date": "2026-05-19"}]},
                     ],
@@ -1294,15 +1294,15 @@ class TestIDFConstructor(unittest.TestCase):
         )
 
     def test_idf_dates_public_release_date_is_empty_without_release_dates(self):
-        rows = IDFConstructor()._idf_dates({"series": {"status": [{"submission_date": "2026-05-18"}]}})
+        rows = IDFConstructor()._idf_dates({"source": {"format": "GEO MINiML"}, "series": {"status": [{"submission_date": "2026-05-18"}]}})
 
         self.assertEqual(["Public Release Date", None], self.row(rows, "Public Release Date"))
-        self.assertEqual(["Comment[GEOReleaseDate]", None], self.row(rows, "Comment[GEOReleaseDate]"))
+        self.assertEqual(["Comment[GEOReleaseDate]"], self.row(rows, "Comment[GEOReleaseDate]"))
 
     def test_idf_dates_public_release_date_ignores_unparseable_release_dates(self):
         rows = IDFConstructor()._idf_dates(
             {
-                "series": {
+                "source": {"format": "GEO MINiML"}, "series": {
                     "status": [
                         {"release_date": "not-a-date"},
                         {"release_date": "2026-07-01"},
@@ -1319,7 +1319,7 @@ class TestIDFConstructor(unittest.TestCase):
 
     def test_idf_dates_public_release_date_is_empty_when_all_release_dates_are_unparseable(self):
         rows = IDFConstructor()._idf_dates(
-            {"series": {"status": [{"release_date": "not-a-date"}, {"release_date": ""}]}}
+            {"source": {"format": "GEO MINiML"}, "series": {"status": [{"release_date": "not-a-date"}, {"release_date": ""}]}}
         )
 
         self.assertEqual(["Public Release Date", None], self.row(rows, "Public Release Date"))

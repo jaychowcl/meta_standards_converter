@@ -398,50 +398,33 @@ class IDFConstructor():
         """
         Extracts date-related fields from MINiML JSON using JSONHandler.
         """
-        handler = JSONHandler()
-        native = data.get("source", {}).get("format") in {"SRA", "ENA"}
-        provider = data["source"]["format"] if native else "GEO"
-        if native:
-            statuses = data.get('series', {}).get('status', [])
-            native_dates = [s['release_date'] for s in statuses if s.get('database', provider) == provider and s.get('release_date')]
-            rows = [['Date of Experiment', *([data['series']['experiment_date']] if data['series'].get('experiment_date') else [])],
-                    ['Public Release Date', self._earliest_idf_date([v[:10] for v in native_dates])]]
-            for database in dict.fromkeys([provider, *[s.get('database', provider) for s in statuses]]):
-                for field, label in [('release_date','ReleaseDate'), ('last_update_date','LastUpdateDate')]:
-                    rows.append([f'Comment[{database}{label}]', *[s[field] for s in statuses if s.get('database', provider) == database and s.get(field)]])
-            rows.append(['Comment[ArrayExpressSubmissionDate]', self._current_idf_date()])
-            return rows
+        from meta_standards_converter.metadata.provenance import repository_name
+        provider = repository_name(data)
+        native = provider in {"SRA", "ENA"}
+        series = data.get("series", {})
+        series = series if isinstance(series, list) else [series]
+        statuses = [s for item in series for s in item.get("status", [])]
         normalize = (lambda value: value) if native else self._normalized_idf_date
-
-        submission_dates = [
-            normalize(value)
-            for value in handler._from_path(data, "series.status.*.submission_date")
-        ]
-        experiment_dates = [
-            normalize(value)
-            for value in handler._from_path(data, "series.experiment_date")
-            if value not in (None, "")
-        ]
-        release_dates = [
-            normalize(value)
-            for value in handler._from_path(data, "series.status.*.release_date")
-        ]
-        last_update_dates = [
-            normalize(value)
-            for value in handler._from_path(data, "series.status.*.last_update_date")
-        ]
-        public_release_date = self._earliest_idf_date(values=[
-            value[:10] if native and isinstance(value, str) and re.match(r"^\d{4}-\d{2}-\d{2}T", value) else value
-            for value in release_dates
-        ])
-
-        return [
-            ["Date of Experiment", *(experiment_dates or submission_dates)],
-            ["Public Release Date", public_release_date],
-            [f"Comment[{provider}ReleaseDate]", *release_dates],
-            [f"Comment[{provider}LastUpdateDate]", *last_update_dates],
-            ["Comment[ArrayExpressSubmissionDate]", self._current_idf_date()],
-        ]
+        values = lambda field: [normalize(s[field]) for s in statuses if s.get(field)]
+        experiments = [normalize(item["experiment_date"]) for item in series if item.get("experiment_date")]
+        generic_releases = [normalize(s["release_date"]) for s in statuses
+                            if s.get("date_source") == "Public Release Date" and s.get("release_date")]
+        releases = generic_releases or [normalize(s["release_date"]) for s in statuses
+            if s.get("release_date") and (not native or s.get("database", provider) == provider)]
+        rows = [["Date of Experiment", *(experiments if experiments else
+                                        [] if native else values("submission_date"))],
+                ["Public Release Date", self._earliest_idf_date([v[:10] for v in releases])]]
+        # An explicit status scope takes precedence over package provenance.
+        for database in dict.fromkeys([provider, *[s.get("database") for s in statuses]]):
+            if not database:
+                continue
+            for field, label in (("release_date", "ReleaseDate"), ("last_update_date", "LastUpdateDate")):
+                scoped = [normalize(s[field]) for s in statuses if field in s
+                          and s.get("database", provider) == database
+                          and s.get("date_source") != "Public Release Date"]
+                rows.append([f"Comment[{database}{label}]", *scoped])
+        rows.append(["Comment[ArrayExpressSubmissionDate]", self._current_idf_date()])
+        return rows
 
     def _current_idf_date(self):
         return date.today().isoformat()

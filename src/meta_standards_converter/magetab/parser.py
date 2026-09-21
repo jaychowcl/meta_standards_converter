@@ -61,6 +61,8 @@ class AEParser:
             "Person Roles Term Source Ref", "Person Roles Term Accession Number",
             "Date of Experiment", "Public Release Date", "Comment[GEOReleaseDate]",
             "Comment[GEOLastUpdateDate]", "Comment[ArrayExpressSubmissionDate]",
+            *[f"Comment[{database}{label}]" for database in ("ArrayExpress", "ENA", "SRA", "INSDC")
+              for label in ("ReleaseDate", "LastUpdateDate")],
             "PubMed ID", "Publication DOI", "Publication Author List", "Publication Title",
             "Publication Status", "Status Term Source Ref", "Status Term Accession Number",
             "Publication Status Term Source REF",
@@ -364,17 +366,16 @@ class AEParser:
 
     def _statuses(self, idf: dict) -> list[dict]:
         submissions = self._nonblank(idf, "Date of Experiment")
-        releases = self._nonblank(idf, "Comment[GEOReleaseDate]") or self._nonblank(idf, "Public Release Date")
-        updates = self._nonblank(idf, "Comment[GEOLastUpdateDate]")
-        count = max(len(submissions), len(releases), len(updates), 0)
-        return [
-            {
-                **({"submission_date": submissions[index]} if index < len(submissions) else {}),
-                **({"release_date": releases[index]} if index < len(releases) else {}),
-                **({"last_update_date": updates[index]} if index < len(updates) else {}),
-            }
-            for index in range(count)
-        ]
+        releases = self._nonblank(idf, "Public Release Date")
+        result = [{"submission_date": value} for value in submissions]
+        result.extend({"release_date": value, "date_source": "Public Release Date"} for value in releases)
+        for database in ("GEO", "ArrayExpress", "ENA", "SRA", "INSDC"):
+            for field, label in (("release_date", "ReleaseDate"), ("last_update_date", "LastUpdateDate")):
+                result.extend({"database": database, field: value} for value in
+                              self._nonblank(idf, f"Comment[{database}{label}]"))
+        if len({s["release_date"] for s in result if s.get("release_date")}) > 1:
+            self._warn("Distinct release-date statements retained with their source field or repository scope.")
+        return result
 
     def _publications(self, idf: dict) -> list[dict]:
         fields = {
@@ -895,6 +896,8 @@ class AEParser:
         return accessions[0]["value"]
 
     def _warn(self, message):
+        if not hasattr(self, "warnings"):
+            self.warnings = []
         if message not in self.warnings:
             self.warnings.append(message)
             logger.warning(message)
