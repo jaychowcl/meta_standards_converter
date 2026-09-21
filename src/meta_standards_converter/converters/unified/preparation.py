@@ -6,7 +6,7 @@ import json
 import re
 
 from meta_standards_converter.miniml import MINiMLCodec
-from meta_standards_converter.metadata.preparation_scope import loading_source
+from meta_standards_converter.metadata.preparation_scope import loading_source, convert_source
 from .contracts import Diagnostic
 
 
@@ -35,6 +35,9 @@ class MetadataPreparation:
     def prepare(self, loaded):
         if loaded.metadata is None:
             return loaded
+        providers = {provider_of(p, loaded.provider) for g in loaded.metadata.groups for p in g.packages}
+        if len(providers) == 1:
+            loaded.provider = providers.pop()
         loaded = self.families.expand(loaded)
         groups = []
         for group in loaded.metadata.groups:
@@ -106,7 +109,7 @@ class MetadataPreparation:
         converter = getattr(primary, "peer_converter", None) or self.context.service(
             peer + "2json", lambda: cls(resource_profile=self.context.profile))
         with loading_source(self.context.preparation_policy):
-            result = converter.convert(accession, include_peer=False, enrich_from_geo_ae=False,
+            result = convert_source(converter, accession, include_peer=False, enrich_from_geo_ae=False,
                                        evidence_dir=self.context.input_options.get("evidence_dir"))
         issues = [issue for outcome in result.studies for issue in outcome.issues]
         if not result.packages:
@@ -130,7 +133,11 @@ class MetadataPreparation:
         from meta_standards_converter.metadata.enrichment import MINiMLEnricher
         service = self.context.converter.services.get("enricher")
         if service is None:
-            primary = self.context.converter.services.get((provider or "") + "2json")
+            primary = self.context.converter.services.get((provider or "") + "2json") or self.context._services.get((provider or "") + "2json")
+            if primary is None and provider == "geo":
+                primary = self.context.converter.services.get("geo2ae")
+            if primary is None and self.context.target == "magetab":
+                primary = self.context.converter.services.get("json2ae")
             service = getattr(primary, "enricher", None) or getattr(primary, "publication_enricher", None)
         service = service or self.context.service("enricher", lambda: MINiMLEnricher(resource_profile=self.context.profile))
         runs = self.context.preparation_policy.enrichment == "standard" and provider not in {"sra", "ena"}

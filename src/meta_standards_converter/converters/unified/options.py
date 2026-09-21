@@ -98,7 +98,7 @@ BOOLS = {
 }
 
 
-def settings(value, allowed, label):
+def settings(value, allowed, label, *, partial=False):
     if value is None:
         return {}
     if not isinstance(value, Mapping):
@@ -125,7 +125,7 @@ def settings(value, allowed, label):
         raise ValueError("Unsupported pipeline")
     if result.get("gtf") and result.get("gff"):
         raise ValueError("gtf and gff are mutually exclusive")
-    if result.get("force_memory") and not result.get("resume"):
+    if not partial and result.get("force_memory") and not result.get("resume"):
         raise ValueError("force_memory requires resume=True")
     if "insdc_default" in result and result["insdc_default"] not in {"ena", "sra"}:
         raise ValueError("insdc_default must be ena or sra")

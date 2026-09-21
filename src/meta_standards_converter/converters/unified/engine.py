@@ -86,7 +86,18 @@ class ExecutionContext:
         if key in self.converter.services:
             return self.converter.services[key]
         if key not in self._services:
-            self._services[key] = factory()
+            direct = self.converter.services.get("geo2ae")
+            if direct is not None and key == "geo2json":
+                from meta_standards_converter.converters.geo2json import GEO2JSONConverter
+                self._services[key] = GEO2JSONConverter(
+                    geo_fetcher=direct.geo_fetcher, parser=direct.parser,
+                    enricher=direct.enricher, resource_profile=self.profile)
+            elif direct is not None and key == "json2ae":
+                from meta_standards_converter.converters.json2ae import JSON2AEConverter
+                self._services[key] = JSON2AEConverter(
+                    enricher=direct.enricher, ae_constructor=direct.ae_constructor)
+            else:
+                self._services[key] = factory()
         return self._services[key]
 
     def localize(self, source):
@@ -177,6 +188,8 @@ class Converter:
         base_output = settings(output_options, OUTPUT[out_type], "output options")
         result = ConversionBatchResult()
         with ExitStack() as stack:
+            from meta_standards_converter.metadata.preparation_scope import preparation_session
+            stack.enter_context(preparation_session())
             context = ExecutionContext(self, runtime, out_type, outfile, outdir, stack)
             declared = (
                 manifest_specs(input_manifest, context.profile.max_xml_bytes)
@@ -247,7 +260,7 @@ class Converter:
                 chosen = kind_name(spec.in_type) or forced
                 inp = base_input | input_settings(spec.input_options)
                 out = settings(
-                    base_output | output_settings(spec.output_options, out_type),
+                    base_output | output_settings(spec.output_options, out_type, partial=True),
                     OUTPUT[out_type],
                     "output options",
                 )
@@ -350,7 +363,7 @@ class Converter:
                             ),
                             kind,
                         )
-                        configuration = repr((inp, out, spec.companions, spec.metadata))
+                        configuration = repr((inp, out, preparation, spec.companions, spec.metadata))
                         if key in seen:
                             if seen[key] != configuration:
                                 raise InputError(
@@ -432,6 +445,7 @@ class Converter:
                     context.stage = "preparation"
                     before = len(loaded.diagnostics)
                     loaded = context.preparer.prepare(loaded)
+                    item.provider = loaded.provider
                     item.preparation = loaded.preparation
                     item.diagnostics.extend(loaded.diagnostics[before:])
                     if loaded.metadata is not None:

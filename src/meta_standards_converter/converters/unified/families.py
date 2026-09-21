@@ -78,9 +78,9 @@ class StudyFamilies:
                 if not uid or not uid.isdigit() or not PROJECT.fullmatch(accession):
                     continue
                 if accession not in self.projects:
-                    source = self.context.service('sra2json', lambda: SRA2JSONConverter(resource_profile=self.context.profile)).source
                     result, linked = Resolution(), set()
                     try:
+                        source = self.context.service('sra2json', lambda: SRA2JSONConverter(resource_profile=self.context.profile)).source
                         for direction in ('u2d', 'd2u'):
                             name = 'bioproject_bioproject_' + direction
                             ids = source.publication_links('bioproject', 'bioproject', [uid], name)[uid]

@@ -119,7 +119,7 @@ def test_manifest_binding_removes_unreferenced_companion_from_discovery(tmp_path
             }
         )
     )
-    result = Converter().convert(tmp_path, out_type="json", input_manifest=manifest)
+    result = Converter().convert(tmp_path, out_type="json", enrichment="off", options={"expand_studies": False}, input_manifest=manifest)
     assert len(result.items) == 1, result.to_dict()
     assert result.status == "complete", result.to_dict()
 
@@ -211,7 +211,7 @@ def test_probe_is_used_for_replaced_registered_handler():
 
 def test_standalone_sdrf_finds_unique_idf():
     fixture = Path(__file__).parents[2] / "tests/fixtures/studies/E-MTAB-1/inputs"
-    result = Converter().convert(next(fixture.glob("*.sdrf.txt")), out_type="json")
+    result = Converter().convert(next(fixture.glob("*.sdrf.txt")), out_type="json", enrichment="off", options={"expand_studies": False})
     assert result.status == "complete", result.to_dict()
 
 

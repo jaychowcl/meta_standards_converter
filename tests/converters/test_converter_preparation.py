@@ -103,3 +103,57 @@ def test_curators_geo_excludes_sra_run_enrichment():
     result = Converter(services=services(calls)).convert(value, out_type="json", enrichment="curators")
     assert result.status == "complete", result.to_dict()
     assert calls == [("standard", True, False)]
+
+
+def test_publication_retrieval_is_deduplicated_per_convert_only():
+    from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+    calls = []
+    class Pubmed:
+        def pubmed_summary(self, *, pubmed_id):
+            calls.append(pubmed_id)
+            return ('10.1/example', 'Authors', 'Title', 'published', 'EFO', 'EFO:1')
+    enricher = MINiMLEnricher(pubmed_fetcher=Pubmed())
+    converter = Converter(services={'enricher': enricher})
+    sources = [package('GSE1', 'GSM1'), package('GSE2', 'GSM2')]
+    for p in sources:
+        p['series']['pubmed_id'] = ['12345']
+    for _ in range(2):
+        result = converter.convert(sources, out_type='json', enrichment='curators')
+        assert result.status == 'complete', result.to_dict()
+        assert all(p.series.to_mapping()['pubmed_publication'][0]['title'] == 'Title' for p in result.items[0].payload)
+    assert calls == ['12345', '12345']
+
+
+def test_injected_geo2ae_collaborators_are_used_in_composed_facade():
+    from meta_standards_converter.converters.geo2ae import GEO2AEConverter
+    from meta_standards_converter.magetab.constructor import AEConstructor
+    from meta_standards_converter.miniml.geo_parser import GEOParser
+    from pathlib import Path
+    calls = []
+    class Fetcher:
+        def fetch_gse_miniml(self, **kwargs):
+            calls.append('fetch')
+            return (Path(__file__).parents[1] / 'fixtures/studies/GSE100/inputs/geo.xml').read_text()
+    class Parser:
+        def parse(self, miniml, **kwargs):
+            calls.append('parse')
+            return GEOParser().parse(miniml)
+    class Enricher:
+        def enrich_selected(self, data, **kwargs):
+            calls.append('enrich')
+            return data
+    class Constructor(AEConstructor):
+        def miniml2magetab(self, **kwargs):
+            calls.append('construct')
+            return super().miniml2magetab(**kwargs)
+    direct = GEO2AEConverter(geo_fetcher=Fetcher(), parser=Parser(), enricher=Enricher(), ae_constructor=Constructor())
+    result = Converter(services={'geo2ae': direct}).convert('GSE100', out_type='magetab', enrichment='curators', options={'expand_studies':False})
+    assert result.status == 'complete', result.to_dict()
+    assert calls == ['fetch', 'parse', 'enrich', 'construct']
+
+
+def test_saved_geo_provenance_is_reported():
+    value = package()
+    value['source']['format'] = 'GEO MINiML'
+    result = Converter().convert(value, out_type='json', enrichment='off')
+    assert result.items[0].provider == 'geo'

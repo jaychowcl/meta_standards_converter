@@ -2,7 +2,6 @@
 from dataclasses import dataclass
 from collections.abc import Mapping
 from os import PathLike
-from pathlib import Path
 
 from .discovery import kind_name
 from .options import INPUT, OUTPUT, RUNTIME_DEFAULTS, settings
@@ -72,20 +71,20 @@ def aliases(value, names, label):
 
 
 def input_settings(value):
-    return settings(aliases(value, {"matrix_orientation": "orientation"}, "input options"),
+    return settings(aliases(value, {"matrix_orientation": "orientation", "related_series": "expand_studies"}, "input options"),
                     set().union(*INPUT.values()) | PREPARATION, "input options")
 
 
-def output_settings(value, target):
+def output_settings(value, target, *, partial=False):
     return settings(aliases(value, {"execution_profile": "profile"}, "output options"),
-                    OUTPUT[target], "output options")
+                    OUTPUT[target], "output options", partial=partial)
 
 
 def normalize(*, target, in_type, enrichment, options, force_in_type, outfile,
               input_manifest, input_options, output_options, runtime_options):
     simple = aliases(options, {"execution_profile": "profile"}, "options")
     inp = input_settings(input_options)
-    out = output_settings(output_options, target)
+    out = output_settings(output_options, target, partial=True)
     runtime = settings(runtime_options, RUNTIME_DEFAULTS, "runtime options")
     paths = {"outfile": outfile, "input_manifest": input_manifest}
     for key, value in simple.items():
@@ -100,7 +99,7 @@ def normalize(*, target, in_type, enrichment, options, force_in_type, outfile,
             if key == "enrich" and key in OUTPUT[target] and key not in inp:
                 out = combine(out, {key: value}, "output options")
             else:
-                inp = combine(inp, {key: value}, "input options")
+                inp = combine(inp, input_settings({key: value}), "input options")
         elif key in OUTPUT[target]:
             out = combine(out, {key: value}, "output options")
         else:

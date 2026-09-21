@@ -342,6 +342,7 @@ class InputHandler:
         )
 
     def _accession(self, spec, context):
+        from meta_standards_converter.metadata.preparation_scope import convert_source
         token = str(spec.sources).strip().upper()
         options = context.input_options
         if self.kind == "geo_accession":
@@ -351,7 +352,7 @@ class InputHandler:
                 "geo2json", lambda: GEO2JSONConverter(resource_profile=context.profile)
             )
             return self._metadata(
-                converter.convert(token, **{**options, "enrich": False, "related_series": False}),
+                convert_source(converter, token, **{**options, "enrich": False, "related_series": False}),
                 "geo",
                 enriched=False,
             )
@@ -361,7 +362,7 @@ class InputHandler:
             converter = context.service(
                 "ae2json", lambda: AE2JSONConverter(resource_profile=context.profile)
             )
-            return self._metadata(converter.convert(token, **options), "biostudies")
+            return self._metadata(convert_source(converter, token, **options), "biostudies")
         from meta_standards_converter.converters.sra2json import SRA2JSONConverter
         from meta_standards_converter.converters.ena2json import ENA2JSONConverter
 
@@ -370,7 +371,7 @@ class InputHandler:
         converter = context.service(
             provider + "2json", lambda: cls(resource_profile=context.profile)
         )
-        result = converter.convert(token, **options)
+        result = convert_source(converter, token, **options)
         diagnostics = [
             Diagnostic("source_" + s.status, f"{s.study}: {issue}", "load", "warning")
             for s in result.studies

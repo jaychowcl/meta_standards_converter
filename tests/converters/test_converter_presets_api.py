@@ -77,3 +77,30 @@ def test_policy_defaults_are_resolved_per_input():
     ], out_type="json")
     assert result.status == "complete", result.to_dict()
     assert [(p.enrichment, p.expand_studies) for p in policies] == [("standard", True), ("off", False)]
+
+
+def test_flat_matrix_orientation_and_execution_profile_normalization():
+    from meta_standards_converter.converters.unified.requests import normalize, AUTO, STANDARD
+    def request(options, input_options=None, output_options=None):
+        return normalize(target='h5ad', in_type=AUTO, enrichment=STANDARD,
+                         options=options, force_in_type=None, outfile=None,
+                         input_manifest=None, input_options=input_options,
+                         output_options=output_options, runtime_options=None)
+    resolved = request({'matrix_orientation': 'genes-by-observations', 'execution_profile': 'docker'},
+                       output_options={'matrix_orientation':'genes-by-observations', 'profile':'docker'})
+    assert resolved[4]['profile'] == 'docker'
+    assert resolved[4]['matrix_orientation'] == 'genes-by-observations'
+    with pytest.raises(ValueError, match='Conflicting'):
+        request({'execution_profile':'docker'}, output_options={'profile':'singularity'})
+    # Interdependent options can be supplied through different aliases.
+    assert request({'resume': True}, output_options={'force_memory':True})[4]['force_memory']
+
+
+def test_per_input_expansion_alias_overrides_default():
+    from tests.converters.test_converter_expansion import geo, Geo
+    reader = Geo({})
+    result = Converter(services={'geo2json':reader}).convert(
+        InputSpec(geo('GSE1',['GSE2']), input_options={'related_series':False}),
+        out_type='json', enrichment='off', options={'expand_studies':True})
+    assert result.status == 'complete', result.to_dict()
+    assert not reader.calls

@@ -17,6 +17,8 @@ from copy import deepcopy
 
 import requests
 
+from .preparation_scope import retrieve_once
+
 from meta_standards_converter.sources.insdc import INSDCWebfetcher
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 from meta_standards_converter.sources.pubmed import PubmedWebFetcher
@@ -196,11 +198,13 @@ class MINiMLEnricher:
         if key not in cache:
             try:
                 if self.publication_identifier_resolver is not None:
-                    resolved = self.publication_identifier_resolver(kind, value)
+                    resolved = retrieve_once(("citation", id(self.publication_identifier_resolver), kind, value),
+                        lambda: self.publication_identifier_resolver(kind, value))
                 else:
                     if getattr(self, '_identifier_http', None) is None:
                         self._identifier_http = ArchiveHTTP('ncbi_eutils', resource_profile=self.profile)
-                    resolved = resolve_identifier(kind, value, self._identifier_http)
+                    resolved = retrieve_once(("citation", id(self), kind, value),
+                        lambda: resolve_identifier(kind, value, self._identifier_http))
                 cache[key] = citation_identifier('pubmed', resolved).get('pubmed_id')
                 if resolved and not cache[key]:
                     raise ValueError('invalid resolved PMID')
@@ -233,7 +237,8 @@ class MINiMLEnricher:
             fetched = []
             for accession in accessions:
                 try:
-                    fetched.extend(self.insdc_fetcher.fetch_sra_runs(accession=accession))
+                    fetched.extend(retrieve_once(("runs", id(self.insdc_fetcher), accession),
+                        lambda: self.insdc_fetcher.fetch_sra_runs(accession=accession)))
                 except (requests.RequestException, ET.ParseError) as error:
                     self._sra_failures = getattr(self, "_sra_failures", 0) + 1
                     logger.warning('SRA refresh %s failed (%s); retaining saved metadata', accession, type(error).__name__)
@@ -315,9 +320,8 @@ class MINiMLEnricher:
         cache = getattr(self, '_publication_cache', None)
         if cache is not None and pubmed_id in cache: return dict(cache[pubmed_id])
         try:
-            doi, authors, title, status, source_ref, accession = self.pubmed_fetcher.pubmed_summary(
-                pubmed_id=pubmed_id
-            )
+            doi, authors, title, status, source_ref, accession = retrieve_once(("publication", id(self.pubmed_fetcher), pubmed_id),
+                lambda: self.pubmed_fetcher.pubmed_summary(pubmed_id=pubmed_id))
             if not any((doi, authors, title, status)):
                 raise ValueError('PubMed response contains no citation metadata')
         except (requests.RequestException, ET.ParseError, ValueError) as error:

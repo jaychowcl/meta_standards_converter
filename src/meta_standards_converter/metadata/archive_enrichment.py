@@ -474,6 +474,7 @@ class LinkedArchiveEnricher:
         return self.enrich_selected(package)
 
     def enrich_selected(self, package, *, accessions=None):
+        from .preparation_scope import convert_source
         issues = []
         # Stable ascending priority: informative AE values are applied last.
         discovered = set(linked_accessions(package) if accessions is None else accessions)
@@ -488,12 +489,12 @@ class LinkedArchiveEnricher:
                     if self.geo is None:
                         from ..converters.geo2json import GEO2JSONConverter
                         self.geo = GEO2JSONConverter(resource_profile=self.profile)
-                    packages = self.geo.convert(accession, enrich=False, related_series=False)
+                    packages = convert_source(self.geo, accession, enrich=False, related_series=False)
                 else:
                     if self.ae is None:
                         from ..converters.ae2json import AE2JSONConverter
                         self.ae = AE2JSONConverter(resource_profile=self.profile)
-                    packages = self.ae.convert(accession)
+                    packages = convert_source(self.ae, accession)
                 candidates = [p for p in packages if accession in entity_ids(p.to_mapping()['series'])]
                 if len(candidates) != 1:
                     issues.append(f'{accession}: ambiguous or unavailable enrichment study')
