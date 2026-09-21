@@ -71,7 +71,7 @@ def aliases(value, names, label):
 
 
 def input_settings(value):
-    return settings(aliases(value, {"matrix_orientation": "orientation", "related_series": "expand_studies"}, "input options"),
+    return settings(aliases(value, {"matrix_orientation": "orientation"}, "input options"),
                     set().union(*INPUT.values()) | PREPARATION, "input options")
 
 
@@ -142,3 +142,14 @@ def preparation_options(inp, out):
         if value is not None and explicit and value != (name == "standard"):
             raise ValueError("Conflicting enrichment preset and repository override")
     return inp, out, PreparationPolicy(name, expand, linked, peer)
+
+
+def merge_input_options(defaults, overrides):
+    """An input-local expansion alias overrides a call-level expansion default."""
+    local = input_settings(overrides)
+    base = dict(defaults)
+    if 'related_series' in local and 'expand_studies' not in local:
+        base.pop('expand_studies', None)
+    if 'expand_studies' in local and 'related_series' not in local:
+        base.pop('related_series', None)
+    return base | local

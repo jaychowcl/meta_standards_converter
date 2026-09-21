@@ -98,9 +98,9 @@ def test_flat_matrix_orientation_and_execution_profile_normalization():
 
 def test_per_input_expansion_alias_overrides_default():
     from tests.converters.test_converter_expansion import geo, Geo
-    reader = Geo({})
+    reader = Geo({'GSE1':geo('GSE1',['GSE2'])})
     result = Converter(services={'geo2json':reader}).convert(
-        InputSpec(geo('GSE1',['GSE2']), input_options={'related_series':False}),
+        InputSpec('GSE1', input_options={'related_series':False}),
         out_type='json', enrichment='off', options={'expand_studies':True})
     assert result.status == 'complete', result.to_dict()
-    assert not reader.calls
+    assert reader.calls == ['GSE1']

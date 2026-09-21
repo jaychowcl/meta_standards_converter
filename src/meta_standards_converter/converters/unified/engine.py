@@ -39,7 +39,7 @@ from .options import TARGETS, INPUT, OUTPUT, RUNTIME_DEFAULTS, settings
 from .publication import publish_jsons, publish_tables, publish_magetab
 from .routes import select_route
 from .requests import (AUTO, STANDARD, normalize, input_settings, output_settings,
-                       preparation_options)
+                       preparation_options, merge_input_options)
 
 
 def source_label(source):
@@ -258,7 +258,7 @@ class Converter:
                 if set(spec.companions) - allowed_companions:
                     raise ValueError("Unknown companion role")
                 chosen = kind_name(spec.in_type) or forced
-                inp = base_input | input_settings(spec.input_options)
+                inp = merge_input_options(base_input, spec.input_options)
                 out = settings(
                     base_output | output_settings(spec.output_options, out_type, partial=True),
                     OUTPUT[out_type],
