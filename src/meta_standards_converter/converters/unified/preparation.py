@@ -95,15 +95,21 @@ class MetadataPreparation:
                 record["status"] = "failed"
                 diagnostics.append(Diagnostic("source_partial", f"{identity}: {name} failed ({type(exc).__name__})", "preparation", "warning"))
 
-        archive_id = next((v for v in ids if re.fullmatch(r"[SED]RP\d+|PRJ(?:NA|EB|DB|DA)\d+", v)), None)
-        run("peer_provider", provider in {"sra", "ena"} and archive_id is not None,
-            lambda p: self._peer(p, provider, archive_id))
+        read_id = next((v for v in ids if re.fullmatch(r"[SED]RP\d+", v)), None)
+        archive_id = read_id or next((v for v in ids if re.fullmatch(r"PRJ(?:NA|EB|DB|DA)\d+", v)), None)
+        run("peer_provider", provider in {"sra", "ena"} and read_id is not None,
+            lambda p: self._peer(p, provider, read_id))
         from meta_standards_converter.metadata.archive_enrichment import linked_accessions
         from .families import recorded_neighbors
         links = set(linked_accessions(package)) - set(recorded_neighbors(package, provider))
-        own = {a.get("value") for a in package.to_mapping().get("series", {}).get("accession", [])} if provider in {"geo", "biostudies"} else set()
+        # Same-repository related experiments are distinct studies, not peer
+        # evidence for the current one. Family traversal owns typed hierarchy links.
+        if provider == "geo":
+            links = {a for a in links if a.startswith("E-")}
+        elif provider == "biostudies":
+            links = {a for a in links if a.startswith("GSE")}
         linked_applicable = (provider in {"geo", "biostudies"} or (provider in {"sra", "ena"} and archive_id is not None))
-        run("linked_metadata", linked_applicable and bool(set(links) - own), lambda p: self._linked(p, provider, links))
+        run("linked_metadata", linked_applicable and bool(links), lambda p: self._linked(p, provider, links))
         run("standard", True, lambda p: self._standard(p, provider))
         return package, records, diagnostics
 

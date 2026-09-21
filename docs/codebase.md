@@ -953,7 +953,9 @@ Source provenance is derived from the selected reader or recognized package
 `source.format`, including `GEO MINiML`. Ambiguous provenance cannot authorize
 cross-repository retrieval under `curators`. Existing evidence is retained even
 when its repository is excluded from new retrieval. Peer merges keep native
-priority; linked evidence uses the existing verified merge precedence.
+priority and request the exact read-study identifier, never a broader project;
+linked evidence uses the existing verified merge precedence. GEO/AE links to
+another experiment within the same repository do not trigger metadata merging.
 
 The execution flow is source loading → structural validation → family expansion
 → peer/linked enrichment where applicable → standard preparation → export.
@@ -1067,7 +1069,7 @@ failover, protocol registry sharing, or changes to legacy processing permission.
 The contract suites are `tests/converters/test_loaded_inputs.py` and
 `test_unified_{converter,sources,expression,defensive}.py`,
 `test_converter_{presets_api,preparation,expansion}.py` and
-`tests/e2e/test_converter_presets_replay.py` plus the 96-case native
+`tests/e2e/test_converter_presets_replay.py` plus the 114-case native and BioStudies
 provider/reader/preset/destination matrix in
 `test_converter_provider_matrix.py`. They cover recorded
 provider fixtures, fake processing, format equivalence, malformed/forced inputs,

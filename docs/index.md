@@ -47,7 +47,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Enrichment presets and study expansion
   anchor: unified-preparation
   purpose: Simple options, standard/curators/off presets, independent family expansion, operation-scoped retrieval and legacy aliases.
-  keywords: enrichment, standard, curators, off, expand_studies, SuperSeries, BioProject, deduplication, execution_profile
+  keywords: enrichment, standard, curators, off, expand_studies, SuperSeries, BioProject, read study, related experiment, deduplication, execution_profile
   link: [Open section](codebase.md#unified-preparation)
 
 - id: magetab-row-factors
