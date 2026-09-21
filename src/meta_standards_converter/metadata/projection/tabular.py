@@ -121,6 +121,7 @@ class MSCMetadataProjector:
         "msc.database.name",
         "msc.database.uri",
         "msc.expression.modality",
+        "msc.expression.modality_detail",
     )
     VALUE_MAP = {
         "msc.sample.title": "title",
@@ -164,6 +165,7 @@ class MSCMetadataProjector:
                 for column, key in self.VALUE_MAP.items()
             },
             "msc.expression.modality": context.base_metadata.get("modality"),
+            "msc.expression.modality_detail": context.base_metadata.get("modality_detail", "unknown"),
         }
         characteristics = context.base_metadata.get("characteristics", {})
         if isinstance(characteristics, Mapping):

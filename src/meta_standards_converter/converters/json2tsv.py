@@ -84,9 +84,13 @@ class JSON2DelimitedConverter:
                     base = self.metadata_service.sample_metadata(
                         sample, package
                     )
+                    from meta_standards_converter.metadata.modality import resolve_modality
+                    detail = resolve_modality(sample, data=package)
+                    warnings.extend(f"{d.code}: {', '.join(d.paths)}" for d in detail.diagnostics)
                     base = {
                         **base,
                         "modality": self.metadata_service.sample_modality(sample),
+                        "modality_detail": detail.value,
                         "harmonization": [
                             vars(item)
                             for item in getattr(resolution, "selections", ())

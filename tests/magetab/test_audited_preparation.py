@@ -102,7 +102,7 @@ def test_empty_control_uses_uniquely_bound_library_preparation():
         'A no cell control was separately prepared in a PCR tube without any cell input.')
     assert resolve_technology(s, run=run, data={'series':series}).handler == 'sequencing'
 def test_bound_protocol_index_is_operation_local_and_shared(monkeypatch):
-    from meta_standards_converter.magetab import preparation
+    from meta_standards_converter.metadata import preparation
     from copy import deepcopy
     series = {'protocols':[{'name':'p', 'type':{'value':'library preparation'}, 'description':'Dropseq'}],
               'assay_paths':[{'steps':[{'kind':'source','name':'s','sample_ref':'s'},

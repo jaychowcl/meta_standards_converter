@@ -173,23 +173,10 @@ def _resolve_technology(sample: dict, channel: dict | None = None,
             signals = ('single_cell',) if level == 3 and str(text).casefold() in {'single cell', 'transcriptomic single cell'} else _signals(str(text))
             levels[level].append(TechnologyEvidence(path, str(text), signals))
 
-    for key in ('library_name', 'description'):
-        add(0, prefix+'.run.'+key, (run or {}).get(key))
-    for key in ('title', 'description', 'library_name'):
-        add(1, prefix+'.'+key, sample.get(key))
-    add(3, prefix+'.library_source', (run or {}).get('library_source') or sample.get('library_source'))
-    for i, item in enumerate(channels):
-        if not isinstance(item, dict):
-            continue
-        index = next((j for j,c in enumerate(_items(sample.get('channel'))) if c is item), i)
-        path = f'{prefix}.channel[{index}]'
-        for j, characteristic in enumerate(_items(item.get('characteristics'))):
-            if not isinstance(characteristic, dict):
-                continue
-            tag = re.sub(r'[\s_-]+', '_', str(characteristic.get('name') or characteristic.get('tag', '')).strip().casefold())
-            if tag in {'assay', 'assay_type', 'library_type', 'library_name', 'technology'}:
-                add(0, f'{path}.characteristics[{j}].value', characteristic.get('value'))
-        add(2, path+'.extract_protocol', item.get('extract_protocol'))
+    from meta_standards_converter.metadata.preparation import library_evidence_levels
+    for level, facts in enumerate(library_evidence_levels(sample, channel, run, series=data.get('series'))):
+        for path, text in facts:
+            add(level, path, text)
     method, method_evidence = scoped_method(sample, channel, run)
     if method == 'bulk':
         return TechnologyDecision('bulk_sequencing', tuple(TechnologyEvidence(p, t, ('bulk',)) for p, t, _ in method_evidence))
@@ -200,10 +187,6 @@ def _resolve_technology(sample: dict, channel: dict | None = None,
     for fact in chemistry.evidence:
         if fact.field == 'identifier' and any(f.path == fact.path and f.field == 'manufacturer' for f in chemistry.evidence):
             levels[0].append(TechnologyEvidence(fact.path, fact.text, ('single_cell',)))
-    for key in ('library_construction_protocol', 'library_protocol'):
-        add(2, prefix+'.run.'+key, (run or {}).get(key))
-    for path, text in bound_protocols(sample, run, data.get('series')):
-        add(2, path, text)
     for i, series in enumerate(_items(data.get('series'))):
         if control_role(sample, channel, run) == 'empty control':
             break

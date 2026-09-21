@@ -100,6 +100,9 @@ class AnnDataNormalizer:
         metadata_values = self._sample_metadata_values(sample, package)
         metadata = self._render_sample_metadata(metadata_values)
         modality = self._sample_modality(sample)
+        from meta_standards_converter.metadata.modality import resolve_modality
+        from dataclasses import asdict
+        detail = resolve_modality(sample, data=package)
         original_names = [str(value) for value in adata.obs_names]
         adata.obs["msc.observation.original_id"] = original_names
         candidates = [
@@ -121,6 +124,7 @@ class AnnDataNormalizer:
             "msc.asset.uri": (source_uri,) if source_uri else (),
             "msc.asset.uri_scope": (source_uri_scope,) if source_uri_scope else (),
             "msc.expression.modality": (modality,),
+            "msc.expression.modality_detail": (detail.value,),
         }
         canonical_values.update(_parameter_summary(package, sample))
         for column in characteristic_columns:
@@ -164,6 +168,9 @@ class AnnDataNormalizer:
             "converter_version": self._package_version(),
             "metadata_schema_version": self.H5AD_METADATA_SCHEMA_VERSION,
             "modality": modality,
+            "modality_detail": detail.value,
+            "modality_evidence": json.dumps([asdict(f) for f in detail.evidence]),
+            "modality_diagnostics": json.dumps([asdict(d) for d in detail.diagnostics]),
         }
         declared_reference = asset.reference or self._declared_reference(adata)
         if declared_reference:
