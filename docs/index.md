@@ -68,7 +68,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Unified compatibility and tests
   anchor: unified-compatibility
   purpose: Loaded-data adapters, injected services, lazy dependencies, provenance identity and offline acceptance.
-  keywords: convert_loaded, project_loaded, decode, canonical SHA256, legacy CLI, TDD, fake pipeline
+  keywords: convert_loaded, project_loaded, decode, canonical SHA256, legacy CLI, TDD, fake pipeline, presets, provider matrix
   link: [Open section](codebase.md#unified-compatibility)
 
 - id: architecture

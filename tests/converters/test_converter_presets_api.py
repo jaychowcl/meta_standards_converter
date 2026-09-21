@@ -112,3 +112,16 @@ def test_per_input_expansion_alias_overrides_default():
         out_type='json', enrichment='off', options={'expand_studies':True})
     assert result.status == 'complete', result.to_dict()
     assert reader.calls == ['GSE1']
+
+
+@pytest.mark.parametrize('local,call', [
+    ({'input_options':{'enrichment':'off'}}, {'output_options':{'enrich':True}}),
+    ({'output_options':{'enrich':False}}, {'enrichment':'standard'}),
+])
+def test_input_local_preparation_overrides_call_level_aliases(local,call):
+    from tests.converters.test_converter_preparation import services
+    calls=[]
+    result=Converter(services=services(calls)).convert(InputSpec(package(),**local),
+        out_type='magetab',**call)
+    assert result.status=='complete',result.to_dict()
+    assert not calls

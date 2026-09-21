@@ -161,3 +161,15 @@ def merge_input_options(defaults, overrides):
     if 'expand_studies' in local and 'related_series' not in local:
         base.pop('related_series', None)
     return base | local
+
+
+def apply_preparation_overrides(inp, out, local_input, local_output):
+    """Resolve per-input preparation before comparing same-level aliases."""
+    inp, out = dict(inp), dict(out)
+    if 'enrichment' in local_input or 'enrich' in local_input or 'enrich' in local_output:
+        for key in ('enrichment', 'enrich', 'include_peer', 'enrich_from_geo_ae'):
+            if key not in local_input:
+                inp.pop(key, None)
+        if 'enrich' not in local_output:
+            out.pop('enrich', None)
+    return inp, out

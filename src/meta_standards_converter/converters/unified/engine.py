@@ -39,7 +39,7 @@ from .options import TARGETS, INPUT, OUTPUT, RUNTIME_DEFAULTS, settings
 from .publication import publish_jsons, publish_tables, publish_magetab
 from .routes import select_route
 from .requests import (AUTO, STANDARD, normalize, input_settings, output_settings,
-                       preparation_options, merge_input_options)
+                       preparation_options, merge_input_options, apply_preparation_overrides)
 
 
 def source_label(source):
@@ -264,6 +264,7 @@ class Converter:
                     OUTPUT[out_type],
                     "output options",
                 )
+                inp, out = apply_preparation_overrides(inp, out, spec.input_options, spec.output_options)
                 inp, out, preparation = preparation_options(inp, out)
                 error = None
                 kind = chosen

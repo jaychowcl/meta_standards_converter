@@ -1067,7 +1067,9 @@ failover, protocol registry sharing, or changes to legacy processing permission.
 The contract suites are `tests/converters/test_loaded_inputs.py` and
 `test_unified_{converter,sources,expression,defensive}.py`,
 `test_converter_{presets_api,preparation,expansion}.py` and
-`tests/e2e/test_converter_presets_replay.py`. They cover recorded
+`tests/e2e/test_converter_presets_replay.py` plus the 96-case native
+provider/reader/preset/destination matrix in
+`test_converter_provider_matrix.py`. They cover recorded
 provider fixtures, fake processing, format equivalence, malformed/forced inputs,
 versions, bounded archives/XML, manifests, ambiguous companions, directory
 recursion, duplicates, option scope, permission/reference/orientation/memory
@@ -1091,6 +1093,7 @@ Only the three owning-package exports form the unified public surface.
 | `meta_standards_converter.converters.unified.requests.output_settings` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
 | `meta_standards_converter.converters.unified.requests.normalize` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
 | `meta_standards_converter.converters.unified.requests.preparation_options` | Extract preparation flags before validating a reader's own settings. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
+| `meta_standards_converter.converters.unified.requests.apply_preparation_overrides` | Resolve per-input preparation before comparing same-level aliases. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
 | `meta_standards_converter.converters.unified.requests.merge_input_options` | An input-local expansion alias overrides a call-level expansion default. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
 | `meta_standards_converter.converters.unified.preparation.provider_of` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
 | `meta_standards_converter.converters.unified.preparation.study_ids` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
