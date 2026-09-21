@@ -6,5 +6,6 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-requests>=2.31.0
-python-dateutil>=2.8.2
+# Run from the repository root: python -m pip install -r requirements.txt
+# Package dependencies and optional extras are declared in pyproject.toml.
+.

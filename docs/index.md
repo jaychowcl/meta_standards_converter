@@ -283,8 +283,8 @@ Full flag and Python API details remain in the canonical routes below.
 - id: docker-guide
   title: Docker guide
   anchor: docker-guide
-  purpose: Build and run the image or provision the supported rootless Compose workflow.
-  keywords: Docker, Compose, mount, daemon, nfcore-runner, installation
+  purpose: Build metadata or full images and run the supported rootless Compose workflow.
+  keywords: Docker, metadata target, full target, Compose, mount, daemon, nfcore-runner, installation
   link: [Open section](codebase.md#docker-guide)
 
 - id: request-helper
@@ -297,8 +297,8 @@ Full flag and Python API details remain in the canonical routes below.
 - id: runtime-behavior
   title: Runtime Behavior
   anchor: runtime-behavior
-  purpose: Find Python requirements, package dependencies, release evidence and runtime boundaries.
-  keywords: MSC 8, installation, dependencies, packaging, Nextflow, Docker, release policy
+  purpose: Find Python 3.12 requirements, package dependencies, installation extras and runtime boundaries.
+  keywords: MSC 8, Python 3.12, installation, requirements.txt, pyproject.toml, dependencies, packaging, Nextflow, Docker
   link: [Open section](codebase.md#runtime-behavior)
 
 - id: end-to-end-geo2ae-flow

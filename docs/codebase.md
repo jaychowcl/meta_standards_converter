@@ -2283,16 +2283,21 @@ delimited and AnnData outputs without coupling either exporter to the other.
 <a id="docker-guide"></a>
 ## Docker guide
 
-Build the image:
+The Dockerfile provides two targets. Both use Python 3.12 on Debian slim and
+show `msc-convert --help` when no command is supplied.
+
+| Target | Capabilities | Build command |
+| --- | --- | --- |
+| `metadata` (default) | JSON, MAGE-TAB, TSV and CSV; base Python dependencies only | `docker build -t meta-standards-converter .` |
+| `full` | Metadata plus H5AD/OBS, Java 21, Nextflow, Docker CLI and `gffread` | `docker build --target full -t meta-standards-converter:full .` |
+
+The default image excludes scientific dependencies and processing tools. Use the
+full target for expression workflows; requesting H5AD/OBS without the scientific
+extra reports `missing_optional_dependency` with installation guidance. Any installed CLI can be supplied after
+the image name:
 
 ```bash
-docker build -t meta-standards-converter .
-```
-
-With no command, the image displays `geo2ae --help`. Any installed CLI can be supplied after the image name:
-
-```bash
-docker run --rm meta-standards-converter geo2json --help
+docker run --rm meta-standards-converter msc-convert --help
 ```
 
 Mount host paths for inputs and outputs. Use matching container paths in CLI arguments:
@@ -2302,19 +2307,19 @@ mkdir -p output
 docker run --rm \
   -v "$PWD/output:/work" \
   meta-standards-converter \
-  geo2json GSE234602 --out /work
-
-docker run --rm \
-  -v "$PWD/output:/work" \
-  meta-standards-converter \
-  json2ae /work/GSE234602.json --out /work
+  msc-convert GSE234602 --out-type magetab --out /work
 ```
 
-The standard image contains no Docker daemon. Metadata conversion and processed-asset H5AD conversion work without a nested runtime. Raw FASTQ processing with the Docker profile requires a deliberately supplied daemon; use the hardened rootless Compose workflow below.
+The full target pins Nextflow 26.04.6 with SHA-256 verification and Docker CLI
+29.8.1. These defaults are declared only in the Dockerfile; coordinated version
+and checksum overrides are available as build arguments. Neither image includes
+a Docker daemon. Processed-asset H5AD/OBS conversion in the full image needs no
+nested runtime. Raw FASTQ processing with the Docker profile requires a supplied
+daemon; use the hardened rootless Compose workflow below.
 
 ### Rootless Docker Compose guide
 
-The rootless workflow is intended for raw `json2h5ad` processing. It creates a locked `nfcore-runner` account, gives it read access to the project and read/write access only to `.out/json2h5ad`, and connects the converter to that account's rootless Docker socket.
+Compose explicitly builds the `full` target, retains the `meta-standards-converter:rootless` image tag, and defaults to unified CLI help. The rootless workflow is intended for raw `json2h5ad` processing. It creates a locked `nfcore-runner` account, gives it read access to the project and read/write access only to `.out/json2h5ad`, and connects the converter to that account's rootless Docker socket.
 
 Provision once as root:
 
@@ -2399,14 +2404,17 @@ Alternatively, install from a source checkout in a project-local virtual environ
 ```bash
 git clone https://github.com/jaychowcl/meta_standards_converter.git
 cd meta_standards_converter
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install .
 ```
 
 From that checkout, install expression/AnnData dependencies with
 `python -m pip install '.[h5ad]'`. For development, use
-`python -m pip install -e '.[test]'` in the same environment.
+`python -m pip install -e '.[test]'` in the same environment. The test extra uses
+pytest 9's built-in subtests. `python -m pip install -r requirements.txt`, run from
+the repository root, also installs the base package: the requirements file
+contains `.` and delegates dependency declarations to `pyproject.toml`.
 Metadata conversion does not require Docker. Raw FASTQ processing requires Java,
 Nextflow, a supported execution runtime and a reference genome/annotation;
 GFF conversion also requires `gffread`. See [reference configuration](#reference-annotation-flow)
@@ -2416,21 +2424,18 @@ and the [Docker guide](#docker-guide).
   H5AD metadata schema 2.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
-- The package requires Python `>=3.10`.
-- Base runtime dependencies are `requests>=2.31,<3` and
-  `python-dateutil>=2.8.2,<3`; the `h5ad` extra bounds AnnData `<1`, Scanpy
-  `<2`, NumPy `<3`, pandas `<4`, SciPy `<2`, and h5py `<4` while retaining the
-  documented minimum versions.
-- `dependency-provenance/pylock.python312-linux-x86_64.toml` locks the complete
-  external base/H5AD Python 3.12/Linux x86_64 resolution by exact version,
-  artifact URL, and SHA-256. `runtime.python312-linux-x86_64.cdx.json` is the
-  deterministic CycloneDX 1.6 inventory derived from that lock.
-  `release-policy.json` requires a verified signed artifact manifest and an
-  approved offline advisory snapshot no older than seven days, with
-  critical/high/medium/low remediation SLAs of 2/7/30/90 days. Those trusted
-  operator artifacts are deliberately absent, leaving the composing release
-  gate blocked instead of fabricating security evidence.
-- The `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, and `json2obs` console scripts point to their matching modules under `meta_standards_converter.cli`.
+- The package requires Python `>=3.12`; Python 3.10 and 3.11 are no longer supported.
+- `pyproject.toml` is the dependency authority. Base requirements are
+  `requests>=2.34.2,<3` and `python-dateutil>=2.9.0.post0,<3`.
+- The optional `h5ad` extra declares `anndata>=0.13.4,<1`, `h5py>=3.16.0,<4`,
+  `numpy>=2.5.3,<3`, `pandas>=3.0.6,<4`, `scanpy>=1.12.4,<2` and `scipy>=1.18.1,<2`.
+  The `test` extra includes the same scientific dependencies and `pytest>=9.1.1,<10`.
+- Builds use setuptools with SPDX `GPL-3.0-only` metadata and include `LICENSE`.
+  Discovery is limited to `meta_standards_converter*` under `src/`; build tools,
+  test fixtures and local development files are not runtime package modules.
+- All eleven console scripts are retained: `msc-convert`, `sra2json`, `ena2json`,
+  `geo2ae`, `geo2json`, `json2ae`, `ae2json`, `json2h5ad`, `json2tsv`, `json2obs`,
+  and `miniml-migrate`. Their entrypoints are declared in `pyproject.toml`.
 - Network calls are owned by platform fetchers and routed through `RateLimitedRequester`: `GEOWebFetcher` handles GEO FTP MINiML tarballs and `GEOSource` owns related-series traversal, `AEWebFetcher` handles BioStudies discovery and HTTP(S) MAGE-TAB text, `INSDCWebfetcher` handles NCBI SRA EFetch plus ENA Portal file reports, and `PubmedWebFetcher` handles NCBI PubMed ESummary publication metadata.
 - Default request settings are derived from the standard resource profile and
   enforced across the process by normalized hostname: 10-second connect and
@@ -2694,7 +2699,7 @@ This is the supported process boundary for raw `json2h5ad` workflows.
 the separately executed rootless run; [current test commands](#test-plan) verify
 the checkout without claiming a new live runtime acceptance.
 
-`Dockerfile` builds the application image with Python 3.12, Java 21, Nextflow 26.04.2 verified by SHA-256, Docker CLI 29.6.2, `gffread`, and the H5AD extra. It contains no Docker daemon.
+`Dockerfile` builds a default metadata image and an explicit `full` target. Compose selects `full`, with Python 3.12, Java 21, Nextflow 26.04.6 verified by SHA-256, Docker CLI 29.8.1, `gffread`, and the H5AD extra. Neither image contains a Docker daemon.
 
 `scripts/provision-rootless-json2h5ad.sh` is the administrative boundary. It installs rootless prerequisites, creates the locked `nfcore-runner` account, allocates a non-overlapping 65,536-ID subordinate range, enables its user service, and configures ACLs. The build context is read-only to the runner; `.out/json2h5ad` is the only writable project path.
 

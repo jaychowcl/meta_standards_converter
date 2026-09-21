@@ -18,10 +18,7 @@ import pytest
 
 from meta_standards_converter.magetab.constructor import PLATFORM_HANDLER_KEYS
 
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib
+import tomllib
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -596,8 +593,6 @@ class DocsIndexTests(unittest.TestCase):
             "tests/fixtures/contracts/atlas-document-v1.json",
             "tests/fixtures/arrayexpress/E-MTAB-6486.idf.txt",
             "tests/fixtures/arrayexpress/E-MTAB-6486.sdrf.txt",
-            "dependency-provenance/release-policy.json",
-            "dependency-provenance/runtime.python312-linux-x86_64.cdx.json",
         }
         hash_comment_files = {
             ".gitattributes",
@@ -607,7 +602,6 @@ class DocsIndexTests(unittest.TestCase):
             "compose.yaml",
             "pyproject.toml",
             "requirements.txt",
-            "dependency-provenance/pylock.python312-linux-x86_64.toml",
         }
         provider_reference_prefixes = ("docs/sra/", "docs/ena/")
 

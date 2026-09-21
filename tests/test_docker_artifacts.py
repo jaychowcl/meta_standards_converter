@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import unittest
+import re
 import os
 import socket
 import subprocess
@@ -30,16 +31,25 @@ class DockerArtifactsTest(unittest.TestCase):
         self.assertIn("COPY pyproject.toml README.md LICENSE ./", content)
         self.assertIn("COPY src ./src", content)
         self.assertIn("RUN pip install --no-cache-dir '.[h5ad]'", content)
-        self.assertIn('CMD ["geo2ae", "--help"]', content)
+        self.assertIn('CMD ["msc-convert", "--help"]', content)
+        stages = dict(re.findall(r"(?ms)^FROM [^\n]+ AS (\w+)\n(.*?)(?=^FROM |\Z)", content))
+        self.assertEqual(list(stages)[-1], "metadata")
+        self.assertIn("RUN pip install --no-cache-dir .", stages["base"])
+        for excluded in ("h5ad", "openjdk", "nextflow", "gffread", "docker_cli"):
+            self.assertNotIn(excluded, stages["base"] + stages["metadata"])
+        self.assertIn("FROM base AS full", content)
+        self.assertIn("FROM base AS metadata", content)
 
     def test_dockerfile_installs_pinned_nfcore_runtime(self):
         content = (ROOT / "Dockerfile").read_text(encoding="utf-8")
 
-        self.assertIn("ARG NEXTFLOW_VERSION=26.04.2", content)
-        self.assertIn("ARG DOCKER_CLI_VERSION=29.6.2", content)
+        self.assertIn("ARG NEXTFLOW_VERSION=26.04.6", content)
+        self.assertIn("ARG DOCKER_CLI_VERSION=29.8.1", content)
         self.assertIn("openjdk-21-jre-headless", content)
         self.assertIn("gffread", content)
         self.assertNotIn("openjdk-17-jre-headless", content)
+        self.assertIn("182a63c74074e2dc7956ffa3c8cd59de952ed2c44394e21faf5e1736b945444c", content)
+        self.assertIn("sha256sum --check --strict", content)
         self.assertIn("NEXTFLOW_VERSION", content)
         self.assertIn("nextflow -version", content)
         self.assertIn("docker --version", content)
@@ -66,6 +76,10 @@ class DockerArtifactsTest(unittest.TestCase):
         )
         self.assertIn("source: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}", content)
         self.assertIn("target: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}", content)
+        self.assertIn("target: full", content)
+        self.assertIn('command: ["msc-convert", "--help"]', content)
+        self.assertNotIn("NEXTFLOW_VERSION:", content)
+        self.assertNotIn("DOCKER_CLI_VERSION:", content)
         self.assertIn("read_only: true", content)
         self.assertIn("no-new-privileges:true", content)
         self.assertIn("cap_drop:", content)

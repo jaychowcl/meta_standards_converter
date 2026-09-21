@@ -42,6 +42,15 @@ from .requests import (AUTO, STANDARD, normalize, input_settings, output_setting
                        preparation_options, merge_input_options, apply_preparation_overrides)
 
 
+def _missing_scientific_dependency(exc):
+    scientific = {"anndata", "numpy", "pandas", "scipy", "h5py", "scanpy"}
+    return any(
+        isinstance(error, ImportError)
+        and (error.name or "").split(".")[0] in scientific
+        for error in (exc, exc.__cause__)
+    )
+
+
 def source_label(source):
     if isinstance(source, (str, os.PathLike)):
         value = str(source)
@@ -479,6 +488,12 @@ class Converter:
                     item.completeness = "partial" if item.artifacts else "unknown"
                     if isinstance(exc, InputError):
                         code, message = exc.code, str(exc)
+                    elif _missing_scientific_dependency(exc):
+                        code, message = (
+                            "missing_optional_dependency",
+                            "Expression conversion requires optional dependencies; install "
+                            "meta-standards-converter[h5ad] or use the full Docker image.",
+                        )
                     elif type(exc).__name__ in {
                         "MINiMLModelError",
                         "MINiMLCompatibilityError",

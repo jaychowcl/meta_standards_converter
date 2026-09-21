@@ -10,10 +10,7 @@ import os
 import sys
 import unittest
 
-try:
-    import tomllib
-except ModuleNotFoundError:
-    import tomli as tomllib
+import tomllib
 
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -28,6 +25,10 @@ class TestProjectScripts(unittest.TestCase):
             pyproject = tomllib.load(handle)
 
         for name in (
+            "sra2json",
+            "ena2json",
+            "miniml-migrate",
+            "msc-convert",
             "ae2json",
             "geo2ae",
             "geo2json",
@@ -38,7 +39,7 @@ class TestProjectScripts(unittest.TestCase):
         ):
             with self.subTest(name=name):
                 self.assertEqual(
-                    f"meta_standards_converter.cli.{name}:main",
+                    f"meta_standards_converter.cli.{'convert' if name == 'msc-convert' else name.replace('-', '_')}:main",
                     pyproject["project"]["scripts"][name],
                 )
 
@@ -48,14 +49,13 @@ class TestProjectScripts(unittest.TestCase):
 
         self.assertEqual(
             [
-                "pytest>=8.2,<9",
-                "pytest-subtests>=0.14,<1",
-                "anndata>=0.10.8,<1",
-                "h5py>=3.10.0,<4",
-                "numpy>=1.26.0,<3",
-                "pandas>=2.1.0,<4",
-                "scanpy>=1.10.0,<2",
-                "scipy>=1.11.0,<2",
+                "pytest>=9.1.1,<10",
+                "anndata>=0.13.4,<1",
+                "h5py>=3.16.0,<4",
+                "numpy>=2.5.3,<3",
+                "pandas>=3.0.6,<4",
+                "scanpy>=1.12.4,<2",
+                "scipy>=1.18.1,<2",
             ],
             pyproject["project"]["optional-dependencies"]["test"],
         )
@@ -65,31 +65,40 @@ class TestProjectScripts(unittest.TestCase):
             project = tomllib.load(handle)["project"]
 
         self.assertEqual(
-            ["python-dateutil>=2.8.2,<3", "requests>=2.31.0,<3"],
+            ["python-dateutil>=2.9.0.post0,<3", "requests>=2.34.2,<3"],
             project["dependencies"],
         )
         self.assertEqual(
             [
-                "anndata>=0.10.8,<1",
-                "h5py>=3.10.0,<4",
-                "numpy>=1.26.0,<3",
-                "pandas>=2.1.0,<4",
-                "scanpy>=1.10.0,<2",
-                "scipy>=1.11.0,<2",
+                "anndata>=0.13.4,<1",
+                "h5py>=3.16.0,<4",
+                "numpy>=2.5.3,<3",
+                "pandas>=3.0.6,<4",
+                "scanpy>=1.12.4,<2",
+                "scipy>=1.18.1,<2",
             ],
             project["optional-dependencies"]["h5ad"],
         )
 
-    def test_project_license_classifier_matches_gplv3_license_file(self):
+    def test_modern_build_metadata_and_package_discovery(self):
         with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
-            pyproject = tomllib.load(handle)
+            config = tomllib.load(handle)
+        project = config["project"]
+        self.assertEqual(project["version"], "8.0.0")
+        self.assertEqual(project["requires-python"], ">=3.12")
+        self.assertEqual(project["license"], "GPL-3.0-only")
+        self.assertEqual(project["license-files"], ["LICENSE"])
+        self.assertFalse(any(c.startswith("License ::") for c in project["classifiers"]))
+        self.assertEqual(config["build-system"]["requires"], ["setuptools>=77.0.3"])
+        self.assertEqual(config["tool"]["setuptools"]["packages"]["find"]["include"],
+                         ["meta_standards_converter*"])
 
-        classifiers = pyproject["project"]["classifiers"]
-        self.assertIn(
-            "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-            classifiers,
-        )
-        self.assertNotIn("License :: OSI Approved :: Apache Software License", classifiers)
+    def test_requirements_installs_project_from_single_dependency_authority(self):
+        with open(os.path.join(ROOT, "requirements.txt")) as handle:
+            requirements = [line.strip() for line in handle
+                            if line.strip() and not line.startswith("#")]
+        self.assertEqual(requirements, ["."])
+        self.assertFalse(os.path.exists(os.path.join(ROOT, "dependency-provenance")))
 
 
 if __name__ == "__main__":

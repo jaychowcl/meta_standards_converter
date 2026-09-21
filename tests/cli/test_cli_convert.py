@@ -268,3 +268,39 @@ except SystemExit as exc:
         env=os.environ | {'PYTHONPATH': str(root / 'src')}, capture_output=True, text=True)
     assert completed.returncode == 0, completed.stderr
     assert 'msc-convert' in completed.stdout
+
+
+@pytest.mark.parametrize("kind,target", [("h5ad", "obs"), ("matrix", "h5ad")])
+@pytest.mark.parametrize("missing_name", ["anndata", "private_dependency"])
+def test_missing_scientific_dependencies_give_install_guidance(tmp_path, monkeypatch, capsys, kind, target, missing_name):
+    import builtins
+
+    original = builtins.__import__
+
+    def missing_scientific(name, *args, **kwargs):
+        if name.split(".")[0] == "anndata":
+            raise ModuleNotFoundError("private environment details", name=missing_name)
+        return original(name, *args, **kwargs)
+
+    source = tmp_path / ("input.h5ad" if kind == "h5ad" else "matrix.tsv")
+    source.write_bytes(b"\x89HDF\r\n\x1a\n" if kind == "h5ad" else b"gene\tc1\ng1\t1\n")
+    monkeypatch.setattr(builtins, "__import__", missing_scientific)
+    argv = [str(source), "--in-type", kind, "--out-type", target,
+            "--out", str(tmp_path / "out"), "--report-json", "-"]
+    if kind == "matrix":
+        argv += ["--orientation", "genes-by-observations"]
+    assert convert.main(argv) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert report["status"] == "failed"
+    item = report["items"][0]
+    assert not item["artifacts"]
+    diagnostic = item["diagnostics"][0]
+    if missing_name == "anndata":
+        assert diagnostic["code"] == "missing_optional_dependency"
+        assert "meta-standards-converter[h5ad]" in diagnostic["message"]
+        assert "full" in diagnostic["message"]
+    else:
+        assert diagnostic["code"] == "conversion_failed"
+        assert "meta-standards-converter[h5ad]" not in diagnostic["message"]
+    assert "private environment details" not in json.dumps(report)
+    assert "private_dependency" not in json.dumps(report)

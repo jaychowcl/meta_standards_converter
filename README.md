@@ -6,7 +6,7 @@ Convert biological study metadata among GEO MINiML, JSON, MAGE-TAB, sample table
 
 ## Installation
 
-Create a Conda environment and install MSC:
+MSC requires Python 3.12 or newer. Create a Conda environment and install MSC:
 
 1. `conda create -n msconverter -c conda-forge python=3.12 pip`
 2. `conda activate msconverter`

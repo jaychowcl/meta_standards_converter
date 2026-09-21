@@ -14,7 +14,7 @@ Converter between different metadata standards and formats using `msc-convert`, 
 
 ## Installation
 
-Install MSC:
+Install MSC with Python 3.12 or newer:
 
 1. `conda create -n msconverter -c conda-forge python=3.12 pip`
 2. `conda activate msconverter`

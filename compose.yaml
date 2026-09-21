@@ -14,9 +14,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        NEXTFLOW_VERSION: "26.04.2"
-        DOCKER_CLI_VERSION: "29.6.2"
+      target: full
     working_dir: ${JSON2H5AD_OUT:?set JSON2H5AD_OUT}
     # Root in a rootless container maps to the unprivileged nfcore-runner host UID.
     user: "0:0"
@@ -45,4 +43,4 @@ services:
       - /tmp:size=2g,mode=1777
       - /nextflow-tmp:size=2g,mode=1777,exec
     init: true
-    command: ["json2h5ad", "--help"]
+    command: ["msc-convert", "--help"]
