@@ -1033,7 +1033,7 @@ published batches, MAGE-TAB pairs and catalogues. Both together are rejected.
 Multiple datasets need a directory unless JSON/table `aggregate=True` is
 explicit. Aggregation is within a logical metadata source; batches remain
 independent. Output names derived from identities must be safe path components.
-No destination means no implicit current-directory publication.
+No destination means no implicit current-directory publication. Directory discovery retains explicitly selected input roots when the output directory is equal to or above them; nested output directories remain excluded.
 
 Known collisions are checked before publishing each logical input. Duplicate
 destinations across inputs are rejected even with overwrite enabled. Existing

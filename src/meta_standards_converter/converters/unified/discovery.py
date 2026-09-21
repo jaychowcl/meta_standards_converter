@@ -407,7 +407,7 @@ def manifest_specs(value, limit):
     return result
 
 
-def expand(value, runtime, excluded=()):
+def expand(value, runtime, excluded=(), *, output_directory=None):
     if isinstance(value, InputSpec):
         specs = [value]
     elif isinstance(value, (list, tuple)) and not metadata_kind(value):
@@ -418,8 +418,9 @@ def expand(value, runtime, excluded=()):
         specs = [InputSpec(value)]
     result = []
     excluded = [Path(p).resolve() for p in excluded if p is not None]
+    output = Path(output_directory).resolve() if output_directory is not None else None
 
-    def children(spec, directory):
+    def children(spec, directory, ignored):
         paths = sorted(directory.iterdir(), key=lambda p: p.name)
         consumed = set()
         grouped = {}
@@ -429,7 +430,7 @@ def expand(value, runtime, excluded=()):
         for path in paths:
             if not path.is_file() or any(
                 path.resolve() == p or path.resolve().is_relative_to(p)
-                for p in excluded
+                for p in ignored
             ):
                 continue
             member = tenx_member(path)
@@ -486,14 +487,14 @@ def expand(value, runtime, excluded=()):
                 continue
             if any(
                 path.resolve() == p or path.resolve().is_relative_to(p)
-                for p in excluded
+                for p in ignored
             ):
                 continue
             if path.is_symlink() and path.is_dir():
                 continue
             if path.is_dir() and not path.is_symlink() and not tenx_directory(path):
                 if runtime["recursive"]:
-                    children(replace(spec, id=None), path)
+                    children(replace(spec, id=None), path, ignored)
                 continue
             result.append(grouped.get(path, replace(spec, sources=path, id=None)))
 
@@ -507,8 +508,13 @@ def expand(value, runtime, excluded=()):
             path = Path(value)
             if path.is_dir() and not path.is_symlink() and not tenx_directory(path):
                 before = len(result)
-                children(spec, path)
-                if len(result) == before and (not excluded or not any(path.iterdir())):
+                # An explicit input root wins over an equal/ancestor destination.
+                # Nested output subtrees remain excluded from recursive discovery.
+                ignored = list(excluded)
+                if output is not None and not path.resolve().is_relative_to(output):
+                    ignored.append(output)
+                children(spec, path, ignored)
+                if len(result) == before and (not ignored or not any(path.iterdir())):
                     result.append(spec)
                 continue
         result.append(spec)

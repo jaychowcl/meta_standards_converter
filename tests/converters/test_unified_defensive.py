@@ -284,3 +284,28 @@ def test_metadata_routes_do_not_import_scientific_dependencies(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", guarded)
     result = Converter().convert(package(), out_type="tsv")
     assert result.status == "complete"
+
+
+@pytest.mark.parametrize("ancestor", [False, True])
+def test_directory_input_survives_equal_or_ancestor_output(tmp_path, ancestor):
+    source = tmp_path / "inputs" if ancestor else tmp_path
+    source.mkdir(exist_ok=True)
+    (source / "input.json").write_text(json.dumps(package()))
+    result = Converter().convert(source, out_type="json", outdir=tmp_path,
+                                 enrichment="off")
+    assert result.status == "complete", result.to_dict()
+    assert len(result.items) == 1
+    assert (tmp_path / "GSE1.json").exists()
+
+
+def test_directory_output_fix_preserves_discovery_exclusions(tmp_path):
+    from meta_standards_converter.converters.unified.discovery import expand
+    from meta_standards_converter.converters.unified.options import RUNTIME_DEFAULTS
+    (tmp_path / "input.json").write_text("{}")
+    for name in ("out", ".cache", ".artifact-bundles"):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "hidden.json").write_text("{}")
+    (tmp_path / "linked").symlink_to(tmp_path / "out", target_is_directory=True)
+    specs = expand(tmp_path, RUNTIME_DEFAULTS | {"recursive": True},
+                   output_directory=tmp_path / "out")
+    assert [s.sources.name for s in specs] == ["input.json"]

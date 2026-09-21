@@ -218,8 +218,8 @@ class Converter:
             specs = declared + expand(
                 input,
                 runtime,
+                output_directory=outdir,
                 excluded=(
-                    outdir,
                     outfile,
                     input_manifest if isinstance(input_manifest, (str, Path)) else None,
                     *companion_paths,

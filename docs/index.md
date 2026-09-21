@@ -26,7 +26,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Unified input handlers and discovery
   anchor: unified-inputs
   purpose: Defensive accession, package, XML, record, MAGE-TAB, expression, directory and companion handling.
-  keywords: probe, validate, load, StudyRecords, ambiguity, symlinks, bounded, remote policy, INSDC, forced type
+  keywords: probe, validate, load, StudyRecords, ambiguity, symlinks, bounded, remote policy, INSDC, forced type, equal or ancestor output directory
   link: [Open section](codebase.md#unified-inputs)
 
 - id: unified-manifest
