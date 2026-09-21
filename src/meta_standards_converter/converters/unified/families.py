@@ -8,6 +8,7 @@
 # =============================================================================
 """Study-family traversal follows typed provider relationships, never citations."""
 from collections import deque
+from collections.abc import Mapping
 from dataclasses import replace
 import re
 from urllib.parse import parse_qs, urlsplit
@@ -29,9 +30,13 @@ def project_records(package, provider):
     from .preparation import study_ids
     own = set(study_ids(package))
     for record in package.to_mapping().get('extensions', {}).get('insdc', {}).get('records', []):
+        if not isinstance(record, Mapping) or str(record.get('kind', '')).casefold() not in {'', 'project'}:
+            continue
         if record.get('provider', '').lower() != provider:
             continue
         root = record.get('metadata', {})
+        if not isinstance(root, Mapping):
+            continue
         if root.get('tag') == 'PROJECT' and root.get('attributes', {}).get('accession') in own:
             yield root
         elif root.get('tag') == 'Project':
@@ -137,8 +142,8 @@ class StudyFamilies:
                                 candidate = handler.load(InputSpec(accession), context)
                             if provider == "geo" and not any(accession in study_ids(p) for g in candidate.metadata.groups for p in g.packages):
                                 raise ValueError('Retrieved family member does not match the requested identity')
-                            if any(d.severity == 'error' for d in candidate.metadata.diagnostics):
-                                raise ValueError('Retrieved family member failed metadata validation')
+                            from .validation import validate_metadata
+                            validate_metadata(candidate.metadata)
                             self.cache[key] = candidate
                         candidate = self.cache[key]
                         if isinstance(candidate, Exception):

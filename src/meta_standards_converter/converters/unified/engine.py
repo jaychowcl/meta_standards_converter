@@ -426,6 +426,7 @@ class Converter:
                     route, item.route = select_route(loaded, kind, out_type)
                     item.diagnostics.extend(loaded.diagnostics)
                     if loaded.metadata is not None:
+                        context.stage = "validation"
                         issues = loaded.metadata.diagnostics
                         item.diagnostics.extend(
                             Diagnostic(
@@ -445,6 +446,8 @@ class Converter:
                                 "invalid_metadata",
                                 "Metadata failed structural or reference validation",
                             )
+                        from .validation import validate_metadata
+                        validate_metadata(loaded.metadata)
                         item.dataset_ids = tuple(
                             g.dataset_id for g in loaded.metadata.groups
                         )
@@ -461,6 +464,7 @@ class Converter:
                     item.diagnostics.extend(loaded.diagnostics[before:])
                     if loaded.metadata is not None:
                         item.dataset_ids = tuple(g.dataset_id for g in loaded.metadata.groups)
+                        validate_metadata(loaded.metadata)
                     context.stage = "conversion"
                     from meta_standards_converter.metadata.preparation_scope import exporting_prepared
                     with exporting_prepared():

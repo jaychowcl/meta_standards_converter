@@ -14,6 +14,7 @@ import json
 import re
 
 from meta_standards_converter.miniml import MINiMLCodec
+from meta_standards_converter.miniml.codec import MINiMLCompatibilityError
 from meta_standards_converter.metadata.preparation_scope import loading_source, convert_source
 from .contracts import Diagnostic
 
@@ -81,16 +82,23 @@ class MetadataPreparation:
                 record["reason"] = "disabled"
                 diagnostics.append(Diagnostic("enrichment_skipped", f"{identity}: {name} disabled", "preparation", "info"))
                 return
-            if not applicable:
-                diagnostics.append(Diagnostic("enrichment_skipped", f"{identity}: {name} not applicable", "preparation", "info"))
-                return
-            record.update(status="attempted", reason=None)
             try:
-                candidate, issues = fn(package)
-                package = MINiMLCodec().decode(candidate).package
+                if not (applicable() if callable(applicable) else applicable):
+                    diagnostics.append(Diagnostic("enrichment_skipped", f"{identity}: {name} not applicable", "preparation", "info"))
+                    return
+                record.update(status="attempted", reason=None)
+                # A collaborator gets an isolated, valid candidate. Commit only
+                # after it passes the same policy used by strict consumers.
+                candidate, issues = fn(MINiMLCodec().decode(package, strict=True).package)
+                package = MINiMLCodec().decode(candidate, strict=True).package
                 record["status"] = "partial" if issues else "completed"
                 diagnostics.extend(Diagnostic("source_partial", f"{identity}: {name}: {issue}", "preparation", "warning") for issue in issues)
                 diagnostics.append(Diagnostic("enrichment_completed", f"{identity}: {name} {record['status']}", "preparation", "info"))
+            except MINiMLCompatibilityError as exc:
+                record.update(status="failed", reason="invalid_candidate")
+                diagnostics.extend(Diagnostic(
+                    "source_partial", f"{identity}: {name}: {d.code} at {d.path}: {d.message}; candidate rejected",
+                    "preparation", "warning") for d in exc.diagnostics)
             except Exception as exc:
                 record["status"] = "failed"
                 diagnostics.append(Diagnostic("source_partial", f"{identity}: {name} failed ({type(exc).__name__})", "preparation", "warning"))
@@ -101,15 +109,19 @@ class MetadataPreparation:
             lambda p: self._peer(p, provider, read_id))
         from meta_standards_converter.metadata.archive_enrichment import linked_accessions
         from .families import recorded_neighbors
-        links = set(linked_accessions(package)) - set(recorded_neighbors(package, provider))
-        # Same-repository related experiments are distinct studies, not peer
-        # evidence for the current one. Family traversal owns typed hierarchy links.
-        if provider == "geo":
-            links = {a for a in links if a.startswith("E-")}
-        elif provider == "biostudies":
-            links = {a for a in links if a.startswith("GSE")}
-        linked_applicable = (provider in {"geo", "biostudies"} or (provider in {"sra", "ena"} and archive_id is not None))
-        run("linked_metadata", linked_applicable and bool(links), lambda p: self._linked(p, provider, links))
+        links = set()
+        def linked_applicable():
+            nonlocal links
+            if not (provider in {"geo", "biostudies"} or (provider in {"sra", "ena"} and archive_id is not None)):
+                return False
+            links = set(linked_accessions(package)) - set(recorded_neighbors(package, provider))
+            # Same-provider experiments are distinct studies, not peer evidence.
+            if provider == "geo":
+                links = {a for a in links if a.startswith("E-")}
+            elif provider == "biostudies":
+                links = {a for a in links if a.startswith("GSE")}
+            return bool(links)
+        run("linked_metadata", linked_applicable, lambda p: self._linked(p, provider, links))
         run("standard", True, lambda p: self._standard(p, provider))
         return package, records, diagnostics
 
