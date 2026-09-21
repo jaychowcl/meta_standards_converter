@@ -12,6 +12,7 @@ read Atlas documents without installing ThematicAtlases.
 
 | Command | Use it to… |
 | --- | --- |
+| `msc-convert` | Convert supported inputs to JSON, MAGE-TAB, TSV, CSV, H5AD or OBS through one interface |
 | `sra2json` | Resolve SRA accessions and import native read-study metadata |
 | `ena2json` | Resolve ENA accessions and import native read-study metadata |
 | `geo2json` | Fetch a GEO Series and produce MSC MINiML JSON |
@@ -62,12 +63,15 @@ for reference configuration.
 Fetch a study and export its sample metadata (retrieval requires network access):
 
 ```bash
-geo2json GSE234602 --out output
-json2tsv output/GSE234602.json --out tables
+msc-convert GSE234602 --out-type tsv --out tables
 ```
 
-For an existing package, `json2tsv` performs metadata-only conversion without
-fetching expression assets. See the [CLI guide](#cli).
+Use `msc-convert --help` for all flags, or follow the
+[terminal-only GEO to MAGE-TAB guide](docs/codebase.md#unified-cli-guide).
+Output defaults to the current directory. Enrichment is `standard` and verified
+study expansion is enabled; use `--enrichment off --no-expand-studies` to disable
+both optional behaviors. `--report-json -` prints a JSON summary; logs use stderr.
+See the [full CLI reference](docs/codebase.md#unified-cli) and [CLI guide](#cli).
 
 ### Python API quickstart
 

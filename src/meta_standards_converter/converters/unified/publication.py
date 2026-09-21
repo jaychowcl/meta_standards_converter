@@ -21,8 +21,12 @@ from .handlers import safe_name
 def reserve(paths, context):
     context.stage = "publication"
     resolved = [Path(p).resolve() for p in paths]
+    auxiliary = [Path(p).resolve() for p in context.runtime.get("reserved_paths", ())]
     if len(set(resolved)) != len(resolved) or any(
         p in context.reserved for p in resolved
+    ) or any(
+        p.is_relative_to(r) or r.is_relative_to(p)
+        for p in resolved for r in auxiliary
     ):
         raise InputError(
             "output_collision", "Multiple inputs would publish the same destination"

@@ -75,6 +75,7 @@ RUNTIME_DEFAULTS = {
     "resource_overrides": None,
     "insdc_default": "ena",
     "allowed_hosts": (),
+    "reserved_paths": (),
 }
 BOOLS = {
     "overwrite",
@@ -107,6 +108,11 @@ def settings(value, allowed, label, *, partial=False):
     if unknown:
         raise ValueError(f'Unsupported {label}: {", ".join(sorted(map(str, unknown)))}')
     result = dict(value)
+    if "reserved_paths" in result:
+        from os import PathLike
+        paths = result["reserved_paths"]
+        if not isinstance(paths, (list, tuple)) or not all(isinstance(p, (str, PathLike)) and str(p) for p in paths):
+            raise TypeError("reserved_paths must be a list of nonempty local paths")
     for key, item in result.items():
         if key in BOOLS and not isinstance(item, bool):
             raise TypeError(f"{key} must be a boolean")

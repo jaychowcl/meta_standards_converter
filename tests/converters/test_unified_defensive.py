@@ -309,3 +309,16 @@ def test_directory_output_fix_preserves_discovery_exclusions(tmp_path):
     specs = expand(tmp_path, RUNTIME_DEFAULTS | {"recursive": True},
                    output_directory=tmp_path / "out")
     assert [s.sources.name for s in specs] == ["input.json"]
+
+
+@pytest.mark.parametrize('descendant', [False, True])
+def test_reserved_report_path_cannot_be_artifact_parent_or_child(tmp_path, descendant):
+    output = tmp_path / 'result.json'
+    reserved = output / 'report.json' if descendant else tmp_path / 'bundle'
+    if not descendant:
+        output = reserved / 'result.json'
+    result = Converter().convert(package(), out_type='json', outfile=output,
+                                 enrichment='off', options={'reserved_paths': [reserved]})
+    assert result.status == 'failed'
+    assert any(d.code == 'output_collision' for d in result.items[0].diagnostics)
+    assert not output.exists()

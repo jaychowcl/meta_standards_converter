@@ -93,6 +93,7 @@ LEGACY_CODEBASE_ANCHORS = (
     "test-plan",
 )
 CLI_COMMANDS = (
+    "msc-convert",
     "geo2ae",
     "geo2json",
     "json2ae",
@@ -476,7 +477,7 @@ class DocsIndexTests(unittest.TestCase):
     def test_codebase_cli_reference_documents_every_parser_argument(self):
         readme_text = CODEBASE.read_text(encoding="utf-8")
         modules = {
-            command: importlib.import_module(f"meta_standards_converter.cli.{command.replace('-', '_')}")
+            command: importlib.import_module(f"meta_standards_converter.cli.{('convert' if command == 'msc-convert' else command.replace('-', '_'))}")
             for command in CLI_COMMANDS
         }
 

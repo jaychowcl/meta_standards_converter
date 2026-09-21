@@ -9,14 +9,14 @@ https://www.ebi.ac.uk/about/teams/functional-genomics/
 # meta_standards_converter Codebase Handoff
 
 This is the canonical handoff for the live package under
-`src/meta_standards_converter`. It covers the unified Python API, nine legacy conversion paths and the explicit legacy importer, their
+`src/meta_standards_converter`. It covers the unified Python API and CLI, nine legacy conversion paths and the explicit legacy importer, their
 runtime boundaries, extension contracts, and the evidence needed to change them
 safely.
 
 <a id="architecture"></a>
 ## Architecture
 
-`meta_standards_converter` is a Python library and ten-command toolkit for
+`meta_standards_converter` is a Python library and eleven-command toolkit for
 moving study metadata and expression assets among GEO MINiML, the package's
 parsed JSON model, ArrayExpress MAGE-TAB, delimited sample tables, and AnnData
 H5AD. CLI modules are thin batch adapters. Converter classes own use-case
@@ -734,6 +734,205 @@ its preparation policy. No downstream caller migration is required.
 Atlas, Curator, GEO or an archive provider. It is not an Atlas/native-provider
 serializer. Saved older schemas require an explicit migration outside this API.
 
+<a id="unified-cli"></a>
+## Unified command-line interface
+
+#### `msc-convert`
+
+`msc-convert INPUT... --out-type TYPE [options]` is the terminal interface to
+`Converter.convert()`. The entrypoint is `meta_standards_converter.cli.convert.main`
+(`main(argv=None) -> int`). The CLI translates arguments and handles logging/reports;
+the facade owns discovery, enrichment, validation, routing and publication.
+All six destinations (`json`, `magetab`, `tsv`, `csv`, `h5ad`, `obs`) are available.
+No input or destination is required for help and listing operations.
+
+Defaults are automatic input detection, `standard` enrichment, study expansion
+on, overwrite off, and continuation after individual failures. Unlike the Python
+API, omitting `--out`/`--outdir` and `--outfile` writes to the current directory.
+`--outfile` is an exact single-file destination and cannot accompany a directory;
+MAGE-TAB pairs, batches and metadata-backed expression catalogues need a directory.
+H5AD/OBS still require the scientific extra, and raw processing requires explicit
+`--allow-processing` plus the API's reference and runtime prerequisites.
+
+Only explicitly supplied settings are forwarded. Manifest per-input settings
+retain their API precedence. The facade rejects irrelevant settings and conflicting
+presets/legacy overrides; contradictory positive/negative CLI switches are usage
+errors. `--related` and `--related-series` are aliases for `--expand-studies`;
+expansion is already on by default and independent of enrichment.
+
+Human summaries show each input's status, artifact paths and diagnostic codes.
+Logs go to stderr (`-v`: INFO, `-vv`: DEBUG, `--quiet`: ERROR); quiet does not
+suppress the result summary. `--report-json PATH` writes `ConversionBatchResult.to_dict()`
+without scientific payloads. `--report-json -` produces JSON-only stdout.
+Exit codes: **0** complete, **1** partial/failed conversion or operational/report
+failure, **2** invalid arguments/configuration. Earlier successful artifacts remain
+available if a later input fails; `--fail-fast` marks subsequent inputs skipped.
+
+Report/log files are preflighted against inputs, manifest dependencies, supplied
+assets and exact outputs. Existing report/log files require `--overwrite`.
+Output-directory paths and internal `.artifact-bundles` paths cannot be report/log
+destinations. Their paths are reserved against conversion publication, including when overwrite
+is enabled, and excluded from discovery. An existing report inside an explicitly
+scanned input directory is treated as an input conflict; use a separate report path.
+Reports are published atomically. The optional Python runtime setting `reserved_paths`
+provides the same local-path reservation, including ancestor/descendant file-directory
+conflicts; it defaults to an empty sequence.
+
+The full flag reference follows. Boolean settings have explicit positive/negative
+forms. Repeated assets, hosts and SDRF sources accumulate; resource override keys
+with contradictory values are rejected. Relative terminal paths use the current
+directory; input-manifest paths retain the existing manifest-relative semantics.
+
+| Argument | Meaning |
+| --- | --- |
+| `-h` / `--help` | show this help message and exit |
+| `inputs` | Set inputs. |
+| `--out-type` | Set out type. Choices: `csv`, `h5ad`, `json`, `magetab`, `obs`, `tsv`. |
+| `--in-type` / `--force-in-type` | Set in type. Choices: `auto`, `ae_accession`, `anndata`, `atlas`, `atlas_v1`, `curator`, `ena`, `ena_accession`, `ena_records`, `ena_xml`, `fastq`, `geo`, `geo_accession`, `geo_archive`, `geo_xml`, `h5ad`, `json`, `magetab`, `matrix`, `miniml`, `msc_miniml`, `sra`, `sra_accession`, `sra_records`, `sra_xml`. |
+| `--input-manifest` | Version 1.0 JSON input manifest; may accompany positional inputs. |
+| `--out` / `--outdir` / `-o` | Output directory (default: current directory). |
+| `--outfile` | Exact single-file output; incompatible with MAGE-TAB and batch inputs. |
+| `--list-input-types` | Set list input types. |
+| `--list-output-types` | Set list output types. |
+| `--platform-handler` | Force IDF and SDRF generation through the selected platform handler. Choices: `plate_single_cell_sequencing`, `droplet_single_cell_sequencing`, `tenx_v2_droplet_single_cell_sequencing`, `tenx_v3_droplet_single_cell_sequencing`, `single_cell_sequencing`, `spatial_sequencing`, `bulk_sequencing`, `sequencing`, `array`, `generic`. |
+| `--list-platform-handlers` | List available platform handler keys and exit. |
+| `--enrichment` | Set enrichment. Choices: `standard`, `curators`, `off`. |
+| `--expand-studies` / `--related` / `--related-series` | Expand verified related studies (default: enabled). |
+| `--no-expand-studies` / `--no-related` | Disable expand studies. |
+| `--enrich` | Compatibility enrichment switch; prefer --enrichment. |
+| `--no-enrich` | Disable enrich. |
+| `--include-peer` | Allow peer archive enrichment. |
+| `--no-include-peer` | Disable include peer. |
+| `--enrich-from-geo-ae` | Allow linked GEO/ArrayExpress metadata enrichment. |
+| `--no-enrich-from-geo-ae` | Disable enrich from geo ae. |
+| `--remove-empty` | Remove empty parsed GEO fields. |
+| `--no-remove-empty` | Disable remove empty. |
+| `--evidence-dir` | Set evidence dir. |
+| `--sdrf-source` | Set sdrf sources. |
+| `--orientation` | Orientation of an input matrix. Choices: `auto`, `genes-by-observations`, `observations-by-genes`. |
+| `--aggregate` | Enable aggregate. |
+| `--no-aggregate` | Disable aggregate. |
+| `--allow-invalid` | Enable allow invalid. |
+| `--no-allow-invalid` | Disable allow invalid. |
+| `--include-var` | Enable include var. |
+| `--no-include-var` | Disable include var. |
+| `--include-uns` | Enable include uns. |
+| `--no-include-uns` | Disable include uns. |
+| `--replacement-profile` | Replacement profile as inline JSON; supplying it activates replacements. |
+| `--replacement-profile-file` | Path to a replacement profile JSON object. |
+| `--asset` | Set asset specs. |
+| `--asset-manifest` | Existing CSV/TSV asset manifest. |
+| `--explicit-assets` | JSON array of Asset field mappings. |
+| `--explicit-assets-file` | JSON file containing an array of Asset field mappings. |
+| `--matrix-orientation` | Set matrix orientation. Choices: `auto`, `genes-by-observations`, `observations-by-genes`. |
+| `--pipeline` | Set pipeline. Choices: `auto`, `rnaseq`, `scrnaseq`. |
+| `--allow-processing` | Enable allow processing. |
+| `--no-allow-processing` | Disable allow processing. |
+| `--force-reprocess` | Enable force reprocess. |
+| `--no-force-reprocess` | Disable force reprocess. |
+| `--accept-inferred-reference` | Enable accept inferred reference. |
+| `--no-accept-inferred-reference` | Disable accept inferred reference. |
+| `--resume` | Enable resume. |
+| `--no-resume` | Disable resume. |
+| `--force-memory` | Enable force memory. |
+| `--no-force-memory` | Disable force memory. |
+| `--allow-unverified-combination` | Deprecated compatibility option; never combines matrices. |
+| `--no-allow-unverified-combination` | Disable allow unverified combination. |
+| `--genome` | Set genome. |
+| `--fasta` | Set fasta. |
+| `--gtf` | Set gtf. |
+| `--gff` | Set gff. |
+| `--revision` | Set revision. |
+| `--params-file` | Set params file. |
+| `--nextflow-config` | Set nextflow config. |
+| `--work-dir` | Set work dir. |
+| `--processed-checkpoint-dir` | Set processed checkpoint dir. |
+| `--execution-profile` / `--profile` | Nextflow execution profile. |
+| `--overwrite` | Enable overwrite. |
+| `--no-overwrite` | Disable overwrite. |
+| `--fail-fast` | Enable fail fast. |
+| `--no-fail-fast` | Disable fail fast. |
+| `--recursive` | Enable recursive. |
+| `--no-recursive` | Disable recursive. |
+| `--resource-profile` | Set resource profile. Choices: `standard`, `large`. |
+| `--resource-override` | Set resource override. |
+| `--insdc-default` | Set insdc default. Choices: `ena`, `sra`. |
+| `--allowed-host` / `--asset-host` | Set allowed hosts. |
+| `--reserved-path` | Reserve an additional path against discovery/publication. |
+| `--report-json` | Write a structured result summary; use - for JSON-only stdout. |
+| `-v` / `--verbose` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
+| `-q` / `--quiet` | Only emit ERROR logs. |
+| `--log-file` | Optional file path to write logs. |
+
+Structured inputs use the existing version 1.0 `--input-manifest`, including
+companions, metadata and per-input options. `--asset ACCESSION=PATH_OR_URL` is
+repeatable, while `--asset-manifest` reads the existing CSV/TSV asset format.
+For the complete Asset field interface, `--explicit-assets` accepts a JSON array
+of Asset mappings or `--explicit-assets-file` reads that array from disk; required
+fields are `scope_id`, `path` and `kind`. Python service/handler injection and
+in-memory objects remain Python-only. Replacement profiles accept inline JSON or
+a JSON file through the existing mutually exclusive flags.
+
+<a id="unified-cli-guide"></a>
+### Guide to meta_standards_converter
+
+Converter between different standards and formats, using the unified CLI.
+
+**Install MSC once before using MSC:**
+
+```bash
+conda create -n msconverter -c conda-forge python=3.12 pip
+conda activate msconverter
+pip install "git+https://github.com/jaychowcl/meta_standards_converter.git"
+```
+
+**Convert GEO MINiML XML to ArrayExpress MAGE-TAB IDF & SDRF:**
+
+```bash
+conda activate msconverter
+msc-convert GSE12345 GSE54321 --out-type magetab --related -v --out magetabs
+```
+
+Options:
+
+- `--out-type magetab`: generate MAGE-TAB IDF and SDRF files.
+- `--related`: include verified related studies; enabled by default. Use
+  `--no-expand-studies` to disable expansion.
+- `-v`: print informational logs in the terminal (stderr).
+- `--out`: directory containing the generated files; defaults to the current directory.
+
+**Convert while forcing a platform:**
+
+```bash
+conda activate msconverter
+msc-convert --list-platform-handlers
+msc-convert GSE12345 GSE54321 --out-type magetab \
+  --platform-handler tenx_v3_droplet_single_cell_sequencing \
+  --related -v --out output
+```
+
+`--list-platform-handlers` prints the runtime platform catalogue;
+`--platform-handler` forces the selected platform. Choose the most specific
+matching platform, for example the 10x v3 handler for 10x v3 data rather than a
+generic droplet or sequencing handler. Omitting it enables automatic detection.
+See [available platforms](#configuration) for the catalogue and relationships.
+
+Additional terminal examples:
+
+```bash
+msc-convert study.json --out-type csv --enrichment off --out tables
+msc-convert --input-manifest inputs.json --out-type json --out packages
+msc-convert matrix.tsv --in-type matrix --orientation genes-by-observations \
+  --out-type h5ad --out expression
+msc-convert sample.h5ad --out-type obs --include-var --include-uns --out observations
+msc-convert study.json --out-type json --outfile converted.json --report-json -
+```
+
+CLI tests cover all six outputs, typed flag dispatch, fixture-backed GEO
+preparation, reports, exit codes, collisions, manifests, and raw permission gates.
+Discovery regression tests cover equal/ancestor destinations, nested exclusions
+and symlinks. These offline tests do not claim live provider or pipeline execution.
+
 <a id="unified-inputs"></a>
 ### Inputs, detection and explicit binding
 
@@ -1063,7 +1262,7 @@ instances retain their caller-owned lifecycle. Injected `GEO2AEConverter`
 fetcher/parser/enricher/constructor collaborators are preserved when composing
 the facade route; explicit `geo2json`/`json2ae` injections take precedence.
 Scientific imports remain lazy.
-The unified boundary adds no CLI command, ontology access, migration, provider
+The unified Python boundary adds no ontology access, migration, provider
 failover, protocol registry sharing, or changes to legacy processing permission.
 
 The contract suites are `tests/converters/test_loaded_inputs.py` and
@@ -1646,7 +1845,7 @@ See [profile validation and fallback](#harmonization-overrides).
 <a id="cli"></a>
 ## CLI reference
 
-All ten commands are registered in [pyproject.toml](../pyproject.toml).
+All eleven commands are registered in [pyproject.toml](../pyproject.toml).
 The tables below are derived from their current `argparse` parsers.
 `None` denotes an omitted value; repeatable options accumulate unless a
 mutually exclusive group is noted. Use `COMMAND --help` for installed-version help.

@@ -51,3 +51,21 @@ def test_direct_geo_magetab_equals_facade_with_equivalent_preparation(workspace,
     assert result.status=='complete',result.to_dict()
     assert result.items[0].payload==direct
     assert replay==direct_calls
+
+
+@pytest.mark.parametrize('preset', ['standard', 'curators', 'off'])
+def test_unified_cli_geo_magetab_matches_recorded_evidence(preset, workspace, replay, capsys):
+    from meta_standards_converter.cli.convert import main
+    assert main(['GSE328265', '--out-type', 'magetab', '--out', 'out',
+                 '--enrichment', preset, '--no-expand-studies',
+                 '--platform-handler', 'single_cell_sequencing', '-v',
+                 '--report-json', '-']) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report['items'][0]['dataset_ids'] == ['E-GEOD-328265']
+    expected = ['geo:GSE328265']
+    if preset != 'off':
+        expected += ['pubmed:42129775']
+    if preset == 'standard':
+        expected += ['sra:SRX32831930', 'ena:SRX32831930']
+        assert_expected(GEO, 'geo2ae', workspace / 'out', workspace)
+    assert replay == expected

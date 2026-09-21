@@ -65,7 +65,7 @@ class ExecutionContext:
         self.outdir = Path(outdir) if outdir is not None else None
         self.destination = self.outfile or self.outdir
         self.stack = stack
-        self.reserved = set()
+        self.reserved = {Path(p).resolve() for p in runtime["reserved_paths"]}
         self.input_options = {}
         self.output_options = {}
         self.profile = get_resource_profile(
@@ -224,6 +224,7 @@ class Converter:
                     input_manifest if isinstance(input_manifest, (str, Path)) else None,
                     *companion_paths,
                     *declared_paths,
+                    *runtime["reserved_paths"],
                 ),
             )
             # Manifest-owned paths must not be discovered again from the accompanying directory.

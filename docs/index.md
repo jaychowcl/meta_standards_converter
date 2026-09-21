@@ -15,6 +15,20 @@ canonical handoff by stable anchor, purpose and search keywords.
 
 ## Canonical routes
 
+- id: unified-cli
+  title: Unified conversion command
+  anchor: unified-cli
+  purpose: Terminal entrypoint, complete flag reference, summaries, reports, exit codes and publication safeguards.
+  keywords: msc-convert, CLI, out-type, enrichment, related, report-json, reserved_paths, current directory
+  link: [Open section](codebase.md#unified-cli)
+
+- id: unified-cli-guide
+  title: Unified CLI quick guide
+  anchor: unified-cli-guide
+  purpose: Conda installation and terminal-only GEO to MAGE-TAB instructions with platform forcing.
+  keywords: msc-convert, installation, MINiML, MAGETAB, platform-handler, list-platform-handlers
+  link: [Open section](codebase.md#unified-cli-guide)
+
 - id: unified-converter
   title: Unified converter API
   anchor: unified-converter
@@ -159,7 +173,7 @@ canonical handoff by stable anchor, purpose and search keywords.
   title: Principal workflows
   anchor: principal-workflows
   purpose: Choose a conversion or legacy import flow and trace validation through terminal outcomes.
-  keywords: unified API, nine converters, ten commands, workflow, stages, failure, pseudocode
+  keywords: unified API, nine converters, eleven commands, workflow, stages, failure, pseudocode
   link: [Open section](codebase.md#principal-workflows)
 
 - id: workflow-geo2ae
