@@ -260,6 +260,7 @@ class MINiMLV1Migrator:
         from .cells import has_cell_value
         result: list[dict[str, Any]] = []
         active_node = None
+        last_assay = None
         current_application: dict[str, Any] | None = None
         last_named: dict[str, Any] | None = None
         last_ontology: dict[str, Any] | None = None
@@ -302,6 +303,8 @@ class MINiMLV1Migrator:
                     if step.get('link'):
                         active_node['link'] = deepcopy(step['link'])
                     result.append(active_node)
+                    if node_kind in {'assay', 'hybridization'}:
+                        last_assay = active_node
                 continue
             if not has_cell_value(step.get('value')) and kind != 'harmonized':
                 if kind == 'attribute':
@@ -311,7 +314,13 @@ class MINiMLV1Migrator:
                 )):
                     unbound.append(deepcopy(dict(step)))
                 continue
-            if active_node is None and current_application is None:
+            # Factor values describe the experiment row (MAGE-TAB 1.1), and
+            # may follow empty optional file columns. Keep them on the last
+            # explicit assay; never invent an assay or rebind other attributes.
+            factor_node = active_node
+            if kind == 'attribute' and step.get('attribute_type') == 'factor value' and factor_node is None:
+                factor_node = last_assay
+            if active_node is None and current_application is None and factor_node is None:
                 if unbound is not None:
                     unbound.append(deepcopy(dict(step)))
                 continue
@@ -333,9 +342,9 @@ class MINiMLV1Migrator:
                 attribute = cls._legacy_attribute(step)
                 if step.get("attribute_type") == "parameter value" and current_application is not None:
                     current_application.setdefault("parameter_values", []).append(attribute)
-                elif active_node is not None and step.get('attribute_type') != 'parameter value':
+                elif factor_node is not None and step.get('attribute_type') != 'parameter value':
                     destination = "factor_values" if step.get("attribute_type") == "factor value" else "characteristics"
-                    active_node.setdefault(destination, []).append(attribute)
+                    factor_node.setdefault(destination, []).append(attribute)
                 else:
                     if unbound is not None:
                         unbound.append(deepcopy(dict(step)))

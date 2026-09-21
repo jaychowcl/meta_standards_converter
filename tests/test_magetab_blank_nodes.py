@@ -106,3 +106,38 @@ def test_optional_blank_unit_header_alone_does_not_create_orphan_diagnostics():
                  [['s1','5',' ','','']])
     assert not data.get('extensions',{}).get('magetab',{}).get('unbound_annotations')
     assert data['sample'][0]['channel'][0]['characteristics'] == [{'name':'dose','value':'5'}]
+
+
+def test_row_factor_after_empty_optional_files_is_retained_on_assay():
+    """MAGE-TAB factors describe the experiment row, not an optional file node."""
+    from meta_standards_converter.magetab.semantics import render_miniml_assay_documents
+    header = ['Source Name', 'Assay Name', 'Derived Array Data File',
+              'Derived Array Data File', 'Factor Value[immunoprecipitate]']
+    rows = [['s1','a1','one.bw','','H3K4me3'], ['s2','a2','two.bw','','H3K27ac']]
+    data = parse(header, rows)
+    docs = render_miniml_assay_documents(data.to_mapping()['series']['assay_paths'])
+    rendered = docs['x.sdrf.txt']
+    assert 'Factor Value[immunoprecipitate]' in rendered[0]
+    i = rendered[0].index('Factor Value[immunoprecipitate]')
+    assert [r[i] for r in rendered[1:]] == ['H3K4me3','H3K27ac']
+    for path in data['series']['assay_paths']:
+        assay = next(s for s in path['steps'] if s['kind']=='assay')
+        assert assay['factor_values']
+        assert not any(s['kind']=='derived_array_data_file' and s.get('factor_values') for s in path['steps'])
+
+
+def test_row_factor_does_not_invent_an_absent_assay():
+    data = parse(['Source Name','Assay Name','Derived Array Data File','Factor Value[treatment]'],
+                 [['s1','','','drug']])
+    assert [s['kind'] for s in data['series']['assay_paths'][0]['steps']] == ['source']
+    assert data['extensions']['magetab']['unbound_annotations'][0]['value'] == 'drug'
+
+
+def test_optional_file_nodes_do_not_split_one_row_factor_into_two_columns():
+    from meta_standards_converter.magetab.semantics import render_miniml_assay_documents
+    data=parse(['Source Name','Assay Name','Derived Array Data File','Factor Value[disease]'],
+               [['s1','a1','one.txt','control'],['s2','a2','','disease']])
+    rendered=render_miniml_assay_documents(data.to_mapping()['series']['assay_paths'])['x.sdrf.txt']
+    assert rendered[0].count('Factor Value[disease]')==1
+    i=rendered[0].index('Factor Value[disease]')
+    assert [r[i] for r in rendered[1:]]==['control','disease']

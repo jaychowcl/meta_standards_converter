@@ -36,7 +36,7 @@ def recorded_neighbors(package, provider):
     found = set()
     if provider == 'geo':
         for relation in package.to_mapping().get('series', {}).get('relation', []):
-            if str(relation.get('type', '')).casefold() not in {'superseries', 'subseries'}:
+            if str(relation.get('type', '')).casefold() not in {'superseries', 'subseries', 'superseries of', 'subseries of'}:
                 continue
             target = relation.get('target', '')
             candidates = [target]

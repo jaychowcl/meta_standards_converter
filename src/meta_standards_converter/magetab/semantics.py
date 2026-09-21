@@ -435,6 +435,28 @@ def render_miniml_assay_documents(paths, *, preserve_order=False) -> dict[str, l
 def _render_assay_path_group(paths, *, preserve_order=False) -> list[list]:
     from .sdrf.model import SDRFPath, SDRFNode, SDRFEdge, SDRFAttr
     from .sdrf.renderer import SDRFRenderer
+    # Optional terminal files may be blank for only some rows. A row-level
+    # factor must not become two columns merely because its carrier differs.
+    owners = {}
+    for path in paths:
+        for step in path.get('steps', []):
+            for factor in step.get('factor_values', []):
+                owners.setdefault(factor.get('name'), set()).add(step.get('kind'))
+    shared = {name for name, kinds in owners.items() if len(kinds) > 1}
+    if shared:
+        paths = copy.deepcopy(paths)
+        for path in paths:
+            assay = next((step for step in reversed(path.get('steps', []))
+                          if step.get('kind') in {'assay', 'hybridization'}), None)
+            if assay is None:
+                continue
+            values = []
+            for step in path['steps']:
+                factors = step.get('factor_values', [])
+                values.extend(v for v in factors if v.get('name') in shared)
+                if factors:
+                    step['factor_values'] = [v for v in factors if v.get('name') not in shared]
+            assay.setdefault('factor_values', []).extend(values)
     rendered = []
     for path in paths:
         parts = []
