@@ -1,0 +1,37 @@
+Comment[ArrayExpressAccession]	E-MTAB-13131
+MAGE-TAB Version	1.1
+Comment[Submitted Name]	A spatial map of human liver cirrhosis reveals the patho-architecture and gene signatures associated with cell state transitions during liver disease - single nuclei ATAC-seq
+Investigation Title	A spatial map of human liver cirrhosis reveals the patho-architecture and gene signatures associated with cell state transitions during liver disease - single nuclei ATAC-seq
+Experiment Description	Liver  fibrosis  is  a  major  cause  of  death  worldwide.  As  a  progressive  step  in  chronic  liver disease, fibrosis is almost always diagnosed too late with limited treatment options. Here, we uncover the spatial transcriptional landscape driving human liver fibrosis using single nuclei RNA  and Assay  for  Transposase-Accessible  Chromatin  (ATAC)  sequencing  to  deconvolute multi-cell spatial transcriptomic profiling in human liver cirrhosis.Through multi-modal data integration,we  define  molecular  signatures  driving  cell  state  transitions  in  liver  disease  and define   an   impaired cellular response   and   directional   trajectory   from   hepatocytes   to cholangiocytes associated with disease remodelling.We identifypro-fibrogenic signatures in non-parenchymal  cell  subpopulations  co-localised  within  the  fibrotic  niche  and localise transitional cell states at the scar interface. This combined approach providesa spatial atlas of gene  regulation  and defines  molecular  signatures  associated liver  diseasefor  targeted therapeutics or as early diagnostic markers of progressive liver disease. This is the snATAC-seq data for the work.
+Experimental Design	disease state design
+Experimental Design Term Source REF	EFO
+Experimental Design Term Accession Number	EFO:0001756
+Experimental Factor Name	disease
+Experimental Factor Type	disease
+Experimental Factor Term Source REF	EFO
+Experimental Factor Term Accession Number	EFO_0000408
+Person Last Name	Baker	Hanley
+Person First Name	Syed Murtuza	Karen Piper
+Person Mid Initials		
+Person Email	galib36@gmail.com	karen.piperhanley@manchester.ac.uk
+Person Phone
+Person Fax
+Person Address	University of Manchester Oxford Road Manchester, UK.	University of Manchester Oxford Road Manchester, UK.
+Person Affiliation	Faculty  of  Biology,  Medicine  &  Health University of Manchester	Faculty  of  Biology,  Medicine  &  Health University of Manchester
+Person Roles	submitter	investigator
+Public Release Date	2025-09-08
+Protocol Name	P-MTAB-134376	P-MTAB-134377	P-MTAB-134378	P-MTAB-134379
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0004184	EFO_0004170
+Protocol Description	Liver tissue was obtained following ethical approval and informed consent (National Research Ethics Service, REC14/NW1260/22) from the Manchester Foundation Trust Biobank. Fresh, unfixed tissue was obtained intraoperatively from patients undergoing surgical liver resections at the Manchester Royal Infirmary. Tissue was snap frozen within 30 minutes of collection and stored at -80˚C. 	Used 10X sample collection protocol, detailed in CG000505_chromium nuclei isolation kit_UG_RevA.pdf	Used 10X sample collection protocol, detailed in CG000505_chromium nuclei isolation kit_UG_RevA.pdf	Used Illumina NextSeq 500 protocol, detailed in nextseq-500-system-guide-15046563-06.pdf
+Protocol Hardware				NextSeq 500
+Protocol Software
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/
+Term Source Version
+Comment[AEExperimentType]	scATAC-seq
+Comment[TemplateType]	Human - Single-cell sequencing
+Comment[SecondaryAccession]	ERP148790
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR11634701-ERR11634701	http://www.ebi.ac.uk/ena/data/view/ERR11634701-ERR11634701	http://www.ebi.ac.uk/ena/data/view/ERR11634701-ERR11634701	http://www.ebi.ac.uk/ena/data/view/ERR11634701-ERR11634702	http://www.ebi.ac.uk/ena/data/view/ERR11634702-ERR11634702	http://www.ebi.ac.uk/ena/data/view/ERR11634702-ERR11634702	http://www.ebi.ac.uk/ena/data/view/ERR11634702-ERR11634703	http://www.ebi.ac.uk/ena/data/view/ERR11634703-ERR11634703	http://www.ebi.ac.uk/ena/data/view/ERR11634703-ERR11634703	http://www.ebi.ac.uk/ena/data/view/ERR11634703-ERR11634704	http://www.ebi.ac.uk/ena/data/view/ERR11634704-ERR11634704	http://www.ebi.ac.uk/ena/data/view/ERR11634704-ERR11634704	http://www.ebi.ac.uk/ena/data/view/ERR11634704-ERR11634704
+SDRF File	E-MTAB-13131.sdrf.txt

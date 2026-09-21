@@ -1,0 +1,46 @@
+Comment[ArrayExpressAccession]	E-MTAB-14416
+MAGE-TAB Version	1.1
+Comment[Submitted Name]	Distribution of active (H3K4me1, H3K4me3, H3K27ac) and inactive (H3K9me3, H3K27me3) histone PTMs in WT and HIRA KO HeLa cells
+Investigation Title	Distribution of active (H3K4me1, H3K4me3, H3K27ac) and inactive (H3K9me3, H3K27me3) histone PTMs in WT and HIRA KO HeLa cells
+Experiment Description	We profiled the enrichment of active (H3K4me1, H3K4me3, H3K27ac) and inactive (H3K9me3, H3K27me3) histone PTMs in cells that are wild-type (WT) or knock-out (KO) for the H3.3-specific chaperone HIRA. We performed native ChIP-seq following MNase digestion to isolate nucleosomes in H3.1-SNAP and H3.3-SNAP-bearing HeLa cells. We had previously assayed the distribution of the H3.1 and H3.3 histone variants (Gatto et al., 2022) in the same cell lines, so we generated this PTM ChIP-seq data to compare the behaviour of the variants with that of H3 modifications.
+Experimental Design	genotype design
+Experimental Design Term Source REF	EFO
+Experimental Design Term Accession Number	EFO:0001748
+Experimental Factor Name	genotype	immunoprecipitate
+Experimental Factor Type	genotype	immunoprecipitate
+Experimental Factor Term Source REF	EFO	EFO
+Experimental Factor Term Accession Number	EFO_0000513	EFO_0000541
+Person Last Name	Karagyozova	Gatto	Forest	Marti-Renom	Mirny	Almouzni	Quivy
+Person First Name	Tina	Alberto	Audrey	Marc	Leonid	Geneviève	Jean-Pierre
+Person Mid Initials							
+Person Email	tina.n.karagyozova@gmail.com	agatto.personal@gmail.com	audrey.forest@curie.fr	martirenom@cnag.eu	leonid@mit.edu	genevieve.almouzni@curie.fr	Jean-Pierre.Quivy@curie.fr
+Person Phone
+Person Fax
+Person Address	26 rue d'Ulm, Paris, France	26 rue d'Ulm, Paris, France	26 rue d'Ulm, Paris, France	Barcelona Institute of Science and Technology (BIST), Baldiri i Reixac 4, 08028 Barcelona, Spain	Cambridge, MA 02139, USA	26 rue d'Ulm, Paris, France	26 rue d'Ulm, Paris, France
+Person Affiliation	Nuclear Dynamics Unit UMR3664 CNRS/IC Institut Curie - Centre de Recherche	Nuclear Dynamics Unit UMR3664 CNRS/IC Institut Curie - Centre de Recherche	Nuclear Dynamics Unit UMR3664 CNRS/IC Institut Curie - Centre de Recherche	CNAG-CRG, Centre for Genomic Regulation (CRG), Universitat Pompeu Fabra (UPF)	Institute for Medical Engineering and Science, and Department of Physics, Massachusetts Institute of Technology	Nuclear Dynamics Unit UMR3664 CNRS/IC Institut Curie - Centre de Recherche	Nuclear Dynamics Unit UMR3664 CNRS/IC Institut Curie - Centre de Recherche
+Person Roles	data analyst;experiment performer;investigator;submitter	investigator	experiment performer;investigator	investigator	investigator	investigator	investigator
+Public Release Date	2025-08-07
+PubMed ID
+Publication DOI	10.1101/2024.08.27.609896
+Publication Author List	Tina Karagyozova, Alberto Gatto, Audrey Forest, Jean-Pierre Quivy, Marc Marti-Renom, Leonid Mirny, Geneviève Almouzni
+Publication Title	HIRA-dependent provision of histone H3.3 in active chromatin ensures genome compartmentalisation
+Publication Status	preprint
+Publication Status Term Source REF	EFO
+Publication Status Term Accession Number	EFO_0010558
+Protocol Name	P-MTAB-146988	P-MTAB-146989	P-MTAB-146990	P-MTAB-146991	P-MTAB-146992
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol	growth protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0004184	EFO_0004170	EFO_0003789
+Protocol Description	We collected 5 million cells per IP by trypsinization.	We performed ChIP-seq using the native nucleosomes isolation procedure described in Gatto et al. (2022) with small modifications. We used 5 million cells per IP and Dynabeads Protein A-conjugated antibodies against histone PTMs for immunoprecipitation. All steps were performed at 4°C and in the presence of Protease inhibitors (Roche) and 1mM TSA in every buffer to prevent protease and HDAC activity, respectively. For each IP reaction, we prepared 50μL of Ab-conjugated beads by blocking for 4 hours in Bead blocking buffer (2.5% BSA in PBS-T, 1mg/mL tRNA), washing once in 0.02% PBS-T and incubating for 15-30min with the antibodies (diluted in 0.2mL 0.02% PBS-T) on a rotating wheel. Ab-conjugated beads were then washed twice with 0.02% PBS-T and resuspended in 0.2mL 0.02% PBS-T. Native nucleosomes (80μL per IP) from up to 3 samples were pooled, diluted in 5x volumes of Incubation buffer (50mM Tris-HCl pH 7.5, 100mM NaCl, 0.5% BSA) and pre-cleared by incubating with Dynabeads Protein A (15μL per input pool) for 30 min on a rotating wheel. We kept 20μL (1%) pre-cleared chromatin as input sample. We incubated the remaining (460μL/IP) with the Ab-conjugated beads (washed once in Incubation buffer) overnight on a rotating wheel. Beads were washed and DNA was purified from the IPed material as described for SNAP-seq in Gatto et al. (2022).  Ab used: PTM     Provider        Cat. no Amount per ChIP (ug) H3K4me1 abcam         ab8895 4 H3K4me3 Active Motif 39915 4 H3K9me3 Active Motif 39765 10 H3K27ac Active Motif 39133 5 H3K7me3 Active Motif 39155 5 	Sequencing libraries were prepared at the NGS (Next-Generation Sequencing) platform at Institut Curie with the Illumina TruSeq ChIP kit.	All libraries were sequenced on Illumina NovaSeq 6000 (PE100). 	We used HeLa cells stably expressing H3.1-SNAP-HA or H3.3-SNAP-HA which were either wild-type (WT, CRISPR/Cas9 GFP KO) or knock-out for HIRA (KO, CRISPR/Cas9 HIRA KO), as described in Ray-Gallet et al. (2018). We cultured cells in DMEM complete medium (Dulbecco’s Modified Eagle’s Medium with D-Glucose, L-Glutamine and Pyruvate) supplemented with 10% fetal calf serum, 100U/mL Penicillin and 100mg/mL Streptomycin.
+Protocol Hardware				Illumina NovaSeq 6000
+Protocol Software
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/
+Term Source Version
+Comment[AEExperimentType]	ChIP-seq
+Comment[TemplateType]	Cell line - High-throughput sequencing
+Comment[AEAnonymousReview]	yes
+Comment[RelatedExperiment]	E-MTAB-10619	E-MTAB-14415	E-MTAB-14417	E-MTAB-14419
+Comment[SecondaryAccession]	ERP163837
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR13630548-ERR13630548	http://www.ebi.ac.uk/ena/data/view/ERR13630548-ERR13630549	http://www.ebi.ac.uk/ena/data/view/ERR13630549-ERR13630550	http://www.ebi.ac.uk/ena/data/view/ERR13630550-ERR13630551	http://www.ebi.ac.uk/ena/data/view/ERR13630551-ERR13630552	http://www.ebi.ac.uk/ena/data/view/ERR13630552-ERR13630553	http://www.ebi.ac.uk/ena/data/view/ERR13630553-ERR13630554	http://www.ebi.ac.uk/ena/data/view/ERR13630554-ERR13630555	http://www.ebi.ac.uk/ena/data/view/ERR13630555-ERR13630556	http://www.ebi.ac.uk/ena/data/view/ERR13630556-ERR13630557	http://www.ebi.ac.uk/ena/data/view/ERR13630557-ERR13630558	http://www.ebi.ac.uk/ena/data/view/ERR13630558-ERR13630559	http://www.ebi.ac.uk/ena/data/view/ERR13630559-ERR13630560	http://www.ebi.ac.uk/ena/data/view/ERR13630560-ERR13630561	http://www.ebi.ac.uk/ena/data/view/ERR13630561-ERR13630562	http://www.ebi.ac.uk/ena/data/view/ERR13630562-ERR13630563	http://www.ebi.ac.uk/ena/data/view/ERR13630563-ERR13630564	http://www.ebi.ac.uk/ena/data/view/ERR13630564-ERR13630565	http://www.ebi.ac.uk/ena/data/view/ERR13630565-ERR13630566	http://www.ebi.ac.uk/ena/data/view/ERR13630566-ERR13630567	http://www.ebi.ac.uk/ena/data/view/ERR13630567-ERR13630568	http://www.ebi.ac.uk/ena/data/view/ERR13630568-ERR13630569	http://www.ebi.ac.uk/ena/data/view/ERR13630569-ERR13630570	http://www.ebi.ac.uk/ena/data/view/ERR13630570-ERR13630571	http://www.ebi.ac.uk/ena/data/view/ERR13630571-ERR13630572	http://www.ebi.ac.uk/ena/data/view/ERR13630572-ERR13630573	http://www.ebi.ac.uk/ena/data/view/ERR13630573-ERR13630573
+SDRF File	E-MTAB-14416.sdrf.txt

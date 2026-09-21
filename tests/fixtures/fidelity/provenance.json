@@ -1,0 +1,131 @@
+{
+  "retrieved_at": "2026-09-21T12:51:55.363058+00:00",
+  "files": [
+    {
+      "file": "E-MTAB-13662.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/662/E-MTAB-13662/Files/E-MTAB-13662.idf.txt",
+      "sha256": "32ca84ce745e704cc6ff70bbfc6e0b384c5d556cb9a1c46a0647b89777e37501",
+      "bytes": 4762
+    },
+    {
+      "file": "E-MTAB-13662.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/662/E-MTAB-13662/Files/E-MTAB-13662.sdrf.txt",
+      "sha256": "245dee38e00b7eaf1f3a4583a9048cb953f38ca5e3d7a243e7c6557b5d89b311",
+      "bytes": 30539
+    },
+    {
+      "file": "E-MTAB-14560.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/560/E-MTAB-14560/Files/E-MTAB-14560.idf.txt",
+      "sha256": "6a8cb9f15754adabf7c2174b65d547201c57a6999d47ec4230d6795971cfc531",
+      "bytes": 10961
+    },
+    {
+      "file": "E-MTAB-14560.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/560/E-MTAB-14560/Files/E-MTAB-14560.sdrf.txt",
+      "sha256": "ad111d33b1affd7cc4bd3417de89968557e014c619864dd7ab5416fd9888fa18",
+      "bytes": 98415
+    },
+    {
+      "file": "E-MTAB-14566.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/566/E-MTAB-14566/Files/E-MTAB-14566.idf.txt",
+      "sha256": "4cddba19fc1c6ba770a9c65e881dc9c0a790a2c872ca08387c9828e11b61fd50",
+      "bytes": 6185
+    },
+    {
+      "file": "E-MTAB-14566.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/566/E-MTAB-14566/Files/E-MTAB-14566.sdrf.txt",
+      "sha256": "f61b6a45f2eba9099be821b76d380608c7804f4e233aea618b171bce691288ef",
+      "bytes": 926627
+    },
+    {
+      "file": "E-MTAB-16192.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/192/E-MTAB-16192/Files/E-MTAB-16192.idf.txt",
+      "sha256": "b895adcc98cc0c9003ddac288f724bd21bdc295844524067aec212c22fbc669c",
+      "bytes": 7093
+    },
+    {
+      "file": "E-MTAB-16192.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/192/E-MTAB-16192/Files/E-MTAB-16192.sdrf.txt",
+      "sha256": "8d58f1561881e6413a7c86ff1bbc9cc60b76b64f56d8d85dc2e5cf6310427035",
+      "bytes": 3576
+    },
+    {
+      "file": "E-MTAB-16253.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/253/E-MTAB-16253/Files/E-MTAB-16253.idf.txt",
+      "sha256": "21ca21825c4c88361c733e873f86a2b5e443ff63bd7103d9eeaa4eedd8bbeb41",
+      "bytes": 5922
+    },
+    {
+      "file": "E-MTAB-16253.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/253/E-MTAB-16253/Files/E-MTAB-16253.sdrf.txt",
+      "sha256": "fbd6f0434f72c462675c4894992dd82ed3e5acb61e1485cf5bea0b9772a6060e",
+      "bytes": 5181
+    },
+    {
+      "file": "E-MTAB-13131.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/131/E-MTAB-13131/Files/E-MTAB-13131.idf.txt",
+      "sha256": "10bdb531aa93761bd5386f36058ab1f3590eee0c8d71e5878adb4a87dad426bd",
+      "bytes": 4611
+    },
+    {
+      "file": "E-MTAB-13131.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/131/E-MTAB-13131/Files/E-MTAB-13131.sdrf.txt",
+      "sha256": "e67eee5cd2b4ef8eec69fdb4a515707f086dceffe8912434a6826d0f408c6b99",
+      "bytes": 11625
+    },
+    {
+      "file": "E-MTAB-16856.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/856/E-MTAB-16856/Files/E-MTAB-16856.idf.txt",
+      "sha256": "a58187f40b4c813c1ccde33ef17b12c2a7bb261c5537d0d012b5571561768255",
+      "bytes": 7134
+    },
+    {
+      "file": "E-MTAB-16856.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/856/E-MTAB-16856/Files/E-MTAB-16856.sdrf.txt",
+      "sha256": "defc37471d28bf999880ddc7a6f51c35ee1e7abbc2423bf8dbb79e5e99c30622",
+      "bytes": 4360
+    },
+    {
+      "file": "E-MTAB-14416.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/416/E-MTAB-14416/Files/E-MTAB-14416.idf.txt",
+      "sha256": "8798d6bf7f0b2881b0242d16471eb3cd68e1406cc3a23049216b131f1a9a4a5e",
+      "bytes": 7852
+    },
+    {
+      "file": "E-MTAB-14416.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/416/E-MTAB-14416/Files/E-MTAB-14416.sdrf.txt",
+      "sha256": "07a8b415e780b53da796317c172de68e84aef097e273dfa13987ca1ee976bbb9",
+      "bytes": 37342
+    },
+    {
+      "file": "E-MTAB-16847.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/847/E-MTAB-16847/Files/E-MTAB-16847.idf.txt",
+      "sha256": "32027b3ac9335385ab9b7c8bbf8565d1f7bacc30406111f9f49a7aefa049f392",
+      "bytes": 3193
+    },
+    {
+      "file": "E-MTAB-16847.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/847/E-MTAB-16847/Files/E-MTAB-16847.sdrf.txt",
+      "sha256": "7d4d1fba123bb21be70eb3f3c00f9fa9c01acecd31ce225b41665d91925b8979",
+      "bytes": 2621
+    },
+    {
+      "file": "E-MTAB-14960.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/960/E-MTAB-14960/Files/E-MTAB-14960.idf.txt",
+      "sha256": "8fd4ef54933ce7361275d1bec720966a582b0b3893fbca73f5c87cbfae9d4396",
+      "bytes": 5182
+    },
+    {
+      "file": "E-MTAB-14960.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/960/E-MTAB-14960/Files/E-MTAB-14960.sdrf.txt",
+      "sha256": "1fe96ddff430244defabedbe86446bf51e832f4da2d5c8eeb90b2cac47f1b84f",
+      "bytes": 12662
+    },
+    {
+      "file": "ERP000263.ena.json",
+      "source": "ENA native ERP000263 retrieval during 2026-09-21 audit; complete seven-sample package",
+      "sha256": "8705dbe3018c2f07dfa49553b47e4cc86a41b17bc7e86232b02787837eaeae5a",
+      "bytes": 186540
+    }
+  ]
+}

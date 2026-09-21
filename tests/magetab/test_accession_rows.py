@@ -24,7 +24,7 @@ SOURCE = 'Comment[SecondaryAccessionTermSourceRef]'
     f'{VALUE}\tPRJNA229389\n{SOURCE}\tBioProject\n{VALUE}\tSRP033200\n{SOURCE}\tSRA\n{VALUE}\tGSE52564\n{SOURCE}\tGEO\n',
 ])
 def test_secondary_accessions_survive_semantic_overlay_and_roundtrip(comments):
-    package = AEParser().parse(resolved_input(idf='Investigation Accession\tE-GEOD-52564\n' + comments))
+    package = AEParser().parse(resolved_input(idf='Investigation Accession\tE-GEOD-52564\nExperimental Factor Name\tdisease\nProtocol Name\tP-extract\n' + comments))
     before = copy.deepcopy(package.to_mapping())
     rows = AEConstructor().miniml2magetab(package)
     pairs = []
@@ -74,7 +74,7 @@ def test_final_accession_partition_is_idempotent_and_preserves_conflicting_label
 @pytest.mark.parametrize('accession', ['CUSTOM', 'SRP123'])
 def test_conflicting_sources_survive_complete_parse_export(sources, accession):
     comments = ''.join(f'{VALUE}\t{accession}\n{SOURCE}\t{source}\n' for source in sources)
-    data = AEParser().parse(resolved_input(idf='Investigation Accession\tE-MTAB-1\n' + comments))
+    data = AEParser().parse(resolved_input(idf='Investigation Accession\tE-MTAB-1\nExperimental Factor Name\tdisease\nProtocol Name\tP-extract\n' + comments))
     pairs = [(a['value'], a.get('database')) for a in data.to_mapping()['series']['accession'] if a['value'] == accession]
     assert pairs == [(accession, source) for source in sources]
     from meta_standards_converter.magetab.accession_rows import secondary_accession_pairs

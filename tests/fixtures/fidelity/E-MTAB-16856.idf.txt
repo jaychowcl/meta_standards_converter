@@ -1,0 +1,45 @@
+MAGE-TAB Version	1.1
+Investigation Title	Single-cell transcriptomic profiling of patient-derived pancreatic ductal adenocarcinoma primary cell cultures
+Experiment Description	Single-cell transcriptomic dataset comprising 41 patient-derived cell cultures (PDCs) established from pancreatic ductal adenocarcinoma (PDAC). The dataset was generated using Evercode™ technology with the Whole Transcriptome v2 kit (Parse Biosciences, ECW02130), based on Split Pool Ligation-based Transcriptome sequencing (SPLiT-seq). For scRNA-seq, PDCs were processed in two batches, 14 samples in the first batch (R1) and 27 samples in the second batch (R2). Sequencing was performed separately for each batch using the Illumina NovaSeq X Plus platform. Paired-end reads were generated on a 10B flow cell with 200 sequencing cycles. FASTQ quality control (QC), barcode correction, alignment to the human reference genome (GRCh38.p13), multiplet detection, and raw count matrix generation were performed using the split-pipe pipeline (v1.1.1, Parse Biosciences) with default parameters. This single-cell collection of experimentally derived models reveals transcriptional heterogeneity both within and across PDCs. The submitted file consists of the count matrix along with the corresponding metadata.
+Experimental Design	cell type comparison design
+Experimental Design Term Source REF	EFO
+Experimental Design Term Accession Number	EFO:0001745
+Experimental Factor Name	replicate
+Experimental Factor Type	replicate
+Experimental Factor Term Source REF	EFO
+Experimental Factor Term Accession Number	EFO_0000683
+Person Last Name	Navarro Fraunhoffer	Dusetti
+Person First Name	Nicolas 	Nelson
+Person Mid Initials	A
+Person Email	nicolasfraunhoffernavarro@gmail.com	nelson.dusetti@inserm.fr
+Person Phone
+Person Fax
+Person Address	163, Av Luminy Inserm - U1068, Batiment TPR2 Bloc 6 Entrance A Etage 3	163, Av Luminy Inserm - U1068, Batiment TPR2 Bloc 6 Entrance A Etage 3
+Person Affiliation	Cancer Research Center of Marseille (CRCM), INSERM U1068, CNRS UMR 7258, Aix-Marseille University and Paoli-Calmettes Institute, Marseille, France.  Buenos Aires University, Center for Pharmacological and Botanical Studies, Faculty of Medicine, National Council for Scientific and Technical Research, Buenos Aires, Argentina.	Cancer Research Center of Marseille (CRCM), INSERM U1068, CNRS UMR 7258, Aix-Marseille University and Paoli-Calmettes Institute, Marseille, France.
+Person Roles	investigator;submitter	investigator
+Date of Experiment	2024-12-16
+Public Release Date	2026-04-15
+PubMed ID
+Publication DOI
+Publication Author List
+Publication Title
+Publication Status	submitted
+Publication Status Term Source REF	EFO
+Publication Status Term Accession Number	EFO_0001794
+Protocol Name	P-MTAB-164369	P-MTAB-164370	P-MTAB-164371	P-MTAB-164372	P-MTAB-164373	P-MTAB-164374
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol	high throughput sequence alignment protocol	normalization data transformation protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0004184	EFO_0004170	EFO_0004917	EFO_0003816
+Protocol Description	To perform scRNA-seq, PDCs were cultured in two batches, 14 samples in the first batch (R1) and 27 samples in the second batch (R2). Following thawing, each PDC was cultured for a maximum of two passages over approximately two weeks. At that point, cells at 60–70% confluency were harvested, and aliquots of 500,000 cells were pelleted, resuspended in 500 µL of freezing medium (FBS + 10% DMSO; Sigma, D8418), counted, and cryopreserved at -80°C using a Corning CoolCell, for subsequent single-cell transcriptomic analysis. Frozen samples were processed using the Evercode™ Cell Fixation v2 kit (Parse Biosciences, ECF2101) and subsequently barcoded and prepared for sequencing according to the manufacturer’s workflow provided with the Evercode™ Whole Transcriptome v2 kit (Parse Biosciences, ECW02130).	No direct RNA extraction was performed. During library construction, the cells were permeabilized, and the RNA molecules were barcoded in situ with well-specific barcode sequences.	The SPLiT-seq protocol applies three rounds of combinatorial indexing to uniquely label individual cells. Briefly, for each PDC, approximately 2,000 fixed cells were used as input. Cells were first distributed into 48 wells for reverse transcription, during which the first molecular tag was incorporated. They were then pooled and redistributed twice into 96-well plates for the sequential ligation of the second and third indexes. After this indexing process, cells were evenly divided into sublibraries and lysed. The uniquely tagged cDNA molecules were isolated using a streptavidin-coated magnetic bead pulldown, followed by PCR amplification. The cDNA was then enzymatically fragmented, ligated to sequencing adapters, and assigned a sublibrary-specific fourth index during the final PCR step.	Sequencing was performed separately for each culture batch using the Illumina NovaSeq X Plus. Paired-end reads were generated using a 10B flow cell with 200 sequencing cycles.	FASTQ file quality control, barcode correction, alignment to the human genome (GRCh38.p13), multiplet detection, and raw count matrix generation were performed using the split-pipe pipeline with the default parameters. 	The raw count matrices were subsequently loaded into R using the Seurat package. To account for potential batch-specific variation, QC filtering was applied independently to each batch. Initially, duplicated barcodes were removed, retaining only one per cell. Then, for batch R1, cells with a total of expressed genes between 2,000 and 10,000 were retained. Concomitantly, for batch R2, cells with expressed genes between 1,500 and 9,000 were retained. aw counts were normalised using log normalisation with a scale factor of 10,000. The top 2,000 features were selected based on variance-stabilising transformation, and the data was subsequently scaled. Principal Component Analysis (PCA) was performed on the selected features. Harmony integration was applied using the first 37 principal components, which explained 90% of the variance in the dataset.
+Protocol Hardware	Whole Transcriptome v2 kit	Whole Transcriptome v2 kit	Whole Transcriptome v2 kit	Illumina NovaSeq X		
+Protocol Software					Split-pipe pipeline v1.1.1	Seurat  v5.3.0
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/
+Term Source Version
+SDRF File	E-MTAB-16856.sdrf.txt
+Comment[AEExperimentType]	RNA-seq of coding RNA from single cells
+Comment[TemplateType]	Cell line - Single-cell sequencing
+Comment[SecondaryAccession]	ERP191728
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR16960920-ERR16960920	http://www.ebi.ac.uk/ena/data/view/ERR16960920-ERR16960921	http://www.ebi.ac.uk/ena/data/view/ERR16960921-ERR16960921
+Comment[Submitted Name]	Single-cell transcriptomic profiling of patient-derived pancreatic ductal adenocarcinoma primary cell cultures
+Comment[ArrayExpressAccession]	E-MTAB-16856

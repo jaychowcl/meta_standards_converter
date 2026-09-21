@@ -1,0 +1,37 @@
+Comment[ArrayExpressAccession]	E-MTAB-13662
+MAGE-TAB Version	1.1
+Comment[Submitted Name]	RNA-seq of human fetal brain cortex
+Investigation Title	RNA-seq of human fetal brain cortex
+Experiment Description	The dataset contains RNA-seq for 32 human fetal brain cortex samples between 7 weeks post-conception (wpc) and 11.5 wpc and 14 control samples from different tissues across the same time frame. The study is designed with 8  fetal adrenal samples (4 of 46,XY; 4 of 46,XX) at 7wpc, 8wpc, 9wpc, 11.5wpc
+Experimental Design	development or differentiation design	sex design
+Experimental Design Term Source REF	EFO	EFO
+Experimental Design Term Accession Number	EFO_0001746	EFO_0001752
+Experimental Factor Name	developmental stage	sex
+Experimental Factor Type	developmental stage	sex
+Experimental Factor Term Source REF	EFO	EFO
+Experimental Factor Term Accession Number	EFO_0000399	PATO_0000047
+Person Last Name	Achermann
+Person First Name	John
+Person Mid Initials
+Person Email	j.achermann@ucl.ac.uk
+Person Phone
+Person Fax
+Person Address	30 Guilford Street, London WC1N 1EH, UK
+Person Affiliation	UCL GOS Institute of Child Health, University College London
+Person Roles	submitter
+Public Release Date	2025-12-13
+Protocol Name	P-MTAB-139302	P-MTAB-139303	P-MTAB-139304	P-MTAB-139305
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0004184	EFO_0004170
+Protocol Description	Human embryonic and fetal tissue samples used for bulk-RNA seq were obtained with ethical approval and informed consent from the Human Developmental Biology Resource (http://www.hdbr.org).The age of embryos up to 8wpc was calculated based on Carnegie staging, whereas in older fetuses the age was estimated from foot length and knee-heel length in relation to standard growth data. Samples were karyotyped by G-banding or quantitative PCR (chromosomes 13, 16, 18, 21, 22 and X and Y) to determine the sex of the embryo/fetus and to exclude any major chromosomal rearrangements or aneuploidies.	Total RNA was extracted from human fetal brain cortex samples using the AllPrep DNA/RNA Mini Kit (Qiagen)	cDNA libraries were prepared using the KAPA mRNA HyperPrep Kit (Roche) 	cDNA libraries were sequenced on a NextSeq 500 sequencer (paired-end 43 bp) (Illumina) in a single run to reduce potential batch effects.
+Protocol Hardware				NextSeq 500
+Protocol Software
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/
+Term Source Version
+Comment[AEExperimentType]	RNA-seq of coding RNA
+Comment[TemplateType]	Human - High-throughput sequencing
+Comment[SecondaryAccession]	ERP156296
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR12387044-ERR12387044	http://www.ebi.ac.uk/ena/data/view/ERR12387044-ERR12387045	http://www.ebi.ac.uk/ena/data/view/ERR12387045-ERR12387046	http://www.ebi.ac.uk/ena/data/view/ERR12387046-ERR12387047	http://www.ebi.ac.uk/ena/data/view/ERR12387047-ERR12387048	http://www.ebi.ac.uk/ena/data/view/ERR12387048-ERR12387049	http://www.ebi.ac.uk/ena/data/view/ERR12387049-ERR12387050	http://www.ebi.ac.uk/ena/data/view/ERR12387050-ERR12387051	http://www.ebi.ac.uk/ena/data/view/ERR12387051-ERR12387052	http://www.ebi.ac.uk/ena/data/view/ERR12387052-ERR12387053	http://www.ebi.ac.uk/ena/data/view/ERR12387053-ERR12387054	http://www.ebi.ac.uk/ena/data/view/ERR12387054-ERR12387055	http://www.ebi.ac.uk/ena/data/view/ERR12387055-ERR12387056	http://www.ebi.ac.uk/ena/data/view/ERR12387056-ERR12387057	http://www.ebi.ac.uk/ena/data/view/ERR12387057-ERR12387058	http://www.ebi.ac.uk/ena/data/view/ERR12387058-ERR12387059	http://www.ebi.ac.uk/ena/data/view/ERR12387059-ERR12387060	http://www.ebi.ac.uk/ena/data/view/ERR12387060-ERR12387061	http://www.ebi.ac.uk/ena/data/view/ERR12387061-ERR12387062	http://www.ebi.ac.uk/ena/data/view/ERR12387062-ERR12387063	http://www.ebi.ac.uk/ena/data/view/ERR12387063-ERR12387064	http://www.ebi.ac.uk/ena/data/view/ERR12387064-ERR12387065	http://www.ebi.ac.uk/ena/data/view/ERR12387065-ERR12387066	http://www.ebi.ac.uk/ena/data/view/ERR12387066-ERR12387067	http://www.ebi.ac.uk/ena/data/view/ERR12387067-ERR12387068	http://www.ebi.ac.uk/ena/data/view/ERR12387068-ERR12387069	http://www.ebi.ac.uk/ena/data/view/ERR12387069-ERR12387070	http://www.ebi.ac.uk/ena/data/view/ERR12387070-ERR12387071	http://www.ebi.ac.uk/ena/data/view/ERR12387071-ERR12387072	http://www.ebi.ac.uk/ena/data/view/ERR12387072-ERR12387073	http://www.ebi.ac.uk/ena/data/view/ERR12387073-ERR12387074	http://www.ebi.ac.uk/ena/data/view/ERR12387074-ERR12387075	http://www.ebi.ac.uk/ena/data/view/ERR12387075-ERR12387075
+SDRF File	E-MTAB-13662.sdrf.txt

@@ -1,0 +1,35 @@
+Comment[ArrayExpressAccession]	E-MTAB-14566
+MAGE-TAB Version	1.1
+Comment[Submitted Name]	Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)
+Investigation Title	Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)
+Experiment Description	We performed Visium CytAssist (10X), GeoMx DSP (Nanostring) and Chromium Flex (10X Genomics) full transcriptome profiling on Breast Cancer (BC), Lung Cancer (LC) and diffuse large B cell lymphoma (DLBCL) samples from archival FFPE blocks. We explore the data quality across blocks with different storage times and DV200 values for all the three methods. We compared the cell type signature purity between ST methods Visium and GeoMx by utilising pathology annotations and scRNAseq. For the Visium and Chromium methods with a large number of data points we explored the heterogeneity between tissues. Finally, we demonstrate the discovery of patient-specific tumor-TME interactions across all three methods.
+Experimental Factor Name	organism part
+Experimental Factor Type	organism part
+Experimental Factor Term Source REF	EFO
+Experimental Factor Term Accession Number	EFO_0000635
+Person Last Name	Kang
+Person First Name	Senbai
+Person Mid Initials
+Person Email	senbai.kang@chuv.ch
+Person Phone
+Person Fax
+Person Address	Rue de Bugnon 21 CH-1011 Lausanne, Vaud, Switzerland
+Person Affiliation	Lausanne University Hospital
+Person Roles	submitter
+Date of Experiment	2023-06-30
+Public Release Date	2024-11-01
+Protocol Name	P-MTAB-148491	P-MTAB-148492	P-MTAB-148493	P-MTAB-148494	P-MTAB-148495
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol	normalization data transformation protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0004184	EFO_0004170	EFO_0003816
+Protocol Description	One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks.	Slides were processed according to the manufacturer’s instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer’s instructions and kits. 	All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout. 	Briefly, i5 and i7 indices were added, reactions pooled and purified, and libraries sequenced with paired-read sequences with 2 × 27 base pairs. The GeoMx NSG pipeline GeomxTools26 was used to convert FASTQ files into expression matrices of raw probe counts stored in DCC files.	Probes with geometric mean from all segments divided by the geometric mean of all probe counts representing the target from all segments less than 0.1, together with probes flagged as outliers according to the Grubb’s test in at least 20% of the segments, were filtered out. Gene raw counts were generated using the geometric mean of the associated probe counts. Segments from each indication were combined by GeomxTools as a SummarizedExperiment object, and then converted by standR 27 to a SpatialExperiment object. No AOI segment or gene was further excluded with the standR preprocessing pipeline.
+Protocol Hardware				Illumina HiSeq 2000
+Protocol Software
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/
+Term Source Version
+Comment[AEExperimentType]	RNA-seq of coding RNA
+Comment[TemplateType]	Human - High-throughput sequencing
+Comment[SecondaryAccession]	ERP165595
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR13906215-ERR13906993
+SDRF File	E-MTAB-14566.sdrf.txt

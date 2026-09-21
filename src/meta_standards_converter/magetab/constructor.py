@@ -127,7 +127,17 @@ class AEConstructor:
             for row in result:
                 if row and row[0] == 'SDRF File':
                     row[1] = prune_empty_file_columns(row[1])
-        return result
+        # Handlers and semantic overlays may emit references absent from the
+        # original IDF. Declare the final emitted set, preserving supplied metadata.
+        declarations = IDFConstructor()._idf_term_source(result, data)
+        positions = {row[0]: i for i, row in enumerate(result) if row}
+        for declaration in declarations:
+            if declaration[0] in positions:
+                result[positions[declaration[0]]] = declaration
+            else:
+                result.append(declaration)
+        from .validation import validate_magetab
+        return validate_magetab(result)
 
     def _detect_ae_technology(self, data: dict) -> str:
         return detect_ae_technology(data)

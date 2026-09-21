@@ -128,6 +128,10 @@ def publish_tables(tables, context, item):
 def publish_magetab(tables, context, item):
     from meta_standards_converter.magetab.writer import MAGETabWriter
     from meta_standards_converter.expression.components import _publish_bundle
+    from meta_standards_converter.magetab.validation import validate_magetab
+
+    for table in tables:
+        validate_magetab(table)
 
     writer = MAGETabWriter()
     names = [safe_name(writer._magetab_accession(t)) for t in tables]

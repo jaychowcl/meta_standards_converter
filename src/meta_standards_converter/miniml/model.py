@@ -592,6 +592,8 @@ class Reference:
     ref: str
     position: str | None = None
     extras: Mapping[str, Any] = field(default_factory=dict)
+    term_source_ref: str | None = None
+    term_accession_number: str | None = None
 
     @classmethod
     def from_mapping(cls, value: Any) -> "Reference":
@@ -602,12 +604,16 @@ class Reference:
         return cls(
             ref=str(ref),
             position=None if data.get("position") is None else str(data["position"]),
-            extras=_extras(data, {"ref", "position"}),
+            extras=_extras(data, {"ref", "position", "term_source_ref", "term_accession_number"}),
+            term_source_ref=data.get("term_source_ref"),
+            term_accession_number=data.get("term_accession_number"),
         )
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"ref": self.ref}
         _put(result, "position", self.position)
+        _put(result, "term_source_ref", self.term_source_ref)
+        _put(result, "term_accession_number", self.term_accession_number)
         return _record(result, self.extras)
 
 

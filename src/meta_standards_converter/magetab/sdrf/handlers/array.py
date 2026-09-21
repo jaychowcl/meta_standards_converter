@@ -77,10 +77,15 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
         array_design = self.platform_accession(sample=sample)
         attrs = [SDRFAttr(label="Technology Type", value="array assay")]
         if array_design:
+            from meta_standards_converter.metadata.platforms import platform_namespace
+            platform = self.platform(sample)
+            declared = next((a.get("database") for a in self._as_list(platform.get("accession"))
+                             if isinstance(a, dict) and a.get("value") == array_design), None)
+            namespace = platform_namespace(array_design, declared)
             attrs.append(SDRFAttr(
                 label="Array Design REF",
                 value=array_design,
-                attrs=[SDRFAttr(label="Term Source REF", value="ArrayExpress")],
+                attrs=[SDRFAttr(label="Term Source REF", value=namespace)] if namespace else [],
             ))
         attrs.extend(self.extra_assay_attrs(sample=sample))
         return SDRFNode(kind="Assay Name", key=f"assay:{accession}", value=accession, attrs=attrs)

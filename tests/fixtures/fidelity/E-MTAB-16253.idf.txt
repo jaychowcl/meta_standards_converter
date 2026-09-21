@@ -1,0 +1,46 @@
+MAGE-TAB Version	1.1
+Investigation Title	RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls
+Experiment Description	Alpibectir potentiates the activity of ethionamide and prothionamide, which are second-line antibiotics used for tuberculosis treatment. Both are prodrugs whose antibacterial activity depends on bioactivation by oxidases, including the Baeyer-Villiger monooxygenase MymA. Alpibectir binds the transcriptional regulator VirS, increasing MymA expression and potentiating Eto and Pto activity. To determine the transcriptional response of M. tuberculosis to alpibectir, we treated cultures at an optical density of 0.7 with alpibectir 0.1 mg/L for 24 h. Alternatively, we determined the transcriptional response of cultures first treated with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h. Untreated controls (DMSO 0.1%) were included.
+Experimental Design	compound treatment design
+Experimental Design Term Source REF	EFO
+Experimental Design Term Accession Number	EFO:0001755
+Experimental Factor Name	compound	dose	duration
+Experimental Factor Type	compound	dose	duration
+Experimental Factor Term Source REF	EFO	EFO
+Experimental Factor Term Accession Number	CHEBI_24431	EFO_0000428
+Person Last Name	Edoo	Antoine	Baulard
+Person First Name	Zainab	Rudy	Alain
+Person Mid Initials			R
+Person Email	zainab.edoo@inserm.fr	rudy.antoine@pasteur-lille.fr	alain.baulard@inserm.fr
+Person Phone
+Person Fax
+Person Address	1 rue du Professeur Calmette, 59000 Lille	1 rue du Professeur Calmette, 59000 Lille	1 rue du Professeur Calmette, 59000 Lille
+Person Affiliation	Institut Pasteur de Lille	Institut Pasteur de Lille	Institut Pasteur de Lille
+Person Roles	submitter	data analyst	investigator
+Date of Experiment	2025-09-04
+Public Release Date	2025-12-10
+PubMed ID
+Publication DOI
+Publication Author List	Zainab Edoo, Camille Grosse, Thomas Maitre, Rosangela Frita, Aurélie Chauffour, Laure Fournier Le Ray, Alexandre Godmer, Alexandra Aubry, Marilyne Bourotte, Rudy Antoine, Lina Tawk, Stéphanie Slupek, Vincent Trebosc, Birgit Schellhorn, Aurore Dreneau, Line Hofmann, Christian Kemmer, Sergio Lociuro, Glenn E. Dale, Françoise Jung, Esther Pérez-Herrán, Alfonso Mendoza, Maria Jose Rebollo López, Sonja Ghidelli-Disse, Thilo Werner, Lluis Ballell, David Barros Aguirre, Vanessa Mathys, Karine Soetaert, Véronique Megalizzi, René Wintjens, Marc Gitzinger, Benoit Deprez, Nicolas Veziris, Modesto J Remuiñán, Nicolas Willand, Michel Pieren, Alain R. Baulard
+Publication Title	Alpibectir-Ethionamide (AlpE) as a novel drug combination for the treatment of tuberculosis
+Publication Status	submitted
+Publication Status Term Source REF	EFO
+Publication Status Term Accession Number	EFO_0001794
+Protocol Name	P-MTAB-160442	P-MTAB-160443	P-MTAB-160444	P-MTAB-160445	P-MTAB-160446	P-MTAB-160447	P-MTAB-160448
+Protocol Type	growth protocol	treatment protocol	sample collection protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol	normalization data transformation protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0003789	EFO_0003969	EFO_0005518	EFO_0002944	EFO_0004184	EFO_0004170	EFO_0003816
+Protocol Description	25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7. 	Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation.	10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min.	The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen).	Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed. 	cDNA libraries were sequenced using an Illumina NextSeq 500 system (Illumina Inc.) in high-output mode. All samples were multiplexed on one lane of the flow cell and sequenced in single-read sequencing mode with read lengths of 150 bp.	Raw RNA-seq reads were processed with Illumina quality control tools using default settings. Sequences shorter than 50 bp and/or that contained any ‘Ns’ and/or with a mean quality score lower than 30 were removed using PRINSEQ (http://prinseq.sourceforge.net/index.html). Next, rRNA-specific reads were filtered out by mapping all the reads on M. tuberculosis rRNA sequences using Bowtie2 (http://bowtie-bio.sourceforge.net/bowtie2/index.shtml). Analysis of the RNA sequencing data was conducted using the SPARTA open-source software package with default parameters (https://sparta.readthedocs.io/en/latest/).
+Protocol Hardware						NextSeq 500	
+Protocol Software							
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/
+Term Source Version
+SDRF File	E-MTAB-16253.sdrf.txt
+Comment[AEExperimentType]	RNA-seq of coding RNA
+Comment[TemplateType]	High-throughput sequencing
+Comment[AEAnonymousReview]	yes
+Comment[SecondaryAccession]	ERP185509
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR15942835-ERR15942842
+Comment[Submitted Name]	RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls
+Comment[ArrayExpressAccession]	E-MTAB-16253

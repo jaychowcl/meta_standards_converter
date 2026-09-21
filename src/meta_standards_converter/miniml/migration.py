@@ -414,6 +414,7 @@ class MINiMLV1Migrator:
             node[destination] = value
         elif header == "array design ref":
             node["array_design_ref"] = {"ref": value}
+            return node["array_design_ref"]
         else:
             node.setdefault("comments", []).append({
                 "name": str(item.get("header") or item.get("name") or "field"),

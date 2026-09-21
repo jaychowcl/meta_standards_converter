@@ -716,7 +716,8 @@ class IDFConstructor():
         '''
         Return term source rows, preferring metadata supplied by the input package.
         '''
-        sources = set()
+        from .validation import used_term_sources
+        sources = used_term_sources(magetab)
         for row in magetab:
             if row and "source ref" in str(row[0]).lower():
                 sources.update(x for x in row[1:] if x)

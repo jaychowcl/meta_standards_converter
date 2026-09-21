@@ -1476,6 +1476,8 @@ class TestAEConstructor(unittest.TestCase):
                 ["SDRF File", sdrf],
                 ["Term Source Name"],
                 ["Investigation Accession", "GSE1"],
+                ["Term Source File"],
+                ["Term Source Version"],
             ],
             result,
         )

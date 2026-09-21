@@ -507,6 +507,7 @@ class Converter:
                     elif type(exc).__name__ in {
                         "TabularProjectionError",
                         "AnnDataProjectionError",
+                        "MAGETabValidationError",
                     }:
                         code, message = "projection_invalid", str(exc)
                     else:

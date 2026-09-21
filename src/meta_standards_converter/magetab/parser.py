@@ -156,6 +156,12 @@ class AEParser:
 
         if not samples:
             raise ValueError("MAGE-TAB SDRF contains no usable Source, Sample, or Assay identity.")
+        for platform in platforms.values():
+            for accession in platform.get("accession", []):
+                database = accession.get("database")
+                if database and database not in database_ids and database not in ambiguous_sources:
+                    databases.append({"iid": database, "name": database})
+                    database_ids.add(database)
         self._warn_ambiguous_term_refs(idf_rows, source_sdrfs, ambiguous_sources)
         sample_values = [state["sample"] for state in samples.values()]
         series["sample_ref"] = [{"ref": sample["iid"]} for sample in sample_values]
@@ -739,12 +745,24 @@ class AEParser:
         if not reference:
             return
         technology = self._cell(header, row, "Technology Type")
+        from meta_standards_converter.metadata.platforms import platform_namespace
+        from meta_standards_converter.miniml.model import TECHNOLOGIES
+        declared = None
+        for index, label in enumerate(header):
+            if normalized_label(label) == "arraydesignref" and index + 1 < len(header):
+                if normalized_label(header[index + 1]) == "termsourceref":
+                    declared = row[index + 1].strip() or None
+                break
+        namespace = platform_namespace(reference, declared)
+        inferred = platform_namespace(reference)
+        if declared and inferred and declared != inferred:
+            self._warn(f"Array design {reference}: declared namespace {declared} conflicts with identifier namespace {inferred}; source retained.")
         platform = platforms.setdefault(reference, {
             "iid": reference,
-            "accession": [{"value": reference, "database": "ArrayExpress"}],
+            "accession": [{"value": reference, **({"database": namespace} if namespace else {})}],
         })
         if technology:
-            platform.setdefault("technology", technology)
+            platform.setdefault("technology", technology if technology in TECHNOLOGIES else "other")
         sample.setdefault("platform_ref", {"ref": reference})
 
     def _map_files_and_runs(self, header, row, sample, state):

@@ -283,7 +283,7 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
         return rows
     _replace_row(rows, "Investigation Accession", [series.get("iid")])
     protocols = [item for item in series.get("protocols", []) if isinstance(item, dict)]
-    if protocols or package.get("source", {}).get("format") in {"SRA", "ENA"}:
+    if protocols or (series.get("assay_paths") and package.get("source", {}).get("format") in {"SRA", "ENA"}):
         fields = (
             ("Protocol Name", lambda item: item.get("name")),
             ("Protocol Type", lambda item: _ontology_text(item.get("type"))),
@@ -510,9 +510,9 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
                 result.append(("Performer", step["performer"]))
             if step.get("date") not in (None, ""):
                 result.append(("Date", step["date"]))
-            result.extend(_named_values_columns("Parameter Value", step.get("parameter_values", [])))
             for comment in step.get("comments", []) or []:
                 result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
+            result.extend(_named_values_columns("Parameter Value", step.get("parameter_values", [])))
             continue
         header = headers.get(step.get("kind"))
         if not header:
@@ -529,8 +529,11 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
                 prefix = 'INDEX_' if member['role'] == 'index' else 'MATRIX_' + member['role'].upper() + '_'
                 result.extend((f"Comment[{c['name']}]", c['value']) for c in
                               _comments(_record(member['node']), prefix))
+        # Emit node comments before named attributes: otherwise re-import binds
+        # the comments to the last characteristic/factor instead of this node.
+        for comment in step.get("comments", []) or []:
+            result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
         result.extend(_named_values_columns("Characteristics", step.get("characteristics", [])))
-        result.extend(_named_values_columns("Factor Value", step.get("factor_values", [])))
         for field, field_header in (
             ("provider", "Provider"), ("material_type", "Material Type"),
             ("description", "Description"), ("label", "Label"),
@@ -541,8 +544,11 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
         reference = step.get("array_design_ref")
         if isinstance(reference, dict) and reference.get("ref"):
             result.append(("Array Design REF", reference["ref"]))
-        for comment in step.get("comments", []) or []:
-            result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
+            if reference.get("term_source_ref"):
+                result.append(("Term Source REF", reference["term_source_ref"]))
+            if reference.get("term_accession_number"):
+                result.append(("Term Accession Number", reference["term_accession_number"]))
+        result.extend(_named_values_columns("Factor Value", step.get("factor_values", [])))
     return result
 
 

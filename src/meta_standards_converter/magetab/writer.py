@@ -17,9 +17,9 @@ class MAGETabWriter:
         Write magetab to idf and sdrf
         '''
         out = out or "."
-        os.makedirs(out, exist_ok=True)
-
         rows = self._normalize_magetab_rows(magetab=copy.deepcopy(magetab))
+        from .validation import validate_magetab
+        validate_magetab(rows)
         sdrf_index = self._sdrf_row_index(rows=rows)
         if sdrf_index is None:
             raise ValueError("MAGETAB does not contain an SDRF File row.")
@@ -43,6 +43,7 @@ class MAGETabWriter:
         if not idf_rows:
             raise ValueError("MAGETAB does not contain usable IDF rows.")
 
+        os.makedirs(out, exist_ok=True)
         self._write_tsv(path=idf_path, rows=idf_rows)
         self._write_tsv(path=sdrf_path, rows=sdrf)
 
