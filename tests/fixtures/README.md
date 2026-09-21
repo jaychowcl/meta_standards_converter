@@ -62,3 +62,17 @@ protocol text are retained for SRP106481 (bulk and combinatorial single-cell),
 ERP022096 (plate deposition with neighbouring controls), and SRP045775 (genomic
 ChIP with conflicting RNA preparation). Files and unrelated entities are omitted.
 Expected classifications are reviewed separately from source literals.
+
+## Fidelity repair expectations (2026-09-21)
+
+The `fidelity/` panel contains ten unmodified public IDF/SDRF pairs and recorded
+native packages, with per-file provenance and hashes. Full source comparisons
+preserve repeated occurrences, run membership, zeros and node scope. E-MTAB-16847
+has a future stated release date despite being publicly retrievable.
+
+Reviewed older golden changes are limited to explicit date provenance, restored
+submitted-name comments, empty
+optional date-cell rendering, the added detailed-modality field/evidence, and
+removal of source-description fallback from canonical tissue and dependent
+material projections. Source metadata, PBMC counts, dtypes, axes and retained
+MINiML were checked unchanged. Existing chemistry SDRFs remain byte-identical.

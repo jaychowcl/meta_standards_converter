@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Conservative biological modality from scoped, positive library evidence.
 
 Assay strategy, manufacturer identity and renderer defaults are not modality.
@@ -6,7 +14,7 @@ Evidence and conflicts remain inspectable even when a decision is unknown.
 from dataclasses import dataclass
 import re
 from .preparation import (library_evidence_levels, clauses, NON_PREP, BULK,
-                          single_cell_signal, CHEMISTRY_IDENTIFIERS)
+                          single_cell_signal, CHEMISTRY_IDENTIFIERS, preparation_operation)
 
 
 @dataclass(frozen=True)
@@ -40,7 +48,7 @@ def _signals(text):
         # A bulk-control description can mention the study it controls.
         if BULK.search(clause) or re.match(r'^\s*bulk\b', clause, re.I):
             found.add('bulk')
-            continue
+            clause = re.split(r'\bcontrol\s+(?:for|in|of)\b', clause, flags=re.I)[0]
         if NON_PREP.search(clause):
             continue
         if _SPATIAL.search(clause): found.add('spatial')
@@ -71,6 +79,7 @@ def _library(sample, run, data):
     return ModalityDecision('unknown')
 
 
+@preparation_operation
 def resolve_modality(sample, *, data=None):
     """Resolve libraries independently, then aggregate without treating runs as libraries."""
     runs = sample.get('sra_run') or [None]

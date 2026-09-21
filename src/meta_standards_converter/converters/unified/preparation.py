@@ -141,6 +141,8 @@ class MetadataPreparation:
         if not result.packages:
             issues.append("No peer metadata returned")
         for extra in result.packages:
+            if extra == package:
+                continue  # An identical peer package adds no evidence or declarations.
             package, found = merge_archive_metadata(package, extra, prefer=False)
             issues.extend(found)
         return package, issues

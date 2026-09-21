@@ -588,3 +588,10 @@ PYCODE
 
 Preserve stable anchors when reorganizing material. Update this index and the
 canonical guide together when an interface, workflow, or contract changes.
+
+- id: fidelity-contracts
+  title: Scientific fidelity and archive validation
+  anchor: fidelity-contracts
+  purpose: Strict preparation rollback, typed array qualifiers, provider dates, biological aliases and detailed library modality.
+  keywords: strict, invalid_candidate, ERP000263, ERP185509, term source, array assay, OrganismPart, modality_detail, Visium, GeoMx
+  link: [Open section](codebase.md#fidelity-contracts)

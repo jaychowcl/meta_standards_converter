@@ -5,6 +5,9 @@
       "converter_version": "8.0.0",
       "metadata_schema_version": "2.0",
       "modality": "unknown",
+      "modality_detail": "unknown",
+      "modality_diagnostics": "[]",
+      "modality_evidence": "[]",
       "path_base": "artifact_parent",
       "sample_accession": "PBMC3K_SAMPLE",
       "source_origin": "cli",
@@ -34,8 +37,7 @@
           "value_000007",
           "value_000008",
           "value_000009",
-          "value_000010",
-          "value_000011"
+          "value_000010"
         ],
         "records": [
           {
@@ -74,21 +76,7 @@
             "value_type": "string"
           },
           {
-            "field": "msc.sample.channel.organism_part",
-            "ordinal": 0,
-            "sample_accession": "PBMC3K_SAMPLE",
-            "value": "peripheral blood mononuclear cells",
-            "value_type": "string"
-          },
-          {
             "field": "msc.sample.channel.source",
-            "ordinal": 0,
-            "sample_accession": "PBMC3K_SAMPLE",
-            "value": "peripheral blood mononuclear cells",
-            "value_type": "string"
-          },
-          {
-            "field": "msc.sample.channel.material_type",
             "ordinal": 0,
             "sample_accession": "PBMC3K_SAMPLE",
             "value": "peripheral blood mononuclear cells",
@@ -117,6 +105,13 @@
           },
           {
             "field": "msc.expression.modality",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "unknown",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.expression.modality_detail",
             "ordinal": 0,
             "sample_accession": "PBMC3K_SAMPLE",
             "value": "unknown",

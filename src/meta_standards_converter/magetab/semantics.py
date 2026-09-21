@@ -311,9 +311,12 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
             _replace_row(rows, labels[0], [_ontology_text(item) for item in values])
             _replace_row(rows, labels[1], [_ontology_field(item, "term_source_ref") for item in values])
             _replace_row(rows, labels[2], [_ontology_field(item, "term_accession_number") for item in values])
+    comment_values = {}
     for comment in series.get("comments", []) or []:
         if isinstance(comment, dict) and comment.get("name"):
-            _replace_row(rows, f"Comment[{comment['name']}]", [comment.get("value", "")])
+            comment_values.setdefault(comment['name'], []).append(comment.get("value", ""))
+    for name, values in comment_values.items():
+        _replace_row(rows, f"Comment[{name}]", values)
     if package.get('source', {}).get('format') in {'ENA', 'SRA'}:
         files = [v for v in series.get('supplementary_data', []) if v.get('value')]
         if files:

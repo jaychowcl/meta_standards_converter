@@ -121,6 +121,7 @@ def test_native_project_expansion_keeps_multiple_studies_from_one_project():
         value = package(study, 'ERS' + study[3:])
         value['series']['iid'] = study
         value['source']['format'] = 'ENA'
+        value['database'][0]['iid'] = 'GEO'
         value['series']['accession'].append({'value': project, 'database': 'GEO'})
         xml = '<PROJECT accession="' + project + '">' + ''.join('<CHILD_PROJECT accession="' + r + '"/>' for r in relatives) + '</PROJECT>'
         value['extensions'] = {'insdc': {'records': [{'provider': 'ena', 'kind': 'PROJECT', 'accession': project, 'metadata': tree(ET.fromstring(xml))}]}}

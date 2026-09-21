@@ -459,7 +459,10 @@
       ],
       "status": [
         {
-          "submission_date": "2016-06-01",
+          "submission_date": "2016-06-01"
+        },
+        {
+          "date_source": "Public Release Date",
           "release_date": "2018-06-01"
         }
       ],
@@ -2585,6 +2588,20 @@
       "normalization_types": [
         {
           "value": ""
+        }
+      ],
+      "comments": [
+        {
+          "name": "Submitted Name",
+          "value": "RNA-seq to investigate impact of treatment of KRAS mutant NCI-H2009 lung adenocarcinoma cells with the multi-ERBB inhibitor Neratinib"
+        },
+        {
+          "name": "SequenceDataURI",
+          "value": "http://www.ebi.ac.uk/ena/data/view/ERR2287664-ERR2287669"
+        },
+        {
+          "name": "AEExperimentType",
+          "value": "RNA-seq of coding RNA"
         }
       ]
     }

@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Conservative biological projection and repository-scoped date contracts."""
 from copy import deepcopy
 
@@ -87,3 +95,14 @@ def test_native_dates_accept_database_declarations_without_optional_iid():
     value['database'] = [{'name': 'ENA'}]
     normalize_archive_dates(value)
     assert value['database'][0] == {'name': 'ENA'}
+
+
+def test_interleaved_alias_values_follow_source_occurrence_order():
+    value = package()
+    sample = value['sample'][0]
+    sample['channel'][0]['characteristics'] = [
+        {'name': 'tissue', 'value': 'lung'},
+        {'name': 'OrganismPart', 'value': 'heart'},
+        {'name': 'tissue', 'value': 'brain'},
+        {'name': 'organism part', 'value': 'lung'}]
+    assert MINiMLMetadataService().sample_metadata_values(sample, value)['organism_part'] == ('lung', 'heart', 'brain')

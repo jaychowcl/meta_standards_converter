@@ -767,8 +767,8 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual(["Investigation Title", "Example study"], rows["Investigation Title"])
         self.assertNotIn("Mystery Row", rows)
-        self.assertEqual("Comment[Mystery Column]", rows["SDRF File"][1][0][-1])
-        self.assertEqual("x", rows["SDRF File"][1][1][-1])
+        column = rows["SDRF File"][1][0].index("Comment[Mystery Column]")
+        self.assertEqual("x", rows["SDRF File"][1][1][column])
 
     def test_edited_json_wins_while_semantic_sdrf_comments_are_retained(self):
         fetcher = MagicMock()

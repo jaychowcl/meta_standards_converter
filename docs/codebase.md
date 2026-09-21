@@ -1125,7 +1125,7 @@ priority and request the exact read-study identifier, never a broader project;
 linked evidence uses the existing verified merge precedence. GEO/AE links to
 another experiment within the same repository do not trigger metadata merging.
 
-The execution flow is source loading → structural validation → family expansion
+The execution flow is source loading → strict MINiML compatibility validation → family expansion
 → peer/linked enrichment where applicable → standard preparation → export.
 Native import and MAGE-TAB evidence services honor operation-scoped policy using
 `ContextVar` scopes, restored even after errors. Export does not start a second
@@ -1180,7 +1180,15 @@ Execution (`succeeded`/`failed`/`skipped`), completeness
 (`complete`/`partial`/`unknown`) and validation
 (`valid`/`invalid`/`unknown`) are independent. Upstream native partial
 status and skipped Atlas dataset states survive successful downstream export.
-Valid partials may publish.
+Valid partials may publish. The facade applies the existing `MINiMLCodec.decode(strict=True)`
+policy at ingress, when accepting preparation candidates, and before export.
+Invalid source references prevent publication. Optional enrichment receives an
+isolated candidate; compatibility failure retains the last valid package and
+reports the operation, issue code and path. Publication therefore can succeed
+with partial completeness and valid retained metadata. Disabled preparation
+operations do not evaluate their prerequisites or inspect unrelated records.
+ENA project traversal discriminates record kind and dictionary shape; list-valued
+cross-reference evidence remains intact. Independent study expansion is unchanged.
 `allow_invalid` is a separate, explicit projector permission. Request-level
 configuration errors raise before execution; operational input failures become
 outcomes. `fail_fast=True` marks later inputs skipped. Batch status is complete
@@ -5678,3 +5686,119 @@ fails on the preceding baseline; it is not caused by the new facade. The
 and absence of invented assays. Existing populated-node parsing contracts remain.
 An entirely blank optional file column may be omitted by semantic export; MSC
 preserves scientific information rather than original spreadsheet byte layout.
+
+
+<a id="fidelity-contracts"></a>
+## Scientific fidelity and archive MAGE-TAB contracts
+
+`Converter.convert()` remains the primary public interface. Input handlers load
+metadata, focused preparation services enrich isolated candidates, codecs enforce
+compatibility, and output services project and publish. Legacy converter signatures
+and public technology-resolver imports remain supported; no inheritance migration
+is required. Strict compatibility does not establish scientific truth, and a
+renderer fallback is never positive biological evidence.
+
+Array references carry an identifier and optional typed `term_source_ref` and
+`term_accession_number`. Unqualified references remain accepted. Import, migration,
+encoding and rendering retain these qualifiers immediately beside their reference.
+Known GPL identifiers use GEO and A-GEOD identifiers use ArrayExpress; MSC never
+manufactures a mapping between them. Explicit conflicting namespace statements
+remain source evidence with a warning. MAGE-TAB `array assay` stays on its assay
+node; canonical MINiML platform technology uses a supported subtype or `other`.
+
+Final IDF declarations include all vocabulary references emitted by IDF and SDRF.
+An explicit Factor Value can supply a missing factor name without an inferred
+factor type. Final validation rejects nonrectangular SDRFs, undeclared protocols,
+factors or vocabularies, and detached ontology qualifiers before publication.
+Repeated columns, values such as zero, file relationships and unknown node comments
+survive; node comments precede named attributes so reparsing retains their scope.
+Repeated IDF comments retain all source values, including the spaced `Comment [name]`
+header spelling. Entirely empty optional file columns may be omitted. These archive checks impose
+no Atlas processing layout, chemistry version, barcode recipe or mandatory assay
+specificity.
+
+Release/update comment labels follow repository provenance or explicit status
+scope. MAGE-TAB's generic Public Release Date is retained as a separately sourced
+statement. Distinct release dates remain alongside their repository scopes and
+produce a parser warning. ArrayExpressSubmissionDate remains the conversion date;
+Date of Experiment retains its accepted submission-date fallback on non-native
+inputs. Native SRA/ENA require an explicit experiment date for that field.
+
+Canonical biological aliases are curated: `OrganismPart`, `organism_part`,
+`organism part` and `tissue` contribute to organism part; compact, underscore and
+space spellings of developmental stage contribute to developmental stage.
+Distinct explicit values remain in stable source order. Original characteristics
+and raw column names are preserved. Source descriptions such as `total RNA` do
+not supply tissue. Explicit harmonization replacement profiles still replace the
+selected destination, including its aliases, on the resolved working view.
+
+### Detailed modality
+
+Tabular and metadata-backed AnnData outputs add `msc.expression.modality_detail`
+without changing `msc.expression.modality` or injected legacy metadata-service
+signatures. Values are `bulk`, `single_cell`, `single_nucleus`, `spatial`, `mixed`
+and `unknown`. Format-neutral preparation evidence collection is shared by the
+MAGE-TAB technology router and biological resolver. Library/channel identity,
+sample identity, bound extraction/library protocols and structured library source
+are considered in scope order; study-wide text and renderer defaults cannot turn
+an unannotated library into bulk or single-cell metadata.
+
+Each library resolves independently. Different positively established libraries
+produce `mixed`; conflicting statements within one library, unresolved libraries
+or insufficient evidence produce `unknown`. Runs sharing an experiment belong to
+the same library. Explicit nuclear preparation can refine a positive single-cell
+classification to single nucleus. Strategy remains separate: single-nucleus ATAC
+is not RNA-seq, and a manufacturer's name alone supplies no mode or recipe.
+`resolve_modality` returns evidence paths and conflict diagnostics. Tabular results
+include conflict warnings; AnnData provenance stores serialized evidence and
+diagnostics under `meta_standards_converter`, alongside the detailed value.
+Preparation indexes live only for the operation, never in persisted source data.
+
+### Acceptance evidence
+
+`tests/fixtures/fidelity/provenance.json` records URLs, dates and SHA256 for ten
+public IDF/SDRF pairs and native ENA/SRA packages. Regression tests compare source
+values by repeated-header occurrence, row multiplicities, graph order and qualifier
+attachment. The panel covers bulk, ChIP, array, Chromium/Visium, GeoMx, single-nucleus
+ATAC and combinatorial indexing. E-MTAB-16847 was publicly accessible at capture
+but carries a future IDF release date; accessibility does not verify that date.
+
+ERP185509 native SRA replay is compared with brokered E-MTAB-16253 for all eight
+runs and available library layout, strategy, source and selection. The brokered
+compound/dose factors are absent as explicit per-sample fields in the captured
+native package; shared treatment prose cannot assign those values. That comparison
+does not prove absence from every upstream BioSample or related source. Native
+file locations and source organism strings may differ legitimately from AE.
+
+Focused regressions live in `test_fidelity_boundaries.py`, `test_fidelity.py`,
+`test_fidelity_metadata.py` and `test_modality_detail.py`. Offline replay and live
+metadata retrieval are separate acceptance evidence; neither tests expression
+pipeline execution. Consumer revision/provenance gates remain separate from
+scientific conversion behavior and are not bypassed or repinned here.
+
+### Fidelity service symbols
+
+| Symbol | Responsibility |
+| --- | --- |
+| `meta_standards_converter.converters.unified.validation.validate_metadata` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.magetab.validation.MAGETabValidationError` | A constructed document cannot safely be published as MAGE-TAB. |
+| `meta_standards_converter.magetab.validation.normalized` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.magetab.validation.text` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.magetab.validation.used_term_sources` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.magetab.validation.validate_magetab` | Raise before publication; return the original tables without modifying them. |
+| `meta_standards_converter.metadata.modality.ModalityEvidence` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.metadata.modality.ModalityDiagnostic` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.metadata.modality.ModalityDecision` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.metadata.modality.resolve_modality` | Resolve libraries independently, then aggregate without treating runs as libraries. |
+| `meta_standards_converter.metadata.platforms.platform_namespace` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.metadata.preparation.clauses` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.metadata.preparation.control_role` | Control identity is distinct from the preparation used for that control. |
+| `meta_standards_converter.metadata.preparation.preparation_operation` | Share immutable preparation indexes only for one export operation. |
+| `meta_standards_converter.metadata.preparation.bound_protocols` | Read preparation definitions through explicit sample/run applications. |
+| `meta_standards_converter.metadata.preparation.control_preparation` | An explicitly described no-cell alternative scopes a shared paragraph. |
+| `meta_standards_converter.metadata.preparation.incompatible_preparation` | Recognize explicit RNA preparation attached to a genomic ChIP assay. |
+| `meta_standards_converter.metadata.preparation.single_cell_signal` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.metadata.preparation.methods` | Typed evidence or supporting operation for the fidelity contracts above. |
+| `meta_standards_converter.metadata.preparation.scoped_method` | Explicit run/channel identity precedes sample identity and description. |
+| `meta_standards_converter.metadata.preparation.library_evidence_levels` | Return ordered evidence scopes shared by biological and rendering decisions. |
+| `meta_standards_converter.metadata.provenance.repository_name` | Typed evidence or supporting operation for the fidelity contracts above. |

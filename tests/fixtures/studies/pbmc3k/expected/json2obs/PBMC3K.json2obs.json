@@ -46,7 +46,8 @@
       "msc.asset.tier",
       "msc.asset.uri",
       "msc.asset.uri_scope",
-      "msc.expression.modality"
+      "msc.expression.modality",
+      "msc.expression.modality_detail"
     ],
     "rows": 4
   },

@@ -237,8 +237,12 @@ class MINiMLMetadataService:
         from .fields import BIOLOGICAL_ALIASES
         for field, names in BIOLOGICAL_ALIASES.items():
             metadata[field] = tuple(self.values(
-                value for key, values in characteristics.items() if key in names
-                for value in values))
+                value
+                for channel in channels
+                for item in self._as_list(channel.get("characteristics"))
+                if isinstance(item, Mapping)
+                and self.metadata_slug(item.get("name", item.get("tag", ""))) in names
+                for value in self.values(item.get("value"))))
         metadata["disease"] = characteristics.get("disease", ())
         metadata["genotype"] = characteristics.get("genotype", ())
 

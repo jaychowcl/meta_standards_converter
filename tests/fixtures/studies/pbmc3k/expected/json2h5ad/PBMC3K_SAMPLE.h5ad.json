@@ -89,13 +89,15 @@
         "msc.asset.tier",
         "msc.asset.uri",
         "msc.asset.uri_scope",
-        "msc.expression.modality"
+        "msc.expression.modality",
+        "msc.expression.modality_detail"
       ],
       "name": null,
       "dtype": "str"
     },
     "dtypes": [
       "str",
+      "category",
       "category",
       "category",
       "category",
@@ -140,13 +142,13 @@
         "",
         "Homo sapiens",
         "9606",
-        "peripheral blood mononuclear cells",
         "",
         "",
         "",
-        "peripheral blood mononuclear cells",
         "",
         "peripheral blood mononuclear cells",
+        "",
+        "",
         "",
         "",
         "",
@@ -167,6 +169,7 @@
         "matrix",
         "../counts.tsv",
         "external",
+        "unknown",
         "unknown"
       ],
       [
@@ -177,13 +180,13 @@
         "",
         "Homo sapiens",
         "9606",
-        "peripheral blood mononuclear cells",
         "",
         "",
         "",
-        "peripheral blood mononuclear cells",
         "",
         "peripheral blood mononuclear cells",
+        "",
+        "",
         "",
         "",
         "",
@@ -204,6 +207,7 @@
         "matrix",
         "../counts.tsv",
         "external",
+        "unknown",
         "unknown"
       ],
       [
@@ -214,13 +218,13 @@
         "",
         "Homo sapiens",
         "9606",
-        "peripheral blood mononuclear cells",
         "",
         "",
         "",
-        "peripheral blood mononuclear cells",
         "",
         "peripheral blood mononuclear cells",
+        "",
+        "",
         "",
         "",
         "",
@@ -241,6 +245,7 @@
         "matrix",
         "../counts.tsv",
         "external",
+        "unknown",
         "unknown"
       ],
       [
@@ -251,13 +256,13 @@
         "",
         "Homo sapiens",
         "9606",
-        "peripheral blood mononuclear cells",
         "",
         "",
         "",
-        "peripheral blood mononuclear cells",
         "",
         "peripheral blood mononuclear cells",
+        "",
+        "",
         "",
         "",
         "",
@@ -278,6 +283,7 @@
         "matrix",
         "../counts.tsv",
         "external",
+        "unknown",
         "unknown"
       ]
     ],
@@ -345,7 +351,7 @@
       "msc.sample.channel.organism_part": {
         "values": {
           "values": [
-            "peripheral blood mononuclear cells"
+            ""
           ],
           "name": null,
           "dtype": "str"
@@ -405,7 +411,7 @@
       "msc.sample.channel.material_type": {
         "values": {
           "values": [
-            "peripheral blood mononuclear cells"
+            ""
           ],
           "name": null,
           "dtype": "str"
@@ -621,6 +627,16 @@
           "dtype": "str"
         },
         "ordered": false
+      },
+      "msc.expression.modality_detail": {
+        "values": {
+          "values": [
+            "unknown"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
       }
     }
   },
@@ -652,6 +668,9 @@
       "converter_version": "8.0.0",
       "metadata_schema_version": "2.0",
       "modality": "unknown",
+      "modality_detail": "unknown",
+      "modality_diagnostics": "[]",
+      "modality_evidence": "[]",
       "path_base": "artifact_parent",
       "sample_accession": "PBMC3K_SAMPLE",
       "source_origin": "cli",
@@ -676,8 +695,7 @@
             "value_000007",
             "value_000008",
             "value_000009",
-            "value_000010",
-            "value_000011"
+            "value_000010"
           ],
           "name": null,
           "dtype": "str"
@@ -738,21 +756,7 @@
           ],
           [
             "PBMC3K_SAMPLE",
-            "msc.sample.channel.organism_part",
-            0,
-            "peripheral blood mononuclear cells",
-            "string"
-          ],
-          [
-            "PBMC3K_SAMPLE",
             "msc.sample.channel.source",
-            0,
-            "peripheral blood mononuclear cells",
-            "string"
-          ],
-          [
-            "PBMC3K_SAMPLE",
-            "msc.sample.channel.material_type",
             0,
             "peripheral blood mononuclear cells",
             "string"
@@ -781,6 +785,13 @@
           [
             "PBMC3K_SAMPLE",
             "msc.expression.modality",
+            0,
+            "unknown",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.expression.modality_detail",
             0,
             "unknown",
             "string"

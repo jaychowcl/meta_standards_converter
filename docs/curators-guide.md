@@ -109,4 +109,28 @@ The terminal summary lists each input's status, output paths and diagnostic code
 `--report-json PATH` saves a machine-readable result report without scientific payloads;
 `--report-json -` emits JSON-only stdout. `-v` enables informational logs on stderr.
 
+## Reading conversion results
+
+MSC checks strict MINiML compatibility before conversion and before publication.
+An invalid source produces diagnostics and no output. Optional enrichment that
+introduces invalid metadata is rejected; the last valid package can still be
+published with partial completeness. Read the diagnostic operation and path to
+identify what could not be accepted.
+
+Default MAGE-TAB preserves deposited archive metadata. Array-design identifiers
+keep their actual namespace; protocol, factor and vocabulary references are
+checked before writing. This does not guarantee an Atlas processing layout.
+Release/update labels follow the source repository. The conversion date and
+submission-date fallback for Date of Experiment retain their existing behavior.
+
+Tables and AnnData add `msc.expression.modality_detail`: bulk, single_cell,
+single_nucleus, spatial, mixed or unknown. The legacy modality field is unchanged.
+Unknown means the available library evidence is insufficient or conflicting;
+forcing a renderer does not change biological evidence. Canonical tissue uses
+explicit tissue/organism-part characteristics, not a source description such as
+total RNA. Distinct explicit values remain visible for review.
+
+See [fidelity contracts](codebase.md#fidelity-contracts) for qualification, evidence
+scope, rollback and the recorded multi-technology acceptance panel.
+
 [Documentation index](index.md)

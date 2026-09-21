@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Validate archive MAGE-TAB references and occurrence-local qualifiers.
 
 These checks do not impose an Atlas processing recipe or infer missing biology.
@@ -36,6 +44,9 @@ def used_term_sources(rows):
 
 def _qualifiable(header):
     label = normalized(header)
+    if re.fullmatch(r"comment\[hz_.*\]", label):
+        from meta_standards_converter.miniml.harmonization import parse_harmonized_key
+        return parse_harmonized_key(label[8:-1])[1] == "value"
     return label in {"provider", "materialtype", "arraydesignref", "arraydesignfile",
                      "technologytype", "label", "protocolref", "unit", "performer"} or bool(
         re.fullmatch(r"(?:characteristics|factorvalue|parametervalue|unit)\[.*\](?:\(.*\))?", label))

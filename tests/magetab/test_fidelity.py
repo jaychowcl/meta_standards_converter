@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """MAGE-TAB field meaning survives the typed MINiML boundary."""
 from copy import deepcopy
 from collections import Counter
@@ -155,3 +163,42 @@ def test_node_comments_do_not_migrate_onto_a_characteristic_or_factor():
     parsed = AEParser().parse(source).to_mapping()["series"]["assay_paths"][0]["steps"]
     for expected, actual in zip(steps, parsed):
         assert expected["comments"] == actual["comments"]
+
+
+def test_native_sra_broker_matches_available_library_facts_without_enrichment():
+    value = json.loads((FIXTURES / 'fidelity/ERP185509.sra.json').read_text())[0]
+    assert value['series']['iid'] == 'ERP185509'
+    result = Converter().convert(value, out_type='magetab', enrichment='off',
+                                 options={'expand_studies': False})
+    assert result.status == 'complete', result.to_dict()
+    native = next(r[1] for r in result.items[0].payload[0] if r[0] == 'SDRF File')
+    broker = table(FIXTURES / 'fidelity/E-MTAB-16253.sdrf.txt')
+    fields = ['Comment[ENA_RUN]', 'Comment[LIBRARY_LAYOUT]', 'Comment[LIBRARY_STRATEGY]',
+              'Comment[LIBRARY_SOURCE]', 'Comment[LIBRARY_SELECTION]']
+    def facts(rows):
+        indices = [rows[0].index(h) for h in fields]
+        return {tuple(row[i] for i in indices) for row in rows[1:]}
+    assert len(facts(native)) == 8
+    assert facts(native) == facts(broker)
+    expected_runs = {row[0] for row in facts(broker)}
+    assert {r['run'] for s in value['sample'] for r in s.get('sra_run', [])} == expected_runs
+    # These factors are authored in AE but are not explicit per-sample facts in
+    # the captured native package. Shared treatment prose cannot assign doses.
+    assert 'Factor Value[compound]' in broker[0] and 'Factor Value[dose]' in broker[0]
+    assert 'Factor Value[dose]' not in native[0]
+    assert all(record['status'] == 'skipped' for record in result.items[0].preparation)
+
+
+def test_repeated_unknown_idf_comments_and_scoped_dates_survive_export():
+    from meta_standards_converter.magetab.constructor import AEConstructor
+    from meta_standards_converter.sources.magetab import MAGETabInput, TextResource
+    source = MAGETabInput(TextResource('test.idf.txt',
+        'Investigation Accession\tE-MTAB-1\nPublic Release Date\t2025-01-01\n'
+        'Comment [Custom note]\t0\tfirst\nComment [Custom note]\tsecond\n'
+        'Comment[ArrayExpressReleaseDate]\t2025-02-01\t2025-03-01\n', 'test'),
+        (TextResource('test.sdrf.txt', 'Source Name\nsample\n', 'test'),), 'test', 'path')
+    package = AEParser().parse(source)
+    rows = AEConstructor().miniml2magetab(package)
+    assert next(r[1:] for r in rows if r[0] == 'Comment[Custom note]') == ['0', 'first', 'second']
+    assert next(r[1:] for r in rows if r[0] == 'Comment[ArrayExpressReleaseDate]') == ['2025-02-01', '2025-03-01']
+    assert next(r[1:] for r in rows if r[0] == 'Public Release Date') == ['2025-01-01']

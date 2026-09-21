@@ -19,7 +19,7 @@ Person Affiliation
 Person Roles
 Person Roles Term Source Ref
 Person Roles Term Accession Number
-Date of Experiment	
+Date of Experiment
 Public Release Date	
 PubMed ID
 Publication DOI
@@ -43,8 +43,8 @@ Investigation Accession	GSE900021
 Comment[SecondaryAccession]	GSE900021
 Comment[SecondaryAccessionTermSourceRef]	GEO
 Comment[ArrayExpressAccession]	E-GEOD-900021
-Comment[GEOReleaseDate]	
-Comment[GEOLastUpdateDate]	
+Comment[GEOReleaseDate]
+Comment[GEOLastUpdateDate]
 Comment[ArrayExpressSubmissionDate]	2026-09-10
 Comment[AEExperiment]
 Comment[AEExperimentType]

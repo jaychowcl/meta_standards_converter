@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Library-scoped biological modality, independently of renderer defaults."""
 from collections import Counter
 from copy import deepcopy
@@ -16,6 +24,7 @@ from meta_standards_converter.sources.magetab import AEWebFetcher
     ('bulk RNA-seq control for a single-cell study', 'bulk'),
     ('10x Genomics', 'unknown'), ('Illumina RNA-seq', 'unknown'),
     ('single-cell and spatial RNA sequencing', 'unknown'),
+    ('bulk RNA-seq and single-cell RNA-seq', 'unknown'),
     ('without single-cell preparation; bulk RNA libraries', 'bulk'),
 ])
 def test_positive_scoped_evidence_and_counterexamples(text, expected):

@@ -453,8 +453,11 @@ class AEParser:
             "secondaryaccession", "secondaryaccessiontermsourceref", "arrayexpressaccession",
             "relatedexperiment", "georeleasedate", "geolastupdatedate", "arrayexpresssubmissiondate",
         }
+        reserved.update(f"{database}{label}".casefold()
+                        for database in ("ArrayExpress", "ENA", "SRA", "INSDC")
+                        for label in ("ReleaseDate", "LastUpdateDate"))
         for row in rows:
-            match = re.fullmatch(r"\s*Comment\[(.*)]\s*", row[0], re.I) if row else None
+            match = re.fullmatch(r"\s*Comment\s*\[(.*)]\s*", row[0], re.I) if row else None
             if match and normalized_label(match.group(1)) not in reserved:
                 comments.extend({"name": match.group(1), "value": value.strip()} for value in row[1:] if value.strip())
         return comments

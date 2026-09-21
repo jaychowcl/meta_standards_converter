@@ -136,6 +136,24 @@ class AEConstructor:
                 result[positions[declaration[0]]] = declaration
             else:
                 result.append(declaration)
+        # An authored Factor Value is an explicit variable even when MINiML
+        # omitted its IDF declaration. Preserve its name without guessing a type.
+        from .validation import normalized
+        import re
+        factor_rows = {row[0]: row for row in result if row and str(row[0]).startswith("Experimental Factor")}
+        names = factor_rows.setdefault("Experimental Factor Name", ["Experimental Factor Name"])
+        for row in result:
+            if row and row[0] == "SDRF File":
+                for header in row[1][0]:
+                    match = re.fullmatch(r"Factor Value\[(.*)\]", str(header), re.I)
+                    if match and normalized(match[1]) not in {normalized(v) for v in names[1:]}:
+                        names.append(match[1])
+        if len(names) > 1 and names not in result:
+            result.append(names)
+        for label in ("Experimental Factor Type", "Experimental Factor Term Source REF", "Experimental Factor Term Accession Number"):
+            row = factor_rows.get(label)
+            if row is not None:
+                row.extend([None] * (len(names) - len(row)))
         from .validation import validate_magetab
         return validate_magetab(result)
 
