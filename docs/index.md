@@ -13,6 +13,12 @@ read [Architecture](codebase.md#architecture), [OOP design](codebase.md#oop-desi
 then one [workflow](codebase.md#principal-workflows). This index routes into the
 canonical handoff by stable anchor, purpose and search keywords.
 
+## Curator guide
+
+Use the [curator guide](curators-guide.md) for Conda installation, GEO, ArrayExpress,
+SRA, ENA and DDBJ conversion examples, main options and platform selection.
+Full flag and Python API details remain in the canonical routes below.
+
 ## Canonical routes
 
 - id: unified-cli
@@ -23,10 +29,10 @@ canonical handoff by stable anchor, purpose and search keywords.
   link: [Open section](codebase.md#unified-cli)
 
 - id: unified-cli-guide
-  title: Unified CLI quick guide
+  title: Curator guide
   anchor: unified-cli-guide
-  purpose: Conda installation and terminal-only GEO to MAGE-TAB instructions with platform forcing.
-  keywords: msc-convert, installation, MINiML, MAGETAB, platform-handler, list-platform-handlers
+  purpose: Stable route to the standalone curator guide for repository-to-MAGE-TAB conversion and platform selection.
+  keywords: msc-convert, installation, GEO, ArrayExpress, SRA, ENA, DDBJ, MAGETAB, platform-handler, curators
   link: [Open section](codebase.md#unified-cli-guide)
 
 - id: unified-converter

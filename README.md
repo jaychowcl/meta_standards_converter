@@ -4,222 +4,56 @@
 
 Convert biological study metadata among GEO MINiML, JSON, MAGE-TAB, sample tables, and AnnData/H5AD.
 
-## Description
-
-MSC is a Python library and command-line toolkit for fetching study metadata,
-converting metadata formats, and attaching metadata to expression data. It can
-read Atlas documents without installing ThematicAtlases.
-
-| Command | Use it to… |
-| --- | --- |
-| `msc-convert` | Convert supported inputs to JSON, MAGE-TAB, TSV, CSV, H5AD or OBS through one interface |
-| `sra2json` | Resolve SRA accessions and import native read-study metadata |
-| `ena2json` | Resolve ENA accessions and import native read-study metadata |
-| `geo2json` | Fetch a GEO Series and produce MSC MINiML JSON |
-| `geo2ae` | Fetch a GEO Series and produce MAGE-TAB IDF/SDRF files |
-| `ae2json` | Read local or remote MAGE-TAB and produce MSC MINiML JSON |
-| `json2ae` | Convert MSC MINiML or Atlas JSON to MAGE-TAB |
-| `json2tsv` | Export sample-level metadata as TSV or CSV |
-| `json2h5ad` | Produce a per-sample H5AD catalogue from metadata and expression assets |
-| `json2obs` | Export cell observation metadata and optional `var`/`uns` components |
-| `miniml-migrate` | Import supported unversioned/1.0 legacy source JSON as v3 |
-
 ## Installation
 
-Install from a source checkout in a virtual environment:
+Create a Conda environment and install MSC:
 
-```bash
-git clone https://github.com/jaychowcl/meta_standards_converter.git
-cd meta_standards_converter
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install .
-```
+1. `conda create -n msconverter -c conda-forge python=3.12 pip`
+2. `conda activate msconverter`
+3. `pip install "git+https://github.com/jaychowcl/meta_standards_converter.git"`
 
-For `json2h5ad` or `json2obs`, install the scientific dependencies:
-
-```bash
-python -m pip install '.[h5ad]'
-```
-
-For development, use `python -m pip install -e '.[test]'`.
-
-### Requirements
-
-- Python **3.10 or newer**.
-- Network access for GEO/BioStudies retrieval and optional PubMed/SRA/ENA enrichment.
-- The `h5ad` extra for expression and AnnData workflows.
-- For raw FASTQ processing: Java, Nextflow, a supported execution runtime,
-  and a reference genome/annotation. GFF conversion also requires `gffread`.
-
-Metadata conversion does not require Docker. See [runtime requirements](docs/codebase.md#runtime-behavior)
-for dependency bounds and [raw processing](docs/codebase.md#reference-annotation-flow)
-for reference configuration.
+Activate the environment with `conda activate msconverter` in each new terminal.
 
 ## Quickstart
 
-### CLI quickstart
+Convert a GEO study to MAGE-TAB IDF and SDRF files:
 
-Fetch a study and export its sample metadata (retrieval requires network access):
+`msc-convert GSE234602 --out-type magetab --out magetabs`
 
-```bash
-msc-convert GSE234602 --out-type tsv --out tables
-```
+Replace the accession with your own. The generated files are written under
+`magetabs/`; retrieving public studies requires network access.
 
-Use `msc-convert --help` for all flags, or follow the
-[terminal-only GEO to MAGE-TAB guide](docs/codebase.md#unified-cli-guide).
-Output defaults to the current directory. Enrichment is `standard` and verified
-study expansion is enabled; use `--enrichment off --no-expand-studies` to disable
-both optional behaviors. `--report-json -` prints a JSON summary; logs use stderr.
-See the [full CLI reference](docs/codebase.md#unified-cli) and [CLI guide](#cli).
+Show all terminal options:
 
-### Python API quickstart
+`msc-convert --help`
 
-```python
-from meta_standards_converter.converters import Converter
+`msc-convert` is the CLI for `Converter.convert()`. It accepts accessions,
+supported files, URLs and directories. Select a required output format with
+`--out-type`: `json`, `magetab`, `tsv`, `csv`, `h5ad` or `obs`.
 
-result = Converter().convert(
-    "output/GSE234602.json", "tables", out_type="tsv",
-    enrichment="curators", options={"expand_studies": False}
-)
-for outcome in result.items:
-    print(outcome.status, outcome.artifacts, outcome.diagnostics)
-```
+Defaults:
 
-The [unified API](docs/codebase.md#unified-converter) accepts accessions, files,
-directories, package objects and expression inputs. It supports explicit input
-types, versioned manifests, in-memory results and consistent batch outcomes.
-Enrichment defaults to `standard`; `curators` allows native/publication preparation
-without other study repositories, and `off` disables supplementary enrichment.
-Study expansion defaults to **on** under all presets: `off` does not disable
-accession retrieval or family expansion. Use `options={"expand_studies": False}`
-to suppress additional family retrieval. Advanced settings use a flat `options`
-mapping; previous stage-specific keywords remain compatible aliases.
-Overwrite and raw processing are disabled by default. Existing converter APIs
-and CLIs remain available; see the [Python API guide](#python-api).
+- Input detection is automatic; use `--in-type` to select a reader.
+- Enrichment is `standard`; select `curators` or `off` with `--enrichment`.
+- Verified related-study expansion is enabled, independently of enrichment;
+  use `--no-expand-studies` to disable it.
+- Output goes to the current directory unless `--out` or `--outfile` is supplied.
 
-### Docker quickstart
-
-```bash
-docker build -t meta-standards-converter .
-docker run --rm meta-standards-converter geo2json --help
-```
-
-Mount an output directory when converting data; see the [Docker guide](#docker).
-
-### Rootless Docker Compose quickstart
-
-Raw FASTQ workflows can use the dedicated rootless runner. Start with the
-[Rootless Docker Compose guide](#rootless-docker-compose) for provisioning,
-mounts, and runtime prerequisites.
-
-### Inputs & Outputs
-
-MSC 8 requires **MSC MINiML 3.0** at JSON conversion boundaries. Fresh GEO and
-MAGE-TAB ingestion produces v3 directly. Saved v2 packages are rejected;
-regenerate them from source or use the preceding release to convert them in a
-separate environment. `miniml-migrate` accepts unversioned/1.0 input, **not v2**.
-See [migration guidance](docs/codebase.md#miniml-v3-only-cutover).
-
-JSON converters accept a native package, a package list, or an Atlas document
-(schema 1.0). Atlas conversion selects harmonized datasets. Metadata converters
-produce JSON, IDF/SDRF, or one row per sample in TSV/CSV. H5AD and OBS workflows
-also need expression assets; their catalogues do not combine expression matrices.
-
-Harmonized `hz_*` values are exported alongside source values by default.
-[Replacement profiles](docs/codebase.md#harmonization-overrides) optionally use
-harmonized values in ordinary destination fields while preserving the canonical
-input. See [data contracts](docs/codebase.md#data-contracts) for provenance and
-round-trip limits.
-
-## Guide
-
-### Configuration
-
-There is no mandatory application configuration file. Use CLI options or Python
-arguments. Common controls include output paths, optional enrichment,
-`--platform-handler`, resource profiles, and expression asset selection.
-
-Use `json2ae ... --no-enrich` to skip the enrichment stage; MAGE-TAB construction
-may still resolve missing publication or sequencing evidence. Use
-`--replacement-profile-file policy.json` to activate an export replacement profile.
-Expression outputs are protected unless `--overwrite` is supplied; output
-behavior varies by command, so consult its reference before reusing a destination.
-
-Native imports support `--enrich-from-geo-ae` (ArrayExpress then GEO priority),
-`--include-peer`, optional reports/evidence, and protected study-named outputs.
-See [native archive imports](docs/codebase.md#native-archive-imports).
-
-See [configuration and precedence](docs/codebase.md#configuration).
-
-### CLI
-
-```bash
-# Reconstruct MAGE-TAB from an existing v3 package.
-json2ae output/GSE234602.json --no-enrich --out mage
-
-# Choose CSV rather than TSV.
-json2tsv output/GSE234602.json --format csv --out csv-tables
-
-# Inspect all options for the installed command.
-json2h5ad --help
-```
-
-The [complete CLI reference](docs/codebase.md#cli) lists all arguments, defaults,
-and failure behavior. [Platform handlers](docs/codebase.md#configuration)
-explain automatic detection and explicit overrides.
-
-### Python API
-
-Import converters from `meta_standards_converter.converters`. GEO and MAGE-TAB
-JSON ingestion returns typed `MINiMLPackage` objects; call `to_mapping()` when
-you need a serializable mapping. Python metadata converters generally return
-in-memory results when no output path is supplied; manifest and expression
-entrypoints have their own output contracts.
-
-See [Python examples](docs/codebase.md#python-api-guide),
-[public interfaces](docs/codebase.md#public-api-reference), and
-[class relationships and injection points](docs/codebase.md#oop-design).
-
-### Docker
-
-The image includes the H5AD dependencies and raw-processing tools. Supply an
-installed command after the image name and mount input/output paths explicitly.
-The image does not include a Docker daemon. See [Docker usage](docs/codebase.md#docker-guide).
-
-### Rootless Docker Compose
-
-The supported raw-processing setup uses a dedicated runner, restricted mounts,
-and its rootless Docker socket. Provisioning changes the host; follow the
-[full setup guide](docs/codebase.md#rootless-json2h5ad-runtime).
-
-### Code flow
-
-Source retrieval → parsing into canonical MINiML → optional enrichment or export
-replacement → destination construction/projection → result and optional files.
-Expression workflows add asset planning, reading or nf-core processing, and
-per-sample checkpointing. See [architecture](docs/codebase.md#architecture) and
-[execution flows](docs/codebase.md#principal-workflows).
-
-## Testing
-
-With `.[test]` installed:
-
-```bash
-python -m pytest tests/e2e -q
-python -m pytest tests/policy tests/test_documented_imports.py -q
-python -m pytest -q
-```
-
-The default suite blocks external network/process effects; live provider checks
-are opt-in. See [test coverage and commands](docs/codebase.md#test-plan),
-[fixture provenance](tests/fixtures/README.md), and the historical
-[rootless acceptance report](docs/rootless-acceptance-2026-07-31.md).
+For other repositories and platform selection, follow the
+[curator guide](docs/curators-guide.md). For H5AD/OBS dependencies and processing
+requirements, see the [runtime guide](docs/codebase.md#runtime-behavior).
 
 ## Docs
 
-- [Docs index](docs/index.md): find topics by purpose, type, command, or keyword.
-- [Codebase docs](docs/codebase.md): architecture, OOP design, workflows, API reference, and maintenance guidance.
+- [Curator guide](docs/curators-guide.md): installation, repository examples,
+  main options and platform selection.
+- [Full CLI options](docs/codebase.md#unified-cli): all flags, summaries,
+  JSON reports and exit codes.
+- [Python API](docs/codebase.md#unified-converter): `Converter.convert()`,
+  supported inputs and outputs, and advanced settings.
+- [Docs index](docs/index.md): guides and references by topic.
+- [Codebase docs](docs/codebase.md): canonical architecture, legacy commands,
+  Python interfaces, Docker setup and testing instructions.
 
 ## Authors
 

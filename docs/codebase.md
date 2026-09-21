@@ -695,15 +695,19 @@ from meta_standards_converter.converters import Converter, InputSpec
 
 converter = Converter()
 result = converter.convert(
-    Path("study.json"),
+    "GSE234602",
     out_type="csv",
     enrichment="curators",
-    options={"outfile": Path("exports/samples.csv")},
+    options={"outfile": Path("exports/samples.csv"), "expand_studies": False},
 )
 for outcome in result.items:
     print(outcome.id, outcome.status, outcome.dataset_ids, outcome.artifacts)
     print([diagnostic.message for diagnostic in outcome.diagnostics])
 ```
+
+This example retrieves the GEO accession directly, disables related-study expansion
+for a single-file output, and writes `exports/samples.csv`. No previously generated
+JSON file is needed.
 
 The primary signature is:
 
@@ -873,51 +877,7 @@ fields are `scope_id`, `path` and `kind`. Python service/handler injection and
 in-memory objects remain Python-only. Replacement profiles accept inline JSON or
 a JSON file through the existing mutually exclusive flags.
 
-<a id="unified-cli-guide"></a>
-### Guide to meta_standards_converter
-
-Converter between different standards and formats, using the unified CLI.
-
-**Install MSC once before using MSC:**
-
-```bash
-conda create -n msconverter -c conda-forge python=3.12 pip
-conda activate msconverter
-pip install "git+https://github.com/jaychowcl/meta_standards_converter.git"
-```
-
-**Convert GEO MINiML XML to ArrayExpress MAGE-TAB IDF & SDRF:**
-
-```bash
-conda activate msconverter
-msc-convert GSE12345 GSE54321 --out-type magetab --related -v --out magetabs
-```
-
-Options:
-
-- `--out-type magetab`: generate MAGE-TAB IDF and SDRF files.
-- `--related`: include verified related studies; enabled by default. Use
-  `--no-expand-studies` to disable expansion.
-- `-v`: print informational logs in the terminal (stderr).
-- `--out`: directory containing the generated files; defaults to the current directory.
-
-**Convert while forcing a platform:**
-
-```bash
-conda activate msconverter
-msc-convert --list-platform-handlers
-msc-convert GSE12345 GSE54321 --out-type magetab \
-  --platform-handler tenx_v3_droplet_single_cell_sequencing \
-  --related -v --out output
-```
-
-`--list-platform-handlers` prints the runtime platform catalogue;
-`--platform-handler` forces the selected platform. Choose the most specific
-matching platform, for example the 10x v3 handler for 10x v3 data rather than a
-generic droplet or sequencing handler. Omitting it enables automatic detection.
-See [available platforms](#configuration) for the catalogue and relationships.
-
-Additional terminal examples:
+Additional terminal examples (supply your own existing files and manifest):
 
 ```bash
 msc-convert study.json --out-type csv --enrichment off --out tables
@@ -932,6 +892,15 @@ CLI tests cover all six outputs, typed flag dispatch, fixture-backed GEO
 preparation, reports, exit codes, collisions, manifests, and raw permission gates.
 Discovery regression tests cover equal/ancestor destinations, nested exclusions
 and symlinks. These offline tests do not claim live provider or pipeline execution.
+
+<a id="unified-cli-guide"></a>
+### Curator guide
+
+The standalone [curator guide](curators-guide.md) covers Conda installation,
+GEO, ArrayExpress, SRA, ENA and DDBJ-to-MAGE-TAB examples, main CLI arguments,
+enrichment defaults and platform selection. Use the [complete CLI reference](#unified-cli)
+for additional flags, summaries and reports, and the [unified API](#unified-converter)
+for Python calls.
 
 <a id="unified-inputs"></a>
 ### Inputs, detection and explicit binding
@@ -1101,7 +1070,7 @@ applicable route):
 | Pipeline execution | `execution_profile` (legacy `profile`), `revision`, `params_file`, `nextflow_config`, `work_dir` |
 | Checkpoints/combination | `resume`, `force_memory`, `processed_checkpoint_dir`, `allow_unverified_combination` |
 | OBS components | `include_var`, `include_uns` |
-| Runtime | `overwrite=False`, `fail_fast=False`, `recursive=False`, `allow_processing=False`, `resource_profile="standard"`, `resource_overrides=None`, `insdc_default="ena"`, `allowed_hosts=()` |
+| Runtime | `overwrite=False`, `fail_fast=False`, `recursive=False`, `allow_processing=False`, `resource_profile="standard"`, `resource_overrides=None`, `insdc_default="ena"`, `allowed_hosts=()`, `reserved_paths=()` |
 
 Companions and explicit metadata use `InputSpec(..., companions=..., metadata=...)`
 or manifest bindings. Standalone H5AD/AnnData accepts only the applicable OBS
@@ -1111,7 +1080,7 @@ reference and matrix-combination defaults are unchanged. `force_memory` requires
 `resume=True`; `gtf` and `gff` are mutually exclusive. Host exceptions retain the
 existing scheme/address/redirect/size restrictions.
 
-Legacy stage dictionaries also accept `orientation` (matrix reader), `profile`
+The flat mapping and legacy stage dictionaries also accept `orientation` (matrix reader), `profile`
 (pipeline), `enrich`, `related_series`, `include_peer`, and
 `enrich_from_geo_ae` on their original routes. `related_series` aliases family
 expansion for a GEO accession. Legacy `enrich=False` maps an omitted preset to
@@ -2423,6 +2392,25 @@ private requesters.
 
 <a id="runtime-behavior"></a>
 ## Runtime Behavior
+
+For Conda installation, see the [curator guide](curators-guide.md#installation).
+Alternatively, install from a source checkout in a project-local virtual environment:
+
+```bash
+git clone https://github.com/jaychowcl/meta_standards_converter.git
+cd meta_standards_converter
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install .
+```
+
+From that checkout, install expression/AnnData dependencies with
+`python -m pip install '.[h5ad]'`. For development, use
+`python -m pip install -e '.[test]'` in the same environment.
+Metadata conversion does not require Docker. Raw FASTQ processing requires Java,
+Nextflow, a supported execution runtime and a reference genome/annotation;
+GFF conversion also requires `gffread`. See [reference configuration](#reference-annotation-flow)
+and the [Docker guide](#docker-guide).
 
 - Distribution version `8.0.0` keeps typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 2.0 and

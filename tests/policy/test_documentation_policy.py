@@ -9,6 +9,7 @@
 import importlib
 import ast
 import re
+import shlex
 import subprocess
 import unittest
 from pathlib import Path
@@ -27,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 INDEX = ROOT / "docs" / "index.md"
 CODEBASE = ROOT / "docs" / "codebase.md"
 README = ROOT / "README.md"
+CURATORS = ROOT / "docs" / "curators-guide.md"
 PYPROJECT = ROOT / "pyproject.toml"
 
 AUTHOR_TEXT = (
@@ -328,10 +330,12 @@ class DocsIndexTests(unittest.TestCase):
 
     def test_readme_is_a_short_guide_with_current_reference_routes(self):
         text = README.read_text(encoding="utf-8")
-        self.assertLessEqual(len(text.splitlines()), 250)
-        for anchor in ("cli", "python-api-guide", "configuration", "oop-design"):
+        self.assertLessEqual(len(text.splitlines()), 80)
+        for anchor in ("unified-cli", "unified-converter"):
             self.assertIn(f"docs/codebase.md#{anchor}", text)
-        self.assertNotIn("#### Platform handlers", text)
+        self.assertIn("docs/curators-guide.md", text)
+        for removed in ("## Testing", "## Guide", "```python", "docker run", "geo2ae"):
+            self.assertNotIn(removed, text)
 
     def test_exported_package_names_and_current_workflows_have_routes(self):
         text = CODEBASE.read_text(encoding="utf-8")
@@ -358,7 +362,7 @@ class DocsIndexTests(unittest.TestCase):
                 anchors.add(slug + (f"-{ordinal}" if ordinal else ""))
             return anchors
 
-        for document in (README, INDEX, CODEBASE):
+        for document in (README, INDEX, CODEBASE, CURATORS):
             text = document.read_text(encoding="utf-8")
             document_anchors(text)
             prose = re.sub(r"```.*?```", "", text, flags=re.S)
@@ -378,23 +382,8 @@ class DocsIndexTests(unittest.TestCase):
         readme_text = README.read_text(encoding="utf-8")
         expected_headings = [
             "# meta_standards_converter",
-            "## Description",
             "## Installation",
-            "### Requirements",
             "## Quickstart",
-            "### CLI quickstart",
-            "### Python API quickstart",
-            "### Docker quickstart",
-            "### Rootless Docker Compose quickstart",
-            "### Inputs & Outputs",
-            "## Guide",
-            "### Configuration",
-            "### CLI",
-            "### Python API",
-            "### Docker",
-            "### Rootless Docker Compose",
-            "### Code flow",
-            "## Testing",
             "## Docs",
             "## Authors",
         ]
@@ -463,16 +452,49 @@ class DocsIndexTests(unittest.TestCase):
         for handler_key in PLATFORM_HANDLER_KEYS:
             self.assertIn(handler_key, section)
 
-    def test_readme_quickstarts_link_to_each_interface_guide(self):
-        readme_text = README.read_text(encoding="utf-8")
+    def test_curator_guide_routes_and_implemented_commands(self):
+        from meta_standards_converter.cli.convert import _parser
+        from meta_standards_converter.converters.unified.discovery import ALIASES, KINDS
 
-        for label, anchor in (
-            ("CLI guide", "cli"),
-            ("Python API guide", "python-api"),
-            ("Docker guide", "docker"),
-            ("Rootless Docker Compose guide", "rootless-docker-compose"),
-        ):
-            self.assertIn(f"[{label}](#{anchor})", readme_text)
+        guide = CURATORS.read_text(encoding="utf-8")
+        self.assertTrue(guide.startswith(HTML_AUTHOR_HEADER))
+        for document in (README, INDEX, CODEBASE):
+            self.assertIn("curators-guide.md", document.read_text())
+        for stale in ("```", "“", "”", "upcoming unified CLI", "separate development checkout"):
+            self.assertNotIn(stale, guide)
+        self.assertIn("codebase.md#unified-cli", guide)
+        commands = re.findall(r"`(msc-convert [^`]+)`", guide)
+        self.assertEqual(len(commands), 7)
+        parsed = [_parser().parse_args(shlex.split(command)[1:]) for command in commands]
+        provider_inputs = {}
+        forced = []
+        for args in parsed:
+            if args.list_platform_handlers:
+                continue
+            self.assertEqual(args.out_type, "magetab")
+            self.assertEqual(args.outdir, "magetabs")
+            if getattr(args, "platform_handler", None):
+                forced.append(args)
+                self.assertFalse(hasattr(args, "in_type"))
+                self.assertIn(args.platform_handler, PLATFORM_HANDLER_KEYS)
+            else:
+                provider_inputs[args.inputs[0]] = ALIASES.get(args.in_type, args.in_type)
+                self.assertIn(provider_inputs[args.inputs[0]], KINDS)
+        self.assertEqual(provider_inputs, {
+            "GSE12345": "geo_accession", "E-MTAB-12345": "ae_accession",
+            "SRP123456": "sra_accession", "ERP123456": "ena_accession",
+            "DRP123456": "ena_accession",
+        })
+        self.assertEqual(len(forced), 1)
+        listed_handlers = re.findall(r"^- `([^`]+)`$", guide, re.M)
+        self.assertEqual(set(listed_handlers), set(PLATFORM_HANDLER_KEYS))
+        for argument in ("input", "in_type", "out_type", "outdir", "enrichment"):
+            self.assertIn(f"| `{argument}` |", guide)
+        self.assertIn('pip install "git+https://github.com/jaychowcl/meta_standards_converter.git"', guide)
+        codebase = CODEBASE.read_text()
+        pointer = codebase.split('<a id="unified-cli-guide"></a>', 1)[1].split('<a id=', 1)[0]
+        self.assertIn("curators-guide.md", pointer)
+        self.assertNotIn("msc-convert GSE", pointer)
 
     def test_codebase_cli_reference_documents_every_parser_argument(self):
         readme_text = CODEBASE.read_text(encoding="utf-8")
@@ -496,20 +518,43 @@ class DocsIndexTests(unittest.TestCase):
                 else:
                     self.assertIn(f"`{action.dest}`", section, f"{command}: {action.dest}")
 
+    def test_unified_api_reference_covers_all_option_keys_and_defaults(self):
+        import inspect
+        from meta_standards_converter.converters import Converter
+        from meta_standards_converter.converters.unified.options import INPUT, OUTPUT, RUNTIME_DEFAULTS
+        from meta_standards_converter.converters.unified.requests import PREPARATION, PreparationPolicy
+
+        text = CODEBASE.read_text()
+        reference = text.split('<a id="unified-converter"></a>', 1)[1].split('<a id="unified-results"></a>', 1)[0]
+        keys = set().union(*INPUT.values(), *OUTPUT.values(), RUNTIME_DEFAULTS, PREPARATION)
+        keys.update(("outfile", "input_manifest", "execution_profile"))
+        for key in keys:
+            self.assertRegex(reference, rf"`{re.escape(key)}(?:`|=)", key)
+        parameters = inspect.signature(Converter.convert).parameters
+        self.assertEqual(parameters["in_type"].default, "auto")
+        self.assertEqual(parameters["enrichment"].default, "standard")
+        self.assertTrue(PreparationPolicy().expand_studies)
+        for argument in ("input", "in_type", "out_type", "outdir", "enrichment"):
+            self.assertIn(argument, parameters)
+        for document in (README, CURATORS):
+            content = document.read_text()
+            self.assertIn("standard", content)
+            self.assertIn("--no-expand-studies", content)
+            self.assertIn("current directory", content)
+
     def test_readme_links_to_docs(self):
         readme_text = README.read_text(encoding="utf-8")
 
         self.assertIn("[Codebase docs](docs/codebase.md)", readme_text)
         self.assertIn("[Docs index](docs/index.md)", readme_text)
 
-    def test_readme_documents_all_seven_conversion_workflows(self):
-        readme_text = README.read_text(encoding="utf-8")
+    def test_codebase_documents_all_conversion_workflows(self):
+        readme_text = CODEBASE.read_text(encoding="utf-8")
 
         for command in CLI_COMMANDS:
             self.assertIn(f"`{command}`", readme_text)
 
     def test_docs_define_implemented_msc_miniml_v3_core(self):
-        readme_text = README.read_text(encoding="utf-8")
         codebase_text = CODEBASE.read_text(encoding="utf-8")
         index_text = INDEX.read_text(encoding="utf-8")
         anchor = "proposed-enriched-miniml-core"
@@ -526,11 +571,10 @@ class DocsIndexTests(unittest.TestCase):
             "semantic",
         ):
             self.assertIn(phrase, codebase_text)
-        self.assertIn("MSC MINiML 3.0", readme_text)
-        self.assertIn("v2", readme_text)
+        self.assertIn("v2", codebase_text)
 
-    def test_readme_documents_all_console_scripts(self):
-        readme_text = README.read_text(encoding="utf-8")
+    def test_codebase_documents_all_console_scripts(self):
+        readme_text = CODEBASE.read_text(encoding="utf-8")
         with PYPROJECT.open("rb") as handle:
             pyproject = tomllib.load(handle)
 
