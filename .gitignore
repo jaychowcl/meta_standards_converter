@@ -40,3 +40,7 @@ CLAUDE.md
 
 .out/
 .out/*
+
+# Local container image exports.
+/docker/*.tar
+/docker/*.tar.gz
