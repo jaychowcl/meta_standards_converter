@@ -63,3 +63,24 @@ def test_verified_platform_accession_reuses_id_with_complementary_fields():
     assert len(data['platform']) == 1
     assert data['platform'][0]['description'] == 'Deposited design'
     assert extra['sample'][0]['platform_ref'] == {'ref': 'one'}
+
+
+def test_peer_workflow_uses_verified_primary_sample_alias_without_changing_authored_names():
+    from copy import deepcopy
+    from meta_standards_converter.metadata.archive_workflows import merge_workflows
+    for incoming_name, expected in [('SAMEA1', 'SRS1'), ('aliquot-B', 'aliquot-B')]:
+        sample = {'iid': 'SRS1', 'accession': [{'value': 'SRS1'}, {'value': 'SAMEA1'}],
+                  'channel': [{'characteristics': []}], 'sra_run': [{'run': 'SRR1', 'experiment': 'SRX1'}]}
+        path = {'steps': [{'kind': 'source', 'name': 'SRS1', 'sample_ref': 'SRS1'},
+                          {'kind': 'assay', 'name': 'SRX1'}, {'kind': 'scan', 'name': 'SRR1'}]}
+        data = {'source': {'format': 'SRA'}, 'series': {'iid': 'SRP1', 'assay_paths': [deepcopy(path)]}, 'sample': [sample]}
+        other = deepcopy(data)
+        other['source']['format'] = 'ENA'
+        other['sample'][0]['iid'] = 'SAMEA1'
+        other['series']['assay_paths'][0]['steps'][0].update(name=incoming_name, sample_ref='SAMEA1')
+        merge_workflows(data, other, {'SAMEA1': 'SRS1'}, {}, False, [])
+        source = data['series']['assay_paths'][-1]['steps'][0]
+        assert source['name'] == expected
+        assert source['sample_ref'] == 'SRS1'
+        if incoming_name == 'SAMEA1':
+            assert {'name': 'ENA source name', 'value': 'SAMEA1'} in source['comments']

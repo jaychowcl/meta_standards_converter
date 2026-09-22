@@ -338,6 +338,26 @@ class _PathScopeIndex:
         return [self.paths[i] for i in sorted(candidates)]
 
 
+def _bind_peer_sample_names(prepared, candidates, sample, provider):
+    """Unify accession aliases, without collapsing authored material identities."""
+    from .archive_enrichment import entity_ids
+    identifiers = entity_ids(sample, sample=True)
+    for step in prepared['steps']:
+        if step.get('kind') not in {'source', 'sample'} or step.get('name') not in identifiers:
+            continue
+        names = {node['name'] for path in candidates for node in path['steps']
+                 if node.get('kind') == step['kind'] and node.get('sample_ref') == sample['iid']
+                 and node.get('name') in identifiers}
+        if len(names) != 1:
+            continue
+        name = next(iter(names))
+        if name != step['name']:
+            comment = {'name': f"{provider} source name", 'value': step['name']}
+            if comment not in step.setdefault('comments', []):
+                step['comments'].append(comment)
+            step['name'] = name
+
+
 def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None, selection=None):
     """Bind complete ordered branches and acquisition prefixes by explicit identity."""
     paths = data['series'].setdefault('assay_paths', [])
@@ -402,6 +422,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                                  for r in samples[target].get('sra_run', [])):
                 issues.append(f'{target}: incompatible peer workflow scope')
                 continue
+            provider = extra.get('source', {}).get('format')
+            if provider in {'SRA', 'ENA', 'DRA'}:
+                _bind_peer_sample_names(prepared, candidates, samples[target], provider)
             paths.append(prepared)
             continue
         if not scope and not any(s['kind'] in ('assay', 'scan', 'extract', 'labeled_extract') for s in prepared['steps']):

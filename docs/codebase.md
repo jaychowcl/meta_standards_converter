@@ -5865,7 +5865,12 @@ Equivalent platforms reconcile by verified accession identity, or by compatible
 explicit instrument platform, model and technology for accessionless native
 sequencing platforms. Titles alone never establish identity; distinct arrays with
 matching titles stay distinct. Conflicting declarations remain evidence and may
-cause strict candidate rollback.
+cause strict candidate rollback. Native peer workflow source/sample names normalize
+to the primary name only when both names are verified accession aliases of the
+same joined sample. The original peer name remains a scoped comment. Authored
+material/aliquot names are not collapsed. Alternative archive-file evidence may
+still require multiple SDRF rows for one acquisition; it must not create another
+biological sample on reimport.
 
 Generated MAGE-TAB anatomy and TSV use the same explicit biological aliases.
 Distinct values keep encounter order and their attached qualifiers; source
