@@ -249,14 +249,19 @@ def _merge_publications(current, incoming, prefer, *, issues=None, scope='entity
     return result
 
 
-def _merge_entity(target, extra, prefer, protected=(), *, issues=None):
+def _merge_entity(target, extra, prefer, protected=(), *, issues=None, selection=None, path=""):
+    from ..miniml.archive_libraries import FIELDS as library_fields
     from copy import deepcopy
     additive = {'raw_data', 'supplementary_data', 'relation', 'accession', 'contact_ref', 'contributor_ref', 'pubmed_id'}
     for key, value in extra.items():
         if key in protected:
             continue
+        choose = prefer
+        if selection is not None and key not in additive | {'status', 'characteristics'}:
+            choose = selection.prefer(target.get(key), value, path + '/' + key, prefer,
+                                      scientific=key in library_fields | {'organism', 'molecule'})
         if key == 'pubmed_publication':
-            target[key] = _merge_publications(target.get(key, []), value, prefer, issues=issues,
+            target[key] = _merge_publications(target.get(key, []), value, choose, issues=issues,
                                              scope=target.get('iid') or target.get('run') or 'entity')
         elif key in additive:
             # Files retain all alternatives. Identity declarations need no duplicates.
@@ -277,20 +282,25 @@ def _merge_entity(target, extra, prefer, protected=(), *, issues=None):
             for item in value:
                 groups.setdefault(item['name'], []).append(item)
             current = target.setdefault(key, [])
+            if selection is not None and selection.mode in {'standard', 'curators'}:
+                # Biological occurrences are multivalued, not a scalar source contest.
+                current[:] = complete_characteristic_groups(current, value)
+                current.extend(deepcopy(v) for v in value if v not in current)
+                continue
             for name, group in groups.items():
                 old = [v for v in current if v['name'] == name]
                 if informative(group) and (prefer or not informative(old)):
                     current[:] = [v for v in current if v['name'] != name] + complete_characteristic_groups(group, old)
                 elif not old:
                     current.extend(deepcopy(group))
-        elif key == 'organism' and informative(value) and (prefer or not informative(target.get(key))):
+        elif key == 'organism' and informative(value) and (choose or not informative(target.get(key))):
             organisms = deepcopy(value)
             for organism in organisms:
                 same = [o for o in target.get(key, []) if o.get('value', '').strip().casefold() == organism.get('value', '').strip().casefold()]
                 if len(same) == 1 and not organism.get('taxid') and same[0].get('taxid'):
                     organism['taxid'] = same[0]['taxid']
             target[key] = organisms
-        elif informative(value) and (prefer or not informative(target.get(key))):
+        elif informative(value) and (choose or not informative(target.get(key))):
             # Replace complete typed values (including units / term references) together.
             target[key] = deepcopy(value)
 
@@ -306,6 +316,8 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
         evidence.append({'provider':data.get('source',{}).get('format'), 'kind':'MINiML', 'accession':data['series']['iid'],
                          'metadata':{k:deepcopy(v) for k,v in data.items() if k not in ('extensions','source','miniml_schema_version')}})
     issues = []
+    from .reconciliation import SourceSelection
+    selection = SourceSelection(data, extra, issues)
     for document in (data, extra):
         source = document.get('source', {}).get('format', '')
         database = {'MAGE-TAB': 'ArrayExpress', 'GEO MINiML': 'GEO'}.get(source, source)
@@ -328,7 +340,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     namespace = str(extra['series'].get('iid') or 'linked') + ':'
     declaration_mappings = merge_declarations(data, extra, namespace)
     _merge_entity(data['series'], extra['series'], prefer,
-                  {'iid', 'sample_ref', 'assay_paths', 'protocols'}, issues=issues)
+                  {'iid', 'sample_ref', 'assay_paths', 'protocols'}, issues=issues, selection=selection, path='/series')
     native_samples, extra_samples = data.get('sample', []), extra.get('sample', [])
     joins = {i: [j for j, s in enumerate(extra_samples) if entity_ids(n, sample=True) & entity_ids(s, sample=True)]
              for i, n in enumerate(native_samples)}
@@ -346,7 +358,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
         j = candidates[0]
         target, source = native_samples[i], extra_samples[j]
         matched[source['iid']] = target['iid']
-        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'platform_ref'} | library_fields, issues=issues)
+        _merge_entity(target, source, prefer, {'iid', 'channel', 'channel_count', 'sra_run', 'ena_accession', 'sra_accession', 'platform_ref'} | library_fields, issues=issues, selection=selection, path=f"/sample/{target['iid']}")
         runs = {r['run']: r for r in target.get('sra_run', [])}
         for run in source.get('sra_run', []):
             if run['run'] in runs:
@@ -355,18 +367,19 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
                     issues.append(f"{run['run']}: conflicting enrichment experiment identity")
                     continue
                 publication_fields = {'pubmed_id', 'pubmed_publication'}
-                _merge_entity(current, {k: v for k, v in run.items() if k in publication_fields}, prefer, issues=issues)
-                _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'} | publication_fields | (library_fields if prefer else set()), issues=issues)
+                _merge_entity(current, {k: v for k, v in run.items() if k in publication_fields}, prefer, issues=issues, selection=selection, path=f"/sample/{target['iid']}/sra_run/{run['run']}")
+                _merge_entity(current, run, False, {'run', 'sample', 'study', 'files', 'fastq_files'} | publication_fields | (library_fields if prefer else set()), issues=issues, selection=selection, path=f"/sample/{target['iid']}/sra_run/{run['run']}")
                 for key in ('files', 'fastq_files'):
                     current.setdefault(key, []).extend(deepcopy(run.get(key, [])))
             elif not prefer:
                 target.setdefault('sra_run', []).append(deepcopy(run))
-        if source.get('platform_ref') and (prefer or not target.get('platform_ref')):
+        if source.get('platform_ref') and selection.prefer(target.get('platform_ref'), source['platform_ref'],
+                f"/sample/{target['iid']}/platform_ref", prefer or not target.get('platform_ref')):
             target['platform_ref'] = deepcopy(source['platform_ref'])
         channels, incoming = target.get('channel', []), source.get('channel', [])
         # A single channel is unambiguous; multi-channel arrays have no generic join.
         if len(channels) == len(incoming) == 1:
-            _merge_entity(channels[0], incoming[0], prefer)
+            _merge_entity(channels[0], incoming[0], prefer, issues=issues, selection=selection, path=f"/sample/{target['iid']}/channel/0")
         elif incoming:
             issues.append(f"{target['iid']}: ambiguous enrichment channels")
     for j, sample in enumerate(extra_samples):
@@ -388,7 +401,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
             data['series']['protocols'].append(protocol)
     sample_map = {s['iid']: s for s in native_samples}
     paths = data['series'].setdefault('assay_paths', [])
-    explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues, original_channels=original_channels)
+    explicit = merge_workflows(data, extra, matched, proto_names, prefer, issues, original_channels=original_channels, selection=selection)
     from ..miniml.archive_libraries import synchronize_library_facts, resolve_library_facts, apply_library_facts
     if prefer and not extra['series'].get('assay_paths') and extra.get('source', {}).get('format') in {'GEO', 'GEO MINiML'}:
         for source in extra_samples:
@@ -399,7 +412,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
                 incoming = [r for r in source.get('sra_run', []) if r.get('run') == run['run']
                             and (not r.get('experiment') or r.get('experiment') == run.get('experiment'))]
                 if incoming:
-                    apply_library_facts(run, [], resolve_library_facts(run, incoming, issues, run['run']))
+                    apply_library_facts(run, [], resolve_library_facts(run, incoming, issues, run['run'], selection=selection, path=f"/sample/{target['iid']}/sra_run/{run['run']}"))
     synchronize_library_facts(data, issues)
     if prefer and extra.get('source', {}).get('format') == 'MAGE-TAB':
         uncovered = [s['iid'] for s in native_samples if s['iid'] in set(matched.values()) - explicit]
@@ -463,6 +476,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
                 record['metadata']['iid'] = declaration_mappings.get(old, old)
             evidence.append(record)
     evidence.extend(r for r in data['extensions']['insdc']['records'] if r['kind']=='annotation' and r not in evidence)
+    evidence.extend(selection.evidence())
     return finalize(data, evidence), issues
 
 

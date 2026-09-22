@@ -95,7 +95,9 @@ class MetadataPreparation:
                 record.update(status="attempted", reason=None)
                 # A collaborator gets an isolated, valid candidate. Commit only
                 # after it passes the same policy used by strict consumers.
-                candidate, issues = fn(MINiMLCodec().decode(package, strict=True).package)
+                from meta_standards_converter.metadata.reconciliation import selection_policy
+                with selection_policy(policy.enrichment):
+                    candidate, issues = fn(MINiMLCodec().decode(package, strict=True).package)
                 package = MINiMLCodec().decode(candidate, strict=True).package
                 record["status"] = "partial" if issues else "completed"
                 diagnostics.extend(Diagnostic("source_partial", f"{identity}: {name}: {issue}", "preparation", "warning") for issue in issues)
@@ -109,6 +111,13 @@ class MetadataPreparation:
                 record["status"] = "failed"
                 diagnostics.append(Diagnostic("source_partial", f"{identity}: {name} failed ({type(exc).__name__})", "preparation", "warning"))
 
+        from meta_standards_converter.metadata.reconciliation import inspect_recorded_conflicts
+        def has_recorded_evidence():
+            kinds = {'MINiML', 'source_conflict'} if policy.enrichment == 'curators' else {'source_conflict'}
+            return any(r.get('kind') in kinds for r in package.to_mapping().get('extensions', {}).get('insdc', {}).get('records', []))
+        if policy.enrichment != "off" and has_recorded_evidence():
+            run("recorded_evidence", True,
+                lambda p: inspect_recorded_conflicts(p, policy.enrichment))
         read_id = next((v for v in ids if re.fullmatch(r"[SED]RP\d+", v)), None)
         archive_id = read_id or next((v for v in ids if re.fullmatch(r"PRJ(?:NA|EB|DB|DA)\d+", v)), None)
         run("peer_provider", provider in {"sra", "ena"} and read_id is not None,

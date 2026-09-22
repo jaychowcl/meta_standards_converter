@@ -25,7 +25,7 @@ def path_facts(steps):
             if (key := field_name(c.get('name'))) and 'value' in c]
 
 
-def resolve_library_facts(native, incoming, issues, identity):
+def resolve_library_facts(native, incoming, issues, identity, *, selection=None, path=""):
     """Incoming records are one accepted source rank, never arbitrary neighbours."""
     from ..metadata.archive_enrichment import informative
     selected = {k: deepcopy(v) for k, v in native.items() if k in FIELDS}
@@ -39,7 +39,8 @@ def resolve_library_facts(native, incoming, issues, identity):
             if message not in issues:
                 issues.append(message)
         elif values:
-            accepted[key] = deepcopy(values[0])
+            if selection is None or selection.prefer(selected.get(key), values[0], path + '/' + key, True, scientific=True):
+                accepted[key] = deepcopy(values[0])
     if 'library_layout' in conflicts:
         for key in GEOMETRY_FIELDS:
             accepted.pop(key, None)

@@ -338,7 +338,7 @@ class _PathScopeIndex:
         return [self.paths[i] for i in sorted(candidates)]
 
 
-def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None):
+def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None, selection=None):
     """Bind complete ordered branches and acquisition prefixes by explicit identity."""
     paths = data['series'].setdefault('assay_paths', [])
     samples = {s['iid']: s for s in data['sample']}
@@ -364,7 +364,7 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                     step.get('characteristics', []), _biological_node(sample).get('characteristics', []))
                 channels = source_samples.get(target, {}).get('channel', [])
                 if len(channels) == 1:
-                    _merge_entity(step, {'characteristics': channels[0].get('characteristics', [])}, prefer)
+                    _merge_entity(step, {'characteristics': channels[0].get('characteristics', [])}, prefer, selection=selection, path=f'/sample/{target}/channel/0')
     originals = deepcopy(paths)
     original_index = _PathScopeIndex(originals)
     templates, incoming, explicit = {}, [], set()
@@ -419,10 +419,11 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
             incoming.append((identity, prepared))
     if prefer:
         from ..miniml.archive_libraries import path_facts, resolve_library_facts, apply_library_facts, _shared_facts
-        selections = {}
+        selections, workflow_priority = {}, {}
         for (target, key), choices in templates.items():
             if len(choices) != 1:
                 continue
+            workflow_priority[(target, key)] = selection is None or selection.prefer_workflow(target, key)
             selected_runs = []
             for run in samples[target].get('sra_run', []):
                 if not compatible(set(key), {run.get('run'), run.get('experiment')}):
@@ -432,7 +433,7 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                     if matched.get(source['iid']) == target:
                         supplied.extend(r for r in source.get('sra_run', []) if r.get('run') == run['run']
                                         and (not r.get('experiment') or r['experiment'] == run.get('experiment')))
-                facts = resolve_library_facts(run, supplied, issues, run['run'])
+                facts = resolve_library_facts(run, supplied, issues, run['run'], selection=selection, path=f"/sample/{target}/sra_run/{run['run']}")
                 selected_runs.append(facts)
                 apply_library_facts(run, [], facts)
             selections[(target, key)] = _shared_facts(selected_runs, issues, f'{target} {list(key)}')
@@ -446,8 +447,10 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                 continue
             if not choices:
                 continue
-            prefix = _bind_native(deepcopy(choices[0]), target, path['steps'])
-            facts = selections.get((target, tuple(sorted(path_ids(path)))))
+            key = (target, tuple(sorted(path_ids(path))))
+            prefix = (_bind_native(deepcopy(choices[0]), target, path['steps'])
+                      if workflow_priority.get(key, True) else _acquisition(path['steps']))
+            facts = selections.get(key)
             if facts is not None:
                 apply_library_facts({}, prefix, facts)
             # An experiment-level workflow does not delete the native run.
@@ -469,6 +472,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                           if tuple(sorted(original_index.scopes[id(p)])) == key]
             # All candidates have the same verified sample/run identity.
             steps = _bind_native(deepcopy(prepared['steps']), target, candidates[0]['steps'])
+            if not workflow_priority.get((target, key), True):
+                boundary = next((i for i, step in enumerate(steps) if is_file(step)), len(steps))
+                steps = _acquisition(candidates[0]['steps']) + steps[boundary:]
             facts = selections.get((target, key))
             if facts is not None:
                 apply_library_facts({}, steps, facts)
