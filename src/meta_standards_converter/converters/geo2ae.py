@@ -1,4 +1,3 @@
-from meta_standards_converter.conversion_logging import logged_conversion
 # =============================================================================
 # Authors
 #
@@ -7,6 +6,7 @@ from meta_standards_converter.conversion_logging import logged_conversion
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from meta_standards_converter.conversion_logging import logged_conversion, stage, progress, count
 from meta_standards_converter.magetab.writer import MAGETabWriter
 """
 Converter for GEO XML to ArrayExpress MAGETAB format.
@@ -66,12 +66,12 @@ class GEO2AEConverter(JSONHandler):
       fetches MINIML from GEO using gse accession, parses into meta_json, then writes via AEConstructor.
       """
       # get gse miniml from GEO
-      logger.info("%s: fetching GEO MINiML", gse)
+      logger.debug("%s: fetching GEO MINiML", gse)
       miniml = self.geo_fetcher.fetch_gse_miniml(gse=gse)
       logger.debug("%s: fetched GEO MINiML with %d characters", gse, len(miniml))
 
       # parse gse miniml to get json
-      logger.info("%s: parsing GEO MINiML", gse)
+      logger.debug("%s: parsing GEO MINiML", gse)
       meta_jsons = self.parser.parse(
          miniml=miniml,
          remove_empty=remove_empty,
@@ -83,9 +83,9 @@ class GEO2AEConverter(JSONHandler):
       constructor = self.ae_constructor
       magetab_dfs = []
       for index, meta_json in enumerate(meta_jsons, start=1):
-         logger.info("%s: enriching parsed package %d", gse, index)
+         logger.debug("%s: enriching parsed package %d", gse, index)
          enriched_json = self.enricher.enrich(data=meta_json)
-         logger.info("%s: building MAGE-TAB package %d", gse, index)
+         logger.debug("%s: building MAGE-TAB package %d", gse, index)
          if platform_handler is None:
             magetab = constructor.miniml2magetab(data=enriched_json)
          else:
@@ -97,9 +97,13 @@ class GEO2AEConverter(JSONHandler):
 
       #write to outfile if given
       if out:
-         for index, magetab in enumerate(magetab_dfs, start=1):
-            logger.info("%s: writing MAGE-TAB package %d to %s", gse, index, out)
-            MAGETabWriter().write(magetab=magetab, out = out)
+         with stage("publication", planned_artifacts=2 * len(magetab_dfs)):
+            progress(0, 2 * len(magetab_dfs), "artifacts")
+            for index, magetab in enumerate(magetab_dfs, start=1):
+               logger.debug("%s: writing MAGE-TAB package %d to %s", gse, index, out)
+               MAGETabWriter().write(magetab=magetab, out = out)
+               count("artifacts_committed", 2)
+               progress(2 * index, 2 * len(magetab_dfs), "artifacts")
 
-      logger.info("%s: conversion produced %d MAGE-TAB package(s)", gse, len(magetab_dfs))
+      logger.debug("%s: conversion produced %d MAGE-TAB package(s)", gse, len(magetab_dfs))
       return magetab_dfs

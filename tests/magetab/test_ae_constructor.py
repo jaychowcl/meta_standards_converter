@@ -815,7 +815,7 @@ class TestIDFConstructor(unittest.TestCase):
         self.assertTrue(any("NOT A RUN" in message for message in logs.output))
 
     def test_sequencing_platform_idf_handler_returns_empty_comment_rows_without_valid_runs(self):
-        with self.assertLogs("meta_standards_converter.magetab.idf", level="WARNING") as logs:
+        with self.assertLogs("meta_standards_converter.magetab.idf", level="DEBUG") as logs:
             rows = IDFConstructor()._idf_platform_specific(
                 data={"sample": [{"sra_run": [{"run": None}, {"run": "ERRABC"}]}]},
                 technology_type="sequencing",
@@ -833,8 +833,9 @@ class TestIDFConstructor(unittest.TestCase):
         self.assertTrue(any("ERRABC" in message for message in logs.output))
         self.assertTrue(any("SequenceDataURI row skipped" in message for message in logs.output))
 
+
     def test_sequencing_platform_idf_handler_emits_empty_comment_rows_without_sra_runs(self):
-        with self.assertLogs("meta_standards_converter.magetab.idf", level="WARNING") as logs:
+        with self.assertLogs("meta_standards_converter.magetab.idf", level="DEBUG") as logs:
             rows = IDFConstructor()._idf_platform_specific(
                 data={"sample": []},
                 technology_type="sequencing",
@@ -849,6 +850,7 @@ class TestIDFConstructor(unittest.TestCase):
             rows,
         )
         self.assertTrue(any("SequenceDataURI row skipped" in message for message in logs.output))
+
 
     def test_sequencing_platform_idf_subclasses_emit_sequence_data_uri(self):
         data = {"sample": [{"sra_run": [{"run": "ERR5385036"}, {"run": "ERR5385041"}]}]}
@@ -1003,12 +1005,13 @@ class TestIDFConstructor(unittest.TestCase):
         )
         fetcher.pubmed_summary.assert_not_called()
 
-    def test_idf_publications_warns_when_pubmed_lookup_has_no_pubmed_id(self):
-        with self.assertLogs("meta_standards_converter.magetab.idf", level="WARNING") as logs:
+    def test_idf_publications_debug_when_pubmed_lookup_has_no_pubmed_id(self):
+        with self.assertLogs("meta_standards_converter.magetab.idf", level="DEBUG") as logs:
             rows = IDFConstructor()._idf_publications({"series": {}})
 
         self.assertEqual(["PubMed ID"], self.row(rows, "PubMed ID"))
         self.assertTrue(any("no PubMed ID found" in message for message in logs.output))
+
 
     def test_person_address_starts_with_organization_only(self):
         rows = IDFConstructor()._idf_persons(

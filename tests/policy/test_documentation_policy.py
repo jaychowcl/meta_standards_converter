@@ -461,11 +461,17 @@ class DocsIndexTests(unittest.TestCase):
             self.assertNotIn(stale, guide)
         self.assertIn("codebase.md#unified-cli", guide)
         commands = re.findall(r"`(msc-convert [^`]+)`", guide)
-        self.assertEqual(len(commands), 7)
+        self.assertEqual(len(commands), 8)
         parsed = [_parser().parse_args(shlex.split(command)[1:]) for command in commands]
         provider_inputs = {}
         forced = []
         for args in parsed:
+            if args.log_file:
+                self.assertTrue(args.quiet)
+                self.assertEqual(args.log_format, "jsonl")
+                self.assertEqual(args.log_file_level, "DEBUG")
+                self.assertEqual(args.out_type, "json")
+                continue
             if args.list_platform_handlers:
                 continue
             self.assertEqual(args.out_type, "magetab")
@@ -586,6 +592,7 @@ class DocsIndexTests(unittest.TestCase):
             text=True,
         ).splitlines()
         external_or_noncommentable = {
+            "docker/meta-standards-converter-metadata.tar",
             "LICENSE",
             "docs/MAGE-TABv1.1_2011_07_28.pdf",
             "docs/MINiML.xsd",

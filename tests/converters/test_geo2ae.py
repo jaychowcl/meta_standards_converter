@@ -178,12 +178,12 @@ class TestGeo2AEConverter(unittest.TestCase):
 
         log_output = "\n".join(logs.output)
         self.assertEqual(["magetab"], result)
-        self.assertIn("INFO:meta_standards_converter.converters.geo2ae:GSE1: fetching GEO MINiML", log_output)
+        self.assertIn("DEBUG:meta_standards_converter.converters.geo2ae:GSE1: fetching GEO MINiML", log_output)
         self.assertIn("DEBUG:meta_standards_converter.converters.geo2ae:GSE1: fetched GEO MINiML", log_output)
-        self.assertIn("INFO:meta_standards_converter.converters.geo2ae:GSE1: parsing GEO MINiML", log_output)
-        self.assertIn("INFO:meta_standards_converter.converters.geo2ae:GSE1: enriching parsed package 1", log_output)
-        self.assertIn("INFO:meta_standards_converter.converters.geo2ae:GSE1: building MAGE-TAB package 1", log_output)
-        self.assertIn("INFO:meta_standards_converter.converters.geo2ae:GSE1: writing MAGE-TAB package 1 to .dev", log_output)
+        self.assertIn("DEBUG:meta_standards_converter.converters.geo2ae:GSE1: parsing GEO MINiML", log_output)
+        self.assertIn("DEBUG:meta_standards_converter.converters.geo2ae:GSE1: enriching parsed package 1", log_output)
+        self.assertIn("DEBUG:meta_standards_converter.converters.geo2ae:GSE1: building MAGE-TAB package 1", log_output)
+        self.assertIn("DEBUG:meta_standards_converter.converters.geo2ae:GSE1: writing MAGE-TAB package 1 to .dev", log_output)
         self.assertNotIn("do-not-log", log_output)
 
 

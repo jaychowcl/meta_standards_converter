@@ -123,7 +123,7 @@ def _options(args, parser):
     cli_only = {'inputs', 'out_type', 'in_type', 'outdir', 'outfile', 'enrichment',
                 'list_input_types', 'list_output_types', 'list_platform_handlers',
                 'replacement_profile', 'replacement_profile_file', 'explicit_assets',
-                'explicit_assets_file', 'report_json', 'verbose', 'quiet', 'log_file'}
+                'explicit_assets_file', 'report_json', 'verbose', 'quiet', 'log_file', 'log_format', 'log_file_level', 'progress'}
     options = {k: v for k, v in vars(args).items() if k not in cli_only and v is not None}
     overrides = options.pop('resource_override', None)
     if overrides is not None:
@@ -201,15 +201,19 @@ def _auxiliary_paths(args, options, parser):
 
 
 def _human_summary(result):
-    print('Conversion: ' + result.status)
-    for item in result.items:
-        print(f'{item.id}: {item.status} ({item.source})')
-        for name, path in item.artifacts.items():
-            print(f'  {name}: {path}')
-        for diagnostic in item.diagnostics:
-            print(f'  {diagnostic.severity} [{diagnostic.code}]: {diagnostic.message}')
+    from .logging_output import human_summary
+    counts = {state: sum(item.status == state for item in result.items)
+              for state in ("complete", "partial", "failed", "skipped")}
+    human_summary(result.status, counts=counts,
+                  artifacts=((item.id, name, path) for item in result.items
+                             for name, path in item.artifacts.items()))
 
 
+
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None):
     parser = _parser()
     args = parser.parse_args(argv)
@@ -246,11 +250,12 @@ def main(argv=None):
         configure_logging(args, stream=sys.stderr)
         result = Converter().convert(args.inputs or None, **kwargs)
     except (ValueError, TypeError) as error:
-        parser.error(str(error))
+        envelope = record_safe_cli_error(logger, error, location="msc-convert", stage="conversion")
+        parser.error(f"Conversion request failed: {envelope.error_type} [correlation_id={envelope.correlation_id}]")
     except Exception as error:
         record_safe_cli_error(logger, error, location='msc-convert', stage='conversion')
         return 1
-    if args.report_json != '-':
+    if args.report_json != '-' and not args.quiet:
         _human_summary(result)
     if args.report_json:
         try:

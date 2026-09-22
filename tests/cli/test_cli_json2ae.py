@@ -160,20 +160,23 @@ class TestJSON2AECLI(unittest.TestCase):
         )
         self.assertIn(
             "ERROR meta_standards_converter.cli.json2ae: bad.json: magetab_conversion failed error_type=RuntimeError",
-            stdout.getvalue(),
+            stderr.getvalue(),
         )
-        self.assertNotIn(canary, stdout.getvalue())
-        self.assertEqual("", stderr.getvalue())
+        self.assertNotIn(canary, stderr.getvalue())
+        self.assertIn("Conversion: partial/failed", stderr.getvalue())
+        self.assertEqual("", stdout.getvalue())
+
+
 
     @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_verbose_and_quiet_logging(self, json2ae_mock):
         json2ae_mock.return_value.convert.return_value = ["magetab"]
 
         verbose = StringIO()
-        with redirect_stdout(verbose):
-            verbose_exit = main(["GSE1.json", "-v"])
+        with redirect_stderr(verbose):
+            verbose_exit = main(["GSE1.json", "-vv"])
         quiet = StringIO()
-        with redirect_stdout(quiet):
+        with redirect_stderr(quiet):
             quiet_exit = main(["GSE2.json", "--quiet"])
 
         self.assertEqual(0, verbose_exit)
@@ -181,6 +184,8 @@ class TestJSON2AECLI(unittest.TestCase):
         self.assertIn("GSE1.json: conversion started", verbose.getvalue())
         self.assertIn("converted 1 MAGE-TAB output(s) to .", verbose.getvalue())
         self.assertEqual("", quiet.getvalue())
+
+
 
     @patch("meta_standards_converter.cli.json2ae.JSON2AEConverter")
     def test_log_file_writes_configured_logs(self, json2ae_mock):

@@ -197,21 +197,22 @@ class TestJSON2H5ADCLI(unittest.TestCase):
         )
 
     @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
-    def test_verbose_emits_success_logs_to_stderr(self, orchestrator_mock):
+    def test_debug_emits_dispatch_logs_to_stderr(self, orchestrator_mock):
         orchestrator_mock.return_value.convert.return_value = ConversionResult("GSE1", combined_h5ad="GSE1.h5ad")
 
         stdout = StringIO()
         stderr = StringIO()
         with redirect_stdout(stdout), redirect_stderr(stderr):
-            exit_code = main(["GSE1.json", "-v"])
+            exit_code = main(["GSE1.json", "-vv"])
 
         self.assertEqual(0, exit_code)
-        self.assertIn("INFO meta_standards_converter.cli.json2h5ad: GSE1.json: H5AD conversion started", stderr.getvalue())
+        self.assertIn("DEBUG meta_standards_converter.cli.json2h5ad: GSE1.json: H5AD conversion started", stderr.getvalue())
         self.assertIn(
-            "INFO meta_standards_converter.cli.json2h5ad: GSE1.json: converted to GSE1.h5ad",
+            "DEBUG meta_standards_converter.cli.json2h5ad: GSE1.json: converted to GSE1.h5ad",
             stderr.getvalue(),
         )
         self.assertEqual("complete", __import__("json").loads(stdout.getvalue())["status"])
+
 
     @patch("meta_standards_converter.cli.json2h5ad.JSON2H5ADConverter")
     def test_quiet_emits_only_errors(self, orchestrator_mock):
@@ -237,7 +238,7 @@ class TestJSON2H5ADCLI(unittest.TestCase):
                 log_content = handle.read()
 
         self.assertEqual(0, exit_code)
-        self.assertIn("INFO meta_standards_converter.cli.json2h5ad: GSE1.json: H5AD conversion started", log_content)
+        self.assertIn("DEBUG meta_standards_converter.cli.json2h5ad: GSE1.json: H5AD conversion started", log_content)
         self.assertIn("GSE1.json: converted to GSE1.h5ad", log_content)
 
 

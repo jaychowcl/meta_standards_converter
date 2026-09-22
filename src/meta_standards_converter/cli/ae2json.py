@@ -52,6 +52,10 @@ def _parser():
     return parser
 
 
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None):
     parser = _parser()
     args = parser.parse_args(argv)
@@ -65,7 +69,7 @@ def main(argv=None):
     failed = False
     logger.debug("Starting ae2json CLI with %d source(s), out=%s", len(args.source), args.out)
     for source in args.source:
-        logger.info("%s: conversion started", source)
+        logger.debug("%s: conversion started", source)
         try:
             packages = converter.convert(
                 source=source,
@@ -81,7 +85,7 @@ def main(argv=None):
                 stage="ae_json_conversion",
             )
             continue
-        logger.info("%s: converted %d package(s) to %s", source, len(packages), args.out)
+        logger.debug("%s: converted %d package(s) to %s", source, len(packages), args.out)
     return 1 if failed else 0
 
 

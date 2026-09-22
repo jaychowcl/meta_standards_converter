@@ -764,9 +764,9 @@ presets/legacy overrides; contradictory positive/negative CLI switches are usage
 errors. `--related` and `--related-series` are aliases for `--expand-studies`;
 expansion is already on by default and independent of enrichment.
 
-Human summaries show each input's status, artifact paths and diagnostic codes.
-Logs go to stderr (`-v`: INFO, `-vv`: DEBUG, `--quiet`: ERROR); quiet does not
-suppress the result summary. `--report-json PATH` writes `ConversionBatchResult.to_dict()`
+Human summaries show status totals and artifact paths. Detailed diagnostic codes remain
+in the result report and logs. Logs and progress use stderr (`-v`: INFO, `-vv`: DEBUG,
+`--quiet`: ERROR). Quiet suppresses progress and human summaries, but preserves JSON results. `--report-json PATH` writes `ConversionBatchResult.to_dict()`
 without scientific payloads. `--report-json -` produces JSON-only stdout.
 Exit codes: **0** complete, **1** partial/failed conversion or operational/report
 failure, **2** invalid arguments/configuration. Earlier successful artifacts remain
@@ -866,7 +866,10 @@ directory; input-manifest paths retain the existing manifest-relative semantics.
 | `--report-json` | Write a structured result summary; use - for JSON-only stdout. |
 | `-v` / `--verbose` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q` / `--quiet` | Only emit ERROR logs. |
-| `--log-file` | Optional file path to write logs. |
+| `--log-file` | Optional detailed log file; defaults to DEBUG independently of console verbosity. |
+| `--log-format` | File format: `text` (default) or `jsonl`. |
+| `--log-file-level` | File threshold: DEBUG (default), INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | `auto` (default), `plain` markers, or `off`; quiet disables progress. |
 
 Structured inputs use the existing version 1.0 `--input-manifest`, including
 companions, metadata and per-input options. `--asset ACCESSION=PATH_OR_URL` is
@@ -1771,7 +1774,7 @@ The package has no mandatory application config file. Configure conversions with
 | Resource envelope | `--resource-profile`, `--resource-override` / `resource_profile`, `resource_overrides` | Typed `standard` profile |
 | Additional MAGE-TAB source host | `ae2json --source-host` / `source_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
 | Output location | CLI `--out` / Python `out` | CLI defaults vary by command; Python metadata `out=None` returns in memory |
-| Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING normally; `json2obs` reserves stdout for its JSON result and logs to stderr |
+| Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING normally; all conversion CLIs log to stderr and preserve result stdout |
 | H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
 | Matrix orientation | `--matrix-orientation` / `matrix_orientation` | `auto`; ambiguous delimited matrices fail |
 | Raw pipeline | `--pipeline` / `pipeline` | `auto` modality detection |
@@ -1849,7 +1852,10 @@ Convert local, remote, or BioStudies MAGE-TAB metadata to parsed JSON.
 | `--source-host` | text; repeatable | `[]` | Explicitly allow one exact remote IDF/SDRF hostname. |
 | `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Optional file path to write logs. |
+| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
+| `--log-format` | choice | `text` | File format: text or jsonl. |
+| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
 
 Mutually exclusive: `-v`, `-q`.
 
@@ -1875,7 +1881,10 @@ Convert one or more GEO Series accessions to ArrayExpress MAGE-TAB files.
 | `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
 | `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Optional file path to write logs. |
+| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
+| `--log-format` | choice | `text` | File format: text or jsonl. |
+| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
 
 Mutually exclusive: `--remove-empty`, `--keep-empty`.
 
@@ -1904,7 +1913,10 @@ Convert one or more GEO Series accessions to parsed MINiML JSON files.
 | `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
 | `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Optional file path to write logs. |
+| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
+| `--log-format` | choice | `text` | File format: text or jsonl. |
+| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
 
 Mutually exclusive: `--remove-empty`, `--keep-empty`.
 
@@ -1930,7 +1942,10 @@ Convert canonical Atlas v1 JSON or parsed MINiML JSON to ArrayExpress MAGE-TAB f
 | `--list-platform-handlers` | flag | `False` | List available platform handler keys and exit. |
 | `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Optional file path to write logs. |
+| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
+| `--log-format` | choice | `text` | File format: text or jsonl. |
+| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
 
 Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
 
@@ -1979,7 +1994,10 @@ Convert parsed MINiML or canonical Atlas v1 JSON files to H5AD.
 | `--asset-host` | text; repeatable | `[]` | Explicitly allow one additional exact remote asset hostname. |
 | `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Optional file path to write logs. |
+| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
+| `--log-format` | choice | `text` | File format: text or jsonl. |
+| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
 
 Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
 
@@ -2005,7 +2023,10 @@ Convert parsed MINiML or canonical Atlas v1 JSON files to a sample manifest.
 | `--replacement-profile-file` | text | `None` | Path to a replacement profile JSON object. |
 | `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Optional file path to write logs. |
+| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
+| `--log-format` | choice | `text` | File format: text or jsonl. |
+| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
 
 Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
 
@@ -2050,7 +2071,10 @@ Aggregate AnnData observation metadata without combining expression matrices.
 | `--matrix-orientation` | auto / genes-by-observations / observations-by-genes | `'auto'` |  |
 | `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Optional file path to write logs. |
+| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
+| `--log-format` | choice | `text` | File format: text or jsonl. |
+| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
+| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
 
 Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
 
@@ -4431,6 +4455,84 @@ Importable symbols are
 identity follows the Python model: a usable `series.iid` takes precedence over
 the first usable accession, and generated MAGE-TAB protocol identifiers use the
 same value. GEO-shaped `GSE` identities remain numeric-only.
+
+<a id="conversion-logging"></a>
+## Conversion logging and progress
+
+All unified and standalone converter entrypoints share operation-scoped telemetry.
+The outer call owns `conversion_started` / `conversion_finished`; nested calls retain
+its run ID. Stage events carry durations, status, bounded counts and item/provider
+identity. Unified batches additionally emit `batch_planned`, `item_started` and
+`item_finished`, including duplicate/fail-fast skips. Conversion results and artifacts
+retain their existing scientific contracts.
+
+| Console | Behavior |
+| --- | --- |
+| default | WARNING/ERROR, automatic interactive progress, compact final human result |
+| `-v` | INFO stage progress and statistics |
+| `-vv` | DEBUG decisions, requests and nested stage detail |
+| `--quiet` | ERROR only; no progress or human summary; machine-readable output remains |
+
+`--log-file run.log` captures DEBUG independently of console verbosity. Use
+`--log-format jsonl` for one v1 event per line, or `--log-file-level INFO` to explicitly
+reduce file detail. Ordinary module records are normalized into the same envelope.
+Files contain semantic events, not animation frames; raw payloads and exception dumps
+are excluded. Diagnostic console warnings are grouped by run/item/stage/code;
+individual occurrences remain in the file and applicable result diagnostics.
+
+`--progress auto` uses an ASCII bar only when stderr is a terminal. Redirected
+output has no control sequences and follows normal log verbosity. `--progress plain`
+prints `[RUN]`, `[OK]`, `[PARTIAL]`, `[FAIL]`, `[SKIP]`; `off` disables the display.
+Known totals show finished inputs or stage units. Unknown totals show activity and
+elapsed time. Failed/skipped inputs count as finished, never as successful. Terminal
+refresh is capped at four times per second; a 30-second semantic heartbeat reports
+long-running stages without extra network requests. Bars clear around logs and on exit.
+
+DEBUG describes routes, optional absence, skips, retries and cache reuse; INFO describes
+normal lifecycle/statistics; WARNING describes recoverable degradation; ERROR describes
+failed requested work. Intentional disabled enrichment is not a warning. Publication
+preflight and committed output remain distinguishable from serialization/staging.
+Counters distinguish samples, archive runs, SDRF rows, expression dimensions, provider
+attempts, retries, downloads, cached work and checkpoint reuse. Unavailable counts are
+omitted rather than inferred as zero.
+
+Human summaries, logs and progress use stderr; JSON results use stdout.
+Library imports never configure handlers. CLI configuration owns only its own handlers
+and restores logger state on exit. CLI invocations in the same process serialize
+logging configuration; library conversions retain independent concurrent contexts. `context_callable()` captures operation context for
+worker dispatch. Repeated and concurrent operation tests verify identity isolation;
+progress and file formatting are tested with fake clocks and terminal streams.
+
+
+Internal telemetry helper inventory (converter API signatures are unchanged):
+
+| Helper | Responsibility |
+| --- | --- |
+| `meta_standards_converter.conversion_logging.current` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.context_callable` | Capture the submitting operation when dispatching a worker. |
+| `meta_standards_converter.conversion_logging.labels` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.bind` | Bind additional identity inside the enclosing operation/item scope. |
+| `meta_standards_converter.conversion_logging.count` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.emit` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.Operation` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.operation` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.Stage` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.stage` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.measured` | Measure a stage without changing its signature or return contract. |
+| `meta_standards_converter.conversion_logging.statistics` | Read bounded public result metadata; never inspect scientific matrices. |
+| `meta_standards_converter.conversion_logging.progress` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.diagnostic` | Retain each diagnostic occurrence; sinks control presentation. |
+| `meta_standards_converter.conversion_logging.result_diagnostics` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.outcome` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.logged_conversion` | Operation event state and emission. |
+| `meta_standards_converter.conversion_logging.item_scope` | Operation event state and emission. |
+| `meta_standards_converter.cli.logging_output.event_for` | CLI sink, formatting and display lifecycle. |
+| `meta_standards_converter.cli.logging_output.EventFormatter` | CLI sink, formatting and display lifecycle. |
+| `meta_standards_converter.cli.logging_output.ProgressRenderer` | CLI sink, formatting and display lifecycle. |
+| `meta_standards_converter.cli.logging_output.ConsoleHandler` | CLI sink, formatting and display lifecycle. |
+| `meta_standards_converter.cli.logging_output.register_configuration` | CLI sink, formatting and display lifecycle. |
+| `meta_standards_converter.cli.logging_output.human_summary` | Compact stderr result rendering. |
+| `meta_standards_converter.cli.logging_output.cli_entrypoint` | Release CLI-owned sinks even when argparse, conversion or output fails. |
 
 <a id="operational-events-v1"></a>
 ## Operational events v1

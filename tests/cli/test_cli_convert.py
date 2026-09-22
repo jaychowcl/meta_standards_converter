@@ -27,7 +27,7 @@ def source(tmp_path, monkeypatch):
 def test_real_metadata_outputs(source, target, suffix, capsys):
     assert convert.main([str(source), "--out-type", target, "--enrichment", "off"]) == 0
     assert source.with_name(("E-GEOD-1" if target == "magetab" else "GSE1") + suffix).exists()
-    assert "complete" in capsys.readouterr().out
+    assert "complete" in capsys.readouterr().err
 
 
 def test_json_stdout_is_machine_readable(source, capsys):
@@ -102,7 +102,7 @@ def test_partial_fail_fast_and_report(source, capsys):
     report = json.loads(Path("report.json").read_text())
     assert [i["status"] for i in report["items"]] == ["failed", "skipped"]
     assert not Path("GSE1.json").exists()
-    assert "failed" in capsys.readouterr().out
+    assert "failed" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize("report", ["input.json", "GSE1.json"])

@@ -105,9 +105,23 @@ Most conversion settings have individual flags and map into the Python
 `Converter.convert(options={...})` mapping; logging and result reports are CLI controls.
 See the [Python options reference](codebase.md#unified-routes) for keys and applicability.
 
-The terminal summary lists each input's status, output paths and diagnostic codes.
+The terminal summary lists status totals and output paths; the result report retains detailed diagnostics.
 `--report-json PATH` saves a machine-readable result report without scientific payloads;
-`--report-json -` emits JSON-only stdout. `-v` enables informational logs on stderr.
+`--report-json -` emits JSON-only stdout. Human summaries, logs and progress always use stderr.
+
+Interactive terminals show an automatic progress bar. Use `--progress plain` for
+stable stage markers, or `--progress off` to disable it. Unknown totals show activity
+rather than an estimated percentage. `-v` adds stage statistics; `-vv` adds diagnostic
+detail. `--quiet` suppresses progress and human summaries but keeps errors and JSON results.
+
+To keep complete logs with a quiet terminal:
+
+`msc-convert GSE100 --out-type json --out results --quiet --log-file run.jsonl --log-format jsonl`
+
+Log files capture DEBUG by default independently of the console. Use
+`--log-file-level INFO` only when a reduced file is desired. The default file format
+is readable text; JSONL is suitable for automated inspection. See the
+[logging and progress reference](codebase.md#conversion-logging).
 
 ## Reading conversion results
 

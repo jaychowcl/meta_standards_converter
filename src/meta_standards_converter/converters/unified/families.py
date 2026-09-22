@@ -12,7 +12,7 @@ from collections import deque
 from collections.abc import Mapping
 from dataclasses import replace
 import re
-from meta_standards_converter.conversion_logging import count, emit
+from meta_standards_converter.conversion_logging import count, emit, progress
 from urllib.parse import parse_qs, urlsplit
 
 from .contracts import Diagnostic, InputSpec
@@ -123,6 +123,8 @@ class StudyFamilies:
         groups = list(loaded.metadata.groups)
         seen = {(provider_of(p, loaded.provider), a) for g in groups for p in g.packages for a in study_ids(p)}
         known_groups = {g.dataset_id for g in groups}
+        processed = 0
+        progress(0, unit="studies", discovered=len(groups))
         while queue:
             group = queue.popleft()
             for package in group.packages:
@@ -135,7 +137,7 @@ class StudyFamilies:
                         count("expansion_already_seen")
                         continue
                     count("expansion_discovered")
-                    emit("study_discovered", level="DEBUG", provider=provider, dataset_id=accession)
+                    emit("study_discovered", provider=provider, dataset_id=accession)
                     seen.add(identity)
                     record = {'operation': 'study_expansion', 'dataset': group.dataset_id,
                               'provider': provider, 'target': accession, 'status': 'attempted'}
@@ -171,5 +173,8 @@ class StudyFamilies:
                         count('expansion_failed')
                         record['status'] = 'failed'
                         loaded.diagnostics.append(Diagnostic('source_partial', f'{accession}: family expansion failed ({type(exc).__name__})', 'expansion', 'warning'))
+            processed += 1
+            progress(processed, unit="studies", discovered=len(groups))
+        progress(processed, processed, "studies")
         loaded.metadata = replace(loaded.metadata, groups=tuple(groups))
         return loaded

@@ -9,7 +9,7 @@
 """
 Converter for GEO XML to enriched MINiML JSON packages.
 """
-from meta_standards_converter.conversion_logging import logged_conversion
+from meta_standards_converter.conversion_logging import logged_conversion, measured, count, progress
 
 import json
 import logging
@@ -115,11 +115,11 @@ class GEO2JSONConverter(JSONHandler):
       """
       Fetches GEO MINiML, parses it to JSON packages, optionally enriches, and optionally writes JSON.
       """
-      logger.info("%s: fetching GEO MINiML", gse)
+      logger.debug("%s: fetching GEO MINiML", gse)
       miniml = self.geo_fetcher.fetch_gse_miniml(gse=gse)
       logger.debug("%s: fetched GEO MINiML with %d characters", gse, len(miniml))
 
-      logger.info("%s: parsing GEO MINiML", gse)
+      logger.debug("%s: parsing GEO MINiML", gse)
       meta_jsons = self.parser.parse(
          miniml=miniml,
          remove_empty=remove_empty,
@@ -135,7 +135,7 @@ class GEO2JSONConverter(JSONHandler):
          )
          packages = []
          for index, meta_json in enumerate(meta_jsons, start=1):
-            logger.info("%s: enriching parsed package %d", gse, index)
+            logger.debug("%s: enriching parsed package %d", gse, index)
             packages.append(codec.decode(self.enricher.enrich(data=meta_json)).package)
       else:
          logger.debug("%s: skipping JSON enrichment", gse)
@@ -144,7 +144,7 @@ class GEO2JSONConverter(JSONHandler):
       if out:
          self.json2file(gse=gse, packages=packages, out=out)
 
-      logger.info("%s: conversion produced %d JSON package(s)", gse, len(packages))
+      logger.debug("%s: conversion produced %d JSON package(s)", gse, len(packages))
       return packages
 
    def _inherit_parent_publications(
@@ -266,11 +266,14 @@ class GEO2JSONConverter(JSONHandler):
          hydrated.append(codec.decode(package).package)
       return hydrated
 
+   @measured("publication")
    def json2file(self, gse: str, packages: list[MINiMLPackage], out: str) -> str:
       os.makedirs(out, exist_ok=True)
       path = os.path.join(out, f"{gse}.json")
-      logger.info("%s: writing JSON package list to %s", gse, path)
+      logger.debug("%s: writing JSON package list to %s", gse, path)
       with open(path, "w", encoding="utf-8") as handle:
          json.dump(MINiMLCodec().encode_many(packages), handle, indent=2, ensure_ascii=False)
          handle.write("\n")
+      count("artifacts_committed")
+      progress(1, 1, "artifacts")
       return path

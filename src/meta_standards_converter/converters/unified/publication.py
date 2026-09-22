@@ -7,7 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Publication adapters with exact paths and explicit atomic boundaries."""
-from meta_standards_converter.conversion_logging import measured
+from meta_standards_converter.conversion_logging import measured, progress
 
 import csv
 import json
@@ -86,13 +86,15 @@ def publish_jsons(groups, context, item):
             for g in groups
         ]
     reserve([p for p, _ in paths], context)
-    for path, values in paths:
+    progress(0, len(paths), "artifacts")
+    for index, (path, values) in enumerate(paths, 1):
         from meta_standards_converter.converters.archive_results import publish_json
 
         publish_json(
             path, MINiMLCodec().encode_many(values), context.runtime["overwrite"]
         )
         item.artifacts[str(path.name)] = str(path)
+        progress(index, len(paths), "artifacts")
 
 
 @measured("publication")
@@ -112,7 +114,8 @@ def publish_tables(tables, context, item):
         for key, table in tables.items()
     ]
     reserve([p for p, _ in paths], context)
-    for path, table in paths:
+    progress(0, len(paths), "artifacts")
+    for index, (path, table) in enumerate(paths, 1):
 
         def write(stream):
             writer = csv.DictWriter(
@@ -126,6 +129,7 @@ def publish_tables(tables, context, item):
 
         atomic_write(path, write, context.runtime["overwrite"])
         item.artifacts[path.name] = str(path)
+        progress(index, len(paths), "artifacts")
 
 
 @measured("publication")
@@ -152,7 +156,8 @@ def publish_magetab(tables, context, item):
         for name in names
     ]
     reserve([p for pair in destinations for p in pair], context)
-    for table, (idf, sdrf) in zip(tables, destinations):
+    progress(0, 3 * len(destinations), "artifacts")
+    for index, (table, (idf, sdrf)) in enumerate(zip(tables, destinations), 1):
         with tempfile.TemporaryDirectory(prefix="msc-magetab-") as temporary:
             writer.write(table, temporary)
             published = _publish_bundle(
@@ -166,3 +171,4 @@ def publish_magetab(tables, context, item):
         item.artifacts[idf.name] = str(idf)
         item.artifacts[sdrf.name] = str(sdrf)
         item.artifacts[idf.stem + ".bundle_pointer"] = str(published.pointer_path)
+        progress(3 * index, 3 * len(destinations), "artifacts")

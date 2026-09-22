@@ -7,7 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Convert MAGE-TAB IDF/SDRF metadata to parsed MINiML-compatible JSON."""
-from meta_standards_converter.conversion_logging import logged_conversion
+from meta_standards_converter.conversion_logging import logged_conversion, stage, progress, count
 
 import json
 import logging
@@ -60,19 +60,23 @@ class AE2JSONConverter:
         out: str | None = None,
         sdrf_sources: list[str] | None = None,
     ) -> list[MINiMLPackage]:
-        logger.info("%s: resolving MAGE-TAB metadata", source)
-        resolved = self.fetcher.resolve(source, sdrf_sources=sdrf_sources)
-        logger.info("%s: parsing IDF and %d SDRF file(s)", source, len(resolved.sdrfs))
+        logger.debug("%s: resolving MAGE-TAB metadata", source)
+        with stage("load"):
+            resolved = self.fetcher.resolve(source, sdrf_sources=sdrf_sources)
+        logger.debug("%s: parsing IDF and %d SDRF file(s)", source, len(resolved.sdrfs))
         package = self.parser.parse(resolved)
         packages = [package]
         if out:
-            os.makedirs(out, exist_ok=True)
-            accession = self._study_accession(package)
-            path = os.path.join(out, f"{self._safe_filename(accession)}.json")
-            with open(path, "w", encoding="utf-8") as handle:
-                json.dump(MINiMLCodec().encode_many(packages), handle, indent=2, ensure_ascii=False)
-                handle.write("\n")
-            logger.info("%s: wrote parsed JSON to %s", source, path)
+            with stage("publication", planned_artifacts=1):
+                os.makedirs(out, exist_ok=True)
+                accession = self._study_accession(package)
+                path = os.path.join(out, f"{self._safe_filename(accession)}.json")
+                with open(path, "w", encoding="utf-8") as handle:
+                    json.dump(MINiMLCodec().encode_many(packages), handle, indent=2, ensure_ascii=False)
+                    handle.write("\n")
+                count("artifacts_committed")
+                progress(1, 1, "artifacts")
+                logger.debug("%s: wrote parsed JSON to %s", source, path)
         return packages
 
     def _study_accession(self, package):

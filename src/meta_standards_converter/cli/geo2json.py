@@ -73,6 +73,10 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -91,7 +95,7 @@ def main(argv=None) -> int:
     )
 
     for gse in args.gse:
-        logger.info("%s: JSON conversion started", gse)
+        logger.debug("%s: JSON conversion started", gse)
         try:
             packages = converter.convert(
                 gse=gse,
@@ -110,7 +114,7 @@ def main(argv=None) -> int:
             )
             continue
 
-        logger.info("%s: converted %d JSON package(s) to %s", gse, len(packages), args.out)
+        logger.debug("%s: converted %d JSON package(s) to %s", gse, len(packages), args.out)
 
     return 1 if failed else 0
 

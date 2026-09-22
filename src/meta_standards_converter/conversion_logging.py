@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Operation-local telemetry shared by unified and standalone conversions.
 
 This module never installs handlers or changes application logging levels.
@@ -38,6 +46,11 @@ def labels(**values):
         _labels.reset(token)
 
 
+def bind(**attributes):
+    """Bind additional identity inside the enclosing operation/item scope."""
+    _labels.set(_labels.get() | {k: v for k, v in attributes.items() if v is not None})
+
+
 def count(name, amount=1):
     run = current()
     if run is not None:
@@ -73,7 +86,7 @@ class Operation:
         self.failure_error = None
         self.status = "complete"
         self.statistics = {}
-        self.diagnostics_seen = set()
+        self.results_seen = set()
 
     def tick(self):
         with self.lock:
@@ -95,6 +108,7 @@ def operation(component, *, clock=time.monotonic, heartbeat=True, emitter=None):
         return
     run = Operation(component, clock, emitter)
     token = _run.set(run)
+    label_token = _labels.set(dict(_labels.get()))
     stop = threading.Event()
     worker = None
     def pulse():
@@ -111,6 +125,10 @@ def operation(component, *, clock=time.monotonic, heartbeat=True, emitter=None):
         safe = SafeErrorEnvelope.from_exception(error, stage=run.failure_stage,
                                                 correlation_id=run.id)
         run.statistics["error"] = safe.to_dict()
+        try:
+            error._msc_logged_envelope = safe
+        except (AttributeError, TypeError):
+            pass
         raise
     finally:
         stop.set()
@@ -119,9 +137,10 @@ def operation(component, *, clock=time.monotonic, heartbeat=True, emitter=None):
         try:
             level = "ERROR" if run.status in {"failed", "interrupted"} else "WARNING" if run.status == "partial" else "INFO"
             emit("conversion_finished", level=level, status=run.status,
-                 stage=run.failure_stage, duration_seconds=clock() - run.started,
+                 stage=run.failure_stage if run.status in {"failed", "interrupted"} else None, duration_seconds=clock() - run.started,
                  **(dict(run.counters) | run.statistics))
         finally:
+            _labels.reset(label_token)
             _run.reset(token)
 
 
@@ -149,7 +168,9 @@ def stage(name, **statistics):
         return
     parent = _span.get()
     token = _span.set(span)
-    level = "DEBUG" if parent is not None else "INFO"
+    phases = {"discovery", "input_validation", "load", "validation", "expansion",
+              "preparation", "conversion", "projection", "expression", "publication"}
+    level = "INFO" if parent is None or (name in phases and name != parent.name) else "DEBUG"
     span.started = run.clock()
     with run.lock:
         run.spans.append(span)
@@ -224,25 +245,49 @@ def statistics(value):
         stats["studies"] = len(studies)
         stats.update({state: sum(i.status == state for i in studies)
                       for state in ("complete", "partial", "failed")})
+    if isinstance(value, (list, tuple)):
+        tables = value if value and isinstance(value[0], (list, tuple)) and value[0] and isinstance(value[0][0], (list, tuple)) else [value]
+        row_counts = [len(row[1]) - 1 for table in tables for row in table
+                      if isinstance(row, (list, tuple)) and len(row) > 1
+                      and row[0] == "SDRF File" and isinstance(row[1], list)]
+        if row_counts:
+            stats.update(magetab_packages=len(row_counts), sdrf_rows=sum(row_counts))
+    sample_files = getattr(value, "sample_h5ads", None)
+    if isinstance(sample_files, dict):
+        stats["sample_outputs"] = len(sample_files)
+    obs = getattr(value, "obs", None)
+    if hasattr(obs, "shape") and isinstance(obs.shape, tuple):
+        stats["observations"] = obs.shape[0]
+    columns = getattr(value, "columns", None)
+    if isinstance(columns, (tuple, list)):
+        stats["columns"] = len(columns)
     return stats
 
 
+def progress(completed, total=None, unit="units", **attributes):
+    span = _span.get()
+    if span is not None:
+        span.update(completed=completed, total=total, unit=unit, **attributes)
+    emit("progress", level="DEBUG", completed=completed, total=total, unit=unit, **attributes)
+
+
 def diagnostic(code, message, *, severity="warning", stage_name=None, **attributes):
-    """Record a diagnostic once per logical item; sinks control presentation."""
+    """Retain each diagnostic occurrence; sinks control presentation."""
     run = current()
     if run is None:
         return
-    key = (_labels.get().get("item_id"), _labels.get().get("dataset_id"), stage_name, code, message)
-    with run.lock:
-        if key in run.diagnostics_seen:
-            return
-        run.diagnostics_seen.add(key)
     count(severity + "s")
     emit("diagnostic", level=severity.upper(), stage=stage_name, code=code,
          message=redact(message), **attributes)
 
 
 def result_diagnostics(result):
+    run = current()
+    if run is not None:
+        with run.lock:
+            if id(result) in run.results_seen:
+                return
+            run.results_seen.add(id(result))
     items = getattr(result, "items", None)
     if isinstance(items, list):
         for item in items:
@@ -251,7 +296,8 @@ def result_diagnostics(result):
     diagnostics = getattr(result, "diagnostics", None)
     if isinstance(diagnostics, (tuple, list)):
         for d in diagnostics:
-            diagnostic(d.code, d.message, severity=d.severity, stage_name=d.stage)
+            severity = "debug" if d.code in {"duplicate_input", "fail_fast", "enrichment_skipped"} else "error" if d.code in {"sample_skipped", "source_failed"} else d.severity
+            diagnostic(d.code, d.message, severity=severity, stage_name=d.stage)
     for attr, severity in (("warnings", "warning"), ("errors", "error"), ("failures", "error"), ("issues", "warning")):
         values = getattr(result, attr, None)
         if isinstance(values, (tuple, list)):
@@ -286,8 +332,13 @@ def logged_conversion(fn):
     def wrapped(*args, **kwargs):
         if current() is not None:
             emit("converter_delegated", level="DEBUG", converter=fn.__qualname__)
-            return fn(*args, **kwargs)
+            with labels():
+                return fn(*args, **kwargs)
         with operation(fn.__qualname__) as run:
+            source = next((kwargs[k] for k in ("input", "source", "json_path", "gse", "accession") if k in kwargs), args[1] if len(args)>1 else None)
+            if source is not None:
+                label = source if isinstance(source, str) and not source.lstrip().startswith(("{", "[", "<")) else type(source).__name__
+                bind(source=label)
             result = fn(*args, **kwargs)
             result_diagnostics(result)
             run.status = outcome(result)

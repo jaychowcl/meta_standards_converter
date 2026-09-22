@@ -134,6 +134,10 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -161,7 +165,7 @@ def main(argv=None) -> int:
     )
 
     for json_path in args.json_path:
-        logger.info("%s: H5AD conversion started", json_path)
+        logger.debug("%s: H5AD conversion started", json_path)
         try:
             convert_options = {}
             for name, value, default in (
@@ -217,9 +221,9 @@ def main(argv=None) -> int:
 
         if getattr(conversion, "partial", False):
             failed = True
-            logger.error("%s: conversion completed partially: %s", json_path, conversion)
+            logger.debug("%s: conversion completed partially: %s", json_path, conversion)
         else:
-            logger.info("%s: converted to %s", json_path, conversion)
+            logger.debug("%s: converted to %s", json_path, conversion)
 
         summaries.append(conversion.to_dict())
 

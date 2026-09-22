@@ -46,7 +46,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
 
         stdout = StringIO()
-        with redirect_stdout(stdout):
+        with redirect_stderr(stdout):
             exit_code = main(["GSE234602"])
 
         self.assertEqual(0, exit_code)
@@ -57,7 +57,8 @@ class TestGeo2JSONCLI(unittest.TestCase):
             enrich=True,
             out=".",
         )
-        self.assertEqual("", stdout.getvalue())
+        self.assertEqual("Conversion: complete\n", stdout.getvalue())
+
 
     @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_multiple_accessions_are_converted_in_order(self, geo2json_mock):
@@ -137,39 +138,46 @@ class TestGeo2JSONCLI(unittest.TestCase):
         )
         self.assertIn(
             "ERROR meta_standards_converter.cli.geo2json: GSE1: json_conversion failed error_type=RuntimeError",
-            stdout.getvalue(),
+            stderr.getvalue(),
         )
-        self.assertNotIn("Traceback (most recent call last):", stdout.getvalue())
-        self.assertNotIn(canary, stdout.getvalue())
-        self.assertEqual("", stderr.getvalue())
+        self.assertNotIn("Traceback (most recent call last):", stderr.getvalue())
+        self.assertNotIn(canary, stderr.getvalue())
+        self.assertIn("Conversion: partial/failed", stderr.getvalue())
+        self.assertEqual("", stdout.getvalue())
+
+
 
     @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
-    def test_verbose_emits_success_logs_to_stdout(self, geo2json_mock):
+    def test_debug_emits_dispatch_logs_to_stderr(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
 
         stdout = StringIO()
-        with redirect_stdout(stdout):
-            exit_code = main(["GSE234602", "-v"])
+        with redirect_stderr(stdout):
+            exit_code = main(["GSE234602", "-vv"])
 
         self.assertEqual(0, exit_code)
-        self.assertIn("INFO meta_standards_converter.cli.geo2json: GSE234602: JSON conversion started", stdout.getvalue())
+        self.assertIn("DEBUG meta_standards_converter.cli.geo2json: GSE234602: JSON conversion started", stdout.getvalue())
         self.assertIn(
-            "INFO meta_standards_converter.cli.geo2json: GSE234602: converted 1 JSON package(s) to .",
+            "DEBUG meta_standards_converter.cli.geo2json: GSE234602: converted 1 JSON package(s) to .",
             stdout.getvalue(),
         )
 
+
+
     @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
-    def test_double_verbose_emits_debug_logs_to_stdout(self, geo2json_mock):
+    def test_double_verbose_emits_debug_logs_to_stderr(self, geo2json_mock):
         converter = geo2json_mock.return_value
         converter.convert.return_value = [{"series": {"accession": "GSE1"}}]
 
         stdout = StringIO()
-        with redirect_stdout(stdout):
+        with redirect_stderr(stdout):
             exit_code = main(["GSE234602", "-vv"])
 
         self.assertEqual(0, exit_code)
         self.assertIn("DEBUG meta_standards_converter.cli.geo2json: Starting geo2json CLI", stdout.getvalue())
+
+
 
     @patch("meta_standards_converter.cli.geo2json.GEO2JSONConverter")
     def test_quiet_emits_only_errors(self, geo2json_mock):
@@ -197,7 +205,7 @@ class TestGeo2JSONCLI(unittest.TestCase):
                 log_content = handle.read()
 
         self.assertEqual(0, exit_code)
-        self.assertIn("INFO meta_standards_converter.cli.geo2json: GSE234602: JSON conversion started", log_content)
+        self.assertIn("DEBUG meta_standards_converter.cli.geo2json: GSE234602: JSON conversion started", log_content)
         self.assertIn("GSE234602: converted 1 JSON package(s) to .", log_content)
 
 

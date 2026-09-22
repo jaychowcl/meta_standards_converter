@@ -17,7 +17,7 @@ import gzip
 import hashlib
 import heapq
 import logging
-from meta_standards_converter.conversion_logging import count, emit, stage
+from meta_standards_converter.conversion_logging import count, emit, stage, progress
 import os
 import re
 import shutil
@@ -520,8 +520,6 @@ class JSON2H5ADConverter:
                 self.checkpoints.metadata(checkpoint) if resume else None
             )
             if checkpoint_metadata is not None:
-                count("checkpoint_hits")
-                emit("checkpoint_reused", level="DEBUG", dataset_id=study_accession, sample_id=sample_id)
                 checkpoint_path = checkpoint[0]
                 names = self.checkpoints.observation_ids(checkpoint_path)
                 if names is not None and not (used_observation_ids & names):
@@ -531,6 +529,9 @@ class JSON2H5ADConverter:
                     sample_path = out_path / f"{sample_id}.h5ad"
                     result.sample_h5ads[sample_id] = str(sample_path)
                     checkpoint_sources[sample_id] = checkpoint_path
+                    count("checkpoint_hits")
+                    emit("checkpoint_reused", level="DEBUG", dataset_id=study_accession, sample_id=sample_id)
+                    progress(sample_index, len(planned), "samples", dataset_id=study_accession)
                     continue
 
             local_path = self._local_path(asset.path, md5=asset.md5)
@@ -564,11 +565,14 @@ class JSON2H5ADConverter:
                     ),
                 }
             )
+            emit("memory_admission", level="DEBUG", sample_id=sample_id, admitted=admitted, estimated_bytes=estimated_peak_bytes, limit_bytes=limit_bytes)
             if not admitted:
                 result.failures.append(
                     f"{sample_id}: skipped by memory admission; estimated peak "
                     f"{estimated_peak_bytes} bytes exceeds {limit_bytes} bytes"
                 )
+                count("samples_skipped")
+                progress(sample_index, len(planned), "samples", dataset_id=study_accession)
                 continue
 
             adata = self.reader.read(asset, orientation=orientation, localize=self._local_path)
@@ -625,6 +629,9 @@ class JSON2H5ADConverter:
             sample_path = out_path / f"{sample_id}.h5ad"
             result.sample_h5ads[sample_id] = str(sample_path)
             checkpoint_sources[sample_id] = checkpoint[0]
+            emit("sample_finished", level="DEBUG", status="complete", sample_id=sample_id, observations=adata.n_obs, features=adata.n_vars)
+            count("samples_converted")
+            progress(sample_index, len(planned), "samples", dataset_id=study_accession)
             del adata
 
         if allow_unverified_combination:

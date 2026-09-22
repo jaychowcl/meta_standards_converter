@@ -107,6 +107,10 @@ def add_logging_arguments(parser: argparse.ArgumentParser) -> None:
         help="Optional file path to write logs.",
     )
 
+    parser.add_argument("--log-format", choices=("text", "jsonl"), default="text", help="Log file format (default: text).")
+    parser.add_argument("--log-file-level", choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"), default="DEBUG", help="File threshold, independent of console verbosity (default: DEBUG).")
+    parser.add_argument("--progress", choices=("auto", "plain", "off"), default="auto", help="Terminal progress; quiet disables it (default: auto).")
+
 
 def log_level(args) -> int:
     if args.quiet:
@@ -119,26 +123,33 @@ def log_level(args) -> int:
 
 
 def configure_logging(args, *, stream=None) -> None:
-    level = log_level(args)
+    from .logging_output import ConsoleHandler, EventFormatter, register_configuration
     package_logger = logging.getLogger("meta_standards_converter")
+    previous = (package_logger.level, package_logger.propagate)
     for handler in package_logger.handlers[:]:
-        package_logger.removeHandler(handler)
-        handler.close()
+        if getattr(handler, "_msc_owned", False):
+            package_logger.removeHandler(handler)
+            handler.close()
     package_logger.setLevel(logging.DEBUG)
     package_logger.propagate = False
-
-    handler = logging.StreamHandler(sys.stdout if stream is None else stream)
-    handler.setLevel(level)
-    handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
+    total = None
+    for name in ("inputs", "gse", "json_path", "source", "accession"):
+        value = getattr(args, name, None)
+        if isinstance(value, (list, tuple)):
+            total = len(value)
+            break
+    handler = ConsoleHandler(sys.stderr if stream is None else stream, threshold=log_level(args),
+        mode=getattr(args, "progress", "auto"), quiet=args.quiet, total=total)
+    handlers = [handler]
     package_logger.addHandler(handler)
-
+    register_configuration(args, package_logger, handlers, previous)
     if args.log_file:
-        file_handler = logging.FileHandler(args.log_file, mode="w")
-        file_handler.setLevel(level)
-        file_handler.setFormatter(
-            logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
-        )
+        file_handler = logging.FileHandler(args.log_file, mode="w", encoding="utf-8")
+        file_handler._msc_owned = True
+        file_handler.setLevel(getattr(args, "log_file_level", "DEBUG"))
+        file_handler.setFormatter(EventFormatter(jsonl=getattr(args, "log_format", "text") == "jsonl", timestamps=True))
         package_logger.addHandler(file_handler)
+        handlers.append(file_handler)
 
 
 def record_safe_cli_error(
@@ -151,6 +162,9 @@ def record_safe_cli_error(
 ) -> SafeErrorEnvelope:
     """Log and return a durable error without serializing its raw message."""
 
+    existing = getattr(error, "_msc_logged_envelope", None)
+    if isinstance(existing, SafeErrorEnvelope):
+        return existing
     envelope = SafeErrorEnvelope.from_exception(
         error,
         provider=provider,

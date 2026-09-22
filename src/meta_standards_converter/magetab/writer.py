@@ -13,7 +13,7 @@ import csv
 import os
 
 class MAGETabWriter:
-    @measured("publication")
+    @measured("serialization")
     def write(self, magetab:list, out:str = None) -> str:
         '''
         Write magetab to idf and sdrf

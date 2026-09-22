@@ -448,6 +448,13 @@ Full flag and Python API details remain in the canonical routes below.
   keywords: ae_common, ProtocolRegistry, technology detection, SDRFConstructor, AEConstructor, import cycle
   link: [Open section](codebase.md#neutral-ae-construction-state)
 
+- id: conversion-logging
+  title: Conversion logging and progress
+  anchor: conversion-logging
+  purpose: Explain levels, correlated stages, counters, text/JSONL files, terminal bars, quiet mode and stdout/stderr contracts.
+  keywords: logging, progress, auto, plain, off, DEBUG, INFO, WARNING, ERROR, log-file-level, log-format, JSONL, heartbeat, run_id
+  link: [Open section](codebase.md#conversion-logging)
+
 - id: operational-events-v1
   title: Operational events v1
   anchor: operational-events-v1

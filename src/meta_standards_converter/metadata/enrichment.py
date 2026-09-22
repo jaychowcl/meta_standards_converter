@@ -9,7 +9,7 @@
 """
 Adds remote metadata lookups to parsed MINiML JSON packages.
 """
-from meta_standards_converter.conversion_logging import measured
+from meta_standards_converter.conversion_logging import measured, progress
 
 import xml.etree.ElementTree as ET
 import logging
@@ -218,7 +218,9 @@ class MINiMLEnricher:
         return cache[key]
 
     def enrich_sra(self, data: dict) -> dict:
-        for sample in self._as_list(data.get("sample")):
+        samples = self._as_list(data.get("sample"))
+        for index, sample in enumerate(samples):
+            progress(index, len(samples), "samples")
             if not isinstance(sample, dict):
                 continue
 
@@ -255,6 +257,7 @@ class MINiMLEnricher:
             if ena_accessions:
                 sample["ena_accession"] = self._dedupe([*self._as_list(sample.get('ena_accession')), *ena_accessions])
 
+        progress(len(samples), len(samples), "samples")
         return data
 
     @staticmethod

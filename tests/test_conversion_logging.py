@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Operation telemetry is independent of display and scientific payloads."""
 import json
 import logging
@@ -174,3 +182,100 @@ def test_publication_collision_reports_publication_not_conversion(caplog, tmp_pa
     assert result.status == 'failed'
     assert output.read_text() == 'original'
     assert any(e['stage']=='publication' and e['level']=='ERROR' for e in events(caplog))
+
+
+def test_failure_after_first_published_artifact_is_truthful(caplog, tmp_path, monkeypatch):
+    from meta_standards_converter.converters import Converter
+    from meta_standards_converter.converters import archive_results
+    from tests.converters.test_json2tsv import package
+    original = archive_results.publish_json
+    calls = []
+    def fail_second(*args, **kwargs):
+        calls.append(args[0])
+        if len(calls) == 2:
+            raise OSError('private storage detail')
+        return original(*args, **kwargs)
+    monkeypatch.setattr(archive_results, 'publish_json', fail_second)
+    with caplog.at_level(logging.DEBUG):
+        result = Converter().convert([package(), package('GSE2','GSM2')], outdir=tmp_path,
+            out_type='json', enrichment='off', options={'expand_studies':False})
+    assert result.status=='failed'
+    assert len(result.items[0].artifacts)==1
+    assert (tmp_path/'GSE1.json').is_file()
+    assert not (tmp_path/'GSE2.json').exists()
+    assert events(caplog)[-1]['attributes']['artifacts']==1
+    assert 'private storage detail' not in caplog.text
+
+
+def test_context_statistics_do_not_turn_missing_optional_data_into_errors(caplog):
+    from meta_standards_converter.converters import Converter
+    from tests.converters.test_json2tsv import package
+    with caplog.at_level(logging.DEBUG):
+        result=Converter().convert(package(), out_type='magetab', enrichment='off', options={'expand_studies':False})
+    assert result.status=='complete'
+    assert not [r for r in caplog.records if r.levelno>=logging.WARNING]
+    assert any(e['attributes'].get('sdrf_rows')==1 for e in events(caplog))
+
+
+def test_publication_progress_only_advances_after_commit(caplog, tmp_path):
+    from meta_standards_converter.conversion_logging import operation
+    from meta_standards_converter.converters.archive_results import publish_json
+    with caplog.at_level(logging.DEBUG), operation('test', heartbeat=False) as run:
+        publish_json(tmp_path/'one.json', {'safe': True})
+        with pytest.raises(FileExistsError):
+            publish_json(tmp_path/'one.json', {})
+    assert run.counters['artifacts_committed'] == 1
+    completed = [e for e in events(caplog) if e['event_type']=='progress' and e['attributes'].get('unit')=='artifacts']
+    assert len(completed) == 1
+    assert completed[0]['attributes']['completed'] == 1
+
+
+def test_nested_context_restored_and_semantic_phases_visible_at_info(caplog):
+    from meta_standards_converter.conversion_logging import logged_conversion, bind, emit, stage
+    @logged_conversion
+    def child():
+        bind(provider='ena', dataset_id='other')
+        with stage('publication'):
+            with stage('serialization'):
+                pass
+    @logged_conversion
+    def parent():
+        bind(provider='geo', dataset_id='GSE1')
+        with stage('conversion'):
+            child()
+        emit('after_child')
+    with caplog.at_level(logging.DEBUG):
+        parent()
+    recorded=events(caplog)
+    assert next(e for e in recorded if e['event_type']=='after_child')['attributes']['provider']=='geo'
+    phases=[e for e in recorded if e['event_type']=='stage_started']
+    assert next(e for e in phases if e['stage']=='publication')['level']=='INFO'
+    assert next(e for e in phases if e['stage']=='serialization')['level']=='DEBUG'
+
+
+def test_repeated_diagnostics_retained_once_per_result_traversal(caplog):
+    from types import SimpleNamespace
+    from meta_standards_converter.conversion_logging import operation, result_diagnostics
+    from meta_standards_converter.converters.unified.contracts import Diagnostic
+    result=SimpleNamespace(diagnostics=[Diagnostic('conflict','same issue','preparation','warning')]*2)
+    with caplog.at_level(logging.DEBUG), operation('test', heartbeat=False) as run:
+        result_diagnostics(result)
+        result_diagnostics(result)
+    assert len([e for e in events(caplog) if e['event_type']=='diagnostic'])==2
+    assert run.counters['warnings']==2
+
+
+def test_redaction_removes_authorization_schemes_and_quoted_secrets():
+    from meta_standards_converter.operational_events import redact
+    value=redact('Authorization: Bearer hidden_bearer Authorization=Basic hidden_basic password="hidden quoted" token=hidden_token')
+    assert 'hidden' not in value
+    assert '[REDACTED]' in value
+
+
+def test_output_counts_do_not_claim_cached_samples_were_executed():
+    from meta_standards_converter.conversion_logging import statistics
+    from meta_standards_converter.expression.catalogue import ConversionResult
+    result=ConversionResult('GSE1',sample_h5ads={'GSM1':'/already/committed.h5ad'})
+    summary=statistics(result)
+    assert summary['sample_outputs']==1
+    assert 'samples_converted' not in summary

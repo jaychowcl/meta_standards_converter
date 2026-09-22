@@ -7,7 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Native import outcomes and independent atomic file publication."""
-from meta_standards_converter.conversion_logging import measured
+from meta_standards_converter.conversion_logging import measured, count, progress
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
@@ -63,6 +63,8 @@ def publish_json(path, value, overwrite=False):
             os.replace(temporary, path)
         else:
             os.link(temporary, path)  # atomic no-replace, including competing imports
+        count("artifacts_committed")
+        progress(1, 1, "artifacts")
     finally:
         temporary.unlink(missing_ok=True)
 

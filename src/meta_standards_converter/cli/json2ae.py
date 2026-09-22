@@ -58,6 +58,10 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -78,7 +82,7 @@ def main(argv=None) -> int:
     )
 
     for json_path in args.json_path:
-        logger.info("%s: conversion started", json_path)
+        logger.debug("%s: conversion started", json_path)
         try:
             convert_options = dict(
                 json_path=json_path,
@@ -100,7 +104,7 @@ def main(argv=None) -> int:
             )
             continue
 
-        logger.info(
+        logger.debug(
             "%s: converted %d MAGE-TAB output(s) to %s",
             json_path,
             len(magetabs),

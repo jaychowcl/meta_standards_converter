@@ -46,8 +46,11 @@ def redact(value: Any, *, key: str = "") -> Any:
             except ValueError:
                 return "[REDACTED_URL]"
         value = re.sub(r"(?:https?|ftp)://[^\s<>\"']+", safe_url, value)
-        value = re.sub(r"(?i)(api[_-]?key|authorization|password|secret|token)([=:]\s*)[^\s,;]+",
-                       r"\1\2[REDACTED]", value)
+        value = re.sub(
+            r"(?i)(api[_-]?key|authorization|password|secret|token)([=:]\s*)"
+            r"(?:(?:Bearer|Basic)\s+)?(?:\"[^\"]*\"|'[^']*'|[^\s,;]+)",
+            r"\1\2[REDACTED]", value,
+        )
         return value.replace("\r", "\\r").replace("\n", "\\n")
     return value
 

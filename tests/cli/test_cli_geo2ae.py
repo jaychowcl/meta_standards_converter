@@ -105,7 +105,7 @@ class TestGeo2AECLI(unittest.TestCase):
         converter.convert.return_value = ["magetab"]
 
         stdout = StringIO()
-        with redirect_stdout(stdout):
+        with redirect_stderr(stdout):
             exit_code = main(["GSE234602"])
 
         self.assertEqual(0, exit_code)
@@ -115,7 +115,8 @@ class TestGeo2AECLI(unittest.TestCase):
             remove_empty=True,
             out=".",
         )
-        self.assertEqual("", stdout.getvalue())
+        self.assertEqual("Conversion: complete\n", stdout.getvalue())
+
 
     @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_multiple_accessions_are_converted_in_order(self, geo2ae_mock):
@@ -223,39 +224,46 @@ class TestGeo2AECLI(unittest.TestCase):
         )
         self.assertIn(
             "ERROR meta_standards_converter.cli.geo2ae: GSE1: magetab_conversion failed error_type=RuntimeError",
-            stdout.getvalue(),
+            stderr.getvalue(),
         )
-        self.assertNotIn("Traceback (most recent call last):", stdout.getvalue())
-        self.assertNotIn(canary, stdout.getvalue())
-        self.assertEqual("", stderr.getvalue())
+        self.assertNotIn("Traceback (most recent call last):", stderr.getvalue())
+        self.assertNotIn(canary, stderr.getvalue())
+        self.assertIn("Conversion: partial/failed", stderr.getvalue())
+        self.assertEqual("", stdout.getvalue())
+
+
 
     @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
-    def test_verbose_emits_success_logs_to_stdout(self, geo2ae_mock):
+    def test_debug_emits_dispatch_logs_to_stderr(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
 
         stdout = StringIO()
-        with redirect_stdout(stdout):
-            exit_code = main(["GSE234602", "-v"])
+        with redirect_stderr(stdout):
+            exit_code = main(["GSE234602", "-vv"])
 
         self.assertEqual(0, exit_code)
-        self.assertIn("INFO meta_standards_converter.cli.geo2ae: GSE234602: conversion started", stdout.getvalue())
+        self.assertIn("DEBUG meta_standards_converter.cli.geo2ae: GSE234602: conversion started", stdout.getvalue())
         self.assertIn(
-            "INFO meta_standards_converter.cli.geo2ae: GSE234602: converted 1 MAGE-TAB output(s) to .",
+            "DEBUG meta_standards_converter.cli.geo2ae: GSE234602: converted 1 MAGE-TAB output(s) to .",
             stdout.getvalue(),
         )
 
+
+
     @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
-    def test_double_verbose_emits_debug_logs_to_stdout(self, geo2ae_mock):
+    def test_double_verbose_emits_debug_logs_to_stderr(self, geo2ae_mock):
         converter = geo2ae_mock.return_value
         converter.convert.return_value = ["magetab"]
 
         stdout = StringIO()
-        with redirect_stdout(stdout):
+        with redirect_stderr(stdout):
             exit_code = main(["GSE234602", "-vv"])
 
         self.assertEqual(0, exit_code)
         self.assertIn("DEBUG meta_standards_converter.cli.geo2ae: Starting geo2ae CLI", stdout.getvalue())
+
+
 
     @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
     def test_quiet_emits_only_errors(self, geo2ae_mock):
@@ -283,7 +291,7 @@ class TestGeo2AECLI(unittest.TestCase):
                 log_content = handle.read()
 
         self.assertEqual(0, exit_code)
-        self.assertIn("INFO meta_standards_converter.cli.geo2ae: GSE234602: conversion started", log_content)
+        self.assertIn("DEBUG meta_standards_converter.cli.geo2ae: GSE234602: conversion started", log_content)
         self.assertIn("GSE234602: converted 1 MAGE-TAB output(s) to .", log_content)
 
     @patch("meta_standards_converter.cli.geo2ae.GEO2AEConverter")
@@ -292,17 +300,19 @@ class TestGeo2AECLI(unittest.TestCase):
         converter.convert.return_value = ["magetab"]
 
         first_stdout = StringIO()
-        with redirect_stdout(first_stdout):
-            first_exit = main(["GSE1", "-v"])
+        with redirect_stderr(first_stdout):
+            first_exit = main(["GSE1", "-vv"])
 
         second_stdout = StringIO()
-        with redirect_stdout(second_stdout):
-            second_exit = main(["GSE2", "-v"])
+        with redirect_stderr(second_stdout):
+            second_exit = main(["GSE2", "-vv"])
 
         self.assertEqual(0, first_exit)
         self.assertEqual(0, second_exit)
         self.assertEqual(1, first_stdout.getvalue().count("GSE1: conversion started"))
         self.assertEqual(1, second_stdout.getvalue().count("GSE2: conversion started"))
+
+
 
 
 if __name__ == "__main__":

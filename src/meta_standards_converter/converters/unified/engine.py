@@ -11,7 +11,7 @@
 from __future__ import annotations
 from meta_standards_converter.conversion_logging import logged_conversion, measured
 import os
-from meta_standards_converter.conversion_logging import stage, item_scope, emit, statistics
+from meta_standards_converter.conversion_logging import stage, item_scope, emit, statistics, bind
 import tempfile
 from collections.abc import Mapping
 from contextlib import ExitStack
@@ -420,6 +420,7 @@ class Converter:
                         loaded.origins = tuple(source_label(source) for source in sources)
                         loaded.companions = dict(spec.companions)
                         item.provider = loaded.provider
+                        bind(provider=loaded.provider)
                         item.content_id = loaded.content_id
                         item.origins = loaded.origins
                         item.companions = {
@@ -468,6 +469,7 @@ class Converter:
                         before = len(loaded.diagnostics)
                         loaded = context.preparer.prepare(loaded)
                         item.provider = loaded.provider
+                        bind(provider=loaded.provider)
                         item.preparation = loaded.preparation
                         item.diagnostics.extend(loaded.diagnostics[before:])
                         if loaded.metadata is not None:

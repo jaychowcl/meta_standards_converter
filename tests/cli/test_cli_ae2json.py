@@ -104,7 +104,7 @@ class TestAE2JSONCLI(unittest.TestCase):
         ]
         stdout = StringIO()
 
-        with redirect_stdout(stdout):
+        with redirect_stderr(stdout):
             exit_code = main(["bad.idf.txt", "good.idf.txt"])
 
         self.assertEqual(1, exit_code)
@@ -115,17 +115,20 @@ class TestAE2JSONCLI(unittest.TestCase):
         )
         self.assertNotIn(canary, stdout.getvalue())
 
+
     @patch("meta_standards_converter.cli.ae2json.AE2JSONConverter")
-    def test_verbose_logs_success(self, converter_mock):
+    def test_debug_logs_dispatch(self, converter_mock):
         converter_mock.return_value.convert.return_value = [{"series": {}}]
         stdout = StringIO()
 
-        with redirect_stdout(stdout):
-            exit_code = main(["E-MTAB-1", "-v"])
+        with redirect_stderr(stdout):
+            exit_code = main(["E-MTAB-1", "-vv"])
 
         self.assertEqual(0, exit_code)
         self.assertIn("E-MTAB-1: conversion started", stdout.getvalue())
         self.assertIn("converted 1 package(s) to .", stdout.getvalue())
+
+
 
 
 if __name__ == "__main__":

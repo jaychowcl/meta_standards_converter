@@ -7,7 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Independent sra native metadata conversion workflow."""
-from meta_standards_converter.conversion_logging import logged_conversion
+from meta_standards_converter.conversion_logging import logged_conversion, stage, bind, progress, count
 import logging
 from pathlib import Path
 from meta_standards_converter.sources.sra import SRASource
@@ -37,7 +37,8 @@ class SRA2JSONConverter:
         if hasattr(self.source, 'http'):
             self.source.http.evidence_dir = Path(evidence_dir) if evidence_dir else None
         try:
-            resolution = _resolution if _resolution is not None else self.source.resolve(accession)
+            with stage("discovery"):
+                resolution = _resolution if _resolution is not None else self.source.resolve(accession)
         except Exception as error:
             result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=[type(error).__name__]))
             logger.debug('%s: resolution failed (%s)', accession, type(error).__name__)
@@ -46,19 +47,24 @@ class SRA2JSONConverter:
             if not resolution.studies:
                 result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=resolution.issues))
                 logger.debug('%s: no study resolved (%s)', accession, '; '.join(resolution.issues))
-            for seed in resolution.studies:
+            progress(0, len(resolution.studies), "studies")
+            for seed_index, seed in enumerate(resolution.studies, 1):
                 key = ('sra', seed.study)
                 if key in seen:
                     if resolution.issues:
                         result.studies.append(StudyImportOutcome(seed.study, seed.primary, 'partial', issues=list(resolution.issues)))
                         for issue in resolution.issues:
                             logger.debug('%s: %s', accession, issue)
+                    count("studies_reused")
+                    progress(seed_index, len(resolution.studies), "studies")
                     continue
+                bind(dataset_id=seed.study, provider="sra")
                 seen.add(key)
                 outcome = StudyImportOutcome(seed.study, seed.primary, 'failed', issues=list(resolution.issues))
                 result.studies.append(outcome)
                 try:
-                    records = self.source.fetch(seed)
+                    with stage("load"):
+                        records = self.source.fetch(seed)
                     if not records.xml and not any(records.indexed.values()):
                         raise ValueError('No native metadata records retrieved')
                     package = self.parser.parse(records)
@@ -112,6 +118,7 @@ class SRA2JSONConverter:
                 for issue in outcome.issues:
                     logger.debug('%s: %s', seed.study, issue)
                 logger.debug('%s: %s', seed.primary, outcome.status)
+                progress(seed_index, len(resolution.studies), "studies")
         if report_path is not None:
             publish_json(report_path, result.to_mapping(), overwrite)
         return result

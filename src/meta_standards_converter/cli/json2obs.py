@@ -67,6 +67,10 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)

@@ -15,6 +15,10 @@ def _parser():
     return parser_for('SRA')
 
 
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None):
     return run_cli(_parser(), SRA2JSONConverter, argv)
 

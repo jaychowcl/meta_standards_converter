@@ -69,6 +69,10 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+from .logging_output import cli_entrypoint
+
+
+@cli_entrypoint
 def main(argv=None) -> int:
     parser = _parser()
     args = parser.parse_args(argv)
@@ -91,7 +95,7 @@ def main(argv=None) -> int:
     )
 
     for gse in args.gse:
-        logger.info("%s: conversion started", gse)
+        logger.debug("%s: conversion started", gse)
         try:
             convert_options = dict(
                 gse=gse,
@@ -113,7 +117,7 @@ def main(argv=None) -> int:
             )
             continue
 
-        logger.info("%s: converted %d MAGE-TAB output(s) to %s", gse, len(magetabs), args.out)
+        logger.debug("%s: converted %d MAGE-TAB output(s) to %s", gse, len(magetabs), args.out)
 
     return 1 if failed else 0
 

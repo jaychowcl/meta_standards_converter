@@ -1,4 +1,3 @@
-from meta_standards_converter.conversion_logging import logged_conversion
 # =============================================================================
 # Authors
 #
@@ -7,6 +6,7 @@ from meta_standards_converter.conversion_logging import logged_conversion
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from meta_standards_converter.conversion_logging import logged_conversion, stage, progress, count
 from meta_standards_converter.magetab.writer import MAGETabWriter
 """Converter for parsed MINiML JSON to ArrayExpress MAGE-TAB format."""
 
@@ -63,13 +63,13 @@ class JSON2AEConverter(JSONHandler):
         for index, package in enumerate(packages, start=1):
             converted_package = package
             if enrich:
-                logger.info("%s: enriching parsed package %d", json_path, index)
+                logger.debug("%s: enriching parsed package %d", json_path, index)
                 converted_package = codec.decode(
                     self.enricher.enrich(data=package)
                 ).package
             else:
                 logger.debug("%s: using prepared metadata for parsed package %d", json_path, index)
-            logger.info("%s: building MAGE-TAB package %d", json_path, index)
+            logger.debug("%s: building MAGE-TAB package %d", json_path, index)
             if platform_handler is None:
                 magetab = self.ae_constructor.miniml2magetab(data=converted_package)
             else:
@@ -80,11 +80,14 @@ class JSON2AEConverter(JSONHandler):
             magetabs.append(magetab)
 
         if out:
-            for index, magetab in enumerate(magetabs, start=1):
-                logger.info("%s: writing MAGE-TAB package %d to %s", json_path, index, out)
-                MAGETabWriter().write(magetab=magetab, out=out)
+            with stage("publication", planned_artifacts=2 * len(magetabs)):
+                progress(0, 2 * len(magetabs), "artifacts")
+                for index, magetab in enumerate(magetabs, start=1):
+                    MAGETabWriter().write(magetab=magetab, out=out)
+                    count("artifacts_committed", 2)
+                    progress(2 * index, 2 * len(magetabs), "artifacts")
 
-        logger.info("%s: conversion produced %d MAGE-TAB package(s)", json_path, len(magetabs))
+        logger.debug("%s: conversion produced %d MAGE-TAB package(s)", json_path, len(magetabs))
         return magetabs
 
     def _load_packages(
