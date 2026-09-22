@@ -35,6 +35,7 @@ class AnnDataNormalizer:
     PUBLICATION_POLICY = "citation_metadata_only"
 
     OBS_METADATA_FIELDS = {
+        "msc.provenance.conflicts": "provenance_conflicts",
         "msc.sample.title": "title",
         "msc.sample.description": "description",
         "msc.sample.channel.organism.value": "organism",
@@ -154,12 +155,14 @@ class AnnDataNormalizer:
         ).items():
             canonical_values[key] = () if value is None else (value,)
         for key, values in canonical_values.items():
-            adata.obs[key] = self._join_values(values)
+            adata.obs[key] = values[0] if key == "msc.provenance.conflicts" else self._join_values(values)
         self._attach_sample_values(
             adata,
             {sample_id: canonical_values},
         )
+        from ..metadata.conflicts import _conflicts, _json
         provenance = {
+            "conflicts": _json(_conflicts(package)),
             "study_accession": study_accession,
             "sample_accession": sample_id,
             "source_tier": asset.kind,

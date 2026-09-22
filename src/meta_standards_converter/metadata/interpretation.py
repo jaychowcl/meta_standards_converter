@@ -380,11 +380,13 @@ class MINiMLMetadataService:
         metadata["metadata_source_uri"] = tuple(
             self.values(database.get("web_link"))
         )
+        from .conflicts import _conflicts, _json
+        metadata["provenance_conflicts"] = (_json(_conflicts(package, sample)),)
         return metadata
 
     def render_sample_metadata(self, values: Mapping[str, Any]) -> dict[str, Any]:
         return {
-            key: (
+            key: (value[0] if key == "provenance_conflicts" else
                 {
                     characteristic: self.join_values(items)
                     for characteristic, items in value.items()

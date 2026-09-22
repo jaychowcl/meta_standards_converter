@@ -115,7 +115,13 @@ class MetadataPreparation:
         def has_recorded_evidence():
             kinds = {'MINiML', 'source_conflict'} if policy.enrichment == 'curators' else {'source_conflict'}
             return any(r.get('kind') in kinds for r in package.to_mapping().get('extensions', {}).get('insdc', {}).get('records', []))
-        if policy.enrichment != "off" and has_recorded_evidence():
+        if policy.enrichment == "off" and has_recorded_evidence():
+            # Reporting supplied disagreements is not supplementary reconciliation.
+            _, issues = inspect_recorded_conflicts(package, "off")
+            records.append({"operation": "recorded_evidence", "dataset": identity,
+                            "provider": provider, "status": "partial", "reason": None})
+            diagnostics.extend(Diagnostic("source_partial", issue, "preparation", "warning") for issue in issues)
+        elif has_recorded_evidence():
             run("recorded_evidence", True,
                 lambda p: inspect_recorded_conflicts(p, policy.enrichment))
         read_id = next((v for v in ids if re.fullmatch(r"[SED]RP\d+", v)), None)

@@ -5867,6 +5867,15 @@ SRA/ENA facts keep the primary provider's populated value and fill gaps. Scienti
 comparison requires the same joined sample, experiment/library, run and field.
 Curator inspection includes library facts on positively bound recorded assay paths;
 unbound or other-library paths cannot supply a comparison.
+Portable conflict evidence uses versioned `Comment[MSCConflict]` IDF entries and
+a readable `Comment[MSCConflictSummary]`. Recognized comments reconstruct the
+existing records; malformed or unknown versions remain source comments with a
+parser warning. TSV/CSV and AnnData obs carry `msc.provenance.conflicts` as JSON;
+AnnData package provenance also carries the complete `conflicts` JSON ledger.
+Serialization deduplicates deterministically and preserves literal values,
+including whitespace. Existing unresolved conflicts produce partial-but-valid
+facade results even with enrichment off, without refetching or reselecting values.
+
 `source_conflict` extension records retain accession, field path, original values,
 selection and reason. A `source_selection` ledger preserves selected-field origins
 across subsequent merges. Unresolved disagreements make completeness partial while

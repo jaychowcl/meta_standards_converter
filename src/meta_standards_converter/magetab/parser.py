@@ -245,6 +245,8 @@ class AEParser:
         for sample in mapping.get("sample", []):
             for i, channel in enumerate(sample.get("channel", [])):
                 channel.setdefault("characteristics", []).extend(retained_hz.get((sample["iid"], i), []))
+        from ..metadata.conflicts import _restore_conflict_comments
+        _restore_conflict_comments(mapping, self._warn)
         return MINiMLCodec().decode(mapping).package
 
     def _table(self, text: str, name: str, rectangular: bool) -> list[list[str]]:

@@ -328,6 +328,8 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
     if assay_table:
         _replace_row(rows, "SDRF File", [assay_table])
     _insert_retained_patch_comments(package, rows)
+    from ..metadata.conflicts import _insert_conflict_comments
+    _insert_conflict_comments(package, rows)
     return rows
 
 

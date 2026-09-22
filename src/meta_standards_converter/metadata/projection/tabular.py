@@ -122,8 +122,10 @@ class MSCMetadataProjector:
         "msc.database.uri",
         "msc.expression.modality",
         "msc.expression.modality_detail",
+        "msc.provenance.conflicts",
     )
     VALUE_MAP = {
+        "msc.provenance.conflicts": "provenance_conflicts",
         "msc.sample.title": "title",
         "msc.sample.description": "description",
         "msc.sample.channel.organism.value": "organism",
