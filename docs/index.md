@@ -451,7 +451,7 @@ Full flag and Python API details remain in the canonical routes below.
 - id: operational-events-v1
   title: Operational events v1
   anchor: operational-events-v1
-  purpose: Shared redacted JSONL/logging envelope and JSON/Prometheus metrics export at provider boundaries.
+  purpose: Shared redacted events, conversion operation/stage context, heartbeats and JSON/Prometheus metrics.
   keywords: OperationalEventEmitter, schema 1.0, JSONL, logging, redaction, metrics, Prometheus, RateLimitedRequester
   link: [Open section](codebase.md#operational-events-v1)
 

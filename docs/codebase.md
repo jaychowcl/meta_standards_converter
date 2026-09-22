@@ -4435,6 +4435,8 @@ same value. GEO-shaped `GSE` identities remain numeric-only.
 <a id="operational-events-v1"></a>
 ## Operational events v1
 
+Operation-local conversion telemetry is implemented by `conversion_logging`: nested calls share a run ID, stage scopes carry durations and counts, and explicit `context_callable()` captures context for worker dispatch. A 30-second heartbeat reports active stages without provider requests. The library does not configure handlers. Events retain the v1 envelope and are attached to log records as `msc_event`; URL userinfo, queries, fragments and credential-like fields are redacted.
+
 `meta_standards_converter.operational_events.OperationalEventEmitter`
 implements the cross-repository schema-1.0 envelope for structured logging and
 optional JSONL. It recursively redacts credential-like keys and URL query

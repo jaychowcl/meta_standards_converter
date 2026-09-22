@@ -33,10 +33,22 @@ def redact(value: Any, *, key: str = "") -> Any:
         return {str(k): redact(v, key=str(k)) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [redact(item) for item in value]
-    if isinstance(value, str) and key.lower() in {"url", "uri", "endpoint"}:
-        parsed = urlsplit(value)
-        if parsed.scheme and parsed.netloc:
-            return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+    if isinstance(value, str):
+        def safe_url(match):
+            try:
+                parsed = urlsplit(match.group(0))
+                host = parsed.hostname or ""
+                if ":" in host:
+                    host = "[" + host + "]"
+                if parsed.port is not None:
+                    host += ":" + str(parsed.port)
+                return urlunsplit((parsed.scheme, host, parsed.path, "", ""))
+            except ValueError:
+                return "[REDACTED_URL]"
+        value = re.sub(r"(?:https?|ftp)://[^\s<>\"']+", safe_url, value)
+        value = re.sub(r"(?i)(api[_-]?key|authorization|password|secret|token)([=:]\s*)[^\s,;]+",
+                       r"\1\2[REDACTED]", value)
+        return value.replace("\r", "\\r").replace("\n", "\\n")
     return value
 
 
@@ -63,7 +75,7 @@ class OperationalEventEmitter:
                 self.jsonl_path.parent.mkdir(parents=True, exist_ok=True)
                 with self.jsonl_path.open("a", encoding="utf-8") as stream:
                     stream.write(payload + "\n")
-        self.logger.log(getattr(logging, level.upper(), logging.INFO), payload)
+        self.logger.log(getattr(logging, level.upper(), logging.INFO), payload, extra={"msc_event": event})
         return event
 
     def metrics(self) -> dict[str, Any]:
