@@ -1261,6 +1261,8 @@ class ProtocolApplication:
     date: str | None = None
     comments: tuple[NamedComment, ...] = ()
     kind: str = field(default="protocol_application", init=False)
+    term_source_ref: str | None = None
+    term_accession_number: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.protocol_ref, str) or not self.protocol_ref.strip():
@@ -1269,7 +1271,7 @@ class ProtocolApplication:
     @classmethod
     def from_mapping(cls, value: Any) -> "ProtocolApplication":
         data = _mapping(value, "protocol application")
-        known = {"kind", "protocol_ref", "parameter_values", "performer", "date", "comments"}
+        known = {"kind", "protocol_ref", "parameter_values", "performer", "date", "comments", "term_source_ref", "term_accession_number"}
         _reject_unknown(data, known, "protocol application")
         reference = str(data.get("protocol_ref", "")).strip()
         if not reference:
@@ -1280,11 +1282,13 @@ class ProtocolApplication:
             data.get("performer"),
             data.get("date"),
             _comments(data.get("comments")),
+            data.get("term_source_ref"),
+            data.get("term_accession_number"),
         )
 
     def to_mapping(self) -> dict[str, Any]:
         result = {"kind": self.kind, "protocol_ref": self.protocol_ref}
-        for key in ("parameter_values", "performer", "date", "comments"):
+        for key in ("parameter_values", "performer", "date", "comments", "term_source_ref", "term_accession_number"):
             _put(result, key, getattr(self, key))
         return result
 

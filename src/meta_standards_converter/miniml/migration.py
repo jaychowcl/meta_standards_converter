@@ -288,9 +288,12 @@ class MINiMLV1Migrator:
                     "kind": "protocol_application",
                     "protocol_ref": reference,
                 }
+                for qualifier in ("term_source_ref", "term_accession_number"):
+                    if step.get(qualifier):
+                        current_application[qualifier] = str(step[qualifier])
                 result.append(current_application)
                 last_named = None
-                last_ontology = None
+                last_ontology = current_application
                 continue
             if kind in {'node', 'file'}:
                 active_node = current_application = last_named = last_ontology = None

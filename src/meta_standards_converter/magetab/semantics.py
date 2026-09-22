@@ -509,6 +509,9 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
             continue
         if step.get("kind") == "protocol_application":
             result.append(("Protocol REF", step.get("protocol_ref", "")))
+            for key, label in (("term_source_ref", "Term Source REF"), ("term_accession_number", "Term Accession Number")):
+                if step.get(key):
+                    result.append((label, step[key]))
             if step.get("performer") not in (None, ""):
                 result.append(("Performer", step["performer"]))
             if step.get("date") not in (None, ""):
