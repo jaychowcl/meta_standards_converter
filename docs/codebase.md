@@ -5842,6 +5842,13 @@ extraction/isolation; nuclear material alone does not establish a single-nucleus
 assay. Bound contradictory preparations remain unknown with evidence diagnostics.
 Shared unbound sample protocols do not override an identified library.
 
+Generated native acquisition prefixes are reconciled before rendering. A verified
+sample/experiment/run, ordered material/protocol identity and exact file location
+are required. Complementary acquisition annotations are shared across its file
+alternatives; a shorter generated path is removed only after all evidence has
+been represented by retained continuations. Authored occurrences, distinct
+processing branches and conflicting or unbound scopes remain separate.
+
 ### Source selection and evidence
 
 The facade scopes `metadata.reconciliation.selection_policy` to each preparation

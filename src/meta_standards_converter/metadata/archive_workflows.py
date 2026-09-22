@@ -361,6 +361,9 @@ def _bind_peer_sample_names(prepared, candidates, sample, provider):
 def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None, selection=None):
     """Bind complete ordered branches and acquisition prefixes by explicit identity."""
     paths = data['series'].setdefault('assay_paths', [])
+    generated = {id(p) for p in paths if data.get('source', {}).get('format') in {'SRA', 'ENA', 'DRA'}
+                 and not p.get('document') and not any(s.get('link', {}).get('repository')
+                     for s in p['steps'] if is_file(s))}
     samples = {s['iid']: s for s in data['sample']}
     source_samples = {matched[s['iid']]: s for s in extra.get('sample', []) if s['iid'] in matched}
     # Refresh native biological projections before accepting authored workflows.
@@ -538,6 +541,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                                     if comment not in s.setdefault('comments', []): s['comments'].append(deepcopy(comment))
                         else:
                             paths.append({'steps': [_biological_node(samples[target]), node]})
+    if prefer:
+        from .workflow_continuations import _reconcile_continuations
+        _reconcile_continuations(paths, generated, issues)
     # Complete channel fallbacks only after binding scoped workflow evidence.
     # Never replace an authored biological-node annotation with a sample copy.
     for path in paths:
