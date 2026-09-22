@@ -230,6 +230,12 @@ class IDFConstructor():
         for relation in self._as_list((data.get("series") or {}).get("relation")):
             if not isinstance(relation, dict):
                 continue
+            if str(relation.get("type", "")).strip().casefold() == "related experiment":
+                target = relation.get("target")
+                if isinstance(target, str) and target.strip() and target.strip() not in seen:
+                    seen.add(target.strip())
+                    related_gses.append(target.strip())
+                continue
             if not self._is_related_series_relation(relation=relation):
                 continue
             for value in (relation.get("type"), relation.get("target"), relation.get("comment")):
