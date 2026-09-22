@@ -27,6 +27,32 @@ def remap_references(value, mappings):
                 remap_references(item, mappings)
 
 
+def _same_platform(left, right):
+    """Use declared identities or explicit native instrument facts, never titles."""
+    def norm(value):
+        return ' '.join(str(value or '').split()).casefold()
+    def accessions(record):
+        return {(norm(a.get('database')), a['value']) for a in record.get('accession', []) if a.get('value')}
+    for key in ('instrument_platform', 'instrument_model', 'technology', 'manufacturer', 'catalog_number'):
+        if left.get(key) and right.get(key) and norm(left[key]) != norm(right[key]):
+            return False
+    a, b = accessions(left), accessions(right)
+    if a or b:
+        return bool(a & b)
+    fields = ('instrument_platform', 'instrument_model', 'technology')
+    return all(norm(left.get(k)) and norm(left.get(k)) == norm(right.get(k)) for k in fields)
+
+
+def _complete_platform(current, incoming):
+    for key, value in incoming.items():
+        if key == 'iid':
+            continue
+        if isinstance(value, list) and isinstance(current.get(key), list):
+            current[key].extend(deepcopy(v) for v in value if v not in current[key])
+        elif value and not current.get(key):
+            current[key] = deepcopy(value)
+
+
 def merge_declarations(data, extra, namespace):
     """Global database IDs agree by identity; conflicting local IDs are scoped."""
     mappings = {}
@@ -64,14 +90,18 @@ def merge_declarations(data, extra, namespace):
     for kind in ('organization', 'contributor', 'platform'):
         for incoming in extra.get(kind, []):
             iid = incoming['iid']
-            mappings[iid] = namespace + iid
+            matches = [p for p in data.get('platform', []) if _same_platform(p, incoming)] if kind == 'platform' else []
+            mappings[iid] = matches[0]['iid'] if len(matches) == 1 else namespace + iid
             incoming['iid'] = mappings[iid]
     remap_references(extra, mappings)
     for kind in ('organization', 'contributor', 'platform'):
         current = {v['iid']: v for v in data.setdefault(kind, [])}
         for incoming in extra.get(kind, []):
             if incoming['iid'] in current:
-                current[incoming['iid']].update(deepcopy(incoming))
+                if kind == 'platform':
+                    _complete_platform(current[incoming['iid']], incoming)
+                else:
+                    current[incoming['iid']].update(deepcopy(incoming))
             else:
                 data[kind].append(deepcopy(incoming))
     # IDF contributors are study-scoped even when the input omitted explicit refs.
