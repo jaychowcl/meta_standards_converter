@@ -600,7 +600,7 @@ canonical guide together when an interface, workflow, or contract changes.
   title: Scientific fidelity and archive validation
   anchor: fidelity-contracts
   purpose: Strict preparation rollback, typed array qualifiers, provider dates, biological aliases and detailed library modality.
-  keywords: strict, invalid_candidate, ERP000263, ERP185509, term source, array assay, OrganismPart, modality_detail, Visium, GeoMx
+  keywords: strict, invalid_candidate, ERP000263, ERP185509, term source, array assay, OrganismPart, modality_detail, nuclei extraction, bound modality conflicts, Visium, GeoMx
   link: [Open section](codebase.md#fidelity-contracts)
 
 - id: scientific-source-selection

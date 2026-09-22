@@ -39,6 +39,10 @@ class ModalityDecision:
 
 _SPATIAL = re.compile(r'\b(?:visium|geomx|slide[- ]seq|stereo[- ]seq|seq[- ]scope)\b|\bspatial\s+(?:transcriptom|rna|gene expression|sequenc)', re.I)
 _NUCLEUS = re.compile(r'\bsingle[- ](?:nucleus|nuclei)\b|\bsn[- ]?(?:rna|atac)(?:[- ]?seq)?\b', re.I)
+_BULK_NUCLEAR = re.compile(r'\bbulk\s+(?:nuclear\s+)?(?:rna|dna|librar|sequenc)', re.I)
+_NUCLEAR_MATERIAL = re.compile(r'\b(?:nuclei|nucleus)\s+(?:(?:were|was|are|is)\s+)?(?:extract|isolat|recover)|\b(?:extraction|isolation|recovery)\s+of\s+(?:nuclei|nucleus)|\b(?:isolated|extracted)\s+nuclei', re.I)
+_WHOLE_CELL = re.compile(r'\b(?:whole|intact)\s+cells?\b', re.I)
+_NEGATIVE = re.compile(r'\b(?:no|not|without|never)\b', re.I)
 _CELL = re.compile(r'\bsingle[- ]cell\b|\b(?:split[- ]seq|evercode)\b|\bcombinatorial indexing\b', re.I)
 
 
@@ -46,7 +50,7 @@ def _signals(text):
     found = set()
     for clause in clauses(text.replace("_", " ")):
         # A bulk-control description can mention the study it controls.
-        if BULK.search(clause) or re.match(r'^\s*bulk\b', clause, re.I):
+        if BULK.search(clause) or _BULK_NUCLEAR.search(clause) or re.match(r'^\s*bulk\b', clause, re.I):
             found.add('bulk')
             clause = re.split(r'\bcontrol\s+(?:for|in|of)\b', clause, flags=re.I)[0]
         if NON_PREP.search(clause):
@@ -61,22 +65,44 @@ def _signals(text):
     return tuple(sorted(found))
 
 
+def _material(text, pattern):
+    return any(pattern.search(clause) and not _NEGATIVE.search(clause)
+               and not NON_PREP.search(clause) for clause in clauses(text))
+
+
 def _library(sample, run, data):
     levels = library_evidence_levels(sample, run=run, series=(data or {}).get('series'))
-    nucleus_material = tuple(ModalityEvidence(path, text, ('single_nucleus',))
-        for path, text in levels[2] if re.search(r'\b(?:nuclei|nucleus)\s+isolation\b', text, re.I))
-    for facts in levels:
-        evidence = tuple(ModalityEvidence(path, text, _signals(text)) for path, text in facts if _signals(text))
-        candidates = {value for fact in evidence for value in fact.candidates}
-        if candidates:
-            if len(candidates) == 1:
-                value = next(iter(candidates))
-                if value == 'single_cell' and nucleus_material:
-                    return ModalityDecision('single_nucleus', evidence + nucleus_material)
-                return ModalityDecision(value, evidence)
-            return ModalityDecision('unknown', evidence,
-                (ModalityDiagnostic('conflicting_modality', tuple(f.path for f in evidence)),))
-    return ModalityDecision('unknown')
+    # Library identity can exclude a shared sample description, but not a
+    # positively bound library preparation. Archive categories remain broad.
+    identity = levels[0] if any(_signals(text) for _, text in levels[0]) else levels[1]
+    bound = [(path, text) for path, text in levels[2]
+             if not identity or identity is levels[1]
+             or '.run[' in path or path.startswith('series.protocols[')]
+    facts = identity + bound
+    evidence = tuple(ModalityEvidence(path, text, _signals(text))
+                     for path, text in facts if _signals(text))
+    candidates = {value for fact in evidence for value in fact.candidates}
+    broad = tuple(ModalityEvidence(path, text, _signals(text))
+                  for path, text in levels[3] if _signals(text))
+    broad_values = {value for fact in broad for value in fact.candidates}
+    # The archive's single-cell umbrella is compatible with spatial and
+    # single-nucleus assays, but contradicts an explicit bulk preparation.
+    if candidates and candidates <= {'spatial', 'single_nucleus'}:
+        broad_values.discard('single_cell')
+    candidates.update(broad_values)
+    evidence += broad
+    nuclear = tuple(ModalityEvidence(path, text, ('single_nucleus',))
+                    for path, text in bound if _material(text, _NUCLEAR_MATERIAL))
+    whole = any(_material(text, _WHOLE_CELL) for _, text in facts)
+    if candidates == {'single_cell'} and nuclear:
+        candidates = {'single_nucleus', 'single_cell'} if whole else {'single_nucleus'}
+        evidence += nuclear
+    if candidates == {'single_cell', 'single_nucleus'} and not whole:
+        candidates.remove('single_cell')
+    if len(candidates) > 1:
+        return ModalityDecision('unknown', evidence,
+            (ModalityDiagnostic('conflicting_modality', tuple(f.path for f in evidence)),))
+    return ModalityDecision(next(iter(candidates)) if candidates else 'unknown', evidence)
 
 
 @preparation_operation

@@ -5836,6 +5836,12 @@ and raw column names are preserved. Source descriptions such as `total RNA` do
 not supply tissue. Explicit harmonization replacement profiles still replace the
 selected destination, including its aliases, on the resolved working view.
 
+Modality resolution combines library identity with positively bound preparation evidence.
+The broad archive single-cell category can be refined by affirmative nuclei
+extraction/isolation; nuclear material alone does not establish a single-nucleus
+assay. Bound contradictory preparations remain unknown with evidence diagnostics.
+Shared unbound sample protocols do not override an identified library.
+
 ### Source selection and evidence
 
 The facade scopes `metadata.reconciliation.selection_policy` to each preparation

@@ -50,7 +50,7 @@ def test_mixed_requires_different_established_libraries_not_conflicting_claims()
 
 
 @pytest.mark.parametrize('accession,expected', [
-    ('E-MTAB-14560', {'single_cell': 4, 'spatial': 16}),
+    ('E-MTAB-14560', {'single_nucleus': 4, 'spatial': 16}),
     ('E-MTAB-14566', {'spatial': 2}), ('E-MTAB-14960', {'spatial': 4}),
     ('E-MTAB-13131', {'single_nucleus': 1}), ('E-MTAB-16856', {'single_cell': 2}),
 ])
@@ -92,3 +92,42 @@ def test_tabular_and_anndata_share_modality_detail_without_changing_legacy_servi
     assert 'modality_evidence' in adata.uns['meta_standards_converter']
     adata.write_h5ad(tmp_path / 'test.h5ad')
     assert anndata.read_h5ad(tmp_path / 'test.h5ad').obs['msc.expression.modality_detail'].tolist() == ['single_nucleus']
+
+
+@pytest.mark.parametrize('protocol,expected', [
+    ('Nuclei were extracted and counted, then partitioned for library preparation.', 'single_nucleus'),
+    ('Isolation of nuclei followed by single-nucleus library construction.', 'single_nucleus'),
+    ('Nuclei isolation and recovery for Chromium libraries.', 'single_nucleus'),
+    ('No nuclei were extracted. Whole cells were partitioned.', 'single_cell'),
+    ('Nuclei were not isolated. Whole cells were processed.', 'single_cell'),
+    ('Bulk nuclear RNA libraries were prepared from isolated nuclei.', 'unknown'),
+])
+def test_broad_archive_source_is_refined_by_bound_preparation(protocol, expected):
+    sample = {'iid': 's', 'sra_run': [{'run': 'r', 'experiment': 'e',
+        'library_source': 'TRANSCRIPTOMIC SINGLE CELL', 'library_construction_protocol': protocol}]}
+    decision = resolve_modality(sample)
+    assert decision.value == expected
+    if expected == 'single_nucleus':
+        assert any('library_construction_protocol' in e.path for e in decision.evidence)
+    if expected == 'unknown': assert decision.diagnostics
+
+
+def test_nuclear_material_does_not_establish_single_nucleus_assay():
+    sample = {'iid': 's', 'channel': [{'extract_protocol': 'Nuclei were extracted and counted.'}]}
+    assert resolve_modality(sample).value == 'unknown'
+    sample['title'] = 'bulk nuclear RNA-seq'
+    assert resolve_modality(sample).value == 'bulk'
+
+
+def test_explicit_bound_library_disagreement_is_not_hidden_by_identity_text():
+    sample = {'iid': 's', 'sra_run': [{'run': 'r', 'experiment': 'e',
+        'library_name': 'single-cell RNA-seq', 'library_construction_protocol': 'Bulk RNA libraries were prepared.'}]}
+    decision = resolve_modality(sample)
+    assert decision.value == 'unknown'
+    assert decision.diagnostics
+
+
+def test_unbound_sample_nuclear_protocol_does_not_refine_identified_library():
+    sample = {'iid': 's', 'channel': [{'extract_protocol': 'Nuclei were extracted.'}],
+              'sra_run': [{'run': 'r', 'library_name': 'single-cell RNA-seq'}]}
+    assert resolve_modality(sample).value == 'single_cell'
