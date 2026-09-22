@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 import json
 import csv
 import logging
@@ -45,6 +46,7 @@ class NFCoreRunner:
         self.runtime_runner = runtime_runner or subprocess.run
         self.annotation_converter = annotation_converter or AnnotationConverter(which=self.which)
 
+    @measured("processing")
     def process(
         self,
         assets: dict[str, Asset],

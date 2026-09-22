@@ -18,6 +18,7 @@ from email.utils import parsedate_to_datetime
 import fcntl
 import hashlib
 import json
+from meta_standards_converter.conversion_logging import count, emit, current
 import logging
 import os
 from pathlib import Path
@@ -548,6 +549,8 @@ class RateLimitedRequester:
                         clock=self._wall_clock,
                     )
                     self.rate_wait_seconds += float(waited or 0)
+                    count("rate_wait_seconds", float(waited or 0))
+                    count("provider_attempts")
                     self.provider_attempts += 1
                     response = self._get(url, **kwargs)
                 finally:
@@ -572,8 +575,9 @@ class RateLimitedRequester:
                     delay_seconds=delay,
                     clock=self._wall_clock,
                 )
+                count("retries")
                 self.retry_count += 1
-                logger.info(
+                logger.debug(
                     "HTTP retry service=%s host=%s exception=%s "
                     "next_attempt=%s delay_seconds=%.3f",
                     self.service,
@@ -611,8 +615,9 @@ class RateLimitedRequester:
                 delay_seconds=delay,
                 clock=self._wall_clock,
             )
+            count("retries")
             self.retry_count += 1
-            logger.info(
+            logger.debug(
                 "HTTP retry service=%s host=%s status=%s next_attempt=%s delay_seconds=%.3f",
                 self.service,
                 host,
@@ -634,7 +639,9 @@ class RateLimitedRequester:
         elapsed: float,
         status_code: int | None,
     ) -> None:
-        if self._event_emitter is not None:
+        emit("provider_request", level="DEBUG", status=status, provider=self.service,
+             host=host, attempts=attempts, status_code=status_code, duration_seconds=elapsed)
+        if self._event_emitter is not None and current() is None:
             self._event_emitter.emit(
                 "provider_request",
                 component=self.service,

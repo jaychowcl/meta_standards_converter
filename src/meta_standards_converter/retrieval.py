@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+from meta_standards_converter.conversion_logging import measured, count, emit
+
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -156,6 +158,7 @@ class RetrievalService:
         self.urlopen = urlopen or urllib.request.urlopen
         self._downloaded_bytes = 0
 
+    @measured("retrieval")
     def localize(
         self,
         value: str,
@@ -178,6 +181,8 @@ class RetrievalService:
         with self._cache_lock():
             if destination.exists():
                 self._verify_cached(destination, origin=value, expected_md5=md5)
+                count("cache_hits")
+                emit("cache_hit", level="DEBUG", url=value)
                 return str(destination)
             if parsed.scheme in {"http", "https"}:
                 self._download_http(
@@ -193,6 +198,9 @@ class RetrievalService:
                     object_limit=object_limit,
                     expected_md5=md5,
                 )
+        count("downloads")
+        count("download_bytes", destination.stat().st_size)
+        emit("download_completed", level="DEBUG", url=value, bytes=destination.stat().st_size)
         return str(destination)
 
     def _download_http(

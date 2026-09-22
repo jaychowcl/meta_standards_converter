@@ -9,6 +9,7 @@
 """Convert parsed MINiML JSON packages into annotated H5AD datasets."""
 
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import logged_conversion, measured
 
 import json
 import csv
@@ -16,6 +17,7 @@ import gzip
 import hashlib
 import heapq
 import logging
+from meta_standards_converter.conversion_logging import count, emit, stage
 import os
 import re
 import shutil
@@ -216,6 +218,7 @@ class JSON2H5ADConverter:
         self.available_memory = available_memory or _available_memory_bytes
         self.memory_estimator = memory_estimator or _estimate_asset_memory_bytes
 
+    @logged_conversion
     def convert(
         self,
         json_path: str,
@@ -291,6 +294,7 @@ class JSON2H5ADConverter:
         )
         return self._run_loaded(loaded, source_json=json_path, out=out, **conversion_options)
 
+    @logged_conversion
     def convert_loaded(self, loaded, out=None, *, source_json=None,
                        replacement_profile=None, **options):
         """Convert loaded package groups without an intermediate JSON file."""
@@ -333,6 +337,7 @@ class JSON2H5ADConverter:
                 result.warnings.append(warning)
         return result
 
+    @logged_conversion
     def convert_source(
         self,
         json_path: str,
@@ -396,6 +401,7 @@ class JSON2H5ADConverter:
             result.conversions[group.dataset_id] = converted
         return result
 
+    @measured("expression")
     def _convert_packages(
         self,
         packages: list[dict],
@@ -495,7 +501,9 @@ class JSON2H5ADConverter:
                     if rendered not in result.warnings:
                         result.warnings.append(rendered)
 
-        for sample_id, asset in planned.items():
+        emit("assets_planned", assets=len(planned), raw_assets=len(raw_assets))
+        for sample_index, (sample_id, asset) in enumerate(planned.items(), 1):
+            emit("sample_started", level="DEBUG", sample_id=sample_id, completed=sample_index - 1, total=len(planned), unit="samples")
             if asset.kind == "raw":
                 raise RuntimeError(f"nf-core did not replace the raw source for {sample_id}.")
             orientation = asset.orientation if asset.orientation != "auto" else matrix_orientation
@@ -512,6 +520,8 @@ class JSON2H5ADConverter:
                 self.checkpoints.metadata(checkpoint) if resume else None
             )
             if checkpoint_metadata is not None:
+                count("checkpoint_hits")
+                emit("checkpoint_reused", level="DEBUG", dataset_id=study_accession, sample_id=sample_id)
                 checkpoint_path = checkpoint[0]
                 names = self.checkpoints.observation_ids(checkpoint_path)
                 if names is not None and not (used_observation_ids & names):

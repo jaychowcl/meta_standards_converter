@@ -7,11 +7,13 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Pure parser for Entrez experiment packages and their linked metadata."""
+from meta_standards_converter.conversion_logging import measured
 from . import insdc_support as m
 from ..sources.archive_support import identifier
 
 
 class SRAParser:
+    @measured("parse")
     def parse(self, records):
         packages = [p for root in records.xml for p in root.findall('.//EXPERIMENT_PACKAGE')]
         packages = [p for p in packages if identifier(p.find('EXPERIMENT/STUDY_REF')) == records.seed.study]

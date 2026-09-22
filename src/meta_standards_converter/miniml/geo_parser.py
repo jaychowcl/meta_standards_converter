@@ -11,6 +11,7 @@ Parser for GEO MINiML XML data.
 """
 
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 
 import re
 import logging
@@ -110,6 +111,7 @@ class GEOParser:
             "Repeats": {"Sample-Ref"},
         }
 
+    @measured("parse")
     def parse(
         self,
         miniml: str,

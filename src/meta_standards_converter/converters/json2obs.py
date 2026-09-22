@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import logged_conversion
 
 import tempfile
 
@@ -29,6 +30,7 @@ class JSON2OBSConverter:
         self.h5ad_converter = h5ad_converter or JSON2H5ADConverter()
         self.components = components or AnnDataComponentExporter()
 
+    @logged_conversion
     def convert(
         self,
         source: str | Path,
@@ -58,6 +60,7 @@ class JSON2OBSConverter:
                 converted, destination, include_var, include_uns, overwrite
             )
 
+    @logged_conversion
     def convert_loaded(
         self,
         loaded,

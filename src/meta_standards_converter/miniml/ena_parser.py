@@ -7,11 +7,13 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Pure parser for ENA Browser objects and indexed Portal records."""
+from meta_standards_converter.conversion_logging import measured
 from . import insdc_support as m
 from ..sources.archive_support import identifier
 
 
 class ENAParser:
+    @measured("parse")
     def parse(self, records):
         entities = {}
         for root in records.xml:

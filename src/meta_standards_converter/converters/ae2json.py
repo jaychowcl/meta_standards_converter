@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Convert MAGE-TAB IDF/SDRF metadata to parsed MINiML-compatible JSON."""
+from meta_standards_converter.conversion_logging import logged_conversion
 
 import json
 import logging
@@ -52,6 +53,7 @@ class AE2JSONConverter:
         )
         self.parser = parser or AEParser()
 
+    @logged_conversion
     def convert(
         self,
         source: str,

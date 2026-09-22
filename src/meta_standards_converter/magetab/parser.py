@@ -8,6 +8,7 @@
 # =============================================================================
 """Parse MAGE-TAB IDF/SDRF tables into a MINiML-compatible package."""
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 import csv
 import hashlib
 import io
@@ -112,6 +113,7 @@ class AEParser:
         "umi barcode size",
     }
 
+    @measured("parse")
     def parse(self, source: MAGETabInput) -> dict:
         self.warnings = []
         self.file_catalogue = source.file_catalogue

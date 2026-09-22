@@ -70,6 +70,7 @@ class Operation:
         self.started = clock()
         self.last_tick = self.started
         self.failure_stage = None
+        self.failure_error = None
         self.status = "complete"
         self.statistics = {}
         self.diagnostics_seen = set()
@@ -155,9 +156,11 @@ def stage(name, **statistics):
     emit("stage_started", level=level, status="running", **statistics)
     try:
         yield span
-    except BaseException:
+    except BaseException as error:
         span.status = "failed"
-        run.failure_stage = name
+        if run.failure_error is not error:
+            run.failure_stage = name
+            run.failure_error = error
         raise
     finally:
         try:
@@ -186,6 +189,11 @@ def measured(name):
 def statistics(value):
     """Read bounded public result metadata; never inspect scientific matrices."""
     stats = {}
+    metadata = getattr(value, "metadata", None)
+    if metadata is not None and hasattr(metadata, "groups"):
+        value = metadata
+    if hasattr(value, "samples") and hasattr(value, "to_mapping"):
+        value = [value]
     groups = getattr(value, "groups", None)
     packages = getattr(value, "packages", None)
     if isinstance(groups, (tuple, list)):
@@ -195,7 +203,9 @@ def statistics(value):
         packages = value
     if isinstance(packages, (tuple, list)):
         stats["packages"] = len(packages)
-        stats["samples"] = sum(len(p.samples) for p in packages)
+        stats["samples"] = sum(len(getattr(p, "samples", ())) for p in packages)
+        stats["runs"] = sum(len(sample.to_mapping().get("sra_run", ()))
+                            for p in packages for sample in getattr(p, "samples", ()))
     for attr, key in (("row_count", "rows"), ("n_obs", "observations"), ("n_vars", "features")):
         number = getattr(value, attr, None)
         if isinstance(number, int):
@@ -222,7 +232,7 @@ def diagnostic(code, message, *, severity="warning", stage_name=None, **attribut
     run = current()
     if run is None:
         return
-    key = (_labels.get().get("item_id"), stage_name, code, message)
+    key = (_labels.get().get("item_id"), _labels.get().get("dataset_id"), stage_name, code, message)
     with run.lock:
         if key in run.diagnostics_seen:
             return
@@ -246,14 +256,15 @@ def result_diagnostics(result):
         values = getattr(result, attr, None)
         if isinstance(values, (tuple, list)):
             for value in values:
-                diagnostic(attr, str(value), severity=severity)
+                diagnostic(attr, str(value), severity="error" if attr == "issues" and getattr(result, "status", None) == "failed" else severity)
     for attr in ("studies", "conversions"):
         values = getattr(result, attr, None)
         if isinstance(values, dict):
             values = list(values.values())
         if isinstance(values, (tuple, list)):
             for value in values:
-                result_diagnostics(value)
+                with labels(dataset_id=getattr(value, "study", None) or getattr(value, "study_accession", None)):
+                    result_diagnostics(value)
 
 
 def outcome(result):
@@ -283,3 +294,22 @@ def logged_conversion(fn):
             run.statistics.update(statistics(result))
             return result
     return wrapped
+
+
+@contextmanager
+def item_scope(item, *, total, index):
+    run = current()
+    if run is None:
+        yield
+        return
+    run.failure_stage = None
+    with labels(item_id=item.id):
+        emit("item_started", status="running", index=index, inputs=total, source=item.source)
+        try:
+            yield
+        finally:
+            result_diagnostics(item)
+            count("inputs_finished")
+            emit("item_finished", status=item.status, index=index, inputs=total,
+                 finished=index, execution=item.execution, completeness=item.completeness,
+                 validation=item.validation, datasets=len(item.dataset_ids), artifacts=len(item.artifacts))

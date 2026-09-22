@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 import json
 import tempfile
 from dataclasses import dataclass, replace
@@ -101,6 +102,7 @@ def scientific_modules():
     return anndata, numpy, pandas, sparse
 
 class AnnDataComponentExporter:
+    @measured("projection")
     def export(
         self,
         conversion: ConversionResult,
@@ -231,6 +233,7 @@ def _json_value(value: Any) -> Any:
         return [_json_value(item) for item in value]
     raise TypeError(f"Unsupported AnnData uns value: {type(value).__name__}")
 
+@measured("publication")
 def _publish_bundle(
     staged: Mapping[str, Path],
     destinations: Mapping[str, Path],

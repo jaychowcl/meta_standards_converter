@@ -108,3 +108,69 @@ def test_interruption_cleans_up_context(exception, caplog):
             raise exception()
     assert current() is None
     assert events(caplog)[-1]["status"] == "interrupted"
+
+
+def test_unified_stage_order_and_final_item_counts(caplog, tmp_path):
+    from meta_standards_converter.converters import Converter, InputSpec
+    from tests.converters.test_json2tsv import package
+    with caplog.at_level(logging.DEBUG):
+        result = Converter().convert([InputSpec(package(), id="good"), tmp_path / 'missing.json'],
+            out_type="json", enrichment="off", options={"expand_studies": False})
+    assert result.status == "partial"
+    recorded = events(caplog)
+    stages = [e["stage"] for e in recorded if e["event_type"] == "stage_started"]
+    assert stages.index("discovery") < stages.index("load") < stages.index("preparation") < stages.index("conversion")
+    finished = [e for e in recorded if e["event_type"] == "item_finished"]
+    assert [e["status"] for e in finished] == ["complete", "failed"]
+    assert recorded[-1]["attributes"]["complete"] == 1
+    assert recorded[-1]["attributes"]["failed"] == 1
+    assert any(e["level"] == "ERROR" and e["attributes"].get("item_id") == "input_2" for e in recorded)
+
+
+def test_optional_failure_is_warning_and_reports_retained_output(caplog):
+    from meta_standards_converter.converters import Converter
+    from tests.converters.test_converter_preparation import native, services
+    with caplog.at_level(logging.DEBUG):
+        result = Converter(services=services([], failure=True)).convert(native(),
+            out_type="json", enrichment="curators", options={"expand_studies":False})
+    assert result.items[0].execution == "succeeded"
+    assert result.status == "partial"
+    recorded = events(caplog)
+    assert any(e["level"] == "WARNING" and e["attributes"].get("code") == "source_partial" for e in recorded)
+    assert not any(e["level"] == "ERROR" for e in recorded)
+
+
+def test_fail_fast_finishes_every_input(caplog, tmp_path):
+    from meta_standards_converter.converters import Converter, InputSpec
+    from tests.converters.test_json2tsv import package
+    with caplog.at_level(logging.DEBUG):
+        result = Converter().convert([tmp_path/'missing.json', InputSpec(package())],
+            out_type="json", options={"fail_fast":True})
+    assert [i.status for i in result.items] == ["failed", "skipped"]
+    assert [e["status"] for e in events(caplog) if e["event_type"] == "item_finished"] == ["failed", "skipped"]
+
+
+@pytest.mark.parametrize('provider', ['sra', 'ena'])
+def test_native_partial_results_log_failed_study(provider, caplog):
+    from tests.test_native_archive_converters import Source, SRA2JSONConverter, ENA2JSONConverter
+    cls = SRA2JSONConverter if provider == 'sra' else ENA2JSONConverter
+    with caplog.at_level(logging.DEBUG):
+        result = cls(source=Source(provider)).convert('SRR11192680')
+    assert [s.status for s in result.studies] == ['complete','failed']
+    recorded = events(caplog)
+    assert len([e for e in recorded if e['event_type']=='conversion_started']) == 1
+    assert any(e['level']=='ERROR' for e in recorded)
+    assert recorded[-1]['attributes']['studies'] == 2
+
+
+def test_publication_collision_reports_publication_not_conversion(caplog, tmp_path):
+    from meta_standards_converter.converters import Converter
+    from tests.converters.test_json2tsv import package
+    output = tmp_path/'protected.json'
+    output.write_text('original')
+    with caplog.at_level(logging.DEBUG):
+        result = Converter().convert(package(), outfile=output, out_type='json',
+            enrichment='off', options={'expand_studies':False})
+    assert result.status == 'failed'
+    assert output.read_text() == 'original'
+    assert any(e['stage']=='publication' and e['level']=='ERROR' for e in events(caplog))

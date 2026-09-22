@@ -7,11 +7,13 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Prepare loaded groups once using existing enrichment and merge services."""
+from meta_standards_converter.conversion_logging import measured
 from copy import deepcopy
 from dataclasses import replace
 import hashlib
 import json
 import re
+from meta_standards_converter.conversion_logging import emit, count, stage, labels
 
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.codec import MINiMLCompatibilityError
@@ -41,6 +43,7 @@ class MetadataPreparation:
         from .families import StudyFamilies
         self.families = StudyFamilies(context)
 
+    @measured("preparation")
     def prepare(self, loaded):
         if loaded.metadata is None:
             return loaded
@@ -57,6 +60,9 @@ class MetadataPreparation:
                        provider, self.context.preparation_policy)
                 if key not in self.cache:
                     self.cache[key] = self._package(package, provider)
+                else:
+                    count("preparation_cache_hits")
+                    emit("preparation_cache_hit", level="DEBUG", provider=provider)
                 prepared, records, diagnostics = self.cache[key]
                 packages.append(prepared)
                 loaded.preparation.extend(deepcopy(records))
@@ -123,6 +129,9 @@ class MetadataPreparation:
             return bool(links)
         run("linked_metadata", linked_applicable, lambda p: self._linked(p, provider, links))
         run("standard", True, lambda p: self._standard(p, provider))
+        for record in records:
+            count("preparation_" + record["status"])
+            emit("preparation_outcome", level="DEBUG", **record)
         return package, records, diagnostics
 
     def _peer(self, package, provider, accession):

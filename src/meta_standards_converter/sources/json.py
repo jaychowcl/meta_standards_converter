@@ -9,6 +9,7 @@
 """Load parsed MINiML or canonical Atlas v1 JSON as study-scoped packages."""
 
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 
 import json
 from copy import deepcopy
@@ -64,6 +65,7 @@ class JSONPackageSource:
         self._atlas_reader = atlas_reader or AtlasV1Reader()
         self._codec = MINiMLCodec()
 
+    @measured("load")
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
         payload = json.loads(source.read_text(encoding="utf-8"))

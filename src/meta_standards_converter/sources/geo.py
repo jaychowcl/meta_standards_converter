@@ -9,6 +9,7 @@
 """
 Fetches data from GEO
 """
+from meta_standards_converter.conversion_logging import measured
 
 import logging
 import tarfile
@@ -90,6 +91,7 @@ class GEOWebFetcher:
         url = f"https://ftp.ncbi.nlm.nih.gov/geo/series/{gse_nnn}/{gse}/miniml/{gse}_family.xml.tgz"
         return url
 
+    @measured("retrieval")
     def fetch_gse_miniml(self, gse) -> str:
         """
         creates url from gse accession, fetches miniml file, returns miniml as string.
@@ -245,6 +247,7 @@ class GEOSource:
         self.parser = parser or GEOParser(resource_profile=resource_profile)
         self.resource_profile = self.parser.resource_profile
 
+    @measured("parse")
     def parse(self, miniml, remove_empty=False, related_series=False):
         if not related_series:
             return self.parser.parse(miniml=miniml, remove_empty=remove_empty)

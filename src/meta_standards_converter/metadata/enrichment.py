@@ -9,6 +9,7 @@
 """
 Adds remote metadata lookups to parsed MINiML JSON packages.
 """
+from meta_standards_converter.conversion_logging import measured
 
 import xml.etree.ElementTree as ET
 import logging
@@ -69,6 +70,7 @@ class MINiMLEnricher:
     def enrich(self, data: MINiMLPackage) -> MINiMLPackage:
         return self.enrich_selected(data)
 
+    @measured("enrichment")
     def enrich_selected(self, data: MINiMLPackage, *, publications=True, run_metadata=True) -> MINiMLPackage:
         """Use the legacy normalization and merge rules with explicit retrieval selection."""
         started = time.monotonic()

@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 import gzip
 import os
 import re
@@ -118,10 +119,12 @@ def _copy_10x_member(source: str, destination: Path, *, decompress: bool) -> Non
 
 
 class AssetReader(Protocol):
+    @measured("read_expression")
     def read(self, asset: Asset, *, orientation: str = "auto", localize: Callable[[str], str]) -> Any: ...
 
 
 class ProcessedAssetReader:
+    @measured("read_expression")
     def read(self, asset: Asset, *, orientation: str = "auto", localize):
         if (
             underlying_suffix(asset.path) == ".mtx"

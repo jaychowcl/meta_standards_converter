@@ -9,7 +9,9 @@
 """Unified request orchestration; handlers and domain services perform conversion."""
 
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import logged_conversion, measured
 import os
+from meta_standards_converter.conversion_logging import stage, item_scope, emit, statistics
 import tempfile
 from collections.abc import Mapping
 from contextlib import ExitStack
@@ -163,6 +165,7 @@ class Converter:
             else detect(source, context.runtime, context.profile.max_xml_bytes)
         )
 
+    @logged_conversion
     def convert(
         self,
         input=None,
@@ -200,139 +203,142 @@ class Converter:
             from meta_standards_converter.metadata.preparation_scope import preparation_session
             stack.enter_context(preparation_session())
             context = ExecutionContext(self, runtime, out_type, outfile, outdir, stack)
-            declared = (
-                manifest_specs(input_manifest, context.profile.max_xml_bytes)
-                if input_manifest is not None
-                else []
-            )
-            companion_paths = [
-                v
-                for spec in declared
-                for value in spec.companions.values()
-                for v in (value if isinstance(value, (list, tuple)) else [value])
-                if isinstance(v, (str, Path)) and not is_url(str(v))
-            ]
-            declared_paths = [
-                v
-                for spec in declared
-                for v in (
-                    spec.sources
-                    if isinstance(spec.sources, (list, tuple))
-                    else [spec.sources]
+            with stage("discovery") as discovery:
+                declared = (
+                    manifest_specs(input_manifest, context.profile.max_xml_bytes)
+                    if input_manifest is not None
+                    else []
                 )
-                if isinstance(v, (str, Path))
-                and not is_url(str(v))
-                and not str(v).lstrip().startswith(("{", "[", "<"))
-            ]
-            specs = declared + expand(
-                input,
-                runtime,
-                output_directory=outdir,
-                excluded=(
-                    outfile,
-                    input_manifest if isinstance(input_manifest, (str, Path)) else None,
-                    *companion_paths,
-                    *declared_paths,
-                    *runtime["reserved_paths"],
-                ),
-            )
-            # Manifest-owned paths must not be discovered again from the accompanying directory.
-            owned = {
-                str(Path(v).resolve())
-                for s in declared
-                for v in (
-                    s.sources if isinstance(s.sources, (list, tuple)) else [s.sources]
+                companion_paths = [
+                    v
+                    for spec in declared
+                    for value in spec.companions.values()
+                    for v in (value if isinstance(value, (list, tuple)) else [value])
+                    if isinstance(v, (str, Path)) and not is_url(str(v))
+                ]
+                declared_paths = [
+                    v
+                    for spec in declared
+                    for v in (
+                        spec.sources
+                        if isinstance(spec.sources, (list, tuple))
+                        else [spec.sources]
+                    )
+                    if isinstance(v, (str, Path))
+                    and not is_url(str(v))
+                    and not str(v).lstrip().startswith(("{", "[", "<"))
+                ]
+                specs = declared + expand(
+                    input,
+                    runtime,
+                    output_directory=outdir,
+                    excluded=(
+                        outfile,
+                        input_manifest if isinstance(input_manifest, (str, Path)) else None,
+                        *companion_paths,
+                        *declared_paths,
+                        *runtime["reserved_paths"],
+                    ),
                 )
-                if isinstance(v, (str, Path)) and not is_url(str(v))
-            }
-            specs = declared + [
-                s
-                for s in specs[len(declared) :]
-                if not (
-                    isinstance(s.sources, (str, Path))
-                    and not is_url(str(s.sources))
-                    and str(s.sources)[:1] not in "{[<"
-                    and str(Path(s.sources).resolve()) in owned
-                )
-            ]
-            if not specs:
-                raise ValueError("At least one input or manifest entry is required")
-            if outfile is not None and len(specs) > 1:
-                raise ValueError("Batch inputs require outdir")
-            planned = []
-            ids = set()
-            for index, spec in enumerate(specs, 1):
-                if not isinstance(spec.companions, Mapping):
-                    raise TypeError("companions must be a mapping")
-                allowed_companions = {"idf", "sdrf", "features", "barcodes"}
-                if set(spec.companions) - allowed_companions:
-                    raise ValueError("Unknown companion role")
-                chosen = kind_name(spec.in_type) or forced
-                inp = merge_input_options(base_input, spec.input_options)
-                out = settings(
-                    base_output | output_settings(spec.output_options, out_type, partial=True),
-                    OUTPUT[out_type],
-                    "output options",
-                )
-                inp, out = apply_preparation_overrides(inp, out, spec.input_options, spec.output_options)
-                inp, out, preparation = preparation_options(inp, out)
-                error = None
-                kind = chosen
-                if kind is None:
-                    try:
-                        kind = self._detect(spec.sources, context)
-                    except Exception as exc:
-                        error = exc
-                if kind in INPUT:
-                    settings(inp, INPUT[kind], f"{kind} input options")
-                    companion_roles = {
-                        "magetab": {"idf", "sdrf"},
-                        "matrix": {"features", "barcodes"},
-                    }.get(kind, set())
-                    if set(spec.companions) - companion_roles:
-                        raise ValueError(f"Irrelevant companions for {kind}")
-                    if spec.metadata is not None and kind not in {
-                        "matrix",
-                        "fastq",
-                        "h5ad",
-                        "anndata",
-                    }:
-                        raise ValueError(
-                            f"Explicit metadata is not applicable to {kind}"
+                # Manifest-owned paths must not be discovered again from the accompanying directory.
+                owned = {
+                    str(Path(v).resolve())
+                    for s in declared
+                    for v in (
+                        s.sources if isinstance(s.sources, (list, tuple)) else [s.sources]
+                    )
+                    if isinstance(v, (str, Path)) and not is_url(str(v))
+                }
+                specs = declared + [
+                    s
+                    for s in specs[len(declared) :]
+                    if not (
+                        isinstance(s.sources, (str, Path))
+                        and not is_url(str(s.sources))
+                        and str(s.sources)[:1] not in "{[<"
+                        and str(Path(s.sources).resolve()) in owned
+                    )
+                ]
+                if not specs:
+                    raise ValueError("At least one input or manifest entry is required")
+                if outfile is not None and len(specs) > 1:
+                    raise ValueError("Batch inputs require outdir")
+                planned = []
+                ids = set()
+                for index, spec in enumerate(specs, 1):
+                    if not isinstance(spec.companions, Mapping):
+                        raise TypeError("companions must be a mapping")
+                    allowed_companions = {"idf", "sdrf", "features", "barcodes"}
+                    if set(spec.companions) - allowed_companions:
+                        raise ValueError("Unknown companion role")
+                    chosen = kind_name(spec.in_type) or forced
+                    inp = merge_input_options(base_input, spec.input_options)
+                    out = settings(
+                        base_output | output_settings(spec.output_options, out_type, partial=True),
+                        OUTPUT[out_type],
+                        "output options",
+                    )
+                    inp, out = apply_preparation_overrides(inp, out, spec.input_options, spec.output_options)
+                    inp, out, preparation = preparation_options(inp, out)
+                    error = None
+                    kind = chosen
+                    if kind is None:
+                        try:
+                            kind = self._detect(spec.sources, context)
+                        except Exception as exc:
+                            error = exc
+                    if kind in INPUT:
+                        settings(inp, INPUT[kind], f"{kind} input options")
+                        companion_roles = {
+                            "magetab": {"idf", "sdrf"},
+                            "matrix": {"features", "barcodes"},
+                        }.get(kind, set())
+                        if set(spec.companions) - companion_roles:
+                            raise ValueError(f"Irrelevant companions for {kind}")
+                        if spec.metadata is not None and kind not in {
+                            "matrix",
+                            "fastq",
+                            "h5ad",
+                            "anndata",
+                        }:
+                            raise ValueError(
+                                f"Explicit metadata is not applicable to {kind}"
+                            )
+                    if kind in {"h5ad", "anndata"} and out_type in {"h5ad", "obs"}:
+                        settings(
+                            out,
+                            {"include_var", "include_uns"} if out_type == "obs" else set(),
+                            "standalone expression options",
                         )
-                if kind in {"h5ad", "anndata"} and out_type in {"h5ad", "obs"}:
-                    settings(
-                        out,
-                        {"include_var", "include_uns"} if out_type == "obs" else set(),
-                        "standalone expression options",
-                    )
-                if (
-                    kind == "matrix"
-                    and spec.metadata is None
-                    and out_type in {"h5ad", "obs"}
-                ):
-                    settings(
-                        out,
-                        (
-                            {"matrix_orientation", "include_var", "include_uns"}
-                            if out_type == "obs"
-                            else {"matrix_orientation"}
-                        ),
-                        "standalone matrix options",
-                    )
                     if (
-                        "orientation" in inp
-                        and "matrix_orientation" in out
-                        and inp["orientation"] != out["matrix_orientation"]
+                        kind == "matrix"
+                        and spec.metadata is None
+                        and out_type in {"h5ad", "obs"}
                     ):
-                        raise ValueError("Conflicting matrix orientations")
-                    if "matrix_orientation" in out:
-                        inp["orientation"] = out["matrix_orientation"]
-                item_id = spec.id or f"input_{index}"
-                if not isinstance(item_id, str) or not item_id or item_id in ids:
-                    raise ValueError("Input IDs must be unique nonempty strings")
-                ids.add(item_id)
-                planned.append((spec, kind, chosen, inp, out, error, item_id, preparation))
+                        settings(
+                            out,
+                            (
+                                {"matrix_orientation", "include_var", "include_uns"}
+                                if out_type == "obs"
+                                else {"matrix_orientation"}
+                            ),
+                            "standalone matrix options",
+                        )
+                        if (
+                            "orientation" in inp
+                            and "matrix_orientation" in out
+                            and inp["orientation"] != out["matrix_orientation"]
+                        ):
+                            raise ValueError("Conflicting matrix orientations")
+                        if "matrix_orientation" in out:
+                            inp["orientation"] = out["matrix_orientation"]
+                    item_id = spec.id or f"input_{index}"
+                    if not isinstance(item_id, str) or not item_id or item_id in ids:
+                        raise ValueError("Input IDs must be unique nonempty strings")
+                    ids.add(item_id)
+                    planned.append((spec, kind, chosen, inp, out, error, item_id, preparation))
+                discovery.update(inputs=len(planned))
+            emit("batch_planned", inputs=len(planned))
             seen = {}
             stopped = False
             for spec, kind, chosen, inp, out, error, item_id, preparation in planned:
@@ -343,189 +349,192 @@ class Converter:
                     forced=bool(chosen),
                 )
                 result.items.append(item)
-                sources = (
-                    spec.sources
-                    if isinstance(spec.sources, (list, tuple))
-                    else [spec.sources]
-                )
-                item.origins = tuple(source_label(source) for source in sources)
-                if stopped:
-                    item.status = "skipped"
-                    item.execution = "skipped"
-                    item.diagnostics.append(
-                        Diagnostic("fail_fast", "Not attempted after previous failure")
-                    )
-                    continue
-                context.preparation_policy = preparation
-                context.input_options = inp
-                context.output_options = out
-                context.stage = "input"
-                try:
-                    if error is not None:
-                        raise error
-                    if isinstance(spec.sources, (str, os.PathLike)) and not str(
-                        spec.sources
-                    ).lstrip().startswith(("{", "[", "<")):
-                        key = (
-                            (
-                                str(Path(spec.sources).resolve())
-                                if not is_url(str(spec.sources))
-                                else str(spec.sources)
-                            ),
-                            kind,
-                        )
-                        configuration = repr((inp, out, preparation, spec.companions, spec.metadata))
-                        if key in seen:
-                            if seen[key] != configuration:
-                                raise InputError(
-                                    "conflicting_input",
-                                    "The same source has conflicting settings or bindings",
-                                )
-                            item.status = "skipped"
-                            item.execution = "skipped"
-                            item.diagnostics.append(
-                                Diagnostic(
-                                    "duplicate_input",
-                                    "Duplicate input was not converted twice",
-                                    "discovery",
-                                    "warning",
-                                )
-                            )
-                            continue
-                        seen[key] = configuration
-                    if kind == "remote_xml":
-                        kind = xml_kind(context.text(spec.sources))
-                        item.in_type = kind
-                    if kind not in self.handlers:
-                        raise InputError(
-                            "unsupported_input", "No registered input handler"
-                        )
-                    context.stage = "load"
-                    self.handlers[kind].validate(spec, context)
-                    from meta_standards_converter.metadata.preparation_scope import loading_source
-                    with loading_source(preparation):
-                        loaded = self.handlers[kind].load(spec, context)
+                with item_scope(item, total=len(planned), index=len(result.items)):
                     sources = (
                         spec.sources
                         if isinstance(spec.sources, (list, tuple))
                         else [spec.sources]
                     )
-                    loaded.origins = tuple(source_label(source) for source in sources)
-                    loaded.companions = dict(spec.companions)
-                    item.provider = loaded.provider
-                    item.content_id = loaded.content_id
-                    item.origins = loaded.origins
-                    item.companions = {
-                        key: (
-                            [source_label(v) for v in value]
-                            if isinstance(value, (list, tuple))
-                            else source_label(value)
+                    item.origins = tuple(source_label(source) for source in sources)
+                    if stopped:
+                        item.status = "skipped"
+                        item.execution = "skipped"
+                        item.diagnostics.append(
+                            Diagnostic("fail_fast", "Not attempted after previous failure")
                         )
-                        for key, value in spec.companions.items()
-                    }
-                    route, item.route = select_route(loaded, kind, out_type)
-                    item.diagnostics.extend(loaded.diagnostics)
-                    if loaded.metadata is not None:
-                        context.stage = "validation"
-                        issues = loaded.metadata.diagnostics
-                        item.diagnostics.extend(
-                            Diagnostic(
+                        continue
+                    context.preparation_policy = preparation
+                    context.input_options = inp
+                    context.output_options = out
+                    context.stage = "input"
+                    try:
+                        if error is not None:
+                            raise error
+                        if isinstance(spec.sources, (str, os.PathLike)) and not str(
+                            spec.sources
+                        ).lstrip().startswith(("{", "[", "<")):
+                            key = (
                                 (
-                                    "metadata_warning"
-                                    if d.severity == "warning"
-                                    else "invalid_metadata"
+                                    str(Path(spec.sources).resolve())
+                                    if not is_url(str(spec.sources))
+                                    else str(spec.sources)
                                 ),
-                                f"{d.path}: {d.message}",
-                                "validation",
-                                d.severity,
+                                kind,
                             )
-                            for d in issues
-                        )
-                        if any(d.severity == "error" for d in issues):
+                            configuration = repr((inp, out, preparation, spec.companions, spec.metadata))
+                            if key in seen:
+                                if seen[key] != configuration:
+                                    raise InputError(
+                                        "conflicting_input",
+                                        "The same source has conflicting settings or bindings",
+                                    )
+                                item.status = "skipped"
+                                item.execution = "skipped"
+                                item.diagnostics.append(
+                                    Diagnostic(
+                                        "duplicate_input",
+                                        "Duplicate input was not converted twice",
+                                        "discovery",
+                                        "warning",
+                                    )
+                                )
+                                continue
+                            seen[key] = configuration
+                        if kind == "remote_xml":
+                            kind = xml_kind(context.text(spec.sources))
+                            item.in_type = kind
+                        if kind not in self.handlers:
                             raise InputError(
-                                "invalid_metadata",
-                                "Metadata failed structural or reference validation",
+                                "unsupported_input", "No registered input handler"
                             )
-                        from .validation import validate_metadata
-                        validate_metadata(loaded.metadata)
-                        item.dataset_ids = tuple(
-                            g.dataset_id for g in loaded.metadata.groups
+                        context.stage = "load"
+                        self.handlers[kind].validate(spec, context)
+                        from meta_standards_converter.metadata.preparation_scope import loading_source
+                        with loading_source(preparation):
+                            loaded = self.handlers[kind].load(spec, context)
+                        sources = (
+                            spec.sources
+                            if isinstance(spec.sources, (list, tuple))
+                            else [spec.sources]
                         )
-                        item.diagnostics.extend(
-                            Diagnostic("source_warning", w, "load", "warning")
-                            for w in loaded.metadata.warnings
-                            if not any(d.message == w for d in loaded.diagnostics)
-                        )
-                    context.stage = "preparation"
-                    before = len(loaded.diagnostics)
-                    loaded = context.preparer.prepare(loaded)
-                    item.provider = loaded.provider
-                    item.preparation = loaded.preparation
-                    item.diagnostics.extend(loaded.diagnostics[before:])
-                    if loaded.metadata is not None:
-                        item.dataset_ids = tuple(g.dataset_id for g in loaded.metadata.groups)
-                        validate_metadata(loaded.metadata)
-                    context.stage = "conversion"
-                    from meta_standards_converter.metadata.preparation_scope import exporting_prepared
-                    with exporting_prepared():
-                        self._export(loaded, context, item, route)
-                    item.execution = "succeeded"
-                    incomplete = any(
-                        d.code
-                        in {
-                            "source_partial",
-                            "source_failed",
-                            "conversion_partial",
-                            "sample_skipped",
+                        loaded.origins = tuple(source_label(source) for source in sources)
+                        loaded.companions = dict(spec.companions)
+                        item.provider = loaded.provider
+                        item.content_id = loaded.content_id
+                        item.origins = loaded.origins
+                        item.companions = {
+                            key: (
+                                [source_label(v) for v in value]
+                                if isinstance(value, (list, tuple))
+                                else source_label(value)
+                            )
+                            for key, value in spec.companions.items()
                         }
-                        for d in item.diagnostics
-                    )
-                    invalid = any(
-                        d.code == "projection_invalid" for d in item.diagnostics
-                    )
-                    item.completeness = "partial" if incomplete else "complete"
-                    item.validation = "invalid" if invalid else "valid"
-                    item.status = "partial" if incomplete or invalid else "complete"
-                except Exception as exc:
-                    item.status = "failed"
-                    item.execution = "failed"
-                    item.completeness = "partial" if item.artifacts else "unknown"
-                    if isinstance(exc, InputError):
-                        code, message = exc.code, str(exc)
-                    elif _missing_scientific_dependency(exc):
-                        code, message = (
-                            "missing_optional_dependency",
-                            "Expression conversion requires optional dependencies; install "
-                            "meta-standards-converter[h5ad] or use the full Docker image.",
+                        route, item.route = select_route(loaded, kind, out_type)
+                        emit("route_selected", level="DEBUG", provider=loaded.provider, route=list(item.route), **statistics(loaded.metadata))
+                        item.diagnostics.extend(loaded.diagnostics)
+                        if loaded.metadata is not None:
+                            context.stage = "validation"
+                            issues = loaded.metadata.diagnostics
+                            item.diagnostics.extend(
+                                Diagnostic(
+                                    (
+                                        "metadata_warning"
+                                        if d.severity == "warning"
+                                        else "invalid_metadata"
+                                    ),
+                                    f"{d.path}: {d.message}",
+                                    "validation",
+                                    d.severity,
+                                )
+                                for d in issues
+                            )
+                            if any(d.severity == "error" for d in issues):
+                                raise InputError(
+                                    "invalid_metadata",
+                                    "Metadata failed structural or reference validation",
+                                )
+                            from .validation import validate_metadata
+                            validate_metadata(loaded.metadata)
+                            item.dataset_ids = tuple(
+                                g.dataset_id for g in loaded.metadata.groups
+                            )
+                            item.diagnostics.extend(
+                                Diagnostic("source_warning", w, "load", "warning")
+                                for w in loaded.metadata.warnings
+                                if not any(d.message == w for d in loaded.diagnostics)
+                            )
+                        context.stage = "preparation"
+                        before = len(loaded.diagnostics)
+                        loaded = context.preparer.prepare(loaded)
+                        item.provider = loaded.provider
+                        item.preparation = loaded.preparation
+                        item.diagnostics.extend(loaded.diagnostics[before:])
+                        if loaded.metadata is not None:
+                            item.dataset_ids = tuple(g.dataset_id for g in loaded.metadata.groups)
+                            validate_metadata(loaded.metadata)
+                        context.stage = "conversion"
+                        from meta_standards_converter.metadata.preparation_scope import exporting_prepared
+                        with exporting_prepared():
+                            self._export(loaded, context, item, route)
+                        item.execution = "succeeded"
+                        incomplete = any(
+                            d.code
+                            in {
+                                "source_partial",
+                                "source_failed",
+                                "conversion_partial",
+                                "sample_skipped",
+                            }
+                            for d in item.diagnostics
                         )
-                    elif type(exc).__name__ in {
-                        "MINiMLModelError",
-                        "MINiMLCompatibilityError",
-                        "AtlasV1Error",
-                    }:
-                        code, message = "invalid_metadata", str(exc)
-                    elif type(exc).__name__ in {
-                        "TabularProjectionError",
-                        "AnnDataProjectionError",
-                        "MAGETabValidationError",
-                    }:
-                        code, message = "projection_invalid", str(exc)
-                    else:
-                        code, message = (
-                            "conversion_failed",
-                            f"Conversion failed ({type(exc).__name__})",
+                        invalid = any(
+                            d.code == "projection_invalid" for d in item.diagnostics
                         )
-                    item.diagnostics.append(Diagnostic(code, message, context.stage))
-                    if code in {
-                        "type_mismatch",
-                        "invalid_accession",
-                        "invalid_metadata",
-                        "projection_invalid",
-                    }:
-                        item.validation = "invalid"
-                    stopped = runtime["fail_fast"]
+                        item.completeness = "partial" if incomplete else "complete"
+                        item.validation = "invalid" if invalid else "valid"
+                        item.status = "partial" if incomplete or invalid else "complete"
+                    except Exception as exc:
+                        item.status = "failed"
+                        item.execution = "failed"
+                        item.completeness = "partial" if item.artifacts else "unknown"
+                        if isinstance(exc, InputError):
+                            code, message = exc.code, str(exc)
+                        elif _missing_scientific_dependency(exc):
+                            code, message = (
+                                "missing_optional_dependency",
+                                "Expression conversion requires optional dependencies; install "
+                                "meta-standards-converter[h5ad] or use the full Docker image.",
+                            )
+                        elif type(exc).__name__ in {
+                            "MINiMLModelError",
+                            "MINiMLCompatibilityError",
+                            "AtlasV1Error",
+                        }:
+                            code, message = "invalid_metadata", str(exc)
+                        elif type(exc).__name__ in {
+                            "TabularProjectionError",
+                            "AnnDataProjectionError",
+                            "MAGETabValidationError",
+                        }:
+                            code, message = "projection_invalid", str(exc)
+                        else:
+                            code, message = (
+                                "conversion_failed",
+                                f"Conversion failed ({type(exc).__name__})",
+                            )
+                        item.diagnostics.append(Diagnostic(code, message, context.stage))
+                        if code in {
+                            "type_mismatch",
+                            "invalid_accession",
+                            "invalid_metadata",
+                            "projection_invalid",
+                        }:
+                            item.validation = "invalid"
+                        stopped = runtime["fail_fast"]
         return result
 
+    @measured("conversion")
     def _export(self, loaded, context, item, route):
         target = context.target
         options = context.output_options

@@ -67,6 +67,10 @@ def retrieve_once(key, call):
     memo = _memo.get()
     if memo is None:
         return call()
+    from meta_standards_converter.conversion_logging import count, emit
+    if key in memo:
+        count("preparation_cache_hits")
+        emit("preparation_cache_hit", level="DEBUG")
     if key not in memo:
         try:
             memo[key] = (True, deepcopy(call()))

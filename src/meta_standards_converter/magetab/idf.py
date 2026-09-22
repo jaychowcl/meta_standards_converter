@@ -476,7 +476,7 @@ class IDFConstructor():
             if pubmed_id
         ]
         if not pubmed_ids:
-            logger.warning("PubMed lookup skipped: no PubMed ID found in series metadata.")
+            logger.debug("PubMed lookup skipped: no PubMed ID found in series metadata.")
 
         if not publication_details:
             publication_details = [(None,) * 6 for _ in pubmed_ids]
@@ -814,7 +814,7 @@ class _SequencingPlatformIDFHandler(_BasePlatformIDFHandler):
         if urls:
             rows.append(["Comment[SequenceDataURI]", *urls])
         else:
-            logger.warning("SequenceDataURI row skipped: no valid sample.sra_run run accessions found.")
+            logger.debug("SequenceDataURI row skipped: no valid sample.sra_run run accessions found.")
         return rows
 
     def _set_ae_experiment_type(self, rows: list, value: str) -> None:

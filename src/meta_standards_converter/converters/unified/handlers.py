@@ -9,6 +9,7 @@
 """Registered, defensive input adapters. Domain parsers remain the owners of meaning."""
 
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 import hashlib
 import json
 import re
@@ -68,6 +69,7 @@ class InputHandler:
             detect(source, context.runtime, context.profile.max_xml_bytes) == self.kind
         )
 
+    @measured("input_validation")
     def validate(self, spec, context):
         kind, source = self.kind, spec.sources
         if kind.endswith("_accession") and isinstance(source, Path):
@@ -112,6 +114,7 @@ class InputHandler:
         if kind == "anndata" and not is_anndata(source):
             raise InputError("type_mismatch", "Expected an AnnData object")
 
+    @measured("load")
     def load(self, spec, context):
         self.validate(spec, context)
         kind, source, options = self.kind, spec.sources, context.input_options

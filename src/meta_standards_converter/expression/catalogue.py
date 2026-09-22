@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
 import json
 import os
@@ -161,6 +162,7 @@ class CataloguePublisher:
         "status_term_accession_number",
     )
 
+    @measured("publication")
     def publish(
         self,
         *,

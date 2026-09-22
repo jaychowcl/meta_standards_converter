@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Publication adapters with exact paths and explicit atomic boundaries."""
+from meta_standards_converter.conversion_logging import measured
 
 import csv
 import json
@@ -55,6 +56,7 @@ def atomic_write(path, writer, overwrite):
         temporary.unlink(missing_ok=True)
 
 
+@measured("publication")
 def publish_jsons(groups, context, item):
     from meta_standards_converter.miniml import MINiMLCodec
 
@@ -93,6 +95,7 @@ def publish_jsons(groups, context, item):
         item.artifacts[str(path.name)] = str(path)
 
 
+@measured("publication")
 def publish_tables(tables, context, item):
     item.payload = tables
     if not context.destination:
@@ -125,6 +128,7 @@ def publish_tables(tables, context, item):
         item.artifacts[path.name] = str(path)
 
 
+@measured("publication")
 def publish_magetab(tables, context, item):
     from meta_standards_converter.magetab.writer import MAGETabWriter
     from meta_standards_converter.expression.components import _publish_bundle

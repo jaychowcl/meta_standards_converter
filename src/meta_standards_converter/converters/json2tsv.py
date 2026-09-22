@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import logged_conversion, measured
 import json
 import tempfile
 from dataclasses import replace
@@ -49,6 +50,7 @@ class JSON2DelimitedConverter:
         self.package_source = package_source or JSONPackageSource()
         self.metadata_service = metadata_service or MINiMLMetadataService()
 
+    @logged_conversion
     def convert_source(
         self,
         source: str | Path,
@@ -62,6 +64,8 @@ class JSON2DelimitedConverter:
         return self.convert_loaded(loaded, destination, allow_invalid=allow_invalid,
                                    overwrite=overwrite, replacement_profile=replacement_profile)
 
+    @logged_conversion
+    @measured("projection")
     def project_loaded(self, loaded, *, allow_invalid=False, replacement_profile=None):
         """Project loaded metadata without filesystem side effects."""
         records: list[dict[str, Any]] = []
@@ -147,6 +151,7 @@ class JSON2DelimitedConverter:
                               tuple(group.dataset_id for group in loaded.groups),
                               tuple(dict.fromkeys(warnings)), tuple(dict.fromkeys(errors)))
 
+    @logged_conversion
     def convert_loaded(self, loaded, destination, *, allow_invalid=False,
                        overwrite=False, replacement_profile=None):
         table = self.project_loaded(loaded, allow_invalid=allow_invalid,
@@ -196,6 +201,7 @@ class JSON2TSVConverter(JSON2DelimitedConverter):
         )
 
 
+    @logged_conversion
     def export_manifest(
         self,
         source: str | Path,

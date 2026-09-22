@@ -1,3 +1,4 @@
+from meta_standards_converter.conversion_logging import logged_conversion
 # =============================================================================
 # Authors
 #
@@ -31,6 +32,7 @@ class JSON2AEConverter(JSONHandler):
         self.ae_constructor = ae_constructor or AEConstructor()
         self.package_source = package_source or JSONPackageSource()
 
+    @logged_conversion
     def convert(
         self,
         json_path: str,
@@ -47,6 +49,7 @@ class JSON2AEConverter(JSONHandler):
         )
         return self._convert_packages(packages, json_path, out, enrich, platform_handler)
 
+    @logged_conversion
     def convert_loaded(self, loaded, out=None, enrich=True, platform_handler=None, *, replacement_profile=None):
         """Construct from loaded groups without serializing an intermediate file."""
         packages = self._packages_from_loaded(loaded, replacement_profile=replacement_profile)
@@ -65,7 +68,7 @@ class JSON2AEConverter(JSONHandler):
                     self.enricher.enrich(data=package)
                 ).package
             else:
-                logger.info("%s: skipping enrichment for parsed package %d", json_path, index)
+                logger.debug("%s: using prepared metadata for parsed package %d", json_path, index)
             logger.info("%s: building MAGE-TAB package %d", json_path, index)
             if platform_handler is None:
                 magetab = self.ae_constructor.miniml2magetab(data=converted_package)

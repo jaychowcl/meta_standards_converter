@@ -9,6 +9,7 @@
 """Expression input adapters with lazy scientific imports and explicit processing."""
 
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 import copy
 import gzip
 import json
@@ -282,6 +283,7 @@ def _read_expression(expression, context, *, metadata_only=False):
     return obj, False
 
 
+@measured("publication")
 def _publish_expression(obj, path, context):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -406,6 +408,7 @@ def _standalone(loaded, context, item):
             obj.file.close()
 
 
+@measured("expression")
 def export_expression(loaded, context, item):
     if loaded.expression is not None:
         _standalone(loaded, context, item)
@@ -510,6 +513,7 @@ def export_expression(loaded, context, item):
             )
             / "assembly"
         )
+    context.stage = "conversion"
     converted = converter.convert_loaded(
         loaded.metadata,
         out=str(assembly),

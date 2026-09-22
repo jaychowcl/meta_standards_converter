@@ -9,6 +9,7 @@
 """
 Converter for GEO XML to enriched MINiML JSON packages.
 """
+from meta_standards_converter.conversion_logging import logged_conversion
 
 import json
 import logging
@@ -102,6 +103,7 @@ class GEO2JSONConverter(JSONHandler):
       )
       self.parser = parser or GEOSource(fetcher=self.geo_fetcher, resource_profile=self.resource_profile)
 
+   @logged_conversion
    def convert(
       self,
       gse: str,
@@ -136,7 +138,7 @@ class GEO2JSONConverter(JSONHandler):
             logger.info("%s: enriching parsed package %d", gse, index)
             packages.append(codec.decode(self.enricher.enrich(data=meta_json)).package)
       else:
-         logger.info("%s: skipping JSON enrichment", gse)
+         logger.debug("%s: skipping JSON enrichment", gse)
          packages = meta_jsons
 
       if out:

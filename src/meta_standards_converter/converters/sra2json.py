@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Independent sra native metadata conversion workflow."""
+from meta_standards_converter.conversion_logging import logged_conversion
 import logging
 from pathlib import Path
 from meta_standards_converter.sources.sra import SRASource
@@ -27,6 +28,7 @@ class SRA2JSONConverter:
         self.peer_converter = peer_converter
         self.publication_enricher = publication_enricher
 
+    @logged_conversion
     def convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False,
                 report_path=None, evidence_dir=None, overwrite=False, seen_studies=None,
                 _resolution=None, _filename_seeds=None) -> ArchiveImportResult:
@@ -38,19 +40,19 @@ class SRA2JSONConverter:
             resolution = _resolution if _resolution is not None else self.source.resolve(accession)
         except Exception as error:
             result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=[type(error).__name__]))
-            logger.warning('%s: resolution failed (%s)', accession, type(error).__name__)
+            logger.debug('%s: resolution failed (%s)', accession, type(error).__name__)
             resolution = None
         if resolution is not None:
             if not resolution.studies:
                 result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=resolution.issues))
-                logger.warning('%s: no study resolved (%s)', accession, '; '.join(resolution.issues))
+                logger.debug('%s: no study resolved (%s)', accession, '; '.join(resolution.issues))
             for seed in resolution.studies:
                 key = ('sra', seed.study)
                 if key in seen:
                     if resolution.issues:
                         result.studies.append(StudyImportOutcome(seed.study, seed.primary, 'partial', issues=list(resolution.issues)))
                         for issue in resolution.issues:
-                            logger.warning('%s: %s', accession, issue)
+                            logger.debug('%s: %s', accession, issue)
                     continue
                 seen.add(key)
                 outcome = StudyImportOutcome(seed.study, seed.primary, 'failed', issues=list(resolution.issues))
@@ -88,7 +90,7 @@ class SRA2JSONConverter:
                     else:
                         links = linked_accessions(package)
                         if links:
-                            logger.warning('%s: linked GEO/ArrayExpress metadata may be richer; use --enrich-from-geo-ae (%s)', seed.primary, ', '.join(links))
+                            logger.debug('%s: linked GEO/ArrayExpress metadata may be richer; use --enrich-from-geo-ae (%s)', seed.primary, ', '.join(links))
                     if converter_enrichment_enabled():
                         try:
                             from meta_standards_converter.metadata.enrichment import MINiMLEnricher
@@ -108,8 +110,8 @@ class SRA2JSONConverter:
                 except Exception as error:
                     outcome.issues.append(type(error).__name__)
                 for issue in outcome.issues:
-                    logger.warning('%s: %s', seed.study, issue)
-                logger.info('%s: %s', seed.primary, outcome.status)
+                    logger.debug('%s: %s', seed.study, issue)
+                logger.debug('%s: %s', seed.primary, outcome.status)
         if report_path is not None:
             publish_json(report_path, result.to_mapping(), overwrite)
         return result

@@ -7,10 +7,12 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Study-family traversal follows typed provider relationships, never citations."""
+from meta_standards_converter.conversion_logging import measured
 from collections import deque
 from collections.abc import Mapping
 from dataclasses import replace
 import re
+from meta_standards_converter.conversion_logging import count, emit
 from urllib.parse import parse_qs, urlsplit
 
 from .contracts import Diagnostic, InputSpec
@@ -109,11 +111,13 @@ class StudyFamilies:
                 issues.extend(warnings)
         return sorted(found), issues
 
+    @measured("expansion")
     def expand(self, loaded):
         from .preparation import provider_of, study_ids
         context = self.context
         if not context.preparation_policy.expand_studies:
             loaded.preparation.append({'operation': 'study_expansion', 'status': 'skipped', 'reason': 'disabled'})
+            emit("expansion_skipped", level="DEBUG", status="skipped", reason="disabled")
             return loaded
         queue = deque(loaded.metadata.groups)
         groups = list(loaded.metadata.groups)
@@ -128,7 +132,10 @@ class StudyFamilies:
                 for accession in neighbors:
                     identity = (provider, accession)
                     if identity in seen:
+                        count("expansion_already_seen")
                         continue
+                    count("expansion_discovered")
+                    emit("study_discovered", level="DEBUG", provider=provider, dataset_id=accession)
                     seen.add(identity)
                     record = {'operation': 'study_expansion', 'dataset': group.dataset_id,
                               'provider': provider, 'target': accession, 'status': 'attempted'}
@@ -145,11 +152,14 @@ class StudyFamilies:
                             from .validation import validate_metadata
                             validate_metadata(candidate.metadata)
                             self.cache[key] = candidate
+                        else:
+                            count("expansion_cache_hits")
                         candidate = self.cache[key]
                         if isinstance(candidate, Exception):
                             raise candidate
                         for new in candidate.metadata.groups:
                             if new.dataset_id not in known_groups:
+                                count("studies_added")
                                 groups.append(new)
                                 queue.append(new)
                                 known_groups.add(new.dataset_id)
@@ -158,6 +168,7 @@ class StudyFamilies:
                         record['status'] = 'partial' if any(d.code in {'source_partial', 'source_failed'} for d in candidate.diagnostics) else 'completed'
                     except Exception as exc:
                         self.cache.setdefault(key, exc)
+                        count('expansion_failed')
                         record['status'] = 'failed'
                         loaded.diagnostics.append(Diagnostic('source_partial', f'{accession}: family expansion failed ({type(exc).__name__})', 'expansion', 'warning'))
         loaded.metadata = replace(loaded.metadata, groups=tuple(groups))

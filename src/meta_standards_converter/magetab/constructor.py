@@ -9,6 +9,7 @@
 '''
 Constructor class for ae MAGETAB idf and sdrf
 '''
+from meta_standards_converter.conversion_logging import measured
 from meta_standards_converter.magetab.idf import IDFConstructor
 from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
 from meta_standards_converter.magetab.semantics import overlay_miniml_semantics
@@ -51,6 +52,7 @@ class AEConstructor:
         self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
 
     @preparation_operation
+    @measured("projection")
     def miniml2magetab(self, data: MINiMLPackage, platform_handler: str | None = None) -> list:
         """
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml

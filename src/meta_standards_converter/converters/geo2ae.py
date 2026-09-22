@@ -1,3 +1,4 @@
+from meta_standards_converter.conversion_logging import logged_conversion
 # =============================================================================
 # Authors
 #
@@ -52,6 +53,7 @@ class GEO2AEConverter(JSONHandler):
       self.parser = parser or GEOSource(fetcher=self.geo_fetcher, resource_profile=self.resource_profile)
       self.ae_constructor = ae_constructor or AEConstructor()
 
+   @logged_conversion
    def convert(
       self,
       gse: str,

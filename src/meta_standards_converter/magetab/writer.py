@@ -7,11 +7,13 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Write constructed MAGE-TAB tables to IDF/SDRF files."""
+from meta_standards_converter.conversion_logging import measured
 import copy
 import csv
 import os
 
 class MAGETabWriter:
+    @measured("publication")
     def write(self, magetab:list, out:str = None) -> str:
         '''
         Write magetab to idf and sdrf

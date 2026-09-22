@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Native import outcomes and independent atomic file publication."""
+from meta_standards_converter.conversion_logging import measured
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
@@ -47,6 +48,7 @@ class ArchiveImportResult:
         return {'accession': self.accession, 'studies': [s.to_mapping() for s in self.studies]}
 
 
+@measured("publication")
 def publish_json(path, value, overwrite=False):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)

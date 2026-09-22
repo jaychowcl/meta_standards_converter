@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.conversion_logging import measured
 import heapq
 import logging
 import os
@@ -30,6 +31,7 @@ class SourcePlanner:
     def __init__(self, discovery: AssetDiscovery | None = None):
         self.discovery = discovery or DefaultAssetDiscovery()
 
+    @measured("planning")
     def plan(
         self,
         packages: list[dict],
