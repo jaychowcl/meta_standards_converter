@@ -89,7 +89,9 @@ class SourceSelection:
 def inspect_recorded_conflicts(package, mode):
     """Inspect supplied alternatives only; this operation never retrieves metadata."""
     from ..miniml import MINiMLCodec
-    from ..miniml.archive_libraries import FIELDS
+    from ..miniml.archive_libraries import FIELDS, path_facts
+    from .archive_workflows import path_ids, compatible
+    import re
     from .archive_enrichment import entity_ids
     data = package.to_mapping()
     records = data.get('extensions', {}).get('insdc', {}).get('records', [])
@@ -104,6 +106,17 @@ def inspect_recorded_conflicts(package, mode):
         extra = {**extra, 'source': extra.get('source') or {'format': record['provider']},
                  'series': {**extra.get('series', {}), 'iid': record.get('accession') or extra.get('series', {}).get('iid', '')}}
         selection = SourceSelection(data, extra, issues, mode='curators')
+        bound_facts = {}
+        for assay_path in extra.get('series', {}).get('assay_paths', []):
+            refs = {step.get('sample_ref') for step in assay_path.get('steps', [])} - {None}
+            scope = path_ids(assay_path)
+            # Only explicit same-sample, run/library bindings support comparison.
+            if len(refs) != 1 or not scope:
+                continue
+            identifiers = {v for v in scope if re.fullmatch(r'[SED]RR\d+', v)} or scope
+            for identifier in identifiers:
+                bound_facts.setdefault((next(iter(refs)), identifier), []).append(
+                    (scope, path_facts(assay_path['steps'])))
         for sample in data.get('sample', []):
             matches = [s for s in extra['sample'] if entity_ids(sample, sample=True) & entity_ids(s, sample=True)]
             if len(matches) != 1: continue
@@ -119,9 +132,18 @@ def inspect_recorded_conflicts(package, mode):
             for run in sample.get('sra_run', []):
                 other = incoming.get(run.get('run'), {})
                 if other.get('experiment') and run.get('experiment') and other['experiment'] != run['experiment']: continue
+                supplied = [other]
+                native_scope = {run.get('run'), run.get('experiment')} - {None}
+                for identifier in native_scope:
+                    for scope, facts in bound_facts.get((matches[0]['iid'], identifier), []):
+                        if compatible(scope, native_scope):
+                            supplied.extend(facts)
                 for field in FIELDS:
-                    if field in other:
-                        selection.prefer(run.get(field), other[field], f"/sample/{sample['iid']}/sra_run/{run['run']}/{field}", False, scientific=True)
+                    seen = []
+                    for statement in supplied:
+                        if field in statement and statement[field] not in seen:
+                            seen.append(statement[field])
+                            selection.prefer(run.get(field), statement[field], f"/sample/{sample['iid']}/sra_run/{run['run']}/{field}", False, scientific=True)
         additions.extend(selection.records)
     if additions:
         records.extend(r for r in additions if r not in records)

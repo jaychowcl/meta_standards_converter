@@ -153,3 +153,31 @@ def test_lower_rank_linked_workflow_does_not_replace_authored_ae_material():
     result, _ = convert(data, incoming)
     paths = result.items[0].payload[0]['series']['assay_paths']
     assert {s['material_type']['value'] for p in paths for s in p['steps'] if s['kind'] == 'extract'} == {'total RNA'}
+
+
+def test_curators_compares_recorded_library_path_facts_without_fetching():
+    data, incoming = package(), package('MAGE-TAB', 'PAIRED')
+    # Deposited AE imports hold library facts on the authored assay path.
+    incoming['sample'][0]['sra_run'][0].pop('library_layout')
+    data['extensions'] = {'insdc': {'version': '1.0', 'records': [
+        {'provider': 'ArrayExpress', 'kind': 'MINiML', 'accession': 'E-MTAB-1', 'metadata': incoming}]}}
+    result, calls = convert(data, incoming, mode='curators')
+    item = result.items[0]
+    assert not calls
+    assert item.payload[0]['sample'][0]['sra_run'][0]['library_layout'] == 'SINGLE'
+    assert item.completeness == 'partial' and item.validation == 'valid'
+    assert any('library_layout' in d.message and 'PAIRED' in d.message for d in item.diagnostics)
+
+
+def test_curators_does_not_propagate_unbound_or_other_library_path_facts():
+    for field, value in [('name', 'SRR2'), ('sample_ref', 'SRS9')]:
+        data, incoming = package(), package('MAGE-TAB', 'PAIRED')
+        incoming['sample'][0]['sra_run'][0].pop('library_layout')
+        steps = incoming['series']['assay_paths'][0]['steps']
+        if field == 'name': steps[-1]['name'] = value
+        else: steps[0]['sample_ref'] = value
+        data['extensions'] = {'insdc': {'version': '1.0', 'records': [
+            {'provider': 'ArrayExpress', 'kind': 'MINiML', 'accession': 'E-MTAB-1', 'metadata': incoming}]}}
+        result, calls = convert(data, incoming, mode='curators')
+        assert not calls and result.status == 'complete'
+        assert not any('library_layout' in d.message for d in result.items[0].diagnostics)

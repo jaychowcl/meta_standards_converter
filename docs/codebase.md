@@ -5851,6 +5851,8 @@ membership joins; it is not the scientific value-precedence policy.
 Native means the primary input source, including AE-native input. Equal-ranked
 SRA/ENA facts keep the primary provider's populated value and fill gaps. Scientific
 comparison requires the same joined sample, experiment/library, run and field.
+Curator inspection includes library facts on positively bound recorded assay paths;
+unbound or other-library paths cannot supply a comparison.
 `source_conflict` extension records retain accession, field path, original values,
 selection and reason. A `source_selection` ledger preserves selected-field origins
 across subsequent merges. Unresolved disagreements make completeness partial while
