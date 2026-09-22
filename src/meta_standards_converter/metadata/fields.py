@@ -11,3 +11,16 @@ BIOLOGICAL_ALIASES = {
     "organism_part": {"organism_part", "organismpart", "tissue"},
     "developmental_stage": {"developmental_stage", "developmentalstage"},
 }
+
+
+def biological_characteristics(channels, field, *, slug):
+    """Yield explicit source occurrences, including their attached qualifiers."""
+    from collections.abc import Mapping
+    names = BIOLOGICAL_ALIASES[field]
+    for channel in channels:
+        items = channel.get("characteristics") or ()
+        if isinstance(items, Mapping):
+            items = (items,)
+        for item in items:
+            if isinstance(item, Mapping) and slug(item.get("name", item.get("tag", ""))) in names:
+                yield item

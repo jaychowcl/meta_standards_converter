@@ -176,11 +176,12 @@ class _BaseSDRFHandler(SDRFRenderer):
             for organism_value in organism_values[1:]:
                 extra_attrs.append(SDRFAttr(label="Characteristics[organism]", value=organism_value))
 
-        organism_part_value = self.organism_part_value(channel=channel)
-        required_attrs["organism part"].value = organism_part_value
+        anatomy = self.organism_part_attrs(channel)
+        if anatomy:
+            required_attrs["organism part"] = anatomy[0]
+            extra_attrs.extend(anatomy[1:])
 
         seen_tags = {}
-        first_organism_part_preserved = False
         for characteristic in channel.get("characteristics", []) or []:
             if not isinstance(characteristic, dict):
                 continue
@@ -189,12 +190,9 @@ class _BaseSDRFHandler(SDRFRenderer):
                 continue
             if str(tag).startswith("hz_"):
                 continue
-            if tag.lower() == "organism part":
-                value = self.clean(characteristic.get("value"))
-                if not first_organism_part_preserved and value == organism_part_value:
-                    required_attrs["organism part"].attrs = self.ontology_companions(characteristic)
-                    first_organism_part_preserved = True
-                    continue
+            if tag == "organism part":
+                # This source occurrence is already represented, with its qualifiers.
+                continue
             seen_tags[tag] = seen_tags.get(tag, 0) + 1
             if seen_tags[tag] > 1:
                 self.audit.warnings.append(f"Repeated Characteristics[{tag}] preserved as {seen_tags[tag]} columns.")
@@ -223,16 +221,22 @@ class _BaseSDRFHandler(SDRFRenderer):
             companions.append(SDRFAttr("Unit", unit.get("value"), attrs=self.ontology_companions(unit) + sdrf_attrs(columns(unit, "Comment"))))
         return companions
 
+    def organism_part_attrs(self, channel):
+        from meta_standards_converter.metadata.fields import biological_characteristics
+        from meta_standards_converter.metadata.interpretation import MINiMLMetadataService
+        service = MINiMLMetadataService()
+        attrs = []
+        for item in biological_characteristics([channel], "organism_part", slug=service.metadata_slug):
+            for value in service.values(item.get("value")):
+                attr = SDRFAttr("Characteristics[organism part]", value,
+                                attrs=self.ontology_companions(item), required=True)
+                if attr not in attrs:
+                    attrs.append(attr)
+        return attrs
+
     def organism_part_value(self, channel: dict):
-        organism_part = self.characteristic_values(channel=channel, tag="organism part")
-        if organism_part:
-            return organism_part[0]
-
-        tissue = self.characteristic_values(channel=channel, tag="tissue")
-        if tissue:
-            return tissue[0]
-
-        return self.clean(channel.get("source"))
+        attrs = self.organism_part_attrs(channel)
+        return attrs[0].value if attrs else None
 
     def provider(self, channel: dict):
         providers = [self.clean(x) for x in self._as_list(channel.get("biomaterial_provider")) if self.clean(x)]
