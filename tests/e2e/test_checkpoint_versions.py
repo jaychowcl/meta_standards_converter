@@ -13,7 +13,9 @@ from meta_standards_converter.expression.readers import ProcessedAssetReader
 from tests.support.contracts import PBMC, prepare
 
 
-def test_version_change_recomputes_and_preserves_old_checkpoint_bytes(workspace, monkeypatch):
+def test_version_change_recomputes_and_preserves_old_checkpoint_bytes(workspace, monkeypatch, caplog):
+    import logging
+    caplog.set_level(logging.DEBUG, logger="meta_standards_converter")
     prepare(PBMC, workspace)
     calls = []
     class Reader(ProcessedAssetReader):
@@ -33,6 +35,13 @@ def test_version_change_recomputes_and_preserves_old_checkpoint_bytes(workspace,
     JSON2H5ADConverter(reader=Reader()).convert("miniml.json", out="replay", **options)
     assert calls == ["PBMC3K_SAMPLE", "PBMC3K_SAMPLE"]
     assert (workspace / "replay/PBMC3K_SAMPLE.h5ad").is_file()
+    completions = [record.msc_event for record in caplog.records
+                   if hasattr(record, "msc_event") and record.msc_event["event_type"] == "conversion_finished"]
+    assert len({event["run_id"] for event in completions}) == 3
+    assert [event["attributes"].get("samples_converted", 0) for event in completions] == [1, 1, 0]
+    assert [event["attributes"].get("checkpoint_hits", 0) for event in completions] == [0, 0, 1]
+    assert all(event["attributes"]["sample_outputs"] == 1 for event in completions)
+
 
 
 def test_profile_change_recomputes_even_when_sample_values_are_unchanged(workspace):

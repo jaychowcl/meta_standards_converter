@@ -113,7 +113,9 @@ def test_curators_geo_excludes_sra_run_enrichment():
     assert calls == [("standard", True, False)]
 
 
-def test_publication_retrieval_is_deduplicated_per_convert_only():
+def test_publication_retrieval_is_deduplicated_per_convert_only(caplog):
+    import logging
+    caplog.set_level(logging.DEBUG, logger="meta_standards_converter")
     from meta_standards_converter.metadata.enrichment import MINiMLEnricher
     calls = []
     class Pubmed:
@@ -130,6 +132,11 @@ def test_publication_retrieval_is_deduplicated_per_convert_only():
         assert result.status == 'complete', result.to_dict()
         assert all(p.series.to_mapping()['pubmed_publication'][0]['title'] == 'Title' for p in result.items[0].payload)
     assert calls == ['12345', '12345']
+    completions = [record.msc_event for record in caplog.records
+                   if hasattr(record, "msc_event") and record.msc_event["event_type"] == "conversion_finished"]
+    assert len({event["run_id"] for event in completions}) == 2
+    assert all(event["attributes"]["preparation_cache_hits"] >= 1 for event in completions)
+
 
 
 def test_injected_geo2ae_collaborators_are_used_in_composed_facade():
