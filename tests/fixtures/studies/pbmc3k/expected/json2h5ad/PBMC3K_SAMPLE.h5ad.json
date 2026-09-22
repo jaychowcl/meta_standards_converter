@@ -58,6 +58,7 @@
         "msc.observation.original_id",
         "msc.sample.accession",
         "msc.series.accession",
+        "msc.provenance.conflicts",
         "msc.sample.title",
         "msc.sample.description",
         "msc.sample.channel.organism.value",
@@ -131,6 +132,7 @@
       "category",
       "category",
       "category",
+      "category",
       "category"
     ],
     "data": [
@@ -138,6 +140,7 @@
         "AAACATACAACCAC-1",
         "PBMC3K_SAMPLE",
         "PBMC3K",
+        "[]",
         "PBMCs",
         "",
         "Homo sapiens",
@@ -176,6 +179,7 @@
         "AAACATTGAGCTAC-1",
         "PBMC3K_SAMPLE",
         "PBMC3K",
+        "[]",
         "PBMCs",
         "",
         "Homo sapiens",
@@ -214,6 +218,7 @@
         "AAACATTGATCAGC-1",
         "PBMC3K_SAMPLE",
         "PBMC3K",
+        "[]",
         "PBMCs",
         "",
         "Homo sapiens",
@@ -252,6 +257,7 @@
         "AAACCGTGCTTCCG-1",
         "PBMC3K_SAMPLE",
         "PBMC3K",
+        "[]",
         "PBMCs",
         "",
         "Homo sapiens",
@@ -302,6 +308,16 @@
         "values": {
           "values": [
             "PBMC3K"
+          ],
+          "name": null,
+          "dtype": "str"
+        },
+        "ordered": false
+      },
+      "msc.provenance.conflicts": {
+        "values": {
+          "values": [
+            "[]"
           ],
           "name": null,
           "dtype": "str"
@@ -665,6 +681,7 @@
   },
   "uns": {
     "meta_standards_converter": {
+      "conflicts": "[]",
       "converter_version": "8.0.0",
       "metadata_schema_version": "2.0",
       "modality": "unknown",
@@ -695,7 +712,8 @@
             "value_000007",
             "value_000008",
             "value_000009",
-            "value_000010"
+            "value_000010",
+            "value_000011"
           ],
           "name": null,
           "dtype": "str"
@@ -731,6 +749,13 @@
             "msc.series.accession",
             0,
             "PBMC3K",
+            "string"
+          ],
+          [
+            "PBMC3K_SAMPLE",
+            "msc.provenance.conflicts",
+            0,
+            "[]",
             "string"
           ],
           [

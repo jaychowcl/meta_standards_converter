@@ -28,6 +28,12 @@ Each study has `provenance.json`. `contracts.sha256.json` seals every input, pro
 
 `expected/<converter>/` contains actual filenames and complete expected text/JSON outputs. An expected `.h5ad.json` is a decoded semantic representation of the H5AD: matrix values, sparse format, dtype, ordered axes, categorical metadata, retained MINiML, other metadata, and auxiliary matrix slots. Binary HDF5 bytes are not a portable oracle. CSV parsing intentionally produces float64 counts from the float32 source dataset; values remain exact.
 
+Metadata tables and AnnData expectations include the portable conflict field
+`msc.provenance.conflicts` (`[]` when no conflicts apply) and the package ledger.
+The provenance-field update preserves all existing matrix values, axes, source
+metadata and diagnostics. Deposited encoding corruption remains literal evidence
+and can produce partial-but-valid facade results without changing archive cells.
+
 Initial candidates were produced with MSC 6.0.0 and reviewed against independent evidence before acceptance:
 
 - GEO identities, titles, protocol text, organism, molecule, relations and sample references were checked against XML; DOI/authors/title and run/library identifiers against captured PubMed/SRA XML.

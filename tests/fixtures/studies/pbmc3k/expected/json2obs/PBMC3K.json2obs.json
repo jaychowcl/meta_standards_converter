@@ -15,6 +15,7 @@
       "msc.observation.original_id",
       "msc.sample.accession",
       "msc.series.accession",
+      "msc.provenance.conflicts",
       "msc.sample.title",
       "msc.sample.description",
       "msc.sample.channel.organism.value",

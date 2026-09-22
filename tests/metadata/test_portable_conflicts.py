@@ -100,3 +100,13 @@ def test_conflict_values_are_not_whitespace_normalized_by_projection():
     result=Converter().convert(data,out_type='tsv',enrichment='off')
     rows=next(iter(result.items[0].payload.values())).rows
     assert json.loads(rows[0]['msc.provenance.conflicts'])[0]['metadata']['statements'][0]['value']=='two  spaces'
+
+
+def test_unrecognized_conflict_summary_remains_source_text():
+    tables=Converter().convert(package(),out_type='magetab',enrichment='off').items[0].payload[0]
+    tables.append(['Comment[MSCConflict]',json.dumps({'schema_version':'99.0','record':record()})])
+    tables.append(['Comment[MSCConflictSummary]','Original summary for the unknown version'])
+    for _ in range(2):
+        parsed,warnings=import_tables(tables)
+        tables=Converter().convert(parsed,out_type='magetab',enrichment='off').items[0].payload[0]
+        assert [v for r in tables if r[0]=='Comment[MSCConflictSummary]' for v in r[1:]]==['Original summary for the unknown version']

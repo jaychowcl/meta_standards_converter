@@ -238,7 +238,8 @@ def test_magetab_directory_consumes_sdrf_once():
     directory = ROOT / "tests/fixtures/studies/E-MTAB-1/inputs"
     result = Converter().convert(directory, out_type="json", enrichment="off", options={"expand_studies": False})
     assert len(result.items) == 1, result.to_dict()
-    assert result.status == "complete", result.to_dict()
+    assert result.status == "partial" and result.items[0].validation == "valid", result.to_dict()
+    assert all('source-text encoding' in d.message for d in result.items[0].diagnostics if d.code == 'source_partial')
     assert result.items[0].payload[0].samples
 
 

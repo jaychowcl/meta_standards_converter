@@ -2,6 +2,7 @@
   "schema_version": "1.0",
   "values": {
     "meta_standards_converter": {
+      "conflicts": "[]",
       "converter_version": "8.0.0",
       "metadata_schema_version": "2.0",
       "modality": "unknown",
@@ -37,7 +38,8 @@
           "value_000007",
           "value_000008",
           "value_000009",
-          "value_000010"
+          "value_000010",
+          "value_000011"
         ],
         "records": [
           {
@@ -52,6 +54,13 @@
             "ordinal": 0,
             "sample_accession": "PBMC3K_SAMPLE",
             "value": "PBMC3K",
+            "value_type": "string"
+          },
+          {
+            "field": "msc.provenance.conflicts",
+            "ordinal": 0,
+            "sample_accession": "PBMC3K_SAMPLE",
+            "value": "[]",
             "value_type": "string"
           },
           {

@@ -1074,6 +1074,7 @@ applicable route):
 | Checkpoints/combination | `resume`, `force_memory`, `processed_checkpoint_dir`, `allow_unverified_combination` |
 | OBS components | `include_var`, `include_uns` |
 | Runtime | `overwrite=False`, `fail_fast=False`, `recursive=False`, `allow_processing=False`, `resource_profile="standard"`, `resource_overrides=None`, `insdc_default="ena"`, `allowed_hosts=()`, `reserved_paths=()` |
+| Optional metadata limits | `metadata_timeout_seconds=None`, `metadata_max_requests=None`; positive seconds/integer attempts shared across one input's metadata retrieval |
 
 Companions and explicit metadata use `InputSpec(..., companions=..., metadata=...)`
 or manifest bindings. Standalone H5AD/AnnData accepts only the applicable OBS
@@ -5870,7 +5871,8 @@ unbound or other-library paths cannot supply a comparison.
 Portable conflict evidence uses versioned `Comment[MSCConflict]` IDF entries and
 a readable `Comment[MSCConflictSummary]`. Recognized comments reconstruct the
 existing records; malformed or unknown versions remain source comments with a
-parser warning. TSV/CSV and AnnData obs carry `msc.provenance.conflicts` as JSON;
+parser warning. Their readable source summaries remain unchanged; only summaries
+recognized as generated from restored records are regenerated. TSV/CSV and AnnData obs carry `msc.provenance.conflicts` as JSON;
 AnnData package provenance also carries the complete `conflicts` JSON ledger.
 Serialization deduplicates deterministically and preserves literal values,
 including whitespace. Existing unresolved conflicts produce partial-but-valid

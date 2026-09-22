@@ -57,18 +57,20 @@ def _decode_comment(value):
 
 def _insert_conflict_comments(data, rows):
     records = _conflicts(data)
+    summaries = {_summary(record) for record in records}
     retained = []
     for row in rows:
         if row and row[0] == 'Comment[MSCConflict]':
             values = [v for v in row[1:] if _decode_comment(v) is None]
             if values: retained.append([row[0], *values])
-        elif not row or row[0] != 'Comment[MSCConflictSummary]': retained.append(row)
+        elif row and row[0] == 'Comment[MSCConflictSummary]':
+            values = [v for v in row[1:] if v not in summaries]
+            if values: retained.append([row[0], *values])
+        else: retained.append(row)
     for record in records:
         retained.append(['Comment[MSCConflict]', _json({'schema_version': '1.0', 'record': record})])
     if records:
-        retained.append(['Comment[MSCConflictSummary]', *[
-            f"{r['metadata']['path']}: selected {r['metadata']['selected']['provider']} {r['metadata']['selected']['value']!r}; {r['metadata']['reason']}"
-            for r in records]])
+        retained.append(['Comment[MSCConflictSummary]', *[_summary(r) for r in records]])
     rows[:] = retained
 
 
@@ -80,10 +82,16 @@ def _restore_conflict_comments(data, warn):
             if record is not None:
                 found.append(record); continue
             warn('Unrecognized or malformed MSCConflict comment retained without interpretation')
-        if comment.get('name') != 'MSCConflictSummary': kept.append(comment)
-    data['series']['comments'] = kept
+        kept.append(comment)
+    summaries = {_summary(record) for record in found}
+    data['series']['comments'] = [c for c in kept if c.get('name') != 'MSCConflictSummary' or c.get('value') not in summaries]
     if found:
         extension = data.setdefault('extensions', {}).setdefault('insdc', {'version': '1.0', 'records': []})
         records = extension.setdefault('records', [])
         for record in found:
             if record not in records: records.append(record)
+
+
+def _summary(record):
+    fact = record['metadata']
+    return f"{fact['path']}: selected {fact['selected']['provider']} {fact['selected']['value']!r}; {fact['reason']}"

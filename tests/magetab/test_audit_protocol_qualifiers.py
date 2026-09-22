@@ -68,7 +68,9 @@ def test_recorded_four_study_protocol_qualifier_occurrences_survive():
             source = list(csv.reader(stream, delimiter='\t'))
         result = Converter().convert(str(root / (accession + '.idf.txt')), out_type='magetab',
                                      enrichment='off', options={'expand_studies': False})
-        assert result.status == 'complete', result.to_dict()
+        assert result.status == ('partial' if accession == 'E-GEOD-48035' else 'complete'), result.to_dict()
+        assert result.items[0].validation == 'valid'
+        assert all('source-text encoding' in d.message for d in result.items[0].diagnostics if d.code == 'source_partial')
         output = next(r[1] for r in result.items[0].payload[0] if r[0] == 'SDRF File')
         original = occurrences(source)
         assert sum(original.values()) == expected

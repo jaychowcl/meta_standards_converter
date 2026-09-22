@@ -37,6 +37,7 @@
     "msc.database.uri",
     "msc.expression.modality",
     "msc.expression.modality_detail",
+    "msc.provenance.conflicts",
     "msc.characteristics.tissue"
   ],
   "dataset_ids": [
