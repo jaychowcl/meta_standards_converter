@@ -330,6 +330,8 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
     _insert_retained_patch_comments(package, rows)
     from ..metadata.conflicts import _insert_conflict_comments
     _insert_conflict_comments(package, rows)
+    from ..metadata.source_text import _normalization_comments
+    _normalization_comments(package, rows=rows)
     return rows
 
 

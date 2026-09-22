@@ -247,6 +247,8 @@ class AEParser:
                 channel.setdefault("characteristics", []).extend(retained_hz.get((sample["iid"], i), []))
         from ..metadata.conflicts import _restore_conflict_comments
         _restore_conflict_comments(mapping, self._warn)
+        from ..metadata.source_text import _normalization_comments
+        _normalization_comments(mapping, warn=self._warn)
         return MINiMLCodec().decode(mapping).package
 
     def _table(self, text: str, name: str, rectangular: bool) -> list[list[str]]:

@@ -58,6 +58,14 @@ class SourceSelection:
         origin = previous if previous.get('value') == old else self.current
         left = {**origin, 'value': deepcopy(old)}
         right = {**self.incoming, 'value': deepcopy(new)}
+        if self.mode == 'standard':
+            from .source_text import _text_choice
+            text_choice = _text_choice(left, right, path)
+            if text_choice is not None:
+                chosen, record = text_choice
+                self.selections[path] = right if chosen else left
+                if record not in self.records: self.records.append(record)
+                return chosen
         chosen = informative(new) and (not informative(old) or (
             self.mode == 'standard' and _RANK.get(right['provider'], 0) > _RANK.get(left['provider'], 0)))
         selected = right if chosen else left

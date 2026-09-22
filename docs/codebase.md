@@ -5876,6 +5876,16 @@ Serialization deduplicates deterministically and preserves literal values,
 including whitespace. Existing unresolved conflicts produce partial-but-valid
 facade results even with enrichment off, without refetching or reselecting values.
 
+Source text is decoded from provider bytes, respecting XML encoding declarations
+and UTF-8 text/JSON contracts rather than an HTTP library's guessed charset.
+Possible inherited encoding corruption stays unchanged with a preparation warning.
+In standard reconciliation, an exactly joined prose field may use a clean
+alternative only when it corroborates a reversible UTF-8/CP1252 or UTF-8/Latin-1
+transformation. Both source statements and the transformation remain in a
+`text_normalization` record and versioned `Comment[MSCTextNormalization]`.
+No cross-field inference or character substitution occurs. Curators keeps its
+primary statement; unknown normalization comment versions remain recoverable.
+
 `source_conflict` extension records retain accession, field path, original values,
 selection and reason. A `source_selection` ledger preserves selected-field origins
 across subsequent merges. Unresolved disagreements make completeness partial while

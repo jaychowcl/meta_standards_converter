@@ -144,6 +144,8 @@ class MetadataPreparation:
             return bool(links)
         run("linked_metadata", linked_applicable, lambda p: self._linked(p, provider, links))
         run("standard", True, lambda p: self._standard(p, provider))
+        from meta_standards_converter.metadata.source_text import _text_issues
+        diagnostics.extend(Diagnostic("source_partial", issue, "preparation", "warning") for issue in _text_issues(package))
         for record in records:
             count("preparation_" + record["status"])
             emit("preparation_outcome", level="DEBUG", **record)
