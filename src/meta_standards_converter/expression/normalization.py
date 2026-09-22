@@ -23,6 +23,7 @@ from meta_standards_converter.miniml import (
 from meta_standards_converter.converters.dataset_combination import DatasetCombinationPolicy
 from meta_standards_converter.metadata.projection.assay import _parameter_rows, _parameter_summary
 from meta_standards_converter.metadata.provenance import patch_provenance_columns
+from meta_standards_converter.metadata.preparation import preparation_operation, package_mapping
 from meta_standards_converter.expression.assets import Asset
 from meta_standards_converter.expression.readers import scientific_modules
 
@@ -85,6 +86,7 @@ class AnnDataNormalizer:
             package_version=package_version,
             metadata_schema_version=self.H5AD_METADATA_SCHEMA_VERSION)
 
+    @preparation_operation
     def normalize(
         self,
         adata,
@@ -96,6 +98,7 @@ class AnnDataNormalizer:
         artifact_parent: Path,
         harmonization_resolution=None,
     ) -> dict:
+        package = package_mapping(package)
         sample_id = self.planner.sample_accession(sample)
         metadata_values = self._sample_metadata_values(sample, package)
         metadata = self._render_sample_metadata(metadata_values)

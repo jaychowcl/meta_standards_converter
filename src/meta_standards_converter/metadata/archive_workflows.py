@@ -312,6 +312,32 @@ def _biological_node(sample):
     return node
 
 
+class _PathScopeIndex:
+    """Stable encounter-ordered joins; scope identifiers are read once per path."""
+    def __init__(self, paths):
+        self.paths, self.scopes, self.samples, self.identifiers = [], {}, {}, {}
+        for path in paths:
+            self.add(path)
+
+    def add(self, path):
+        index = len(self.paths)
+        self.paths.append(path)
+        scope = self.scopes[id(path)] = path_ids(path)
+        for sample in {s['sample_ref'] for s in path['steps'] if s.get('sample_ref')}:
+            self.samples.setdefault(sample, set()).add(index)
+            for accession in scope:
+                self.identifiers.setdefault((sample, accession), set()).add(index)
+
+    def find(self, sample, scope):
+        candidates = self.samples.get(sample, set())
+        for pattern in (r'[SED]RR\d+', r'[SED]RX\d+'):
+            wanted = {v for v in scope if re.fullmatch(pattern, v)}
+            if wanted:
+                matching = set().union(*(self.identifiers.get((sample, v), set()) for v in wanted))
+                candidates = candidates & matching
+        return [self.paths[i] for i in sorted(candidates)]
+
+
 def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None):
     """Bind complete ordered branches and acquisition prefixes by explicit identity."""
     paths = data['series'].setdefault('assay_paths', [])
@@ -340,6 +366,7 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                 if len(channels) == 1:
                     _merge_entity(step, {'characteristics': channels[0].get('characteristics', [])}, prefer)
     originals = deepcopy(paths)
+    original_index = _PathScopeIndex(originals)
     templates, incoming, explicit = {}, [], set()
     for path in extra['series'].get('assay_paths', []):
         refs = {s['sample_ref'] for s in path['steps'] if s.get('sample_ref')}
@@ -366,9 +393,8 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
         except ValueError as error:
             issues.append(f'{target}: {error}')
             continue
-        candidates = [p for p in originals if any(s.get('sample_ref') == target for s in p['steps'])
-                      and compatible(scope, path_ids(p))]
-        run_scopes = {tuple(sorted(path_ids(p))) for p in candidates}
+        candidates = original_index.find(target, scope)
+        run_scopes = {tuple(sorted(original_index.scopes[id(p)])) for p in candidates}
         if not prefer:
             # Peer runs may be new to the native inventory but must be present
             # in the already validated merged sample/run registry.
@@ -439,22 +465,22 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
         for (target, key), prepared in incoming:
             if len(templates[(target, key)]) != 1 or not any(is_file(s) for s in prepared['steps']):
                 continue
-            candidates = [p for p in originals if any(s.get('sample_ref') == target for s in p['steps'])
-                          and tuple(sorted(path_ids(p))) == key]
+            candidates = [p for p in original_index.find(target, set(key))
+                          if tuple(sorted(original_index.scopes[id(p)])) == key]
             # All candidates have the same verified sample/run identity.
             steps = _bind_native(deepcopy(prepared['steps']), target, candidates[0]['steps'])
             facts = selections.get((target, key))
             if facts is not None:
                 apply_library_facts({}, steps, facts)
             paths.append({**deepcopy(prepared), 'steps': steps})
+        current_index = _PathScopeIndex(paths)
         for source in extra.get('sample', []):
             target = matched.get(source['iid'])
             if target is None:
                 continue
             for run in source.get('sra_run', []):
                 scope = {run[k] for k in ('run', 'experiment') if run.get(k)}
-                candidates = [p for p in paths if any(s.get('sample_ref') == target for s in p['steps'])
-                              and compatible(scope, path_ids(p))]
+                candidates = current_index.find(target, scope)
                 prefixes = []
                 for path in candidates:
                     prefix = _acquisition(path['steps'])
@@ -463,7 +489,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                 if scope and len(prefixes) == 1:
                     for file in run.get('files') or run.get('fastq_files', []):
                         if file.get('uri') or file.get('filename'):
-                            paths.append({'steps': deepcopy(prefixes[0]) + [file_node(file)]})
+                            added = {'steps': deepcopy(prefixes[0]) + [file_node(file)]}
+                            paths.append(added)
+                            current_index.add(added)
             for field, kind in [('raw_data', 'array_data_file'), ('supplementary_data', 'derived_array_data_file')]:
                 for link in source.get(field, []):
                     if link.get('value'):

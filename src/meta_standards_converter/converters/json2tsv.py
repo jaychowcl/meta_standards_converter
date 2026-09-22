@@ -7,6 +7,8 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.metadata.preparation import preparation_operation, package_mapping
+
 from meta_standards_converter.conversion_logging import logged_conversion, measured
 import json
 import tempfile
@@ -66,6 +68,7 @@ class JSON2DelimitedConverter:
 
     @logged_conversion
     @measured("projection")
+    @preparation_operation
     def project_loaded(self, loaded, *, allow_invalid=False, replacement_profile=None):
         """Project loaded metadata without filesystem side effects."""
         records: list[dict[str, Any]] = []
@@ -77,6 +80,7 @@ class JSON2DelimitedConverter:
             resolution = group.harmonization_resolution
             warnings.extend(getattr(resolution, "warnings", ()))
             for package in group.packages:
+                package = package_mapping(package)
                 study_accession = (
                     self.metadata_service.study_accession([package])
                     or group.dataset_id

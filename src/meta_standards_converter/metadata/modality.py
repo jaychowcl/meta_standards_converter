@@ -14,7 +14,7 @@ Evidence and conflicts remain inspectable even when a decision is unknown.
 from dataclasses import dataclass
 import re
 from .preparation import (library_evidence_levels, clauses, NON_PREP, BULK,
-                          single_cell_signal, CHEMISTRY_IDENTIFIERS, preparation_operation)
+                          single_cell_signal, CHEMISTRY_IDENTIFIERS, preparation_operation, package_mapping)
 
 
 @dataclass(frozen=True)
@@ -82,6 +82,7 @@ def _library(sample, run, data):
 @preparation_operation
 def resolve_modality(sample, *, data=None):
     """Resolve libraries independently, then aggregate without treating runs as libraries."""
+    data = package_mapping(data)
     runs = sample.get('sra_run') or [None]
     libraries = {}
     for index, run in enumerate(runs):

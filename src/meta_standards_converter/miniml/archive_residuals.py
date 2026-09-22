@@ -605,7 +605,10 @@ class Projection:
 
 
 def source_records(package):
-    return list(deepcopy(getattr(package, '_archive_source_records', package.to_mapping().get('extensions',{}).get('insdc',{}).get('records',[]))))
+    records = getattr(package, '_archive_source_records', None)
+    if records is None:
+        records = package.to_mapping().get('extensions', {}).get('insdc', {}).get('records', [])
+    return list(deepcopy(records))
 
 
 def finalize(data, records=None):

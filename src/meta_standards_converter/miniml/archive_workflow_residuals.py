@@ -25,6 +25,13 @@ def prune_bound_workflows(source, target, residual, provider, accession):
     from meta_standards_converter.miniml.archive_results import comparison_view, normalize_result_bundles
     expanded = comparison_view(target)
     actual = expanded.get('series', {}).get('assay_paths', [])
+    # URI inversion can change links, but never ordered node identities.
+    def skeleton(path):
+        return tuple(tuple((k, s[k]) for k in ('kind', 'name', 'sample_ref', 'protocol_ref') if k in s)
+                     for s in path['steps'])
+    actual_index = {}
+    for position, path in enumerate(actual):
+        actual_index.setdefault(skeleton(path), []).append((position, path))
     prepared = []
     for path in old_paths:
         if any(c.get('name', '').upper() in {'FASTQ_URI', 'FASTQ_FILE_NAME'} and set(c) - {'name', 'value'}
@@ -65,14 +72,14 @@ def prune_bound_workflows(source, target, residual, provider, accession):
             continue
         view, identity = entry
         matches = []
-        for actual_index, path in enumerate(actual):
+        for actual_position, path in actual_index.get(skeleton(view), []):
             candidate = deepcopy(path)
             missing = [i for i, s in enumerate(view['steps']) if is_file(s) and not s.get('link', {}).get('value')]
             if missing:
                 # Only a positively verified final MEX object authorizes the
                 # filename-only representation inverse, within this exact path.
                 probe = {'source': target['source'], 'series': {**target['series'], 'assay_paths': [deepcopy(path)]}}
-                if not normalize_result_bundles(probe) or probe['series']['assay_paths'][0] != target['series']['assay_paths'][actual_index]:
+                if not normalize_result_bundles(probe) or probe['series']['assay_paths'][0] != target['series']['assay_paths'][actual_position]:
                     continue
                 if len(candidate['steps']) != len(view['steps']):
                     continue

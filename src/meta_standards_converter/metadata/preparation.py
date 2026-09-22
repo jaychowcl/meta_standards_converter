@@ -80,12 +80,29 @@ def preparation_operation(function):
     """Share immutable preparation indexes only for one export operation."""
     @wraps(function)
     def wrapped(*args, **kwargs):
+        if _preparation_indexes.get() is not None:
+            return function(*args, **kwargs)
         token = _preparation_indexes.set({})
         try:
             return function(*args, **kwargs)
         finally:
             _preparation_indexes.reset(token)
     return wrapped
+
+
+def package_mapping(package):
+    """Materialize an immutable typed package once within the current operation."""
+    if package is None:
+        return {}
+    if not hasattr(package, 'to_mapping'):
+        return package
+    cache = _preparation_indexes.get()
+    if cache is None:
+        return package.to_mapping()
+    key = ('mapping', id(package))
+    if key not in cache:
+        cache[key] = (package, package.to_mapping())
+    return cache[key][1]
 
 
 def _bound_protocol_index(series):
