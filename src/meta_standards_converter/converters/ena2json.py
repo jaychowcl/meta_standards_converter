@@ -64,11 +64,9 @@ class ENA2JSONConverter:
                 result.studies.append(outcome)
                 try:
                     with stage("load"):
-                        records = self.source.fetch(seed)
-                    if not records.xml and not any(records.indexed.values()):
-                        raise ValueError('No native metadata records retrieved')
-                    package = self.parser.parse(records)
-                    outcome.issues.extend(records.issues)
+                        from .archive_results import _load_native
+                        package, issues = _load_native(self.source, self.parser, seed)
+                    outcome.issues.extend(issues)
                     from meta_standards_converter.metadata.archive_enrichment import LinkedArchiveEnricher, merge_archive_metadata, linked_accessions
                     from ..metadata.preparation_scope import converter_enrichment_enabled
                     if include_peer and converter_enrichment_enabled():

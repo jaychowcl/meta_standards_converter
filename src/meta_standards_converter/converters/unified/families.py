@@ -119,6 +119,11 @@ class StudyFamilies:
             loaded.preparation.append({'operation': 'study_expansion', 'status': 'skipped', 'reason': 'disabled'})
             emit("expansion_skipped", level="DEBUG", status="skipped", reason="disabled")
             return loaded
+        from meta_standards_converter.metadata.retrieval_budget import _active
+        if _active.get() and _active.get().exhausted:
+            loaded.preparation.append({'operation': 'study_expansion', 'status': 'partial', 'reason': 'metadata_budget_exhausted'})
+            loaded.diagnostics.append(Diagnostic('source_partial', 'study_expansion unfinished: metadata budget exhausted', 'expansion', 'warning'))
+            return loaded
         queue = deque(loaded.metadata.groups)
         groups = list(loaded.metadata.groups)
         seen = {(provider_of(p, loaded.provider), a) for g in groups for p in g.packages for a in study_ids(p)}

@@ -36,6 +36,8 @@ class EntrezRecords:
                 ids.extend(page)
                 start += len(page)
             except Exception as error:
+                from ..metadata.retrieval_budget import _BudgetExhausted
+                if isinstance(error, _BudgetExhausted): raise
                 issues.append(f'{db} inventory: {type(error).__name__}')
                 break
         unique = list(dict.fromkeys(ids))
@@ -84,4 +86,3 @@ class EntrezRecords:
         for missing in sorted(set(ids) - found):
             result.issues.append(f'{db} {missing}: missing, error or mismatched identity')
         return clean if len(clean) else None
-

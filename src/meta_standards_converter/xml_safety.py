@@ -152,6 +152,8 @@ def read_limited_response(
             )
     body = bytearray()
     for chunk in response.iter_content(chunk_size=chunk_size):
+        from .metadata.retrieval_budget import _active
+        if _active.get(): _active.get().check()
         if not chunk:
             continue
         body.extend(chunk)
@@ -196,6 +198,8 @@ def stream_limited_response(
             )
     byte_count = 0
     for chunk in response.iter_content(chunk_size=chunk_size):
+        from .metadata.retrieval_budget import _active
+        if _active.get(): _active.get().check()
         if not chunk:
             continue
         byte_count += len(chunk)

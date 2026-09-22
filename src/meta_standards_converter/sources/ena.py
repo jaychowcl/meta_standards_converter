@@ -50,6 +50,8 @@ class ENASource:
                     if len(page) < self.xref_page_size: break
                     offset += len(page)
                 except Exception as error:
+                    from ..metadata.retrieval_budget import _BudgetExhausted
+                    if isinstance(error, _BudgetExhausted): raise
                     issues.append(f'ENA cross references {accession}: {type(error).__name__}')
                     break
             self._xrefs[accession] = rows, issues
@@ -212,22 +214,17 @@ class ENASource:
                         else:
                             records.issues.append(f'{acc}: mismatched indexed analysis identity or membership')
 
-    def fetch(self, seed):
+    def fetch(self, seed, *, _on_core=None):
         records = StudyRecords(seed)
         query = f'secondary_study_accession="{seed.study}"' if seed.study.startswith(('SRP', 'ERP', 'DRP')) else f'study_accession="{seed.primary}"'
         for accession in dict.fromkeys((seed.study, seed.primary)):
             root = self.verified_xml([accession], records)
             if root is not None:
                 records.xml.append(root)
-        for kind in ('study', 'sample', 'read_experiment', 'read_run', 'analysis', 'assembly'):
-            if kind not in self._catalogues:
-                catalogue = attempt(records, f'{kind} catalogue', lambda: self.http.get(self.portal + 'returnFields', {'result': kind}, 'text'))
-                if catalogue:
-                    self._catalogues[kind] = list(csv.DictReader(io.StringIO(catalogue), delimiter='\t'))
-            scoped = f'study_accession="{seed.primary}"' if kind in ('study', 'sample', 'assembly') else query
-            rows = attempt(records, f'{kind} inventory', lambda: self.search(kind, scoped))
-            if rows is not None:
-                records.indexed[kind] = rows
+        kinds = ('study', 'sample', 'read_experiment', 'read_run')
+        if _on_core is None: kinds += ('analysis', 'assembly')
+        for kind in kinds:
+            self._inventory(kind, records, query)
         # File report is a separate contract; do not concatenate the same Portal
         # run projection with itself and accidentally manufacture file duplicates.
         files = attempt(records, 'ENA file report', lambda: self.http.get(self.portal + 'filereport',
@@ -241,6 +238,7 @@ class ENASource:
         inventory = {}
         for kind, field in [('sample', 'sample_accession'), ('read_experiment', 'experiment_accession'),
                             ('read_run', 'run_accession'), ('analysis', 'analysis_accession'), ('assembly', 'assembly_accession')]:
+            if kind not in kinds: continue
             accessions = list(dict.fromkeys((r.get('assembly_set_accession') or r[field]) if kind == 'assembly' else r[field]
                                            for r in records.indexed.get(kind, []) if r.get(field)))
             if kind == 'sample':
@@ -252,6 +250,31 @@ class ENASource:
                 root = self.verified_xml(batch, records, kind)
                 if root is not None:
                     records.xml.append(root)
+        if _on_core is not None: _on_core(records)
+        from ..metadata.retrieval_budget import _budget_stage
+        with _budget_stage('native_supplementary'):
+            return self._supplement(records, inventory, query, extras=_on_core is not None)
+
+    def _inventory(self, kind, records, query):
+        if kind not in self._catalogues:
+            catalogue = attempt(records, f'{kind} catalogue', lambda: self.http.get(self.portal + 'returnFields', {'result': kind}, 'text'))
+            if catalogue:
+                self._catalogues[kind] = list(csv.DictReader(io.StringIO(catalogue), delimiter='\t'))
+        scoped = f'study_accession="{records.seed.primary}"' if kind in ('study', 'sample', 'assembly') else query
+        rows = attempt(records, f'{kind} inventory', lambda: self.search(kind, scoped))
+        if rows is not None: records.indexed[kind] = rows
+
+    def _supplement(self, records, inventory, query, *, extras=False):
+        seed = records.seed
+        if extras:
+            for kind, field in [('analysis', 'analysis_accession'), ('assembly', 'assembly_accession')]:
+                self._inventory(kind, records, query)
+                accessions = list(dict.fromkeys((r.get('assembly_set_accession') or r[field]) if kind == 'assembly' else r[field]
+                                               for r in records.indexed.get(kind, []) if r.get(field)))
+                inventory[kind] = accessions
+                for batch in chunks(accessions):
+                    root = self.verified_xml(batch, records, kind)
+                    if root is not None: records.xml.append(root)
         self.fetch_reference_ranges(records)
         self.fetch_associated_analyses(records)
         count = attempt(records, 'ENA run count', lambda: self.http.get(self.portal + 'count',

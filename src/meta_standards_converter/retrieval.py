@@ -203,6 +203,14 @@ class RetrievalService:
         emit("download_completed", level="DEBUG", url=value, bytes=destination.stat().st_size)
         return str(destination)
 
+    def _metadata_get(self, url, **kwargs):
+        from .metadata.retrieval_budget import _active
+        from .helpers.request_helper import RateLimitedRequester
+        budget = _active.get()
+        if budget and not isinstance(self.session, RateLimitedRequester):
+            kwargs['timeout'] = budget.attempt(kwargs.get('timeout'))
+        return self.session.get(url, **kwargs)
+
     def _download_http(
         self,
         value: str,
@@ -215,7 +223,7 @@ class RetrievalService:
         response = None
         for redirect_count in range(self.policy.resource_profile.max_redirects + 1):
             self.policy.validate_url(current)
-            response = self.session.get(
+            response = self._metadata_get(
                 current,
                 stream=True,
                 allow_redirects=False,
@@ -351,7 +359,7 @@ class RetrievalService:
 
     def _range_response(self, value: str, *, start: int, end: int) -> Any:
         self.policy.validate_url(value)
-        response = self.session.get(
+        response = self._metadata_get(
             value,
             headers={"Range": f"bytes={start}-{end}"},
             stream=True,
@@ -438,6 +446,8 @@ class RetrievalService:
             temporary = Path(handle.name)
             try:
                 for chunk in chunks:
+                    from .metadata.retrieval_budget import _active
+                    if _active.get(): _active.get().check()
                     if not chunk:
                         continue
                     byte_count += len(chunk)

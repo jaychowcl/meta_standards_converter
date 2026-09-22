@@ -73,8 +73,13 @@ def retrieve_once(key, call):
         emit("preparation_cache_hit", level="DEBUG")
     if key not in memo:
         try:
-            memo[key] = (True, deepcopy(call()))
+            value = call()
+            from .retrieval_budget import _active
+            if _active.get() and _active.get().exhausted: return value
+            memo[key] = (True, deepcopy(value))
         except Exception as exc:
+            from .retrieval_budget import _BudgetExhausted
+            if isinstance(exc, _BudgetExhausted): raise
             memo[key] = (False, exc)
     ok, value = memo[key]
     if not ok:

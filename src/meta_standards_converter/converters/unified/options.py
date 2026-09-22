@@ -76,6 +76,8 @@ RUNTIME_DEFAULTS = {
     "insdc_default": "ena",
     "allowed_hosts": (),
     "reserved_paths": (),
+    "metadata_timeout_seconds": None,
+    "metadata_max_requests": None,
 }
 BOOLS = {
     "overwrite",
@@ -108,6 +110,11 @@ def settings(value, allowed, label, *, partial=False):
     if unknown:
         raise ValueError(f'Unsupported {label}: {", ".join(sorted(map(str, unknown)))}')
     result = dict(value)
+    import math
+    for key in ('metadata_timeout_seconds', 'metadata_max_requests'):
+        item = result.get(key)
+        if item is not None and (isinstance(item, bool) or not isinstance(item, (int, float)) or not math.isfinite(item) or item <= 0 or (key == 'metadata_max_requests' and not isinstance(item, int))):
+            raise ValueError(f'{key} must be positive' + (' integer' if key == 'metadata_max_requests' else ' finite seconds'))
     if "reserved_paths" in result:
         from os import PathLike
         paths = result["reserved_paths"]

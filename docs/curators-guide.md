@@ -83,6 +83,32 @@ optional candidate is rejected and the last valid package is retained. `curators
 does not check repositories it has not retrieved; absence of a warning does not
 establish agreement with those repositories.
 
+Conflict evidence travels with MAGE-TAB in versioned `Comment[MSCConflict]`
+entries and a readable summary. TSV/CSV and AnnData observations include the
+applicable ledger in `msc.provenance.conflicts`; AnnData also retains the package
+ledger. Reimporting these conflicts keeps the warnings, even with enrichment off,
+and does not select values again. Unknown comment versions remain recoverable.
+
+Detailed modality combines compatible library and bound preparation evidence.
+Broad single-cell metadata can be refined by nuclei isolation; contradictory
+explicit preparations remain unknown. Generated acquisition paths are reconciled
+only when verified identities establish that a retained continuation covers their
+evidence. Authored archive row occurrences and distinct processing branches remain.
+
+Possible source-text encoding corruption is retained and flagged. Standard
+enrichment may use a clean equivalent only when the same scoped field corroborates
+a reversible decoding transformation; both statements and normalization evidence
+remain available. Curators preserves the primary source's text.
+
+Python calls can optionally bound metadata retrieval, for example
+`options={"metadata_timeout_seconds": 900, "metadata_max_requests": 1000}`.
+Both limits default to `None`. Each top-level input shares its allowance across
+native, peer, linked and publication retrieval; retries and redirects count as
+HTTP attempts, cache hits do not. On exhaustion, MSC returns the latest strictly
+valid metadata with partial coverage diagnostics. If no valid candidate exists,
+it fails without publication. These limits do not cover subsequent expression
+processing and are currently Python runtime options rather than dedicated CLI flags.
+
 Verified related-study expansion is enabled by default, independently of enrichment.
 Use `--no-expand-studies` to disable it. The guide's curator audience does not change
 the default `standard` enrichment preset.

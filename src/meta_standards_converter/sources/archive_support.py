@@ -120,5 +120,7 @@ def attempt(records, label, call):
     try:
         return call()
     except Exception as error:
+        from ..metadata.retrieval_budget import _BudgetExhausted
+        if isinstance(error, _BudgetExhausted): raise
         records.issues.append(f'{label}: {type(error).__name__}')
         return None

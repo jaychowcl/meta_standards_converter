@@ -50,7 +50,9 @@ class MetadataPreparation:
         providers = {provider_of(p, loaded.provider) for g in loaded.metadata.groups for p in g.packages}
         if len(providers) == 1:
             loaded.provider = providers.pop()
-        loaded = self.families.expand(loaded)
+        from meta_standards_converter.metadata.retrieval_budget import _active, _budget_stage, _coverage, _coverage_issues
+        with _budget_stage('study_expansion'):
+            loaded = self.families.expand(loaded)
         groups = []
         for group in loaded.metadata.groups:
             packages = []
@@ -59,14 +61,18 @@ class MetadataPreparation:
                 key = (hashlib.sha256(json.dumps(package.to_mapping(), sort_keys=True).encode()).hexdigest(),
                        provider, self.context.preparation_policy)
                 if key not in self.cache:
-                    self.cache[key] = self._package(package, provider)
+                    prepared_result = self._package(package, provider)
+                    if not (_active.get() and _active.get().exhausted): self.cache[key] = prepared_result
                 else:
                     count("preparation_cache_hits")
                     emit("preparation_cache_hit", level="DEBUG", provider=provider)
-                prepared, records, diagnostics = self.cache[key]
+                    prepared_result = self.cache[key]
+                prepared, records, diagnostics = prepared_result
+                prepared = _coverage(prepared, _active.get())
                 packages.append(prepared)
                 loaded.preparation.extend(deepcopy(records))
                 loaded.diagnostics.extend(diagnostics)
+                loaded.diagnostics.extend(Diagnostic('source_partial', issue, 'preparation', 'warning') for issue in _coverage_issues(prepared))
             groups.append(replace(group, packages=tuple(packages)))
         loaded.metadata = replace(loaded.metadata, groups=tuple(groups))
         loaded.enrichment_applied = True
@@ -93,10 +99,16 @@ class MetadataPreparation:
                     diagnostics.append(Diagnostic("enrichment_skipped", f"{identity}: {name} not applicable", "preparation", "info"))
                     return
                 record.update(status="attempted", reason=None)
+                from meta_standards_converter.metadata.retrieval_budget import _active, _budget_stage
+                budget = _active.get()
+                if budget and budget.exhausted:
+                    record.update(status='skipped', reason='metadata_budget_exhausted')
+                    diagnostics.append(Diagnostic('source_partial', f'{identity}: {name} unfinished: metadata budget exhausted', 'preparation', 'warning'))
+                    return
                 # A collaborator gets an isolated, valid candidate. Commit only
                 # after it passes the same policy used by strict consumers.
                 from meta_standards_converter.metadata.reconciliation import selection_policy
-                with selection_policy(policy.enrichment):
+                with selection_policy(policy.enrichment), _budget_stage(name):
                     candidate, issues = fn(MINiMLCodec().decode(package, strict=True).package)
                 package = MINiMLCodec().decode(candidate, strict=True).package
                 record["status"] = "partial" if issues else "completed"
@@ -109,7 +121,12 @@ class MetadataPreparation:
                     "preparation", "warning") for d in exc.diagnostics)
             except Exception as exc:
                 record["status"] = "failed"
-                diagnostics.append(Diagnostic("source_partial", f"{identity}: {name} failed ({type(exc).__name__})", "preparation", "warning"))
+                from meta_standards_converter.metadata.retrieval_budget import _BudgetExhausted
+                if isinstance(exc, _BudgetExhausted):
+                    record.update(status='partial', reason='metadata_budget_exhausted')
+                    message = f'{identity}: {name}: {exc}; valid candidate retained'
+                else: message = f"{identity}: {name} failed ({type(exc).__name__})"
+                diagnostics.append(Diagnostic("source_partial", message, "preparation", "warning"))
 
         from meta_standards_converter.metadata.reconciliation import inspect_recorded_conflicts
         def has_recorded_evidence():

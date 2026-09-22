@@ -5886,6 +5886,32 @@ transformation. Both source statements and the transformation remain in a
 No cross-field inference or character substitution occurs. Curators keeps its
 primary statement; unknown normalization comment versions remain recoverable.
 
+### Optional metadata retrieval limits
+
+The facade accepts `metadata_timeout_seconds` (positive finite seconds) and
+`metadata_max_requests` (positive integer) in `runtime_options` or the `options`
+alias. Both default to `None`; unbounded standalone and facade behavior remains
+unchanged. One top-level input owns an allowance shared by discovery, native
+loading, family expansion, peer/linked enrichment and publication metadata.
+Nested calls reuse it; separate inputs receive separate allowances. Expression
+asset downloads and processing after metadata preparation are outside this budget.
+
+Actual HTTP attempts, retries and redirects consume the request allowance;
+verified cache hits do not. Request timeouts, host-slot waits and provider pacing
+are limited by the remaining deadline. Existing throttling and retry ceilings
+remain in force. Budget events use the existing conversion logging framework.
+
+Bounded native imports validate a core inventory before supplementary discovery.
+On exhaustion, they retain the latest strictly valid candidate (including valid
+supplementary evidence already retrieved), record the unfinished stage, and return
+partial completeness with valid output. Without a valid candidate, conversion
+fails without publication. Rejected enrichment still rolls back. JSON records
+retain `retrieval_coverage` evidence; reloading incomplete coverage stays partial.
+Partial retrievals are not memoized as complete, and interrupted ENA cross-reference
+pages are retried by later independent calls. Custom source services keep their
+legacy signatures; early native retention additionally requires the optional
+internal `_on_core` callback supported by MSC's SRA/ENA sources.
+
 `source_conflict` extension records retain accession, field path, original values,
 selection and reason. A `source_selection` ledger preserves selected-field origins
 across subsequent merges. Unresolved disagreements make completeness partial while

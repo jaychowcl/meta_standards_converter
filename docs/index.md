@@ -606,6 +606,6 @@ canonical guide together when an interface, workflow, or contract changes.
 - id: scientific-source-selection
   title: Scientific source selection and fidelity
   anchor: fidelity-contracts
-  purpose: Repository precedence, partial-but-valid conflicts, protocol qualifiers, anatomy and operation-scoped indexes.
+  purpose: Repository precedence, portable conflict/text evidence, optional per-input metadata budgets, protocol qualifiers, anatomy and operation-scoped indexes.
   keywords: standard, curators, native, source_conflict, MSCConflict, portable conflicts, source_selection, MSCTextNormalization, source encoding, reversible decoding, AE source alias, peer sample aliases, covered acquisition prefixes, branch annotation scope, bound recorded paths, protocol qualifiers, tissue, GeoMx, performance
   link: [Scientific contracts](codebase.md#fidelity-contracts); [Curator enrichment presets](curators-guide.md#enrichment-presets)

@@ -48,6 +48,36 @@ class ArchiveImportResult:
         return {'accession': self.accession, 'studies': [s.to_mapping() for s in self.studies]}
 
 
+def _load_native(source, parser, seed):
+    """Retain a strictly valid core before optional provider discovery can stop."""
+    from inspect import signature
+    from ..metadata.retrieval_budget import _active, _phase, _budget_stage, _BudgetExhausted, _coverage
+    from ..miniml import MINiMLCodec
+    from ..miniml.codec import MINiMLCompatibilityError
+    budget, candidate, captured = _active.get(), None, None
+    def core(records):
+        nonlocal candidate, captured
+        captured = records
+        if not records.xml and not any(records.indexed.values()): return
+        try: candidate = MINiMLCodec().decode(parser.parse(records), strict=True).package
+        except MINiMLCompatibilityError: pass
+        _phase.set('native_supplementary')  # Restored by the enclosing stage scope.
+    try:
+        with _budget_stage('native_core'):
+            options = {'_on_core': core} if budget and '_on_core' in signature(source.fetch).parameters else {}
+            records = source.fetch(seed, **options)
+        if not records.xml and not any(records.indexed.values()):
+            raise ValueError('No native metadata records retrieved')
+        return parser.parse(records), records.issues
+    except _BudgetExhausted as exc:
+        if candidate is None: raise
+        try:
+            candidate = MINiMLCodec().decode(parser.parse(captured), strict=True).package
+        except Exception:
+            pass  # Supplementary records cannot invalidate the accepted core.
+        return _coverage(candidate, budget), [*captured.issues, str(exc) + '; valid native candidate retained']
+
+
 @measured("publication")
 def publish_json(path, value, overwrite=False):
     path = Path(path)

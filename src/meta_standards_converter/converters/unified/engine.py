@@ -341,6 +341,7 @@ class Converter:
             emit("batch_planned", inputs=len(planned))
             seen = {}
             stopped = False
+            from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _without_budget
             for spec, kind, chosen, inp, out, error, item_id, preparation in planned:
                 item = ConversionItemResult(
                     item_id,
@@ -349,7 +350,8 @@ class Converter:
                     forced=bool(chosen),
                 )
                 result.items.append(item)
-                with item_scope(item, total=len(planned), index=len(result.items)):
+                with item_scope(item, total=len(planned), index=len(result.items)), _budget_scope(
+                    runtime['metadata_timeout_seconds'], runtime['metadata_max_requests']):
                     sources = (
                         spec.sources
                         if isinstance(spec.sources, (list, tuple))
@@ -477,7 +479,7 @@ class Converter:
                             validate_metadata(loaded.metadata)
                         context.stage = "conversion"
                         from meta_standards_converter.metadata.preparation_scope import exporting_prepared
-                        with exporting_prepared():
+                        with exporting_prepared(), _without_budget():
                             self._export(loaded, context, item, route)
                         item.execution = "succeeded"
                         incomplete = any(

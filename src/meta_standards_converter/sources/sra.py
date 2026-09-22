@@ -165,7 +165,7 @@ class SRASource:
             result.issues.append(f'{accession}: no public read study resolved')
         return result
 
-    def fetch(self, seed):
+    def fetch(self, seed, *, _on_core=None):
         records = StudyRecords(seed)
         ids, records.issues = self.search(f'{seed.study}[ACCN]')
         for batch in chunks(ids):
@@ -189,6 +189,12 @@ class SRASource:
         if not ids:
             records.issues.append(f'{seed.study}: no public experiment records')
         self._pool_samples(records)
+        if _on_core is not None: _on_core(records)
+        from ..metadata.retrieval_budget import _budget_stage
+        with _budget_stage('native_supplementary'):
+            return self._supplement(records, ids)
+
+    def _supplement(self, records, ids):
         linked = {'biosample': set(), 'bioproject': set(), 'pubmed': set(), 'taxonomy': set()}
         for root in records.xml:
             for node in root.findall('.//EXTERNAL_ID'):

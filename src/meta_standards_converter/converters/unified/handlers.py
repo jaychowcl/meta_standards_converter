@@ -381,7 +381,10 @@ class InputHandler:
             for issue in s.issues
         ]
         if not result.packages:
-            raise InputError("source_failed", "No native study package was retrieved")
+            from meta_standards_converter.metadata.retrieval_budget import _active
+            budget = _active.get()
+            detail = f'; metadata budget exhausted: {budget.events}' if budget and budget.exhausted else ''
+            raise InputError("source_failed", "No native study package was retrieved" + detail)
         if not result.ok:
             diagnostics.append(
                 Diagnostic(
