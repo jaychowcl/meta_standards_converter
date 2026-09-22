@@ -5836,6 +5836,64 @@ and raw column names are preserved. Source descriptions such as `total RNA` do
 not supply tissue. Explicit harmonization replacement profiles still replace the
 selected destination, including its aliases, on the resolved working view.
 
+### Source selection and evidence
+
+The facade scopes `metadata.reconciliation.selection_policy` to each preparation
+stage. The existing `prefer` merge argument continues to govern identity and
+membership joins; it is not the scientific value-precedence policy.
+
+| Mode | Canonical selection | Conflict handling |
+| --- | --- | --- |
+| `standard` | Explicit AE > GEO > SRA/ENA, independent of entry route. | Preserve alternatives, selected source and reason; warn at the preparation stage. |
+| `curators` | Preserve populated primary-input values. | Inspect already supplied alternatives only; no other-repository comparison fetch. |
+| `off` | No supplementary reconciliation. | Preserve supplied metadata and existing evidence. |
+
+Native means the primary input source, including AE-native input. Equal-ranked
+SRA/ENA facts keep the primary provider's populated value and fill gaps. Scientific
+comparison requires the same joined sample, experiment/library, run and field.
+`source_conflict` extension records retain accession, field path, original values,
+selection and reason. A `source_selection` ledger preserves selected-field origins
+across subsequent merges. Unresolved disagreements make completeness partial while
+strictly compatible output remains valid. Curators cannot establish agreement with
+repositories it has not retrieved. Legacy merge signatures retain their defaults
+outside a facade policy scope.
+
+Equivalent platforms reconcile by verified accession identity, or by compatible
+explicit instrument platform, model and technology for accessionless native
+sequencing platforms. Titles alone never establish identity; distinct arrays with
+matching titles stay distinct. Conflicting declarations remain evidence and may
+cause strict candidate rollback.
+
+Generated MAGE-TAB anatomy and TSV use the same explicit biological aliases.
+Distinct values keep encounter order and their attached qualifiers; source
+labels/descriptions remain preserved. Authored archive paths remain source-faithful.
+Protocol applications retain their string `protocol_ref` plus optional typed
+`term_source_ref` and `term_accession_number`, appended after legacy constructor
+fields. Each qualifier renders immediately after its particular Protocol REF;
+parameter qualifiers stay with their parameters. IDF vocabulary validation includes
+both. Explicit AE related-experiment targets render unchanged in encounter order,
+independent of study expansion; BioProject/publication links are not reclassified.
+
+### Projection and merge costs
+
+An operation materializes typed package metadata once and shares immutable bound
+protocol indexes across nested TSV/CSV and AnnData metadata projection. Separate
+operations own separate state. Each run still contributes scoped modality evidence.
+Archive workflow merging indexes supported sample/run/experiment identities.
+Residual workflow checking indexes ordered node identities before copying candidates;
+existing exact file and occurrence checks still govern removal of represented evidence.
+Deterministic operation-count tests protect these bounds; recorded timing remains
+machine- and study-dependent.
+
+Source-linked helpers (internal services, not new facade entrypoints):
+
+- `meta_standards_converter.metadata.fields.biological_characteristics`: explicit alias occurrences, preserving qualifiers.
+- `meta_standards_converter.metadata.preparation.package_mapping`: one typed materialization per operation.
+- `meta_standards_converter.metadata.reconciliation.provider`: normalize repository provenance.
+- `meta_standards_converter.metadata.reconciliation.selection_policy`: isolate preparation-stage value policy.
+- `meta_standards_converter.metadata.reconciliation.SourceSelection`: selection ledger and scoped conflict evidence.
+- `meta_standards_converter.metadata.reconciliation.inspect_recorded_conflicts`: inspect retained alternatives without retrieval.
+
 ### Detailed modality
 
 Tabular and metadata-backed AnnData outputs add `msc.expression.modality_detail`
@@ -5860,10 +5918,11 @@ Preparation indexes live only for the operation, never in persisted source data.
 
 ### Acceptance evidence
 
-`tests/fixtures/fidelity/provenance.json` records URLs, dates and SHA256 for ten
-public IDF/SDRF pairs and native ENA/SRA packages. Regression tests compare source
+`tests/fixtures/fidelity/provenance.json` records URLs, capture provenance and SHA256 for the expanded
+18-study deposited panel and native ENA/SRA packages. Regression tests compare source
 values by repeated-header occurrence, row multiplicities, graph order and qualifier
-attachment. The panel covers bulk, ChIP, array, Chromium/Visium, GeoMx, single-nucleus
+attachment. The four E-GEOD protocol regressions preserve all 946 populated
+qualifier cells. The panel covers bulk, ChIP, array, Chromium/Visium, GeoMx, single-nucleus
 ATAC and combinatorial indexing. E-MTAB-16847 was publicly accessible at capture
 but carries a future IDF release date; accessibility does not verify that date.
 

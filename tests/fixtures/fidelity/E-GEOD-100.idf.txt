@@ -1,0 +1,50 @@
+Investigation Title	zzMex67 co-IPed RNA vs. Total RNA  (zzMex67IP_v_TotalRNA)	
+Comment[Submitted Name]	zzMex67 co-IPed RNA vs. Total RNA  (zzMex67IP_v_TotalRNA)	
+Experimental Design	
+Experimental Design Term Source REF	
+Comment[SecondaryAccession]	GSE100	
+Comment[ArrayExpressReleaseDate]	2010-05-27	
+Comment[AEMIAMESCORE]	1	
+Comment[Publication DOI]	10.1038/ng1080	
+Comment[ArrayExpressAccession]	E-GEOD-100	
+Comment[MAGETAB TimeStamp_Version]	2010-07-29 16:19:35 Last Changed Rev: 13058	
+Experimental Factor Name	
+Experimental Factor Type	
+Experimental Factor Term Source REF	
+Person Last Name	Silver	Hieronymus	
+Person First Name	Pamela	Haley	
+Person Mid Initials	A	
+Person Email		haley@broad.mit.edu	
+Person Phone	
+Person Fax	
+Person Address		Broad Institute of Harvard and MIT, 7 Cambridge Center, CAMBRIDGE, 02142, USA	
+Person Affiliation		Broad Institute of Harvard and MIT	
+Person Roles		submitter	
+Person Roles Term Source REF		The MGED Ontology	
+Quality Control Type	
+Quality Control Term Source REF	
+Replicate Type	
+Replicate Term Source REF	
+Normalization Type	
+Normalization Term Source REF	
+Date of Experiment	
+Public Release Date	2010-05-27	
+PubMed ID	12524544	
+Publication DOI	12524544	
+Publication Author List	Hieronymus H, Silver PA	
+Publication Title	Genome-wide analysis of RNA-protein interactions illustrates specificity of the mRNA export machinery.	
+Publication Status	journal_article	
+Publication Status Term Source REF	The MGED Ontology	
+Experiment Description	Comparison of cDNA from RNA IPed with zzMex67 to that from total RNA; resulting analysis gives Mex67 binding level relative to total abundance for each mRNA	
+Protocol Name	P-GSE100-1	
+Protocol Type	bioassay_data_transformation	
+Protocol Description	ID_REF =  <br>CH1_MEAN = Sample 1 Mean Intensity<br>CH1_BKD_MEDIAN = Sample 1 Median Background Level; used as CH1 background for ratio calculation<br>CH1_BKD_MEAN = Sample 1 Mean Background Level<br>CH2_MEAN = Sample 2 Mean Intensity<br>CH2_BKD_MEDIAN = Sample 2 Median Background Level; used as CH2 background for ratio calculation<br>CH2_BKD_MEAN = Sample 2 Mean Background Level<br>CH1_AREA = Sample 1 area<br>CH1_BKD_AREA = Sample 1 background area<br>CH2_AREA = Sample 2 area<br>CH2_BKD_AREA = Sample 2 background area<br>VALUE = intermediate log ratio before taking the mean of duplicate ORFS, etc.; see methods and website for full treatment	
+Protocol Parameters	
+Protocol Hardware	
+Protocol Software	
+Protocol Contact	
+Protocol Term Source REF	The MGED Ontology	
+SDRF File	E-GEOD-100.sdrf.txt	
+Term Source Name	The MGED Ontology	ArrayExpress	The MGED Ontology		EFO
+Term Source File	http://mged.sourceforge.net/ontologies/MGEDontology.php	http://www.ebi.ac.uk/arrayexpress	http://mged.sourceforge.net/ontologies/MGEDontology.php		http://efo.svn.sourceforge.net/viewvc/efo/trunk/src/efoinowl/efo.owl
+Term Source Version				

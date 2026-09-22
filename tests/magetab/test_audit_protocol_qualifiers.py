@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Protocol qualifiers belong to their individual application, not a comment."""
 from meta_standards_converter.converters import Converter
 from meta_standards_converter.miniml import MINiMLCodec
@@ -34,3 +42,37 @@ def test_existing_positional_protocol_constructor_is_unchanged():
     assert old.to_mapping() == {'kind': 'protocol_application', 'protocol_ref': 'P1', 'performer': 'person', 'date': '2026-01-01'}
     qualified = ProtocolApplication.from_mapping({**old.to_mapping(), 'term_source_ref': 'ArrayExpress'})
     assert qualified.to_mapping()['term_source_ref'] == 'ArrayExpress'
+
+
+def test_recorded_four_study_protocol_qualifier_occurrences_survive():
+    import csv
+    from collections import Counter
+    from pathlib import Path
+    total = 0
+    def occurrences(table):
+        headers = table[0]
+        columns, owner, occurrence = [], None, 0
+        for i, header in enumerate(headers):
+            if header == 'Protocol REF':
+                occurrence += 1
+                owner = ('protocol', occurrence, i)
+            elif header not in {'Term Source REF', 'Term Accession Number'}:
+                owner = None
+            if owner and header in {'Term Source REF', 'Term Accession Number'}:
+                columns.append((owner, header, i))
+        return Counter((owner[1], header, row[owner[2]], row[i])
+                       for row in table[1:] for owner, header, i in columns if row[i])
+    for accession, expected in [('E-GEOD-48034',20), ('E-GEOD-48035',844), ('E-GEOD-52564',34), ('E-GEOD-60450',48)]:
+        root = Path(__file__).parents[1] / 'fixtures' / 'fidelity'
+        with (root / (accession + '.sdrf.txt')).open() as stream:
+            source = list(csv.reader(stream, delimiter='\t'))
+        result = Converter().convert(str(root / (accession + '.idf.txt')), out_type='magetab',
+                                     enrichment='off', options={'expand_studies': False})
+        assert result.status == 'complete', result.to_dict()
+        output = next(r[1] for r in result.items[0].payload[0] if r[0] == 'SDRF File')
+        original = occurrences(source)
+        assert sum(original.values()) == expected
+        assert occurrences(output) == original
+        assert len(output) == len(source)
+        total += expected
+    assert total == 946

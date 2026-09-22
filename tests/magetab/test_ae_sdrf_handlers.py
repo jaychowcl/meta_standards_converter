@@ -849,7 +849,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
 
         self.assertEqual("GSM'1", self.cell(sdrf, 1, "Source Name"))
         self.assertEqual("John's \"sample\"", self.cell(sdrf, 1, "Comment[Sample_source_name]"))
-        self.assertEqual("John's \"sample\"", self.cell(sdrf, 1, "Characteristics[organism part]"))
+        self.assertFalse(self.cell(sdrf, 1, "Characteristics[organism part]"))
         self.assertEqual('"treated"', self.cell(sdrf, 1, "Characteristics[condition]"))
 
     def test_expanded_file_classification(self):

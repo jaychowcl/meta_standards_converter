@@ -602,3 +602,10 @@ canonical guide together when an interface, workflow, or contract changes.
   purpose: Strict preparation rollback, typed array qualifiers, provider dates, biological aliases and detailed library modality.
   keywords: strict, invalid_candidate, ERP000263, ERP185509, term source, array assay, OrganismPart, modality_detail, Visium, GeoMx
   link: [Open section](codebase.md#fidelity-contracts)
+
+- id: scientific-source-selection
+  title: Scientific source selection and fidelity
+  anchor: fidelity-contracts
+  purpose: Repository precedence, partial-but-valid conflicts, protocol qualifiers, anatomy and operation-scoped indexes.
+  keywords: standard, curators, native, source_conflict, source_selection, protocol qualifiers, tissue, GeoMx, performance
+  link: [Scientific contracts](codebase.md#fidelity-contracts); [Curator enrichment presets](curators-guide.md#enrichment-presets)

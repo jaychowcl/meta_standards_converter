@@ -1,0 +1,73 @@
+MAGE-TAB Version	1.1			
+Investigation Title	Single cell RNA-sequencing of Spike-ins and mESC using Smart-Seq2  on C1 System			
+				
+Experimental Design				
+Experimental Design Term Source REF				
+Experimental Design Term Accession Number				
+				
+Experimental Factor Name	single cell identifier			
+Experimental Factor Type	single cell identifier			
+Experimental Factor Term Source REF				
+Experimental Factor Term Accession Number				
+				
+Person Last Name	Svensson	Emerton		
+Person First Name	Valentine	Guy		
+Person Mid Initials				
+Person Email	vale@ebi.ac.uk	ge2@sanger.ac.uk		
+Person Phone				
+Person Fax				
+Person Affiliation	Wellcome Trust Sanger Institute	Wellcome Trust Sanger Institute		
+Person Address				
+Person Roles		submitter		
+Person Roles Term Source REF				
+Person Roles Term Accession Number				
+				
+Quality Control Type				
+Quality Control Term Source REF				
+Quality Control Term Accession Number				
+				
+Replicate Type				
+Replicate Term Source REF				
+Replicate Term Accession Number				
+				
+Normalization Type				
+Normalization Term Source REF				
+Normalization Term Accession Number				
+				
+Date of Experiment				
+Public Release Date	2017-03-29			
+				
+PubMed ID				
+Publication DOI	10.1038/nmeth.4220			
+Publication Author List	Valentine Svensson, Kedar Nath Natarajan, Lam-Ha Ly, Ricardo J Miragaia, Charlotte Labalette, Iain C Macaulay, Ana Cvejic & Sarah A Teichmann			
+Publication Title	Power analysis of single-cell RNA-sequencing experiments			
+Publication Status				
+Publication Status Term Source REF				
+Publication Status Term Accession Number				
+				
+Experiment Description	In this study, we assess technical differences between commonly used single-cell RNA-Sequencing (scRNA-Seq) methods. We perform scRNA-seq on a homogenous population of mouse embryonic stem cells along with two kinds of control spike-in molecules to assess sensitivity and accuracy of these specific methods. In this dataset, we perform Smart-Seq2 method on Fluidigm C1 system and generate single-cell libraries using Nextera XT kit			
+				
+Protocol Name	P-MTAB-55025	P-MTAB-55026	P-MTAB-55023	P-MTAB-55024
+Protocol Type	nucleic acid library construction protocol	nucleic acid sequencing protocol	growth protocol	nucleic acid extraction protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0004184	EFO_0004170	EFO_0003789	EFO_0002944
+Protocol Description	The cDNA from each single chamber within C1-IFC was harvested and diluted as per manufacturer protocol. Harvested cDNA from single cells was quantified and libraries were made using Nextera XT DNA sample preparation kit (Illumina) utilising 96 dual barcoded indices. Library pooling was performed post AMPure XP beads (Agencourt Biosciences) clean up and sequenced on HiSeq2500 (v4) using paired end sequencing (75 or 125bp) at the Wellcome Trust Sequencing facility following Wellcome Trust Sequencing guidelines.	Sequencing was performed on HiSeq2500 (v4) using paired end sequencing (either 75 or 125bp) at the Wellcome Trust Sequencing facility following Wellcome Trust Sequencing guidelines.	Wildtype E14 mESC were cultured under standard culture conditions in Knockout DMEM containing 15% Fetal Calf Serum, 1x Penicillin-Streptomycin-Glutamine, 1x NEAA 2-mercaptoethanol and 1000U Leukemia Inhibitory Factor.	Trypisnised single mESC suspension is passed through 30micron filter to remove and clumps. Scripts with different method workflows were downloaded from Fluidigm Script Hub. Approx 3000 single mESC are loaded onto 5-10 micron Fluidigm C1 Single-Cell Auto Prep IFC and cell capture was performed as per manufacturers protocol. Two kinds of spike-ins (ERCC-#4456740 and SIRV-E2 #SKU025.03) were mixed (0.5l 1:500 diluted ERCCs + 0.6l 1:500 diluted SIRVs) and added to respective Lysis buffer. The subsequent steps are performed as per manufacturers protocol or described on Fluidigm Script hub.
+Protocol Parameters				
+Protocol Hardware		Illumina HiSeq 2500		
+Protocol Software				
+Protocol Contact				
+				
+Term Source Name	EFO	ArrayExpress		
+Term Source File	http://www.ebi.ac.uk/efo/	http://www.ebi.ac.uk/arrayexpress/		
+Term Source Version	2.38			
+				
+SDRF File	E-MTAB-5485.sdrf.txt			
+Comment [Submitted Name]	Single cell RNA-sequencing of Spike-ins and mESC using Smart-Seq2  on C1 System			
+Comment [SecondaryAccession]	ERP022298			
+Comment [SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR1903881-ERR1903976			
+Comment [AEExperimentType]	RNA-seq of coding RNA from single cells			
+Comment[ArrayExpressAccession]	E-MTAB-5485			
+Comment [AdditionalFile:fa]	spikes.fa			
+Comment[EAExpectedClusters]	1			
+Comment[EAExperimentType]	baseline			
+Comment[EACurator]	Silvie Fexova			

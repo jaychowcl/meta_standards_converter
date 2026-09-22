@@ -133,6 +133,118 @@
       "retrieved_at": "2026-09-21",
       "sha256": "d210ada7c0aee6ca6325f4441518f03a116dfb2acb6e281dd2cd7aa3f22d570b",
       "bytes": 605014
+    },
+    {
+      "file": "E-MTAB-308.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/308/E-MTAB-308/Files/E-MTAB-308.idf.txt",
+      "sha256": "1dab519d63a1e7ce675b25adc85a335ebd323d35b1e19b08acfb22e4d3aeb3e7",
+      "bytes": 3407,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-MTAB-308.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/308/E-MTAB-308/Files/E-MTAB-308.sdrf.txt",
+      "sha256": "df720978eb13c0a83cbe6018572bfd08146ac82866327d1e1c49dcb597f87490",
+      "bytes": 9618,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-MTAB-5481.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/481/E-MTAB-5481/Files/E-MTAB-5481.idf.txt",
+      "sha256": "b5384f561516aa46a5eb9bf13990edb6b002ce4e6291244d6fedcac3e444c6e5",
+      "bytes": 4730,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-MTAB-5481.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/481/E-MTAB-5481/Files/E-MTAB-5481.sdrf.txt",
+      "sha256": "8d76747de5895815a6247f9662b1d370944b40bb84f05cd430d7d075f3ac1bcb",
+      "bytes": 54690,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-MTAB-5485.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/485/E-MTAB-5485/Files/E-MTAB-5485.idf.txt",
+      "sha256": "64262f6c3098dd4aa0e1e395b3d82a7e6e307c8c01d6c1dbc24322d552493fc7",
+      "bytes": 4705,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-MTAB-5485.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/485/E-MTAB-5485/Files/E-MTAB-5485.sdrf.txt",
+      "sha256": "c473316ecbab502233d60f051f87c95e6d3918b72e8a4cc872120a082ec5df61",
+      "bytes": 117380,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-48034.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/034/E-GEOD-48034/Files/E-GEOD-48034.idf.txt",
+      "sha256": "167a7bc63fd35fc6a6a3fe0b9d4a0fb1ab536b6455c37674f5f2a9534ce4105b",
+      "bytes": 4497,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-48034.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/034/E-GEOD-48034/Files/E-GEOD-48034.sdrf.txt",
+      "sha256": "17fc19ea20017bc23fd703c57d8e4c4d25a362f6337b0df8c61d15d5e485e85b",
+      "bytes": 6864,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-48035.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/035/E-GEOD-48035/Files/E-GEOD-48035.idf.txt",
+      "sha256": "db239d9213c5088adf0458cd46bc6f597ffc506bb8d7014bba7a8bafebdadf87",
+      "bytes": 5375,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-48035.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/035/E-GEOD-48035/Files/E-GEOD-48035.sdrf.txt",
+      "sha256": "6fd869692382f1183b8b2aa830dbd68ca1cf58043ce758df2c97ffba71ea43d0",
+      "bytes": 273748,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-52564.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/564/E-GEOD-52564/Files/E-GEOD-52564.idf.txt",
+      "sha256": "840a2e430dd279a31f6e62390c8d573398f7dcde7deaafab52be96634aab1a54",
+      "bytes": 10628,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-52564.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/564/E-GEOD-52564/Files/E-GEOD-52564.sdrf.txt",
+      "sha256": "9eb4dd45ee00b2afc88b5dd9933dcbbedb97257601cf89ff98b83ac36f8b92e1",
+      "bytes": 23995,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-60450.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/450/E-GEOD-60450/Files/E-GEOD-60450.idf.txt",
+      "sha256": "7b2eb953c14eeebf68f6720083b8640850ea23465fa5b591af97636bd0e48bf2",
+      "bytes": 2891,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-60450.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/450/E-GEOD-60450/Files/E-GEOD-60450.sdrf.txt",
+      "sha256": "576814a6f1fb29baa04e4cfdb075a0293c3a7786c05caeaca84f5db858bddb77",
+      "bytes": 11946,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-100.idf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/100/E-GEOD-100/Files/E-GEOD-100.idf.txt",
+      "sha256": "a1a5dc633d93972283a43ed9e0f9f1e64c79bd877e5afcb70b0dee6a38a1eaf5",
+      "bytes": 2867,
+      "capture": "18-study audit 2026-09-21"
+    },
+    {
+      "file": "E-GEOD-100.sdrf.txt",
+      "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/100/E-GEOD-100/Files/E-GEOD-100.sdrf.txt",
+      "sha256": "2a30e18c372acdede944311798eb7a7e8c9605dfb4894575a925fa7614da7399",
+      "bytes": 4218,
+      "capture": "18-study audit 2026-09-21"
     }
   ]
 }

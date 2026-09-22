@@ -61,11 +61,27 @@ These correspond to the main arguments of `Converter.convert()`.
 | `--out DIRECTORY` | Output directory; the CLI defaults to the current directory. Aliases: `--outdir`, `-o`. | `outdir` |
 | `--enrichment MODE` | Enrichment preset: `standard`, `curators` or `off`. Defaults to `standard`. | `enrichment` |
 
+<a id="enrichment-presets"></a>
 Enrichment presets:
 
-- `standard`: Normal preparation and applicable linked-repository enrichment.
-- `curators`: Native/publication preparation without enrichment from other study repositories.
-- `off`: Disable supplementary enrichment.
+| Mode | Canonical selection | Conflicts and retrieval |
+| --- | --- | --- |
+| `standard` | Explicit ArrayExpress > GEO > SRA/ENA, independent of the entry route. | Retrieve applicable linked sources; retain alternatives and warn with the selected source and reason. |
+| `curators` | Preserve the primary input source's existing populated value. | Native/publication preparation; inspect supplied conflict evidence without fetching other study repositories for comparison. |
+| `off` | Preserve supplied metadata. | No supplementary reconciliation. |
+
+Native means the primary input source: an AE input is AE-native. Between SRA
+and ENA, the primary provider keeps its populated values and its peer fills gaps.
+Only statements joined to the same sample, experiment/library, run and field are
+compared. Distinct explicit biological characteristic values remain multivalued;
+repository ranking does not replace library-scoped modality interpretation.
+
+Scientific disagreement produces warnings and **partial completeness with valid
+output**. Conflict evidence retains source accession, field path, original values,
+selected value and reason. This is separate from invalid metadata: an invalid
+optional candidate is rejected and the last valid package is retained. `curators`
+does not check repositories it has not retrieved; absence of a warning does not
+establish agreement with those repositories.
 
 Verified related-study expansion is enabled by default, independently of enrichment.
 Use `--no-expand-studies` to disable it. The guide's curator audience does not change

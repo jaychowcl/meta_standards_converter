@@ -1,0 +1,30 @@
+Comment[ArrayExpressAccession]	E-MTAB-5481
+MAGE-TAB Version	1.1																														
+Investigation Title	Single cell RNA-sequencing of Spike-ins and mESC using Smart-Seq2 on 96-well plates																														
+Comment[Submitted Name]	Single cell RNA-sequencing of Spike-ins and mESC using Smart-Seq2 on 96-well plates
+Experiment Description	In this study, we assess technical differences between commonly used single-cell RNA-Sequencing (scRNA-Seq) methods. We perform scRNA-seq on a homogenous population of mouse embryonic stem cells along with two kinds of control spike-in molecules to assess sensitivity and accuracy of these specific methods. In this dataset, we assess the RNA-degradation and decay rates by subjecting both spike-in molecules to range of repeated freezing and thawing (freeze-thaw) cycles. We manually add spike-in molecules across a 96-well plate (containing cells and reagents), perform Smart-Seq2 method manually and generate single-cell libraries using Nextera XT kit																														
+Experimental Factor Name	protocol																														
+Experimental Factor Type	protocol																														
+Person Last Name	Emerton	Svensson																													
+Person First Name	Guy	Valentine																													
+Person Mid Initials																															
+Person Email	ge2@sanger.ac.uk	vale@ebi.ac.uk																													
+Person Address	Wellcome Genome Campus, Hinxton, Cambridgeshire, United Kingdom	Wellcome Genome Campus, Hinxton, Cambridgeshire, United Kingdom																													
+Person Affiliation	Wellcome Trust Sanger Institute	Wellcome Trust Sanger Institute																													
+Person Roles	submitter	submitter																													
+Public Release Date	2017-03-14																														
+Protocol Name	P-MTAB-54714	P-MTAB-54715	P-MTAB-54716	P-MTAB-54717	P-MTAB-54718
+Protocol Type	growth protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol	high throughput sequence alignment protocol																										
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO																										
+Protocol Term Accession Number	EFO_0003789	EFO_0002944	EFO_0004184	EFO_0004170	EFO_0004917																										
+Protocol Description	Wildtype E14 mESC were cultured under standard culture conditions in Knockout DMEM containing 15% Fetal Calf Serum, 1x Penicillin-Streptomycin-Glutamine, 1x NEAA 2-mercaptoethanol and 1000U Leukemia Inhibitory Factor. 	Trypisnised single mESC suspension is passed through 30micron filter to remove and clumps. A 96-well plate containing lysis buffer (0.2% Triton, 1:20 RNAse inbhibitor, 10mM Oligo-dT30VN, 10mM dNTPs) was prepared. Spike-ins (ERCCs and SIRVs; final 1:1000,000 dilution) are subjected to different freeze-thaw cycles (seven conditions) and 1ul of spike-in mix per condition was added to each well column-wise. Single mES cells were FACS sorted (BD Influx; BD Biosciences) to each well (along with bulk controls). Subsequent steps (Lysis, RT, PCR amplification and DNA purification) was performed as described in Smart-Seq2 publication (Picelli et al Nature Protocol 2014). 	The single cell cDNA across the 96-well plate was quantified, diluted and libraries were made using Nextera XT DNA sample preparation kit (Illumina) utilising 96 dual barcoded indices. Library pooling was performed post AMPure XP beads (Agencourt Biosciences) clean up and sequenced on HiSeq2500 (v4) using paired end sequencing (75 or 125bp) at the Wellcome Trust Sequencing facility following Wellcome Trust Sequencing guidelines.	Sequencing was performed on HiSeq2500 (v4) using paired end sequencing (either 75 or 125bp) at the Wellcome Trust Sequencing facility following Wellcome Trust Sequencing guidelines.	Alignment was done by Salmon (v 0.6.0) with library type parameter -I IU and optional flag --biasCorrect. The Salmon transcriptome indexes were build by adding ERCC and SIRV sequences to cDNA sequences from mouse Ensembl 83 of GRCm38.p4.																										
+Protocol Hardware				Illumina HiSeq 2500																											
+Protocol Software																															
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/																														
+Term Source Version																															
+Comment[AEExperimentType]	RNA-seq of coding RNA from single cells																														
+Comment[AdditionalFile:fa]	spikes.fa																														
+Comment[SecondaryAccession]	ERP022096																														
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR1883127-ERR1883182																														
+SDRF File	E-MTAB-5481.sdrf.txt

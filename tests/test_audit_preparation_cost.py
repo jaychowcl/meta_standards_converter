@@ -120,3 +120,29 @@ def test_residual_workflow_candidates_are_indexed_before_copying(monkeypatch):
     result = residuals.prune_bound_workflows(source, target, deepcopy(source), 'MAGE-TAB', 'E-MTAB-1')
     assert result['series']['assay_paths'] == []
     assert len(calls) <= 3 * count
+
+
+def test_anndata_groups_share_one_operation_materialization(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
+    from meta_standards_converter.metadata.preparation import package_mapping
+    package = native()
+    original = MINiMLPackage.to_mapping
+    calls = []
+    def counted(self):
+        calls.append(self)
+        return original(self)
+    monkeypatch.setattr(MINiMLPackage, 'to_mapping', counted)
+    converter = JSON2H5ADConverter()
+    def project(packages, **kwargs):
+        # Two sample projections inside the same expression conversion.
+        for _ in range(2):
+            @preparation_operation
+            def sample_projection(): return package_mapping(packages[0])
+            sample_projection()
+        return None
+    monkeypatch.setattr(converter, '_convert_packages', project)
+    loaded = SimpleNamespace(warnings=[], groups=[SimpleNamespace(dataset_id='SRP1', packages=[package],
+                              source_packages=[package], harmonization_resolution=None)])
+    converter._convert_groups(loaded, source_json='input.json', out=str(tmp_path))
+    assert len(calls) == 1

@@ -1,0 +1,24 @@
+Comment[ArrayExpressAccession]	E-MTAB-308
+Investigation Title	Genome annotation of zebrafish: identification of alternative 3 prime ends in a range of tissues and developmental stages
+Comment[Submitted Name]	Zebrafish gene 3 prime end pull down for genome annotationÊ
+Experiment Description	Abstract: As part of the zebrafish genome annotation project the 3 prime ends of genes were pulled down on polyT beads and sequenced on the Illumina Genome Analyzer to identify alternative 3 prime ends in a range of tissues and developmental stages. <br> Study description: Total RNA from a range of developmental stages and adult tissues were chemically fragmented, pulled down on polyT magnetic beads and double stranded cDNA was synthesized. The cDNA was BpmI digested to release from the beads and to leave a 6 T base tail. Illumina sequencing libraries were made followed by 76 base paired-end sequencing. 			
+Experimental Design	development_or_differentiation_design			
+Comment[AEExperimentType]	DNA-seq			
+Comment[SecondaryAccession]	ERP000263			
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR015562-ERR015568			
+Experimental Factor Name	AGE	ORGANISM_PART	DEVELOPMENTAL_STAGE	SEX
+Experimental Factor Type	age	organism_part	developmental_stage	sex
+Public Release Date	2011-07-01			
+Person Last Name	Collins			
+Person First Name	John			
+Person Mid Initials	E				
+Person Email	jec@sanger.ac.uk				
+Person Phone	01233 834244				
+Person Address	Wellcome Trust Genome Campus, Hinxton, Cambridgeshire, CB10 1HH, United Kingdom				
+Person Affiliation	Wellcome Trust Sanger Institute				
+Person Roles	submitter				
+Protocol Name	P-MTAB-16070	P-MTAB-16071	P-MTAB-16072	P-MTAB-16073	P-MTAB-16074
+Protocol Type	grow	nucleic_acid_extraction	specified_biomaterial_action	scanning	sequencing
+Protocol Description	Zebrafish embyos or tissues were collected from a Tuebingen strain incross and grown at 28 C.   Collected samples were snap frozen on dry ice and stored at -70 C	Total RNA was extracted using Trizol Reagent (Invitrogen) following the manufacturer's instructions. Pellets were resuspended RNase-free 10 mM Tris pH 7.5 and the RNA was quantified using a NanoDrop ND-1000 Spectrophotometer (Axon Instruments). 	20 µg of total RNA was fragmented using RNA Fragmentation Reagent (Ambion) for 5 minutes at 70 C and ethanol precipitated with glycogen and LiCl.   RNA was annealed to the oligo stBPM1polyT22 (biotin-GGCCAGTCCTGGAGTTTTTTTTTTTTTTTTTTTTTTVN) and bound to streptavidin  magnetic beads.   After washing by pull down on a magnet, the bound RNA was reverse transcribed with SuperScript II (Invitrogen) and a second strand synthesised with DNA polymerase I (Promega) and RNase H (NEB).   After further washing, the double strand cDNA was released from the beads with BpmI (NEB).   The cDNA was recovered with the QIAgen PCR Purification Kit and made into a standard Illumina library following the manufacturerÕs protocol with a fragment size of 250 to 300 bp.	Base calling was performed using Illumina pipeline 1.3 (Bustard 1.3.4) with phred quality scores at 64 levels using Illumina pipeline 1.3 (Gerald).    There were 152 cycles of sequencing with 2 reads per cluster, a forward read starting at base 1 and a reverse read starting at base 77.	Sequencing was performed using the Illumina Genome Analyzer II
+Protocol Hardware					Illumina Genome Analyzer II
+SDRF File	E-MTAB-308.sdrf.txt

@@ -9,6 +9,7 @@
 """Convert parsed MINiML JSON packages into annotated H5AD datasets."""
 
 from __future__ import annotations
+from meta_standards_converter.metadata.preparation import preparation_operation, package_mapping
 from meta_standards_converter.conversion_logging import logged_conversion, measured
 
 import json
@@ -371,6 +372,7 @@ class JSON2H5ADConverter:
             **options,
         )
 
+    @preparation_operation
     def _convert_groups(
         self,
         loaded,
@@ -436,6 +438,7 @@ class JSON2H5ADConverter:
         **options,
     ) -> ConversionResult:
 
+        packages = [package_mapping(package) for package in packages]
         study_accession = dataset_id or self._study_accession(packages) or Path(source_json).stem
         self._validate_path_component(study_accession, "study_accession")
         out_path = Path(out or ".")

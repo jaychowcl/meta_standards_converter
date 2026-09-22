@@ -1,0 +1,31 @@
+Comment[ArrayExpressAccession]	E-GEOD-60450
+MAGE-TAB Version	1.1				
+Public Release Date	2015-01-19
+Investigation Title	Transcriptome analysis of luminal and basal cell subpopulations in the lactating versus pregnant mammary gland				
+Comment[Submitted Name]	Transcriptome analysis of luminal and basal cell subpopulations in the lactating versus pregnant mammary gland
+Experiment Description	To identify genes specifically expressed in lactating mammary glands, the gene expression profiles of luminal and basal cells from different developmental stages were compared. Comparison of gene expression in luminal and basal cells harvested from the mammary glands of virgin, 18.5 day pregnant and 2 day lactating mice (2 mice per stage).				
+Term Source Name	ArrayExpress	EFO
+Term Source File	http://www.ebi.ac.uk/arrayexpress/	http://www.ebi.ac.uk/efo/efo.owl			
+Person Last Name	Smyth	Fu	Lun	Smyth	Visvader
+Person First Name	Gordon	Nai	Aaron	Gordon	Jane
+Person Mid Initials	K	Y		K	E
+Person Email	smyth@wehi.edu.au				
+Person Affiliation	Walter and Eliza Hall Institute of Medical Research				
+Person Phone	(+61 3) 9345 2326				
+Person Fax	(+61 3) 9347 0852				
+Person Address	Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, Australia				
+Person Roles	submitter				
+Protocol Name	P-GSE60450-4	P-GSE60450-1	P-GSE60450-3	P-GSE60450-2	
+Protocol Description	Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.	No treatment.	FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols.	Luminal and basal cells were sorted directly from mouse mammary glands.	
+Protocol Type	normalization data transformation protocol	sample treatment protocol	nucleic acid library construction protocol	growth protocol	
+Experimental Factor Name	developmental stage	immunophenotype			
+Experimental Factor Type	developmental stage	immunophenotype			
+Comment[SecondaryAccession]	GSE60450				
+Comment[GEOReleaseDate]	2015-01-19				
+Comment[ArrayExpressSubmissionDate]	2014-08-15				
+Comment[GEOLastUpdateDate]	2015-01-22				
+Comment[AEExperimentType]	RNA-seq of coding RNA				
+Comment[AdditionalFile:Data1]	GSE60450_Lactation-GenewiseCounts.txt				
+Comment[SecondaryAccession]	SRP045534				
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/SRR1552444-SRR1552455				
+SDRF File	E-GEOD-60450.sdrf.txt
