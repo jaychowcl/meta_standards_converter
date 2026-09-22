@@ -181,3 +181,11 @@ def test_curators_does_not_propagate_unbound_or_other_library_path_facts():
         result, calls = convert(data, incoming, mode='curators')
         assert not calls and result.status == 'complete'
         assert not any('library_layout' in d.message for d in result.items[0].diagnostics)
+
+
+def test_recognized_ae_source_alias_keeps_its_repository_rank():
+    data, incoming = package('MAGE-TAB', 'PAIRED'), package('GEO', 'SINGLE')
+    data['source']['format'] = 'AE'  # Also recognized by facade provider selection.
+    data['series']['relation'].append({'type': 'GEO', 'target': 'GSE1'})
+    result, _ = convert(data, incoming)
+    assert result.items[0].payload[0]['sample'][0]['sra_run'][0]['library_layout'] == 'PAIRED'

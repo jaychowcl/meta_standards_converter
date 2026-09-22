@@ -5848,7 +5848,8 @@ membership joins; it is not the scientific value-precedence policy.
 | `curators` | Preserve populated primary-input values. | Inspect already supplied alternatives only; no other-repository comparison fetch. |
 | `off` | No supplementary reconciliation. | Preserve supplied metadata and existing evidence. |
 
-Native means the primary input source, including AE-native input. Equal-ranked
+Native means the primary input source, including AE-native input. The recognized
+`AE` source-format alias receives the same ArrayExpress rank as `MAGE-TAB`. Equal-ranked
 SRA/ENA facts keep the primary provider's populated value and fill gaps. Scientific
 comparison requires the same joined sample, experiment/library, run and field.
 Curator inspection includes library facts on positively bound recorded assay paths;

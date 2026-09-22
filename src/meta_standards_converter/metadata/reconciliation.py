@@ -18,7 +18,7 @@ _RANK = {'ArrayExpress': 3, 'GEO': 2, 'SRA': 1, 'ENA': 1, 'DRA': 1}
 def provider(document):
     value = str(document.get('source', {}).get('format', '')).casefold()
     return {'mage-tab': 'ArrayExpress', 'magetab': 'ArrayExpress', 'arrayexpress': 'ArrayExpress',
-            'biostudies': 'ArrayExpress', 'geo miniml': 'GEO', 'geo': 'GEO',
+            'biostudies': 'ArrayExpress', 'ae': 'ArrayExpress', 'geo miniml': 'GEO', 'geo': 'GEO',
             'sra': 'SRA', 'ena': 'ENA', 'dra': 'DRA'}.get(value, value)
 
 
