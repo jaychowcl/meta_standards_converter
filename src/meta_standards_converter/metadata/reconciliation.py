@@ -142,11 +142,13 @@ def inspect_recorded_conflicts(package, mode):
                 if other.get('experiment') and run.get('experiment') and other['experiment'] != run['experiment']: continue
                 supplied = [other]
                 native_scope = {run.get('run'), run.get('experiment')} - {None}
-                for identifier in native_scope:
+                for identifier in dict.fromkeys((run.get('run'), run.get('experiment'))):
+                    if identifier is None:
+                        continue
                     for scope, facts in bound_facts.get((matches[0]['iid'], identifier), []):
                         if compatible(scope, native_scope):
                             supplied.extend(facts)
-                for field in FIELDS:
+                for field in sorted(FIELDS):
                     seen = []
                     for statement in supplied:
                         if field in statement and statement[field] not in seen:

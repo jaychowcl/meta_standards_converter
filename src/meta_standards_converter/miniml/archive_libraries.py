@@ -39,7 +39,7 @@ def resolve_library_facts(native, incoming, issues, identity, *, selection=None,
     from ..metadata.archive_enrichment import informative
     selected = {k: deepcopy(v) for k, v in native.items() if k in FIELDS}
     accepted, conflicts = {}, set()
-    for key in FIELDS:
+    for key in sorted(FIELDS):
         values = [r[key] for r in incoming if informative(r.get(key))]
         signatures = {' '.join(str(v).split()).casefold() for v in values}
         if len(signatures) > 1:

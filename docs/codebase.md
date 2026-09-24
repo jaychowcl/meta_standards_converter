@@ -5903,6 +5903,11 @@ AnnData package provenance also carries the complete `conflicts` JSON ledger.
 Serialization deduplicates deterministically and preserves literal values,
 including whitespace. Existing unresolved conflicts produce partial-but-valid
 facade results even with enrichment off, without refetching or reselecting values.
+New library-field conflicts are constructed in alphabetical field order within
+each joined run; sample/run encounter order and already supplied conflict records
+remain unchanged. Curator inspection visits bound run evidence before experiment
+evidence, retaining path order within each scope. This makes JSON and projected conflict ledgers reproducible
+across Python hash seeds without changing source selection or scientific values.
 
 Source text is decoded from provider bytes, respecting XML encoding declarations
 and UTF-8 text/JSON contracts rather than an HTTP library's guessed charset.

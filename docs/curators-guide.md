@@ -88,6 +88,8 @@ entries and a readable summary. TSV/CSV and AnnData observations include the
 applicable ledger in `msc.provenance.conflicts`; AnnData also retains the package
 ledger. Reimporting these conflicts keeps the warnings, even with enrichment off,
 and does not select values again. Unknown comment versions remain recoverable.
+New library conflicts use a stable field order within each run, so repeated
+conversions retain the same ledger order. Imported evidence keeps its supplied order.
 
 Detailed modality combines compatible library and bound preparation evidence.
 Broad single-cell metadata can be refined by nuclei isolation; contradictory
