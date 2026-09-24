@@ -7,8 +7,6 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """ENA Portal membership discovery and full Browser record retrieval."""
-import csv
-import io
 import re
 import xml.etree.ElementTree as ET
 from .archive_support import ArchiveHTTP, Resolution, StudyRecords, StudySeed, accession_kind, attempt, chunks, identifier
@@ -21,7 +19,6 @@ class ENASource:
 
     def __init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None):
         self.http = http or ArchiveHTTP('ena_portal', requester, resource_profile, evidence_dir)
-        self._catalogues = {}
         self._xrefs = {}
 
     def cross_references(self, accession, records):
@@ -156,6 +153,28 @@ class ENASource:
 
     def fetch_reference_ranges(self, records):
         """Validate bounded ENA accession ranges; keep their records outside membership."""
+        kinds = {'ENA-RUN': ('RUN', r'[SED]RR\d+'),
+                 'ENA-EXPERIMENT': ('EXPERIMENT', r'[SED]RX\d+'),
+                 'ENA-STUDY': ('STUDY', r'[SED]RP\d+')}
+        verified = {tag: set() for tag, _ in kinds.values()}
+        patterns = dict(kinds.values())
+
+        def remember(root):
+            # Only full records establish identity, never Portal rows or *_REF
+            # elements. Provider primary/secondary identifiers are exact aliases;
+            # submitter labels, external namespaces and version guesses are not.
+            if root.tag.rsplit('}', 1)[-1].lower() == 'error':
+                return
+            nodes = [root] if root.tag in verified else list(root)
+            for node in nodes:
+                if node.tag not in verified or any(n.tag.rsplit('}', 1)[-1].lower() == 'error' for n in node.iter()):
+                    continue
+                aliases = {identifier(node)} | {n.text for n in node.findall('IDENTIFIERS/PRIMARY_ID')}
+                aliases.update(n.text for n in node.findall('IDENTIFIERS/SECONDARY_ID'))
+                verified[node.tag].update(a for a in aliases if a and re.fullmatch(patterns[node.tag], a))
+
+        for root in records.xml:
+            remember(root)
         for root in list(records.xml):
             for sample in root.findall('.//SAMPLE'):
                 for link in sample.findall('.//XREF_LINK'):
@@ -172,11 +191,17 @@ class ENASource:
                             candidates=[]
                             break
                     if not candidates or len(candidates)>1000: continue
-                    found=set()
-                    for batch in chunks(candidates):
+                    tag, _ = kinds[db]
+                    missing = list(dict.fromkeys(a for a in candidates if a not in verified[tag]))
+                    for batch in chunks(missing):
                         response=self.verified_xml(batch,records,'accession range')
-                        if response is not None: found.update(identifier(n) for n in response)
-                    if set(candidates)<=found:
+                        if response is not None:
+                            remember(response)
+                        for accession in batch:
+                            issue = f'accession range: missing XML record {accession}'
+                            if accession not in verified[tag] and issue not in records.issues:
+                                records.issues.append(issue)
+                    if set(candidates)<=verified[tag]:
                         records.linked.append({'provider':'ena','kind':'accession_range','accession':identifier(sample),
                             'metadata':{'database':db,'literal':literal,'accessions':candidates}})
 
@@ -256,10 +281,6 @@ class ENASource:
             return self._supplement(records, inventory, query, extras=_on_core is not None)
 
     def _inventory(self, kind, records, query):
-        if kind not in self._catalogues:
-            catalogue = attempt(records, f'{kind} catalogue', lambda: self.http.get(self.portal + 'returnFields', {'result': kind}, 'text'))
-            if catalogue:
-                self._catalogues[kind] = list(csv.DictReader(io.StringIO(catalogue), delimiter='\t'))
         scoped = f'study_accession="{records.seed.primary}"' if kind in ('study', 'sample', 'assembly') else query
         rows = attempt(records, f'{kind} inventory', lambda: self.search(kind, scoped))
         if rows is not None: records.indexed[kind] = rows
