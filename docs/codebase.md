@@ -2895,6 +2895,8 @@ unit when rendered. Import tracks the owner explicitly, so a preceding
 characteristic cannot absorb a later field's comment. Meaningful comments on an
 empty ontology field remain attached; ambiguous duplicate fields and unbound unit
 annotations remain explicit residual evidence with diagnostics.
+Array-design reference comments retained in the existing reference extras render
+after that reference's ontology qualifiers, preserving repeated comment occurrences.
 
 Library facts and verified run/experiment joins read comments on the node and its
 material, technology and label fields. They do not search characteristic, factor

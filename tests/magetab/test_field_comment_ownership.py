@@ -193,3 +193,32 @@ def test_channel_repeated_unit_does_not_overwrite_first_occurrence():
     data=parse(['Source Name','Characteristics[dose]','Unit','Term Source REF','Unit','Term Source REF'],
                [['s1','0','hour','UO','day','OTHER']]).to_mapping()
     assert data['sample'][0]['channel'][0]['characteristics'][0]['unit']=={'value':'hour','term_source_ref':'UO'}
+
+
+@pytest.mark.parametrize('following', ['node', 'named', 'none'])
+def test_array_design_reference_comments_retain_owner_and_occurrences(following):
+    header=['Source Name','Assay Name','Array Design REF','Term Source REF',
+            'Term Accession Number','Comment[note]','Comment[note]']
+    row=['s1','a1','GPL1','GEO','GEO:GPL1','design note',' 0 ']
+    if following=='node':
+        header+=['Scan Name','Comment[note]'];row+=['scan1','scan note']
+    elif following=='named':
+        header+=['Characteristics[dose]','Comment[note]'];row+=['0','dose note']
+    data=parse(header,[row])
+    paths=data.to_mapping()['series']['assay_paths']
+    assay=next(step for step in paths[0]['steps'] if step['kind']=='assay')
+    expected={'ref':'GPL1','term_source_ref':'GEO','term_accession_number':'GEO:GPL1',
+              'comments':[{'name':'note','value':'design note'},{'name':'note','value':' 0 '}]}
+    assert assay['array_design_ref']==expected
+    assert not assay.get('comments')
+    output=render_miniml_assay_documents(paths)['x.sdrf.txt']
+    assert_deposited_sdrf([header,row],output,accession='synthetic')
+    reparsed=parse(output[0],output[1:]).to_mapping()['series']['assay_paths']
+    assert reparsed==paths
+
+
+def test_array_design_reference_without_comments_preserves_exact_output():
+    header=['Source Name','Assay Name','Array Design REF','Term Source REF','Term Accession Number']
+    row=['s1','a1','GPL1','GEO','GEO:GPL1']
+    paths=parse(header,[row]).to_mapping()['series']['assay_paths']
+    assert render_miniml_assay_documents(paths)['x.sdrf.txt']==[header,row]

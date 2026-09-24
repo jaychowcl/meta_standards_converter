@@ -565,6 +565,8 @@ def _miniml_path_columns(steps) -> list[tuple[str, object]]:
                 result.append(("Term Source REF", reference["term_source_ref"]))
             if reference.get("term_accession_number"):
                 result.append(("Term Accession Number", reference["term_accession_number"]))
+            for comment in reference.get("comments", []) or []:
+                result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
         result.extend(_named_values_columns("Factor Value", step.get("factor_values", [])))
     return result
 

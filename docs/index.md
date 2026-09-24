@@ -382,7 +382,7 @@ Full flag and Python API details remain in the canonical routes below.
   title: MSC MINiML 3.0 package API
   anchor: miniml-package-model
   purpose: Understand immutable v3 entities, codecs, diagnostics, hz groups and retained source-bound patches.
-  keywords: MINiMLPackage, MINiMLCodec, strict, hz, patch 3.1, source evidence, extensions, immutable children, OntologyValue comments, field ownership
+  keywords: MINiMLPackage, MINiMLCodec, strict, hz, patch 3.1, source evidence, extensions, immutable children, OntologyValue comments, field ownership, array reference comments
   link: [Open section](codebase.md#miniml-package-model)
 
 - id: workflow-details
