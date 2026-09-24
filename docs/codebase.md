@@ -2887,7 +2887,25 @@ replacement policy. TSV/CSV emits deterministic indexed
 `NamedValue` carries a
 typed ontology value, optional unit ontology, `unit_type`, and qualifier;
 `Variable.type` is an ontology value so factor type source/accession companions
-round-trip without string flattening. Source documents retain document role,
+round-trip without string flattening. `OntologyValue` also carries optional typed
+`comments`, appended after its existing constructor fields. Empty comment lists
+do not change the wire representation. MAGE-TAB comments remain attached to their
+material/technology/label field or unit; a comment on a named value precedes its
+unit when rendered. Import tracks the owner explicitly, so a preceding
+characteristic cannot absorb a later field's comment. Meaningful comments on an
+empty ontology field remain attached; ambiguous duplicate fields and unbound unit
+annotations remain explicit residual evidence with diagnostics.
+
+Library facts and verified run/experiment joins read comments on the node and its
+material, technology and label fields. They do not search characteristic, factor
+or unit descendants for identifiers. Reconciliation updates a selected library
+statement at its original owner. After a verified branch join, complementary
+field comments merge only for unique matching node identities and exactly equal
+non-comment ontology mappings. Repeated comments retain the greater occurrence
+count in preferred-source order; conflicting fields and ambiguous nodes remain
+separate.
+
+Source documents retain document role,
 source URI, media type, and SHA-256 of the consumed UTF-8 content (never the raw
 body), plus document-scoped order. Series fields retain experiment design ontology,
 experiment date, contacts and roles, and generic IDF comments.
@@ -3814,7 +3832,7 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `meta_standards_converter.miniml.model.NamedComment` [source](../src/meta_standards_converter/miniml/model.py#L150) | `NamedComment(name: 'str', value: 'str') -> None` | See defining source and workflow contracts. |
 | `NamedComment.from_mapping` [source](../src/meta_standards_converter/miniml/model.py#L161) | `from_mapping(value: Any) -> 'NamedComment'` | Direct raises: MINiMLModelError. |
 | `NamedComment.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L169) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
-| `meta_standards_converter.miniml.model.OntologyValue` [source](../src/meta_standards_converter/miniml/model.py#L220) | `OntologyValue(value: 'str', term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = ()) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.miniml.model.OntologyValue` [source](../src/meta_standards_converter/miniml/model.py#L220) | `OntologyValue(value: 'str', term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = (), comments: 'tuple[NamedComment, ...]' = ()) -> None` | See defining source and workflow contracts. |
 | `OntologyValue.from_value` [source](../src/meta_standards_converter/miniml/model.py#L235) | `from_value(value: Any) -> 'OntologyValue'` | Direct raises: MINiMLModelError. |
 | `OntologyValue.to_mapping` [source](../src/meta_standards_converter/miniml/model.py#L248) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
 | `meta_standards_converter.miniml.model.NamedValue` [source](../src/meta_standards_converter/miniml/model.py#L258) | `NamedValue(name: 'str', value: 'Any', term_source_ref: 'str \| None' = None, term_accession_number: 'str \| None' = None, unit: 'OntologyValue \| None' = None, annotations: 'tuple[_OccurrenceHarmonizedValue, ...]' = (), comments: 'tuple[NamedComment, ...]' = (), qualifier: 'str \| None' = None, unit_type: 'str \| None' = None) -> None` | See defining source and workflow contracts. |
@@ -5607,6 +5625,7 @@ Supporting audited mapping and export callables:
 | `meta_standards_converter.miniml.archive_administration.administrative_destination` | `administrative_destination(item, provider, sample=None)` |
 | `meta_standards_converter.miniml.archive_libraries.field_name` | `field_name(value)` |
 | `meta_standards_converter.miniml.archive_libraries.path_facts` | `path_facts(steps)` |
+| `meta_standards_converter.miniml.archive_libraries.node_comment_owners` | `node_comment_owners(step)` yields the node and scalar ontology-field comment containers, excluding experimental-value descendants. |
 | `meta_standards_converter.miniml.archive_libraries.resolve_library_facts` | `resolve_library_facts(native, incoming, issues, identity)` |
 | `meta_standards_converter.miniml.archive_libraries.apply_library_facts` | `apply_library_facts(run, steps, facts, *, preserve=())` |
 | `meta_standards_converter.miniml.archive_libraries.synchronize_library_facts` | `synchronize_library_facts(data, issues=None)` |
@@ -5781,7 +5800,12 @@ A factor following a blank optional file/protocol node is retained on the row's
 last explicit assay or hybridization. No assay is invented, and characteristics
 or protocol parameters are not rebound by this rule. If optional nodes cause the
 same named factor to use different carriers across rows, semantic rendering uses
-a common assay placement, preserving separate occurrences and row values.
+a common assay carrier, preserving separate occurrences and row values. Final
+SDRF rendering places complete factor column groups after all workflow nodes and
+their attributes, as required by section 2.3.3 of the specification. Their internal
+keys, repeated occurrences and qualifiers remain attached; the final table
+validator rejects workflow columns after the factor block. This layout projection
+does not change the MINiML carrier or scientific value selection.
 Unresolved annotations without an assay remain explicit residual evidence.
 
 This source-backed repair was identified by comparing deposited 2024–2025 bulk
@@ -5914,6 +5938,15 @@ pages are retried by later independent calls. Custom source services keep their
 legacy signatures; early native retention additionally requires the optional
 internal `_on_core` callback supported by MSC's SRA/ENA sources.
 
+ENA range verification reuses full, correctly typed Browser XML records already
+retrieved in the same invocation. Exact accessions and explicit primary/secondary
+identifiers can establish identity; Portal inventory rows, reference nodes and
+unverified labels cannot. Only missing range members are requested, and the original
+range literal and order remain evidence outside native study membership. Unused
+`returnFields` catalogues are not retrieved. Cross-reference discovery retains its
+existing order and coverage requirements; removing duplicate XML work does not
+establish that every supplementary source was visited.
+
 `source_conflict` extension records retain accession, field path, original values,
 selection and reason. A `source_selection` ledger preserves selected-field origins
 across subsequent merges. Unresolved disagreements make completeness partial while
@@ -5931,6 +5964,15 @@ same joined sample. The original peer name remains a scoped comment. Authored
 material/aliquot names are not collapsed. Alternative archive-file evidence may
 still require multiple SDRF rows for one acquisition; it must not create another
 biological sample on reimport.
+
+Row counts alone do not establish duplicate acquisitions. Submitted and archive-
+generated FASTQs with different locations, checksums or sizes remain separate
+file evidence for the same run. A GEO processed `.xls.gz` or `.txt.gz` file is not
+assumed equivalent to an AE `.xls` or `.txt` file. Sample-bound processing branches
+may legitimately lack assay factors; sharing a sample or a basename does not
+authorize broadcasting those factors. Direct archive round trips preserve authored
+row occurrences, while native-to-archive comparisons check supported sample,
+library, run and file relationships rather than identical row totals.
 
 Generated MAGE-TAB anatomy and TSV use the same explicit biological aliases.
 Distinct values keep encounter order and their attached qualifiers; source
@@ -5952,6 +5994,13 @@ Residual workflow checking indexes ordered node identities before copying candid
 existing exact file and occurrence checks still govern removal of represented evidence.
 Deterministic operation-count tests protect these bounds; recorded timing remains
 machine- and study-dependent.
+
+The immutable MINiML model reuses exact, model-owned children only after their
+constructors have frozen and certified all fields. Unknown values, subclasses,
+foreign dataclasses and model mappings keep the defensive-copy path. The private
+certificate is absent from the schema, equality and exported mappings. Public
+mutation isolation, strict decoding and preparation rollback remain unchanged;
+the optimization removes repeated copying of already immutable assay subtrees.
 
 Source-linked helpers (internal services, not new facade entrypoints):
 
@@ -6005,7 +6054,73 @@ Focused regressions live in `test_fidelity_boundaries.py`, `test_fidelity.py`,
 `test_fidelity_metadata.py` and `test_modality_detail.py`. Offline replay and live
 metadata retrieval are separate acceptance evidence; neither tests expression
 pipeline execution. Consumer revision/provenance gates remain separate from
-scientific conversion behavior and are not bypassed or repinned here.
+scientific conversion behavior; they require their own downstream acceptance.
+
+<a id="recorded-provider-audit"></a>
+### Recorded provider audit
+
+`scripts/audit_recorded_provider.py` executes an explicit versioned manifest;
+it does not search development folders for a convenient response. Request
+identities retain the prepared method, ordered query and body hash, with declared
+credential fields redacted. Each response or transport fault, repetition and
+source cohort is selected explicitly. Response bodies, input snapshots, IDF/SDRF
+companions and golden files are hash checked. Safe JSON/XML snapshots support
+parser/merge replay; that mode does not test native HTTP discovery. Standard
+enrichment replay keeps production enrichment services. Linked-only replay names
+its local archive and no-op publication services explicitly.
+
+Offline execution blocks undeclared DNS, network and subprocess access. Independent
+post-call checks reject fixture misses even when conversion code catches the
+exception and returns valid partial output. Expected scientific conflicts and
+recorded provider failures must have their declared execution, completeness,
+validation and diagnostic causes. Missing evidence is a harness error, not a
+provider outage or successful audit. Unexpected errors produce exit status 2.
+The runner rejects optimized Python, which could disable its acceptance assertions.
+It records every attempted format, including failed comparisons, and observes the
+actual preparation stages with sample/library/run/file identities and occurrence
+counts. A changed package hash alone does not establish which scientific facts an
+enrichment stage recovered.
+
+The tracked, reduced corpus runs without development evidence:
+
+```sh
+.venv/bin/python scripts/audit_recorded_provider.py tests/fixtures/recorded_provider/success.manifest.json
+.venv/bin/python scripts/audit_recorded_provider.py tests/fixtures/recorded_provider/conflict.manifest.json
+.venv/bin/python -m pytest tests/test_recorded_provider_replay.py tests/test_audit_row_accounting.py -q
+```
+
+Full external corpora require an explicit `--evidence-root`. Their evidence mode,
+source hashes and coverage remain separate from the reduced CI corpus. The latter
+checks literal values, repeated-column ordinals, duplicate row occurrences,
+file checksums/locations/roles, factors and conflict evidence. Source-derived
+expectations and regression goldens from a previously reviewed converter output
+are identified separately. A passed regression golden alone is not an independent
+scientific assessment of its original output.
+
+`--panel` executes an index-relative manifest roster for all 18 named studies,
+74 routes and 222 JSON/MAGE-TAB/TSV calls. The runner checks that roster independently
+of caller-supplied totals, verifies each manifest hash and cohort identity, and
+retains a result for every required route. Missing evidence, omitted formats,
+duplicate identities, changed manifests and failed calls prevent panel acceptance
+while available routes continue. Supplemental JSON-only cohorts remain separate
+from the required three-format routes. Raw bodies may live outside the repository
+only under the explicitly supplied evidence root.
+
+The independent `tests/support/deposited_fidelity.py` oracle starts from hashed
+deposited IDF/SDRF bytes. It checks complete row multisets, experimental node order,
+repeated attributes and the owner of each comment, unit and ontology qualifier.
+Factors occupy a row namespace and remain joined to that row's complete
+sample/assay/run/file identity. This avoids treating a factor's nearest file node
+as its scientific owner. Only enumerated source header aliases and recorded blank
+literals are compatible; nonblank whitespace, zeros and occurrence counts remain
+significant. A known attachment failure must remain an explicit failing gate or
+strict expected failure, rather than becoming a broad normalization rule.
+
+Use `--artifacts-dir` with a fresh directory to retain actual payloads for reviewing
+a mismatch. Existing payload files are never overwritten. Exact comparisons may
+declare the generated `Comment[ArrayExpressSubmissionDate]` as a runtime date;
+the actual value must be today's date and occur once in each table. No scientific
+value is normalized by that declaration.
 
 ### Fidelity service symbols
 

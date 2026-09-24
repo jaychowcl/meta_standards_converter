@@ -95,6 +95,17 @@ explicit preparations remain unknown. Generated acquisition paths are reconciled
 only when verified identities establish that a retained continuation covers their
 evidence. Authored archive row occurrences and distinct processing branches remain.
 
+One run can produce several SDRF rows for submitted, archive-generated or processed
+files. Different file locations, checksums and sizes remain evidence; similar
+basenames or compressed/uncompressed names do not prove equivalence. A sample-only
+processed-file branch may have no assay factors. Compare supported identities and
+relationships before interpreting extra rows as duplicate samples or missing data.
+
+MAGE-TAB comments stay with their original node, field, protocol or unit occurrence.
+Factor values describe the complete experimental row and are rendered after the
+workflow columns, together with their qualifiers. Ambiguous duplicate scalar fields
+remain explicit residual evidence with diagnostics rather than replacing a value.
+
 Possible source-text encoding corruption is retained and flagged. Standard
 enrichment may use a clean equivalent only when the same scoped field corroborates
 a reversible decoding transformation; both statements and normalization evidence

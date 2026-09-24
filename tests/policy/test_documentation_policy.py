@@ -623,6 +623,8 @@ class DocsIndexTests(unittest.TestCase):
 
             if tracked_file.startswith("tests/fixtures/") and Path(tracked_file).suffix in {".json", ".xml", ".txt", ".tsv", ".csv"}:
                 continue  # Source evidence and exact output fixtures must not gain comment headers.
+            if tracked_file.startswith("tests/fixtures/recorded_provider/") and tracked_file.endswith(".body"):
+                continue  # Captured HTTP bytes are hash-verified evidence, not authored source.
 
             path = ROOT / tracked_file
             text = path.read_text(encoding="utf-8")

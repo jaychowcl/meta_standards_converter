@@ -382,7 +382,7 @@ Full flag and Python API details remain in the canonical routes below.
   title: MSC MINiML 3.0 package API
   anchor: miniml-package-model
   purpose: Understand immutable v3 entities, codecs, diagnostics, hz groups and retained source-bound patches.
-  keywords: MINiMLPackage, MINiMLCodec, strict, hz, patch 3.1, source evidence, extensions
+  keywords: MINiMLPackage, MINiMLCodec, strict, hz, patch 3.1, source evidence, extensions, immutable children, OntologyValue comments, field ownership
   link: [Open section](codebase.md#miniml-package-model)
 
 - id: workflow-details
@@ -606,6 +606,13 @@ canonical guide together when an interface, workflow, or contract changes.
 - id: scientific-source-selection
   title: Scientific source selection and fidelity
   anchor: fidelity-contracts
-  purpose: Repository precedence, portable conflict/text evidence including unknown-version summaries, optional per-input metadata budgets, protocol qualifiers, anatomy and operation-scoped indexes.
-  keywords: standard, curators, native, source_conflict, MSCConflict, portable conflicts, source_selection, MSCTextNormalization, source encoding, reversible decoding, AE source alias, peer sample aliases, covered acquisition prefixes, branch annotation scope, bound recorded paths, protocol qualifiers, tissue, GeoMx, performance
+  purpose: Repository precedence, portable conflict/text evidence, optional per-input metadata budgets, protocol qualifiers, file-branch scope and immutable projection/merge costs.
+  keywords: standard, curators, native, source_conflict, MSCConflict, portable conflicts, source_selection, MSCTextNormalization, source encoding, reversible decoding, AE source alias, peer sample aliases, covered acquisition prefixes, branch annotation scope, file alternatives, row multiplicity, bound recorded paths, protocol qualifiers, tissue, GeoMx, performance, immutable children
   link: [Scientific contracts](codebase.md#fidelity-contracts); [Curator enrichment presets](curators-guide.md#enrichment-presets)
+
+- id: recorded-provider-audit
+  title: Recorded provider audit
+  anchor: recorded-provider-audit
+  purpose: Explicit hashed response cohorts, offline isolation, independent deposited-source ownership checks and distinct scientific versus harness failures.
+  keywords: audit_recorded_provider, panel, 18 studies, 74 routes, 222 calls, manifest, evidence-root, artifacts-dir, replay, fixture miss, expected failure, parser-merge, native HTTP, repeated headers, row multiplicity, source hashes, comment ownership, terminal factors
+  link: [Open section](codebase.md#recorded-provider-audit)
