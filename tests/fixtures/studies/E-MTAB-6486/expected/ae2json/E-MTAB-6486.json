@@ -721,14 +721,14 @@
               "name": "Sample 1",
               "sample_ref": "Sample 1",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339190"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339190"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -881,14 +881,14 @@
               "name": "Sample 1",
               "sample_ref": "Sample 1",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339190"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339190"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -1041,14 +1041,14 @@
               "name": "Sample 2",
               "sample_ref": "Sample 2",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339191"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339191"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -1201,14 +1201,14 @@
               "name": "Sample 2",
               "sample_ref": "Sample 2",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339191"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339191"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -1361,14 +1361,14 @@
               "name": "Sample 3",
               "sample_ref": "Sample 3",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339192"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339192"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -1521,14 +1521,14 @@
               "name": "Sample 3",
               "sample_ref": "Sample 3",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339192"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339192"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -1681,14 +1681,14 @@
               "name": "Sample 4",
               "sample_ref": "Sample 4",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339193"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339193"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -1849,14 +1849,14 @@
               "name": "Sample 4",
               "sample_ref": "Sample 4",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339193"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339193"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -2017,14 +2017,14 @@
               "name": "Sample 5",
               "sample_ref": "Sample 5",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339194"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339194"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -2185,14 +2185,14 @@
               "name": "Sample 5",
               "sample_ref": "Sample 5",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339194"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339194"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -2353,14 +2353,14 @@
               "name": "Sample 6",
               "sample_ref": "Sample 6",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339195"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339195"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",
@@ -2521,14 +2521,14 @@
               "name": "Sample 6",
               "sample_ref": "Sample 6",
               "technology_type": {
-                "value": "sequencing assay"
-              },
-              "comments": [
-                {
-                  "name": "ENA_EXPERIMENT",
-                  "value": "ERX2339195"
-                }
-              ]
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "ERX2339195"
+                  }
+                ]
+              }
             },
             {
               "kind": "scan",

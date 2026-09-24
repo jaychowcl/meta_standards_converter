@@ -57,13 +57,16 @@ def test_real_routing_regressions(case,workspace,monkeypatch):
     retained_protocols=[c.get('extract_protocol') for sample in retained['sample'] for c in sample['channel']]
     for protocol in original_protocols:
         assert ' '.join(protocol.split()) in retained_protocols
-    # The real MAGE-TAB parser retains populated extract comments, including repeated
-    # index attributes, independently for each source row.
+    # Material Type owns these populated comments, including repeated index
+    # attributes, independently for each source row.
+    assert len(retained['series']['assay_paths'])==len(rows)-1
     for row, path in zip(rows[1:],retained['series']['assay_paths']):
         extract=next(step for step in path['steps'] if step['kind']=='extract')
         start=rows[0].index('Extract Name');end=rows[0].index('Assay Name')
         expected=[(h[8:-1],v) for h,v in list(zip(rows[0],row))[start:end] if h.startswith('Comment[') and v.strip()]
-        assert [(c['name'],c['value']) for c in extract.get('comments',[])]==expected
-    assert len(retained['series']['assay_paths'])==len(rows)-1
+        assert rows[0][start+1]=='Material Type'
+        assert extract['material_type']['value']==row[start+1]
+        assert not extract.get('comments')
+        assert [(c['name'],c['value']) for c in extract['material_type'].get('comments',[])]==expected
     for conversion in (converter,json_converter):
         assert asdict(conversion.ae_constructor.sdrf_constructor.last_sdrf_audit)==case['audit']

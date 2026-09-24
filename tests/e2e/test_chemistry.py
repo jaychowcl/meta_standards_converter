@@ -64,4 +64,8 @@ def test_chemistry_complete_converter_outputs(case,workspace,monkeypatch):
     extract=next(step for step in retained['series']['assay_paths'][0]['steps'] if step['kind']=='extract')
     start=original[0].index('Extract Name')
     end=original[0].index('Assay Name')
-    assert [(c['name'],c['value']) for c in extract['comments']] == [(h[8:-1],v) for h,v in list(zip(*original))[start:end] if h.startswith('Comment[')]
+    # Material Type precedes these comments, so it owns every occurrence.
+    assert original[0][start+1] == 'Material Type'
+    assert extract['material_type']['value'] == original[1][start+1]
+    assert not extract.get('comments')
+    assert [(c['name'],c['value']) for c in extract['material_type']['comments']] == [(h[8:-1],v) for h,v in list(zip(*original))[start:end] if h.startswith('Comment[')]

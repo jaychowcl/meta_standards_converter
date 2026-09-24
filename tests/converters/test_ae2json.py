@@ -252,7 +252,8 @@ class TestAE2JSONConverter(unittest.TestCase):
         )
         self.assertEqual("year", age["unit"]["value"])
         self.assertEqual("UO:0000036", age["unit"]["term_accession_number"])
-        barcode = next(comment for comment in age["comments"] if comment["name"] == "cell barcode size")
+        self.assertFalse(age.get("comments"))
+        barcode = next(comment for comment in age["unit"]["comments"] if comment["name"] == "cell barcode size")
         self.assertEqual("16", barcode["value"])
 
     def test_model_edits_render_without_merging_into_miniml_fields(self):
