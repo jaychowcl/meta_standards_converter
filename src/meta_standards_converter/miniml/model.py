@@ -36,6 +36,22 @@ class MINiMLModelError(ValueError):
     """A package cannot be represented by the stable MINiML JSON model."""
 
 
+_IMMUTABLE_MODEL_FIELDS: dict[type, frozenset[str]] = {}
+_IMMUTABLE_CERTIFICATE = "_miniml_immutable"
+
+
+def _certified_immutable(value: Any) -> bool:
+    """Recognize only exact, construction-certified model-owned values."""
+    value_type = type(value)
+    if value_type in (str, int, float, bool, type(None)):
+        return True
+    if value_type is tuple:
+        return all(_certified_immutable(item) for item in value)
+    if value_type is _FrozenJSONMapping or value_type in _IMMUTABLE_MODEL_FIELDS:
+        return vars(value).get(_IMMUTABLE_CERTIFICATE) is True
+    return False
+
+
 class _FrozenJSONMapping(Mapping[str, Any]):
     """Recursively immutable storage for open MINiML extension fields."""
 
@@ -43,6 +59,8 @@ class _FrozenJSONMapping(Mapping[str, Any]):
         self._data = {
             str(key): _freeze_json(item) for key, item in (value or {}).items()
         }
+        if all(_certified_immutable(item) for item in self._data.values()):
+            setattr(self, _IMMUTABLE_CERTIFICATE, True)
 
     def __getitem__(self, key: str) -> Any:
         return self._data[key]
@@ -58,6 +76,8 @@ class _FrozenJSONMapping(Mapping[str, Any]):
 
 
 def _freeze_json(value: Any) -> Any:
+    if _certified_immutable(value):
+        return value
     if isinstance(value, Mapping):
         return _FrozenJSONMapping(value)
     if isinstance(value, (list, tuple)):
@@ -68,9 +88,15 @@ def _freeze_json(value: Any) -> Any:
 def _deep_freeze_constructor(cls):
     """Make direct dataclass construction as immutable as mapping decoding."""
     original = cls.__init__
+    # Mapping models retain their wire-materializing behavior in _freeze_json.
+    # A frozen dataclass alone is not evidence that its nested values are safe.
+    if not issubclass(cls, Mapping):
+        _IMMUTABLE_MODEL_FIELDS[cls] = frozenset(item.name for item in fields(cls))
 
     @wraps(original)
     def immutable_init(self, *args, **kwargs):
+        if _IMMUTABLE_CERTIFICATE in vars(self):
+            object.__delattr__(self, _IMMUTABLE_CERTIFICATE)
         original(self, *args, **kwargs)
         for model_field in fields(self):
             value = getattr(self, model_field.name)
@@ -81,6 +107,13 @@ def _deep_freeze_constructor(cls):
             else:
                 continue
             object.__setattr__(self, model_field.name, frozen)
+        owned_fields = _IMMUTABLE_MODEL_FIELDS.get(type(self))
+        if (
+            owned_fields is not None
+            and vars(self).keys() <= owned_fields
+            and all(_certified_immutable(getattr(self, name)) for name in owned_fields)
+        ):
+            object.__setattr__(self, _IMMUTABLE_CERTIFICATE, True)
 
     cls.__init__ = immutable_init
     return cls

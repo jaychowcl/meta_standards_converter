@@ -146,3 +146,24 @@ def test_anndata_groups_share_one_operation_materialization(monkeypatch, tmp_pat
                               source_packages=[package], harmonization_resolution=None)])
     converter._convert_groups(loaded, source_json='input.json', out=str(tmp_path))
     assert len(calls) == 1
+
+
+def test_model_construction_does_not_deepcopy_owned_immutable_subtrees(monkeypatch):
+    from meta_standards_converter.miniml import model
+
+    original = model.deepcopy
+    copied_nodes = []
+
+    def counted(value):
+        if type(value) in (model.NamedComment, model.AssayNode, model.AssayPath):
+            copied_nodes.append(type(value).__name__)
+        return original(value)
+
+    monkeypatch.setattr(model, 'deepcopy', counted)
+    paths = tuple(model.AssayPath((model.AssayNode(
+        'source', f's{i}', comments=(model.NamedComment('authored', 'preserved'),)
+    ),)) for i in range(64))
+    series = model.Series(iid='S1', assay_paths=paths)
+    package = model.MINiMLPackage(series, model.SourceInfo('test'))
+    assert len(package.series.assay_paths) == 64
+    assert copied_nodes == []
