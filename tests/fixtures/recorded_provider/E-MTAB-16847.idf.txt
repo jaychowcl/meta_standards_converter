@@ -1,0 +1,43 @@
+MAGE-TAB Version	1.1
+Investigation Title	Gene expression profiling of human pancreatic cancer cells treated with RRSP-RBD-TAT and RRSP-TAT compared with untreated controls
+Experiment Description	Human pancreatic cancer cells (PANC-1) were treated with a protein-based pan-RAS inhibitor (RRSP-RBD-TAT), a control construct (RRSP-TAT), or vehicle control. After 48 hours of treatment, total RNA was extracted and subjected to gene expression profiling using Agilent SurePrint G3 Human GE 8x60K microarrays. The objective of this experiment was to characterize transcriptional changes associated with RAS pathway inhibition and to compare the molecular effects of RRSP-RBD-TAT with control treatments. Raw intensity data were processed and used for downstream analyses including gene set enrichment analysis (GSEA).
+Experimental Design	compound treatment design
+Experimental Design Term Source REF	EFO
+Experimental Design Term Accession Number	EFO:0001755
+Experimental Factor Name	compound	dose
+Experimental Factor Type	compound	dose
+Experimental Factor Term Source REF	EFO	EFO
+Experimental Factor Term Accession Number	CHEBI_24431	EFO_0000428
+Person Last Name	Honda
+Person First Name	Ryo
+Person Mid Initials
+Person Email	ryohonda.rh@gmail.com
+Person Phone
+Person Fax
+Person Address	Yanagido 1-1, Gifu, Gifu, Japan
+Person Affiliation	Gifu University
+Person Roles	submitter
+Date of Experiment	2022-02-01
+Public Release Date	2026-12-31
+PubMed ID
+Publication DOI
+Publication Author List
+Publication Title
+Publication Status
+Publication Status Term Source REF
+Publication Status Term Accession Number
+Protocol Name	P-MTAB-164319	P-MTAB-164320	P-MTAB-164321	P-MTAB-164322	P-MTAB-164323
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid labeling protocol	nucleic acid hybridization to array protocol	array scanning and feature extraction protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0003813	EFO_0003815	EFO_0003814
+Protocol Description	After treatment, cells were washed with PBS and lysed for RNA extraction.	Total RNA was extracted using standard procedures and purified according to the manufacturer’s instructions. RNA quality was assessed prior to microarray analysis.	RNA labeling was performed using Agilent one-color labeling protocol with Cy3 according to the manufacturer’s instructions.	Labeled RNA was hybridized onto Agilent SurePrint G3 Human GE 8x60K microarrays according to the manufacturer’s protocol.	Microarray slides were scanned using an Agilent DNA Microarray Scanner (G2505C) at 3 µm resolution according to the manufacturer’s instructions.
+Protocol Hardware					
+Protocol Software					
+Term Source Name	ArrayExpress	EFO
+Term Source File	http://www.ebi.ac.uk/arrayexpress/	http://www.ebi.ac.uk/efo/
+Term Source Version
+SDRF File	E-MTAB-16847.sdrf.txt
+Comment[AEExperimentType]	transcription profiling by array
+Comment[TemplateType]	Cell line - One-color microarray
+Comment[Submitted Name]	Gene expression profiling of human pancreatic cancer cells treated with RRSP-RBD-TAT and RRSP-TAT compared with untreated controls
+Comment[ArrayExpressAccession]	E-MTAB-16847

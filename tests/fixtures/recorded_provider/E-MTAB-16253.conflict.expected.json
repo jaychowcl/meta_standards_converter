@@ -1,0 +1,98 @@
+{
+  "json": {
+    "kind": "pointers",
+    "pointers": {
+      "/0/sample/0/iid": "ERS27611842",
+      "/0/sample/0/channel/0/organism": [
+        {
+          "value": "Mycobacterium tuberculosis H37Rv",
+          "taxid": "83332"
+        }
+      ],
+      "/0/sample/0/sra_run/0/library_layout": "SINGLE",
+      "/0/extensions/insdc/records": [
+        {
+          "provider": "ENA",
+          "kind": "source_conflict",
+          "accession": "PRJEB104204",
+          "metadata": {
+            "field": "organism",
+            "path": "/sample/ERS27611842/channel/0/organism",
+            "statements": [
+              {
+                "provider": "SRA",
+                "accession": "ERP185509",
+                "value": [
+                  {
+                    "value": "Mycobacterium tuberculosis H37Rv",
+                    "taxid": "83332"
+                  }
+                ]
+              },
+              {
+                "provider": "ENA",
+                "accession": "PRJEB104204",
+                "value": [
+                  {
+                    "value": "Mycobacterium tuberculosis",
+                    "taxid": "1773"
+                  }
+                ]
+              }
+            ],
+            "selected": {
+              "provider": "SRA",
+              "accession": "ERP185509",
+              "value": [
+                {
+                  "value": "Mycobacterium tuberculosis H37Rv",
+                  "taxid": "83332"
+                }
+              ]
+            },
+            "reason": "AE > GEO > native; retain current value for equal source rank",
+            "mode": "standard"
+          }
+        }
+      ]
+    }
+  },
+  "magetab": {
+    "kind": "sdrf-columns",
+    "columns": [
+      "Source Name",
+      "Scan Name",
+      "Comment[FASTQ_FILE_NAME]",
+      "Comment[FASTQ_URI]"
+    ],
+    "rows": [
+      [
+        "ERS27611842",
+        "ERR15942837",
+        "ze30.fastq",
+        "s3://sra-pub-src-14/ERR15942837/ze30.fastq.1"
+      ],
+      [
+        "ERS27611842",
+        "ERR15942837",
+        "ERR15942837.fastq.gz",
+        "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz"
+      ]
+    ]
+  },
+  "tsv": {
+    "kind": "tsv-columns",
+    "columns": [
+      "msc.sample.accession",
+      "msc.sample.channel.organism.value",
+      "msc.provenance.conflicts"
+    ],
+    "rows": [
+      {
+        "msc.sample.accession": "ERS27611842",
+        "msc.sample.channel.organism.value": "Mycobacterium tuberculosis H37Rv",
+        "msc.provenance.conflicts": "[{\"accession\":\"PRJEB104204\",\"kind\":\"source_conflict\",\"metadata\":{\"field\":\"organism\",\"mode\":\"standard\",\"path\":\"/sample/ERS27611842/channel/0/organism\",\"reason\":\"AE > GEO > native; retain current value for equal source rank\",\"selected\":{\"accession\":\"ERP185509\",\"provider\":\"SRA\",\"value\":[{\"taxid\":\"83332\",\"value\":\"Mycobacterium tuberculosis H37Rv\"}]},\"statements\":[{\"accession\":\"ERP185509\",\"provider\":\"SRA\",\"value\":[{\"taxid\":\"83332\",\"value\":\"Mycobacterium tuberculosis H37Rv\"}]},{\"accession\":\"PRJEB104204\",\"provider\":\"ENA\",\"value\":[{\"taxid\":\"1773\",\"value\":\"Mycobacterium tuberculosis\"}]}]},\"provider\":\"ENA\"}]"
+      }
+    ]
+  }
+}

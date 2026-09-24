@@ -1,0 +1,108 @@
+{
+  "json": {
+    "kind": "pointers",
+    "pointers": {
+      "/0/series/iid": "E-MTAB-16847",
+      "/0/sample/0/iid": "control1",
+      "/0/sample/1/iid": "control2",
+      "/0/sample/2/iid": "RRSP-RBD-TAT1",
+      "/0/sample/3/iid": "RRSP-RBD-TAT2",
+      "/0/sample/4/iid": "RRSP-TAT1",
+      "/0/sample/5/iid": "RRSP-TAT2"
+    }
+  },
+  "magetab": {
+    "kind": "sdrf-columns",
+    "columns": [
+      "Source Name",
+      "Assay Name",
+      "Array Data File",
+      "Factor Value[compound]",
+      "Factor Value[dose]"
+    ],
+    "rows": [
+      [
+        "control1",
+        "control1:Cy3",
+        "US11033868_257236349154_S01_GE1_107_Sep09_1_1.txt",
+        "vehicle",
+        "0"
+      ],
+      [
+        "control2",
+        "control2:Cy3",
+        "US11033868_257236349154_S01_GE1_107_Sep09_2_2.txt",
+        "vehicle",
+        "0"
+      ],
+      [
+        "RRSP-RBD-TAT1",
+        "RRSP-RBD-TAT1:Cy3",
+        "US11033868_257236349154_S01_GE1_107_Sep09_1_3.txt",
+        "RRSP-RBD-TAT",
+        "250"
+      ],
+      [
+        "RRSP-RBD-TAT2",
+        "RRSP-RBD-TAT2:Cy3",
+        "US11033868_257236349154_S01_GE1_107_Sep09_2_4.txt",
+        "RRSP-RBD-TAT",
+        "250"
+      ],
+      [
+        "RRSP-TAT1",
+        "RRSP-TAT1:Cy3",
+        "US11033868_257236349154_S01_GE1_107_Sep09_1_4.txt",
+        "RRSP-TAT",
+        "250"
+      ],
+      [
+        "RRSP-TAT2",
+        "RRSP-TAT2:Cy3",
+        "US11033868_257236349154_S01_GE1_107_Sep09_2_1.txt",
+        "RRSP-TAT",
+        "250"
+      ]
+    ]
+  },
+  "tsv": {
+    "kind": "tsv-columns",
+    "columns": [
+      "msc.sample.accession",
+      "msc.sample.channel.organism.value",
+      "msc.sample.channel.disease"
+    ],
+    "rows": [
+      {
+        "msc.sample.accession": "control1",
+        "msc.sample.channel.organism.value": "Homo sapiens",
+        "msc.sample.channel.disease": "pancreatic cancer"
+      },
+      {
+        "msc.sample.accession": "control2",
+        "msc.sample.channel.organism.value": "Homo sapiens",
+        "msc.sample.channel.disease": "pancreatic cancer"
+      },
+      {
+        "msc.sample.accession": "RRSP-RBD-TAT1",
+        "msc.sample.channel.organism.value": "Homo sapiens",
+        "msc.sample.channel.disease": "pancreatic cancer"
+      },
+      {
+        "msc.sample.accession": "RRSP-RBD-TAT2",
+        "msc.sample.channel.organism.value": "Homo sapiens",
+        "msc.sample.channel.disease": "pancreatic cancer"
+      },
+      {
+        "msc.sample.accession": "RRSP-TAT1",
+        "msc.sample.channel.organism.value": "Homo sapiens",
+        "msc.sample.channel.disease": "pancreatic cancer"
+      },
+      {
+        "msc.sample.accession": "RRSP-TAT2",
+        "msc.sample.channel.organism.value": "Homo sapiens",
+        "msc.sample.channel.disease": "pancreatic cancer"
+      }
+    ]
+  }
+}

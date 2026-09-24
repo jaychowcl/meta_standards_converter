@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-16847-deposited-reduced-success",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "reduced-source",
+  "files": {
+    "idf": {
+      "path": "E-MTAB-16847.idf.txt",
+      "sha256": "32027b3ac9335385ab9b7c8bbf8565d1f7bacc30406111f9f49a7aefa049f392"
+    },
+    "sdrf": {
+      "path": "E-MTAB-16847.sdrf.txt",
+      "sha256": "7d4d1fba123bb21be70eb3f3c00f9fa9c01acecd31ce225b41665d91925b8979"
+    },
+    "golden": {
+      "path": "E-MTAB-16847.expected.json",
+      "sha256": "30c56398b82fffcc2bbb243d9f66766321cff55dd2f5b46ed41a281f1c6691b7"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "deposited-success",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "file",
+        "file": "idf"
+      },
+      "services": {},
+      "options": {
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": []
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": []
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": []
+        }
+      },
+      "golden": "golden",
+      "expected_item_count": 1
+    }
+  ]
+}

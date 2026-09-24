@@ -1,0 +1,4239 @@
+{
+  "miniml_schema_version": "3.0",
+  "source": {
+    "format": "SRA"
+  },
+  "database": [
+    {
+      "iid": "ArrayExpress",
+      "name": "ArrayExpress"
+    },
+    {
+      "iid": "BioProject",
+      "name": "BioProject"
+    },
+    {
+      "iid": "BioSample",
+      "name": "BioSample"
+    },
+    {
+      "iid": "ENA",
+      "name": "ENA"
+    }
+  ],
+  "organization": [
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX13308825:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX13308826:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA116327056",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA116327056:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA116327055",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA116327055:organization-2",
+      "name": "EBI"
+    },
+    {
+      "role": "owner",
+      "type": "center",
+      "iid": "sra:DocumentSummary:1181434:organization-1-0-0",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "center_name",
+      "iid": "sra:STUDY:ERP165595:center_name",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "ERS21375898",
+      "iid": "sra:SAMPLE:ERS21375898:center_name",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "ERS21375899",
+      "iid": "sra:SAMPLE:ERS21375899:center_name",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS21375898:center:f4a048bcc87e27bc:0",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS21375898:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS21375899:center:f4a048bcc87e27bc:0",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS21375899:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "sample_accession": "SAMEA116327056",
+      "role": "owner",
+      "iid": "PRJEB81792:ena:BioSample:SAMEA116327056:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA116327055",
+      "role": "owner",
+      "iid": "PRJEB81792:ena:BioSample:SAMEA116327055:organization-2",
+      "name": "EBI"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJEB81792:ena:STUDY:ERP165595:center_name",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJEB81792:ena:PROJECT:PRJEB81792:center_name",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA116327055",
+      "iid": "PRJEB81792:ena:SAMPLE:SAMEA116327055:center_name",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA116327056",
+      "iid": "PRJEB81792:ena:SAMPLE:SAMEA116327056:center_name",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB81792:ena:sample:SAMEA116327055:center:f4a048bcc87e27bc:0",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB81792:ena:sample:SAMEA116327055:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB81792:ena:sample:SAMEA116327056:center:f4a048bcc87e27bc:0",
+      "name": "Lausanne University Hospital"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB81792:ena:sample:SAMEA116327056:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    }
+  ],
+  "contributor": [],
+  "platform": [
+    {
+      "instrument_model": "Illumina HiSeq 2000",
+      "instrument_platform": "ILLUMINA",
+      "iid": "sra:platform:4431867c9e387a40",
+      "title": "Illumina HiSeq 2000",
+      "technology": "high-throughput sequencing"
+    }
+  ],
+  "sample": [
+    {
+      "comments": [
+        {
+          "name": "ENA-CHECKLIST",
+          "value": "ERC000011"
+        }
+      ],
+      "library_layout": "SINGLE",
+      "iid": "ERS21375898",
+      "accession": [
+        {
+          "value": "ERS21375898",
+          "database": "ENA"
+        },
+        {
+          "value": "SAMEA116327055",
+          "database": "BioSample"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2024-11-03T10:03:48.294",
+          "release_date": "2024-11-01T00:00:00.000",
+          "last_update_date": "2024-11-01T01:02:21.000",
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "record status",
+              "value": "live"
+            }
+          ]
+        },
+        {
+          "release_date": "2024-11-01",
+          "database": "ENA"
+        },
+        {
+          "database": "INSDC",
+          "comment": [
+            {
+              "name": "INSDC status",
+              "value": "public"
+            }
+          ]
+        }
+      ],
+      "title": "GeoMx_breast_lung",
+      "type": "SRA",
+      "channel_count": "1",
+      "channel": [
+        {
+          "organism": [
+            {
+              "value": "Homo sapiens",
+              "taxid": "9606"
+            }
+          ],
+          "characteristics": [
+            {
+              "name": "isolate",
+              "value": "not applicable"
+            },
+            {
+              "name": "disease",
+              "value": "cancer"
+            },
+            {
+              "name": "organism",
+              "value": "Homo sapiens"
+            },
+            {
+              "name": "organism",
+              "value": "Homo sapiens"
+            },
+            {
+              "name": "collection date",
+              "value": "not collected"
+            },
+            {
+              "name": "scientific_name",
+              "value": "Homo sapiens"
+            },
+            {
+              "name": "common name",
+              "value": "human"
+            },
+            {
+              "name": "organism part",
+              "value": "breast and lung"
+            },
+            {
+              "name": "developmental stage",
+              "value": "adult"
+            },
+            {
+              "name": "geographic location (country and/or sea)",
+              "value": "not collected"
+            },
+            {
+              "name": "sample name",
+              "value": "E-MTAB-14566:GeoMx_breast_lung"
+            }
+          ]
+        }
+      ],
+      "description": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout.",
+      "platform_ref": {
+        "ref": "sra:platform:4431867c9e387a40"
+      },
+      "library_strategy": "RNA-Seq",
+      "library_source": "TRANSCRIPTOMIC",
+      "library_selection": "RANDOM",
+      "relation": [
+        {
+          "type": "archive center",
+          "target": "sra:sample:ERS21375898:center:f4a048bcc87e27bc:0"
+        },
+        {
+          "namespace": "SRA submitter",
+          "type": "Submitter Id",
+          "target": "E-MTAB-14566:GeoMx_breast_lung"
+        },
+        {
+          "type": "archive broker",
+          "target": "sra:sample:ERS21375898:center:a0b484ca1b3e0750:0"
+        },
+        {
+          "type": "sample owner",
+          "target": "sra:BioSample:SAMEA116327055:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "sra:SAMPLE:ERS21375898:center_name"
+        },
+        {
+          "type": "ENA-EXPERIMENT",
+          "target": "ERX13308825"
+        },
+        {
+          "type": "ENA-SUBMISSION",
+          "target": "ERA30917188"
+        },
+        {
+          "type": "ENA-FASTQ-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERS21375898&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+        },
+        {
+          "type": "ENA-SUBMITTED-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERS21375898&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+        },
+        {
+          "type": "ENA-STUDY",
+          "target": "ERP165595"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906215"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906216"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906217"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906218"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906219"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906220"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906221"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906222"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906223"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906224"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906225"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906226"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906227"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906228"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906229"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906230"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906231"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906232"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906233"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906234"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906235"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906236"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906237"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906238"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906239"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906240"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906241"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906242"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906243"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906244"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906245"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906246"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906247"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906248"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906249"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906250"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906251"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906252"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906253"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906254"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906255"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906256"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906257"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906258"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906259"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906260"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906261"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906262"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906263"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906264"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906265"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906266"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906267"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906268"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906269"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906270"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906271"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906272"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906273"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906274"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906275"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906276"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906277"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906278"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906279"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906280"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906281"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906282"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906283"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906284"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906285"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906286"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906287"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906288"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906289"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906290"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906291"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906292"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906293"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906294"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906295"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906296"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906297"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906298"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906299"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906300"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906301"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906302"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906303"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906304"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906305"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906306"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906307"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906308"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906309"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906310"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906311"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906312"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906313"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906314"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906315"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906316"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906317"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906318"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906319"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906320"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906321"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906322"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906323"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906324"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906325"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906326"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906327"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906328"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906329"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906330"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906331"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906332"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906333"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906334"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906335"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906336"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906337"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906338"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906339"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906340"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906341"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906342"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906343"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906344"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906345"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906346"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906347"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906348"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906349"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906350"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906351"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906352"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906353"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906354"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906355"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906356"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906357"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906358"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906359"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906360"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906361"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906362"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906363"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906364"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906365"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906366"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906367"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906368"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906369"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906370"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906371"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906372"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906373"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906374"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906375"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906376"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906377"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906378"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906379"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906380"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906381"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906382"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906383"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906384"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906385"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906386"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906387"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906388"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906389"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906390"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906391"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906392"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906393"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906394"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906395"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906396"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906397"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906398"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906399"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906400"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906401"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906402"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906403"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906404"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906405"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906406"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906407"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906408"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906409"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906410"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906411"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906412"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906413"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906414"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906415"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906416"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906417"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906418"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906419"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906420"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906421"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906422"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906423"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906424"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906425"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906426"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906427"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906428"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906429"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906430"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906431"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906432"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906433"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906434"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906435"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906436"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906437"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906438"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906439"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906440"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906441"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906442"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906443"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906444"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906445"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906446"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906447"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906448"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906449"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906450"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906451"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906452"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906453"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906454"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906455"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906456"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906457"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906458"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906459"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906460"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906461"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906462"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906463"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906464"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906465"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906466"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906467"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906468"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906469"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906470"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906471"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906472"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906473"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906474"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906475"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906476"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906477"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906478"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906479"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906480"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906481"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906482"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906483"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906484"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906485"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906486"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906487"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906488"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906489"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906490"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906491"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906492"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906493"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906494"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906495"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906496"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906497"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906498"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906499"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906500"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906501"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906502"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906503"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906504"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906505"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906506"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906507"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906508"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906509"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906510"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906511"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906512"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906513"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906514"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906515"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906516"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906517"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906518"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906519"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906520"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906521"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906522"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906523"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906524"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906525"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906526"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906527"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906528"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906529"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906530"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906531"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906532"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906533"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906534"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906535"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906536"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906537"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906538"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906539"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906540"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906541"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906542"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906543"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906544"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906545"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906546"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906547"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906548"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906549"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906550"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906551"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906552"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906553"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906554"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906555"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906556"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906557"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906558"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906559"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906560"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906561"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906562"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906563"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906564"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906565"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906566"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906567"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906568"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906569"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906570"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906571"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906572"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906573"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906574"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906575"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906576"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906577"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906578"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906579"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906580"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906581"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906582"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906583"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906584"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906585"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906586"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906587"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906588"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906589"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906590"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906591"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906592"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906593"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906594"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906595"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906596"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906597"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906598"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906599"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906600"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906601"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906602"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906603"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906604"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906605"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906606"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906607"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906608"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906609"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906610"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906611"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906612"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906613"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906614"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906615"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906616"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906617"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906618"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906619"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906620"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906621"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906622"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906623"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906624"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906625"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906626"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906627"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906628"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906629"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906630"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906631"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906632"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906633"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906634"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906635"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906636"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906637"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906638"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906639"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906640"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906641"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906642"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906643"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906644"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906645"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906646"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906647"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906648"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906649"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906650"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906651"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906652"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906653"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906654"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906655"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906656"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906657"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906658"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906659"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906660"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906661"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906662"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906663"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906664"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906665"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906666"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906667"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906668"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906669"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906670"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906671"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906672"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906673"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906674"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906675"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906676"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906677"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906678"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906679"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906680"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906681"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906682"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906683"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906684"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906685"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906686"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906687"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906688"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906689"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906690"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906691"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906692"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906693"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906694"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906695"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906696"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906697"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906698"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906699"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906700"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906701"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906702"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906703"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR13906704"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:sample:SAMEA116327055:center:f4a048bcc87e27bc:0"
+        },
+        {
+          "namespace": "ENA submitter",
+          "type": "Submitter Id",
+          "target": "E-MTAB-14566:GeoMx_breast_lung"
+        },
+        {
+          "type": "archive broker",
+          "target": "ena:sample:SAMEA116327055:center:a0b484ca1b3e0750:0"
+        },
+        {
+          "type": "sample owner",
+          "target": "ena:BioSample:SAMEA116327055:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:SAMPLE:SAMEA116327055:center_name"
+        },
+        {
+          "type": "sample owner",
+          "target": "PRJEB81792:ena:BioSample:SAMEA116327055:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "PRJEB81792:ena:SAMPLE:SAMEA116327055:center_name"
+        }
+      ],
+      "sra_accession": [
+        "ERX13308825"
+      ],
+      "ena_accession": [
+        "ERP165595"
+      ],
+      "sra_run": [
+        {
+          "instrument_platform": "ILLUMINA",
+          "files": [
+            {
+              "filename": "DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "bytes": "21839730",
+              "md5": "02441f925a67390ea875d23550f75e35",
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-6/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz.1",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-6/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz.1"
+            },
+            {
+              "filename": "ERR13906479",
+              "bytes": "11811858",
+              "md5": "b152e74e079e4df3a6fdcbca9b3bde79",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR13906479/ERR13906479",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR13906479/ERR13906479"
+            },
+            {
+              "filename": "ERR13906479",
+              "bytes": "11811858",
+              "md5": "b152e74e079e4df3a6fdcbca9b3bde79",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR13906479/ERR13906479",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "AWS",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR13906479/ERR13906479"
+            },
+            {
+              "filename": "ERR13906479.lite",
+              "bytes": "10536994",
+              "md5": "40bac3b7a0127d79c9466b639cdd99ed",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR013/13906/ERR13906479/ERR13906479.lite.1",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR013/13906/ERR13906479/ERR13906479.lite.1"
+            },
+            {
+              "filename": "ERR13906479.lite",
+              "bytes": "10536994",
+              "md5": "40bac3b7a0127d79c9466b639cdd99ed",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR013/13906/ERR13906479/ERR13906479.lite.1",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "NCBI",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR013/13906/ERR13906479/ERR13906479.lite.1"
+            },
+            {
+              "filename": "ERR13906479.lite",
+              "bytes": "10536994",
+              "md5": "40bac3b7a0127d79c9466b639cdd99ed",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "s3://sra-pub-zq-1/ERR13906479/ERR13906479.lite.1",
+              "free_egress": "s3.us-east-1",
+              "access_type": "aws identity",
+              "org": "AWS",
+              "uri": "s3://sra-pub-zq-1/ERR13906479/ERR13906479.lite.1"
+            },
+            {
+              "filename": "ERR13906479.lite",
+              "bytes": "10536994",
+              "md5": "40bac3b7a0127d79c9466b639cdd99ed",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "gs://sra-pub-zq-100/ERR13906479/ERR13906479.lite.1",
+              "free_egress": "gs.us-east1",
+              "access_type": "gcp identity",
+              "org": "GCP",
+              "uri": "gs://sra-pub-zq-100/ERR13906479/ERR13906479.lite.1"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR139/079/ERR13906479/ERR13906479.fastq.gz",
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "filename": "ERR13906479.fastq.gz",
+              "md5": "dcf34672f1ab98db2040f1aef82f1dd4",
+              "bytes": "23912294",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/ERR139/079/ERR13906479/ERR13906479.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/ERR139/079/ERR13906479/ERR13906479.fastq.gz"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR139/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "format": "FASTQ",
+              "role": "SUBMISSION_FILE",
+              "filename": "DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "md5": "02441f925a67390ea875d23550f75e35",
+              "bytes": "21839730",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/run/ERR139/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/run/ERR139/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR139/079/ERR13906479/ERR13906479.bam",
+              "format": "bam",
+              "role": "ARCHIVAL_FILE",
+              "filename": "ERR13906479.bam",
+              "md5": "ace3fae30f43034dbb51296fbbae72c0",
+              "bytes": "21677752",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/err/ERR139/079/ERR13906479/ERR13906479.bam",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/err/ERR139/079/ERR13906479/ERR13906479.bam"
+            }
+          ],
+          "statistics": {
+            "tag": "Statistics",
+            "attributes": {
+              "nreads": "1",
+              "nspots": "1142869"
+            },
+            "children": [
+              {
+                "tag": "Read",
+                "attributes": {
+                  "index": "0",
+                  "count": "1142869",
+                  "average": "27",
+                  "stdev": "0"
+                },
+                "children": []
+              }
+            ]
+          },
+          "platform_ref": {
+            "ref": "sra:platform:4431867c9e387a40"
+          },
+          "indexed_statistics": {
+            "read_count": "1142869",
+            "base_count": "30857463"
+          },
+          "run": "ERR13906479",
+          "study": "ERP165595",
+          "experiment": "ERX13308825",
+          "sample": "ERS21375898",
+          "biosample": "SAMEA116327055",
+          "library_layout": "SINGLE",
+          "library_selection": "RANDOM",
+          "library_source": "TRANSCRIPTOMIC",
+          "library_strategy": "RNA-Seq",
+          "scan_name": "E-MTAB-14566:DSP-1001660018473-B-G10_S1_L002",
+          "instrument_model": "Illumina HiSeq 2000",
+          "fastq_files": [
+            {
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-6/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz.1",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-6/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz.1",
+              "filename": "DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "md5": "02441f925a67390ea875d23550f75e35",
+              "bytes": "21839730"
+            },
+            {
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/ERR139/079/ERR13906479/ERR13906479.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/ERR139/079/ERR13906479/ERR13906479.fastq.gz",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR139/079/ERR13906479/ERR13906479.fastq.gz",
+              "filename": "ERR13906479.fastq.gz",
+              "md5": "dcf34672f1ab98db2040f1aef82f1dd4",
+              "bytes": "23912294"
+            },
+            {
+              "format": "FASTQ",
+              "role": "SUBMISSION_FILE",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/run/ERR139/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/run/ERR139/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR139/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "filename": "DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "md5": "02441f925a67390ea875d23550f75e35",
+              "bytes": "21839730"
+            }
+          ],
+          "read_lengths": [
+            "27"
+          ]
+        }
+      ]
+    }
+  ],
+  "series": {
+    "iid": "ERP165595",
+    "accession": [
+      {
+        "value": "ERP165595",
+        "database": "ENA"
+      },
+      {
+        "value": "PRJEB81792",
+        "database": "BioProject"
+      },
+      {
+        "value": "E-MTAB-14566",
+        "database": "ArrayExpress"
+      }
+    ],
+    "status": [
+      {
+        "release_date": "2024-11-01",
+        "last_update_date": "2024-11-01",
+        "database": "ENA"
+      }
+    ],
+    "title": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+    "summary": "We performed Visium CytAssist (10X), GeoMx DSP (Nanostring) and Chromium Flex (10X Genomics) full transcriptome profiling on Breast Cancer (BC), Lung Cancer (LC) and diffuse large B cell lymphoma (DLBCL) samples from archival FFPE blocks. We explore the data quality across blocks with different storage times and DV200 values for all the three methods. We compared the cell type signature purity between ST methods Visium and GeoMx by utilising pathology annotations and scRNAseq. For the Visium and Chromium methods with a large number of data points we explored the heterogeneity between tissues. Finally, we demonstrate the discovery of patient-specific tumor-TME interactions across all three methods.",
+    "type": [
+      {
+        "value": "Transcriptome Analysis"
+      }
+    ],
+    "sample_ref": [
+      {
+        "ref": "ERS21375898"
+      }
+    ],
+    "relation": [
+      {
+        "type": "E-MTAB-14566 in ArrayExpress",
+        "target": "https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-14566"
+      },
+      {
+        "type": "ENA-SUBMISSION",
+        "target": "ERA30917188"
+      },
+      {
+        "type": "ENA-FASTQ-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERP165595&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+      },
+      {
+        "type": "ENA-SUBMITTED-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERP165595&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "ERX13308825:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+      },
+      {
+        "name": "ERX13308826:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+      },
+      {
+        "name": "PRJEB81792:ERX13308825:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer’s instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer’s instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+      },
+      {
+        "name": "PRJEB81792:ERX13308826:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer’s instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer’s instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+      }
+    ],
+    "assay_paths": [
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+            "link": {
+              "value": "s3://sra-pub-src-6/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz.1",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "02441f925a67390ea875d23550f75e35"
+              },
+              {
+                "name": "BYTES",
+                "value": "21839730"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "Original"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR13906479/ERR13906479",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "b152e74e079e4df3a6fdcbca9b3bde79"
+              },
+              {
+                "name": "BYTES",
+                "value": "11811858"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR13906479/ERR13906479",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "b152e74e079e4df3a6fdcbca9b3bde79"
+              },
+              {
+                "name": "BYTES",
+                "value": "11811858"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479.lite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR013/13906/ERR13906479/ERR13906479.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "40bac3b7a0127d79c9466b639cdd99ed"
+              },
+              {
+                "name": "BYTES",
+                "value": "10536994"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479.lite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR013/13906/ERR13906479/ERR13906479.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "40bac3b7a0127d79c9466b639cdd99ed"
+              },
+              {
+                "name": "BYTES",
+                "value": "10536994"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479.lite",
+            "link": {
+              "value": "s3://sra-pub-zq-1/ERR13906479/ERR13906479.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "40bac3b7a0127d79c9466b639cdd99ed"
+              },
+              {
+                "name": "BYTES",
+                "value": "10536994"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479.lite",
+            "link": {
+              "value": "gs://sra-pub-zq-100/ERR13906479/ERR13906479.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "40bac3b7a0127d79c9466b639cdd99ed"
+              },
+              {
+                "name": "BYTES",
+                "value": "10536994"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "PRJEB81792:ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479.fastq.gz",
+            "link": {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR139/079/ERR13906479/ERR13906479.fastq.gz",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "dcf34672f1ab98db2040f1aef82f1dd4"
+              },
+              {
+                "name": "BYTES",
+                "value": "23912294"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "GENERATED_FILE"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "PRJEB81792:ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+            "link": {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR139/ERR13906479/DSP-1001660018473-B-G10_S1_L002_R1_001.fastq.gz",
+              "type": "FASTQ"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "02441f925a67390ea875d23550f75e35"
+              },
+              {
+                "name": "BYTES",
+                "value": "21839730"
+              },
+              {
+                "name": "FORMAT",
+                "value": "FASTQ"
+              },
+              {
+                "name": "ROLE",
+                "value": "SUBMISSION_FILE"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS21375898",
+            "sample_ref": "ERS21375898",
+            "characteristics": [
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "disease",
+                "value": "cancer"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "organism",
+                "value": "Homo sapiens",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "9606"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "common name",
+                "value": "human"
+              },
+              {
+                "name": "organism part",
+                "value": "breast and lung"
+              },
+              {
+                "name": "developmental stage",
+                "value": "adult"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-14566:GeoMx_breast_lung"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMEA116327055"
+              },
+              {
+                "name": "Sample_title",
+                "value": "GeoMx_breast_lung"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: One to three lung, breast and/or DLBCL tissue sections of 5 micrometer thickness were placed on each slide, sectioned from FFPE blocks. Slides were processed according to the manufacturer's instructions. Tissue sections were cut at 5 um thickness. They were baked at 60°C for 2 hours. Sections were stained on a BOND-RXm fully automated multiplexing immunohistochemical stainer (Leica Biosystems; Wetzlar, Germany) using the following immunofluorescent antibodies: for Breast and Lung, PanCK - AF532 (Clone AE1 + AE3 from Novus) diluted at 1/50, CD3 - AF647  (Clone CD3-12 from Biorad) diluted at  1/100, CD68 - AF594  (Clone KP1, from Santa Cruz) in concentration 0.25 ug/ml and SYTO 13  nuclear stain diluted at 1:10000 (Nanostring) in Buffer W for 1 h at room temperature; for DLBCL, CD20 - AF594 (Clone IGL/773 from BioTechne) diluted at 1/100, CD3 - AF647 (Clone CD3-12 from Biorad) diluted at 1/100, CD68 - AF488 (Clone KP1 from e-BioMed) at concentration 0.25 ug/ml and SYTO 83 nuclear stain diluted at 1:100000 (Invitrogen) in Buffer W for 1 h at room temperature.  Regions of interest (ROIs) were selected by pathologists, and segmented into areas of illumination (AOI-s) based on immunofluorescent markers (Supplementary Tables 3-4). The first segment was defined as double positive for CD3 and CD68 with the purpose of excluding autofluorescent structures (such as elastin fibers in lung) or debris, and it was not collected. For Lung and DLBCL samples, the CD3-AOI-s were collected first, followed by CD68-AOI-s. For Breast samples, CD68-AOI-s were collected first, followed by CD3-AOI-s. PanCK-AOI-s and CD20-AOI-s were collected third for solid cancers and DLBCL respectively. For five and four ROI-s in breast and lung replica samples respectively, only two segments of PanCK+ and PanCK- were collected in that order, ignoring other markers. The remaining cells showing SYTO nuclear expression in the absence of any cytoplasmic marker were collected as the fourth marker-negative (Other) segment in BC. All the remaining surface of ROIs which had not been collected into any AOI was collected as marker-negative (Other) segments for Lung and DLBCL, independently of the presence of nuclei. With the exception of the Other segment of Lung and DLBCL, a segment was collected when it contained at least 50 cells. About 24 such AOI-s per patient were collected with AOI size varying from about 500µm2 to 300,000µm2 with an average size of 60,000µm2. Library preparation and sequencing was performed according to the manufacturer's instructions and kits.  All Breast, Lung and DLBCL samples were assayed on the Nanostring GeoMx Digital Spatial Profiler (DSP) platform using the Whole Transcriptome Atlas (WTA) probe panel with NGS readout."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "PRJEB81792:ERX13308825:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX13308825",
+            "sample_ref": "ERS21375898",
+            "description": "Spatially resolved transcriptomic profiling: an experimental comparison of GeoMx Digital Spatial Profiling and Visium CytAssist spatial transcriptomics in three cancer types (GeoMx)",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "RANDOM"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR13906479",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR13906479"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX13308825"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS21375898"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR13906479.bam",
+            "link": {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR139/079/ERR13906479/ERR13906479.bam",
+              "type": "bam"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "ace3fae30f43034dbb51296fbbae72c0"
+              },
+              {
+                "name": "BYTES",
+                "value": "21677752"
+              },
+              {
+                "name": "FORMAT",
+                "value": "bam"
+              },
+              {
+                "name": "ROLE",
+                "value": "ARCHIVAL_FILE"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "extensions": {
+    "insdc": {
+      "version": "1.0",
+      "records": []
+    }
+  }
+}

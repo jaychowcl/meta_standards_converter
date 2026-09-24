@@ -1,0 +1,4302 @@
+{
+  "miniml_schema_version": "3.0",
+  "source": {
+    "format": "SRA"
+  },
+  "database": [
+    {
+      "iid": "BioProject",
+      "name": "BioProject"
+    },
+    {
+      "iid": "BioSample",
+      "name": "BioSample"
+    },
+    {
+      "iid": "GEO",
+      "name": "GEO",
+      "public_id": "GEO",
+      "organization": "NCBI NLM NIH",
+      "web_link": "http://www.ncbi.nlm.nih.gov/geo",
+      "email": "geo@ncbi.nlm.nih.gov"
+    },
+    {
+      "iid": "SRA",
+      "name": "SRA"
+    },
+    {
+      "iid": "ENA",
+      "name": "ENA"
+    },
+    {
+      "url": "http://www.ebi.ac.uk/arrayexpress/",
+      "iid": "ArrayExpress",
+      "name": "ArrayExpress"
+    }
+  ],
+  "organization": [
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380395:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380394:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380393:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380392:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380391:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380390:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380389:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380388:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380387:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380386:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380385:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380384:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380383:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380382:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380381:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380380:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX380379:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "sample_accession": "SAMN02415138",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415138:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415137",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415137:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415136",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415136:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415135",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415135:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415134",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415134:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415133",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415133:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415132",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415132:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415131",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415131:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415130",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415130:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415129",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415129:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415128",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415128:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415127",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415127:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415126",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415126:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415125",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415125:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415124",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415124:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415123",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415123:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415122",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02415122:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "owner",
+      "type": "institute",
+      "iid": "sra:DocumentSummary:229389:organization-1-0-0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "iid": "sra:STUDY:SRP033200:center_name",
+      "name": "GEO"
+    },
+    {
+      "sample_accession": "SAMN02415138",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415138:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415137",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415137:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415136",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415136:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415135",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415135:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415134",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415134:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415133",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415133:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415132",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415132:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415131",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415131:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415130",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415130:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415129",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415129:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415128",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415128:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415127",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415127:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415126",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415126:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415125",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415125:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415124",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415124:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415123",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415123:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "sample_accession": "SAMN02415122",
+      "role": "owner",
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415122:organization-2",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJNA229389:ena:STUDY:SRP033200:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJNA229389:ena:PROJECT:PRJNA229389:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415122",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415122:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415123",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415123:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415124",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415124:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415125",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415125:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415126",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415126:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415127",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415127:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415128",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415128:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415129",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415129:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415130",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415130:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415131",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415131:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415132",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415132:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415133",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415133:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415134",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415134:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415135",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415135:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415136",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415136:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415137",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415137:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02415138",
+      "iid": "PRJNA229389:ena:SAMPLE:SAMN02415138:center_name",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415122:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415123:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415124:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415125:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415126:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415127:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415128:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415129:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415130:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415131:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415132:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415133:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415134:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415135:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415136:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415137:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA229389:ena:sample:SAMN02415138:center:4b7ac250f30febfe:0",
+      "name": "Jiaqian Wu Lab, Neurosugery, UThealth"
+    }
+  ],
+  "contributor": [
+    {
+      "iid": "sra:BioSample:SAMN02415138:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415138:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415137:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415137:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415136:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415136:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415135:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415135:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415134:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415134:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415133:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415133:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415132:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415132:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415131:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415131:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415130:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415130:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415129:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415129:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415128:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415128:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415127:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415127:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415126:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415126:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415125:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415125:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415124:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415124:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415123:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415123:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02415122:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02415122:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415138:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415138:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415137:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415137:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415136:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415136:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415135:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415135:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415134:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415134:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415133:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415133:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415132:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415132:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415131:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415131:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415130:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415130:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415129:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415129:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415128:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415128:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415127:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415127:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415126:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415126:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415125:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415125:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415124:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415124:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415123:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415123:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA229389:ena:BioSample:SAMN02415122:organization-2:contact-0",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization_ref": {
+        "ref": "PRJNA229389:ena:BioSample:SAMN02415122:organization-2"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib3",
+      "person": {
+        "first": "Ye",
+        "last": "Zhang"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib1",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization": "UTsouthwestern",
+      "email": "chenkn007@gmail.com",
+      "laboratory": "Quantitative Biological Research Center",
+      "department": "Population and Data Science",
+      "address": {
+        "line": [
+          "5323 Harry Hines Boulevard"
+        ],
+        "city": "Dallas",
+        "state": "TX",
+        "zip_code": "75390",
+        "country": "USA"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib4",
+      "person": {
+        "first": "Steven",
+        "middle": "A",
+        "last": "Sloan"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib5",
+      "person": {
+        "first": "Anja",
+        "middle": "R",
+        "last": "Scholze"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib6",
+      "person": {
+        "first": "Christine",
+        "last": "Caneda"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib7",
+      "person": {
+        "first": "Nadine",
+        "last": "Ruderisch"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib8",
+      "person": {
+        "first": "Shuyun",
+        "last": "Deng"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib9",
+      "person": {
+        "first": "Richard",
+        "last": "Daneman"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib10",
+      "person": {
+        "first": "Ben",
+        "middle": "A",
+        "last": "Barres"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib11",
+      "person": {
+        "first": "Jia",
+        "middle": "Q",
+        "last": "Wu"
+      }
+    },
+    {
+      "iid": "GSE52564:contrib2",
+      "organization": "GEO",
+      "address": {
+        "country": "USA"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-1",
+      "person": {
+        "first": "kenian",
+        "last": "chen"
+      },
+      "organization": "UThealth",
+      "email": "chenkn007@gmail.com",
+      "address": "Neurosugery, UThealth, Pressler St, Houston, TX, USA",
+      "roles": [
+        {
+          "value": "submitter"
+        }
+      ]
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-2",
+      "person": {
+        "first": "Ye",
+        "last": "Zhang"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-3",
+      "person": {
+        "first": "Kenian",
+        "last": "Chen"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-4",
+      "person": {
+        "first": "Steven",
+        "middle": "A",
+        "last": "Sloan"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-5",
+      "person": {
+        "first": "Anja",
+        "middle": "R",
+        "last": "Scholze"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-6",
+      "person": {
+        "first": "Christine",
+        "last": "Caneda"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-7",
+      "person": {
+        "first": "Nadine",
+        "last": "Ruderisch"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-8",
+      "person": {
+        "first": "Shuyun",
+        "last": "Deng"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-9",
+      "person": {
+        "first": "Richard",
+        "last": "Daneman"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-10",
+      "person": {
+        "first": "Ben",
+        "middle": "A",
+        "last": "Barres"
+      }
+    },
+    {
+      "iid": "E-GEOD-52564:contributor-11",
+      "person": {
+        "first": "Jia",
+        "middle": "Q",
+        "last": "Wu"
+      }
+    }
+  ],
+  "platform": [
+    {
+      "instrument_model": "Illumina HiSeq 2000",
+      "instrument_platform": "ILLUMINA",
+      "iid": "sra:platform:4431867c9e387a40",
+      "title": "Illumina HiSeq 2000",
+      "technology": "high-throughput sequencing"
+    },
+    {
+      "iid": "GSE52564:GPL13112",
+      "accession": [
+        {
+          "value": "GPL13112",
+          "database": "GEO"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2011-02-02",
+          "release_date": "2011-02-02",
+          "last_update_date": "2019-03-19",
+          "database": "GEO"
+        }
+      ],
+      "title": "Illumina HiSeq 2000 (Mus musculus)",
+      "technology": "high-throughput sequencing",
+      "distribution": "virtual",
+      "organism": [
+        {
+          "value": "Mus musculus",
+          "taxid": "10090"
+        }
+      ],
+      "contact_ref": [
+        {
+          "ref": "GSE52564:contrib2"
+        }
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "comments": [
+        {
+          "name": "NCBI submission package",
+          "value": "Generic.1.0"
+        },
+        {
+          "name": "BioSampleModel",
+          "value": "Generic"
+        },
+        {
+          "name": "NCBI submission model",
+          "value": "Generic"
+        }
+      ],
+      "library_layout": "PAIRED",
+      "iid": "SRS504841",
+      "accession": [
+        {
+          "value": "SRS504841",
+          "database": "SRA"
+        },
+        {
+          "value": "SAMN02415138",
+          "database": "BioSample"
+        },
+        {
+          "value": "GSM1269919",
+          "database": "GEO"
+        },
+        {
+          "label": "INSDC secondary accession",
+          "value": "SRS504841",
+          "database": "SRA"
+        },
+        {
+          "label": "External Id",
+          "value": "SAMN02415138",
+          "database": "BioSample"
+        },
+        {
+          "label": "SRA accession",
+          "value": "SRS504841",
+          "database": "SRA"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2013-11-20T11:01:19.173",
+          "release_date": "2016-04-29T01:30:10.213",
+          "last_update_date": "2016-04-29T01:34:17.127",
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "record status",
+              "value": "live"
+            }
+          ]
+        },
+        {
+          "release_date": "2016-04-29",
+          "last_update_date": "2016-04-29",
+          "database": "ENA"
+        },
+        {
+          "database": "BioSamples",
+          "comment": [
+            {
+              "name": "status",
+              "value": "PUBLIC"
+            }
+          ]
+        },
+        {
+          "release_date": "2016-04-29T01:30:10.213Z",
+          "last_update_date": "2016-04-29T01:34:17.127Z",
+          "database": "INSDC",
+          "comment": [
+            {
+              "name": "INSDC status",
+              "value": "live"
+            }
+          ]
+        },
+        {
+          "submission_date": "2013-11-20",
+          "release_date": "2014-08-15",
+          "last_update_date": "2019-05-15",
+          "database": "GEO"
+        }
+      ],
+      "title": "WC3",
+      "type": "SRA",
+      "channel_count": "1",
+      "channel": [
+        {
+          "source": {
+            "value": "whole cortex"
+          },
+          "organism": [
+            {
+              "value": "Mus musculus",
+              "taxid": "10090",
+              "term_source_ref": "NCBITaxon",
+              "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+            }
+          ],
+          "characteristics": [
+            {
+              "name": "source_name",
+              "value": "whole cortex"
+            },
+            {
+              "name": "strain",
+              "value": "FVN/Swiss"
+            },
+            {
+              "name": "tissue",
+              "value": "cerebral cortex",
+              "term_source_ref": "UBERON",
+              "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+            },
+            {
+              "name": "organism",
+              "value": "Mus musculus"
+            },
+            {
+              "name": "tissue",
+              "value": "cerebral cortex"
+            },
+            {
+              "name": "organism part",
+              "value": "cerebral cortex",
+              "term_source_ref": "UBERON",
+              "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+            },
+            {
+              "name": "cell type",
+              "value": "mixture"
+            }
+          ],
+          "molecule": {
+            "value": "polyA RNA"
+          },
+          "extract_protocol": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+        }
+      ],
+      "data_processing": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample",
+      "platform_ref": {
+        "ref": "GSE52564:GPL13112"
+      },
+      "library_strategy": "RNA-Seq",
+      "library_source": "TRANSCRIPTOMIC",
+      "library_selection": "cDNA",
+      "instrument_model": {
+        "value": "Illumina HiSeq 2000"
+      },
+      "contact_ref": [
+        {
+          "ref": "sra:BioSample:SAMN02415138:organization-2:contact-0"
+        },
+        {
+          "ref": "PRJNA229389:ena:BioSample:SAMN02415138:organization-2:contact-0"
+        },
+        {
+          "ref": "GSE52564:contrib1"
+        }
+      ],
+      "supplementary_data": [
+        {
+          "repository": "GEO",
+          "source_accession": "GSE52564",
+          "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1269nnn/GSM1269919/suppl/GSM1269919_WC3.xls.gz",
+          "type": "XLS"
+        },
+        {
+          "repository": "ArrayExpress",
+          "source_accession": "E-GEOD-52564",
+          "value": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/564/E-GEOD-52564/Files/GSM1269919_WC3.xls"
+        }
+      ],
+      "relation": [
+        {
+          "type": "bioproject",
+          "target": "229389"
+        },
+        {
+          "type": "sample owner",
+          "target": "sra:BioSample:SAMN02415138:organization-2"
+        },
+        {
+          "type": "ENA-EXPERIMENT",
+          "target": "SRX380395"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "SRR1033799"
+        },
+        {
+          "type": "ENA-SUBMISSION",
+          "target": "SRA111878"
+        },
+        {
+          "type": "ENA-FASTQ-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS504841&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+        },
+        {
+          "type": "ENA-SUBMITTED-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS504841&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+        },
+        {
+          "type": "ENA-STUDY",
+          "target": "SRP033200"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:sample:SAMN02415138:center:4b7ac250f30febfe:0"
+        },
+        {
+          "type": "sample owner",
+          "target": "ena:BioSample:SAMN02415138:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:SAMPLE:SAMN02415138:center_name"
+        },
+        {
+          "type": "sample owner",
+          "target": "PRJNA229389:ena:BioSample:SAMN02415138:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "PRJNA229389:ena:SAMPLE:SAMN02415138:center_name"
+        },
+        {
+          "type": "Reanalyzed by",
+          "target": "GSE80797"
+        },
+        {
+          "type": "BioSample",
+          "target": "https://www.ncbi.nlm.nih.gov/biosample/SAMN02415138"
+        }
+      ],
+      "sra_accession": [
+        "SRX380395"
+      ],
+      "ena_accession": [
+        "SRP033200"
+      ],
+      "sra_run": [
+        {
+          "instrument_platform": "ILLUMINA",
+          "files": [
+            {
+              "filename": "WC3.read1.bz2",
+              "bytes": "1966709690",
+              "md5": "fd8e212f281069576fd7f24a096346e1",
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-13/SRR1033799/WC3.read1.bz2",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-13/SRR1033799/WC3.read1.bz2"
+            },
+            {
+              "filename": "WC3.read2.bz2",
+              "bytes": "1988316166",
+              "md5": "2056c2b0c7ef850a2c37a6151a4613ff",
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-9/SRR1033799/WC3.read2.bz2",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-9/SRR1033799/WC3.read2.bz2"
+            },
+            {
+              "filename": "SRR1033799",
+              "bytes": "3995675077",
+              "md5": "4f70dfeca0b35adc8cd0d3ece7521574",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1033799/SRR1033799",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1033799/SRR1033799"
+            },
+            {
+              "filename": "SRR1033799",
+              "bytes": "3995675077",
+              "md5": "4f70dfeca0b35adc8cd0d3ece7521574",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1033799/SRR1033799",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "AWS",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1033799/SRR1033799"
+            },
+            {
+              "filename": "SRR1033799.sralite",
+              "bytes": "1588947246",
+              "md5": "122bf743dde62dc73ad219eb99b72565",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/033/SRR1033799/SRR1033799.sralite.1",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/033/SRR1033799/SRR1033799.sralite.1"
+            },
+            {
+              "filename": "SRR1033799.sralite",
+              "bytes": "1588947246",
+              "md5": "122bf743dde62dc73ad219eb99b72565",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/033/SRR1033799/SRR1033799.sralite.1",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "NCBI",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/033/SRR1033799/SRR1033799.sralite.1"
+            },
+            {
+              "filename": "SRR1033799.sralite",
+              "bytes": "1588947246",
+              "md5": "122bf743dde62dc73ad219eb99b72565",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "s3://sra-pub-zq-9/SRR1033799/SRR1033799.sralite.1",
+              "free_egress": "s3.us-east-1",
+              "access_type": "aws identity",
+              "org": "AWS",
+              "uri": "s3://sra-pub-zq-9/SRR1033799/SRR1033799.sralite.1"
+            },
+            {
+              "filename": "SRR1033799.sralite",
+              "bytes": "1588947246",
+              "md5": "122bf743dde62dc73ad219eb99b72565",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "gs://sra-pub-zq-104/SRR1033799/SRR1033799.zq.1",
+              "free_egress": "gs.us-east1",
+              "access_type": "gcp identity",
+              "org": "GCP",
+              "uri": "gs://sra-pub-zq-104/SRR1033799/SRR1033799.zq.1"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz",
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "filename": "SRR1033799_1.fastq.gz",
+              "md5": "432049c23ee7f10be10150baee221e56",
+              "bytes": "2585702457",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz",
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "filename": "SRR1033799_2.fastq.gz",
+              "md5": "78270bc88ec22f8faf88f00dd37f9592",
+              "bytes": "2613801872",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz"
+            }
+          ],
+          "statistics": {
+            "tag": "Statistics",
+            "attributes": {
+              "nreads": "2",
+              "nspots": "30172824"
+            },
+            "children": [
+              {
+                "tag": "Read",
+                "attributes": {
+                  "index": "0",
+                  "count": "30172824",
+                  "average": "101",
+                  "stdev": "0"
+                },
+                "children": []
+              },
+              {
+                "tag": "Read",
+                "attributes": {
+                  "index": "1",
+                  "count": "30172824",
+                  "average": "101",
+                  "stdev": "0"
+                },
+                "children": []
+              }
+            ]
+          },
+          "platform_ref": {
+            "ref": "sra:platform:4431867c9e387a40"
+          },
+          "indexed_statistics": {
+            "read_count": "30172824",
+            "base_count": "6094910448"
+          },
+          "run": "SRR1033799",
+          "study": "SRP033200",
+          "experiment": "SRX380395",
+          "sample": "SRS504841",
+          "biosample": "SAMN02415138",
+          "library_layout": "PAIRED",
+          "library_selection": "cDNA",
+          "library_source": "TRANSCRIPTOMIC",
+          "library_strategy": "RNA-Seq",
+          "scan_name": "GSM1269919_r1",
+          "instrument_model": "Illumina HiSeq 2000",
+          "fastq_files": [
+            {
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-13/SRR1033799/WC3.read1.bz2",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-13/SRR1033799/WC3.read1.bz2",
+              "filename": "WC3.read1.bz2",
+              "md5": "fd8e212f281069576fd7f24a096346e1",
+              "bytes": "1966709690"
+            },
+            {
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-9/SRR1033799/WC3.read2.bz2",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-9/SRR1033799/WC3.read2.bz2",
+              "filename": "WC3.read2.bz2",
+              "md5": "2056c2b0c7ef850a2c37a6151a4613ff",
+              "bytes": "1988316166"
+            },
+            {
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz",
+              "filename": "SRR1033799_1.fastq.gz",
+              "md5": "432049c23ee7f10be10150baee221e56",
+              "bytes": "2585702457"
+            },
+            {
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz",
+              "filename": "SRR1033799_2.fastq.gz",
+              "md5": "78270bc88ec22f8faf88f00dd37f9592",
+              "bytes": "2613801872"
+            },
+            {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-52564",
+              "uri": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz",
+              "filename": "SRR1033799_1.fastq.gz"
+            },
+            {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-52564",
+              "uri": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz",
+              "filename": "SRR1033799_2.fastq.gz"
+            }
+          ],
+          "read_lengths": [
+            "101",
+            "101"
+          ]
+        }
+      ]
+    }
+  ],
+  "series": {
+    "iid": "SRP033200",
+    "accession": [
+      {
+        "value": "SRP033200",
+        "database": "SRA"
+      },
+      {
+        "value": "PRJNA229389",
+        "database": "BioProject"
+      },
+      {
+        "value": "GSE52564",
+        "database": "GEO"
+      },
+      {
+        "value": "E-GEOD-52564",
+        "database": "ArrayExpress"
+      }
+    ],
+    "status": [
+      {
+        "release_date": "2014-08-17",
+        "last_update_date": "2026-05-04",
+        "database": "ENA"
+      },
+      {
+        "submission_date": "2013-11-20",
+        "release_date": "2014-08-15",
+        "last_update_date": "2019-05-15",
+        "database": "GEO"
+      },
+      {
+        "date_source": "Public Release Date",
+        "release_date": "2014-08-15",
+        "database": "ArrayExpress"
+      },
+      {
+        "last_update_date": "2014-11-24",
+        "database": "GEO"
+      }
+    ],
+    "title": "An RNA-Seq transcriptome and splicing database of neurons, glia, and vascular cells of the cerebral cortex",
+    "pubmed_id": [
+      "25186741"
+    ],
+    "summary": "Purpose: To better understand the function of the various cell types of the brain, we prospectively purified neurons, astrocytes, oligodendrocyte precursor cells, newly formed oligodendrocytes, myelinating oligodendrocytes, microglia, endothelial cells, and pericytes from mouse cerebral cortex. We generated a transcriptome database for these 8 cell types by RNA sequencing and used a highly sensitive algorithm to detect alternative splicing events in each gene. Our analysis identified thousands of new cell type enriched genes and splicing isoforms that will provide novel markers for cell identification, new tools for genetic manipulation, and numerous insights into the biology of the brain. Method Part1:To purify astrocytes, we took advantage of a BAC transgenic mouse line expressing EGFP under the control of regulatory sequences in Aldh1l1-BAC. This line has been previously characterized to have complete astrocyte-specific labeling throughout the brain. Cells from a litter of 8-16 P7 Aldh1l1-EGFP transgenic mice of both genders were pooled together as one biological replicate. The cortices were dissected out and meninges were removed. The tissue was enzymatically dissociated to make a suspension of single cells as described previously. Briefly, the tissue was incubated at 33 °C for 45 minutes in 20 ml of a papain solution containing Earle’s balanced salts (EBSS, Sigma, St. Louis, MO, E7510), D(+)-glucose (22.5mM), NaHCO3 (26mM), DNase (125U/ml, Worthington, Lakewood, NJ, LS002007),  papain (9 U/ml, Worthington, Lakewood, NJ, LS03126), and L-cysteine (1mM, Sigma, St. Louis, MO, C7880). The papain solution was equilibrated with 5% CO2 and 95% O2 gas before and during papain treatment. Following papain treatment, the tissue was washed three times with 4.5ml of inhibitor buffer containing BSA (1.0mg/ml, Sigma, St. Louis, MO, A-8806), and ovomucoid (also known as trypsin inhibitor, 1.0 mg/ml, Roche Diagnostics Corporation, Indianapolis, IN 109878) and then mechanically dissociated by gentle sequential trituration using a 5ml pipette. Dissociated cells were layered on top of 10ml of high concentration inhibitor solution with 5mg/ml BSA and 5mg/ml ovomucoid and centrifuged at 130g for 5 minutes. The cell pellet was then resuspended in 12 ml Dulbecco’s phosphate-buffered saline (DPBS, Invitrogen, Carlsbad, CA 14287) containing 0.02% BSA and 12.5U/ml DNase and filtered through a 20um Nitex mesh (Sefar America Inc., Depew NY, Lab Pak 03-20/14) to remove undissociated cell clumps. This yields a single cell suspension. Cell health is assessed by trypan blue exclusion. Only single cell suspensions with >85% viability were used for purification experiments. 1μg/ml propidium iodide (PI, Sigma, St. Louis, MO, P4864) was added to the single cell solution to label dead cells. Cells were sorted on a BD Aria II cell sorter (BD Bioscience) with a 70μm nozzle. Dead cells and debris were gated first by their low forward light scatter and high side light scatter and secondly by high PI staining. Doublets were removed by high side light scatter. Cell concentration and flow rate were carefully adjusted to maximize purity. Astrocytes were identified based on high EGFP fluorescence. FACS routinely yielded >99% purity based on reanalysis of sorted cells. Method Part2:To purify neurons, a single cell suspension was prepared as described above and incubated at 34 °C for one hour to allow expression of cell surface protein antigens digested by papain, and then incubated on two sequential panning plates coated with BSL-1 to deplete endothelial cells (10 minutes each), followed by a 30 minute incuation on a plate coated with mouse IgM anti-O4 hybridoma (Bansal et al., 1989. 4ml hybridoma supernatant diluted with 8ml DPBS/0.2% BSA) to deplete OPCs, and then incubated for 20 minutes on a plate coated with rat anti-mouse CD45 (BD Pharmingen 550539, 1.25ug in 12ml of DPBS/0.2% BSA) to deplete microglia and macrophages. Finally cells were added to a plate coated with rat anti-mouse L1CAM (30ug in 12ml of DPBS/0.2% BSA, Millipore, Billerica, MA, MAB5272) to bind neurons. The adherent cells on the L1CAM plate were washed 8 times with 10-20 ml of DPBS to remove all antigen-negative nonadherent cells, and then removed from the plate by treating with trypsin (Sigma, 1,000U/ml, T-4665) in 8ml Ca2+ and Mg2+ free EBSS (Irvine Scientific, Santa Ana, CA, 9208) for 3-10 minutes at 37°C in a 10% CO2 incubator. The trypsin was then neutralized with 20ml of fetal calf serum (FCS) solution containing 30% FCS (Gibco, 10437-028), 35% Dulbecco’s modified eagle medium (DMEM, Invitrogen, 11960-044), and 35% Neurobasal (Gibco, 21103-049). The cells were dislodged by gentle squirting of FCS solution over the plate and harvested by centrifugation at 200g for 10 minutes. Method Part3:To purify microglia and oligodendrocyte-lineage cells, the mice were first perfused with 10ml PBS to remove macrophage contamination from the brain. A single cell suspension was then prepared as described above and incubated 20 minutes on a plate coated with rat anti-mouse CD45 (BD Pharmingen 550539, 1.25ug in 12ml of DPBS/0.2% BSA) to harvest microglia, and then incubated sequentially on four BSL1 coated plates (8 minutes each) to deplete endothelial cells and remaining microglia. The remaining cells were next incubated for 30 minutes on a rat anti-PDGFRα (10ug in 12ml DPBS/0.2% BSA, Fitzgerald, Acton, MA, 10R-CD140aMS) coated plate to harvest OPCs, and then incubated on an additional PDGFRα plate and mouse A2B5 monoclonal antibody ascites (American Type Culture Collection, Rockville, MD) coated plate for 30 minutes each to deplete remaining OPCs. The cell suspension was next incubated on an anti-MOG hybridoma coated plate for 30 minutes to harvest myelinating oligodendrocytes, followed by an additional anti-MOG hybridoma coated plate for 30 minutes to deplete any remaining myelinating oligodendrocytes. Finally, the cell suspension was incubated on an anti-GalC hybridoma coated plate for 30 minutes to harvest newly formed oligodendrocytes. For purification of RNA, the cells were lysed while still attached to the panning plate with Qiazol reagent (Qiagen 217004), and total RNA was purified as described below. Mehtod Part4:To purify endothelial cells, we took advantage of Tie2-EGFP transgenic mice available from Jackson labs. These mice express EGFP under the pan-endothelial Tie2 promotor (Daneman et al., 2010; Motoike et al., 2000). Single cell suspension was prepared and FACS was performed as described above. Method Part5: RNA-Seq was performed on the polyadenylated fraction of RNA isolated from purified cell samples.Two biological replicates were used for each phase.100 ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina).The samples were then sequenced using the Illumina HiSeq 2000 sequencer. Method Part6: Read mapping and Transcriptome construction were done by using optimized pipeline which integrate Tophat followed by Cufflinks. Result:We purified neurons, astrocytes, oligodendrocyte precursor cells (OPCs), newly formed oligodendrocytes (NFOs), myelinating oligodendrocytes (MOs), microglia, endothelial cells and pericytes from mouse cortex and used RNA-Seq to generate a high resolution transcriptome database of > 22,000 genes. We identified thousands of novel cell type-enriched genes that have not been previously identified. These include novel transcription factors, ligands, receptors, enzymes, and signaling molecules. We then used a novel splice mapping algorithm to identify thousands of cell type-specific alternative splicing events. Conclusion:We generated a transcriptome database for these 8 cell types by RNA sequencing and used a highly sensitive algorithm to detect alternative splicing events in each gene. Our analysis i mRNA profiles of purified cell samples from mice were generated by RNA-sequencing,  in duplicate, using Illumina HiSeq 2000.",
+    "overall_design": "mRNA profiles of purified cell samples from mice were generated by RNA-sequencing, in duplicate, using Illumina HiSeq 2000.",
+    "type": [
+      {
+        "value": "Expression profiling by high throughput sequencing"
+      }
+    ],
+    "contributor_ref": [
+      {
+        "ref": "GSE52564:contrib3"
+      },
+      {
+        "ref": "GSE52564:contrib1"
+      },
+      {
+        "ref": "GSE52564:contrib4"
+      },
+      {
+        "ref": "GSE52564:contrib5"
+      },
+      {
+        "ref": "GSE52564:contrib6"
+      },
+      {
+        "ref": "GSE52564:contrib7"
+      },
+      {
+        "ref": "GSE52564:contrib8"
+      },
+      {
+        "ref": "GSE52564:contrib9"
+      },
+      {
+        "ref": "GSE52564:contrib10"
+      },
+      {
+        "ref": "GSE52564:contrib11"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-1"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-2"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-3"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-4"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-5"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-6"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-7"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-8"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-9"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-10"
+      },
+      {
+        "ref": "E-GEOD-52564:contributor-11"
+      }
+    ],
+    "contact_ref": [
+      {
+        "ref": "GSE52564:contrib1"
+      }
+    ],
+    "sample_ref": [
+      {
+        "ref": "SRS504841"
+      }
+    ],
+    "variable": [
+      {
+        "name": "cell type",
+        "factor": "cell type",
+        "type": {
+          "value": "cell type"
+        }
+      }
+    ],
+    "supplementary_data": [
+      {
+        "repository": "GEO",
+        "source_accession": "GSE52564",
+        "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE52nnn/GSE52564/suppl/GSE52564_RAW.tar",
+        "type": "TAR"
+      }
+    ],
+    "relation": [
+      {
+        "type": "pubmed",
+        "target": "25186741"
+      },
+      {
+        "type": "PubMed",
+        "target": "25186741"
+      },
+      {
+        "type": "ENA-SUBMISSION",
+        "target": "SRA111878"
+      },
+      {
+        "type": "ENA-FASTQ-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP033200&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+      },
+      {
+        "type": "ENA-SUBMITTED-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP033200&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+      },
+      {
+        "type": "PMC",
+        "target": "PMC4152602"
+      },
+      {
+        "type": "DOI",
+        "target": "10.1523/JNEUROSCI.1860-14.2014"
+      },
+      {
+        "reference_source": "PubMed",
+        "publication": {
+          "pubmed_id": "25186741",
+          "title": "An RNA-sequencing transcriptome and splicing database of glia, neurons, and vascular cells of the cerebral cortex.",
+          "author_list": "Ye Zhang, Kenian Chen, Steven A Sloan, Mariko L Bennett, Anja R Scholze, Sean O'Keeffe, Hemali P Phatnani, Paolo Guarnieri, Christine Caneda, Nadine Ruderisch, Shuyun Deng, Shane A Liddelow, Chaolin Zhang, Richard Daneman, Tom Maniatis, Ben A Barres, Jian Qian Wu",
+          "status": "published",
+          "status_term_source_ref": "EFO",
+          "status_term_accession_number": "EFO_0001796",
+          "pmcid": "PMC4152602",
+          "doi": "10.1523/JNEUROSCI.1860-14.2014"
+        },
+        "type": "literature cross-reference",
+        "target": "25186741"
+      },
+      {
+        "type": "ArrayExpress",
+        "target": "E-GEOD-52564"
+      },
+      {
+        "type": "BioProject",
+        "target": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA229389"
+      },
+      {
+        "type": "SRA",
+        "target": "https://www.ncbi.nlm.nih.gov/sra?term=SRP033200"
+      },
+      {
+        "type": "GEO",
+        "target": "GSE80797"
+      },
+      {
+        "type": "GEO",
+        "target": "GSE85458"
+      }
+    ],
+    "pubmed_publication": [
+      {
+        "pmcid": "PMC4152602",
+        "pubmed_id": "25186741",
+        "doi": "10.1523/JNEUROSCI.1860-14.2014",
+        "author_list": "Zhang Y, Chen K, Sloan SA, Bennett ML, Scholze AR, O'Keeffe S, Phatnani HP, Guarnieri P, Caneda C, Ruderisch N, Deng S, Liddelow SA, Zhang C, Daneman R, Maniatis T, Barres BA, Wu JQ",
+        "title": "An RNA-sequencing transcriptome and splicing database of glia, neurons, and vascular cells of the cerebral cortex.",
+        "status": "published",
+        "status_term_source_ref": "EFO",
+        "status_term_accession_number": "EFO_0001796"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "SRX380395:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380394:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380393:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380392:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380391:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380390:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380389:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380388:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380387:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380386:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380385:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380384:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380383:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380382:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380381:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380380:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRX380379:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380383:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380385:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380386:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380381:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380379:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380384:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380391:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380380:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380387:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380392:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380394:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380388:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380395:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380389:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380393:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380382:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "PRJNA229389:SRX380390:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504841:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504841:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504840:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504840:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504839:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504839:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504838:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504838:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504837:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504837:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504836:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504836:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504835:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504835:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504834:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504834:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504833:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504833:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504832:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504832:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504831:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504831:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504830:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504830:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504829:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504829:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504828:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504828:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504827:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504827:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504826:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504826:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "SRP033200:SRS504825:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor’s protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      },
+      {
+        "name": "SRP033200:SRS504825:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina Pipeline (CASAVA) v1.8.2 used for basecalling. Reads were mapped to reference genome (version mm9) using Tophat (version 1.3.3) which uses the Bowtie (version 0.12.7)read mapper, Tophat was fed with the option of“–no-novel-juncs”and option \"–G\" which supplies Tophat with known transcript GTF file (download from cufflinks website) Mapped reads were assembled into RNA transcripts using the Cufflinks software (version 1.3.0). Cufflinks was run using the annotation file (downloaded from Cufflinks web site) of known genes and the mapped reads produced by Tophat. FPKM values (Fragments Per Kilobase of exon model per Million mapped fragments, a normalized gene expression value that are comparable between different samples and genes) together with confidence intervals were estimated for each replicate. Genome_build: mm9 Supplementary_files_format_and_content: Excel file include FPKM values for each Sample"
+      },
+      {
+        "name": "E-GEOD-52564:P-GSE52564-1",
+        "type": {
+          "value": "nucleic acid library construction protocol"
+        },
+        "description": "Total RNA was extracted using the miRNeasy kit (Qiagen) under manufactor's protocols. The quality was accessed by BioanalyzerTM. Samples with high RNA integrity number (RIN) (>8) were used for library construction. 100ng total RNAs were used for each sequencing library. RNA samples were polyA selected and paired-end sequencing libraries were constructed using TruSeq RNA Sample Prep Kit as described in the TruSeq RNA Sample Preparation V2 Guide (Illumina)."
+      }
+    ],
+    "assay_paths": [
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "WC3.read1.bz2",
+            "link": {
+              "value": "s3://sra-pub-src-13/SRR1033799/WC3.read1.bz2",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "fd8e212f281069576fd7f24a096346e1"
+              },
+              {
+                "name": "BYTES",
+                "value": "1966709690"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "Original"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "WC3.read2.bz2",
+            "link": {
+              "value": "s3://sra-pub-src-9/SRR1033799/WC3.read2.bz2",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "2056c2b0c7ef850a2c37a6151a4613ff"
+              },
+              {
+                "name": "BYTES",
+                "value": "1988316166"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "Original"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1033799/SRR1033799",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "4f70dfeca0b35adc8cd0d3ece7521574"
+              },
+              {
+                "name": "BYTES",
+                "value": "3995675077"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1033799/SRR1033799",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "4f70dfeca0b35adc8cd0d3ece7521574"
+              },
+              {
+                "name": "BYTES",
+                "value": "3995675077"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799.sralite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/033/SRR1033799/SRR1033799.sralite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "122bf743dde62dc73ad219eb99b72565"
+              },
+              {
+                "name": "BYTES",
+                "value": "1588947246"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799.sralite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/033/SRR1033799/SRR1033799.sralite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "122bf743dde62dc73ad219eb99b72565"
+              },
+              {
+                "name": "BYTES",
+                "value": "1588947246"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799.sralite",
+            "link": {
+              "value": "s3://sra-pub-zq-9/SRR1033799/SRR1033799.sralite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "122bf743dde62dc73ad219eb99b72565"
+              },
+              {
+                "name": "BYTES",
+                "value": "1588947246"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799.sralite",
+            "link": {
+              "value": "gs://sra-pub-zq-104/SRR1033799/SRR1033799.zq.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "122bf743dde62dc73ad219eb99b72565"
+              },
+              {
+                "name": "BYTES",
+                "value": "1588947246"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              },
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "10090"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "SRP033200:SRS504841:data_processing"
+          },
+          {
+            "kind": "derived_array_data_file",
+            "name": "GSM1269919_WC3.xls.gz",
+            "link": {
+              "repository": "GEO",
+              "source_accession": "GSE52564",
+              "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1269nnn/GSM1269919/suppl/GSM1269919_WC3.xls.gz",
+              "type": "XLS"
+            }
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799_1.fastq.gz",
+            "link": {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-52564",
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_1.fastq.gz",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "File format",
+                "value": "fastq"
+              },
+              {
+                "name": "MD5",
+                "value": "432049c23ee7f10be10150baee221e56"
+              },
+              {
+                "name": "BYTES",
+                "value": "2585702457"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "GENERATED_FILE"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "SRP033200:SRS504841:data_processing"
+          },
+          {
+            "kind": "derived_array_data_file",
+            "name": "GSM1269919_WC3.xls",
+            "factor_values": [
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "link": {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-52564",
+              "value": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/564/E-GEOD-52564/Files/GSM1269919_WC3.xls"
+            },
+            "comments": [
+              {
+                "name": "Derived ArrayExpress FTP file",
+                "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-52564/E-GEOD-52564.processed.1.zip"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS504841",
+            "sample_ref": "SRS504841",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "whole cortex"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "tissue",
+                "value": "cerebral cortex"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "strain",
+                "value": "FVN/Swiss"
+              },
+              {
+                "name": "organism part",
+                "value": "cerebral cortex",
+                "term_source_ref": "UBERON",
+                "term_accession_number": "http://purl.obolibrary.org/obo/UBERON_0000956"
+              },
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02415138"
+              },
+              {
+                "name": "Sample_title",
+                "value": "WC3"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "whole cortex"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-52564:P-GSE52564-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1269919 extract 1",
+            "material_type": {
+              "value": "polyA RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX380395",
+            "sample_ref": "SRS504841",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "PAIRED"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1033799",
+            "sample_ref": "SRS504841",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1033799"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX380395"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS504841"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1033799_2.fastq.gz",
+            "link": {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-52564",
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR103/009/SRR1033799/SRR1033799_2.fastq.gz",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "File format",
+                "value": "fastq"
+              },
+              {
+                "name": "MD5",
+                "value": "78270bc88ec22f8faf88f00dd37f9592"
+              },
+              {
+                "name": "BYTES",
+                "value": "2613801872"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "GENERATED_FILE"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "SRP033200:SRS504841:data_processing"
+          },
+          {
+            "kind": "derived_array_data_file",
+            "name": "GSM1269919_WC3.xls",
+            "factor_values": [
+              {
+                "name": "cell type",
+                "value": "mixture"
+              }
+            ],
+            "link": {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-52564",
+              "value": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/564/E-GEOD-52564/Files/GSM1269919_WC3.xls"
+            },
+            "comments": [
+              {
+                "name": "Derived ArrayExpress FTP file",
+                "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-52564/E-GEOD-52564.processed.1.zip"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "comments": [
+      {
+        "name": "Submitted Name",
+        "value": "An RNA-Seq transcriptome and splicing database of neurons, glia, and vascular cells of the cerebral cortex"
+      },
+      {
+        "name": "AEExperimentType",
+        "value": "RNA-seq of coding RNA"
+      }
+    ]
+  },
+  "extensions": {
+    "insdc": {
+      "version": "1.0",
+      "records": []
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "cohort": "workflow-provenance-1cec34c-row-evidence",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "reduced-source",
+  "files": {
+    "E-MTAB-16253.package": {
+      "path": "E-MTAB-16253.reduced.json",
+      "sha256": "b912027322f8cd4d745d2bf6e620a4629a615101be6e88d036bf13c29222720d",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/standard.json",
+      "source_sha256": "17caf6972affc85f9afb2e4d2da7eb978b436b992f7c2d24c33e094acbe49bbb",
+      "selected_sample": "ERS27611842",
+      "selected_run": "ERR15942837"
+    },
+    "E-MTAB-16253.rows": {
+      "path": "E-MTAB-16253.rows.json",
+      "sha256": "3f997d2a5fd86423e15b2d9a41a58533fe7682ffe5e9a5630a1fac23ed4fbe30",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/standard.magetab.json",
+      "source_sha256": "85e90408a57042d65a787b53c4d1fea701cefab58255cf6e9c3f84b7e61eaaaf"
+    },
+    "E-MTAB-14566.package": {
+      "path": "E-MTAB-14566.reduced.json",
+      "sha256": "1581744f76def6dd2467ae09ccb1c0376097e00861155a2aed621a62d5a2b92b",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/standard.json",
+      "source_sha256": "b6e02900c472398970454f341599de4031ddbae796c15de45dbd0a6bd99afd0c",
+      "selected_sample": "ERS21375898",
+      "selected_run": "ERR13906479"
+    },
+    "E-MTAB-14566.rows": {
+      "path": "E-MTAB-14566.rows.json",
+      "sha256": "491b9a4d00b7647e1afbce742f27a5268a5311a357d9a51bf0a57b1a880b018b",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/standard.magetab.json",
+      "source_sha256": "5c7148ade915f20351d604536243d96eac50b0e949f5101f3734493cf91d7edd"
+    },
+    "E-MTAB-14416.package": {
+      "path": "E-MTAB-14416.reduced.json",
+      "sha256": "40249493c439dac8d55fbde6c784edce958abe1ade681515be3848a4ff5a759c",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14416/standard.json",
+      "source_sha256": "1849f863291527bd53ee47fe8233549330f3f5968695decd89fa9625504bc0f3",
+      "selected_sample": "ERS20948807",
+      "selected_run": "ERR13630561"
+    },
+    "E-MTAB-14416.rows": {
+      "path": "E-MTAB-14416.rows.json",
+      "sha256": "02d07f76ecc78c969e1db5dae0e4af5627fab4890f5fd41bc406bd5f65ccf8f9",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14416/standard.magetab.json",
+      "source_sha256": "ea4038a66dae61e87f833f56fdc28e0f6998d7cbb6f8673349e0ff0641a9af49"
+    },
+    "E-GEOD-52564.package": {
+      "path": "E-GEOD-52564.reduced.json",
+      "sha256": "6f3645c1b9fcd4913f2b206af891a794ff1a754476c38e1d6d285716d74e1fc4",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-52564/standard.json",
+      "source_sha256": "b9e879b3bbf86c0d786144d447fb33d9fec9759e289b731599c522ae0d3e5f65",
+      "selected_sample": "SRS504841",
+      "selected_run": "SRR1033799"
+    },
+    "E-GEOD-52564.rows": {
+      "path": "E-GEOD-52564.rows.json",
+      "sha256": "d313334d45f8514ed1c6b5320b6ab0a1fb1417af9e8eccfcb1d924836ca36272",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-52564/standard.magetab.json",
+      "source_sha256": "1a02b9ebe774ad1d9c7b7fe83ba7ff793d72b8c10a7ccb28c30685a03161f898"
+    },
+    "E-GEOD-60450.package": {
+      "path": "E-GEOD-60450.reduced.json",
+      "sha256": "7bcf07f310bc66403f8d510a1a62db4682d958053b889ba2f7390b031be31af4",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-60450/standard.json",
+      "source_sha256": "02f4ebd5f657f2571e81d812ba6601eececbf06df63ec45ed86326851214c7ce",
+      "selected_sample": "SRS685550",
+      "selected_run": "SRR1552455"
+    },
+    "E-GEOD-60450.rows": {
+      "path": "E-GEOD-60450.rows.json",
+      "sha256": "738230982e23e5a6bab9754174c631af51c918527ca807b4b0cf03fa62285f0b",
+      "source_id": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-60450/standard.magetab.json",
+      "source_sha256": "2a8898a9ea164fa90436ecfed4ca73dd94fbe6aeb12593f004219e3775286dd7"
+    }
+  },
+  "requests": [],
+  "reduction": "Exact scoped projection from immutable prior output. This is parser/render replay, not provider discovery. Nonselected samples/runs and raw provider extension envelopes omitted; retained values are unchanged."
+}

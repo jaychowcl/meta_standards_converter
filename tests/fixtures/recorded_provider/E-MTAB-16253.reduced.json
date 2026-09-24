@@ -1,0 +1,2712 @@
+{
+  "miniml_schema_version": "3.0",
+  "source": {
+    "format": "SRA"
+  },
+  "database": [
+    {
+      "iid": "ArrayExpress",
+      "name": "ArrayExpress"
+    },
+    {
+      "iid": "BioProject",
+      "name": "BioProject"
+    },
+    {
+      "iid": "BioSample",
+      "name": "BioSample"
+    },
+    {
+      "iid": "ENA",
+      "name": "ENA"
+    }
+  ],
+  "organization": [
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338379:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338383:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338377:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338378:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338382:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338384:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338380:organization-2",
+      "name": "EBI"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:ERX15338381:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586950",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586950:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586951",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586951:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586953",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586953:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586956",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586956:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586952",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586952:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586949",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586949:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586954",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586954:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586955",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMEA120586955:organization-2",
+      "name": "EBI"
+    },
+    {
+      "role": "owner",
+      "type": "center",
+      "iid": "sra:DocumentSummary:1378586:organization-1-0-0",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "center_name",
+      "iid": "sra:STUDY:ERP185509:center_name",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611842:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611842:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611846:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611846:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611840:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611840:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611841:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611841:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611845:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611845:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611847:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611847:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611843:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611843:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "sra:sample:ERS27611844:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "sra:sample:ERS27611844:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "sample_accession": "SAMEA120586950",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586950:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586951",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586951:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586953",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586953:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586956",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586956:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586952",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586952:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586949",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586949:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586954",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586954:organization-2",
+      "name": "EBI"
+    },
+    {
+      "sample_accession": "SAMEA120586955",
+      "role": "owner",
+      "iid": "PRJEB104204:ena:BioSample:SAMEA120586955:organization-2",
+      "name": "EBI"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJEB104204:ena:STUDY:ERP185509:center_name",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJEB104204:ena:PROJECT:PRJEB104204:center_name",
+      "name": "European Bioinformatics Institute"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586949",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586949:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586950",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586950:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586951",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586951:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586952",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586952:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586953",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586953:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586954",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586954:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586955",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586955:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMEA120586956",
+      "iid": "PRJEB104204:ena:SAMPLE:SAMEA120586956:center_name",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586949:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586949:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586950:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586950:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586951:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586951:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586952:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586952:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586953:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586953:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586954:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586954:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586955:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586955:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586956:center:a7a8bfd50c81674e:0",
+      "name": "IPL_U1011"
+    },
+    {
+      "role": "broker name",
+      "iid": "PRJEB104204:ena:sample:SAMEA120586956:center:a0b484ca1b3e0750:0",
+      "name": "ArrayExpress"
+    }
+  ],
+  "contributor": [],
+  "platform": [
+    {
+      "instrument_model": "NextSeq 500",
+      "instrument_platform": "ILLUMINA",
+      "iid": "sra:platform:1db673c85899f5f8",
+      "title": "NextSeq 500",
+      "technology": "high-throughput sequencing"
+    }
+  ],
+  "sample": [
+    {
+      "comments": [
+        {
+          "name": "ENA-CHECKLIST",
+          "value": "ERC000011"
+        }
+      ],
+      "library_layout": "SINGLE",
+      "iid": "ERS27611842",
+      "accession": [
+        {
+          "value": "ERS27611842",
+          "database": "ENA"
+        },
+        {
+          "value": "SAMEA120586951",
+          "database": "BioSample"
+        },
+        {
+          "label": "SRA accession",
+          "value": "ERS27611842",
+          "database": "ENA"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2025-12-11T08:26:03.690",
+          "release_date": "2025-12-10T00:00:00.000",
+          "last_update_date": "2025-12-09T22:02:21.000",
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "record status",
+              "value": "live"
+            }
+          ]
+        },
+        {
+          "release_date": "2025-12-10",
+          "database": "ENA"
+        },
+        {
+          "database": "INSDC",
+          "comment": [
+            {
+              "name": "INSDC status",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSamples",
+          "comment": [
+            {
+              "name": "status",
+              "value": "PUBLIC"
+            }
+          ]
+        }
+      ],
+      "title": "Sample 3",
+      "type": "SRA",
+      "channel_count": "1",
+      "channel": [
+        {
+          "organism": [
+            {
+              "value": "Mycobacterium tuberculosis H37Rv",
+              "taxid": "83332"
+            }
+          ],
+          "characteristics": [
+            {
+              "name": "collection date",
+              "value": "not collected"
+            },
+            {
+              "name": "duration",
+              "value": "24",
+              "unit": {
+                "value": "hour"
+              }
+            },
+            {
+              "name": "geographic location (country and/or sea)",
+              "value": "not collected"
+            },
+            {
+              "name": "growth condition",
+              "value": "37°C without agitation"
+            },
+            {
+              "name": "isolate",
+              "value": "not applicable"
+            },
+            {
+              "name": "replicate",
+              "value": "3"
+            },
+            {
+              "name": "sample name",
+              "value": "E-MTAB-16253:Sample 3"
+            },
+            {
+              "name": "scientific_name",
+              "value": "Mycobacterium tuberculosis"
+            },
+            {
+              "name": "strain",
+              "value": "H37Rv"
+            },
+            {
+              "name": "type-material",
+              "value": "type strain of Mycobacterium tuberculosis"
+            },
+            {
+              "name": "organism",
+              "value": "Mycobacterium tuberculosis"
+            }
+          ]
+        }
+      ],
+      "description": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed.",
+      "platform_ref": {
+        "ref": "sra:platform:1db673c85899f5f8"
+      },
+      "library_strategy": "RNA-Seq",
+      "library_source": "TRANSCRIPTOMIC",
+      "library_selection": "cDNA_randomPriming",
+      "relation": [
+        {
+          "type": "archive center",
+          "target": "sra:sample:ERS27611842:center:a7a8bfd50c81674e:0"
+        },
+        {
+          "namespace": "SRA submitter",
+          "type": "Submitter Id",
+          "target": "E-MTAB-16253:Sample 3"
+        },
+        {
+          "type": "archive broker",
+          "target": "sra:sample:ERS27611842:center:a0b484ca1b3e0750:0"
+        },
+        {
+          "type": "sample owner",
+          "target": "sra:BioSample:SAMEA120586951:organization-2"
+        },
+        {
+          "type": "ENA-EXPERIMENT",
+          "target": "ERX15338379"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "ERR15942837"
+        },
+        {
+          "type": "ENA-SUBMISSION",
+          "target": "ERA35262060"
+        },
+        {
+          "type": "ENA-FASTQ-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERS27611842&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+        },
+        {
+          "type": "ENA-SUBMITTED-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERS27611842&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+        },
+        {
+          "type": "ENA-STUDY",
+          "target": "ERP185509"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:sample:SAMEA120586951:center:a7a8bfd50c81674e:0"
+        },
+        {
+          "namespace": "ENA submitter",
+          "type": "Submitter Id",
+          "target": "E-MTAB-16253:Sample 3"
+        },
+        {
+          "type": "archive broker",
+          "target": "ena:sample:SAMEA120586951:center:a0b484ca1b3e0750:0"
+        },
+        {
+          "type": "sample owner",
+          "target": "ena:BioSample:SAMEA120586951:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:SAMPLE:SAMEA120586951:center_name"
+        },
+        {
+          "type": "sample owner",
+          "target": "PRJEB104204:ena:BioSample:SAMEA120586951:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "PRJEB104204:ena:SAMPLE:SAMEA120586951:center_name"
+        }
+      ],
+      "sra_accession": [
+        "ERX15338379"
+      ],
+      "ena_accession": [
+        "ERP185509"
+      ],
+      "sra_run": [
+        {
+          "instrument_platform": "ILLUMINA",
+          "files": [
+            {
+              "filename": "ze30.fastq",
+              "bytes": "403443449",
+              "md5": "bfb3e334318d2ab97b5c72ce8c498d51",
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-14/ERR15942837/ze30.fastq.1",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-14/ERR15942837/ze30.fastq.1"
+            },
+            {
+              "filename": "ERR15942837",
+              "bytes": "66314033",
+              "md5": "efe248a4d175b9b4ebe27bf2ae47c3b8",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR15942837/ERR15942837",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR15942837/ERR15942837"
+            },
+            {
+              "filename": "ERR15942837",
+              "bytes": "66314033",
+              "md5": "efe248a4d175b9b4ebe27bf2ae47c3b8",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR15942837/ERR15942837",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "AWS",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR15942837/ERR15942837"
+            },
+            {
+              "filename": "ERR15942837.lite",
+              "bytes": "45272473",
+              "md5": "b072a74be36a76b2c9f6ddd16f742010",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR015/15942/ERR15942837/ERR15942837.lite.1",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR015/15942/ERR15942837/ERR15942837.lite.1"
+            },
+            {
+              "filename": "ERR15942837.lite",
+              "bytes": "45272473",
+              "md5": "b072a74be36a76b2c9f6ddd16f742010",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR015/15942/ERR15942837/ERR15942837.lite.1",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "NCBI",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR015/15942/ERR15942837/ERR15942837.lite.1"
+            },
+            {
+              "filename": "ERR15942837.lite",
+              "bytes": "45272473",
+              "md5": "b072a74be36a76b2c9f6ddd16f742010",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "s3://sra-pub-zq-1/ERR15942837/ERR15942837.lite.1",
+              "free_egress": "s3.us-east-1",
+              "access_type": "aws identity",
+              "org": "AWS",
+              "uri": "s3://sra-pub-zq-1/ERR15942837/ERR15942837.lite.1"
+            },
+            {
+              "filename": "ERR15942837.lite",
+              "bytes": "45272473",
+              "md5": "b072a74be36a76b2c9f6ddd16f742010",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "gs://sra-pub-zq-106/ERR15942837/ERR15942837.lite.1",
+              "free_egress": "gs.us-east1",
+              "access_type": "gcp identity",
+              "org": "GCP",
+              "uri": "gs://sra-pub-zq-106/ERR15942837/ERR15942837.lite.1"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz",
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "filename": "ERR15942837.fastq.gz",
+              "md5": "79fb741520ceb67f4e5568d36f9b9831",
+              "bytes": "73292322",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR159/ERR15942837/ze30.fastq.bz2",
+              "format": "FASTQ",
+              "role": "SUBMISSION_FILE",
+              "filename": "ze30.fastq.bz2",
+              "md5": "5515d2901742a23340ac8f1b24a7660e",
+              "bytes": "50471367",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/run/ERR159/ERR15942837/ze30.fastq.bz2",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/run/ERR159/ERR15942837/ze30.fastq.bz2"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR159/037/ERR15942837/ERR15942837.bam",
+              "format": "bam",
+              "role": "ARCHIVAL_FILE",
+              "filename": "ERR15942837.bam",
+              "md5": "a8ccd72504ed86318aa4f2ab4e6e2990",
+              "bytes": "82349596",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/err/ERR159/037/ERR15942837/ERR15942837.bam",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/err/ERR159/037/ERR15942837/ERR15942837.bam"
+            }
+          ],
+          "statistics": {
+            "tag": "Statistics",
+            "attributes": {
+              "nreads": "1",
+              "nspots": "1213095"
+            },
+            "children": [
+              {
+                "tag": "Read",
+                "attributes": {
+                  "index": "0",
+                  "count": "1213095",
+                  "average": "130.69",
+                  "stdev": "27.71"
+                },
+                "children": []
+              }
+            ]
+          },
+          "platform_ref": {
+            "ref": "sra:platform:1db673c85899f5f8"
+          },
+          "indexed_statistics": {
+            "read_count": "1213095",
+            "base_count": "158539248"
+          },
+          "run": "ERR15942837",
+          "study": "ERP185509",
+          "experiment": "ERX15338379",
+          "sample": "ERS27611842",
+          "biosample": "SAMEA120586951",
+          "library_layout": "SINGLE",
+          "library_selection": "cDNA_randomPriming",
+          "library_source": "TRANSCRIPTOMIC",
+          "library_strategy": "RNA-Seq",
+          "scan_name": "E-MTAB-16253:Sample 3",
+          "instrument_model": "NextSeq 500",
+          "fastq_files": [
+            {
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-14/ERR15942837/ze30.fastq.1",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-14/ERR15942837/ze30.fastq.1",
+              "filename": "ze30.fastq",
+              "md5": "bfb3e334318d2ab97b5c72ce8c498d51",
+              "bytes": "403443449"
+            },
+            {
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz",
+              "filename": "ERR15942837.fastq.gz",
+              "md5": "79fb741520ceb67f4e5568d36f9b9831",
+              "bytes": "73292322"
+            },
+            {
+              "format": "FASTQ",
+              "role": "SUBMISSION_FILE",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/run/ERR159/ERR15942837/ze30.fastq.bz2",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/run/ERR159/ERR15942837/ze30.fastq.bz2",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR159/ERR15942837/ze30.fastq.bz2",
+              "filename": "ze30.fastq.bz2",
+              "md5": "5515d2901742a23340ac8f1b24a7660e",
+              "bytes": "50471367"
+            }
+          ],
+          "read_lengths": [
+            "130.69"
+          ]
+        }
+      ]
+    }
+  ],
+  "series": {
+    "iid": "ERP185509",
+    "accession": [
+      {
+        "value": "ERP185509",
+        "database": "ENA"
+      },
+      {
+        "value": "PRJEB104204",
+        "database": "BioProject"
+      },
+      {
+        "value": "E-MTAB-16253",
+        "database": "ArrayExpress"
+      }
+    ],
+    "status": [
+      {
+        "release_date": "2025-12-10",
+        "last_update_date": "2025-12-10",
+        "database": "ENA"
+      }
+    ],
+    "title": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+    "summary": "Alpibectir potentiates the activity of ethionamide and prothionamide, which are second-line antibiotics used for tuberculosis treatment. Both are prodrugs whose antibacterial activity depends on bioactivation by oxidases, including the Baeyer-Villiger monooxygenase MymA. Alpibectir binds the transcriptional regulator VirS, increasing MymA expression and potentiating Eto and Pto activity. To determine the transcriptional response of M. tuberculosis to alpibectir, we treated cultures at an optical density of 0.7 with alpibectir 0.1 mg/L for 24 h. Alternatively, we determined the transcriptional response of cultures first treated with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h. Untreated controls (DMSO 0.1%) were included.",
+    "type": [
+      {
+        "value": "Transcriptome Analysis"
+      }
+    ],
+    "sample_ref": [
+      {
+        "ref": "ERS27611842"
+      }
+    ],
+    "relation": [
+      {
+        "type": "E-MTAB-16253 in ArrayExpress",
+        "target": "https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-16253"
+      },
+      {
+        "type": "ENA-SUBMISSION",
+        "target": "ERA35262060"
+      },
+      {
+        "type": "ENA-FASTQ-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERP185509&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+      },
+      {
+        "type": "ENA-SUBMITTED-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERP185509&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "ERX15338379:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "ERX15338383:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "ERX15338377:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "ERX15338378:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "ERX15338382:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "ERX15338384:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "ERX15338380:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "ERX15338381:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338384:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338377:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338383:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338378:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338379:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338382:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338380:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      },
+      {
+        "name": "PRJEB104204:ERX15338381:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+      }
+    ],
+    "assay_paths": [
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis H37Rv",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "83332"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ze30.fastq",
+            "link": {
+              "value": "s3://sra-pub-src-14/ERR15942837/ze30.fastq.1",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "bfb3e334318d2ab97b5c72ce8c498d51"
+              },
+              {
+                "name": "BYTES",
+                "value": "403443449"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "Original"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis H37Rv",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "83332"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR15942837/ERR15942837",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "efe248a4d175b9b4ebe27bf2ae47c3b8"
+              },
+              {
+                "name": "BYTES",
+                "value": "66314033"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis H37Rv",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "83332"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/ERR15942837/ERR15942837",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "efe248a4d175b9b4ebe27bf2ae47c3b8"
+              },
+              {
+                "name": "BYTES",
+                "value": "66314033"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis H37Rv",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "83332"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837.lite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR015/15942/ERR15942837/ERR15942837.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "b072a74be36a76b2c9f6ddd16f742010"
+              },
+              {
+                "name": "BYTES",
+                "value": "45272473"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis H37Rv",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "83332"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837.lite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos11/sra-pub-zq-1140/ERR015/15942/ERR15942837/ERR15942837.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "b072a74be36a76b2c9f6ddd16f742010"
+              },
+              {
+                "name": "BYTES",
+                "value": "45272473"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis H37Rv",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "83332"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837.lite",
+            "link": {
+              "value": "s3://sra-pub-zq-1/ERR15942837/ERR15942837.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "b072a74be36a76b2c9f6ddd16f742010"
+              },
+              {
+                "name": "BYTES",
+                "value": "45272473"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis H37Rv",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "83332"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837.lite",
+            "link": {
+              "value": "gs://sra-pub-zq-106/ERR15942837/ERR15942837.lite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "b072a74be36a76b2c9f6ddd16f742010"
+              },
+              {
+                "name": "BYTES",
+                "value": "45272473"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "1773"
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "PRJEB104204:ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837.fastq.gz",
+            "link": {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR159/037/ERR15942837/ERR15942837.fastq.gz",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "79fb741520ceb67f4e5568d36f9b9831"
+              },
+              {
+                "name": "BYTES",
+                "value": "73292322"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "GENERATED_FILE"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "1773"
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "PRJEB104204:ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ze30.fastq.bz2",
+            "link": {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR159/ERR15942837/ze30.fastq.bz2",
+              "type": "FASTQ"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "5515d2901742a23340ac8f1b24a7660e"
+              },
+              {
+                "name": "BYTES",
+                "value": "50471367"
+              },
+              {
+                "name": "FORMAT",
+                "value": "FASTQ"
+              },
+              {
+                "name": "ROLE",
+                "value": "SUBMISSION_FILE"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "ERS27611842",
+            "sample_ref": "ERS27611842",
+            "characteristics": [
+              {
+                "name": "collection date",
+                "value": "not collected"
+              },
+              {
+                "name": "geographic location (country and/or sea)",
+                "value": "not collected"
+              },
+              {
+                "name": "isolate",
+                "value": "not applicable"
+              },
+              {
+                "name": "duration",
+                "value": "24",
+                "unit": {
+                  "value": "hour"
+                }
+              },
+              {
+                "name": "strain",
+                "value": "H37Rv"
+              },
+              {
+                "name": "replicate",
+                "value": "3"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "organism",
+                "value": "Mycobacterium tuberculosis",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "1773"
+              },
+              {
+                "name": "growth condition",
+                "value": "37°C without agitation"
+              },
+              {
+                "name": "scientific_name",
+                "value": "Mycobacterium tuberculosis"
+              },
+              {
+                "name": "sample name",
+                "value": "E-MTAB-16253:Sample 3"
+              },
+              {
+                "name": "type-material",
+                "value": "type strain of Mycobacterium tuberculosis"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMEA120586951"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Sample 3"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Protocols: 10 mL of the treated and control cultures were harvested by centrifugation at 3,000 x g for 5 min. 25 mL cultures were grown at 37°C without agitation to an optical density at 600 nm of 0.7.  Individual cultures at an optical density of 0.7 were treated with alpibectir 0.1 mg/L alone for 24 h or with alpibectir 0.1 mg/L for 20 h followed by ethionamide 2 mg/L for 4 h at 37°C without agitation. The pellets were resuspended in 1 mL of RNAproTM (FastRNA Pro Blue Kit, MP biomedicals) and homogenized in impact-resistant 2 mL tubes containing 0.1 mm silica spheres (Lysing Matrix B, MP biomedicals) using a FastPrep FP120 cell disrupter (Thermo Fisher Scientific) at 6.0 Hz for 40 s. The ribolysed cells were centrifuged at 12,000 x g to remove cellular debris and RNA was purified following the manufacturer's instructions. Ribosomal RNA (rRNA) depletion was performed using QIAseq FastSelect –5S/16S/23S Kits; Qiagen). Libraries for Illumina sequencing were prepared with the TruSeq RNA sample preparation kit version 2.0 rev. A (Illumina Inc.). All cDNA libraries were uniquely indexed."
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "PRJEB104204:ERX15338379:library"
+          },
+          {
+            "kind": "assay",
+            "name": "ERX15338379",
+            "sample_ref": "ERS27611842",
+            "description": "RNA-seq of Mycobacterium tuberculosis H37Rv treated with alpibectir or a combination of alpibectir and ethionamide against untreated controls",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "TRANSCRIPTOMIC"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA_randomPriming"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "NextSeq 500"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "NextSeq 500"
+              }
+            ]
+          },
+          {
+            "kind": "scan",
+            "name": "ERR15942837",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "ERR15942837"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "ERX15338379"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "ERS27611842"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "ERR15942837.bam",
+            "link": {
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/err/ERR159/037/ERR15942837/ERR15942837.bam",
+              "type": "bam"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "a8ccd72504ed86318aa4f2ab4e6e2990"
+              },
+              {
+                "name": "BYTES",
+                "value": "82349596"
+              },
+              {
+                "name": "FORMAT",
+                "value": "bam"
+              },
+              {
+                "name": "ROLE",
+                "value": "ARCHIVAL_FILE"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "extensions": {
+    "insdc": {
+      "version": "1.0",
+      "records": [
+        {
+          "provider": "ENA",
+          "kind": "source_conflict",
+          "accession": "PRJEB104204",
+          "metadata": {
+            "field": "organism",
+            "path": "/sample/ERS27611842/channel/0/organism",
+            "statements": [
+              {
+                "provider": "SRA",
+                "accession": "ERP185509",
+                "value": [
+                  {
+                    "value": "Mycobacterium tuberculosis H37Rv",
+                    "taxid": "83332"
+                  }
+                ]
+              },
+              {
+                "provider": "ENA",
+                "accession": "PRJEB104204",
+                "value": [
+                  {
+                    "value": "Mycobacterium tuberculosis",
+                    "taxid": "1773"
+                  }
+                ]
+              }
+            ],
+            "selected": {
+              "provider": "SRA",
+              "accession": "ERP185509",
+              "value": [
+                {
+                  "value": "Mycobacterium tuberculosis H37Rv",
+                  "taxid": "83332"
+                }
+              ]
+            },
+            "reason": "AE > GEO > native; retain current value for equal source rank",
+            "mode": "standard"
+          }
+        }
+      ]
+    }
+  }
+}

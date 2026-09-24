@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-16253-old-conflict-parser-replay",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "files": {
+    "input": {
+      "path": "E-MTAB-16253.reduced.json",
+      "sha256": "b912027322f8cd4d745d2bf6e620a4629a615101be6e88d036bf13c29222720d"
+    },
+    "golden": {
+      "path": "E-MTAB-16253.conflict.expected.json",
+      "sha256": "c3268045ba03608ab19b6ab103317701ce2a444d0a17a77a52e7de20a9a65304"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "retained-scientific-conflict",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "json",
+        "file": "input"
+      },
+      "services": {},
+      "options": {
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "stage": "preparation",
+              "severity": "warning",
+              "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ENA', 'accession': 'PRJEB104204', 'value': [{'value': 'Mycobacterium tuberculosis', 'taxid': '1773'}]}]; selected {'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}"
+            }
+          ]
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "stage": "preparation",
+              "severity": "warning",
+              "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ENA', 'accession': 'PRJEB104204', 'value': [{'value': 'Mycobacterium tuberculosis', 'taxid': '1773'}]}]; selected {'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}"
+            }
+          ]
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "stage": "preparation",
+              "severity": "warning",
+              "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ENA', 'accession': 'PRJEB104204', 'value': [{'value': 'Mycobacterium tuberculosis', 'taxid': '1773'}]}]; selected {'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}"
+            }
+          ]
+        }
+      },
+      "golden": "golden",
+      "expected_item_count": 1
+    }
+  ]
+}

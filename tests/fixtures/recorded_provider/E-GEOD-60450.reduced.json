@@ -1,0 +1,3993 @@
+{
+  "miniml_schema_version": "3.0",
+  "source": {
+    "format": "SRA"
+  },
+  "database": [
+    {
+      "iid": "BioProject",
+      "name": "BioProject"
+    },
+    {
+      "iid": "BioSample",
+      "name": "BioSample"
+    },
+    {
+      "iid": "GEO",
+      "name": "GEO",
+      "public_id": "GEO",
+      "organization": "NCBI NLM NIH",
+      "web_link": "http://www.ncbi.nlm.nih.gov/geo",
+      "email": "geo@ncbi.nlm.nih.gov"
+    },
+    {
+      "iid": "SRA",
+      "name": "SRA"
+    },
+    {
+      "iid": "ENA",
+      "name": "ENA"
+    },
+    {
+      "url": "http://www.ebi.ac.uk/arrayexpress/",
+      "iid": "ArrayExpress",
+      "name": "ArrayExpress"
+    }
+  ],
+  "organization": [
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681996:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681995:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681994:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681993:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681992:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681991:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681990:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681989:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681988:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681987:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681986:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "type": "center",
+      "iid": "sra:EXPERIMENT_PACKAGE:SRX681985:organization-2",
+      "name": "Gene Expression Omnibus"
+    },
+    {
+      "sample_accession": "SAMN02991541",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991541:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991540",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991540:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991539",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991539:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991538",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991538:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991537",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991537:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991536",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991536:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991535",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991535:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991534",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991534:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991533",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991533:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991532",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991532:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991531",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991531:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991530",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991530:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "owner",
+      "type": "institute",
+      "iid": "sra:DocumentSummary:258286:organization-1-0-0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "iid": "sra:STUDY:SRP045534:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685550",
+      "iid": "sra:SAMPLE:SRS685550:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685549",
+      "iid": "sra:SAMPLE:SRS685549:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685547",
+      "iid": "sra:SAMPLE:SRS685547:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685548",
+      "iid": "sra:SAMPLE:SRS685548:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685546",
+      "iid": "sra:SAMPLE:SRS685546:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685545",
+      "iid": "sra:SAMPLE:SRS685545:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685544",
+      "iid": "sra:SAMPLE:SRS685544:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685543",
+      "iid": "sra:SAMPLE:SRS685543:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685542",
+      "iid": "sra:SAMPLE:SRS685542:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685541",
+      "iid": "sra:SAMPLE:SRS685541:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685539",
+      "iid": "sra:SAMPLE:SRS685539:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SRS685538",
+      "iid": "sra:SAMPLE:SRS685538:center_name",
+      "name": "GEO"
+    },
+    {
+      "sample_accession": "SAMN02991541",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991540",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991540:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991539",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991539:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991538",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991538:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991537",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991537:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991536",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991536:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991535",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991535:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991534",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991534:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991533",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991533:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991532",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991532:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991531",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991531:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991530",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991530:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJNA258286:ena:STUDY:SRP045534:center_name",
+      "name": "GEO"
+    },
+    {
+      "role": "center_name",
+      "iid": "PRJNA258286:ena:PROJECT:PRJNA258286:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991530",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991530:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991531",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991531:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991532",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991532:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991533",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991533:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991534",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991534:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991535",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991535:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991536",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991536:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991537",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991537:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991538",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991538:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991539",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991539:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991540",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991540:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "center_name",
+      "sample_accession": "SAMN02991541",
+      "iid": "PRJNA258286:ena:SAMPLE:SAMN02991541:center_name",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991530:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991531:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991532:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991533:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991534:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991535:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991536:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991537:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991538:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991539:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991540:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "role": "INSDC center name",
+      "iid": "PRJNA258286:ena:sample:SAMN02991541:center:11434899d33c2ff2:0",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    }
+  ],
+  "contributor": [
+    {
+      "iid": "sra:BioSample:SAMN02991541:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991541:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991540:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991540:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991539:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991539:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991538:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991538:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991537:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991537:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991536:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991536:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991535:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991535:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991534:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991534:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991533:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991533:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991532:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991532:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991531:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991531:organization-2"
+      }
+    },
+    {
+      "iid": "sra:BioSample:SAMN02991530:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991530:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991540:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991540:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991539:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991539:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991538:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991538:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991537:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991537:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991536:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991536:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991535:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991535:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991534:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991534:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991533:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991533:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991532:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991532:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991531:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991531:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991530:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991530:organization-2"
+      }
+    },
+    {
+      "iid": "GSE60450:contrib3",
+      "person": {
+        "first": "Nai",
+        "middle": "Y",
+        "last": "Fu"
+      }
+    },
+    {
+      "iid": "GSE60450:contrib4",
+      "person": {
+        "first": "Aaron",
+        "last": "Lun"
+      }
+    },
+    {
+      "iid": "GSE60450:contrib1",
+      "person": {
+        "first": "Gordon",
+        "middle": "K",
+        "last": "Smyth"
+      },
+      "organization": "Walter and Eliza Hall Institute of Medical Research",
+      "email": "smyth@wehi.edu.au",
+      "phone": "(+61 3) 9345 2326",
+      "fax": "(+61 3) 9347 0852",
+      "laboratory": "Smyth",
+      "department": "Bioinformatics",
+      "address": {
+        "line": [
+          "1G Royal Pde"
+        ],
+        "city": "Parkville",
+        "state": "Vic",
+        "postal_code": "3052",
+        "country": "Australia"
+      },
+      "web_link": "http://www.wehi.edu.au"
+    },
+    {
+      "iid": "GSE60450:contrib5",
+      "person": {
+        "first": "Jane",
+        "middle": "E",
+        "last": "Visvader"
+      }
+    },
+    {
+      "iid": "GSE60450:contrib2",
+      "organization": "GEO",
+      "address": {
+        "country": "USA"
+      }
+    },
+    {
+      "iid": "E-GEOD-60450:contributor-1",
+      "person": {
+        "first": "Gordon",
+        "middle": "K",
+        "last": "Smyth"
+      },
+      "organization": "Walter and Eliza Hall Institute of Medical Research",
+      "email": "smyth@wehi.edu.au",
+      "phone": "(+61 3) 9345 2326",
+      "fax": "(+61 3) 9347 0852",
+      "address": "Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, Australia",
+      "roles": [
+        {
+          "value": "submitter"
+        }
+      ]
+    },
+    {
+      "iid": "E-GEOD-60450:contributor-2",
+      "person": {
+        "first": "Nai",
+        "middle": "Y",
+        "last": "Fu"
+      }
+    },
+    {
+      "iid": "E-GEOD-60450:contributor-3",
+      "person": {
+        "first": "Aaron",
+        "last": "Lun"
+      }
+    },
+    {
+      "iid": "E-GEOD-60450:contributor-4",
+      "person": {
+        "first": "Gordon",
+        "middle": "K",
+        "last": "Smyth"
+      }
+    },
+    {
+      "iid": "E-GEOD-60450:contributor-5",
+      "person": {
+        "first": "Jane",
+        "middle": "E",
+        "last": "Visvader"
+      }
+    }
+  ],
+  "platform": [
+    {
+      "instrument_model": "Illumina HiSeq 2000",
+      "instrument_platform": "ILLUMINA",
+      "iid": "sra:platform:4431867c9e387a40",
+      "title": "Illumina HiSeq 2000",
+      "technology": "high-throughput sequencing"
+    },
+    {
+      "iid": "GSE60450:GPL13112",
+      "accession": [
+        {
+          "value": "GPL13112",
+          "database": "GEO"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2011-02-02",
+          "release_date": "2011-02-02",
+          "last_update_date": "2019-03-19",
+          "database": "GEO"
+        }
+      ],
+      "title": "Illumina HiSeq 2000 (Mus musculus)",
+      "technology": "high-throughput sequencing",
+      "distribution": "virtual",
+      "organism": [
+        {
+          "value": "Mus musculus",
+          "taxid": "10090"
+        }
+      ],
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib2"
+        }
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "comments": [
+        {
+          "name": "NCBI submission package",
+          "value": "Generic.1.0"
+        },
+        {
+          "name": "BioSampleModel",
+          "value": "Generic"
+        },
+        {
+          "name": "NCBI submission model",
+          "value": "Generic"
+        }
+      ],
+      "library_layout": "SINGLE",
+      "iid": "SRS685550",
+      "accession": [
+        {
+          "value": "SRS685550",
+          "database": "SRA"
+        },
+        {
+          "value": "SAMN02991541",
+          "database": "BioSample"
+        },
+        {
+          "value": "GSM1480302",
+          "database": "GEO"
+        },
+        {
+          "label": "INSDC secondary accession",
+          "value": "SRS685550",
+          "database": "SRA"
+        },
+        {
+          "label": "External Id",
+          "value": "SAMN02991541",
+          "database": "BioSample"
+        },
+        {
+          "label": "SRA accession",
+          "value": "SRS685550",
+          "database": "SRA"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2014-08-15T14:36:47.280",
+          "release_date": "2015-01-20T01:19:14.377",
+          "last_update_date": "2015-01-20T01:22:24.137",
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "access",
+              "value": "public"
+            }
+          ]
+        },
+        {
+          "database": "BioSample",
+          "comment": [
+            {
+              "name": "record status",
+              "value": "live"
+            }
+          ]
+        },
+        {
+          "release_date": "2015-01-20",
+          "last_update_date": "2015-01-20",
+          "database": "ENA"
+        },
+        {
+          "database": "BioSamples",
+          "comment": [
+            {
+              "name": "status",
+              "value": "PUBLIC"
+            }
+          ]
+        },
+        {
+          "release_date": "2015-01-20T01:19:14.377Z",
+          "last_update_date": "2015-01-20T01:22:24.137Z",
+          "database": "INSDC",
+          "comment": [
+            {
+              "name": "INSDC status",
+              "value": "live"
+            }
+          ]
+        },
+        {
+          "submission_date": "2014-08-15",
+          "release_date": "2015-01-19",
+          "last_update_date": "2019-05-15",
+          "database": "GEO"
+        }
+      ],
+      "title": "Basal 2 dL #2",
+      "type": "SRA",
+      "channel_count": "1",
+      "channel": [
+        {
+          "source": {
+            "value": "mammary gland, basal cells, 2 day lactation"
+          },
+          "organism": [
+            {
+              "value": "Mus musculus",
+              "taxid": "10090",
+              "term_source_ref": "NCBITaxon",
+              "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+            }
+          ],
+          "characteristics": [
+            {
+              "name": "source_name",
+              "value": "mammary gland, basal cells, 2 day lactation"
+            },
+            {
+              "name": "strain/background",
+              "value": "FVB/N",
+              "term_source_ref": "EFO",
+              "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0007728"
+            },
+            {
+              "name": "genotype/variation",
+              "value": "wild type",
+              "term_source_ref": "EFO",
+              "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+            },
+            {
+              "name": "gender",
+              "value": "female",
+              "term_source_ref": "PATO",
+              "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+            },
+            {
+              "name": "tissue",
+              "value": "mouse mammary gland"
+            },
+            {
+              "name": "immunophenotype",
+              "value": "basal cell population"
+            },
+            {
+              "name": "developmental stage",
+              "value": "2 day lactation"
+            },
+            {
+              "name": "organism",
+              "value": "Mus musculus"
+            },
+            {
+              "name": "strain/background",
+              "value": "FVB/N"
+            },
+            {
+              "name": "genotype/variation",
+              "value": "wild type"
+            },
+            {
+              "name": "gender",
+              "value": "female"
+            },
+            {
+              "name": "genotype",
+              "value": "wild type"
+            },
+            {
+              "name": "organism part",
+              "value": "mouse mammary gland"
+            },
+            {
+              "name": "sex",
+              "value": "female",
+              "term_source_ref": "EFO",
+              "term_accession_number": "EFO_0001265"
+            }
+          ],
+          "treatment_protocol": "No treatment.",
+          "growth_protocol": "Luminal and basal cells were sorted directly from mouse mammary glands.",
+          "molecule": {
+            "value": "total RNA"
+          },
+          "extract_protocol": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+        }
+      ],
+      "description": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013",
+      "data_processing": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene.",
+      "platform_ref": {
+        "ref": "GSE60450:GPL13112"
+      },
+      "library_strategy": "RNA-Seq",
+      "library_source": "transcriptomic",
+      "library_selection": "cDNA",
+      "instrument_model": {
+        "value": "Illumina HiSeq 2000"
+      },
+      "contact_ref": [
+        {
+          "ref": "sra:BioSample:SAMN02991541:organization-2:contact-0"
+        },
+        {
+          "ref": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2:contact-0"
+        },
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ],
+      "supplementary_data": [
+        {
+          "repository": "GEO",
+          "source_accession": "GSE60450",
+          "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480302/suppl/GSM1480302_MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.txt.gz",
+          "type": "TXT"
+        },
+        {
+          "repository": "ArrayExpress",
+          "source_accession": "E-GEOD-60450",
+          "value": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/450/E-GEOD-60450/Files/GSM1480302_MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.txt"
+        }
+      ],
+      "relation": [
+        {
+          "type": "bioproject",
+          "target": "258286"
+        },
+        {
+          "type": "sample owner",
+          "target": "sra:BioSample:SAMN02991541:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "sra:SAMPLE:SRS685550:center_name"
+        },
+        {
+          "type": "ENA-EXPERIMENT",
+          "target": "SRX681996"
+        },
+        {
+          "type": "ENA-RUN",
+          "target": "SRR1552455"
+        },
+        {
+          "type": "ENA-SUBMISSION",
+          "target": "SRA179382"
+        },
+        {
+          "type": "ENA-FASTQ-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS685550&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+        },
+        {
+          "type": "ENA-SUBMITTED-FILES",
+          "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRS685550&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+        },
+        {
+          "type": "ENA-STUDY",
+          "target": "SRP045534"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:sample:SAMN02991541:center:11434899d33c2ff2:0"
+        },
+        {
+          "type": "sample owner",
+          "target": "ena:BioSample:SAMN02991541:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "ena:SAMPLE:SAMN02991541:center_name"
+        },
+        {
+          "type": "sample owner",
+          "target": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2"
+        },
+        {
+          "type": "archive center",
+          "target": "PRJNA258286:ena:SAMPLE:SAMN02991541:center_name"
+        },
+        {
+          "type": "BioSample",
+          "target": "https://www.ncbi.nlm.nih.gov/biosample/SAMN02991541"
+        }
+      ],
+      "sra_accession": [
+        "SRX681996"
+      ],
+      "ena_accession": [
+        "SRP045534"
+      ],
+      "sra_run": [
+        {
+          "instrument_platform": "ILLUMINA",
+          "files": [
+            {
+              "filename": "MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz",
+              "bytes": "2078416615",
+              "md5": "a217bcac0280fdd3a64f9f9875d13805",
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-9/SRR1552455/MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-9/SRR1552455/MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz"
+            },
+            {
+              "filename": "SRR1552455",
+              "bytes": "1679247560",
+              "md5": "c55f47b0914100cd1e94ea5070d14bb8",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1552455/SRR1552455",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1552455/SRR1552455"
+            },
+            {
+              "filename": "SRR1552455",
+              "bytes": "1679247560",
+              "md5": "c55f47b0914100cd1e94ea5070d14bb8",
+              "format": "SRA Normalized",
+              "role": "Primary ETL",
+              "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1552455/SRR1552455",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "AWS",
+              "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1552455/SRR1552455"
+            },
+            {
+              "filename": "SRR1552455.sralite",
+              "bytes": "691657919",
+              "md5": "a471e28770bf62e8c42c40dcdddd91af",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/552/SRR1552455/SRR1552455.sralite.1",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/552/SRR1552455/SRR1552455.sralite.1"
+            },
+            {
+              "filename": "SRR1552455.sralite",
+              "bytes": "691657919",
+              "md5": "a471e28770bf62e8c42c40dcdddd91af",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/552/SRR1552455/SRR1552455.sralite.1",
+              "free_egress": "worldwide",
+              "access_type": "anonymous",
+              "org": "NCBI",
+              "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/552/SRR1552455/SRR1552455.sralite.1"
+            },
+            {
+              "filename": "SRR1552455.sralite",
+              "bytes": "691657919",
+              "md5": "a471e28770bf62e8c42c40dcdddd91af",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "s3://sra-pub-zq-1/SRR1552455/SRR1552455.sralite.1",
+              "free_egress": "s3.us-east-1",
+              "access_type": "aws identity",
+              "org": "AWS",
+              "uri": "s3://sra-pub-zq-1/SRR1552455/SRR1552455.sralite.1"
+            },
+            {
+              "filename": "SRR1552455.sralite",
+              "bytes": "691657919",
+              "md5": "a471e28770bf62e8c42c40dcdddd91af",
+              "format": "SRA Lite",
+              "role": "Primary ETL",
+              "url": "gs://sra-pub-zq-104/SRR1552455/SRR1552455.zq.1",
+              "free_egress": "gs.us-east1",
+              "access_type": "gcp identity",
+              "org": "GCP",
+              "uri": "gs://sra-pub-zq-104/SRR1552455/SRR1552455.zq.1"
+            },
+            {
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz",
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "filename": "SRR1552455.fastq.gz",
+              "md5": "b4404125a7087e03624912dc70365594",
+              "bytes": "2155260227",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz"
+            }
+          ],
+          "statistics": {
+            "tag": "Statistics",
+            "attributes": {
+              "nreads": "1",
+              "nspots": "25433157"
+            },
+            "children": [
+              {
+                "tag": "Read",
+                "attributes": {
+                  "index": "0",
+                  "count": "25433157",
+                  "average": "100",
+                  "stdev": "0"
+                },
+                "children": []
+              }
+            ]
+          },
+          "platform_ref": {
+            "ref": "sra:platform:4431867c9e387a40"
+          },
+          "indexed_statistics": {
+            "read_count": "25433157",
+            "base_count": "2543315700"
+          },
+          "run": "SRR1552455",
+          "study": "SRP045534",
+          "experiment": "SRX681996",
+          "sample": "SRS685550",
+          "biosample": "SAMN02991541",
+          "library_layout": "SINGLE",
+          "library_selection": "cDNA",
+          "library_source": "transcriptomic",
+          "library_strategy": "RNA-Seq",
+          "scan_name": "GSM1480302_r1",
+          "instrument_model": "Illumina HiSeq 2000",
+          "fastq_files": [
+            {
+              "format": "fastq",
+              "role": "Original",
+              "url": "s3://sra-pub-src-9/SRR1552455/MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz",
+              "free_egress": "-",
+              "access_type": "Use Cloud Data Delivery",
+              "org": "AWS",
+              "uri": "s3://sra-pub-src-9/SRR1552455/MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz",
+              "filename": "MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz",
+              "md5": "a217bcac0280fdd3a64f9f9875d13805",
+              "bytes": "2078416615"
+            },
+            {
+              "format": "fastq",
+              "role": "GENERATED_FILE",
+              "aspera": "fasp.sra.ebi.ac.uk:/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz",
+              "galaxy": "ftp.sra.ebi.ac.uk/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz",
+              "filename": "SRR1552455.fastq.gz",
+              "md5": "b4404125a7087e03624912dc70365594",
+              "bytes": "2155260227"
+            },
+            {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-60450",
+              "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz",
+              "filename": "SRR1552455.fastq.gz"
+            }
+          ],
+          "read_lengths": [
+            "100"
+          ]
+        }
+      ]
+    }
+  ],
+  "series": {
+    "iid": "SRP045534",
+    "accession": [
+      {
+        "value": "SRP045534",
+        "database": "SRA"
+      },
+      {
+        "value": "PRJNA258286",
+        "database": "BioProject"
+      },
+      {
+        "value": "GSE60450",
+        "database": "GEO"
+      },
+      {
+        "value": "E-GEOD-60450",
+        "database": "ArrayExpress"
+      }
+    ],
+    "status": [
+      {
+        "release_date": "2015-01-21",
+        "last_update_date": "2026-09-20",
+        "database": "ENA"
+      },
+      {
+        "submission_date": "2014-08-15",
+        "release_date": "2015-01-19",
+        "last_update_date": "2019-05-15",
+        "database": "GEO"
+      },
+      {
+        "date_source": "Public Release Date",
+        "release_date": "2015-01-19",
+        "database": "ArrayExpress"
+      },
+      {
+        "last_update_date": "2015-01-22",
+        "database": "GEO"
+      }
+    ],
+    "title": "Transcriptome analysis of luminal and basal cell subpopulations in the lactating versus pregnant mammary gland",
+    "pubmed_id": [
+      "25730472"
+    ],
+    "summary": "To identify genes specifically expressed in lactating mammary glands, the gene expression profiles of luminal and basal cells from different developmental stages were compared. Comparison of gene expression in luminal and basal cells harvested from the mammary glands of virgin, 18.5 day pregnant and 2 day lactating mice (2 mice per stage).",
+    "overall_design": "Comparison of gene expression in luminal and basal cells harvested from the mammary glands of virgin, 18.5 day pregnant and 2 day lactating mice (2 mice per stage).",
+    "type": [
+      {
+        "value": "Expression profiling by high throughput sequencing"
+      }
+    ],
+    "contributor_ref": [
+      {
+        "ref": "GSE60450:contrib3"
+      },
+      {
+        "ref": "GSE60450:contrib4"
+      },
+      {
+        "ref": "GSE60450:contrib1"
+      },
+      {
+        "ref": "GSE60450:contrib5"
+      },
+      {
+        "ref": "E-GEOD-60450:contributor-1"
+      },
+      {
+        "ref": "E-GEOD-60450:contributor-2"
+      },
+      {
+        "ref": "E-GEOD-60450:contributor-3"
+      },
+      {
+        "ref": "E-GEOD-60450:contributor-4"
+      },
+      {
+        "ref": "E-GEOD-60450:contributor-5"
+      }
+    ],
+    "contact_ref": [
+      {
+        "ref": "GSE60450:contrib1"
+      }
+    ],
+    "sample_ref": [
+      {
+        "ref": "SRS685550"
+      }
+    ],
+    "variable": [
+      {
+        "name": "developmental stage",
+        "factor": "other",
+        "type": {
+          "value": "developmental stage"
+        }
+      },
+      {
+        "name": "immunophenotype",
+        "factor": "other",
+        "type": {
+          "value": "immunophenotype"
+        }
+      }
+    ],
+    "supplementary_data": [
+      {
+        "repository": "GEO",
+        "source_accession": "GSE60450",
+        "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE60nnn/GSE60450/suppl/GSE60450_Lactation-GenewiseCounts.txt.gz",
+        "type": "TXT"
+      },
+      {
+        "repository": "GEO",
+        "source_accession": "GSE60450",
+        "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE60nnn/GSE60450/suppl/GSE60450_RAW.tar",
+        "type": "TAR"
+      }
+    ],
+    "relation": [
+      {
+        "type": "pubmed",
+        "target": "25730472"
+      },
+      {
+        "type": "PubMed",
+        "target": "25730472"
+      },
+      {
+        "type": "ENA-SUBMISSION",
+        "target": "SRA179382"
+      },
+      {
+        "type": "ENA-FASTQ-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP045534&result=read_run&fields=run_accession,fastq_ftp,fastq_md5,fastq_bytes"
+      },
+      {
+        "type": "ENA-SUBMITTED-FILES",
+        "target": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=SRP045534&result=read_run&fields=run_accession,submitted_ftp,submitted_md5,submitted_bytes,submitted_format"
+      },
+      {
+        "type": "DOI",
+        "target": "10.1038/ncb3117"
+      },
+      {
+        "reference_source": "PubMed",
+        "publication": {
+          "pubmed_id": "25730472",
+          "title": "EGF-mediated induction of Mcl-1 at the switch to lactation is essential for alveolar cell survival.",
+          "author_list": "Nai Yang Fu, Anne C Rios, Bhupinder Pal, Rina Soetanto, Aaron T L Lun, Kevin Liu, Tamara Beck, Sarah A Best, François Vaillant, Philippe Bouillet, Andreas Strasser, Thomas Preiss, Gordon K Smyth, Geoffrey J Lindeman, Jane E Visvader",
+          "status": "published",
+          "status_term_source_ref": "EFO",
+          "status_term_accession_number": "EFO_0001796",
+          "doi": "10.1038/ncb3117"
+        },
+        "type": "literature cross-reference",
+        "target": "25730472"
+      },
+      {
+        "type": "ArrayExpress",
+        "target": "E-GEOD-60450"
+      },
+      {
+        "type": "BioProject",
+        "target": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA258286"
+      },
+      {
+        "type": "SRA",
+        "target": "https://www.ncbi.nlm.nih.gov/sra?term=SRP045534"
+      }
+    ],
+    "pubmed_publication": [
+      {
+        "pubmed_id": "25730472",
+        "doi": "10.1038/ncb3117",
+        "author_list": "Nai Yang Fu, Anne C Rios, Bhupinder Pal, Rina Soetanto, Aaron T L Lun, Kevin Liu, Tamara Beck, Sarah A Best, François Vaillant, Philippe Bouillet, Andreas Strasser, Thomas Preiss, Gordon K Smyth, Geoffrey J Lindeman, Jane E Visvader",
+        "title": "EGF-mediated induction of Mcl-1 at the switch to lactation is essential for alveolar cell survival.",
+        "status": "published",
+        "status_term_source_ref": "EFO",
+        "status_term_accession_number": "EFO_0001796"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "SRX681996:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681995:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681994:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681993:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681992:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681991:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681990:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681989:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681988:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681987:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681986:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRX681985:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681991:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681992:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681994:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681987:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681985:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681988:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681986:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681993:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681996:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681990:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681995:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "PRJNA258286:SRX681989:library",
+        "type": {
+          "value": "library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685550:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685550:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685550:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685549:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685549:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685549:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685547:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685547:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685547:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685548:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685548:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685548:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685546:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685546:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685546:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685545:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685545:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685545:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685544:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685544:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685544:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685543:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685543:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685543:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685542:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685542:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685542:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685541:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685541:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685541:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685539:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685539:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685539:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "SRP045534:SRS685538:treatment_protocol",
+        "type": {
+          "value": "treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "SRP045534:SRS685538:extract_protocol",
+        "type": {
+          "value": "nucleic acid extraction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "SRP045534:SRS685538:data_processing",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "E-GEOD-60450:P-GSE60450-4",
+        "type": {
+          "value": "normalization data transformation protocol"
+        },
+        "description": "Illumina CASAVA pipeline version 1.8.2 used for basecalling. Reads were aligned to the mouse genome by subread version 1.4.4. Read counts were summarized by Entrez Gene ID using the Rsubread featureCounts function and NCBI annotation. Genome_build: GRCm38 (mm10, NCBI build 38.1) Supplementary_files_format_and_content: Tab-delimited text files were written from the R prompt; columns represent Entrez Gene ID, total gene length (total base count of all exons) and the number of reads mapping to that gene."
+      },
+      {
+        "name": "E-GEOD-60450:P-GSE60450-1",
+        "type": {
+          "value": "sample treatment protocol"
+        },
+        "description": "No treatment."
+      },
+      {
+        "name": "E-GEOD-60450:P-GSE60450-3",
+        "type": {
+          "value": "nucleic acid library construction protocol"
+        },
+        "description": "FACS-sorted cells were lysed for RNA preparation using the QIAGEN RNeasy Plus Mini-kit. RNA libraries were prepared for sequencing using standard Illumina protocols."
+      },
+      {
+        "name": "E-GEOD-60450:P-GSE60450-2",
+        "type": {
+          "value": "growth protocol"
+        },
+        "description": "Luminal and basal cells were sorted directly from mouse mammary glands."
+      }
+    ],
+    "assay_paths": [
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz",
+            "link": {
+              "value": "s3://sra-pub-src-9/SRR1552455/MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.fastq.gz",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "a217bcac0280fdd3a64f9f9875d13805"
+              },
+              {
+                "name": "BYTES",
+                "value": "2078416615"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "Original"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1552455",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1552455/SRR1552455",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "c55f47b0914100cd1e94ea5070d14bb8"
+              },
+              {
+                "name": "BYTES",
+                "value": "1679247560"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1552455",
+            "link": {
+              "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR1552455/SRR1552455",
+              "type": "SRA Normalized"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "c55f47b0914100cd1e94ea5070d14bb8"
+              },
+              {
+                "name": "BYTES",
+                "value": "1679247560"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Normalized"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1552455.sralite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/552/SRR1552455/SRR1552455.sralite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "a471e28770bf62e8c42c40dcdddd91af"
+              },
+              {
+                "name": "BYTES",
+                "value": "691657919"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1552455.sralite",
+            "link": {
+              "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1211/SRR001/552/SRR1552455/SRR1552455.sralite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "a471e28770bf62e8c42c40dcdddd91af"
+              },
+              {
+                "name": "BYTES",
+                "value": "691657919"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1552455.sralite",
+            "link": {
+              "value": "s3://sra-pub-zq-1/SRR1552455/SRR1552455.sralite.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "a471e28770bf62e8c42c40dcdddd91af"
+              },
+              {
+                "name": "BYTES",
+                "value": "691657919"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1552455.sralite",
+            "link": {
+              "value": "gs://sra-pub-zq-104/SRR1552455/SRR1552455.zq.1",
+              "type": "SRA Lite"
+            },
+            "comments": [
+              {
+                "name": "MD5",
+                "value": "a471e28770bf62e8c42c40dcdddd91af"
+              },
+              {
+                "name": "BYTES",
+                "value": "691657919"
+              },
+              {
+                "name": "FORMAT",
+                "value": "SRA Lite"
+              },
+              {
+                "name": "ROLE",
+                "value": "Primary ETL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0007728"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "10090"
+              }
+            ],
+            "comments": [
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "SRP045534:SRS685550:data_processing"
+          },
+          {
+            "kind": "derived_array_data_file",
+            "name": "GSM1480302_MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.txt.gz",
+            "link": {
+              "repository": "GEO",
+              "source_accession": "GSE60450",
+              "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM1480nnn/GSM1480302/suppl/GSM1480302_MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.txt.gz",
+              "type": "TXT"
+            }
+          }
+        ]
+      },
+      {
+        "steps": [
+          {
+            "kind": "source",
+            "name": "SRS685550",
+            "sample_ref": "SRS685550",
+            "characteristics": [
+              {
+                "name": "source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type",
+                "term_source_ref": "EFO",
+                "term_accession_number": "http://www.ebi.ac.uk/efo/EFO_0005168"
+              },
+              {
+                "name": "genotype/variation",
+                "value": "wild type"
+              },
+              {
+                "name": "gender",
+                "value": "female",
+                "term_source_ref": "PATO",
+                "term_accession_number": "http://purl.obolibrary.org/obo/PATO_0000383"
+              },
+              {
+                "name": "gender",
+                "value": "female"
+              },
+              {
+                "name": "tissue",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "genotype",
+                "value": "wild type"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              },
+              {
+                "name": "organism",
+                "value": "Mus musculus",
+                "term_source_ref": "NCBITaxon",
+                "term_accession_number": "http://purl.obolibrary.org/obo/NCBITaxon_10090"
+              },
+              {
+                "name": "organism part",
+                "value": "mouse mammary gland"
+              },
+              {
+                "name": "sex",
+                "value": "female",
+                "term_source_ref": "EFO",
+                "term_accession_number": "EFO_0001265"
+              },
+              {
+                "name": "strain/background",
+                "value": "FVB/N"
+              }
+            ],
+            "comments": [
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              },
+              {
+                "name": "BioSD_SAMPLE",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "ENA source name",
+                "value": "SAMN02991541"
+              },
+              {
+                "name": "Sample_title",
+                "value": "Basal 2 dL #2"
+              },
+              {
+                "name": "Sample_source_name",
+                "value": "mammary gland, basal cells, 2 day lactation"
+              },
+              {
+                "name": "Sample_description",
+                "value": "Sample name: MCL1-DL MCL1-DL_BC2CTUACXX_ATCACG_L002_R1 Raw data file batch date: Aug. 9, 2013"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-1",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-2",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-3",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "extract",
+            "name": "GSM1480302 extract 1",
+            "material_type": {
+              "value": "total RNA"
+            },
+            "comments": [
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              }
+            ]
+          },
+          {
+            "kind": "assay",
+            "name": "SRX681996",
+            "sample_ref": "SRS685550",
+            "technology_type": {
+              "value": "sequencing assay"
+            },
+            "comments": [
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "LIBRARY_STRATEGY",
+                "value": "RNA-Seq"
+              },
+              {
+                "name": "LIBRARY_SOURCE",
+                "value": "transcriptomic"
+              },
+              {
+                "name": "LIBRARY_SELECTION",
+                "value": "cDNA"
+              },
+              {
+                "name": "LIBRARY_LAYOUT",
+                "value": "SINGLE"
+              },
+              {
+                "name": "INSTRUMENT_MODEL",
+                "value": "Illumina HiSeq 2000"
+              },
+              {
+                "name": "INSTRUMENT_PLATFORM",
+                "value": "ILLUMINA"
+              },
+              {
+                "name": "Platform_title",
+                "value": "Illumina HiSeq 2000 (Mus musculus)"
+              }
+            ]
+          },
+          {
+            "kind": "protocol_application",
+            "protocol_ref": "E-GEOD-60450:P-GSE60450-4",
+            "term_source_ref": "ArrayExpress"
+          },
+          {
+            "kind": "scan",
+            "name": "SRR1552455",
+            "sample_ref": "SRS685550",
+            "comments": [
+              {
+                "name": "ENA_RUN",
+                "value": "SRR1552455"
+              },
+              {
+                "name": "ENA_EXPERIMENT",
+                "value": "SRX681996"
+              },
+              {
+                "name": "ENA_SAMPLE",
+                "value": "SRS685550"
+              }
+            ]
+          },
+          {
+            "kind": "array_data_file",
+            "name": "SRR1552455.fastq.gz",
+            "link": {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-60450",
+              "value": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR155/005/SRR1552455/SRR1552455.fastq.gz",
+              "type": "fastq"
+            },
+            "comments": [
+              {
+                "name": "File format",
+                "value": "fastq"
+              },
+              {
+                "name": "MD5",
+                "value": "b4404125a7087e03624912dc70365594"
+              },
+              {
+                "name": "BYTES",
+                "value": "2155260227"
+              },
+              {
+                "name": "FORMAT",
+                "value": "fastq"
+              },
+              {
+                "name": "ROLE",
+                "value": "GENERATED_FILE"
+              }
+            ]
+          },
+          {
+            "kind": "derived_array_data_file",
+            "name": "GSM1480302_MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.txt",
+            "factor_values": [
+              {
+                "name": "developmental stage",
+                "value": "2 day lactation"
+              },
+              {
+                "name": "immunophenotype",
+                "value": "basal cell population"
+              }
+            ],
+            "link": {
+              "repository": "ArrayExpress",
+              "source_accession": "E-GEOD-60450",
+              "value": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/450/E-GEOD-60450/Files/GSM1480302_MCL1-DL_BC2CTUACXX_ATCACG_L002_R1.txt"
+            },
+            "comments": [
+              {
+                "name": "Derived ArrayExpress FTP file",
+                "value": "ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-60450/E-GEOD-60450.processed.1.zip"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "comments": [
+      {
+        "name": "Submitted Name",
+        "value": "Transcriptome analysis of luminal and basal cell subpopulations in the lactating versus pregnant mammary gland"
+      },
+      {
+        "name": "AEExperimentType",
+        "value": "RNA-seq of coding RNA"
+      },
+      {
+        "name": "AdditionalFile:Data1",
+        "value": "GSE60450_Lactation-GenewiseCounts.txt"
+      },
+      {
+        "name": "SequenceDataURI",
+        "value": "http://www.ebi.ac.uk/ena/data/view/SRR1552444-SRR1552455"
+      }
+    ]
+  },
+  "extensions": {
+    "insdc": {
+      "version": "1.0",
+      "records": []
+    }
+  }
+}
