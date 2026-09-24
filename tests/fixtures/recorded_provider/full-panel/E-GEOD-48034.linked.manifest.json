@@ -1,0 +1,212 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-GEOD-48034-linked-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-48034.idf.txt",
+      "sha256": "167a7bc63fd35fc6a6a3fe0b9d4a0fb1ab536b6455c37674f5f2a9534ce4105b"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-48034.sdrf.txt",
+      "sha256": "17fc19ea20017bc23fd703c57d8e4c4d25a362f6337b0df8c61d15d5e485e85b"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-GEOD-48034--resolution.json",
+      "sha256": "238e3967865f8968fcab342ad2215a8b9c2097c22e7338572c4fbf5dfeb6f959",
+      "original_pickle_sha256": "3399ebd5b8555926e82055a9260c6aad022e4daf1f53cb4d594c3dc0a692fbf6"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-GEOD-48034--SRP026125.records.json",
+      "sha256": "d113d2e34c720a47930ea0ab822cc9024c2ee14e05bdebaa76129cd45dd621e9",
+      "original_pickle_sha256": "2a27748a2ff1168d779a27fdc152ecb7287b414f36b193129624c1529a9927d0"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-GEOD-48034.linked/payloads/bf26aa59b5f16872.json.json",
+      "sha256": "9a439baa652455a2c34cb771589cd835b2d97e32cad16721d4fa34b77df3ef65"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-GEOD-48034.linked/payloads/bf26aa59b5f16872.magetab.json",
+      "sha256": "dc57194fb463a2730857e07d69f5c108b9d0a5bdebb4258a67919c7f36d63a7e"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48034/linked.tsv.json",
+      "sha256": "5e05c61e5fa65d98475ea8bdd41f63653362543552f34644981a4cf525fdf33f"
+    },
+    "http-22c06f648fd96dc80bfcaf484db7621d557f7621be11d789313c92ac7cd86030": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-GEOD-48034/http/3ad990e85538005d0130da6ccea5781e59b041bea91c90af29ef35cc3959bc3b.body",
+      "sha256": "d4374f3c9bbe9f1b88813c63820fca25b8cdf289c9b6c37bac9bc4349c42fc63",
+      "source_session": "expanded-E-GEOD-48034",
+      "metadata_sha256": "7a04769b8dc67da33070ae320cad45462ec215e0a29aca873cdd16dc1fb5ab5e"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/new-linked-review/successor-nonreference-final-review.json",
+      "sha256": "22e4585108a0fb54f06f1941da2e5ecc3ddd947e3dd27da83f83e728979731ef"
+    }
+  },
+  "requests": [
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE48nnn/GSE48034/miniml/GSE48034_family.xml.tgz",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-22c06f648fd96dc80bfcaf484db7621d557f7621be11d789313c92ac7cd86030",
+          "status": 200,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 15:32:35 GMT",
+            "Server": "Apache",
+            "Last-Modified": "Tue, 11 Aug 2026 05:43:18 GMT",
+            "Accept-Ranges": "bytes",
+            "Content-Length": "3541",
+            "Cache-Control": "public, max-age=86400",
+            "Expires": "Mon, 28 Sep 2026 15:32:35 GMT",
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+            "Access-Control-Allow-Headers": "RANGE, Cache-control, If-None-Match, Content-Type",
+            "Access-Control-Expose-Headers": "Content-Length, Content-Range, Content-Type",
+            "Keep-Alive": "timeout=5, max=1000",
+            "Connection": "Keep-Alive",
+            "Content-Type": "application/x-gzip"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "E-GEOD-48034/linked",
+      "route_intent": "linked-only",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "SRP026125"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "SRP026125": "records"
+          },
+          "requested_accessions": [
+            "SRP026125"
+          ]
+        },
+        "ae2json": {
+          "kind": "local-ae",
+          "files": {
+            "E-GEOD-48034": {
+              "idf": "idf",
+              "sdrfs": [
+                "sdrf"
+              ]
+            }
+          }
+        },
+        "enricher": {
+          "kind": "no-publication"
+        }
+      },
+      "options": {
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra",
+        "input_options": {
+          "include_peer": false,
+          "enrich_from_geo_ae": true
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "root-reviewed original-session GEO tgz; exactly one declared response",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48034/linked.json",
+        "sha256": "ad68bfa77eb93d18ba99ec3516b6f81c664d05ad39019f6e7fe1b566ddd5f29a"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48034/linked.magetab.json",
+        "sha256": "8ff5abd3edd31f5304325019a59b6de285280fd7d32d06cac22d0059e15a1912"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48034/linked.tsv.json",
+        "sha256": "5e05c61e5fa65d98475ea8bdd41f63653362543552f34644981a4cf525fdf33f"
+      }
+    },
+    "successor_generation_revision": "c08e9ca11956663e9c72b40f658f112bd099b837",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/new-linked-review/successor-nonreference-final-review.json",
+      "report_sha256": "22e4585108a0fb54f06f1941da2e5ecc3ddd947e3dd27da83f83e728979731ef",
+      "route": "E-GEOD-48034.linked",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-GEOD-48034",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:32:16.053738+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-GEOD-48034/summary.json",
+      "summary_sha256": "bfe5545dc350071258eeef5927259880f308ae79b4503f66ad376d467a859757"
+    }
+  ],
+  "selection_review": {
+    "reviewer": "vergil",
+    "decision": "PASS transport selection only",
+    "ledger": ".dev/comms/agents/workers_3/dev/linked-GEO-selection-ledger.json",
+    "ledger_sha256": "f28445a03ee8ddcaf3be3ead3013214b3fa1b5c75ad02a1bcea8144d609cd296"
+  }
+}

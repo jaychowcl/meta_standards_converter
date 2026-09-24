@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "cohort": "GSE100-direct-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "reduced-source",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-100.idf.txt",
+      "sha256": "a1a5dc633d93972283a43ed9e0f9f1e64c79bd877e5afcb70b0dee6a38a1eaf5"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-100.sdrf.txt",
+      "sha256": "2a30e18c372acdede944311798eb7a7e8c9605dfb4894575a925fa7614da7399"
+    },
+    "geo": {
+      "path": "tests/fixtures/studies/GSE100/inputs/geo.xml",
+      "sha256": "6696a5e9b9965f935089299b817dbb27fb06469e7e1d4ce78c2cc2ffc0516caa"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/GSE100.direct/payloads/267e0536375c33c8.json.json",
+      "sha256": "06e59e38f77d3b97ca96b2a5fa6165addc599f139a14a5cc3b9e00c8ac576b3a",
+      "reviewed_candidate": ".dev/comms/agents/workers_3/dev/successor-candidates/GSE100.direct/CANDIDATE.json"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/GSE100.direct/payloads/267e0536375c33c8.magetab.json",
+      "sha256": "103833339e18106f1e442a4575a699271082fbb396698200cb3ccb20ce9306c1",
+      "reviewed_candidate": ".dev/comms/agents/workers_3/dev/successor-candidates/GSE100.direct/CANDIDATE.json"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/GSE100/direct.tsv.json",
+      "sha256": "1b038e503498d3827c3415ef65688209129097d4a06cc0c4fb34b9291604d21d"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/successor-direct-review.json",
+      "sha256": "03c4f555ab9a1aabd9e1007f2a39ab0fb71c761a3b0ccc54887cbf0e677bb44a"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "GSE100/direct",
+      "route_intent": "deposited-off",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "file",
+        "file": "geo"
+      },
+      "services": {},
+      "options": {
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "immutable original; final model/comment and rendering fixes require independently reviewed successor expectations",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/GSE100/direct.json",
+        "sha256": "06e59e38f77d3b97ca96b2a5fa6165addc599f139a14a5cc3b9e00c8ac576b3a"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/GSE100/direct.magetab.json",
+        "sha256": "cc6b2c4c04301b65dd1f76706369a432036d5668d8d167feee827f54fd38484b"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/GSE100/direct.tsv.json",
+        "sha256": "1b038e503498d3827c3415ef65688209129097d4a06cc0c4fb34b9291604d21d"
+      }
+    },
+    "successor_generation_revision": "7693e3314e26c7fcf7bcbda8877d390435b0bff9",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "raw_scope": "strict18deposited/1883rows/946qualifiers, noncommentJSON and per-step comment occurrences;2direct source comparison",
+      "report": ".dev/comms/agents/workers_2/dev/successor-direct-review.json",
+      "report_sha256": "03c4f555ab9a1aabd9e1007f2a39ab0fb71c761a3b0ccc54887cbf0e677bb44a",
+      "status": "science reviewed; final-source strict refresh pending"
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-GSE100",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:43:32.408036+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/GSE100/summary.json",
+      "summary_sha256": "d847cf79eb8d9491fe0ba4eb15891761dbe095383ba2f414e8a814234ce8e5df"
+    }
+  ]
+}

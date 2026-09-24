@@ -1,0 +1,175 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-14566-linked-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14566.idf.txt",
+      "sha256": "4cddba19fc1c6ba770a9c65e881dc9c0a790a2c872ca08387c9828e11b61fd50"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14566.sdrf.txt",
+      "sha256": "f61b6a45f2eba9099be821b76d380608c7804f4e233aea618b171bce691288ef"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14566--resolution.json",
+      "sha256": "c6859494b85f870aa0b9562d19953c15e967fa1f33314c2486ee6eb1f91fdf02",
+      "original_pickle_sha256": "09e9d144e4a6ff53e47570816644e65b5034a7ef35630f8870298c4ba0ac65c7"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14566--ERP165595.records.json",
+      "sha256": "786b5206460aca8824f988b0f7e83011d7f8a1f3e3d2c4fce17fa4fe96d7fd49",
+      "original_pickle_sha256": "1a72064d991d6c54797578faf4fa548ae3fcefc93c4ec76dfeb86cacde112020"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-pending-f061c3f3/E-MTAB-14566.linked/payloads/698189882f97f771.json.json",
+      "sha256": "147f0dfc6c2aa624115974eeaadc5266a067119983aae3629f7db29827c8128a"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-pending-f061c3f3/E-MTAB-14566.linked/payloads/698189882f97f771.magetab.json",
+      "sha256": "a63a5943b82cb069eafd32b75d8fa7b58b59ac4535a8c0129d83716c54c9666c"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-pending-f061c3f3/E-MTAB-14566.linked/payloads/698189882f97f771.tsv.json",
+      "sha256": "b673e3eb72968f42e68053bfa56b4c42ae7ec118691a13265409c6b89fccb225"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/geomx-linked-review/scientific-summary.json",
+      "sha256": "dde06c51e1c5483b9a41cdc5b5ed906a9535e355ef7a0c8092e62909d9ccf155"
+    },
+    "scientific-review-full": {
+      "path": ".dev/comms/agents/workers_2/dev/geomx-linked-review/successor-nonreference-final-review.json",
+      "sha256": "301af0db14f273dfbcc45972233dc0b6d5e03e39c7ee6e36f62b3cfbdbbcb49c"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-14566/linked",
+      "route_intent": "linked-only",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP165595"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP165595": "records"
+          },
+          "requested_accessions": [
+            "ERP165595"
+          ]
+        },
+        "ae2json": {
+          "kind": "local-ae",
+          "files": {
+            "E-MTAB-14566": {
+              "idf": "idf",
+              "sdrfs": [
+                "sdrf"
+              ]
+            }
+          }
+        },
+        "enricher": {
+          "kind": "no-publication"
+        }
+      },
+      "options": {
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra",
+        "input_options": {
+          "include_peer": false,
+          "enrich_from_geo_ae": true
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Root-sealed source owner successor; strict final execution pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/linked.json",
+        "sha256": "6c892aaf51efd749113359186b1938411a0e52a4c1ceaa181840d96ebd913789"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/linked.magetab.json",
+        "sha256": "07c8caf281cfbf40c5a8909dc60ee5e07feb610d1fba864773866f38b63e98b6"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/linked.tsv.json",
+        "sha256": "bfe8b5e2dd5fb2dc5d3a9915a82b8dcd40ffbfcca3e98a7c3d7a8fa3c2e8b5ea"
+      }
+    },
+    "successor_generation_revision": "f061c3f39b1b7e71aa6bdb6a61aab3561b31de95",
+    "review": {
+      "reviewer": "workers_2 independent source proof; vergil final PASS",
+      "report": ".dev/comms/agents/workers_2/dev/geomx-linked-review/scientific-summary.json",
+      "report_sha256": "dde06c51e1c5483b9a41cdc5b5ed906a9535e355ef7a0c8092e62909d9ccf155",
+      "full_evidence": {
+        "path": ".dev/comms/agents/workers_2/dev/geomx-linked-review/successor-nonreference-final-review.json",
+        "sha256": "301af0db14f273dfbcc45972233dc0b6d5e03e39c7ee6e36f62b3cfbdbbcb49c"
+      },
+      "route": "E-MTAB-14566.linked",
+      "status": "root-sealed SCIENTIFIC_DELTA_PASS",
+      "accepted_delta_scope": "15496raw-proven owner moves; exact noncomment JSON/TSV, full779SDRF row scopes, comment multiplicities,2samples/6969paths, ordered IDs/library facts/modalities retained."
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-14566",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:05:09.355738+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-14566/summary.json",
+      "summary_sha256": "dd384e2c6db76502f17e501709e7941a50636fd260806c305ad9faf540a532e5"
+    }
+  ]
+}

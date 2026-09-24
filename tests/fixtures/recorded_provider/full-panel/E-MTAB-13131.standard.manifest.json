@@ -1,0 +1,1151 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-13131-standard-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-13131.idf.txt",
+      "sha256": "10bdb531aa93761bd5386f36058ab1f3590eee0c8d71e5878adb4a87dad426bd"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-13131.sdrf.txt",
+      "sha256": "e67eee5cd2b4ef8eec69fdb4a515707f086dceffe8912434a6826d0f408c6b99"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-13131--resolution.json",
+      "sha256": "8ef1f37396eb87ef92c847ce35fb09868507ac795ba78c0c85eed24000082c78",
+      "original_pickle_sha256": "71369b9311975f82f0608f95ff652e7f21570d27275a06fd5613618c46b91eff"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-13131--ERP148790.records.json",
+      "sha256": "0e893a7130e4337f7406f4ab2d91f738ca5e31322a0b3906f53e74ef54eaed5c",
+      "original_pickle_sha256": "30ce645f4d2dc6eff2f32b4033f4c1aa03b4d9d59feada3bd73322e323001b63"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-13131.standard/payloads/74eea6cd5355e4cc.json.json",
+      "sha256": "d198847383e11cf51bce0fad0e93547786f6c7e4e69ebd65e156b6fb497c2acc"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-13131.standard/payloads/74eea6cd5355e4cc.magetab.json",
+      "sha256": "8ad8e31fe578dfecfb0e2424d2c0a4f26d720969ea32392d4bb3b09e028db4d1"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/standard.tsv.json",
+      "sha256": "dac25d1dda9119a06a35c4d70cf45d39a2ebcbc684f681bc71f6735099b6b576"
+    },
+    "http-44e9f627b0c5498c9756b155233ade1f8dd100da015c6aa0fa408cccf40734ed": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/0b0b96060a8bbed052a1c17e3a53894efcf5ff9b9469c5f55d114d6c29d0e850.body",
+      "sha256": "61ec0ae13dae23242f7285996eebe36d15198302d033bd0ef3220d6f47281d12",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "c63c5dd660763407f77c80d4780a33d6998a2e36ec2dd5be7f2333b25bb92c00"
+    },
+    "http-71ea62ab58244fa67efa1b697af91adc0c8bbc0ce5348f0f8ed8698dea700085": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/0fe080ff20fa70d41d54bb844503772ff9d518af65a5754e5081465a00ffd589.body",
+      "sha256": "19247445a9dc7a5457db5811b63dd721ec2cc002ca5bf556b35b3bf35a694ce5",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "1a315e3bff1e20eec84e1cf1e0b1e50834693f7be87904f29e06ea79483bdb9f"
+    },
+    "http-1a05d520f22bcc69f757dc046e90e195cf3068196e09c06755a0d741c92d753c": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/1863c998735322b68985abb0635891ad3cdcb2d2cb351484d4ee4f7e90d21274.body",
+      "sha256": "232feaa2abd894c56d2ffb2ab609f3d5c417a3074e4473dea84935057cdbe723",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "2261a415bb33f523a5a30347ffe7defbc8dcd98c9733aadc990e9f24526d71e6"
+    },
+    "http-a58650d49239bd5a60793c7cbd45cee7fb9c31759749951138bdac15bc3824a8": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/1bfad07f91c84a7ea0f210bfd07be2f1610beebc3ada23422533b6065f775642.body",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "56066159517d13ae8b30cda47a18e56ed086efad670a2c3f775affcf86630487"
+    },
+    "http-242fa7686271cec9d3a540e7970b53a25c887f638ed6225a860f35cff4bf8e0e": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/1d0220b8a72fdabaab77b1b693a2529523b023e626b085b87611671fc6a3c7e2.body",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "52d157c6890d631296980f0daabcc86876c587191cd11602a7a2f8d64ce55462"
+    },
+    "http-d12a389bf0ee1993fded175b591fc2f6849fc283993b3db34fa80eb0d3f71fee": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/1d93123a5cba1710c2b560b3d7ecd5d9f75c0824f5073ac74f24f576a9526125.body",
+      "sha256": "869e094cb171d4664a32ad092bc9f24928b2928063f14f7ff12678ed08b1a35b",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "ac676e2264f9910289390fab8b51dee33001bbc80251cde53e86f59e6049fe1e"
+    },
+    "http-6b8ff72f6bef52b06f48a284352059938e6b8f7ac3ec51f39b1168d4d6d23a03": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/33b2df651080e3daa1020a92287c54f90b7e02908dfe3f593e7f6b2bc3b5f78f.body",
+      "sha256": "7fcd3c0519b37bc0323a11d9903d93e8226947252b7545bd3539ba4f4758fd81",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "76aec43b0b02be10cbba16cd471da9354e2d6ecb544e3a6cf39413636e783594"
+    },
+    "http-c2cdf160db0a647c2a06d52d94886b8fc1ad15c44b9140e2ba6db0d36155d030": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/363eaee619c1233bd7296c8c367e5c58f6be5856440ec8fa33bb1946f27ad9e2.body",
+      "sha256": "e5c60b12f8f34cd1456b98c59c5fc4093b04e8eef0ce537f776c1913f1352632",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "e711fca72e5b55e9725d2d5010214db0c42a3e73c30c5244ec4ff331038cc8bf"
+    },
+    "http-dd19a95fc751ef4a5e9187b5447905984b83c2f6f9bad900cab4d7b997a7c2d3": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/36d05753e0685e1dc46cc57b4396b5b4ad7f9e5be0c04c24201bd4734de9aca0.body",
+      "sha256": "0318ba6299432e85f3d06aa95572010c6bfbca19de621725235507ce2f8deb45",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "9bb855f69b5554b248be4b67dee89437f0686e52c2f84fd4899819993f58f3ac"
+    },
+    "http-0218db6dd5967dd7ce0b34cbc89236d59badedc152a6b688600863c57b4aa42f": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/3874760a8b2ff1ef949c45b8d8c5464634caf0698bafc54efcbc960552053993.body",
+      "sha256": "7cb2495f9971f7402e10906a585f9e6f38c8ac75b1beb4889b86d2750b26a67c",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "3210e26f7f799c0805b627d37f37c8c1d5d29e8a7d44404676ffe7535670259e"
+    },
+    "http-c2b594a2156eb0bff001f64458ecdc16a38ed78dc3eeb8dc577dbf2ab16dce22": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/43e4d1b0d7fbc936830655af6ddf94247341b89e7f363943d3dc5284743c0150.body",
+      "sha256": "46634e7854fcfa5ea25c8b04c9153bdf91304c836ec5d73d7562583cff3363d8",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "41e15f3e775a59f2df213427c70fda199d3e90c7bd0a4010536224b141f3f890"
+    },
+    "http-64f1510b28262830b039d22c957ec953601c3fab445bdb97e967f7357b5a160e": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/552077fe2859f8369f90ffe7bebffc05b5ae90aac320c283f00fac24c4ba9453.body",
+      "sha256": "2ba33ca0557f1bb5b7ba88d67f9d0093c7185a36ec51fe2b7bd9372d3e001d6d",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "c6c616f1dd92fd2aae9edf132d1e0041bc2e471eb674376f64f161163061cc45"
+    },
+    "http-3e102950c6653936bc78b4b59b5c1a60b98be4345d8611d45ddda934e7795f41": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/698fb9088f975bccee34611b95dcae9230ca5b295ec8de095f26f5d6219ba570.body",
+      "sha256": "e4fea4dc886c07ccd823f14b6ef7a7920f2648e52f554eb8ecf7ff09579bf52b",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "b81adad2dc153bf60ef8f998257ef1736aec7b8ee1e7b7f156a0f23b594506dc"
+    },
+    "http-c8ef4dbbd3d8ad3a5a4b2c69430ebdb099b0f97117eb86afe55fcd4f5c9ce604": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/7a92650a76a13c38d60bdc437338b3b39b24a16a1a9ff41f9c40a996a4033f05.body",
+      "sha256": "10bdb531aa93761bd5386f36058ab1f3590eee0c8d71e5878adb4a87dad426bd",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "10958e84313df508f467f0aab124cb62c53d9f0463b6cd5a269c1e0e516ed844"
+    },
+    "http-43dadf3c9555ecc6fea4bae93da9b4c1aac35cacc4ec9e5c1348f6eac0d45f31": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/7cb79d2e9dbf3a0485a17177ee7413fdb389eacccd28ccd17a0c9809f055b00e.body",
+      "sha256": "2ba33ca0557f1bb5b7ba88d67f9d0093c7185a36ec51fe2b7bd9372d3e001d6d",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "5740b9a9e9f93bb48ba32d55cf35d72087eac34879d5567176e4ab039e3cf760"
+    },
+    "http-2bc70875df88ccdbe92074bc078f6735014876631f87906abcb81732a7ef3e22": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/84cac19b9f39a1edaba74ccf88f8f2472ca4b01d7a49c9937fd97841c194a1d0.body",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "bed608c066995b38b6d451f17447c9c8daf6f2d65fffec77a217ffb90711825a"
+    },
+    "http-7ef2f6d395cf9f7698ecb558674d545ba0d8cc7456759e1b3c75e9ab7d7c0e43": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/87ff4943816e0b0ffd078a8017763d3effbb3409e7d826d43287aa9361541f08.body",
+      "sha256": "e9b96c4b6bad157e70790270004262c0eee366953cb9fd5db1d0e539e0d1a849",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "93cf452fac34b172ae72aa7781ce19c390158a3b840eecb8830748363a56076e"
+    },
+    "http-1303f9ea9cde40aad904aa54af50ee4ca97fb452c838e90ebc7137b0063251c2": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/908952db701a2e8f561bb707621d6b75aaff50aa6fad92c7cf608a8b66ac3e87.body",
+      "sha256": "e67eee5cd2b4ef8eec69fdb4a515707f086dceffe8912434a6826d0f408c6b99",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "dc5a1b305fcbd759d47a0f16c38101d5032dea4c782f82571c1cac6998d7e170"
+    },
+    "http-ec0a8f7b11ed086a66a99fcd9de357238dc42376accd90b1d94b35b98fcb2235": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/981f3cb11850eef0bd7ad612fcf2aa19470e937b1f1abdca1dbe9e5f95e74297.body",
+      "sha256": "ae6861231eabbe5c76a3e6240a9109a3163b77f2061b644c22bbdd1b01b15840",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "c8b4eefcffb690e2119ef9c5c2523c25a58f0277e4c915db9a0f990ad53972a6"
+    },
+    "http-017ba477862b9d74b7dddf699cdc0ef035cbe04c1091bc3873ce9ecb6f9bd89d": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/9e8dc961b009a2ef35fb0a4d0ce133fb0a5879736d26c8829d156aff7d035bf9.body",
+      "sha256": "16c1e420af91b6ba97c02092d41ac03f8fc6b2767a778c6f6e3f9c437d8dd35c",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "519debe6537c630bc3061eb19fb1713cbac7599fb66a3be776ebdba2b3735b33"
+    },
+    "http-be3d1d5d205ffd1d134761befba941fe51d8791f653b08e0cd2b67decd524608": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/a809cc699b4b589e486118e3bfacd3730f5b9e448cfdb3766e728f47106d3c4c.body",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "cbf2d1a52318b70545862de6905aa84990575fdd4121800ee5e450846662ed21"
+    },
+    "http-fbb3c1fc7778ac026f620365e39e2843d41c2f3f848d7aa7f700f9c17c089203": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/b4893ff6973a91d9eee5b7b2ed8b1554a587343fcb6a23f0f0a8ad980a2668f2.body",
+      "sha256": "8a9c541a8af22c78c58ef9fc3c634dc93be231dcf5f399675130450be5d10bb3",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "e90e2414e908a040f175337006508032a22776ef8de056fa49a7913322230a9a"
+    },
+    "http-77929b8ecc1e0b4c60d3ac609c2318305f55783193259f0048f6255e46882832": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/b66dc11325df15873aaa305576ed6d86308f961a83d238b508fa62706969f4a8.body",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "dab776be7a104d9333db3cab195d1021b1bcd17e9c313354224f66fbb113bc29"
+    },
+    "http-e872b27873d66d73fb04a96f2e50dbdbccaff24959fcdc359b64d159504713e3": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/c0e28c63d441395b78f60438bbea9022881851e8c6942200f94c9e55362e560e.body",
+      "sha256": "09541c78f2281b2c4128e00d1da18dea525471f25aaf019e64ee6e9dcd8c1f44",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "cffd76a955bc87c40667e464f263c78b3cec7e7877278a01ca404d2016450227"
+    },
+    "http-91a05bc86d8aab3379fa8c4f5a3316105f62f18b6e1c303f421ac6feeb7ccac1": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/c4bd7d8150d868ee35c06aa241345b69514420f8f80996b94bab45ef3cc8a9f1.body",
+      "sha256": "74f5db9e019047bdb4daf59f6665ae8c81f365e563320a74efe29d32de4bc777",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "9a6e6b3b5792d9b51a0cd27085975edcdc4363105ff042653322b182734f0a8b"
+    },
+    "http-fda7eeee32909e1be5e072bac696c784a2dcbcd6758664c9bc5e9135150e563d": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/daf81679f9a19d5c15be66ff25d50d248c801c735a0ff01bd5fd3fad88529184.body",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "aff5aed9f9f9806a9732fd18f5212d79a1553a409288301812e204e076813708"
+    },
+    "http-909d9a65256d9ed393ef6bcb75a7eef55eae5ca4f44fc0279e344285db27ef50": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/e273524162bfa05611b8f70f715a369e51a3581fe21c2328ef1085a6fa55a78a.body",
+      "sha256": "f9da717f8537612d9e3ebdd0d00f95cae60697f34f776d82aa64e0df8fda0b2a",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "2b1f7743119ec92149e7f85096411449a7b9acefdc8bc0a8576eed24284bebbb"
+    },
+    "http-5528153e5e20f24d31ca2658ff7d970ee83632d71dd5602f71a1dd74bbcda0c8": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/f67cc0fa89561fb254a5a32d76a7e41fd400752494fd028b78c7c7eecb6a1a51.body",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "9b589aad3d64d0d828e888d618e5cd8e80dcc60330ca36736f24289ea6806fac"
+    },
+    "http-fba814ace35d0523d444a4e0a051bdad9a4073f71b4a0e8067a1cd6fdfbac5be": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/f7dd9b956ecca52b1480d1c328ea8d71ee8a3941fb94295badafd543a41ee061.body",
+      "sha256": "05cf974aacecb229d711c0296bcd264a4423a6f01744c84c6d9aa7c1a70ad5d3",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "01ce90a5664335e7717933a3636daf4ad6462ef1fc94ddd3117876e398bf9fb2"
+    },
+    "http-1c819824cb2a30b9affeffdda79edfbe9fa76aa3c537e70b6e57a8d335aad465": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/http/fec5986a66d5d3f556e2a7d07426072863552b8196c6859ffc0eb9743bdf8228.body",
+      "sha256": "1fa40d908473308d57342e5df3bae88d292c84696c19efede30f8ab31034cf15",
+      "source_session": "expanded-E-MTAB-13131",
+      "metadata_sha256": "90e6768e0d59ec5550514e43c03376b26cefd5582635e38b11332318a2217c58"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/successor-nonreference-final-review.json",
+      "sha256": "23ffc14afcac13e728bd35626d0b0fe13a45da2edd2ff1cc3318c9c81c0cd745"
+    }
+  },
+  "requests": [
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB63640?includeLinks=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-44e9f627b0c5498c9756b155233ade1f8dd100da015c6aa0fa408cccf40734ed",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/xml",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:47 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=SAMEA113965026&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-71ea62ab58244fa67efa1b697af91adc0c8bbc0ce5348f0f8ed8698dea700085",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:13 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/count?result=read_run&query=secondary_study_accession%3D%22ERP148790%22&format=json&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-1a05d520f22bcc69f757dc046e90e195cf3068196e09c06755a0d741c92d753c",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:05 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY",
+            "Content-Length": "13"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=ERR11634702&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-a58650d49239bd5a60793c7cbd45cee7fb9c31759749951138bdac15bc3824a8",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:08 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=ERR11634704&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-242fa7686271cec9d3a540e7970b53a25c887f638ed6225a860f35cff4bf8e0e",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:10 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_experiment&query=secondary_study_accession%3D%22ERP148790%22&fields=study_accession%2Csecondary_study_accession&format=json&limit=0&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-d12a389bf0ee1993fded175b591fc2f6849fc283993b3db34fa80eb0d3f71fee",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:45 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY",
+            "Content-Length": "570"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=study_accession%3D%22PRJEB63640%22&fields=all&format=json&limit=0&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-6b8ff72f6bef52b06f48a284352059938e6b8f7ac3ec51f39b1168d4d6d23a03",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:51 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY",
+            "Content-Length": "3711"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/biosamples/samples/SAMEA113965026",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-c2cdf160db0a647c2a06d52d94886b8fc1ad15c44b9140e2ba6db0d36155d030",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "max-age=60, public",
+            "Content-Type": "application/hal+json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:14 GMT",
+            "Keep-Alive": "timeout=60",
+            "X-XSS-Protection": "1; mode=block",
+            "ETag": "\"0e2cc6794d56f1b523f638fdc0e69fdc4\"",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY",
+            "Content-Length": "3752"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-13131/info",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-dd19a95fc751ef4a5e9187b5447905984b83c2f6f9bad900cab4d7b997a7c2d3",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json;charset=UTF-8",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:20 GMT",
+            "Keep-Alive": "timeout=60",
+            "Expires": "0",
+            "X-XSS-Protection": "1; mode=block",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "SAMEORIGIN",
+            "Content-Length": "1159"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERX11036790?includeLinks=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-0218db6dd5967dd7ce0b34cbc89236d59badedc152a6b688600863c57b4aa42f",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/xml",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:02 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERP148790?includeLinks=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-c2b594a2156eb0bff001f64458ecdc16a38ed78dc3eeb8dc577dbf2ab16dce22",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/xml",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:46 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=assembly&query=study_accession%3D%22PRJEB63640%22&fields=all&format=json&limit=0&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-64f1510b28262830b039d22c957ec953601c3fab445bdb97e967f7357b5a160e",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:59 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY",
+            "Content-Length": "5"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/biostudies/api/v1/files/E-MTAB-13131?start=0&length=100",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-3e102950c6653936bc78b4b59b5c1a60b98be4345d8611d45ddda934e7795f41",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json;charset=UTF-8",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:19 GMT",
+            "Keep-Alive": "timeout=60",
+            "Expires": "0",
+            "X-XSS-Protection": "1; mode=block",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "SAMEORIGIN",
+            "Content-Length": "675"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/131/E-MTAB-13131/Files/E-MTAB-13131.idf.txt",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-c8ef4dbbd3d8ad3a5a4b2c69430ebdb099b0f97117eb86afe55fcd4f5c9ce604",
+          "status": 200,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 15:08:21 GMT",
+            "Server": "Apache",
+            "Last-Modified": "Wed, 03 Jul 2024 12:00:28 GMT",
+            "ETag": "\"1203-61c5693850f00\"",
+            "Accept-Ranges": "bytes",
+            "Content-Length": "4611",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization,Origin,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept",
+            "Keep-Alive": "timeout=15, max=100",
+            "Connection": "Keep-Alive",
+            "Content-Type": "text/plain; charset=UTF-8"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=analysis&query=secondary_study_accession%3D%22ERP148790%22&fields=all&format=json&limit=0&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-43dadf3c9555ecc6fea4bae93da9b4c1aac35cacc4ec9e5c1348f6eac0d45f31",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:57 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY",
+            "Content-Length": "5"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=PRJEB63640&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-2bc70875df88ccdbe92074bc078f6735014876631f87906abcb81732a7ef3e22",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:12 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=biosample&term=SAMEA113965026%5BAccession%5D&retmode=json&usehistory=y&retstart=0&retmax=10000",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-7ef2f6d395cf9f7698ecb558674d545ba0d8cc7456759e1b3c75e9ab7d7c0e43",
+          "status": 200,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 15:08:13 GMT",
+            "Server": "Finatra",
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+            "Content-Security-Policy": "upgrade-insecure-requests",
+            "Referrer-Policy": "origin-when-cross-origin",
+            "Ncbi-Sid": "1227ECA0406E3AAD_8B1DSID",
+            "Ncbi-Phid": "1D320C1676A3E995000044FAD2C139E1.1.1.m_1",
+            "Content-Type": "application/json; charset=UTF-8",
+            "Cache-Control": "private",
+            "Content-Encoding": "gzip",
+            "X-Ratelimit-Limit": "3",
+            "X-Ratelimit-Remaining": "0",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "X-RateLimit-Limit,X-RateLimit-Remaining",
+            "Set-Cookie": "ncbi_sid=1227ECA0406E3AAD_8B1DSID; domain=.nih.gov; path=/; expires=Tue, 21 Sep 2027 15:08:13 GMT",
+            "X-Ua-Compatible": "IE=Edge",
+            "X-Xss-Protection": "1; mode=block",
+            "Via": "1.1 google",
+            "Alt-Svc": "clear",
+            "Transfer-Encoding": "chunked"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/131/E-MTAB-13131/Files/E-MTAB-13131.sdrf.txt",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-1303f9ea9cde40aad904aa54af50ee4ca97fb452c838e90ebc7137b0063251c2",
+          "status": 200,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 15:08:31 GMT",
+            "Server": "Apache",
+            "Last-Modified": "Fri, 30 Jun 2023 07:55:41 GMT",
+            "ETag": "\"2d69-5ff5424a9d940\"",
+            "Accept-Ranges": "bytes",
+            "Content-Length": "11625",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization,Origin,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept",
+            "Keep-Alive": "timeout=15, max=100",
+            "Connection": "Keep-Alive",
+            "Content-Type": "text/plain; charset=UTF-8"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/9606",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-ec0a8f7b11ed086a66a99fcd9de357238dc42376accd90b1d94b35b98fcb2235",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:15 GMT",
+            "Keep-Alive": "timeout=60",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_run&query=secondary_study_accession%3D%22ERP148790%22&fields=all&format=json&limit=0&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-017ba477862b9d74b7dddf699cdc0ef035cbe04c1091bc3873ce9ecb6f9bd89d",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:55 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=ERX11036790&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-be3d1d5d205ffd1d134761befba941fe51d8791f653b08e0cd2b67decd524608",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:11 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=study&query=study_accession%3D%22PRJEB63640%22&fields=all&format=json&limit=0&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-fbb3c1fc7778ac026f620365e39e2843d41c2f3f848d7aa7f700f9c17c089203",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:49 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY",
+            "Content-Length": "3596"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=ERP148790&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-77929b8ecc1e0b4c60d3ac609c2318305f55783193259f0048f6255e46882832",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:06 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=biosample&id=50027810&retmode=xml",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-e872b27873d66d73fb04a96f2e50dbdbccaff24959fcdc359b64d159504713e3",
+          "status": 200,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 15:08:14 GMT",
+            "Server": "Finatra",
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+            "Content-Security-Policy": "upgrade-insecure-requests",
+            "Referrer-Policy": "origin-when-cross-origin",
+            "Ncbi-Sid": "C22FAA2665E8DB15_CDABSID",
+            "Ncbi-Phid": "1D34507ADC8427E500004D0C169C8AA1.1.1.m_7",
+            "Content-Type": "text/xml; charset=UTF-8",
+            "Cache-Control": "private",
+            "Content-Encoding": "gzip",
+            "X-Ratelimit-Limit": "3",
+            "X-Ratelimit-Remaining": "0",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Expose-Headers": "X-RateLimit-Limit,X-RateLimit-Remaining",
+            "Set-Cookie": "ncbi_sid=C22FAA2665E8DB15_CDABSID; domain=.nih.gov; path=/; expires=Tue, 21 Sep 2027 15:08:14 GMT",
+            "X-Ua-Compatible": "IE=Edge",
+            "X-Xss-Protection": "1; mode=block",
+            "Via": "1.1 google",
+            "Alt-Svc": "clear",
+            "Transfer-Encoding": "chunked"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/browser/api/xml/SAMEA113965026?includeLinks=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-91a05bc86d8aab3379fa8c4f5a3316105f62f18b6e1c303f421ac6feeb7ccac1",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/xml",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:01 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=ERR11634703&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-fda7eeee32909e1be5e072bac696c784a2dcbcd6758664c9bc5e9135150e563d",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:09 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_experiment&query=secondary_study_accession%3D%22ERP148790%22&fields=all&format=json&limit=0&includeMetagenomes=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-909d9a65256d9ed393ef6bcb75a7eef55eae5ca4f44fc0279e344285db27ef50",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:08:53 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/xref/rest/json/search?accession=ERR11634701&limit=1000&offset=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-5528153e5e20f24d31ca2658ff7d970ee83632d71dd5602f71a1dd74bbcda0c8",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:07 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/browser/api/xml/ERR11634704,ERR11634702,ERR11634701,ERR11634703?includeLinks=true",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-fba814ace35d0523d444a4e0a051bdad9a4073f71b4a0e8067a1cd6fdfbac5be",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Content-Type": "application/xml",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:03 GMT",
+            "Transfer-Encoding": "chunked",
+            "Connection": "keep-alive"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=ERP148790&result=read_run&fields=all&format=json&limit=0",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-1c819824cb2a30b9affeffdda79edfbe9fa76aa3c537e70b6e57a8d335aad465",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 15:09:00 GMT",
+            "Expires": "0",
+            "X-XSS-Protection": "0",
+            "Pragma": "no-cache",
+            "Transfer-Encoding": "chunked",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "DENY"
+          },
+          "encoding": "utf-8",
+          "repeat": 1
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "E-MTAB-13131/standard",
+      "route_intent": "production-standard",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP148790"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP148790": "records"
+          },
+          "requested_accessions": [
+            "ERP148790"
+          ]
+        }
+      },
+      "options": {
+        "enrichment": "standard",
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra"
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/standard.json",
+        "sha256": "f585d829284a1f87beb288c43458e6ec9fe767cc063c1111a2a4a615666123db"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/standard.magetab.json",
+        "sha256": "a0036bea689109e7ae699041e919418f9622464a74e533f51e77c85bca8ea328"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/standard.tsv.json",
+        "sha256": "dac25d1dda9119a06a35c4d70cf45d39a2ebcbc684f681bc71f6735099b6b576"
+      }
+    },
+    "successor_generation_revision": "7693e3314e26c7fcf7bcbda8877d390435b0bff9",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/successor-nonreference-final-review.json",
+      "report_sha256": "23ffc14afcac13e728bd35626d0b0fe13a45da2edd2ff1cc3318c9c81c0cd745",
+      "route": "E-MTAB-13131.standard",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-13131",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:08:11.600334+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/summary.json",
+      "summary_sha256": "8729c2cdfec72cf37141e1acd2ee8aaf3481855308acebb02d61a16d6c8caccf"
+    }
+  ],
+  "selection_review": {
+    "reviewer": "vergil",
+    "decision": "PASS response selection only; not acceptance",
+    "ledger_report": {
+      "path": ".dev/comms/agents/workers_3/dev/legacy-probes/E-MTAB-13131/standard/report.json",
+      "sha256": "313359e413650bc88e5a0a6201b0aa42f62187649cd30cf7e91a7aeda75ac901"
+    },
+    "ledger_inventory": {
+      "path": ".dev/comms/agents/workers_3/dev/legacy-probes/E-MTAB-13131/standard/inventory.json",
+      "sha256": "f97d8bdf13989625313ad754f1b4116e26cc1c5e4d060018f0a84dc1cfeeed18"
+    },
+    "offline_reuse_policy": "Each manifested occurrence is offline replay usage; historical recorder did not preserve live retry multiplicity"
+  },
+  "coverage_kind": "single-session-recorded-replay",
+  "golden_review_status": "Original regression expectations unchanged; final source/comment and rendering freeze pending"
+}

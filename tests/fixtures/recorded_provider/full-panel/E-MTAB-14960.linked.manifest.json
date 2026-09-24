@@ -1,0 +1,314 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-14960-linked-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14960.idf.txt",
+      "sha256": "8fd4ef54933ce7361275d1bec720966a582b0b3893fbca73f5c87cbfae9d4396"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14960.sdrf.txt",
+      "sha256": "1fe96ddff430244defabedbe86446bf51e832f4da2d5c8eeb90b2cac47f1b84f"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14960--resolution.json",
+      "sha256": "df6ab2a8ea313c8fc07009a6344bb0f0a30c85c1aeb5df112abcd45d6a67743d",
+      "original_pickle_sha256": "30d29e03a90d4e378c2678c58d8ddf582f27b7fe42dd94809a0ad95d4de0c01c"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14960--ERP170611.records.json",
+      "sha256": "52ae8640c492b4a3d16fe6b94ffbcdbb94c8ad13493c892168bd82a8f21821a8",
+      "original_pickle_sha256": "073a35f449fc937f926f1bbcc52cfcc84e606f0e65c6f255b6f382cfd0090319"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-14960.linked/payloads/d068e1a01e2ef28d.json.json",
+      "sha256": "82dbcf982fb158025a9a85b49fa5534ee922005da012f53ec95db7ef0319fe0b"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-14960.linked/payloads/d068e1a01e2ef28d.magetab.json",
+      "sha256": "98d82eabe32738062f0b395960ddaec5b4de096db6576a862143c63c647e74c4"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14960/linked.tsv.json",
+      "sha256": "39d59a340c41b85d93b0f78f80f6ffbd8cc714c2cc9f53e6c6ea6a0adfc797fc"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-14960/linked",
+      "route_intent": "linked-only",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP170611"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP170611": "records"
+          },
+          "requested_accessions": [
+            "ERP170611"
+          ]
+        },
+        "ae2json": {
+          "kind": "local-ae",
+          "files": {
+            "E-MTAB-14960": {
+              "idf": "idf",
+              "sdrfs": [
+                "sdrf"
+              ]
+            }
+          }
+        },
+        "enricher": {
+          "kind": "no-publication"
+        }
+      },
+      "options": {
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra",
+        "input_options": {
+          "include_peer": false,
+          "enrich_from_geo_ae": true
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "ERP170611: linked_metadata: source conflict at /sample/ERS23835429/sra_run/ERR14761305/library_layout: SRA ERP170611 'SINGLE' versus ArrayExpress E-MTAB-14960 'PAIRED'; selected ArrayExpress 'PAIRED' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP170611: linked_metadata: source conflict at /sample/ERS23835430/sra_run/ERR14761304/library_layout: SRA ERP170611 'SINGLE' versus ArrayExpress E-MTAB-14960 'PAIRED'; selected ArrayExpress 'PAIRED' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP170611: linked_metadata: source conflict at /sample/ERS23835431/sra_run/ERR14761306/library_layout: SRA ERP170611 'SINGLE' versus ArrayExpress E-MTAB-14960 'PAIRED'; selected ArrayExpress 'PAIRED' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP170611: linked_metadata: source conflict at /sample/ERS23835432/sra_run/ERR14761303/library_layout: SRA ERP170611 'SINGLE' versus ArrayExpress E-MTAB-14960 'PAIRED'; selected ArrayExpress 'PAIRED' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/0/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/1/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/2/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/3/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835429/sra_run/ERR14761305/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835430/sra_run/ERR14761304/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835431/sra_run/ERR14761306/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835432/sra_run/ERR14761303/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/0/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/1/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/2/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/3/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835429/sra_run/ERR14761305/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835430/sra_run/ERR14761304/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835431/sra_run/ERR14761306/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS23835432/sra_run/ERR14761303/library_layout: [{'provider': 'SRA', 'accession': 'ERP170611', 'value': 'SINGLE'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-14960', 'value': 'PAIRED'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/0/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/1/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/2/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/3/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14960/linked.json",
+        "sha256": "67fdcfdfbc84d6b19af565b11feaf61ba41f7cc1349264eea82fd60cd7a8fa89"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14960/linked.magetab.json",
+        "sha256": "513da38326e44eb705d6a0ed9480741ab2503068d6ca125552e0843aef62d46a"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14960/linked.tsv.json",
+        "sha256": "39d59a340c41b85d93b0f78f80f6ffbd8cc714c2cc9f53e6c6ea6a0adfc797fc"
+      }
+    },
+    "successor_generation_revision": "c08e9ca11956663e9c72b40f658f112bd099b837",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "report_sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2",
+      "route": "E-MTAB-14960.linked",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-14960",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:16:44.539928+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-14960/summary.json",
+      "summary_sha256": "542bab8af156a651bc71fc01f2cd2761aadf021db6fbe1dabb24160eaeaa0d30"
+    }
+  ]
+}

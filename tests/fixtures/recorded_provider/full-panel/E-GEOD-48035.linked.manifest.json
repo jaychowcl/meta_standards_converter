@@ -1,0 +1,506 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-GEOD-48035-linked-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-48035.idf.txt",
+      "sha256": "db239d9213c5088adf0458cd46bc6f597ffc506bb8d7014bba7a8bafebdadf87"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-48035.sdrf.txt",
+      "sha256": "6fd869692382f1183b8b2aa830dbd68ca1cf58043ce758df2c97ffba71ea43d0"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-GEOD-48035--resolution.json",
+      "sha256": "cdb779b29842226f7335def24a86c98ec56f183a68765e0a3b055dbfc185032e",
+      "original_pickle_sha256": "8aaa9c2358cf272d1ea50921d65bbe071a7ba4f62a1e13e0ddb1b286b2fc593f"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-GEOD-48035--SRP026126.records.json",
+      "sha256": "0e3e53f834efd14b5bac71c07ac351de5763f2f01d151516f56ed1c6ca5a32fb",
+      "original_pickle_sha256": "66283b22300b983ead49f378cf89a16aa6790969b1ac284c6a8597a6529cddc7"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-pending-f061c3f3/E-GEOD-48035.linked/payloads/a82bf8f847356ee7.json.json",
+      "sha256": "0834a215cc280c3c6a4c4ec7b51928c8ea3ec8c5fdd79bf88ae366d56701b976"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-pending-f061c3f3/E-GEOD-48035.linked/payloads/a82bf8f847356ee7.magetab.json",
+      "sha256": "175c5abacc24892d1e831463f6ff5e168f5d57961744bf1b8acd53a71840b01f"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-pending-f061c3f3/E-GEOD-48035.linked/payloads/a82bf8f847356ee7.tsv.json",
+      "sha256": "9d53abd7e56b117c64ef95cf8aa06dd0a9dd64c17abf9ac1e1892e6d49a4f869"
+    },
+    "http-8a5709e3b36e4f501eafa7a3b0d0431f8f20073c481e88cdfbc082e00b7cde85": {
+      "path": ".dev/comms/agents/msc_expanded_audit/dev/live/E-GEOD-48035/http/c36599f1ba28ba635e8a463b7951071303a652cf8875c7ecbad6d130d5c3a54a.body",
+      "sha256": "52b898328e7d9672133573ecc71ec20f4da43c71353a1712a48a6e1566aed0b2",
+      "source_session": "expanded-E-GEOD-48035",
+      "metadata_sha256": "6e68df8862ef40356a942e558c32795968b6c43fd007cf47b329f1fe17ed588f"
+    },
+    "transport-review": {
+      "path": ".dev/comms/agents/workers_3/dev/e48035-linked-selection-ledger.json",
+      "sha256": "58b9b7072dde536bbe919e865149758c13a5e9ce6921f64306036acc9b400100"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/e48035-linked-review/successor-nonreference-final-review.json",
+      "sha256": "a837907a5ed0fa61a4d2ed60d70ba766875810475c4e6461ad3bea030ff673c9"
+    }
+  },
+  "requests": [
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE48nnn/GSE48035/miniml/GSE48035_family.xml.tgz",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "http-8a5709e3b36e4f501eafa7a3b0d0431f8f20073c481e88cdfbc082e00b7cde85",
+          "status": 200,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 15:39:31 GMT",
+            "Server": "Apache",
+            "Last-Modified": "Tue, 11 Aug 2026 05:43:20 GMT",
+            "Accept-Ranges": "bytes",
+            "Content-Length": "6529",
+            "Cache-Control": "public, max-age=86400",
+            "Expires": "Mon, 28 Sep 2026 15:39:31 GMT",
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+            "Access-Control-Allow-Headers": "RANGE, Cache-control, If-None-Match, Content-Type",
+            "Access-Control-Expose-Headers": "Content-Length, Content-Range, Content-Type",
+            "Keep-Alive": "timeout=5, max=1000",
+            "Connection": "Keep-Alive",
+            "Content-Type": "application/x-gzip"
+          },
+          "encoding": null,
+          "repeat": 1
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "E-GEOD-48035/linked",
+      "route_intent": "linked-only",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "SRP026126"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "SRP026126": "records"
+          },
+          "requested_accessions": [
+            "SRP026126"
+          ]
+        },
+        "ae2json": {
+          "kind": "local-ae",
+          "files": {
+            "E-GEOD-48035": {
+              "idf": "idf",
+              "sdrfs": [
+                "sdrf"
+              ]
+            }
+          }
+        },
+        "enricher": {
+          "kind": "no-publication"
+        }
+      },
+      "options": {
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra",
+        "input_options": {
+          "include_peer": false,
+          "enrich_from_geo_ae": true
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445971/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445970/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445969/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445968/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445967/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445965/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445966/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445963/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445956/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445954/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445953/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445951/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445952/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445950/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445949/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445948/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445971/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445970/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445969/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445968/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445967/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445965/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445966/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445963/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445956/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445954/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445953/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445951/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445952/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445950/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445949/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445948/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445971/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445970/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445969/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445968/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445967/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445965/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445966/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445963/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445956/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445954/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445953/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445951/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445952/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445950/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445949/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445948/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "root-reviewed explicit captured transport selection; successor science review pending",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Root-reviewed exact source successor; strict final execution pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48035/linked.json",
+        "sha256": "6eeb854d806eeb0b3275f45d7d5574e613517c8cfab9f8300da0a354d2929288"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48035/linked.magetab.json",
+        "sha256": "bb2fafe92635e4ae8da5831fce13f60f7141c1c327ed2d8c8db227d5570a4015"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48035/linked.tsv.json",
+        "sha256": "efdbe6a0bbaf46feb648a1ff4709a0113a2eb3512a3483928318d7f29b9c6e0b"
+      }
+    },
+    "successor_generation_revision": "f061c3f39b1b7e71aa6bdb6a61aab3561b31de95",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/e48035-linked-review/successor-nonreference-final-review.json",
+      "report_sha256": "a837907a5ed0fa61a4d2ed60d70ba766875810475c4e6461ad3bea030ff673c9",
+      "route": "E-GEOD-48035.linked",
+      "status": "SCIENTIFIC_DELTA_PASS"
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-GEOD-48035",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:36:31.388506+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-GEOD-48035/summary.json",
+      "summary_sha256": "af8b4c89758da969f46571009f9ad219f8c35f4011aff9bab96c9fd507bc5d27"
+    }
+  ],
+  "coverage_kind": "single-session-recorded-replay",
+  "transport_selection_review": {
+    "ledger": ".dev/comms/agents/workers_3/dev/e48035-linked-selection-ledger.json",
+    "sha256": "58b9b7072dde536bbe919e865149758c13a5e9ce6921f64306036acc9b400100",
+    "status": "vergil PASS transport only"
+  }
+}

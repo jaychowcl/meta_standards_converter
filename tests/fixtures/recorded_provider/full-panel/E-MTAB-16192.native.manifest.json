@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-16192-native-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-16192.idf.txt",
+      "sha256": "b895adcc98cc0c9003ddac288f724bd21bdc295844524067aec212c22fbc669c"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-16192.sdrf.txt",
+      "sha256": "8d58f1561881e6413a7c86ff1bbc9cc60b76b64f56d8d85dc2e5cf6310427035"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-16192--resolution.json",
+      "sha256": "258463421d40eec2349c88e90b0fdfc68900bf1b68996973fd9c4ea52e0decaf",
+      "original_pickle_sha256": "1afb4e292cc54e8a113d678a28f7e19f0c9d3b31e700a13e4f4bbd20e1b23204"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-16192--ERP185409.records.json",
+      "sha256": "8675a0735ccb2736d8d20881a621e4e5e6767704832fac5ddf1ae308c7711962",
+      "original_pickle_sha256": "a7d75c136baad1271c019950a1af62d48e989ff47d8eb4889858f2566975982c"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-16192.native/payloads/3029ea9569284f4b.json.json",
+      "sha256": "2f7b701a1a1ba5ba7771252e74d00f90c672e25af5ff9d246c78c7a28bddf1ea"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-16192.native/payloads/3029ea9569284f4b.magetab.json",
+      "sha256": "1a8b2514a1799bf0c6dca51b82a8e527d9f5e3117d797417567e10ff8531fb86"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16192/native.tsv.json",
+      "sha256": "c79cd63e660b2e8a175e2f130ec91b98c0cf0bcc13f27bb2a387b5a601d85c86"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-16192/native",
+      "route_intent": "parser-native-off",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP185409"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP185409": "records"
+          },
+          "requested_accessions": [
+            "ERP185409"
+          ]
+        }
+      },
+      "options": {
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra"
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16192/native.json",
+        "sha256": "1317a1fa182f8105d79503a09f06a1903db5812cb12609e188777c77dece7c27"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16192/native.magetab.json",
+        "sha256": "810bfbaabda8e10a1ee24fe6590603450d1ba6c89fe75738062c7087ff475dae"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16192/native.tsv.json",
+        "sha256": "c79cd63e660b2e8a175e2f130ec91b98c0cf0bcc13f27bb2a387b5a601d85c86"
+      }
+    },
+    "successor_generation_revision": "c08e9ca11956663e9c72b40f658f112bd099b837",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "report_sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2",
+      "route": "E-MTAB-16192.native",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-16192",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:10:44.217229+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-16192/summary.json",
+      "summary_sha256": "c49a693cd0314b1fa35da0f3acc6453ed0bdc525b7ac7c8588806478eff92c41"
+    }
+  ]
+}

@@ -1,0 +1,1178 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-5481-linked-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-5481.idf.txt",
+      "sha256": "b5384f561516aa46a5eb9bf13990edb6b002ce4e6291244d6fedcac3e444c6e5"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-5481.sdrf.txt",
+      "sha256": "8d76747de5895815a6247f9662b1d370944b40bb84f05cd430d7d075f3ac1bcb"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-5481--resolution.json",
+      "sha256": "b6242b36f8e1a6ce8ec10b31a82b5297761545c02999049b3acec2b082ac9c28",
+      "original_pickle_sha256": "a7bba202ed9835db5d6c11dcb96e04e74aefcea3b493fd6062f0564e3018b88c"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-5481--ERP022096.records.json",
+      "sha256": "32ae3d8a334f8e5e94b727cfde7e5c51b7c2409d9f1d37a02f0e4722fac4bc51",
+      "original_pickle_sha256": "9647cbaa8b8a45360905cb51f19235f85217e5d686550c0ef7ad820fbc383c28"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-5481.linked/payloads/e806988d0e39ca35.json.json",
+      "sha256": "686346f5e73dcbc3a222ea9e34026eabafff31e287cf643a3d1b1b18e3f0ebb2"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-5481.linked/payloads/e806988d0e39ca35.magetab.json",
+      "sha256": "99bad1a6c4a4ba35161d796518f3d165c7007b5ca4add707dc126410732e8a61"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-5481/linked.tsv.json",
+      "sha256": "db9fc245d5510b9cc57aad646b6324dac29794b4c4d65e6d979e28f4e1966779"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-5481/linked",
+      "route_intent": "linked-only",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP022096"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP022096": "records"
+          },
+          "requested_accessions": [
+            "ERP022096"
+          ]
+        },
+        "ae2json": {
+          "kind": "local-ae",
+          "files": {
+            "E-MTAB-5481": {
+              "idf": "idf",
+              "sdrfs": [
+                "sdrf"
+              ]
+            }
+          }
+        },
+        "enricher": {
+          "kind": "no-publication"
+        }
+      },
+      "options": {
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra",
+        "input_options": {
+          "include_peer": false,
+          "enrich_from_geo_ae": true
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600165/sra_run/ERR1883127/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600166/sra_run/ERR1883128/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600167/sra_run/ERR1883129/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600168/sra_run/ERR1883130/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600169/sra_run/ERR1883131/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600170/sra_run/ERR1883132/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600171/sra_run/ERR1883133/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600172/sra_run/ERR1883134/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600173/sra_run/ERR1883135/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600174/sra_run/ERR1883136/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600175/sra_run/ERR1883137/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600176/sra_run/ERR1883138/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600177/sra_run/ERR1883139/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600178/sra_run/ERR1883140/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600179/sra_run/ERR1883141/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600180/sra_run/ERR1883142/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600181/sra_run/ERR1883143/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600182/sra_run/ERR1883144/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600183/sra_run/ERR1883145/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600184/sra_run/ERR1883146/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600185/sra_run/ERR1883147/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600186/sra_run/ERR1883148/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600187/sra_run/ERR1883149/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600188/sra_run/ERR1883150/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600189/sra_run/ERR1883151/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600190/sra_run/ERR1883152/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600191/sra_run/ERR1883153/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600192/sra_run/ERR1883154/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600193/sra_run/ERR1883155/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600194/sra_run/ERR1883156/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600195/sra_run/ERR1883157/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600196/sra_run/ERR1883158/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600197/sra_run/ERR1883159/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600198/sra_run/ERR1883160/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600199/sra_run/ERR1883161/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600200/sra_run/ERR1883162/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600201/sra_run/ERR1883163/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600202/sra_run/ERR1883164/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600203/sra_run/ERR1883165/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600204/sra_run/ERR1883166/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600205/sra_run/ERR1883167/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600206/sra_run/ERR1883168/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600207/sra_run/ERR1883169/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600208/sra_run/ERR1883170/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600209/sra_run/ERR1883171/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600210/sra_run/ERR1883172/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600211/sra_run/ERR1883173/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600212/sra_run/ERR1883174/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600213/sra_run/ERR1883175/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600214/sra_run/ERR1883176/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600215/sra_run/ERR1883177/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600216/sra_run/ERR1883178/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600217/sra_run/ERR1883179/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600218/sra_run/ERR1883180/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600219/sra_run/ERR1883181/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP022096: linked_metadata: source conflict at /sample/ERS1600220/sra_run/ERR1883182/library_source: SRA ERP022096 'TRANSCRIPTOMIC' versus ArrayExpress E-MTAB-5481 'TRANSCRIPTOMIC SINGLE CELL'; selected ArrayExpress 'TRANSCRIPTOMIC SINGLE CELL' (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600165/sra_run/ERR1883127/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600166/sra_run/ERR1883128/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600167/sra_run/ERR1883129/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600168/sra_run/ERR1883130/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600169/sra_run/ERR1883131/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600170/sra_run/ERR1883132/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600171/sra_run/ERR1883133/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600172/sra_run/ERR1883134/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600173/sra_run/ERR1883135/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600174/sra_run/ERR1883136/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600175/sra_run/ERR1883137/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600176/sra_run/ERR1883138/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600177/sra_run/ERR1883139/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600178/sra_run/ERR1883140/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600179/sra_run/ERR1883141/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600180/sra_run/ERR1883142/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600181/sra_run/ERR1883143/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600182/sra_run/ERR1883144/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600183/sra_run/ERR1883145/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600184/sra_run/ERR1883146/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600185/sra_run/ERR1883147/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600186/sra_run/ERR1883148/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600187/sra_run/ERR1883149/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600188/sra_run/ERR1883150/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600189/sra_run/ERR1883151/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600190/sra_run/ERR1883152/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600191/sra_run/ERR1883153/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600192/sra_run/ERR1883154/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600193/sra_run/ERR1883155/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600194/sra_run/ERR1883156/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600195/sra_run/ERR1883157/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600196/sra_run/ERR1883158/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600197/sra_run/ERR1883159/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600198/sra_run/ERR1883160/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600199/sra_run/ERR1883161/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600200/sra_run/ERR1883162/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600201/sra_run/ERR1883163/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600202/sra_run/ERR1883164/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600203/sra_run/ERR1883165/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600204/sra_run/ERR1883166/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600205/sra_run/ERR1883167/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600206/sra_run/ERR1883168/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600207/sra_run/ERR1883169/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600208/sra_run/ERR1883170/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600209/sra_run/ERR1883171/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600210/sra_run/ERR1883172/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600211/sra_run/ERR1883173/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600212/sra_run/ERR1883174/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600213/sra_run/ERR1883175/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600214/sra_run/ERR1883176/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600215/sra_run/ERR1883177/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600216/sra_run/ERR1883178/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600217/sra_run/ERR1883179/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600218/sra_run/ERR1883180/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600219/sra_run/ERR1883181/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600220/sra_run/ERR1883182/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600165/sra_run/ERR1883127/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600166/sra_run/ERR1883128/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600167/sra_run/ERR1883129/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600168/sra_run/ERR1883130/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600169/sra_run/ERR1883131/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600170/sra_run/ERR1883132/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600171/sra_run/ERR1883133/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600172/sra_run/ERR1883134/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600173/sra_run/ERR1883135/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600174/sra_run/ERR1883136/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600175/sra_run/ERR1883137/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600176/sra_run/ERR1883138/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600177/sra_run/ERR1883139/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600178/sra_run/ERR1883140/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600179/sra_run/ERR1883141/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600180/sra_run/ERR1883142/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600181/sra_run/ERR1883143/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600182/sra_run/ERR1883144/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600183/sra_run/ERR1883145/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600184/sra_run/ERR1883146/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600185/sra_run/ERR1883147/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600186/sra_run/ERR1883148/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600187/sra_run/ERR1883149/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600188/sra_run/ERR1883150/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600189/sra_run/ERR1883151/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600190/sra_run/ERR1883152/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600191/sra_run/ERR1883153/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600192/sra_run/ERR1883154/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600193/sra_run/ERR1883155/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600194/sra_run/ERR1883156/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600195/sra_run/ERR1883157/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600196/sra_run/ERR1883158/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600197/sra_run/ERR1883159/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600198/sra_run/ERR1883160/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600199/sra_run/ERR1883161/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600200/sra_run/ERR1883162/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600201/sra_run/ERR1883163/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600202/sra_run/ERR1883164/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600203/sra_run/ERR1883165/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600204/sra_run/ERR1883166/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600205/sra_run/ERR1883167/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600206/sra_run/ERR1883168/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600207/sra_run/ERR1883169/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600208/sra_run/ERR1883170/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600209/sra_run/ERR1883171/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600210/sra_run/ERR1883172/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600211/sra_run/ERR1883173/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600212/sra_run/ERR1883174/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600213/sra_run/ERR1883175/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600214/sra_run/ERR1883176/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600215/sra_run/ERR1883177/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600216/sra_run/ERR1883178/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600217/sra_run/ERR1883179/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600218/sra_run/ERR1883180/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600219/sra_run/ERR1883181/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS1600220/sra_run/ERR1883182/library_source: [{'provider': 'SRA', 'accession': 'ERP022096', 'value': 'TRANSCRIPTOMIC'}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-5481', 'value': 'TRANSCRIPTOMIC SINGLE CELL'}",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-5481/linked.json",
+        "sha256": "1b9e3e70172d7f9c3965b9f50afadf43c405a938049b7d4a14650eebce6cd38b"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-5481/linked.magetab.json",
+        "sha256": "439570e915fa76da63c85f669d412a33ba266faf423ac8da430b946a08fe5238"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-5481/linked.tsv.json",
+        "sha256": "db9fc245d5510b9cc57aad646b6324dac29794b4c4d65e6d979e28f4e1966779"
+      }
+    },
+    "successor_generation_revision": "c08e9ca11956663e9c72b40f658f112bd099b837",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "report_sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2",
+      "route": "E-MTAB-5481.linked",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-5481",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:20:16.003397+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-5481/summary.json",
+      "summary_sha256": "293d56e2e0468aa14b0ad4042201d3ab5fa40bcc19332433f84e07f97de0f3bd"
+    }
+  ]
+}

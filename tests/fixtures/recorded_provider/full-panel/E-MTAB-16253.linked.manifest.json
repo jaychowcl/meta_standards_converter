@@ -1,0 +1,314 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-16253-linked-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-16253.idf.txt",
+      "sha256": "21ca21825c4c88361c733e873f86a2b5e443ff63bd7103d9eeaa4eedd8bbeb41"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-16253.sdrf.txt",
+      "sha256": "fbd6f0434f72c462675c4894992dd82ed3e5acb61e1485cf5bea0b9772a6060e"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-16253--resolution.json",
+      "sha256": "b7d58e4d571389745fcc8fa42890e2012f87f69ac1a3d914c38fdc33a5def61b",
+      "original_pickle_sha256": "f51e48dc74d510940c923a4208f10695cf02347f2f409f40db287acf7ff01e1e"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-16253--ERP185509.records.json",
+      "sha256": "00f074021dba22e97cc677bb0137cb214765cc14fe4a8e31cdb6f0136a5a73bb",
+      "original_pickle_sha256": "91727b4ddfd6e4fe60fa8781f2906ad912fb0f5ae09314239e63fef6b7aecbce"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-16253.linked/payloads/ecb6569b245818e4.json.json",
+      "sha256": "2ec70fc50e5a0a477246ad0377a56585bd23d2eec4b64bd46ddd62785710243e"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-16253.linked/payloads/ecb6569b245818e4.magetab.json",
+      "sha256": "460f319cce9739f68894ded0154bed00c1d289599011229c581d60e2365b5b47"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/linked.tsv.json",
+      "sha256": "b8913c8744f69f12ec438ae84a593776a8bf3ec5427d1239d9bfffcfa79ecb8e"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-16253/linked",
+      "route_intent": "linked-only",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP185509"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP185509": "records"
+          },
+          "requested_accessions": [
+            "ERP185509"
+          ]
+        },
+        "ae2json": {
+          "kind": "local-ae",
+          "files": {
+            "E-MTAB-16253": {
+              "idf": "idf",
+              "sdrfs": [
+                "sdrf"
+              ]
+            }
+          }
+        },
+        "enricher": {
+          "kind": "no-publication"
+        }
+      },
+      "options": {
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra",
+        "input_options": {
+          "include_peer": false,
+          "enrich_from_geo_ae": true
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611842/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611846/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611840/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611841/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611845/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611847/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611843/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP185509: linked_metadata: source conflict at /sample/ERS27611844/channel/0/organism: SRA ERP185509 [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}] versus ArrayExpress E-MTAB-16253 [{'value': 'Mycobacterium tuberculosis'}]; selected ArrayExpress [{'value': 'Mycobacterium tuberculosis'}] (AE > GEO > native; retain current value for equal source rank)",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611846/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611840/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611841/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611845/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611847/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611843/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611844/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611846/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611840/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611841/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611845/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611847/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611843/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "recorded source conflict at /sample/ERS27611844/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}]; selected {'provider': 'ArrayExpress', 'accession': 'E-MTAB-16253', 'value': [{'value': 'Mycobacterium tuberculosis'}]}",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/linked.json",
+        "sha256": "44a4d19e00243d55c0e53fb74feea4cc8420f9d6b1a32a8cb5010bb9d16247df"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/linked.magetab.json",
+        "sha256": "55ebd47dab7170509ab281f13cebcda2a2610ca4043e83dc48139ba603a8f846"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/linked.tsv.json",
+        "sha256": "b8913c8744f69f12ec438ae84a593776a8bf3ec5427d1239d9bfffcfa79ecb8e"
+      }
+    },
+    "successor_generation_revision": "c08e9ca11956663e9c72b40f658f112bd099b837",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "report_sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2",
+      "route": "E-MTAB-16253.linked",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-16253",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T14:47:39.038123+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-16253/summary.json",
+      "summary_sha256": "9c2dcf25e95b23a0f17f396041187321a5ca5fca9db8f3b6a8d3753633a1a3f5"
+    }
+  ]
+}

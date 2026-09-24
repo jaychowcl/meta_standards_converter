@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-13131-linked-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-13131.idf.txt",
+      "sha256": "10bdb531aa93761bd5386f36058ab1f3590eee0c8d71e5878adb4a87dad426bd"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-13131.sdrf.txt",
+      "sha256": "e67eee5cd2b4ef8eec69fdb4a515707f086dceffe8912434a6826d0f408c6b99"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-13131--resolution.json",
+      "sha256": "8ef1f37396eb87ef92c847ce35fb09868507ac795ba78c0c85eed24000082c78",
+      "original_pickle_sha256": "71369b9311975f82f0608f95ff652e7f21570d27275a06fd5613618c46b91eff"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-13131--ERP148790.records.json",
+      "sha256": "0e893a7130e4337f7406f4ab2d91f738ca5e31322a0b3906f53e74ef54eaed5c",
+      "original_pickle_sha256": "30ce645f4d2dc6eff2f32b4033f4c1aa03b4d9d59feada3bd73322e323001b63"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-13131.linked/payloads/a6aaf05856491ab0.json.json",
+      "sha256": "27d0e63c7db60cfd36bc2609ae5eea6588c04a33e3dc143da53b5f76974295f3"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-13131.linked/payloads/a6aaf05856491ab0.magetab.json",
+      "sha256": "c81312311816510f64ad65d97b5423b129a323788fe72293160d78bacd2ca134"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/linked.tsv.json",
+      "sha256": "45b32545149f1b59da4f196870bf32fe2106596d77bb5ba0e4b285b4ce235dee"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/successor-nonreference-final-review.json",
+      "sha256": "23ffc14afcac13e728bd35626d0b0fe13a45da2edd2ff1cc3318c9c81c0cd745"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-13131/linked",
+      "route_intent": "linked-only",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP148790"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP148790": "records"
+          },
+          "requested_accessions": [
+            "ERP148790"
+          ]
+        },
+        "ae2json": {
+          "kind": "local-ae",
+          "files": {
+            "E-MTAB-13131": {
+              "idf": "idf",
+              "sdrfs": [
+                "sdrf"
+              ]
+            }
+          }
+        },
+        "enricher": {
+          "kind": "no-publication"
+        }
+      },
+      "options": {
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra",
+        "input_options": {
+          "include_peer": false,
+          "enrich_from_geo_ae": true
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/linked.json",
+        "sha256": "4b9ce67e2484fbba459649c2884c8c22892ea66f0a65ed57ddd548f8c8bac7c8"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/linked.magetab.json",
+        "sha256": "3370708f42e78149c491aa808a167b2ebbb27b7748c170dcabbb26d7e82db06e"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-13131/linked.tsv.json",
+        "sha256": "45b32545149f1b59da4f196870bf32fe2106596d77bb5ba0e4b285b4ce235dee"
+      }
+    },
+    "successor_generation_revision": "7693e3314e26c7fcf7bcbda8877d390435b0bff9",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/successor-nonreference-final-review.json",
+      "report_sha256": "23ffc14afcac13e728bd35626d0b0fe13a45da2edd2ff1cc3318c9c81c0cd745",
+      "route": "E-MTAB-13131.linked",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-13131",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:08:11.600334+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-13131/summary.json",
+      "summary_sha256": "8729c2cdfec72cf37141e1acd2ee8aaf3481855308acebb02d61a16d6c8caccf"
+    }
+  ]
+}

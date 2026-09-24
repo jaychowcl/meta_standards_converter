@@ -1,0 +1,354 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-14566-ena-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "recorded-http",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14566.idf.txt",
+      "sha256": "4cddba19fc1c6ba770a9c65e881dc9c0a790a2c872ca08387c9828e11b61fd50"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14566.sdrf.txt",
+      "sha256": "f61b6a45f2eba9099be821b76d380608c7804f4e233aea618b171bce691288ef"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/ena.json",
+      "sha256": "6400f52c53031842f4a7ddcca880299671ec5c691c04d495311de97c260b0446"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/ena.magetab.json",
+      "sha256": "6b9c6611467f69452e64cac27f6f65ce7249364408e286dd0dfc84884c7b2e5d"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/ena.tsv.json",
+      "sha256": "f91df45a59aea8dd8ffefaa84f5672b136d07fe3c3c8ad5b24b0e36b8252c5e2"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-14566/ena",
+      "route_intent": "parser-native-off",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP165595"
+      },
+      "services": {},
+      "options": {
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "ena"
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906964: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906965: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906966: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906967: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906968: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906969: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906970: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906971: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906972: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906973: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906974: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906975: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906976: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906977: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906978: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906979: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906980: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906981: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906982: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906983: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906984: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906985: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906986: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906987: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906988: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906989: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906990: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906991: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906992: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERR13906993: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERX13308825: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references ERX13308826: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references PRJEB81792: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references SAMEA116327055: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: ENA cross references SAMEA116327056: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: linked SAMEA116327055: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: linked SAMEA116327056: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: linked 9606: RuntimeError",
+              "stage": "load",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "Native import was incomplete",
+              "stage": "load",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-22"
+      }
+    }
+  ],
+  "request_closure": "pending-explicit-http-attempt-selection",
+  "unmet_prerequisites": [
+    "Final ENA offline probe intentionally not launched: inventory lacks35 native supplementary cross-references (30runs,2experiments,2BioSamples,1project), plus observed BioSample/taxonomy responses. Actual fresh ENA partial-valid wallclock-budget result remains distinct; no complete exact replay cohort."
+  ],
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "immutable original; final model/comment and rendering fixes require independently reviewed successor expectations"
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-14566",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:05:09.355738+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-14566/summary.json",
+      "summary_sha256": "dd384e2c6db76502f17e501709e7941a50636fd260806c305ad9faf540a532e5"
+    }
+  ],
+  "coverage_evidence": {
+    "missing_requests": {
+      "path": ".dev/comms/agents/workers_3/dev/geomx-missing38-requests.json",
+      "sha256": "ba731b24a13ba78982a62c01c27c633a2eb4e62efd0a6cb4740df1ae5e4c9391"
+    },
+    "ena_route_inference": {
+      "path": ".dev/comms/agents/workers_3/dev/geomx-ena-unmet-proof.json",
+      "sha256": "bb99278b22b09d4d290cc19f286a634570e4d312b689934d91874f0b71353015"
+    },
+    "probe_report": {
+      "path": ".dev/comms/agents/workers_3/dev/legacy-probes-geomx-final/E-MTAB-14566/standard/report.json",
+      "sha256": "0db9cdc7e6950b0591a4ceea009c1a9f18bac83fa1d149ba8b5f6408b0555a8e"
+    }
+  }
+}

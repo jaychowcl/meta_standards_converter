@@ -1,0 +1,375 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-14566-standard-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14566.idf.txt",
+      "sha256": "4cddba19fc1c6ba770a9c65e881dc9c0a790a2c872ca08387c9828e11b61fd50"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14566.sdrf.txt",
+      "sha256": "f61b6a45f2eba9099be821b76d380608c7804f4e233aea618b171bce691288ef"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14566--resolution.json",
+      "sha256": "c6859494b85f870aa0b9562d19953c15e967fa1f33314c2486ee6eb1f91fdf02",
+      "original_pickle_sha256": "09e9d144e4a6ff53e47570816644e65b5034a7ef35630f8870298c4ba0ac65c7"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14566--ERP165595.records.json",
+      "sha256": "786b5206460aca8824f988b0f7e83011d7f8a1f3e3d2c4fce17fa4fe96d7fd49",
+      "original_pickle_sha256": "1a72064d991d6c54797578faf4fa548ae3fcefc93c4ec76dfeb86cacde112020"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/standard.json",
+      "sha256": "b6e02900c472398970454f341599de4031ddbae796c15de45dbd0a6bd99afd0c"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/standard.magetab.json",
+      "sha256": "5c7148ade915f20351d604536243d96eac50b0e949f5101f3734493cf91d7edd"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14566/standard.tsv.json",
+      "sha256": "43e0c8d51e67f673237fab3293312fcbf191f99e5522c34409a365d1dbe138e9"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-14566/standard",
+      "route_intent": "production-standard",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP165595"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP165595": "records"
+          },
+          "requested_accessions": [
+            "ERP165595"
+          ]
+        }
+      },
+      "options": {
+        "enrichment": "standard",
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra"
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906964: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906965: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906966: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906967: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906968: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906969: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906970: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906971: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906972: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906973: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906974: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906975: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906976: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906977: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906978: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906979: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906980: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906981: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906982: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906983: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906984: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906985: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906986: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906987: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906988: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906989: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906990: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906991: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906992: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERR13906993: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERX13308825: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references ERX13308826: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references PRJEB81792: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references SAMEA116327055: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: ENA cross references SAMEA116327056: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: linked SAMEA116327055: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: linked SAMEA116327056: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: peer_provider: linked 9606: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "ERP165595: linked_metadata: E-MTAB-14566: enrichment unavailable (RuntimeError)",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-22"
+      }
+    }
+  ],
+  "request_closure": "pending-explicit-http-attempt-selection",
+  "unmet_prerequisites": [
+    "Final bounded offline standard discovery observed38 missing exact requests (35ENA xrefs,2BioSamples,1taxonomy) and reached900.176s CPU/process ceiling without a returned package; no live allowance remains."
+  ],
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "immutable original; final model/comment and rendering fixes require independently reviewed successor expectations"
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-14566",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:05:09.355738+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-14566/summary.json",
+      "summary_sha256": "dd384e2c6db76502f17e501709e7941a50636fd260806c305ad9faf540a532e5"
+    }
+  ],
+  "coverage_evidence": {
+    "missing_requests": {
+      "path": ".dev/comms/agents/workers_3/dev/geomx-missing38-requests.json",
+      "sha256": "ba731b24a13ba78982a62c01c27c633a2eb4e62efd0a6cb4740df1ae5e4c9391"
+    },
+    "ena_route_inference": {
+      "path": ".dev/comms/agents/workers_3/dev/geomx-ena-unmet-proof.json",
+      "sha256": "bb99278b22b09d4d290cc19f286a634570e4d312b689934d91874f0b71353015"
+    },
+    "probe_report": {
+      "path": ".dev/comms/agents/workers_3/dev/legacy-probes-geomx-final/E-MTAB-14566/standard/report.json",
+      "sha256": "0db9cdc7e6950b0591a4ceea009c1a9f18bac83fa1d149ba8b5f6408b0555a8e"
+    }
+  }
+}

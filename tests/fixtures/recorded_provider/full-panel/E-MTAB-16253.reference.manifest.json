@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-16253-reference-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "reduced-source",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-16253.idf.txt",
+      "sha256": "21ca21825c4c88361c733e873f86a2b5e443ff63bd7103d9eeaa4eedd8bbeb41"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-16253.sdrf.txt",
+      "sha256": "fbd6f0434f72c462675c4894992dd82ed3e5acb61e1485cf5bea0b9772a6060e"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-16253.reference/payloads/c351c0ca74396ae9.json.json",
+      "sha256": "d0641a018bdb358c79bd5d46e1a180955950d0bcc9d4cd289e09e8feefb1074b",
+      "reviewed_candidate": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-16253.reference/CANDIDATE.json"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-16253.reference/payloads/c351c0ca74396ae9.magetab.json",
+      "sha256": "a59feaf8df9e573a3953084959f0e0bad32dbb9e4228b746906ccede37b44091",
+      "reviewed_candidate": ".dev/comms/agents/workers_3/dev/successor-candidates/E-MTAB-16253.reference/CANDIDATE.json"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/reference.tsv.json",
+      "sha256": "a6d475dcff719a99fe211e727cd4709fdbc1ee2d7849392c1c2c2caf67c66eb7"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/successor-reference-review.json",
+      "sha256": "ca46e989370d6c18fe9a42b8e8cd8e39d46f5fbec32240f9f02744578fef29a4"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-16253/reference",
+      "route_intent": "deposited-off",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "file",
+        "file": "idf"
+      },
+      "services": {},
+      "options": {
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        }
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "complete",
+          "causes": [],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "immutable original; final model/comment and rendering fixes require independently reviewed successor expectations",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/reference.json",
+        "sha256": "cc58ce56f9b64d632befccf4e5a5b79cd3fb34214b01684838fe672cd978202d"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/reference.magetab.json",
+        "sha256": "57de9e087bc9d0308255849251ced1aa526b83a8407e73568547c5cd90de797c"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-16253/reference.tsv.json",
+        "sha256": "a6d475dcff719a99fe211e727cd4709fdbc1ee2d7849392c1c2c2caf67c66eb7"
+      }
+    },
+    "successor_generation_revision": "7693e3314e26c7fcf7bcbda8877d390435b0bff9",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "raw_scope": "strict18deposited/1883rows/946qualifiers, noncommentJSON and per-step comment occurrences;2direct source comparison",
+      "report": ".dev/comms/agents/workers_2/dev/successor-reference-review.json",
+      "report_sha256": "ca46e989370d6c18fe9a42b8e8cd8e39d46f5fbec32240f9f02744578fef29a4",
+      "status": "science reviewed; final-source strict refresh pending"
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-16253",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T14:47:39.038123+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-16253/summary.json",
+      "summary_sha256": "9c2dcf25e95b23a0f17f396041187321a5ca5fca9db8f3b6a8d3753633a1a3f5"
+    }
+  ]
+}

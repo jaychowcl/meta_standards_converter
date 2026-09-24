@@ -1,0 +1,1606 @@
+{
+  "schema_version": "1.0",
+  "panel": "workflow-provenance-18-studies",
+  "expected_studies": 18,
+  "expected_routes": 74,
+  "expected_facade_calls": 222,
+  "classification": "not-executed",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "unmet_prerequisites": [
+    {
+      "study": "E-GEOD-48035",
+      "route": "standard",
+      "reasons": [
+        "Forty exact follow-up requests missing after explicit original/fresh mixed probe; bounded live allowance exhausted. No complete standard result in fresh actual SRA session."
+      ]
+    },
+    {
+      "study": "E-MTAB-14566",
+      "route": "standard",
+      "reasons": [
+        "Final bounded offline standard discovery observed38 missing exact requests (35ENA xrefs,2BioSamples,1taxonomy) and reached900.176s CPU/process ceiling without a returned package; no live allowance remains."
+      ]
+    },
+    {
+      "study": "E-MTAB-14566",
+      "route": "ena",
+      "reasons": [
+        "Final ENA offline probe intentionally not launched: inventory lacks35 native supplementary cross-references (30runs,2experiments,2BioSamples,1project), plus observed BioSample/taxonomy responses. Actual fresh ENA partial-valid wallclock-budget result remains distinct; no complete exact replay cohort."
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "study": "E-GEOD-48034",
+      "route": "reference",
+      "manifest": "E-GEOD-48034.reference.manifest.json",
+      "manifest_sha256": "311c89297f9bf58cb19f15a40090de3c8ff7e4fa8ad2797da874178d9bbce50a",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48034-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-GEOD-48034",
+      "route": "native",
+      "manifest": "E-GEOD-48034.native.manifest.json",
+      "manifest_sha256": "25f0e2b1db5e441d70c9aac0a973a3600f3e08c84e6644bcb0edd76e9aa6e06a",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48034-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-GEOD-48034",
+      "route": "linked",
+      "manifest": "E-GEOD-48034.linked.manifest.json",
+      "manifest_sha256": "dbf08e6f998a8ecea571ed3df3bbfa15a297c1cf1cfe4d1c2b37ffe5854eb98b",
+      "request_closure": "root-reviewed original-session GEO tgz; exactly one declared response",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48034-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-GEOD-48034",
+      "route": "standard",
+      "manifest": "E-GEOD-48034.standard.manifest.json",
+      "manifest_sha256": "093a9bb1377a80bc3c9e545f5f36fe28d8063860b4f7ff3f0b56b31924647089",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48034-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-GEOD-48034",
+      "route": "ena",
+      "manifest": "E-GEOD-48034.ena.manifest.json",
+      "manifest_sha256": "0ff9749db6de79541d59eed83ec75f9b1c95399ed0fe5ef700cfe3ee0789ffc4",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "recorded-http",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48034-ena-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-GEOD-48035",
+      "route": "reference",
+      "manifest": "E-GEOD-48035.reference.manifest.json",
+      "manifest_sha256": "9f869967442904d24d1c605870576da039b75db67b8f50ee91b5ce681fad12a0",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48035-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-GEOD-48035",
+      "route": "native",
+      "manifest": "E-GEOD-48035.native.manifest.json",
+      "manifest_sha256": "7ad08bb34736086ab0052bdeb6d9415c7318a826e07e1ad997922b01ea1c2695",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48035-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-GEOD-48035",
+      "route": "linked",
+      "manifest": "E-GEOD-48035.linked.manifest.json",
+      "manifest_sha256": "99012d8297f46de4223e138fb19efa1a98841241fdfc90994b799e2acb38e924",
+      "request_closure": "root-reviewed explicit captured transport selection; successor science review pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48035-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-GEOD-48035",
+      "route": "standard",
+      "manifest": "E-GEOD-48035.standard.manifest.json",
+      "manifest_sha256": "c1f627cfb77f14fd98ee37112b8fe1274412e422c4ebbc1fe54c9f843ebee45f",
+      "request_closure": "pending-explicit-http-attempt-selection",
+      "historical_missing": 76,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "unmet prerequisites",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-48035-standard-legacy-1cec34c",
+      "route_intent": "production-standard",
+      "unmet_prerequisites": [
+        "Forty exact follow-up requests missing after explicit original/fresh mixed probe; bounded live allowance exhausted. No complete standard result in fresh actual SRA session."
+      ]
+    },
+    {
+      "study": "E-GEOD-52564",
+      "route": "reference",
+      "manifest": "E-GEOD-52564.reference.manifest.json",
+      "manifest_sha256": "e969b7df296b236b6e165f84f223ea46473ad88d51e6ddb98309fa8c5a4d1599",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-52564-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-GEOD-52564",
+      "route": "native",
+      "manifest": "E-GEOD-52564.native.manifest.json",
+      "manifest_sha256": "23acb64632c779794ad65c8b985a89b0025da13278b58de6fe95a1a61fc08f0a",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-52564-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-GEOD-52564",
+      "route": "linked",
+      "manifest": "E-GEOD-52564.linked.manifest.json",
+      "manifest_sha256": "60571bc1019f483f4c72427a72024699d9714b19caa7fca732a2b46634ce800b",
+      "request_closure": "root-reviewed original-session GEO tgz; exactly one declared response",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-52564-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-GEOD-52564",
+      "route": "standard",
+      "manifest": "E-GEOD-52564.standard.manifest.json",
+      "manifest_sha256": "499b9cbf5f324e649c2161b17e4410c6fcca305cc0ae00f477cce3bc2b0d3dc0",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-52564-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-GEOD-60450",
+      "route": "reference",
+      "manifest": "E-GEOD-60450.reference.manifest.json",
+      "manifest_sha256": "530249a3d96507644005220141fd4c6b7dbdae2a711384c779fbcc042d9ac88e",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-60450-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-GEOD-60450",
+      "route": "native",
+      "manifest": "E-GEOD-60450.native.manifest.json",
+      "manifest_sha256": "b1c264ebcb8e7ef113faf110a27557c52734b972b0b7a9cd0b09cf560845f06f",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-60450-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-GEOD-60450",
+      "route": "linked",
+      "manifest": "E-GEOD-60450.linked.manifest.json",
+      "manifest_sha256": "663f1340f8a209caadebbd8cba867ad37ee0dbcc5e47b2a43caad36ac4548470",
+      "request_closure": "root-reviewed original-session GEO tgz; exactly one declared response",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-60450-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-GEOD-60450",
+      "route": "standard",
+      "manifest": "E-GEOD-60450.standard.manifest.json",
+      "manifest_sha256": "34f5e3fe0c68f9a5df53750e41b1868271b800745ff35c34237f23d450e12f08",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-60450-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-GEOD-60450",
+      "route": "ena",
+      "manifest": "E-GEOD-60450.ena.manifest.json",
+      "manifest_sha256": "bae4d63ba43127510f2748716b1adcc59bc02181dabac3a6529df4a54c52e0b8",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "recorded-http",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-GEOD-60450-ena-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-13131",
+      "route": "reference",
+      "manifest": "E-MTAB-13131.reference.manifest.json",
+      "manifest_sha256": "0736619af52600a6aaaff7038f05b509bd41106fc7441ef3e06364acf39b0012",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13131-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-13131",
+      "route": "native",
+      "manifest": "E-MTAB-13131.native.manifest.json",
+      "manifest_sha256": "dd7a507ca4879cadd530c9c66bb4f2e9de45a5956bdcdae464c2cd251b9df11d",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13131-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-13131",
+      "route": "linked",
+      "manifest": "E-MTAB-13131.linked.manifest.json",
+      "manifest_sha256": "247a56c41c64c9c267d2cc4fa23d3b103985b1dc17c775245807a994b021cc14",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13131-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-13131",
+      "route": "standard",
+      "manifest": "E-MTAB-13131.standard.manifest.json",
+      "manifest_sha256": "ec694cd74482ab5c8a61d2591c6bdd3bdc0971aef1c62362da002654e47e95a3",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13131-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-13662",
+      "route": "reference",
+      "manifest": "E-MTAB-13662.reference.manifest.json",
+      "manifest_sha256": "5978ae7f7ac9c7ef8278f9d15b564737a65539662960b0af3fc7e684a841b275",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13662-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-13662",
+      "route": "native",
+      "manifest": "E-MTAB-13662.native.manifest.json",
+      "manifest_sha256": "9a51500ee42f3cf567dd19dfa76c6d5c4a0be0dcca98a5e11cb56989bf0edeba",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13662-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-13662",
+      "route": "linked",
+      "manifest": "E-MTAB-13662.linked.manifest.json",
+      "manifest_sha256": "b615cae26abf8d41c1c5ab0c21925696e9c5815ec72430dcd7c494f1ae561bcb",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13662-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-13662",
+      "route": "standard",
+      "manifest": "E-MTAB-13662.standard.manifest.json",
+      "manifest_sha256": "949177c7c9639e3ce14001e75a5c1991a279c7d187eb28d607fd4f3e38173739",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-13662-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-14416",
+      "route": "reference",
+      "manifest": "E-MTAB-14416.reference.manifest.json",
+      "manifest_sha256": "d9732d22b72367c7efc0e0f28171656c19e89a827ea6e58b048bcc03d1c596fc",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14416-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-14416",
+      "route": "native",
+      "manifest": "E-MTAB-14416.native.manifest.json",
+      "manifest_sha256": "86bf604fc223e27b90101d28d62d68f5b0e443ef79e42f1bbef1593b7133c6b7",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14416-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-14416",
+      "route": "linked",
+      "manifest": "E-MTAB-14416.linked.manifest.json",
+      "manifest_sha256": "a3aaeb88828ae1174e50f95ddcf2c618884bd7d13e1bbc660c7ac53b066683cb",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14416-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-14416",
+      "route": "standard",
+      "manifest": "E-MTAB-14416.standard.manifest.json",
+      "manifest_sha256": "196d8f11b993da20bcbf6b78c0731dff788926c2206d09bbab7bd2107648ba3d",
+      "request_closure": "root-reviewed explicit captured transport selection; successor science review pending",
+      "historical_missing": 1,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14416-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-14560",
+      "route": "reference",
+      "manifest": "E-MTAB-14560.reference.manifest.json",
+      "manifest_sha256": "19aee1f429861a799fb6b9791678a2da42376d323fd0440072aceeab37ba1de6",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14560-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-14560",
+      "route": "native",
+      "manifest": "E-MTAB-14560.native.manifest.json",
+      "manifest_sha256": "1c3b477ccd9221d6a154bc95459ed21be295a1bc7041e1102bd2f9023c4c39a1",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14560-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-14560",
+      "route": "linked",
+      "manifest": "E-MTAB-14560.linked.manifest.json",
+      "manifest_sha256": "3784ab9376f704320f0794c4b34973514bfcc4b093e549aff4f08748a7b21296",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14560-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-14560",
+      "route": "standard",
+      "manifest": "E-MTAB-14560.standard.manifest.json",
+      "manifest_sha256": "6ea88d66e554bbe3f4d8358caefc9f4fb3bc092605b016ea7c952f1bc8f637e2",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14560-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-14560",
+      "route": "ena",
+      "manifest": "E-MTAB-14560.ena.manifest.json",
+      "manifest_sha256": "e705de5a3d25a027b0490a5e251131e5c177ed2299710801132d11fb198c3388",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "recorded-http",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14560-ena-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-14566",
+      "route": "reference",
+      "manifest": "E-MTAB-14566.reference.manifest.json",
+      "manifest_sha256": "8be86847c86cd67809d5b1308ad055a58b1e9e23c0d1830d579bf391ffaa0af7",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14566-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-14566",
+      "route": "native",
+      "manifest": "E-MTAB-14566.native.manifest.json",
+      "manifest_sha256": "3c17eb0556b06bef48d27115190ffe7a2309fb6ceb73360242bee413834ec94f",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14566-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-14566",
+      "route": "linked",
+      "manifest": "E-MTAB-14566.linked.manifest.json",
+      "manifest_sha256": "2a12224f2e54754b36cfd4d62326c0afc51d746bf377e97c7269fc9ecc133649",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14566-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-14566",
+      "route": "standard",
+      "manifest": "E-MTAB-14566.standard.manifest.json",
+      "manifest_sha256": "34d0eff330821ab09e8f75526e289605a524ba18952218e43542b0b6d9214623",
+      "request_closure": "pending-explicit-http-attempt-selection",
+      "historical_missing": 39,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "unmet prerequisites",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14566-standard-legacy-1cec34c",
+      "route_intent": "production-standard",
+      "unmet_prerequisites": [
+        "Final bounded offline standard discovery observed38 missing exact requests (35ENA xrefs,2BioSamples,1taxonomy) and reached900.176s CPU/process ceiling without a returned package; no live allowance remains."
+      ]
+    },
+    {
+      "study": "E-MTAB-14566",
+      "route": "ena",
+      "manifest": "E-MTAB-14566.ena.manifest.json",
+      "manifest_sha256": "cff520c108b87c8c58e400f7150369b8b871094ae817da05d4231020daa6d845",
+      "request_closure": "pending-explicit-http-attempt-selection",
+      "historical_missing": 39,
+      "evidence_kind": "recorded-http",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "unmet prerequisites",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14566-ena-legacy-1cec34c",
+      "route_intent": "parser-native-off",
+      "unmet_prerequisites": [
+        "Final ENA offline probe intentionally not launched: inventory lacks35 native supplementary cross-references (30runs,2experiments,2BioSamples,1project), plus observed BioSample/taxonomy responses. Actual fresh ENA partial-valid wallclock-budget result remains distinct; no complete exact replay cohort."
+      ]
+    },
+    {
+      "study": "E-MTAB-14960",
+      "route": "reference",
+      "manifest": "E-MTAB-14960.reference.manifest.json",
+      "manifest_sha256": "ed2b5d5b872bd45f53f866f3ff82ab283882a01868127505193c95ad88c477b7",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14960-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-14960",
+      "route": "native",
+      "manifest": "E-MTAB-14960.native.manifest.json",
+      "manifest_sha256": "31beaf13cce50485a7f082c5f105f3b3bbf55fa3837a8143e6547bf2930c7d6c",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14960-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-14960",
+      "route": "linked",
+      "manifest": "E-MTAB-14960.linked.manifest.json",
+      "manifest_sha256": "fbf396fec0198e3d7baa05a322caccc1410ed09ce4b1ae3838f6c6692f95e692",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14960-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-14960",
+      "route": "standard",
+      "manifest": "E-MTAB-14960.standard.manifest.json",
+      "manifest_sha256": "0b5d28729dbc3b1a4762b1cd3f3185a9ce971013ddb100e5803a7443ea43c8e8",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-14960-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-16192",
+      "route": "reference",
+      "manifest": "E-MTAB-16192.reference.manifest.json",
+      "manifest_sha256": "83f3a4eb303b95a500a17c4b24fd0237a5b30e9f93a68f6a079a0ec2ddee010a",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16192-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-16192",
+      "route": "native",
+      "manifest": "E-MTAB-16192.native.manifest.json",
+      "manifest_sha256": "8ca7f6a3cab98f110ad8ad598054b6c6d2fcf4319a8ddb47e37c76b3fcbcb1f4",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16192-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-16192",
+      "route": "linked",
+      "manifest": "E-MTAB-16192.linked.manifest.json",
+      "manifest_sha256": "52deebf2387309cfb281946eeffe0ef2615310308f5f5814d1d3b03fb79a68ff",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16192-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-16192",
+      "route": "standard",
+      "manifest": "E-MTAB-16192.standard.manifest.json",
+      "manifest_sha256": "237c5dfaff9c87e0494f99920d182c7fffba498c337b738bf4095b6c9b684740",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16192-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-16253",
+      "route": "reference",
+      "manifest": "E-MTAB-16253.reference.manifest.json",
+      "manifest_sha256": "ea54dc2827d73238880ecea5a95b6578a9fafcfdeaef78a00aef618139b9b500",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16253-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-16253",
+      "route": "native",
+      "manifest": "E-MTAB-16253.native.manifest.json",
+      "manifest_sha256": "8f729f731c5a7e5ef91fe290c8738cabfa34a125f9472b76c4c1ee81f7ccb160",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16253-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-16253",
+      "route": "linked",
+      "manifest": "E-MTAB-16253.linked.manifest.json",
+      "manifest_sha256": "55468789ae404b6ae9d7d15d8c4d620c8d759ad98f6328a64fbff0687376b96d",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16253-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-16253",
+      "route": "standard",
+      "manifest": "E-MTAB-16253.standard.manifest.json",
+      "manifest_sha256": "7f3ee38e177cfbd0992004e7bf28705a778b8df346924b1f8eb720784902781b",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16253-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-16253",
+      "route": "ena",
+      "manifest": "E-MTAB-16253.ena.manifest.json",
+      "manifest_sha256": "678bafb2ec95289c7805301e774ba0088a3902ab54b68b272e700818dbe2a9c5",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "recorded-http",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16253-ena-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-16847",
+      "route": "reference",
+      "manifest": "E-MTAB-16847.reference.manifest.json",
+      "manifest_sha256": "0167214bc883f9c61e8fb568ac9c86b171464d29b909c41479037a8e470651c6",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16847-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-16847",
+      "route": "direct",
+      "manifest": "E-MTAB-16847.direct.manifest.json",
+      "manifest_sha256": "06e3394834970bd743c255e1fa472e6bc7b2f3ded8f3f443752827696dea143f",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16847-direct-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-16856",
+      "route": "reference",
+      "manifest": "E-MTAB-16856.reference.manifest.json",
+      "manifest_sha256": "4acd9846999f564a50b7f635420990170a7b39e877b59512b8c0e3e00f2e627d",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16856-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-16856",
+      "route": "native",
+      "manifest": "E-MTAB-16856.native.manifest.json",
+      "manifest_sha256": "d35a819714a03eb7cacdec35327a338abd062f9bdd1a99756099d3a4703f29eb",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16856-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-16856",
+      "route": "linked",
+      "manifest": "E-MTAB-16856.linked.manifest.json",
+      "manifest_sha256": "7c73f0b1446569cc5ab1dce5686ab6f69be517bad83ee654a5726d9d1569c2e5",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16856-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-16856",
+      "route": "standard",
+      "manifest": "E-MTAB-16856.standard.manifest.json",
+      "manifest_sha256": "74061397821bcdd2e9331cbe149ffbf94b49075819a3cb1fb875eda855857d14",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-16856-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-308",
+      "route": "reference",
+      "manifest": "E-MTAB-308.reference.manifest.json",
+      "manifest_sha256": "9bccf55c8f055a79b3758f6c208ee24f84b501be8d259ed89a425d621860b78b",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-308-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-308",
+      "route": "native",
+      "manifest": "E-MTAB-308.native.manifest.json",
+      "manifest_sha256": "21d73898da865af91f524eec071f4e35f64f5145f2efc7c0b4664a8f2d664c66",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-308-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-308",
+      "route": "linked",
+      "manifest": "E-MTAB-308.linked.manifest.json",
+      "manifest_sha256": "bf3f6a50af4cb1508372217038df51f69beac9fbc96883affbe108b82c5ce8f6",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-308-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-308",
+      "route": "standard",
+      "manifest": "E-MTAB-308.standard.manifest.json",
+      "manifest_sha256": "c039d076bfc86e16295304d485e7bcf910f8b9e2b2498274c861315cf7a76bf2",
+      "request_closure": "root-reviewed explicit mixed-cohort transport selection",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-308-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-308",
+      "route": "ena",
+      "manifest": "E-MTAB-308.ena.manifest.json",
+      "manifest_sha256": "ddb7526c7c9a0e7d3ef63cf3f574741714266f32f40ff346aad1b92c2a5bb890",
+      "request_closure": "root-reviewed explicit mixed-cohort transport selection",
+      "historical_missing": 0,
+      "evidence_kind": "recorded-http",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-308-ena-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-5481",
+      "route": "reference",
+      "manifest": "E-MTAB-5481.reference.manifest.json",
+      "manifest_sha256": "6ca0ec073a348fc63784d3b7cc92bb1ea11e7f79bb9c56a0a72cdb17d76805c3",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5481-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-5481",
+      "route": "native",
+      "manifest": "E-MTAB-5481.native.manifest.json",
+      "manifest_sha256": "058d60e9771b365d67630e78773cba2802d0d7380dd8c8e31a2e890dd86a18ef",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5481-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-5481",
+      "route": "linked",
+      "manifest": "E-MTAB-5481.linked.manifest.json",
+      "manifest_sha256": "4b2286690fab5ed3e9dd3459a0061813ce84b272ce98948b602878b1a9446178",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5481-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-5481",
+      "route": "standard",
+      "manifest": "E-MTAB-5481.standard.manifest.json",
+      "manifest_sha256": "99b88c6dbec2e82d8e72502b57f3a23bd2884ac84c214a1a7a236f9d9743274e",
+      "request_closure": "reviewed explicit single-original-session selection; strict final replay pending",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5481-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "E-MTAB-5485",
+      "route": "reference",
+      "manifest": "E-MTAB-5485.reference.manifest.json",
+      "manifest_sha256": "d26e3dbcb150964e866d165b38fe2afdd3631969eddd6ff2e7b7796b4a06748a",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5485-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "E-MTAB-5485",
+      "route": "native",
+      "manifest": "E-MTAB-5485.native.manifest.json",
+      "manifest_sha256": "348ace27f1984fde76780d7e759df3fb457d3b0774b96c49990b41c18609331e",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5485-native-legacy-1cec34c",
+      "route_intent": "parser-native-off"
+    },
+    {
+      "study": "E-MTAB-5485",
+      "route": "linked",
+      "manifest": "E-MTAB-5485.linked.manifest.json",
+      "manifest_sha256": "af4e5289dfd5714105e80656ff865eadb9a9d7e6d3333f295868a69f71257ca3",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5485-linked-legacy-1cec34c",
+      "route_intent": "linked-only"
+    },
+    {
+      "study": "E-MTAB-5485",
+      "route": "standard",
+      "manifest": "E-MTAB-5485.standard.manifest.json",
+      "manifest_sha256": "8f7e36d1e7460124f002e5fdeac37cad9e6633b61ae41e1fd5e91f3953771469",
+      "request_closure": "root-reviewed explicit captured transport selection; successor science review pending",
+      "historical_missing": 215,
+      "evidence_kind": "parser-merge-replay",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "E-MTAB-5485-standard-legacy-1cec34c",
+      "route_intent": "production-standard"
+    },
+    {
+      "study": "GSE100",
+      "route": "reference",
+      "manifest": "GSE100.reference.manifest.json",
+      "manifest_sha256": "0bfb3690252a1a730ce789a1f6b9b9ba71243404cab68adc3db2b98225cb7a20",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "GSE100-reference-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    },
+    {
+      "study": "GSE100",
+      "route": "direct",
+      "manifest": "GSE100.direct.manifest.json",
+      "manifest_sha256": "a14b934142e5eeb6a84c3d577b106425b459a2915adcb2b591e61d6059f7ff26",
+      "request_closure": "no-http-declared",
+      "historical_missing": 0,
+      "evidence_kind": "reduced-source",
+      "declared_facade_calls": 3,
+      "audit_classification": "not-executed",
+      "coverage_status": "runnable with reviewed expectations; final strict execution pending",
+      "scientific_oracle": "Source-proven independently reviewed successor of immutable historical converter golden; see manifest review evidence",
+      "manifest_id": "GSE100-direct-legacy-1cec34c",
+      "route_intent": "deposited-off"
+    }
+  ],
+  "source_file_integrity": {
+    "unique_hash_verified_files": 1841,
+    "inventory_kind": "All explicitly manifest-referenced external and tracked evidence files; raw corpus not vendored"
+  },
+  "final_freeze": {
+    "production_revision": "f061c3f39b1b7e71aa6bdb6a61aab3561b31de95",
+    "runner_sha256": "cbb5b24cba172a8e160fc271dfff80e303844172eceb16b6f37900f8f91adc44",
+    "note": "Manifest catalogue commit is recorded by final execution report; declared runnable coverage does not imply accepted execution."
+  },
+  "fresh_cohorts": [
+    {
+      "study": "E-MTAB-14416",
+      "session_id": "capture-20260924T115711Z/E-MTAB-14416",
+      "source_revision": "dc9d454f830b8f877a43729dffd9d608433080cd",
+      "captured_at": "2026-09-24T11:58:21.922790+00:00",
+      "capture": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-MTAB-14416/capture.json",
+        "sha256": "45e9814a081260ff23e9bb760d18004eecd021fb9fdccfeddee995faa63fbce1"
+      },
+      "seal": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-MTAB-14416/sealed.json",
+        "sha256": "953f9c93bdfff32d71d1c232754ea6628e79e81a33a189c62661e1261e55bbac"
+      },
+      "http_attempts": 146,
+      "elapsed_seconds": 565.147,
+      "limits": {
+        "wall_seconds": 900,
+        "http_attempts": 1000,
+        "retries_per_failure": 2
+      },
+      "coverage": "Supplemental actual live HTTP discovery/JSON-only evidence; never replaces required three-format paired-seed routes. Real GeoMx ENA wallclock partial is not an offline count-budget replay.",
+      "routes": [
+        {
+          "route": "reference",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "E-MTAB-14416",
+            "source_type": "ae_accession",
+            "enrichment": "off",
+            "metadata_timeout_seconds": 839.9996847000002,
+            "metadata_max_requests": 1000,
+            "samples": 26,
+            "runs": 26,
+            "strict_valid": true,
+            "http_attempts": 4,
+            "seconds": 3.581
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "complete",
+              "validation": "valid",
+              "status": "complete"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_skipped": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        },
+        {
+          "route": "standard",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "ERP163837",
+            "source_type": "sra",
+            "enrichment": "standard",
+            "metadata_timeout_seconds": 836.4174885460002,
+            "metadata_max_requests": 996,
+            "samples": 26,
+            "runs": 26,
+            "strict_valid": true,
+            "http_attempts": 142,
+            "seconds": 561.557
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "complete",
+              "validation": "valid",
+              "status": "complete"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_completed": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        }
+      ]
+    },
+    {
+      "study": "E-MTAB-5485",
+      "session_id": "capture-20260924T115711Z/E-MTAB-5485",
+      "source_revision": "82b8ab992ebaa4fd8cdbcc442a708fdab6d3fd7a",
+      "captured_at": "2026-09-24T12:11:23.554312+00:00",
+      "capture": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-MTAB-5485/capture.json",
+        "sha256": "2dd92b39056df8db8bd8ab13c182309695aff87e35beab70c3b3361053a3eb90"
+      },
+      "seal": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-MTAB-5485/sealed.json",
+        "sha256": "ba99b9b8a41d98576968ee9221e57eedc065e57cd94688d3816164aec07b8e9e"
+      },
+      "http_attempts": 428,
+      "elapsed_seconds": 838.357,
+      "limits": {
+        "wall_seconds": 900,
+        "http_attempts": 1000,
+        "retries_per_failure": 2
+      },
+      "coverage": "Supplemental actual live HTTP discovery/JSON-only evidence; never replaces required three-format paired-seed routes. Real GeoMx ENA wallclock partial is not an offline count-budget replay.",
+      "routes": [
+        {
+          "route": "reference",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "E-MTAB-5485",
+            "source_type": "ae_accession",
+            "enrichment": "off",
+            "metadata_timeout_seconds": 839.9990759809998,
+            "metadata_max_requests": 1000,
+            "samples": 96,
+            "runs": 96,
+            "strict_valid": true,
+            "http_attempts": 4,
+            "seconds": 7.836
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "complete",
+              "validation": "valid",
+              "status": "complete"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_skipped": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        },
+        {
+          "route": "standard",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "ERP022298",
+            "source_type": "sra",
+            "enrichment": "standard",
+            "metadata_timeout_seconds": 832.1619000820001,
+            "metadata_max_requests": 996,
+            "samples": 96,
+            "runs": 96,
+            "strict_valid": true,
+            "http_attempts": 424,
+            "seconds": 830.501
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid",
+              "status": "partial"
+            }
+          ],
+          "diagnostic_counts": {
+            "warning:source_partial": 192,
+            "info:enrichment_completed": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        }
+      ]
+    },
+    {
+      "study": "E-GEOD-48035",
+      "session_id": "capture-20260924T115711Z/E-GEOD-48035",
+      "source_revision": "dc9d454f830b8f877a43729dffd9d608433080cd",
+      "captured_at": "2026-09-24T11:58:03.618708+00:00",
+      "capture": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-GEOD-48035/capture.json",
+        "sha256": "1733f330b719a8e10923a1dab3004dbb1be997417b7ab3b851ab96cb51b3bcbf"
+      },
+      "seal": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-GEOD-48035/sealed.json",
+        "sha256": "a72b8561583de3797c2cc2241601aa908da6182772e465b3e2c6d89994d173a9"
+      },
+      "http_attempts": 675,
+      "elapsed_seconds": 900.088,
+      "limits": {
+        "wall_seconds": 900,
+        "http_attempts": 1000,
+        "retries_per_failure": 2
+      },
+      "coverage": "Supplemental actual live HTTP discovery/JSON-only evidence; never replaces required three-format paired-seed routes. Real GeoMx ENA wallclock partial is not an offline count-budget replay.",
+      "routes": [
+        {
+          "route": "reference",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "E-GEOD-48035",
+            "source_type": "ae_accession",
+            "enrichment": "off",
+            "metadata_timeout_seconds": 839.9995220159999,
+            "metadata_max_requests": 1000,
+            "samples": 62,
+            "runs": 422,
+            "strict_valid": true,
+            "http_attempts": 4,
+            "seconds": 6.169
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid",
+              "status": "partial"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_skipped": 3,
+            "warning:source_partial": 16
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        },
+        {
+          "route": "standard",
+          "package_returned": false,
+          "capture_route_details": {
+            "source": "SRP026126",
+            "source_type": "sra",
+            "enrichment": "standard",
+            "metadata_timeout_seconds": 833.829268815,
+            "metadata_max_requests": 996,
+            "http_attempts": 671,
+            "seconds": 893.891
+          },
+          "outcomes": [],
+          "diagnostic_counts": {},
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        }
+      ]
+    },
+    {
+      "study": "E-MTAB-14566",
+      "session_id": "capture-20260924T115711Z/E-MTAB-14566",
+      "source_revision": "82b8ab992ebaa4fd8cdbcc442a708fdab6d3fd7a",
+      "captured_at": "2026-09-24T12:14:23.182714+00:00",
+      "capture": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-MTAB-14566/capture.json",
+        "sha256": "95bff42a75a7340ae18b73dc41ccd3d017ec65e46173e518c09daeb2a8d6f05f"
+      },
+      "seal": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T115711Z/E-MTAB-14566/sealed.json",
+        "sha256": "4e809cfa071a5ccabf9adda9c7b6561fa6ba75921c484edcf400f63a2b1d72db"
+      },
+      "http_attempts": 546,
+      "elapsed_seconds": 894.878,
+      "limits": {
+        "wall_seconds": 900,
+        "http_attempts": 1000,
+        "retries_per_failure": 2
+      },
+      "coverage": "Supplemental actual live HTTP discovery/JSON-only evidence; never replaces required three-format paired-seed routes. Real GeoMx ENA wallclock partial is not an offline count-budget replay.",
+      "routes": [
+        {
+          "route": "reference",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "E-MTAB-14566",
+            "source_type": "ae_accession",
+            "enrichment": "off",
+            "metadata_timeout_seconds": 839.9996904679997,
+            "metadata_max_requests": 1000,
+            "samples": 2,
+            "runs": 779,
+            "strict_valid": true,
+            "http_attempts": 4,
+            "seconds": 22.024
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "complete",
+              "validation": "valid",
+              "status": "complete"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_skipped": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        },
+        {
+          "route": "ena",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "ERP165595",
+            "source_type": "ena",
+            "enrichment": "off",
+            "metadata_timeout_seconds": 817.9746559299997,
+            "metadata_max_requests": 996,
+            "samples": 2,
+            "runs": 779,
+            "strict_valid": true,
+            "http_attempts": 542,
+            "seconds": 872.833
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid",
+              "status": "partial"
+            }
+          ],
+          "diagnostic_counts": {
+            "warning:source_partial": 3,
+            "info:enrichment_skipped": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        },
+        {
+          "route": "standard",
+          "package_returned": false,
+          "capture_route_details": {
+            "classification": "incomplete-retrieval",
+            "reason": "study allowance exhausted before route"
+          },
+          "outcomes": [],
+          "diagnostic_counts": {},
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        }
+      ]
+    },
+    {
+      "study": "E-MTAB-308",
+      "session_id": "capture-20260924T132340Z-e308/E-MTAB-308",
+      "source_revision": "c08e9ca11956663e9c72b40f658f112bd099b837",
+      "captured_at": "2026-09-24T13:31:03.110236+00:00",
+      "capture": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T132340Z-e308/E-MTAB-308/capture.json",
+        "sha256": "14353de16a1e1ddf36362e936d332e2aab84cc2dfe062750c295c383e8731594"
+      },
+      "seal": {
+        "path": ".dev/comms/agents/vergil/dev/capture-20260924T132340Z-e308/E-MTAB-308/sealed.json",
+        "sha256": "e351b474d4c7dc0049081a18e6197d6c38eb566ed31ec5f060017e0b3f72ad17"
+      },
+      "http_attempts": 129,
+      "elapsed_seconds": 158.955,
+      "limits": {
+        "wall_seconds": 900,
+        "http_attempts": 1000,
+        "retries_per_failure": 2
+      },
+      "coverage": "Supplemental actual live HTTP discovery/JSON-only evidence; never replaces required three-format paired-seed routes. Real GeoMx ENA wallclock partial is not an offline count-budget replay.",
+      "routes": [
+        {
+          "route": "reference",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "E-MTAB-308",
+            "source_type": "ae_accession",
+            "enrichment": "off",
+            "metadata_timeout_seconds": 839.9996424729998,
+            "metadata_max_requests": 1000,
+            "samples": 7,
+            "runs": 7,
+            "strict_valid": true,
+            "http_attempts": 4,
+            "seconds": 12.187
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "complete",
+              "validation": "valid",
+              "status": "complete"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_skipped": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        },
+        {
+          "route": "ena",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "ERP000263",
+            "source_type": "ena",
+            "enrichment": "off",
+            "metadata_timeout_seconds": 827.8118000659997,
+            "metadata_max_requests": 996,
+            "samples": 7,
+            "runs": 7,
+            "strict_valid": true,
+            "http_attempts": 53,
+            "seconds": 51.724
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "complete",
+              "validation": "valid",
+              "status": "complete"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_skipped": 3
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        },
+        {
+          "route": "standard",
+          "package_returned": true,
+          "capture_route_details": {
+            "source": "ERP000263",
+            "source_type": "sra",
+            "enrichment": "standard",
+            "metadata_timeout_seconds": 776.0848016839991,
+            "metadata_max_requests": 943,
+            "samples": 7,
+            "runs": 7,
+            "strict_valid": true,
+            "http_attempts": 72,
+            "seconds": 95.034
+          },
+          "outcomes": [
+            {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid",
+              "status": "partial"
+            }
+          ],
+          "diagnostic_counts": {
+            "info:enrichment_completed": 3,
+            "warning:source_partial": 1
+          },
+          "full_diagnostics": "See hashed capture.json; these are actual historical live JSON-only results, not final three-format replay acceptance."
+        }
+      ]
+    }
+  ],
+  "external_evidence": true,
+  "execution_contract": {
+    "primary_json_conversions": 74,
+    "saved_package_magetab_projections": 74,
+    "saved_package_tsv_projections": 74,
+    "independent_acquisitions_claim": false
+  },
+  "coverage_summary": {
+    "runnable with reviewed expectations; final strict execution pending": 71,
+    "unmet prerequisites": 3
+  }
+}

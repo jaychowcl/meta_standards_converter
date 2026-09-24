@@ -6113,6 +6113,24 @@ while available routes continue. Supplemental JSON-only cohorts remain separate
 from the required three-format routes. Raw bodies may live outside the repository
 only under the explicitly supplied evidence root.
 
+The full roster is tracked at
+`tests/fixtures/recorded_provider/full-panel/panel.index.json`. Its manifests
+identify external, hash-verified evidence; committing the roster does not vendor
+the development captures or establish acceptance. Missing captures fail closed.
+Each route first converts its declared source to JSON through the facade, then
+projects that same retained package to MAGE-TAB and TSV through the facade with
+enrichment and expansion off. Thus 222 calls comprise 74 source conversions and
+148 saved-package projections, not 222 independent retrievals. Per-route reports
+keep primary retrieval coverage separate from projection completeness.
+
+```sh
+.venv/bin/python scripts/audit_recorded_provider.py --panel tests/fixtures/recorded_provider/full-panel/panel.index.json --evidence-root "$PWD" --artifacts-dir .dev/audit-fresh
+```
+
+Use a fresh artifact directory and the evidence root containing the exact
+manifest-relative capture paths. The index records unaccepted or unavailable
+routes explicitly; only the execution report can establish which checks passed.
+
 The independent `tests/support/deposited_fidelity.py` oracle starts from hashed
 deposited IDF/SDRF bytes. It checks complete row multisets, experimental node order,
 repeated attributes and the owner of each comment, unit and ontology qualifier.

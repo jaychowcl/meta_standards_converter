@@ -613,6 +613,6 @@ canonical guide together when an interface, workflow, or contract changes.
 - id: recorded-provider-audit
   title: Recorded provider audit
   anchor: recorded-provider-audit
-  purpose: Explicit hashed response cohorts, offline isolation, independent deposited-source ownership checks and distinct scientific versus harness failures.
+  purpose: Tracked full-panel roster with external hashed evidence, source conversion versus saved-package projection, offline isolation and independent deposited-source ownership checks.
   keywords: audit_recorded_provider, panel, 18 studies, 74 routes, 222 calls, manifest, evidence-root, artifacts-dir, replay, fixture miss, expected failure, parser-merge, native HTTP, repeated headers, row multiplicity, source hashes, comment ownership, terminal factors
   link: [Open section](codebase.md#recorded-provider-audit)

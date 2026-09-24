@@ -1,0 +1,1255 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-GEOD-48035-standard-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-48035.idf.txt",
+      "sha256": "db239d9213c5088adf0458cd46bc6f597ffc506bb8d7014bba7a8bafebdadf87"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-GEOD-48035.sdrf.txt",
+      "sha256": "6fd869692382f1183b8b2aa830dbd68ca1cf58043ce758df2c97ffba71ea43d0"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-GEOD-48035--resolution.json",
+      "sha256": "cdb779b29842226f7335def24a86c98ec56f183a68765e0a3b055dbfc185032e",
+      "original_pickle_sha256": "8aaa9c2358cf272d1ea50921d65bbe071a7ba4f62a1e13e0ddb1b286b2fc593f"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-GEOD-48035--SRP026126.records.json",
+      "sha256": "0e3e53f834efd14b5bac71c07ac351de5763f2f01d151516f56ed1c6ca5a32fb",
+      "original_pickle_sha256": "66283b22300b983ead49f378cf89a16aa6790969b1ac284c6a8597a6529cddc7"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48035/standard.json",
+      "sha256": "7ab00898e584fc393d1f5395fe41a65a2e8b23a99b8361ddea45ed1564ce303f"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48035/standard.magetab.json",
+      "sha256": "e7705d9cea0e9da018bdf3304cc3feb3e29955f3a2fbdbf3ef96cb2077d21045"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-GEOD-48035/standard.tsv.json",
+      "sha256": "fd8b29bf3b26bc11acb4080ea3c76524b90f67fbdb37fa4f05955f4ab99e6820"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-GEOD-48035/standard",
+      "route_intent": "production-standard",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "SRP026126"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "SRP026126": "records"
+          },
+          "requested_accessions": [
+            "SRP026126"
+          ]
+        }
+      },
+      "options": {
+        "enrichment": "standard",
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra"
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: read_experiment inventory: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: read_run catalogue: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: read_run inventory: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: analysis catalogue: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: analysis inventory: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: assembly catalogue: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: assembly inventory: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: ENA file report: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: sample XML: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: ENA run count: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SRP026126: no public run records",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: ENA cross references PRJNA208732: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: ENA cross references SRP026126: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205214: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205220: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205226: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205266: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205272: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205280: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205288: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205295: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205297: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205302: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205304: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205228: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205274: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205276: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205301: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205303: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205217: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205227: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205286: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205259: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205267: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205269: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205270: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205289: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205296: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205221: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205223: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205225: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205230: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205281: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205292: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205298: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205222: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205264: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205283: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205215: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205216: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205218: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205219: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205224: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205261: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205262: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205263: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205265: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205268: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205271: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205273: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205275: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205277: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205278: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205279: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205282: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205284: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205285: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205287: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205290: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205291: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205293: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205294: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205299: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205300: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: linked SAMN02205305: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: PubMed: RuntimeError",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205214: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205220: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205226: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205266: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205272: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205280: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205288: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205295: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205297: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205302: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205304: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205228: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205274: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205276: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205301: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205303: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205217: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205227: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205286: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205259: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205267: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205269: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205270: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205289: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205296: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205221: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205223: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205225: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205230: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205281: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205292: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205298: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205222: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205264: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205283: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205215: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205216: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205218: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205219: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205224: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205261: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205262: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205263: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205265: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205268: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205271: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205273: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205275: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205277: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205278: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205279: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205282: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205284: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205285: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205287: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205290: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205291: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205293: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205294: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205299: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205300: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: peer_provider: SAMN02205305: using indexed metadata without full Browser record",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "SRP026126: standard failed (RuntimeError)",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445971/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445970/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445969/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445968/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445967/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445965/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445966/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445963/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445956/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445954/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445953/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445951/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445952/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445950/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445949/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445948/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445971/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445970/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445969/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445968/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445967/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445965/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445966/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445963/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445956/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445954/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445953/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445951/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445952/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445950/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445949/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445948/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445971/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445970/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445969/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445968/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445967/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445965/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445966/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445963/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445956/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445954/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445953/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445951/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445952/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445950/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445949/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/SRS445948/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-22"
+      }
+    }
+  ],
+  "request_closure": "pending-explicit-http-attempt-selection",
+  "unmet_prerequisites": [
+    "Forty exact follow-up requests missing after explicit original/fresh mixed probe; bounded live allowance exhausted. No complete standard result in fresh actual SRA session."
+  ],
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "immutable original; final model/comment and rendering fixes require independently reviewed successor expectations"
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-GEOD-48035",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T15:36:31.388506+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-GEOD-48035/summary.json",
+      "summary_sha256": "af8b4c89758da969f46571009f9ad219f8c35f4011aff9bab96c9fd507bc5d27"
+    }
+  ],
+  "coverage_evidence": {
+    "probe_report": ".dev/comms/agents/workers_3/dev/legacy-probes-fresh-reviewed/E-GEOD-48035/standard/report.json",
+    "probe_sha256": "b4b9483ad53b1118d21f66d027f33bb7ad76459287b372fa4065fb6ca5639efb"
+  }
+}

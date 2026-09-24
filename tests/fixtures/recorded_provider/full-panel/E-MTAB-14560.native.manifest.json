@@ -1,0 +1,729 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-14560-native-legacy-1cec34c",
+  "source_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+  "captured_at": null,
+  "evidence_kind": "parser-merge-replay",
+  "external_evidence": true,
+  "files": {
+    "idf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14560.idf.txt",
+      "sha256": "6a8cb9f15754adabf7c2174b65d547201c57a6999d47ec4230d6795971cfc531"
+    },
+    "sdrf": {
+      "path": "tests/fixtures/fidelity/E-MTAB-14560.sdrf.txt",
+      "sha256": "ad111d33b1affd7cc4bd3417de89968557e014c619864dd7ab5416fd9888fa18"
+    },
+    "resolution": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14560--resolution.json",
+      "sha256": "4d5221b67ad14318ca87ae1cf650f51d7ac39f138f16285145ae4ee749478480",
+      "original_pickle_sha256": "3ac3ac70241743fdb2f579b5d39173819419bfe7b6e523ed42304f4d8946d0fd"
+    },
+    "records": {
+      "path": ".dev/comms/agents/workers_3/dev/safe-snapshots/E-MTAB-14560--ERP165490.records.json",
+      "sha256": "c504cc49f407f1e020672dead942c204339f54838cfe53246a358a13cf2b2baa",
+      "original_pickle_sha256": "05d1873e369083a9a5f06de4d507742351eace611b6db96a4865ebb18dcad8fc"
+    },
+    "json.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-14560.native/payloads/de32c86989c5800c.json.json",
+      "sha256": "1065a792ef4b8a7adfb4116837d74ca3a736f7f985eb60691fc783198ed958f3"
+    },
+    "magetab.golden": {
+      "path": ".dev/comms/agents/workers_3/dev/successor-candidates-v5e413/E-MTAB-14560.native/payloads/de32c86989c5800c.magetab.json",
+      "sha256": "126e3940317e70dd4836f5289d091009fde6cba82ac4ea8761cae62f5f2884ba"
+    },
+    "tsv.golden": {
+      "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14560/native.tsv.json",
+      "sha256": "2dd51a72210ed22dff7f1fc246e6c50adcf13339b1215f0093c43d391468e62b"
+    },
+    "scientific-review": {
+      "path": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2"
+    }
+  },
+  "requests": [],
+  "scenarios": [
+    {
+      "id": "E-MTAB-14560/native",
+      "route_intent": "parser-native-off",
+      "classification": "complete-captured-coverage",
+      "source": {
+        "kind": "accession",
+        "value": "ERP165490"
+      },
+      "services": {
+        "sra2json": {
+          "kind": "frozen-source",
+          "resolution": "resolution",
+          "records": {
+            "ERP165490": "records"
+          },
+          "requested_accessions": [
+            "ERP165490"
+          ]
+        }
+      },
+      "options": {
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        },
+        "in_type": "sra"
+      },
+      "formats": [
+        "json",
+        "magetab",
+        "tsv"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/0/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/1/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/2/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/3/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/4/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/6/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/7/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/9/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/11/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/12/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/13/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/14/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/15/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/17/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/18/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/19/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362024/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362023/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362015/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362025/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362022/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362030/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362018/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362028/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362019/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362017/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362026/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362027/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362020/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362029/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362021/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362016/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "magetab": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/0/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/1/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/2/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/3/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/4/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/6/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/7/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/9/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/11/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/12/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/13/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/14/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/15/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/17/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/18/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/19/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362024/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362023/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362015/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362025/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362022/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362030/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362018/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362028/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362019/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362017/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362026/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362027/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362020/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362029/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362021/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362016/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        },
+        "tsv": {
+          "execution": "succeeded",
+          "validation": "valid",
+          "completeness": "partial",
+          "causes": [
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/0/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/1/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/2/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/3/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/4/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/6/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/7/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/9/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/11/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/12/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/13/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/14/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/15/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/17/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/18/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /series/protocols/19/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362024/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362023/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362015/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362025/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362022/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362030/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362018/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362028/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362019/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362017/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362026/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362027/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362020/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362029/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362021/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            },
+            {
+              "code": "source_partial",
+              "message": "possible source-text encoding corruption at /sample/ERS21362016/description; original retained without same-field corroboration",
+              "stage": "preparation",
+              "severity": "warning"
+            }
+          ],
+          "payload_count": 1
+        }
+      },
+      "goldens": {
+        "json": "json.golden",
+        "magetab": "magetab.golden",
+        "tsv": "tsv.golden"
+      },
+      "runtime_date": {
+        "recorded_submission_date": "2026-09-24"
+      }
+    }
+  ],
+  "request_closure": "no-http-declared",
+  "golden_provenance": {
+    "kind": "historical converter regression artifact, not independent source oracle",
+    "converter_revision": "1cec34cb3ee31fada67fbf4d2474ec1e2a7dfefe",
+    "status": "Reviewed source-proven successor; final-source strict replay pending",
+    "immutable_original_goldens": {
+      "json": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14560/native.json",
+        "sha256": "d748f4744d59f9a41c54976807f963fbe286f75c11f20464ceb379365b4aaded"
+      },
+      "magetab": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14560/native.magetab.json",
+        "sha256": "80edc5d3edc228138da1e499f3ed19ab9689e7528233e0f44a0c15438092ba7d"
+      },
+      "tsv": {
+        "path": ".dev/comms/agents/msc_workflow_provenance/dev/replay/E-MTAB-14560/native.tsv.json",
+        "sha256": "2dd51a72210ed22dff7f1fc246e6c50adcf13339b1215f0093c43d391468e62b"
+      }
+    },
+    "successor_generation_revision": "c08e9ca11956663e9c72b40f658f112bd099b837",
+    "review": {
+      "reviewer": "workers_2; vergil PASS",
+      "report": ".dev/comms/agents/workers_2/dev/additional-final-source-review/successor-nonreference-final-review.json",
+      "report_sha256": "73b110faab90d4ff004f7541f8d0f0f7daddd5672b511d40a688df6c3cbd4dd2",
+      "route": "E-MTAB-14560.native",
+      "status": "SCIENTIFIC_DELTA_PASS",
+      "explicit_dual_owner_allowance": null
+    }
+  },
+  "source_cohorts": [
+    {
+      "id": "expanded-E-MTAB-14560",
+      "source_revision": "2c26a2b4db34332e8295345bf56d771045ccadc1",
+      "captured_at": "2026-09-21T14:55:18.419749+00:00",
+      "summary": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-14560/summary.json",
+      "summary_sha256": "1a1437e6c6268a59a7a0af61d2e28a3d4e5189e80a9e8d6d24f52fe7c8ef7ac4"
+    }
+  ]
+}
