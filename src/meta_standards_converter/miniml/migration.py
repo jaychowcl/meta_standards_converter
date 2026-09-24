@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, replace
+import re
 from typing import Any, Mapping
 
 from .model import MINiMLModelError, MINiMLPackage, MINiMLValidationIssue
@@ -264,6 +265,10 @@ class MINiMLV1Migrator:
         current_application: dict[str, Any] | None = None
         last_named: dict[str, Any] | None = None
         last_ontology: dict[str, Any] | None = None
+        comment_owner = None
+        comment_unit_column = None
+        comment_unit = None
+        unbound_field = False
         header_kinds = {
             "source name": "source", "sample name": "sample", "extract name": "extract",
             "labeled extract name": "labeled_extract", "hybridization name": "hybridization",
@@ -277,6 +282,8 @@ class MINiMLV1Migrator:
                 continue
             kind = step.get("kind")
             if kind in {"protocol", "protocol_ref"}:
+                comment_owner = comment_unit_column = comment_unit = None
+                unbound_field = False
                 active_node = None
                 reference = str(step.get("value") or step.get("protocol_ref") or "").strip()
                 if not reference:
@@ -294,9 +301,12 @@ class MINiMLV1Migrator:
                 result.append(current_application)
                 last_named = None
                 last_ontology = current_application
+                comment_owner = current_application
                 continue
             if kind in {'node', 'file'}:
                 active_node = current_application = last_named = last_ontology = None
+                comment_owner = comment_unit_column = comment_unit = None
+                unbound_field = False
                 label = str(step.get('name') or step.get('header') or '').strip().casefold()
                 node_kind = header_kinds.get(label)
                 if node_kind and has_cell_value(step.get('value')):
@@ -306,12 +316,16 @@ class MINiMLV1Migrator:
                     if step.get('link'):
                         active_node['link'] = deepcopy(step['link'])
                     result.append(active_node)
+                    comment_owner = active_node
                     if node_kind in {'assay', 'hybridization'}:
                         last_assay = active_node
                 continue
-            if not has_cell_value(step.get('value')) and kind != 'harmonized':
+            ontology_field = kind == 'field' and str(step.get('header','')).casefold() in {
+                'material type', 'technology type', 'label'}
+            if not has_cell_value(step.get('value')) and kind != 'harmonized' and not ontology_field:
                 if kind == 'attribute':
                     last_named = last_ontology = None
+                    comment_owner = comment_unit_column = comment_unit = None
                 if unbound is not None and any(has_cell_value(step.get(key)) for key in (
                     'unit', 'term_source_ref', 'term_accession_number', 'unit_term_source_ref', 'unit_term_accession_number',
                 )):
@@ -342,6 +356,8 @@ class MINiMLV1Migrator:
                     active_node.setdefault("characteristics", []).extend(named_harmonized_rows([HarmonizedValue(**item)]))
                 continue
             if kind == "attribute":
+                comment_owner = comment_unit_column = comment_unit = None
+                unbound_field = False
                 attribute = cls._legacy_attribute(step)
                 if step.get("attribute_type") == "parameter value" and current_application is not None:
                     current_application.setdefault("parameter_values", []).append(attribute)
@@ -366,6 +382,9 @@ class MINiMLV1Migrator:
                     })
                 last_named = attribute
                 last_ontology = attribute
+                comment_owner = attribute
+                comment_unit_column = step.get('companion_columns', {}).get('unit')
+                comment_unit = attribute.get('unit')
                 continue
             if kind == "comment" and result:
                 comment = {
@@ -375,11 +394,25 @@ class MINiMLV1Migrator:
                 if comment['name'].casefold() == 'file uri' and active_node is not None and active_node.get('kind', '').endswith('_file'):
                     active_node['link'] = {'value': comment['value']}
                     continue
-                target = active_node if comment["name"] == "msc_channel" and active_node is not None else last_named or current_application or active_node
+                target = comment_owner
+                if comment_unit_column is not None and step.get('column_index',-1)>comment_unit_column:
+                    target = comment_unit
+                if comment['name'] == 'msc_channel' and active_node is not None:
+                    target = active_node
+                if target is None:
+                    if unbound is not None:
+                        unbound.append(deepcopy(dict(step)))
+                    continue
                 target.setdefault("comments", []).append(comment)
                 continue
             if kind == "field" and result:
                 header = str(step.get("header") or step.get("name") or "").strip().casefold()
+                if re.fullmatch(r'unit(?:\[.*])?', header) and (last_named is not None or comment_unit_column is not None):
+                    if unbound is not None:
+                        unbound.append(deepcopy(dict(step)))
+                    last_named = last_ontology = comment_owner = comment_unit_column = comment_unit = None
+                    unbound_field = True
+                    continue
                 if current_application is not None and header == "performer":
                     current_application["performer"] = str(step.get("value", ""))
                 elif current_application is not None and header == "date":
@@ -389,7 +422,18 @@ class MINiMLV1Migrator:
                 elif header == "term accession number" and last_ontology is not None:
                     last_ontology["term_accession_number"] = str(step.get("value", ""))
                 elif active_node is not None:
-                    last_ontology = cls._attach_node_field(active_node, step)
+                    comment_unit_column = comment_unit = None
+                    last_named = None
+                    destination = {'material type':'material_type','technology type':'technology_type','label':'label'}.get(header)
+                    if (destination and destination in active_node) or (unbound_field and header in {'term source ref','term accession number','unit'}):
+                        if unbound is not None:
+                            unbound.append(deepcopy(dict(step)))
+                        last_ontology = comment_owner = None
+                        unbound_field = True
+                    else:
+                        last_ontology = cls._attach_node_field(active_node, step)
+                        comment_owner = last_ontology
+                        unbound_field = False
                 continue
         return result
 

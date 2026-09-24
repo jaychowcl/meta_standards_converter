@@ -21,8 +21,17 @@ def field_name(value):
 
 
 def path_facts(steps):
-    return [{key: c['value']} for step in steps for c in step.get('comments', [])
+    return [{key: c['value']} for step in steps for owner in node_comment_owners(step) for c in owner.get('comments', [])
             if (key := field_name(c.get('name'))) and 'value' in c]
+
+
+def node_comment_owners(step):
+    """Yield node/scalar-field containers, never experimental-value descendants."""
+    yield step
+    for field in ('material_type', 'technology_type', 'label'):
+        value = step.get(field)
+        if isinstance(value, dict):
+            yield value
 
 
 def resolve_library_facts(native, incoming, issues, identity, *, selection=None, path=""):
@@ -62,21 +71,22 @@ def apply_library_facts(run, steps, facts, *, preserve=()):
         run.pop(key, None)
     run.update(deepcopy(facts))
     for step in steps:
-        comments = step.get('comments', [])
-        rewritten = []
-        for comment in comments:
-            key = field_name(comment.get('name'))
-            if key is None or key in preserve or (key in LIBRARY_FIELDS and step.get('kind') in {'extract', 'labeled_extract'}
-                               and not informative(comment.get('value'))):
-                # Missing authored preparation cells must not become native
-                # fallback facts that saved-JSON recovery treats as AE evidence.
-                rewritten.append(comment)
-            elif key in facts:
-                value = {**deepcopy(comment), 'value': str(facts[key])}
-                if value not in rewritten:
-                    rewritten.append(value)
-        if 'comments' in step:
-            step['comments'] = rewritten
+        for owner in node_comment_owners(step):
+            comments = owner.get('comments', [])
+            rewritten = []
+            for comment in comments:
+                key = field_name(comment.get('name'))
+                if key is None or key in preserve or (key in LIBRARY_FIELDS and step.get('kind') in {'extract', 'labeled_extract'}
+                                   and not informative(comment.get('value'))):
+                    # Missing authored preparation cells must not become native
+                    # fallback facts that saved-JSON recovery treats as AE evidence.
+                    rewritten.append(comment)
+                elif key in facts:
+                    value = {**deepcopy(comment), 'value': str(facts[key])}
+                    if value not in rewritten:
+                        rewritten.append(value)
+            if 'comments' in owner:
+                owner['comments'] = rewritten
 
 
 def _shared_facts(choices, issues, identity):

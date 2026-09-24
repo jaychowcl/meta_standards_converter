@@ -112,11 +112,12 @@ def merge_declarations(data, extra, namespace):
 
 
 def path_ids(path):
+    from ..miniml.archive_libraries import node_comment_owners
     values = []
     for step in path.get('steps', []):
         if step.get('kind') in ('assay', 'scan'):
             values.append(step.get('name', ''))
-            values.extend(c.get('value', '') for c in step.get('comments', [])
+            values.extend(c.get('value', '') for owner in node_comment_owners(step) for c in owner.get('comments', [])
                           if c.get('name', '').upper() in {'ENA_RUN', 'ENA_EXPERIMENT', 'SRA_RUN', 'SRA_EXPERIMENT'})
     return {acc for value in values for acc in re.findall(r'\b[SED]R[RX]\d+\b', str(value))}
 
@@ -298,6 +299,33 @@ def _bind_native(steps, target, native):
                 step['sample_ref'] = target
                 step.setdefault('comments', []).extend(c for c in deepcopy(old.get('comments', []))
                                                         if c not in step.get('comments', []))
+    # Complete notes only after the existing verified branch binding. Scientific
+    # values and source selection remain unchanged; ambiguous occurrences do not
+    # provide evidence for combining field-owned annotations.
+    from collections import Counter
+    identity = lambda s: (s.get('kind'), s.get('name'))
+    incoming_counts = Counter(identity(s) for s in steps)
+    native_counts = Counter(identity(s) for s in native)
+    native_nodes = {identity(s): s for s in native}
+    for step in steps:
+        key = identity(step)
+        if incoming_counts[key] != 1 or native_counts[key] != 1:
+            continue
+        old = native_nodes[key]
+        for field in ('material_type', 'technology_type', 'label'):
+            preferred, fallback = step.get(field), old.get(field)
+            if not isinstance(preferred, dict) or not isinstance(fallback, dict):
+                continue
+            if ({k:v for k,v in preferred.items() if k != 'comments'} !=
+                    {k:v for k,v in fallback.items() if k != 'comments'}):
+                continue
+            counts = Counter((c['name'],c['value']) for c in preferred.get('comments', []))
+            seen = Counter()
+            for comment in fallback.get('comments', []):
+                note = (comment['name'],comment['value'])
+                seen[note] += 1
+                if seen[note] > counts[note]:
+                    preferred.setdefault('comments', []).append(deepcopy(comment))
     return steps
 
 

@@ -112,7 +112,8 @@ def test_protocol_application_metadata_and_ontology_companions_round_trip():
     assert application["performer"] == "Jane Doe"
     assert application["date"] == "2025-01-02"
     assert application["parameter_values"][0]["unit_type"] == "temperature unit"
-    assert application["parameter_values"][0]["comments"] == [{"name": "note", "value": "critical"}]
+    assert application["parameter_values"][0]["unit"]["comments"] == [{"name": "note", "value": "critical"}]
+    assert not application["parameter_values"][0].get("comments")
     assay = next(step for step in steps if step["kind"] == "assay")
     assert assay["technology_type"]["term_accession_number"] == "EFO:0002770"
     rendered = _render_sdrf(package)

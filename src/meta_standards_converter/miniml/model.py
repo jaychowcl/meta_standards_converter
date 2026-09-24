@@ -255,6 +255,7 @@ class OntologyValue:
     term_source_ref: str | None = None
     term_accession_number: str | None = None
     annotations: tuple[_OccurrenceHarmonizedValue, ...] = ()
+    comments: tuple[NamedComment, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, str):
@@ -263,16 +264,19 @@ class OntologyValue:
             isinstance(item, _OccurrenceHarmonizedValue) for item in self.annotations
         ):
             raise MINiMLModelError("ontology value annotations must be typed annotations")
+        if not isinstance(self.comments, tuple) or not all(isinstance(item, NamedComment) for item in self.comments):
+            raise MINiMLModelError("ontology value comments must be typed comments")
 
     @classmethod
     def from_value(cls, value: Any) -> "OntologyValue":
         if isinstance(value, Mapping):
-            known = {"value", "term_source_ref", "term_accession_number"}
+            known = {"value", "term_source_ref", "term_accession_number", "comments"}
             return cls(
                 str(value.get("value", "")),
                 value.get("term_source_ref"),
                 value.get("term_accession_number"),
                 _harmonized_annotations(value, known, "ontology value"),
+                _comments(value.get('comments')),
             )
         if isinstance(value, (str, int, float, bool)):
             return cls(str(value))
@@ -283,6 +287,8 @@ class OntologyValue:
         for key in ("term_source_ref", "term_accession_number"):
             _put(result, key, getattr(self, key))
         result.update(_harmonized_wire(self.annotations))
+        if self.comments:
+            result['comments'] = [item.to_mapping() for item in self.comments]
         return result
 
 

@@ -695,10 +695,14 @@ class AEParser:
             value = row[index].strip()
             companions = {}
             companion_target = companions
+            unit_seen = False
             for companion_index in range(index + 1, len(header)):
                 companion = normalized_label(header[companion_index])
                 unit_match = re.fullmatch(r"\s*Unit(?:\[([^]]*)])?\s*", header[companion_index], re.I)
                 if unit_match:
+                    if unit_seen:
+                        break
+                    unit_seen = True
                     value_unit = row[companion_index].strip()
                     # An absent unit clears the ontology attachment context.
                     # The canonical semantic path retains these unbound cells.
@@ -713,6 +717,10 @@ class AEParser:
                 if companion == normalized_label("Term Accession Number"):
                     if row[companion_index].strip():
                         companion_target["term_accession_number"] = row[companion_index].strip()
+                    continue
+                if not unit_seen and re.fullmatch(r"\s*Comment\[(?!hz_)[^]]*]\s*", header[companion_index], re.I):
+                    # The semantic path retains the comment; the channel still
+                    # needs the later unit of this same named occurrence.
                     continue
                 break
             if tag.casefold() == "organism":

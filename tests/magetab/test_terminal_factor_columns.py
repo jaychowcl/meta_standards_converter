@@ -107,7 +107,6 @@ def test_factor_companion_scan_keeps_post_unit_comment_position_explicit():
     path=_assay_path('x',1,headers,['s1','0','factor comment','hour','unit comment','other'])
     factor=next(s for s in path['steps'] if s.get('header')=='Factor Value[dose]')
     assert factor['unit']=='hour' and factor['companion_columns']['unit']==3
-    # Unit-comment typing belongs to the separately tracked OntologyValue gap;
-    # the source model must still retain the exact two positional owners.
+    # The source model retains both positions for typed-owner migration.
     comments=[s for s in path['steps'] if s['kind']=='comment']
     assert [(s['column_index'],s['value']) for s in comments]==[(2,'factor comment'),(4,'unit comment')]
