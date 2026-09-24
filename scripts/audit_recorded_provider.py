@@ -413,14 +413,172 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
     return report
 
 
+
+# This reviewed roster is independent of caller-supplied index counts.
+_PANEL_NATIVE = (
+    "E-GEOD-48034", "E-GEOD-48035", "E-GEOD-52564", "E-GEOD-60450",
+    "E-MTAB-13131", "E-MTAB-13662", "E-MTAB-14416", "E-MTAB-14560",
+    "E-MTAB-14566", "E-MTAB-14960", "E-MTAB-16192", "E-MTAB-16253",
+    "E-MTAB-16856", "E-MTAB-308", "E-MTAB-5481", "E-MTAB-5485",
+)
+_PANEL_ENA = ("E-GEOD-48034", "E-GEOD-60450", "E-MTAB-14560", "E-MTAB-14566", "E-MTAB-16253", "E-MTAB-308")
+_PANEL_ROUTES = tuple((study, route) for study in _PANEL_NATIVE for route in ("reference", "native", "linked", "standard"))
+_PANEL_ROUTES += tuple((study, "ena") for study in _PANEL_ENA)
+_PANEL_ROUTES += tuple((study, route) for study in ("E-MTAB-16847", "GSE100") for route in ("reference", "direct"))
+_PANEL_FORMATS = ["json", "magetab", "tsv"]
+_PANEL_ACCESSIONS = dict(zip(_PANEL_NATIVE, (
+    "SRP026125", "SRP026126", "SRP033200", "SRP045534", "ERP148790", "ERP156296",
+    "ERP163837", "ERP165490", "ERP165595", "ERP170611", "ERP185409", "ERP185509",
+    "ERP191728", "ERP000263", "ERP022096", "ERP022298",
+)))
+
+
+def validate_panel_route(study, route, manifest, scenario):
+    """A named matrix entry must exercise its intended scientific route."""
+    intended = {"reference": "deposited-off", "direct": "deposited-off",
+                "native": "parser-native-off", "ena": "parser-native-off",
+                "standard": "production-standard", "linked": "linked-only"}[route]
+    if scenario.get("route_intent") != intended: raise HarnessError("panel route intent does not match approved route")
+    validate_route_intent(scenario)
+    options = scenario["options"]
+    if options.get("options", {}).get("expand_studies") is not False:
+        raise HarnessError("panel routes require explicit expand_studies=False")
+    source = scenario["source"]
+    if route in {"standard", "native", "ena", "linked"}:
+        if source != {"kind": "accession", "value": _PANEL_ACCESSIONS[study]}:
+            raise HarnessError("source accession differs from approved study mapping")
+        if options.get("in_type") != ("ena" if route == "ena" else "sra"):
+            raise HarnessError("source provider differs from approved route")
+        if route == "standard":
+            for scope in (options, options.get("options", {}), options.get("input_options", {})):
+                if any(key in scope and scope[key] is not True for key in ("include_peer", "enrich_from_geo_ae")):
+                    raise HarnessError("standard panel route cannot disable peer or linked preparation")
+    else:
+        if scenario["services"]: raise HarnessError("archive controls require production file import services")
+        if "in_type" in options: raise HarnessError("archive controls require approved file-type detection without provider override")
+        files = manifest["files"]
+        if study == "GSE100" and route == "direct":
+            if source != {"kind": "file", "file": "geo"} or files["geo"]["path"] != "tests/fixtures/studies/GSE100/inputs/geo.xml":
+                raise HarnessError("GSE100 direct route requires its approved GEO XML reference")
+        else:
+            accession = "E-GEOD-100" if study == "GSE100" else study
+            if source != {"kind": "file", "file": "idf"}:
+                raise HarnessError("archive control requires its explicit IDF source")
+            for kind in ("idf", "sdrf"):
+                if Path(files[kind]["path"]).name != accession + "." + kind + ".txt":
+                    raise HarnessError("archive IDF/SDRF reference differs from approved accession")
+
+
+
+def audit_panel(index, *, evidence_root=None, artifacts_dir=None):
+    """Execute the approved 18-study roster; missing routes never disappear.
+
+    Manifests are relative to the index, external evidence to the explicitly
+    supplied root. Supplemental cohorts do not replace any required route.
+    """
+    from collections import Counter
+    report = {"classification": "harness-error", "panel": "workflow-provenance-18-studies",
+              "routes": [], "errors": [], "passed_facade_calls": 0, "attempted_facade_calls": 0,
+              "required_studies": 18, "required_routes": 74, "required_facade_calls": 222}
+    try:
+        if sys.flags.optimize: raise HarnessError("optimized Python disables acceptance assertions; run without -O")
+        if evidence_root is None: raise HarnessError("unmet prerequisite: explicit --evidence-root is required")
+        index = Path(index).resolve()
+        original_index = index.read_bytes()
+        doc = json.loads(original_index)
+        if doc.get("schema_version") != "1.0" or doc.get("panel") != report["panel"]:
+            raise HarnessError("unsupported panel identity or schema")
+        if (doc.get("expected_studies"), doc.get("expected_routes"), doc.get("expected_facade_calls")) != (18, 74, 222):
+            report["errors"].append("declared counts differ from the approved 18/74/222 roster")
+        report["index_sha256"] = hashlib.sha256(original_index).hexdigest()
+        report["runner_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        report["final_freeze"] = doc.get("final_freeze")
+        if doc.get("unmet_prerequisites"):
+            report["errors"].append(f"panel unmet prerequisites: {doc['unmet_prerequisites']}")
+        rows = doc.get("routes")
+        if not isinstance(rows, list): raise HarnessError("panel routes must be an explicit list")
+        by_route, ids, paths = {}, Counter(), Counter()
+        for row in rows:
+            if not isinstance(row, dict) or not all(isinstance(row.get(k), str) and row[k] for k in ("study", "route", "manifest_id", "manifest")):
+                report["errors"].append("malformed route declaration")
+                continue
+            key = (row["study"], row["route"])
+            by_route.setdefault(key, []).append(row)
+            ids[row["manifest_id"]] += 1
+            paths[row["manifest"]] += 1
+        if set(by_route) != set(_PANEL_ROUTES) or any(len(v) != 1 for v in by_route.values()):
+            report["errors"].append("route roster differs from the approved named study/route roster")
+        if any(n != 1 for n in ids.values()) or any(n != 1 for n in paths.values()):
+            report["errors"].append("duplicate manifest identity or path")
+        artifact_root = None
+        if artifacts_dir is not None:
+            artifact_root = Path(artifacts_dir).resolve()
+            artifact_root.mkdir(parents=True, exist_ok=False)
+        for key in _PANEL_ROUTES:
+            study, route = key
+            entry = {"study": study, "route": route, "classification": "harness-error", "errors": []}
+            report["routes"].append(entry)
+            try:
+                declarations = by_route.get(key, [])
+                if len(declarations) != 1: raise HarnessError("missing or duplicated approved route")
+                row = declarations[0]
+                if ids[row["manifest_id"]] != 1 or paths[row["manifest"]] != 1:
+                    raise HarnessError("duplicate manifest identity or path")
+                relative = Path(row["manifest"])
+                manifest = (index.parent / relative).resolve()
+                if relative.is_absolute() or ".." in relative.parts or not manifest.is_relative_to(index.parent):
+                    raise HarnessError("manifest path escapes explicit index root")
+                raw = manifest.read_bytes()
+                digest = hashlib.sha256(raw).hexdigest()
+                if digest != row["manifest_sha256"]: raise HarnessError("manifest SHA256 mismatch")
+                declared = json.loads(raw)
+                if declared["cohort"] != row["manifest_id"]: raise HarnessError("manifest cohort identity mismatch")
+                scenarios = declared.get("scenarios")
+                if not isinstance(scenarios, list) or len(scenarios) != 1:
+                    raise HarnessError("each approved route requires exactly one scenario")
+                scenario = scenarios[0]
+                if scenario.get("id") != study + "/" + route: raise HarnessError("manifest scenario identity differs from approved route")
+                if scenario.get("formats") != _PANEL_FORMATS or set(scenario.get("expected", {})) != set(_PANEL_FORMATS):
+                    raise HarnessError("each approved route requires JSON, MAGE-TAB and TSV coverage")
+                if scenario.get("classification") != "complete-captured-coverage":
+                    raise HarnessError("expected-failure supplements cannot replace required successful route coverage")
+                validate_panel_route(study, route, declared, scenario)
+                entry["manifest_sha256"] = digest
+                result = audit(manifest, evidence_root=Path(evidence_root).resolve(),
+                               artifacts_dir=artifact_root / study / route if artifact_root else None)
+                entry["audit"] = result
+                calls = [call for scenario in result.get("scenarios", []) for call in scenario.get("calls", [])]
+                report["attempted_facade_calls"] += len(calls)
+                report["passed_facade_calls"] += sum(call.get("status") == "passed" for call in calls)
+                if result.get("classification") != "complete-captured-coverage":
+                    raise HarnessError(f"route audit failed: {result.get('errors', [])}")
+                if [call.get("format") for call in calls] != _PANEL_FORMATS or any(call.get("status") != "passed" for call in calls):
+                    raise HarnessError("returned facade call coverage differs from required JSON/MAGE-TAB/TSV")
+                if hashlib.sha256(manifest.read_bytes()).hexdigest() != digest:
+                    raise HarnessError("manifest changed during route audit")
+                entry["classification"] = "complete-captured-coverage"
+            except Exception as exc:
+                entry["errors"].append(f"{type(exc).__name__}: {exc}")
+        if index.read_bytes() != original_index: report["errors"].append("panel index changed during audit")
+        if any(row["classification"] != "complete-captured-coverage" for row in report["routes"]):
+            report["errors"].append("one or more required routes failed or have unmet prerequisites")
+        if report["passed_facade_calls"] != 222:
+            report["errors"].append(f"required 222 passing facade calls; observed {report['passed_facade_calls']}")
+        if not report["errors"]: report["classification"] = "complete-captured-coverage"
+    except Exception as exc:
+        report["errors"].append(f"{type(exc).__name__}: {exc}")
+    return report
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("manifest", type=Path)
+    parser.add_argument("manifest", type=Path, help="Route manifest, or approved panel index with --panel")
+    parser.add_argument("--panel", action="store_true", help="Require the approved 18-study, 74-route, 222-call roster")
     parser.add_argument("--evidence-root", type=Path)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--artifacts-dir", type=Path, help="Optional fresh audit payload files; existing files are never overwritten")
     args = parser.parse_args(argv)
-    report = audit(args.manifest, evidence_root=args.evidence_root, artifacts_dir=args.artifacts_dir)
+    report = (audit_panel if args.panel else audit)(args.manifest, evidence_root=args.evidence_root, artifacts_dir=args.artifacts_dir)
     rendered = json.dumps(report, indent=2)
     if args.report: args.report.write_text(rendered + "\n")
     print(rendered)
