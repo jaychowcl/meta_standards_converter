@@ -44,23 +44,27 @@
           "execution": "succeeded",
           "validation": "valid",
           "completeness": "complete",
-          "causes": []
+          "causes": [],
+          "payload_count": 1
         },
         "magetab": {
           "execution": "succeeded",
           "validation": "valid",
           "completeness": "complete",
-          "causes": []
+          "causes": [],
+          "payload_count": 1
         },
         "tsv": {
           "execution": "succeeded",
           "validation": "valid",
           "completeness": "complete",
-          "causes": []
+          "causes": [],
+          "payload_count": 1
         }
       },
       "golden": "golden",
-      "expected_item_count": 1
+      "expected_item_count": 1,
+      "route_intent": "deposited-off"
     }
   ]
 }

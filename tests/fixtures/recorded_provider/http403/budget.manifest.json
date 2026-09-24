@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "cohort": "declared-synthetic-budget-fault-on-recorded-AE-request",
+  "source_revision": null,
+  "captured_at": null,
+  "evidence_kind": "recorded-http",
+  "files": {
+    "golden": {
+      "path": "expected.json",
+      "sha256": "83c874c3f1bd28980b7aeb34e114390723a0ac5c4d92b381548cffe2ccc5ea13"
+    }
+  },
+  "requests": [
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/biostudies/api/v1/files/E-MTAB-16253?start=0&length=100",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "exception": "budget-exhausted",
+          "repeat": 1
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "declared-budget-exhaustion",
+      "route_intent": "deposited-off",
+      "classification": "expected-failure",
+      "source": {
+        "kind": "accession",
+        "value": "E-MTAB-16253"
+      },
+      "services": {},
+      "options": {
+        "in_type": "ae_accession",
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        }
+      },
+      "formats": [
+        "json"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "exception": "budget-exhausted"
+        }
+      },
+      "golden": "golden"
+    }
+  ],
+  "source_note": "Original expanded-audit source session, preserved independently from fresh ERP185509 success. No later200 response is selected.",
+  "fault_model": "Synthetic deterministic harness budget exception at the initial recorded request identity; not a captured live timeout or provider reply."
+}

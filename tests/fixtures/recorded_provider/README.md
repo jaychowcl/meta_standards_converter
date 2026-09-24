@@ -1,3 +1,13 @@
+<!--
+Authors
+
+Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+https://github.com/jaychowcl
+https://saezlab.org
+https://www.ebi.ac.uk/about/teams/functional-genomics/
+-->
+
+
 # Recorded provider audit fixtures
 
 These fixtures are reviewed reductions of source-faithful scientific evidence,
@@ -17,6 +27,14 @@ not a replacement for the full 18-study provider audit.
   authored/native paths, sample-only supplementary paths and scoped conflicts.
   Other samples/runs, redundant raw-data collections and raw provider extension
   envelopes are omitted explicitly. Scientific values are not rewritten.
+* `http403/manifest.json` retains the original E-MTAB-16253 failed SDRF response
+  and its three source catalogue/IDF responses. Four explicit offline reuses of
+  that one 403 body exercise the default initial attempt plus three retries;
+  this is not evidence of four separate captured live requests. The failure
+  cannot be replaced by a later 200 response.
+* `http403/budget.manifest.json` is explicitly a synthetic budget fault at a
+  recorded request identity. Its purpose is to verify expected exhaustion and
+  harness-error separation; it is not a captured provider failure.
 
 Row ledgers preserve original column index/header and exact cell strings,
 including repeated headers and authored rows. Counts are 16, 1558, 104, 51 and
@@ -39,3 +57,9 @@ or live fallback exists. A swallowed miss remains a harness error and exits 2.
 External manifests require an explicit `--evidence-root` and report missing
 evidence as an unmet prerequisite. Full raw HTTP and expanded GeoMx packages
 remain in immutable development evidence, outside this tracked CI corpus.
+Every scenario declares route intent, nonempty formats, one logical outcome,
+and exact package/artifact counts. Production-standard routes retain default
+enrichment services even when the default preset argument is omitted. Only
+linked-only routes may explicitly select local-AE and no-publication services.
+Optional audit artifact capture uses fresh files and retains failed-call payloads;
+the first exact-golden mismatch includes a bounded JSON-pointer location.

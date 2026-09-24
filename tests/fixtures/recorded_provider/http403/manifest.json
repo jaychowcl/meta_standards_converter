@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0",
+  "cohort": "E-MTAB-16253-original-SDRF403",
+  "source_revision": null,
+  "captured_at": null,
+  "evidence_kind": "recorded-http",
+  "files": {
+    "cdbd84231aceef2ed4ce066f76418d5b883964f79a661774da33b5734788002c": {
+      "path": "cdbd84231aceef2ed4ce066f76418d5b883964f79a661774da33b5734788002c.body",
+      "sha256": "21ca21825c4c88361c733e873f86a2b5e443ff63bd7103d9eeaa4eedd8bbeb41",
+      "source_metadata": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-16253/http/cdbd84231aceef2ed4ce066f76418d5b883964f79a661774da33b5734788002c.json",
+      "source_metadata_sha256": "855c6e24b499ca3adefcb68598104418b170ddad0ecf5447a5e6434ba0793b64"
+    },
+    "0503197b3a3635f18dada7487103b4456a9df7808add96163e97d37411e5f9bd": {
+      "path": "0503197b3a3635f18dada7487103b4456a9df7808add96163e97d37411e5f9bd.body",
+      "sha256": "5b13fb5957b84ef7bb9d0b6cd509c947ff6a37d67efdac2b896ddd3b908aad10",
+      "source_metadata": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-16253/http/0503197b3a3635f18dada7487103b4456a9df7808add96163e97d37411e5f9bd.json",
+      "source_metadata_sha256": "bb60338cd47cde54b8a2e37e8b6608d68b2c4c5c0e9abf681b13f13499bfa8b0"
+    },
+    "f864c2fccaf1e0bf04c821fbf7450560f7b6c097cf980256c6e8c39afa3f5ac6": {
+      "path": "f864c2fccaf1e0bf04c821fbf7450560f7b6c097cf980256c6e8c39afa3f5ac6.body",
+      "sha256": "85e2d1792b8f43db6bb344dd69eb74e097247e4293a60e1ebead219aa7304495",
+      "source_metadata": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-16253/http/f864c2fccaf1e0bf04c821fbf7450560f7b6c097cf980256c6e8c39afa3f5ac6.json",
+      "source_metadata_sha256": "553705e0b082bf5cf7a3bdee8952dffb457d62eea6cb39fa27e14e1b13e74bdd"
+    },
+    "51bd2a42f2151bc9f7a9e9b39cc187daa085e01e6d4645b839204cd8efedbf78": {
+      "path": "51bd2a42f2151bc9f7a9e9b39cc187daa085e01e6d4645b839204cd8efedbf78.body",
+      "sha256": "8e862489b047622466f403ae6fa23612e1e6a68ccf8350c34c3440a7d45bb74f",
+      "source_metadata": ".dev/comms/agents/msc_expanded_audit/dev/live/E-MTAB-16253/http/51bd2a42f2151bc9f7a9e9b39cc187daa085e01e6d4645b839204cd8efedbf78.json",
+      "source_metadata_sha256": "ea39463ecda442e98784013ac5045d0fa0b4c356065c3d4f1cf7688d26b34306"
+    },
+    "golden": {
+      "path": "expected.json",
+      "sha256": "83c874c3f1bd28980b7aeb34e114390723a0ac5c4d92b381548cffe2ccc5ea13"
+    }
+  },
+  "requests": [
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/253/E-MTAB-16253/Files/E-MTAB-16253.idf.txt",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "cdbd84231aceef2ed4ce066f76418d5b883964f79a661774da33b5734788002c",
+          "status": 200,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 14:48:07 GMT",
+            "Server": "Apache",
+            "Last-Modified": "Tue, 16 Jun 2026 14:01:02 GMT",
+            "ETag": "\"1722-6545f5f8d8380\"",
+            "Accept-Ranges": "bytes",
+            "Content-Length": "5922",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization,Origin,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Accept",
+            "Keep-Alive": "timeout=15, max=100",
+            "Connection": "Keep-Alive",
+            "Content-Type": "text/plain; charset=UTF-8"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/253/E-MTAB-16253/Files/E-MTAB-16253.sdrf.txt",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "0503197b3a3635f18dada7487103b4456a9df7808add96163e97d37411e5f9bd",
+          "status": 403,
+          "headers": {
+            "Date": "Mon, 21 Sep 2026 14:48:20 GMT",
+            "Server": "Apache",
+            "Content-Length": "199",
+            "Keep-Alive": "timeout=15, max=100",
+            "Connection": "Keep-Alive",
+            "Content-Type": "text/html; charset=iso-8859-1"
+          },
+          "encoding": "iso-8859-1",
+          "repeat": 4
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/biostudies/api/v1/files/E-MTAB-16253?start=0&length=100",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "f864c2fccaf1e0bf04c821fbf7450560f7b6c097cf980256c6e8c39afa3f5ac6",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json;charset=UTF-8",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 14:47:50 GMT",
+            "Keep-Alive": "timeout=60",
+            "Expires": "0",
+            "X-XSS-Protection": "1; mode=block",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "SAMEORIGIN",
+            "Content-Length": "1147"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    },
+    {
+      "identity": {
+        "method": "GET",
+        "url": "https://www.ebi.ac.uk/biostudies/api/v1/studies/E-MTAB-16253/info",
+        "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "attempts": [
+        {
+          "response": "51bd2a42f2151bc9f7a9e9b39cc187daa085e01e6d4645b839204cd8efedbf78",
+          "status": 200,
+          "headers": {
+            "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers",
+            "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+            "Content-Type": "application/json;charset=UTF-8",
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+            "Date": "Mon, 21 Sep 2026 14:47:51 GMT",
+            "Keep-Alive": "timeout=60",
+            "Expires": "0",
+            "X-XSS-Protection": "1; mode=block",
+            "Pragma": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Connection": "keep-alive",
+            "X-Frame-Options": "SAMEORIGIN",
+            "Content-Length": "1195"
+          },
+          "encoding": "UTF-8",
+          "repeat": 1
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "old-SDRF403",
+      "route_intent": "deposited-off",
+      "classification": "expected-failure",
+      "source": {
+        "kind": "accession",
+        "value": "E-MTAB-16253"
+      },
+      "services": {},
+      "options": {
+        "in_type": "ae_accession",
+        "enrichment": "off",
+        "options": {
+          "expand_studies": false
+        }
+      },
+      "formats": [
+        "json"
+      ],
+      "expected_item_count": 1,
+      "expected": {
+        "json": {
+          "execution": "failed",
+          "validation": "unknown",
+          "completeness": "unknown",
+          "causes": [
+            {
+              "code": "conversion_failed",
+              "stage": "load",
+              "severity": "error",
+              "message": "Conversion failed (HTTPError)"
+            }
+          ],
+          "payload_count": 0
+        }
+      },
+      "golden": "golden"
+    }
+  ],
+  "source_note": "Original expanded-audit source session, preserved independently from fresh ERP185509 success. No later200 response is selected.",
+  "retry_policy": "Four offline reuses of the one preserved403 body exercise RequestSettings default initial attempt +3 retries; this is not four captured live attempts."
+}

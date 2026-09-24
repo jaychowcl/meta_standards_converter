@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+
 """Audit explicit recorded cohorts. No live fallback or golden regeneration.
 
 Run with the existing environment: python scripts/audit_recorded_provider.py
@@ -7,15 +15,21 @@ tests/fixtures/recorded_provider/success.manifest.json. External corpora require
 """
 import argparse
 import csv
+from contextlib import contextmanager, ExitStack
 from dataclasses import asdict, is_dataclass
+from datetime import date
+import hashlib
 import json
+import os
 from pathlib import Path
 import sys
+import tempfile
 import time
 
 REPO = Path(__file__).resolve().parents[1]
 if str(REPO) not in sys.path: sys.path.insert(0, str(REPO))
 from tests.support.recorded_replay import HarnessError, ReplayTransport, ReplayBudgetExceeded, assert_occurrences
+from tests.support.recorded_replay import occurrence_counter
 
 
 def primitive(value):
@@ -31,6 +45,23 @@ def pointer(value, path):
         key = key.replace("~1", "/").replace("~0", "~")
         value = value[int(key)] if isinstance(value, list) else value[key]
     return value
+
+
+def first_difference(actual, expected, path=""):
+    """Bounded mismatch location; never dumps multi-megabyte golden payloads."""
+    if type(actual) is not type(expected): return path or "/", actual, expected
+    if isinstance(actual, dict):
+        if actual.keys() != expected.keys(): return path + "/<keys>", sorted(actual), sorted(expected)
+        for key in actual:
+            found = first_difference(actual[key], expected[key], path + "/" + str(key).replace("~", "~0").replace("/", "~1"))
+            if found: return found
+    elif isinstance(actual, list):
+        if len(actual) != len(expected): return path + "/<length>", len(actual), len(expected)
+        for index, (left, right) in enumerate(zip(actual, expected)):
+            found = first_difference(left, right, path + "/" + str(index))
+            if found: return found
+    elif actual != expected: return path or "/", actual, expected
+    return None
 
 
 def compare_golden(payload, expected):
@@ -55,9 +86,33 @@ def compare_golden(payload, expected):
                 for table in payload.values() for row in table["rows"]]
         assert_occurrences(expected["rows"], rows)
     elif kind == "exact":
-        assert payload == expected["value"], "exact scientific payload mismatch"
+        mismatch = first_difference(payload, expected["value"])
+        if mismatch:
+            path, actual, wanted = mismatch
+            raise AssertionError(f"exact scientific payload mismatch at {path}: actual={str(actual)[:240]!r}; expected={str(wanted)[:240]!r}")
     else:
         raise HarnessError(f"unknown golden comparator: {kind}")
+
+
+def normalize_runtime_date(payload, expected, declaration):
+    """Only declared generated IDF dates; every scientific cell is untouched."""
+    if declaration is None: return payload, expected
+    if set(declaration) != {"recorded_submission_date"}: raise HarnessError("unsupported golden normalization")
+    def normalized(value, required):
+        result = []
+        for table in value:
+            found = 0
+            rows = []
+            for row in table:
+                if row and row[0] == "Comment[ArrayExpressSubmissionDate]":
+                    assert row[1:] == [required], "unexpected generated submission date"
+                    rows.append([row[0], "<AUDIT_RUN_DATE>"])
+                    found += 1
+                else: rows.append(row)
+            assert found == 1, "missing or repeated generated submission date in table"
+            result.append(rows)
+        return result
+    return normalized(payload, date.today().isoformat()), normalized(expected, declaration["recorded_submission_date"])
 
 
 def build_services(replay, declarations):
@@ -84,10 +139,16 @@ def build_services(replay, declarations):
             class FrozenSource:
                 def __init__(self, declaration): self.declaration = declaration
                 def resolve(self, accession):
+                    if accession not in self.declaration["requested_accessions"]:
+                        replay.fail(f"unmanifested frozen resolution accession: {accession}")
                     return snapshot(self.declaration["resolution"])
                 def fetch(self, seed):
                     if seed.study not in self.declaration["records"]: replay.fail(f"unmanifested frozen study: {seed.study}")
-                    return snapshot(self.declaration["records"][seed.study], records=True)
+                    record = snapshot(self.declaration["records"][seed.study], records=True)
+                    resolution = snapshot(self.declaration["resolution"])
+                    if record.seed != seed or seed not in resolution.studies:
+                        replay.fail("frozen record seed identity differs from requested/resolved seed")
+                    return record
             services[name] = SRA2JSONConverter(source=FrozenSource(spec))
         elif name == "ae2json" and spec["kind"] == "local-ae":
             from meta_standards_converter.converters.ae2json import AE2JSONConverter
@@ -136,19 +197,118 @@ def verify_local_companions(replay, idf_id, expected_ids=None):
     return actual
 
 
-def audit(manifest, *, evidence_root=None):
+def validate_route_intent(scenario):
+    intent = scenario["route_intent"]
+    services = scenario["services"]
+    preset = scenario["options"].get("enrichment", "standard")
+    if intent == "linked-only":
+        if services.get("enricher", {}).get("kind") != "no-publication" or services.get("ae2json", {}).get("kind") != "local-ae":
+            raise HarnessError("linked-only requires explicit no-publication and local-ae services")
+        options = scenario["options"].get("input_options", {})
+        if options.get("include_peer") is not False or options.get("enrich_from_geo_ae") is not True:
+            raise HarnessError("linked-only must explicitly disable peer and enable linked metadata")
+    elif intent == "production-standard":
+        if preset != "standard" or any(name in services for name in ("enricher", "ae2json", "linked_enricher")):
+            raise HarnessError("production-standard requires production enrichment services and standard preset")
+    elif intent in {"deposited-off", "parser-native-off", "loaded-export-off"}:
+        if preset != "off" or any(name in services for name in ("enricher", "ae2json", "linked_enricher")):
+            raise HarnessError("off route requires explicit off preset and no enrichment replacements")
+    else:
+        raise HarnessError("unknown or missing explicit route intent")
+    formats = scenario["formats"]
+    if not isinstance(formats, list) or not formats or formats[0] != "json" or len(set(formats)) != len(formats):
+        raise HarnessError("formats must be a nonempty unique sequence beginning with json")
+    if set(formats) != set(scenario["expected"]): raise HarnessError("format expectation coverage differs from declared calls")
+    for options in (scenario["options"].get("input_options", {}), scenario["options"].get("options", {})):
+        if "sdrf_sources" in options:
+            raise HarnessError("SDRF overrides must be declared by a local-ae IDF/SDRF manifest, not option paths")
+
+
+def validate_payload_count(payload, fmt, wanted):
+    if type(wanted) is not int or wanted < 0: raise HarnessError("invalid required payload count")
+    if payload is None: actual = 0
+    elif fmt in {"json", "magetab"} and isinstance(payload, (list, tuple)): actual = len(payload)
+    elif fmt in {"tsv", "csv"} and isinstance(payload, dict): actual = len(payload)
+    else: raise HarnessError(f"unexpected {fmt} payload shape")
+    if actual != wanted: raise HarnessError(f"{fmt} artifact/package count {actual} != {wanted}")
+
+
+def preparation_snapshot(package):
+    """Audit-only semantic fingerprint plus interpretable scientific counts."""
+    value = primitive(package)
+    samples = value.get("sample", [])
+    paths = value.get("series", {}).get("assay_paths", [])
+    runs = [run for sample in samples for run in sample.get("sra_run", [])]
+    conflicts = [record for record in value.get("extensions", {}).get("insdc", {}).get("records", [])
+                 if record.get("kind") == "source_conflict"]
+    file_identities, run_identities = [], []
+    for sample in samples:
+        for run in sample.get("sra_run", []):
+            scope = {"sample": sample.get("iid"), "run": run.get("run"), "library": run.get("experiment")}
+            run_identities.append(scope | {key: run[key] for key in ("library_layout", "library_source", "library_strategy", "library_selection") if key in run})
+            for file in run.get("fastq_files", []):
+                file_identities.append(scope | {key: file[key] for key in ("uri", "filename", "format", "role", "md5", "bytes", "submitted_file_name") if key in file})
+    def counted(records):
+        return [{"identity": json.loads(key), "occurrences": count} for key, count in sorted(occurrence_counter(records).items())]
+    return {"sha256": hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
+            "sample_ids": [sample.get("iid") for sample in samples],
+            "run_occurrences": len(runs), "assay_path_occurrences": len(paths),
+            "native_file_occurrences": len(file_identities),
+            "retained_archive_file_occurrences": sum(len(run.get("files", [])) for run in runs),
+            "run_identities": counted(run_identities), "native_file_identities": counted(file_identities),
+            "protocol_count": len(value.get("series", {}).get("protocols", [])),
+            "conflicts": conflicts}
+
+
+@contextmanager
+def observe_preparation(replay, observations):
+    """Read-only wrappers around real preparation services; restored on exit."""
+    from meta_standards_converter.converters.unified.preparation import MetadataPreparation
+    from functools import wraps
+    from unittest.mock import patch
+    with ExitStack() as stack:
+        for name in ("_package", "_peer", "_linked", "_standard"):
+            original = getattr(MetadataPreparation, name)
+            def instrument(method, label):
+                @wraps(method)
+                def wrapped(self, package, *args, **kwargs):
+                    observation = {"route": replay.route, "call": replay.call, "operation": label,
+                                   "http_before": len(replay.events), "before": preparation_snapshot(package)}
+                    observations.append(observation)
+                    start = time.monotonic()
+                    try:
+                        result = method(self, package, *args, **kwargs)
+                        observation["after"] = preparation_snapshot(result[0])
+                        observation["status"] = "returned"
+                        return result
+                    except BaseException as exc:
+                        observation.update(status="raised", error_type=type(exc).__name__)
+                        raise
+                    finally:
+                        observation.update(http_after=len(replay.events), seconds=time.monotonic() - start)
+                return wrapped
+            stack.enter_context(patch.object(MetadataPreparation, name, instrument(original, name.lstrip("_"))))
+        yield
+
+
+def audit(manifest, *, evidence_root=None, artifacts_dir=None):
     report = {"classification": "harness-error", "scenarios": [], "errors": []}
     replay = None
     try:
+        if sys.flags.optimize:
+            raise HarnessError("optimized Python disables acceptance assertions; run without -O")
         declaration = json.loads(Path(manifest).read_text())
         if declaration.get("external_evidence") and evidence_root is None:
             raise HarnessError("unmet prerequisite: explicit --evidence-root is required")
+        if declaration.get("unmet_prerequisites"):
+            raise HarnessError(f"unmet prerequisites: {declaration['unmet_prerequisites']}")
         replay = ReplayTransport(manifest, evidence_root=evidence_root)
         doc = replay.manifest
         report.update(cohort=doc["cohort"], evidence_kind=doc["evidence_kind"],
                       source_revision=doc["source_revision"], captured_at=doc["captured_at"])
         scenarios = doc.get("scenarios", [])
         if not scenarios: raise HarnessError("no declared executable scenarios")
+        if artifacts_dir is not None: Path(artifacts_dir).mkdir(parents=True, exist_ok=True)
         with replay.offline():
             # Bootstrap the DNS patch before importing MSC. Pacing is disabled
             # only for recorded replies, never for any live capture operation.
@@ -156,16 +316,20 @@ def audit(manifest, *, evidence_root=None):
             from meta_standards_converter.miniml import MINiMLCodec
             from meta_standards_converter.helpers.request_helper import HostRequestGate
             from unittest.mock import patch
-            with patch.object(HostRequestGate, "wait", return_value=0.0):
+            observations = []
+            report["preparation_observations"] = observations
+            with tempfile.TemporaryDirectory(prefix="msc-replay-gates-") as gate_dir, \
+                    patch.dict(os.environ, {"SCIENTIFIC_PROVIDER_GATE_DIR": gate_dir}), \
+                    patch.object(HostRequestGate, "_default", None), \
+                    patch.object(HostRequestGate, "wait", return_value=0.0), observe_preparation(replay, observations):
                 for scenario in scenarios:
                     replay.route = scenario["id"]
-                    entry = {"id": scenario["id"], "classification": scenario["classification"], "calls": []}
+                    validate_route_intent(scenario)
+                    entry = {"id": scenario["id"], "route_intent": scenario["route_intent"], "classification": scenario["classification"], "calls": []}
                     report["scenarios"].append(entry)
                     if scenario["classification"] not in {"complete-captured-coverage", "expected-failure"}:
                         raise HarnessError("scenario is not declared executable")
                     services = build_services(replay, scenario["services"])
-                    if scenario["options"].get("enrichment") == "standard" and any(name in services for name in ("ae2json", "enricher")):
-                        raise HarnessError("standard replay requires production enrichment services")
                     spec = scenario["source"]
                     if spec["kind"] == "file":
                         replay.read(spec["file"])
@@ -181,10 +345,11 @@ def audit(manifest, *, evidence_root=None):
                         start = time.monotonic()
                         input_evidence = primitive(packages) if packages is not None else spec
                         call = {"format": fmt, "http_before": len(replay.events), "preparation_before": input_evidence}
+                        call["status"] = "running"
+                        entry["calls"].append(call)
                         # Evidence uses bounded hashes/counts for preparation
                         # input rather than duplicating full scientific output.
                         before = json.dumps(call.pop("preparation_before"), sort_keys=True).encode()
-                        import hashlib
                         call["input_sha256"] = hashlib.sha256(before).hexdigest()
                         wanted = scenario["expected"][fmt]
                         try:
@@ -195,9 +360,9 @@ def audit(manifest, *, evidence_root=None):
                             if scenario["classification"] != "expected-failure" or wanted.get("exception") != "budget-exhausted":
                                 raise HarnessError("undeclared budget exhaustion")
                             call.update(exception="budget-exhausted", seconds=time.monotonic() - start,
-                                        http_after=len(replay.events))
-                            entry["calls"].append(call)
+                                        http_after=len(replay.events), status="expected-failure")
                             continue
+                        call.update(result=result.to_dict(), preparation=[primitive(item.preparation) for item in result.items])
                         replay.assert_no_errors()  # Mandatory even when MSC caught the sentinel.
                         expected_count = scenario["expected_item_count"]
                         if expected_count != 1:
@@ -213,20 +378,35 @@ def audit(manifest, *, evidence_root=None):
                             if wanted["execution"] == "succeeded":
                                 assert item.payload is not None, f"{fmt}: required in-memory artifact missing"
                         payload = primitive(result.items[0].payload)
+                        if artifacts_dir is not None:
+                            label = hashlib.sha256(scenario["id"].encode()).hexdigest()[:16] + "." + fmt + ".json"
+                            artifact = Path(artifacts_dir) / label
+                            with artifact.open("x") as handle: json.dump(payload, handle, ensure_ascii=False)
+                            call["audit_artifact"] = str(artifact.resolve())
+                        validate_payload_count(payload, fmt, wanted["payload_count"])
                         expected_payload = golden[fmt] if golden is not None else {"kind": "exact", "value": json.loads(replay.read(scenario["goldens"][fmt]))}
-                        compare_golden(payload, expected_payload)
+                        normalization = scenario.get("runtime_date") if fmt == "magetab" else None
+                        if normalization is not None:
+                            if expected_payload["kind"] != "exact": raise HarnessError("date normalization requires exact MAGE-TAB golden")
+                            compared, expected_payload["value"] = normalize_runtime_date(payload, expected_payload["value"], normalization)
+                        else: compared = payload
+                        compare_golden(compared, expected_payload)
                         if fmt == "json" and result.items[0].payload is not None:
                             packages = result.items[0].payload
                             for package in packages: MINiMLCodec().decode(package, strict=True)
                         call.update(seconds=time.monotonic() - start, http_after=len(replay.events),
                                     preparation=[primitive(item.preparation) for item in result.items],
-                                    result=result.to_dict(), output_sha256=hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest())
-                        entry["calls"].append(call)
+                                    result=result.to_dict(), status="passed", output_sha256=hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest())
                     replay.assert_no_errors()
                 replay.assert_complete()
         report["classification"] = "expected-failure" if any(s["classification"] == "expected-failure" for s in scenarios) else "complete-captured-coverage"
     except Exception as exc:
         report["errors"].append(f"{type(exc).__name__}: {exc}")
+        if report["scenarios"] and report["scenarios"][-1]["calls"]:
+            failed = report["scenarios"][-1]["calls"][-1]
+            if failed["status"] == "running":
+                failed.update(status="harness-error", seconds=time.monotonic() - start,
+                              http_after=len(replay.events), error=report["errors"][-1])
     if replay is not None:
         report["transport"] = {"events": replay.events, "errors": replay.errors,
                                "unexpected_misses": len(replay.errors)}
@@ -238,8 +418,9 @@ def main(argv=None):
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--evidence-root", type=Path)
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--artifacts-dir", type=Path, help="Optional fresh audit payload files; existing files are never overwritten")
     args = parser.parse_args(argv)
-    report = audit(args.manifest, evidence_root=args.evidence_root)
+    report = audit(args.manifest, evidence_root=args.evidence_root, artifacts_dir=args.artifacts_dir)
     rendered = json.dumps(report, indent=2)
     if args.report: args.report.write_text(rendered + "\n")
     print(rendered)

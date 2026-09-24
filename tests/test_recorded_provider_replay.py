@@ -1,3 +1,12 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+
 """Fail-closed replay contracts, independent of converter exception handling."""
 import copy
 import hashlib
@@ -210,6 +219,10 @@ def test_reduced_scientific_success_all_formats(tmp_path):
     assert report["classification"] == "complete-captured-coverage", report
     assert [call["format"] for call in report["scenarios"][0]["calls"]] == ["json", "magetab", "tsv"]
     assert all(call["preparation"] for call in report["scenarios"][0]["calls"])
+    assert len(report["preparation_observations"]) == 3
+    assert all(obs["before"] == obs["after"] for obs in report["preparation_observations"])
+    assert all(obs["before"]["sample_ids"] == ["control1", "control2", "RRSP-RBD-TAT1", "RRSP-RBD-TAT2", "RRSP-TAT1", "RRSP-TAT2"]
+               for obs in report["preparation_observations"])
 
 
 def test_reduced_conflict_is_partial_valid_in_all_formats_and_reimports():
@@ -278,11 +291,13 @@ def test_frozen_source_reconstructs_only_json_and_safe_xml(tmp_path):
         manifest["files"][name] = {"path": file.name, "sha256": hashlib.sha256(file.read_bytes()).hexdigest()}
     path.write_text(json.dumps(manifest))
     replay = ReplayTransport(path)
-    service = build_services(replay, {"sra2json": {"kind": "frozen-source", "resolution": "resolution", "records": {"SRP1": "records"}}})["sra2json"]
+    service = build_services(replay, {"sra2json": {"kind": "frozen-source", "requested_accessions": ["SRP1"], "resolution": "resolution", "records": {"SRP1": "records"}}})["sra2json"]
     source = service.source
     seed = source.resolve("SRP1").studies[0]
     assert seed == StudySeed("SRP1", "SRP1")
     assert source.fetch(seed).xml[0].get("accession") == "SRP1"
+    with pytest.raises(HarnessError, match="resolution accession"): source.resolve("SRP2")
+    with pytest.raises(HarnessError, match="seed identity"): source.fetch(StudySeed("SRP1", "wrong-primary"))
     # A valid-hash file is still parsed as data; it cannot become executable pickle.
     file = tmp_path / "records.json"
     file.write_bytes(b"cos\nsystem\n(S'touch should-not-exist'\ntR.")
@@ -297,3 +312,132 @@ def test_runner_reports_harness_error_and_nonzero_for_missing_evidence(tmp_path,
     (tmp_path / "response.body").unlink()
     assert main([str(path)]) == 2
     assert json.loads(capsys.readouterr().out)["classification"] == "harness-error"
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_production_standard_cannot_hide_enrichment_injections(explicit):
+    from scripts.audit_recorded_provider import validate_route_intent
+    scenario = {"route_intent": "production-standard", "options": {"enrichment": "standard"} if explicit else {},
+                "services": {"enricher": {"kind": "no-publication"}}}
+    with pytest.raises(HarnessError, match="production enrichment"): validate_route_intent(scenario)
+    scenario["services"] = {}
+    scenario.update(formats=["json"], expected={"json": {}})
+    validate_route_intent(scenario)
+
+
+def test_linked_route_requires_explicit_local_services_and_policy():
+    from scripts.audit_recorded_provider import validate_route_intent
+    scenario = {"route_intent": "linked-only", "services": {}, "options": {}}
+    with pytest.raises(HarnessError): validate_route_intent(scenario)
+    scenario["services"] = {"enricher": {"kind": "no-publication"}, "ae2json": {"kind": "local-ae"}}
+    with pytest.raises(HarnessError): validate_route_intent(scenario)
+    scenario["options"]["input_options"] = {"include_peer": False, "enrich_from_geo_ae": True}
+    scenario.update(formats=["json"], expected={"json": {}})
+    validate_route_intent(scenario)
+
+
+def test_empty_format_and_unmanifested_sdrf_override_rejected(tmp_path):
+    from scripts.audit_recorded_provider import audit
+    root = Path(__file__).parent / "fixtures/recorded_provider"
+    original = json.loads((root / "success.manifest.json").read_text())
+    for changes in [{"formats": []}, {"options": {"enrichment": "off", "input_options": {"sdrf_sources": ["/tmp/not-manifested.sdrf.txt"]}}}]:
+        manifest = copy.deepcopy(original)
+        manifest["scenarios"][0].update(changes)
+        path = tmp_path / "invalid.json"
+        path.write_text(json.dumps(manifest))
+        result = audit(path, evidence_root=root)
+        assert result["classification"] == "harness-error", result
+
+
+@pytest.mark.parametrize("fmt,payload", [("json", [{}, {}]), ("magetab", [[], []]), ("tsv", {"a": {}, "b": {}})])
+def test_extra_package_or_artifact_cannot_hide_outside_pointer_golden(fmt, payload):
+    from scripts.audit_recorded_provider import validate_payload_count
+    with pytest.raises(HarnessError, match="count"): validate_payload_count(payload, fmt, 1)
+
+
+def test_runtime_date_normalization_is_narrow_and_validates_actual_today():
+    from datetime import date
+    from scripts.audit_recorded_provider import normalize_runtime_date
+    actual = [[["Comment[ArrayExpressSubmissionDate]", date.today().isoformat()], ["literal", "  scientific value  "]]]
+    expected = [[["Comment[ArrayExpressSubmissionDate]", "2026-09-22"], ["literal", "  scientific value  "]]]
+    left, right = normalize_runtime_date(actual, expected, {"recorded_submission_date": "2026-09-22"})
+    assert left == right
+    assert left[0][1][1] == "  scientific value  "
+    actual[0][0][1] = "1900-01-01"
+    with pytest.raises(AssertionError): normalize_runtime_date(actual, expected, {"recorded_submission_date": "2026-09-22"})
+    actual = [[["Comment[ArrayExpressSubmissionDate]", date.today().isoformat()]] * 2, [["literal", "table without date"]]]
+    expected = [[["Comment[ArrayExpressSubmissionDate]", "2026-09-22"]], [["Comment[ArrayExpressSubmissionDate]", "2026-09-22"]]]
+    with pytest.raises(AssertionError, match="in table"):
+        normalize_runtime_date(actual, expected, {"recorded_submission_date": "2026-09-22"})
+
+
+@pytest.mark.fake_process
+def test_optimized_python_cannot_disable_audit_acceptance_assertions():
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run([sys.executable, "-O", str(root / "scripts/audit_recorded_provider.py"),
+                             str(root / "tests/fixtures/recorded_provider/success.manifest.json")],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 2
+    report = json.loads(result.stdout)
+    assert report["classification"] == "harness-error"
+    assert "optimized Python" in report["errors"][0]
+    assert not report["scenarios"]
+
+
+def test_failed_golden_call_remains_accounted_with_optional_payload_artifact(tmp_path):
+    from scripts.audit_recorded_provider import audit
+    root = Path(__file__).parent / "fixtures/recorded_provider"
+    manifest = json.loads((root / "success.manifest.json").read_text())
+    golden = json.loads((root / "E-MTAB-16847.expected.json").read_text())
+    golden["json"] = {"kind": "exact", "value": []}
+    for item in manifest["files"].values():
+        content = (root / item["path"]).read_bytes()
+        (tmp_path / item["path"]).write_bytes(content)
+    path = tmp_path / manifest["files"]["golden"]["path"]
+    path.write_text(json.dumps(golden))
+    manifest["files"]["golden"]["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    declared = tmp_path / "manifest.json"
+    declared.write_text(json.dumps(manifest))
+    report = audit(declared, artifacts_dir=tmp_path / "actual")
+    assert report["classification"] == "harness-error"
+    call = report["scenarios"][0]["calls"][0]
+    assert call["status"] == "harness-error" and call["result"]["items"][0]["execution"] == "succeeded"
+    assert "mismatch at /<length>" in call["error"]
+    assert Path(call["audit_artifact"]).is_file()
+    assert call["http_after"] == 0
+
+
+def test_preparation_contributions_count_real_fastq_relationships_and_duplicates():
+    from scripts.audit_recorded_provider import preparation_snapshot
+    path = Path(__file__).parent / "fixtures/recorded_provider/E-MTAB-16253.reduced.json"
+    package = json.loads(path.read_text())
+    before = preparation_snapshot(package)
+    assert before["native_file_occurrences"] == 3
+    expected = {("ze30.fastq", "Original", "bfb3e334318d2ab97b5c72ce8c498d51"),
+                ("ERR15942837.fastq.gz", "GENERATED_FILE", "79fb741520ceb67f4e5568d36f9b9831"),
+                ("ze30.fastq.bz2", "SUBMISSION_FILE", "5515d2901742a23340ac8f1b24a7660e")}
+    assert {(x["identity"]["filename"], x["identity"]["role"], x["identity"]["md5"]) for x in before["native_file_identities"]} == expected
+    assert all(x["identity"]["sample"] == "ERS27611842" and x["identity"]["run"] == "ERR15942837"
+               and x["identity"]["library"] == "ERX15338379" for x in before["native_file_identities"])
+    package["sample"][0]["sra_run"][0]["fastq_files"].append(copy.deepcopy(package["sample"][0]["sra_run"][0]["fastq_files"][0]))
+    after = preparation_snapshot(package)
+    assert after["native_file_occurrences"] == 4
+    assert sorted(x["occurrences"] for x in after["native_file_identities"]) == [1, 1, 2]
+    package["sample"][0]["sra_run"][0]["experiment"] = "wrong-library"
+    rebound = preparation_snapshot(package)
+    assert rebound["native_file_occurrences"] == after["native_file_occurrences"]
+    assert rebound["native_file_identities"] != after["native_file_identities"]
+
+
+@pytest.mark.parametrize("name,attempts", [("manifest.json", 7), ("budget.manifest.json", 1)])
+def test_retained_403_and_declared_budget_have_expected_failure_goldens(name, attempts):
+    from scripts.audit_recorded_provider import audit
+    root = Path(__file__).parent / "fixtures/recorded_provider/http403"
+    report = audit(root / name)
+    assert report["classification"] == "expected-failure", report
+    assert not report["errors"] and not report["transport"]["errors"]
+    assert len(report["transport"]["events"]) == attempts
+    if name == "manifest.json":
+        call = report["scenarios"][0]["calls"][0]
+        assert call["result"]["items"][0]["execution"] == "failed"
+        assert [e["status"] for e in report["transport"]["events"]][-4:] == [403] * 4

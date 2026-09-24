@@ -1,3 +1,12 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+
 """Explicit, hash-verified provider replay; never searches development folders.
 
 Importing this module imports no MSC code. Enter ``offline`` before importing
@@ -157,6 +166,13 @@ class ReplayTransport:
         self.errors.append({"route": self.route, "call": self.call, "stage": self.stage, "reason": reason})
         raise HarnessError(reason)
 
+    def context(self):
+        module = sys.modules.get("meta_standards_converter.conversion_logging")
+        span = module._span.get() if module is not None else None
+        budget = sys.modules.get("meta_standards_converter.metadata.retrieval_budget")
+        return {"route": self.route, "call": self.call, "stage": span.name if span else self.stage,
+                "facade_format": self.stage, "preparation_stage": budget._phase.get() if budget else None}
+
     def send(self, session, request, **kwargs):
         try:
             identity = request_identity(request)
@@ -167,7 +183,7 @@ class ReplayTransport:
             attempt = self.attempts[key][attempt_index]
             if "exception" in attempt:
                 self.consumed[key] += 1
-                self.events.append({"route": self.route, "call": self.call, "stage": self.stage,
+                self.events.append({**self.context(),
                                     "identity": identity, "attempt": attempt_index + 1,
                                     "exception": attempt["exception"]})
                 raise TRANSPORT_EXCEPTIONS[attempt["exception"]]("Recorded " + attempt["exception"])
@@ -180,7 +196,7 @@ class ReplayTransport:
             response._content_consumed = True
             response.url, response.request = request.url, request
             self.consumed[key] += 1
-            self.events.append({"route": self.route, "call": self.call, "stage": self.stage,
+            self.events.append({**self.context(),
                                 "identity": identity, "attempt": attempt_index + 1,
                                 "status": response.status_code, "response": attempt["response"],
                                 "sha256": hashlib.sha256(content).hexdigest()})

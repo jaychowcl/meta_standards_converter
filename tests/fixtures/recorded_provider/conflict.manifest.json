@@ -47,7 +47,8 @@
               "severity": "warning",
               "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ENA', 'accession': 'PRJEB104204', 'value': [{'value': 'Mycobacterium tuberculosis', 'taxid': '1773'}]}]; selected {'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}"
             }
-          ]
+          ],
+          "payload_count": 1
         },
         "magetab": {
           "execution": "succeeded",
@@ -60,7 +61,8 @@
               "severity": "warning",
               "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ENA', 'accession': 'PRJEB104204', 'value': [{'value': 'Mycobacterium tuberculosis', 'taxid': '1773'}]}]; selected {'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}"
             }
-          ]
+          ],
+          "payload_count": 1
         },
         "tsv": {
           "execution": "succeeded",
@@ -73,11 +75,13 @@
               "severity": "warning",
               "message": "recorded source conflict at /sample/ERS27611842/channel/0/organism: [{'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}, {'provider': 'ENA', 'accession': 'PRJEB104204', 'value': [{'value': 'Mycobacterium tuberculosis', 'taxid': '1773'}]}]; selected {'provider': 'SRA', 'accession': 'ERP185509', 'value': [{'value': 'Mycobacterium tuberculosis H37Rv', 'taxid': '83332'}]}"
             }
-          ]
+          ],
+          "payload_count": 1
         }
       },
       "golden": "golden",
-      "expected_item_count": 1
+      "expected_item_count": 1,
+      "route_intent": "loaded-export-off"
     }
   ]
 }
