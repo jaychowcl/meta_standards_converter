@@ -68,8 +68,15 @@ def validate_magetab(rows):
         if not isinstance(table, list) or not table or not isinstance(table[0], (tuple, list)):
             raise MAGETabValidationError("SDRF File must contain a nonempty table before publication")
         headers = table[0]
+        factor_block = False
         for i, header in enumerate(headers):
             label = normalized(header)
+            is_factor = bool(re.fullmatch(r"factorvalue\[.*?\](?:\(.*\))?", label))
+            if factor_block and not (is_factor or label in {"termsourceref", "termaccessionnumber", "unit"}
+                                     or label.startswith(("unit[", "comment["))):
+                raise MAGETabValidationError(
+                    f"SDRF column {i + 1}: Factor Value columns must occur after all element nodes and their attributes")
+            factor_block = factor_block or is_factor
             if label in {"termsourceref", "termaccessionnumber"}:
                 previous = headers[i - 1] if i else ""
                 if not (_qualifiable(previous) or (label == "termaccessionnumber" and normalized(previous) == "termsourceref")):

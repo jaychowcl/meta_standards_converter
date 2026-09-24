@@ -468,13 +468,17 @@ def _render_assay_path_group(paths, *, preserve_order=False) -> list[list]:
     for path in paths:
         parts = []
         for step in path.get("steps", []):
-            pairs = _miniml_path_columns([step])
+            # Keep the typed factor segment explicit: its comments belong to
+            # those factors, even after units, and never to the carrier node.
+            pairs = _miniml_path_columns([{**step, 'factor_values': []}])
             if not pairs:
                 continue
+            factor_start = len(pairs)
+            pairs.extend(_named_values_columns('Factor Value', step.get('factor_values', [])))
             label, value = pairs[0]
             part = SDRFEdge(value) if label == "Protocol REF" else SDRFNode(label, label, value)
             last = named = unit = None
-            for label, value in pairs[1:]:
+            for pair_index, (label, value) in enumerate(pairs[1:], 1):
                 attr = SDRFAttr(label, value, required=True)
                 if last is not None and (label in {"Term Source REF", "Term Accession Number"} or "_hierarchy_depth" in label):
                     last.attrs.append(attr)
@@ -484,6 +488,8 @@ def _render_assay_path_group(paths, *, preserve_order=False) -> list[list]:
                     unit = attr
                 elif label.startswith("Comment[hz_unit") and unit is not None:
                     unit.attrs.append(attr)
+                elif pair_index >= factor_start and label.startswith("Comment[") and named is not None:
+                    named.attrs.append(attr)
                 elif label.startswith(("Parameter Value[hz_", "Factor Value[hz_")) and named is not None:
                     named.attrs.append(attr)
                 else:
@@ -583,11 +589,17 @@ def _named_value_columns(prefix: str, value) -> list[tuple[str, object]]:
         result.append(("Term Source REF", value["term_source_ref"]))
     if value.get("term_accession_number"):
         result.append(("Term Accession Number", value["term_accession_number"]))
+    comments = [(f"Comment[{comment.get('name', '')}]", comment.get("value", ""))
+                for comment in value.get("comments", []) or []]
+    # Factor-owned comments precede Unit so positional readers cannot attach
+    # them to the unit. Other named-value emission is outside this repair.
+    if prefix == "Factor Value":
+        result.extend(comments)
     if value.get("unit") is not None:
         unit_header = f"Unit[{value['unit_type']}]" if value.get("unit_type") else "Unit"
         result.extend(_ontology_columns(unit_header, value["unit"]))
-    for comment in value.get("comments", []) or []:
-        result.append((f"Comment[{comment.get('name', '')}]", comment.get("value", "")))
+    if prefix != "Factor Value":
+        result.extend(comments)
     return result
 
 
@@ -736,6 +748,11 @@ def _assay_path(sdrf_name: str, row_index: int, header: list[str], row: list[str
                     field = "unit_term_source_ref" if unit_seen else "term_source_ref"
                 elif normalized == _normalized("Term Accession Number"):
                     field = "unit_term_accession_number" if unit_seen else "term_accession_number"
+                elif (base['attribute_type'] == 'factor value' and not unit_seen
+                      and re.fullmatch(r"\s*Comment\[(?!hz_)[^]]*]\s*", companion_label, re.I)):
+                    # Retain each factor-owned comment as its own source step,
+                    # while finding a later Unit belonging to the same factor.
+                    continue
                 else:
                     break
                 companion_value = row[companion_index] if companion_index < len(row) else ""

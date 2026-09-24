@@ -60,18 +60,25 @@ class SDRFRenderer:
 
 
     def render_paths(self, columns: list[ColumnGroup], paths: list[SDRFPath]) -> list:
-        header = []
+        # MAGE-TAB 1.1 section 2.3.3: factors follow all graph elements.
+        # Project existing keys without changing the plan, trees or row values.
+        ordinary, factors = [], []
+        def project(column, *, factor=False):
+            factor = factor or column.main_label.startswith("Factor Value[")
+            (factors if factor else ordinary).append((column.main_key, column.main_label))
+            for companion in column.companions:
+                project(companion, factor=factor)
         for column in columns:
-            header.extend(self.column_labels(column=column))
+            project(column)
+        projected = ordinary + factors
+        header = [label for _, label in projected]
 
         rows = [header]
         for path in paths:
             values = {}
             for group, group_values in self.path_groups(path=path):
                 values.update(group_values)
-            row = []
-            for column in columns:
-                row.extend(self.column_values(column=column, values=values))
+            row = [self.render_value(values.get(key)) for key, _ in projected]
             rows.append(row)
         return rows
 
