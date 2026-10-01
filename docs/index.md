@@ -78,6 +78,7 @@ Full flag and Python API details remain in the canonical routes below.
   link: [Open section](codebase.md#magetab-row-factors)
 
 - id: unified-results
+  recovery: Structured safe errors, retry_at, per-item RequestMetrics and cumulative Converter.metrics support whole-conversion checkpoints.
   title: Unified outcomes and publication
   anchor: unified-results
   purpose: In-memory payloads, status axes, exact outfile, bundle outdir, collisions, aggregation and failure continuation.

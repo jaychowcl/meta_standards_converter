@@ -1172,6 +1172,15 @@ Converter().convert(outdir="exports", out_type="json",
 <a id="unified-results"></a>
 ### Outcomes and publication
 
+Each `ConversionItemResult` also exposes `error` (a `SafeErrorEnvelope` or
+`None`), `retry_at` (an optional absolute retry time), and `metrics`
+(`RequestMetrics`). The envelope preserves transient versus terminal failure
+classification without requiring callers to parse diagnostic messages. These
+fields are included in `to_dict()`; scientific payloads remain in `payload`.
+`Converter.metrics()` reports cumulative request attempts, retries and wait
+time, including failed conversions. An orchestrator can checkpoint each full
+conversion outcome and retry that input without controlling MSC substages.
+
 Every call returns `ConversionBatchResult`, including a single input.
 `items` preserves request order. Each outcome carries the input ID, source and
 origins, selected/forced type, provider, canonical metadata content ID, route,

@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Mapping
+from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
+from meta_standards_converter.sources.contracts import RequestMetrics
 
 
 @dataclass(frozen=True)
@@ -79,6 +81,9 @@ class ConversionItemResult:
     artifacts: dict[str, str] = field(default_factory=dict)
     diagnostics: list[Diagnostic] = field(default_factory=list)
     preparation: list[dict] = field(default_factory=list)
+    error: SafeErrorEnvelope | None = None
+    retry_at: float | None = None
+    metrics: RequestMetrics = field(default_factory=RequestMetrics)
 
     def to_dict(self):
         """Serialize a summary without embedding large or scientific payloads."""
@@ -102,7 +107,12 @@ class ConversionItemResult:
                 "artifacts",
                 "preparation",
             )
-        } | {"diagnostics": [vars(d).copy() for d in self.diagnostics]}
+        } | {
+            "diagnostics": [vars(d).copy() for d in self.diagnostics],
+            "error": self.error.to_dict() if self.error else None,
+            "retry_at": self.retry_at,
+            "metrics": vars(self.metrics).copy(),
+        }
 
 
 @dataclass

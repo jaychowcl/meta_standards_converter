@@ -42,6 +42,8 @@ from .publication import publish_jsons, publish_tables, publish_magetab
 from .routes import select_route
 from .requests import (AUTO, STANDARD, normalize, input_settings, output_settings,
                        preparation_options, merge_input_options, apply_preparation_overrides)
+from . import outcomes
+from meta_standards_converter.sources.contracts import RequestMetrics
 
 
 def _missing_scientific_dependency(exc):
@@ -144,10 +146,15 @@ class Converter:
 
     def __init__(self, *, services=None, handlers=None):
         self.services = dict(services or {})
+        self._request_metrics = RequestMetrics()
         self.handlers = default_handlers()
         self.custom_handlers = tuple(handlers or ())
         if handlers:
             self.handlers.update({h.kind: h for h in self.custom_handlers})
+
+    def metrics(self):
+        """Cumulative requests made by this converter, including failed calls."""
+        return self._request_metrics
 
     def _detect(self, source, context):
         matches = [
@@ -369,6 +376,7 @@ class Converter:
                     context.input_options = inp
                     context.output_options = out
                     context.stage = "input"
+                    metrics_before = outcomes.snapshot(context)
                     try:
                         if error is not None:
                             raise error
@@ -499,6 +507,10 @@ class Converter:
                         item.validation = "invalid" if invalid else "valid"
                         item.status = "partial" if incomplete or invalid else "complete"
                     except Exception as exc:
+                        item.error, item.retry_at = outcomes.failure(
+                            exc, stage=context.stage, provider=item.provider,
+                            item_id=item.id,
+                        )
                         item.status = "failed"
                         item.execution = "failed"
                         item.completeness = "partial" if item.artifacts else "unknown"
@@ -536,6 +548,9 @@ class Converter:
                         }:
                             item.validation = "invalid"
                         stopped = runtime["fail_fast"]
+                    finally:
+                        item.metrics = outcomes.delta(metrics_before, outcomes.snapshot(context))
+                        self._request_metrics = outcomes.add(self._request_metrics, item.metrics)
         return result
 
     @measured("conversion")
