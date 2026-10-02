@@ -12,6 +12,7 @@ Shared HTTP request helpers for external metadata services.
 
 from __future__ import annotations
 
+from meta_standards_converter.provider_issues import provider_boundary
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -522,6 +523,7 @@ class RateLimitedRequester:
         self.retry_count = 0
         self.rate_wait_seconds = 0.0
 
+    @provider_boundary()
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         """GET one URL under the process-wide host policy and bounded retries."""
         from ..metadata.retrieval_budget import _active

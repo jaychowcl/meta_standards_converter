@@ -9,6 +9,7 @@
 """
 Fetches data from GEO
 """
+from meta_standards_converter.provider_issues import provider_boundary
 from meta_standards_converter.conversion_logging import measured
 
 import logging
@@ -92,6 +93,7 @@ class GEOWebFetcher:
         return url
 
     @measured("retrieval")
+    @provider_boundary(provider='geo', operation='linked_metadata')
     def fetch_gse_miniml(self, gse) -> str:
         """
         creates url from gse accession, fetches miniml file, returns miniml as string.

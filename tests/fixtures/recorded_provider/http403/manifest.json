@@ -180,6 +180,12 @@
               "stage": "load",
               "severity": "error",
               "message": "Conversion failed (HTTPError)"
+            },
+            {
+              "code": "source_partial",
+              "stage": "retrieval",
+              "severity": "warning",
+              "message": "biostudies: linked_metadata: provider_http_failure"
             }
           ],
           "payload_count": 0

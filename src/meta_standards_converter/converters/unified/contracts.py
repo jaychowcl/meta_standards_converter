@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
+from meta_standards_converter.provider_issues import ProviderIssue
 from meta_standards_converter.sources.contracts import RequestMetrics
 
 
@@ -35,6 +36,13 @@ class Diagnostic:
     message: str
     stage: str = "input"
     severity: str = "error"
+    provider_issue: ProviderIssue | None = None
+
+    def to_dict(self):
+        value = {key: value for key, value in vars(self).items() if key != 'provider_issue'}
+        if self.provider_issue is not None:
+            value['provider_issue'] = self.provider_issue.to_dict()
+        return value
 
 
 class InputError(ValueError):
@@ -108,7 +116,7 @@ class ConversionItemResult:
                 "preparation",
             )
         } | {
-            "diagnostics": [vars(d).copy() for d in self.diagnostics],
+            "diagnostics": [d.to_dict() for d in self.diagnostics],
             "error": self.error.to_dict() if self.error else None,
             "retry_at": self.retry_at,
             "metrics": vars(self.metrics).copy(),

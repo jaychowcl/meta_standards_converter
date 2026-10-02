@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Safe failure and request accounting at the whole-conversion boundary."""
 from http.client import IncompleteRead
 import math
@@ -10,6 +18,14 @@ from meta_standards_converter.sources.contracts import RequestMetrics, request_m
 
 
 def failure(error, *, stage, provider, item_id):
+    cause = error
+    seen = set()
+    while cause is not None and id(cause) not in seen:
+        seen.add(id(cause))
+        issue = getattr(cause, '_msc_provider_issue', None)
+        if issue is not None:
+            return issue.error, issue.retry_at
+        cause = cause.__cause__
     response = getattr(error, "response", None)
     status = getattr(response, "status_code", None)
     transient = isinstance(error, (

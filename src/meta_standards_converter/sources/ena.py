@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """ENA Portal membership discovery and full Browser record retrieval."""
+from meta_standards_converter.provider_issues import provider_boundary
 import re
 import xml.etree.ElementTree as ET
 from .archive_support import ArchiveHTTP, Resolution, StudyRecords, StudySeed, accession_kind, attempt, chunks, identifier
@@ -105,6 +106,7 @@ class ENASource:
             if root is not None:
                 records.xml.append(root)
 
+    @provider_boundary(provider='pubmed', operation='publication_retrieval')
     def publications(self, ids, result):
         root = attempt(result, 'PubMed', lambda: self.http.get('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi',
                 {'db': 'pubmed', 'id': ','.join(ids), 'retmode': 'xml'}))
@@ -120,6 +122,7 @@ class ENASource:
             result.issues.append(f'PubMed {missing}: missing or mismatched identity')
         return clean if len(clean) else None
 
+    @provider_boundary(provider='ena', operation='study_resolution')
     def resolve(self, accession):
         accession, kind = accession_kind(accession)
         result, visited, queries = Resolution(), set(), []
@@ -239,6 +242,7 @@ class ENASource:
                         else:
                             records.issues.append(f'{acc}: mismatched indexed analysis identity or membership')
 
+    @provider_boundary(provider='ena', operation='metadata_retrieval')
     def fetch(self, seed, *, _on_core=None):
         records = StudyRecords(seed)
         query = f'secondary_study_accession="{seed.study}"' if seed.study.startswith(('SRP', 'ERP', 'DRP')) else f'study_accession="{seed.primary}"'
@@ -280,6 +284,7 @@ class ENASource:
         with _budget_stage('native_supplementary'):
             return self._supplement(records, inventory, query, extras=_on_core is not None)
 
+    @provider_boundary(provider='ena', operation=lambda self, kind, *args, **kwargs: {'sample': 'sample_inventory', 'read_run': 'run_inventory', 'read_experiment': 'experiment_inventory'}.get(kind, 'metadata_retrieval'))
     def _inventory(self, kind, records, query):
         scoped = f'study_accession="{records.seed.primary}"' if kind in ('study', 'sample', 'assembly') else query
         rows = attempt(records, f'{kind} inventory', lambda: self.search(kind, scoped))

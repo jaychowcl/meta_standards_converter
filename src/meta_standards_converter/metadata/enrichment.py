@@ -9,6 +9,7 @@
 """
 Adds remote metadata lookups to parsed MINiML JSON packages.
 """
+from meta_standards_converter.provider_issues import provider_boundary, record
 from meta_standards_converter.conversion_logging import measured, progress
 
 import xml.etree.ElementTree as ET
@@ -190,6 +191,7 @@ class MINiMLEnricher:
         ]
         return data
 
+    @provider_boundary(provider='pubmed', operation='publication_retrieval')
     def _resolve_publication_identifier(self, kind, value):
         from ..sources.archive_publications import resolve_identifier, citation_identifier
         from ..sources.archive_support import ArchiveHTTP
@@ -211,12 +213,14 @@ class MINiMLEnricher:
                 if resolved and not cache[key]:
                     raise ValueError('invalid resolved PMID')
             except (requests.RequestException, ET.ParseError, ValueError, KeyError) as error:
+                record(error, provider="pubmed")
                 cache[key] = None
                 issue = f'{kind} {value}: {type(error).__name__}'
                 self.publication_issues.append(issue)
                 logger.warning('%s', issue)
         return cache[key]
 
+    @provider_boundary(provider='sra', operation='run_inventory')
     def enrich_sra(self, data: dict) -> dict:
         samples = self._as_list(data.get("sample"))
         for index, sample in enumerate(samples):
@@ -244,6 +248,7 @@ class MINiMLEnricher:
                     fetched.extend(retrieve_once(("runs", id(self.insdc_fetcher), accession),
                         lambda: self.insdc_fetcher.fetch_sra_runs(accession=accession)))
                 except (requests.RequestException, ET.ParseError) as error:
+                    record(error, provider="sra")
                     self._sra_failures = getattr(self, "_sra_failures", 0) + 1
                     logger.warning('SRA refresh %s failed (%s); retaining saved metadata', accession, type(error).__name__)
                     continue
@@ -318,6 +323,7 @@ class MINiMLEnricher:
             # filename similarity and response order never select an identity.
             saved.append(deepcopy(file))
 
+    @provider_boundary(provider='pubmed', operation='publication_retrieval')
     def _pubmed_publication(self, pubmed_id: str) -> dict:
         from ..miniml.publication_identifiers import valid_pubmed_ids
         if not valid_pubmed_ids([pubmed_id]):
@@ -330,6 +336,7 @@ class MINiMLEnricher:
             if not any((doi, authors, title, status)):
                 raise ValueError('PubMed response contains no citation metadata')
         except (requests.RequestException, ET.ParseError, ValueError) as error:
+            record(error, provider="pubmed")
             self._pubmed_failures = getattr(self, "_pubmed_failures", 0) + 1
             issue = f'PubMed {pubmed_id}: {type(error).__name__}'
             self.publication_issues.append(issue)

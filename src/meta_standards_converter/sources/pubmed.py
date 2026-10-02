@@ -10,6 +10,7 @@
 Fetches and parses PubMed summary metadata.
 """
 
+from meta_standards_converter.provider_issues import provider_boundary
 import xml.etree.ElementTree as ET
 
 from meta_standards_converter.metadata.ontology_mappings import Harmonizer
@@ -50,6 +51,7 @@ class PubmedWebFetcher:
             ),
         )
 
+    @provider_boundary(provider='pubmed', operation='publication_retrieval')
     def fetch_pubmed_summary(self, pubmed_id: str) -> ET.Element:
         url = "https://www.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
         response = self.requester.get(
