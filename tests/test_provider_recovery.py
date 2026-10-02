@@ -190,3 +190,16 @@ def test_optional_publication_provider_failure_has_operation():
     assert pub['pubmed_id'] == '26221022'
     assert issues(item)[0]['operation'] == 'publication_retrieval'
     assert issues(item)[0]['error']['provider'] == 'pubmed'
+
+
+@pytest.mark.parametrize('url,provider', [
+    ('https://www.ebi.ac.uk/biosamples/samples/SAMEA1','biosamples'),
+    ('https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/','pubmed'),
+])
+def test_auxiliary_provider_identity(url, provider):
+    from meta_standards_converter.provider_issues import collect_provider_issues
+    item=ConversionItemResult('one','remote')
+    with collect_provider_issues(item):
+        with pytest.raises(ValueError):
+            ArchiveHTTP('ena_portal',requester=Requester()).get(url,fmt='json')
+    assert issues(item)[0]['error']['provider']==provider

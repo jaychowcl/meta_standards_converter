@@ -1177,6 +1177,8 @@ existing safe `error` envelope and optional `retry_at`. Remote invalid JSON/XML,
 exhausted transport failures and HTTP failures use `provider_response_invalid`,
 `provider_transport_failure` and `provider_http_failure`. Local parsing, budget
 limits and scientific disagreements do not receive provider retry tags.
+Auxiliary BioSamples and PMC identifier requests retain their own provider
+identity even when invoked by an SRA/ENA source service.
 Facts are collected at remote boundaries per input, deduplicated by correlation
 ID, and retained through handled failures and operation-scoped memoization.
 No global exception tracer is used. Recovered request attempts do not create

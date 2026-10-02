@@ -97,6 +97,10 @@ def _remote_provider(args, kwargs):
         return 'ena'
     if 'biostudies' in url:
         return 'biostudies'
+    if '/biosamples/' in url:
+        return 'biosamples'
+    if host == 'pmc.ncbi.nlm.nih.gov':
+        return 'pubmed'
     if 'eutils.ncbi' in host:
         return (kwargs.get('params') or (args[2] if len(args) > 2 and isinstance(args[2], dict) else {})).get('db') or 'ncbi'
     if 'geo' in url:
