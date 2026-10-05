@@ -73,8 +73,7 @@ class ArchiveHTTP:
     def __init__(self, service, requester=None, resource_profile='standard', evidence_dir=None):
         self.profile = get_resource_profile(resource_profile)
         self.requester = requester or RateLimitedRequester(service=service,
-            settings=RequestSettings.from_resource_profile(self.profile,
-                request_delay=0.5 if service == 'ncbi_eutils' else 1.0))
+            settings=RequestSettings.from_resource_profile(self.profile))
         self.identity = NCBIApplicationIdentity()
         self.downloaded_bytes = 0
         self.evidence_dir = Path(evidence_dir) if evidence_dir else None

@@ -52,7 +52,6 @@ class INSDCWebfetcher():
             settings=ncbi_request_settings
             or RequestSettings.from_resource_profile(
                 self.resource_profile,
-                request_delay=0.5,
             ),
         )
         self.ena_requester = ena_requester or RateLimitedRequester(
@@ -60,7 +59,6 @@ class INSDCWebfetcher():
             settings=ena_request_settings
             or RequestSettings.from_resource_profile(
                 self.resource_profile,
-                request_delay=1.0,
             ),
         )
 

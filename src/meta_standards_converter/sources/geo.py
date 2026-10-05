@@ -68,7 +68,6 @@ class GEOWebFetcher:
             settings=request_settings
             or RequestSettings.from_resource_profile(
                 self.resource_profile,
-                request_delay=1.0,
             ),
         )
 
@@ -378,5 +377,4 @@ class GEOSource:
                     pending_gses.append(related_gse)
 
         return all_series
-
 

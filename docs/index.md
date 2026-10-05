@@ -289,10 +289,10 @@ Full flag and Python API details remain in the canonical routes below.
   link: [Open section](codebase.md#docker-guide)
 
 - id: request-helper
-  title: Host-aware request policy
+  title: Service-aware request policy
   anchor: request-helper
-  purpose: Defines conservative provider defaults, cross-process hostname scheduling and cooldowns, in-flight limits, bounded retries, and safe telemetry.
-  keywords: RateLimitedRequester, HostRequestGate, HostRequestCooldownDeferred, slot, lease, model concurrency, RequestSettings, NCBIApplicationIdentity, tool, email, api_key, hostname, flock, Retry-After, max_inline_wait, jitter, provider_attempts, retry_count, rate_wait_seconds, 403, 429
+  purpose: Defines URL-specific provider defaults, shared service budgets and NCBI aliases, cross-process cooldowns, in-flight limits, retries, redirects, and safe telemetry.
+  keywords: RateLimitedRequester, HostRequestGate, HostRequestCooldownDeferred, slot, lease, model concurrency, RequestSettings, request_delay, NCBIApplicationIdentity, tool, email, api_key, ENA, BioSamples, BioStudies, hostname, flock, Retry-After, max_inline_wait, jitter, provider_attempts, retry_count, rate_wait_seconds, 403, 429
   link: [Open section](codebase.md#request-helper)
 
 - id: runtime-behavior

@@ -76,6 +76,19 @@ credentials, or tokens.
 <a id="architectural-decisions"></a>
 ## Architectural decisions
 
+<a id="decision-service-request-budgets"></a>
+### Share request budgets by provider service
+
+Provider quotas follow services, which do not map one-to-one to HTTP hostnames.
+MSC separates ENA, BioSamples and BioStudies URL paths and joins the NCBI
+E-utilities hostname aliases. Defaults leave headroom below documented limits;
+unknown quotas retain conservative spacing. Explicit caller overrides remain
+available, while retries, redirects and terminal cooldowns use the same shared
+gate. This changes transport timing without changing converter routes, source
+curations, output formats, enrichment or cross-format retrieval. See
+[request policy](#request-helper) and `tests/test_endpoint_pacing.py` for the
+boundary, concurrency and credential-presence checks.
+
 <a id="decision-thin-cli-adapters"></a>
 ### AD-001: Keep CLI adapters thin and converters reusable
 
@@ -394,7 +407,7 @@ database service, or plugin discovery mechanism is exposed.
 - `RateLimitedRequester` is the shared external-call boundary.
   `GEOWebFetcher`, `AEWebFetcher`, `PubmedWebFetcher`, and `INSDCWebfetcher`
   apply repository-specific URL and response semantics.
-- `HostRequestGate` persists per-host request-start timestamps and provider
+- `HostRequestGate` persists request-start timestamps and provider
   cooldowns under an owner-only per-user runtime directory. Its `flock`
   boundary coordinates unrelated local processes as well as MSC instances;
   an unavailable implicit XDG runtime path falls back to an owner-only `/tmp`
@@ -2397,7 +2410,7 @@ The helper refuses non-rootless daemons. Compose drops all capabilities, enables
 
 
 <a id="request-helper"></a>
-## Host-aware request policy
+## Service-aware request policy
 
 Source fetchers own provider-specific operations; `RateLimitedRequester` owns
 bounded attempts, timing and redacted metrics. `HostRequestGate` shares start
@@ -2412,13 +2425,39 @@ directory. This is a filesystem coordination boundary, not a service database.
 | SRA | GET `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi` for SRA XML; parse run, library, instrument and study evidence | [INSDCWebfetcher](../src/meta_standards_converter/sources/insdc.py) |
 | ENA | GET `https://www.ebi.ac.uk/ena/portal/api/filereport`; parse the run/FASTQ file report and merge supported missing evidence | [INSDCWebfetcher](../src/meta_standards_converter/sources/insdc.py) |
 
-Conservative defaults space NCBI E-utilities starts by 0.5 seconds and GEO FTP,
-BioStudies and ENA starts by one second. `Retry-After` cooldowns survive process
-exit. A cooldown exceeding the inline wait budget produces deferred work rather
-than an unbounded sleep. `SCIENTIFIC_PROVIDER_GATE_DIR` selects an explicit
-state directory; otherwise the validated runtime-directory fallback applies.
-`NCBIApplicationIdentity` supplies tool/contact parameters. `NCBI_API_KEY` is
-optional and secret: it is not logged and does not raise the default request rate.
+The actual URL selects the shared pacing key independently of the client label:
+ENA `/ena/` requests use 0.1-second spacing (10/s); `/biosamples/` and
+`/biostudies/` each use separate one-second budgets. Unknown services and GEO
+downloads retain one-second spacing. E-utilities URLs under both
+`eutils.ncbi.nlm.nih.gov` and `www.ncbi.nlm.nih.gov` share one budget with
+0.5-second spacing (2/s), or 0.125 seconds (8/s) when a nonblank `api_key` is
+actually present in the request query. Environment presence alone does not
+enable keyed pacing. Keys and query values never become gate identifiers.
+
+`RequestSettings.request_delay=None` selects these defaults; an explicit numeric
+value retains the caller's spacing override. Resource-profile factories preserve
+timeouts and the process-wide per-host in-flight ceiling while selecting URL
+defaults. Parallel callers share the same start budget; worker count does not
+multiply the permitted request rate. Separate services on EBI can have independent
+start budgets while still sharing their host's process in-flight ceiling.
+
+Every retry and redirect is gated and counted, including calls outside a metadata
+budget. `Retry-After` cooldowns survive process exit and the final failed attempt
+publishes the cooldown for other callers even when its own retries are exhausted.
+A cooldown exceeding the inline wait budget produces deferred work rather than
+an unbounded sleep. `SCIENTIFIC_PROVIDER_GATE_DIR` selects an explicit state
+directory; otherwise the validated runtime-directory fallback applies.
+`NCBIApplicationIdentity` supplies tool/contact parameters and optional secret
+API-key parameters. Mixed old/new MSC revisions and unrelated software do not
+necessarily share the new service keys; the provider's IP/key quota still applies.
+
+The defaults leave headroom below the published
+[ENA 50/s ceiling](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access.html#rate-limits)
+and [NCBI 3/s anonymous or 10/s keyed ceiling](https://support.nlm.nih.gov/kbArticle/?pn=KA-05317).
+The one-second BioSamples/BioStudies/GEO settings are client choices, not verified
+published provider ceilings. BioSamples v2 bulk fetch is not substituted for
+individual retrieval: it does not apply the same default curations and can omit
+unavailable records. Output routes retain independent live retrieval.
 
 Request metrics expose cumulative `provider_attempts`, `retry_count` and
 `rate_wait_seconds`; converters aggregate them through public `metrics()` methods
@@ -3534,7 +3573,7 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `HostRequestGate.defer` [source](../src/meta_standards_converter/helpers/request_helper.py#L187) | `defer(key: str, *, delay_seconds: int \| float, clock: Callable[[], float]=time.time) -> float` | See source; follows the owning type contract. |
 | `HostRequestGate.slot` [source](../src/meta_standards_converter/helpers/request_helper.py#L204) | `slot(key: str, *, min_interval_seconds: int \| float, max_wait_seconds: int \| float \| None=None, sleep: Callable[[float], None]=time.sleep, monotonic_clock: Callable[[], float]=time.monotonic, wall_clock: Callable[[], float]=time.time, cancelled: Callable[[], bool] \| None=None)` | Return a one-at-a-time lease that also applies start pacing. |
 | `HostRequestGate.retry_after_seconds` [source](../src/meta_standards_converter/helpers/request_helper.py#L237) | `retry_after_seconds(value: Any, *, clock: Callable[[], float]=time.time) -> float \| None` | See source; follows the owning type contract. |
-| `meta_standards_converter.helpers.request_helper.RequestSettings` [source](../src/meta_standards_converter/helpers/request_helper.py#L438) | `RequestSettings(timeout: 'float \| tuple[float, float]' = 30, request_delay: 'float' = 1.0, max_in_flight: 'int' = 2, max_retries: 'int' = 3, retry_statuses: 'frozenset[int]' = frozenset({504, 425, 429, 403, 500, 502, 503, 408}), backoff_base: 'float' = 0.5, backoff_max: 'float' = 8.0, max_inline_wait: 'float' = 30.0) -> None` | See defining source and workflow contracts. |
+| `meta_standards_converter.helpers.request_helper.RequestSettings` [source](../src/meta_standards_converter/helpers/request_helper.py#L438) | `RequestSettings(timeout: 'float \| tuple[float, float]' = 30, request_delay: 'float \| None' = None, max_in_flight: 'int' = 2, max_retries: 'int' = 3, retry_statuses: 'frozenset[int]' = frozenset({504, 425, 429, 403, 500, 502, 503, 408}), backoff_base: 'float' = 0.5, backoff_max: 'float' = 8.0, max_inline_wait: 'float' = 30.0) -> None` | See defining source and workflow contracts. |
 | `RequestSettings.from_resource_profile` [source](../src/meta_standards_converter/helpers/request_helper.py#L471) | `from_resource_profile(profile: ResourceProfile, **overrides: Any) -> 'RequestSettings'` | See source; follows the owning type contract. |
 | `meta_standards_converter.helpers.request_helper.RateLimitedRequester` [source](../src/meta_standards_converter/helpers/request_helper.py#L494) | `RateLimitedRequester(service: 'str', settings: 'RequestSettings \| None' = None, get: 'Callable \| None' = None, sleep: 'Callable[[float], None] \| None' = None, clock: 'Callable[[], float] \| None' = None, event_emitter=None, host_gate: 'HostRequestGate \| None' = None, random_value: 'Callable[[], float]' = <built-in method random of Random object at 0x39431f40>)` | Apply host-wide request-start and process in-flight limits per HTTP host. |
 | `RateLimitedRequester.__init__` [source](../src/meta_standards_converter/helpers/request_helper.py#L500) | `__init__(service: str, settings: RequestSettings \| None=None, get: Callable \| None=None, sleep: Callable[[float], None] \| None=None, clock: Callable[[], float] \| None=None, event_emitter=None, host_gate: HostRequestGate \| None=None, random_value: Callable[[], float]=random.random)` | See source; follows the owning type contract. |

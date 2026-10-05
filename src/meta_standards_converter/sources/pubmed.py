@@ -46,7 +46,6 @@ class PubmedWebFetcher:
             settings=request_settings
             or RequestSettings.from_resource_profile(
                 self.resource_profile,
-                request_delay=0.5,
             ),
         )
 

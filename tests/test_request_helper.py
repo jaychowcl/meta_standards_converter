@@ -305,6 +305,7 @@ class TestRateLimitedRequester(unittest.TestCase):
             "https://example.org/data",
             params={"id": "1"},
             timeout=12,
+            allow_redirects=False,
         )
 
     def test_get_preserves_explicit_timeout(self):
@@ -317,7 +318,7 @@ class TestRateLimitedRequester(unittest.TestCase):
 
         requester.get("https://example.org/data", timeout=3)
 
-        get.assert_called_once_with("https://example.org/data", timeout=3)
+        get.assert_called_once_with("https://example.org/data", timeout=3, allow_redirects=False)
 
     def test_get_sleeps_between_sequential_requests_for_same_service(self):
         fake_time = FakeTime()

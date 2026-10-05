@@ -82,7 +82,6 @@ class AEWebFetcher:
             settings=request_settings
             or RequestSettings.from_resource_profile(
                 self.resource_profile,
-                request_delay=1.0,
             ),
         )
         self._downloaded_bytes = 0

@@ -28,7 +28,7 @@ import tempfile
 import threading
 import time
 from typing import Any, Callable
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 
 import requests
 
@@ -438,7 +438,9 @@ class _HostRequestSlot:
 @dataclass(frozen=True)
 class RequestSettings:
     timeout: float | tuple[float, float] = 30
-    request_delay: float = 1.0
+    # None selects the policy for the actual URL. Numeric overrides retain the
+    # existing caller-controlled spacing contract (including offline clients).
+    request_delay: float | None = None
     max_in_flight: int = 2
     max_retries: int = 3
     retry_statuses: frozenset[int] = frozenset(
@@ -459,7 +461,7 @@ class RequestSettings:
             or any(value <= 0 for value in timeout_values)
         ):
             raise ValueError("timeout must be positive")
-        if self.request_delay < 0:
+        if self.request_delay is not None and self.request_delay < 0:
             raise ValueError("request_delay must be non-negative")
         if self.max_in_flight < 1:
             raise ValueError("max_in_flight must be a positive integer")
@@ -485,15 +487,13 @@ class RequestSettings:
 
 
 DEFAULT_REQUEST_SETTINGS = {
-    "ncbi_eutils": RequestSettings(request_delay=0.5, max_in_flight=2),
-    "geo_ftp": RequestSettings(request_delay=1.0, max_in_flight=2),
-    "ena_portal": RequestSettings(request_delay=1.0, max_in_flight=2),
-    "biostudies": RequestSettings(request_delay=1.0, max_in_flight=2),
+    service: RequestSettings(max_in_flight=2)
+    for service in ("ncbi_eutils", "geo_ftp", "ena_portal", "biosamples", "biostudies")
 }
 
 
 class RateLimitedRequester:
-    """Apply host-wide request-start and process in-flight limits per HTTP host."""
+    """Apply shared service pacing and process in-flight limits per HTTP host."""
 
     _host_state = {}
     _state_lock = threading.Lock()
@@ -523,9 +523,8 @@ class RateLimitedRequester:
         self.rate_wait_seconds = 0.0
 
     def get(self, url: str, **kwargs: Any) -> requests.Response:
-        """GET one URL under the process-wide host policy and bounded retries."""
-        from ..metadata.retrieval_budget import _active
-        if _active.get() is None or kwargs.get('allow_redirects') is False:
+        """GET one URL, accounting for each retry and redirect under its policy."""
+        if kwargs.get('allow_redirects') is False:
             return self._request(url, **kwargs)
         # Requests otherwise follows redirects inside one opaque call. Expose
         # every hop to the same host gate, retry policy and operation allowance.
@@ -545,6 +544,30 @@ class RateLimitedRequester:
                 kwargs.pop('cookies', None)
             url = target
 
+    def _request_policy(self, url: str, params: Any) -> tuple[str, float]:
+        """Classify by URL, not the source that happened to create this client."""
+        parsed = urlsplit(url)
+        host = (parsed.hostname or "").lower().rstrip(".")
+        key, interval = host, 1.0
+        if host == "www.ebi.ac.uk":
+            for path, delay in (("ena", 0.1), ("biosamples", 1.0), ("biostudies", 1.0)):
+                if parsed.path == "/" + path or parsed.path.startswith("/" + path + "/"):
+                    key, interval = host + "/" + path, delay
+                    break
+        elif host in {"eutils.ncbi.nlm.nih.gov", "www.ncbi.nlm.nih.gov"} and parsed.path.startswith("/entrez/eutils/"):
+            key, interval = "eutils.ncbi.nlm.nih.gov", 0.5
+            # Match Requests' actual query encoding, including URL parameters,
+            # tuple sequences and encoded strings. Environment presence alone
+            # does not grant the keyed rate; the key must be sent to E-utilities.
+            prepared = requests.PreparedRequest()
+            prepared.prepare_url(url, params)
+            if any(name == "api_key" and value.strip()
+                   for name, value in parse_qsl(urlsplit(prepared.url).query)):
+                interval = 0.125
+        if self.settings.request_delay is not None:
+            interval = self.settings.request_delay
+        return key, interval
+
     def _request(self, url, **kwargs):
         from ..metadata.retrieval_budget import _active
         budget = _active.get()
@@ -555,6 +578,7 @@ class RateLimitedRequester:
         for attempt in range(self.settings.max_retries + 1):
             if budget: budget.check(request=True)
             host = (urlsplit(url).hostname or "").lower()
+            gate_key, interval = self._request_policy(url, kwargs.get("params"))
             state = self._acquire_host_slot(host)
             started = self._clock()
             logger.debug(
@@ -571,7 +595,7 @@ class RateLimitedRequester:
                     if remaining is not None: maximum = min(maximum, remaining) if maximum is not None else remaining
                     try:
                         waited = self._host_gate.wait(
-                            host, min_interval_seconds=self.settings.request_delay,
+                            gate_key, min_interval_seconds=interval,
                             max_wait_seconds=maximum, sleep=self._sleep, clock=self._wall_clock)
                     except HostRequestCooldownDeferred:
                         if remaining is not None and maximum == remaining:
@@ -602,7 +626,7 @@ class RateLimitedRequester:
                     raise
                 delay = self._retry_delay(response=None, attempt=attempt)
                 self._host_gate.defer(
-                    host,
+                    gate_key,
                     delay_seconds=delay,
                     clock=self._wall_clock,
                 )
@@ -635,17 +659,18 @@ class RateLimitedRequester:
                 )
                 return response
 
+            delay = self._retry_delay(response=response, attempt=attempt)
+            self._host_gate.defer(
+                gate_key,
+                delay_seconds=delay,
+                clock=self._wall_clock,
+            )
+            # Even when this caller has exhausted retries, other callers must
+            # observe the provider's cooldown before starting their next request.
             if attempt >= self.settings.max_retries:
                 self._emit_request_event(host, "failed", attempt + 1, elapsed, response.status_code)
                 response.raise_for_status()
                 return response
-
-            delay = self._retry_delay(response=response, attempt=attempt)
-            self._host_gate.defer(
-                host,
-                delay_seconds=delay,
-                clock=self._wall_clock,
-            )
             count("retries")
             self.retry_count += 1
             logger.debug(
@@ -685,9 +710,6 @@ class RateLimitedRequester:
     def _acquire_host_slot(self, host: str) -> dict[str, Any]:
         state = self._state_for_host(host)
         with state["condition"]:
-            state["request_delay"] = max(
-                state["request_delay"], self.settings.request_delay
-            )
             state["max_in_flight"] = min(
                 state["max_in_flight"], self.settings.max_in_flight
             )
@@ -732,7 +754,6 @@ class RateLimitedRequester:
                     "last_request_at": None,
                     "in_flight": 0,
                     "max_in_flight": self.settings.max_in_flight,
-                    "request_delay": self.settings.request_delay,
                 }
                 self._host_state[host] = state
             return state
