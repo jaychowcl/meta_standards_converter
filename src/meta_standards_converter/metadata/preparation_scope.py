@@ -13,6 +13,7 @@ are always restored, including when a provider or an injected service fails.
 """
 from contextlib import contextmanager
 from contextvars import ContextVar
+from ..conversion_logging import measured
 
 _loading = ContextVar("msc_preparation_loading", default=None)
 _exporting = ContextVar("msc_preparation_exporting", default=False)
@@ -61,6 +62,7 @@ def preparation_session():
         _memo.reset(token)
 
 
+@measured('copying')
 def _candidate_copy(value):
     """Copy mutable shells/evidence, sharing only construction-certified branches."""
     from copy import deepcopy

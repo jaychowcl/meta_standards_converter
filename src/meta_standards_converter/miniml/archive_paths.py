@@ -9,8 +9,10 @@
 """Complete native paths from explicit sample fields without inferring methods."""
 from copy import deepcopy
 from .protocol_text import comparable_protocol_text
+from ..conversion_logging import measured
 
 
+@measured('indexing')
 def _bound_steps(data):
     """Index explicit/single-sample bindings, retaining every ordered occurrence."""
     result = {}

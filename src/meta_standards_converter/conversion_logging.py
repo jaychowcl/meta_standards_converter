@@ -225,8 +225,10 @@ def statistics(value):
     if isinstance(packages, (tuple, list)):
         stats["packages"] = len(packages)
         stats["samples"] = sum(len(getattr(p, "samples", ())) for p in packages)
-        stats["runs"] = sum(len(sample.to_mapping().get("sra_run", ()))
-                            for p in packages for sample in getattr(p, "samples", ()))
+        def runs(sample):
+            values = getattr(sample, 'sra_runs', None)
+            return len(values) if isinstance(values, (tuple, list)) else len(sample.to_mapping().get('sra_run', ()))
+        stats["runs"] = sum(runs(sample) for p in packages for sample in getattr(p, "samples", ()))
     for attr, key in (("row_count", "rows"), ("n_obs", "observations"), ("n_vars", "features")):
         number = getattr(value, attr, None)
         if isinstance(number, int):

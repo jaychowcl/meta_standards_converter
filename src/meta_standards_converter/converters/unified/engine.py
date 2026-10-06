@@ -558,6 +558,7 @@ class Converter:
         return result
 
     @measured("conversion")
+    @measured("export")
     def _export(self, loaded, context, item, route):
         target = context.target
         options = context.output_options

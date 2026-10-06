@@ -16,6 +16,7 @@ from copy import deepcopy
 import json
 import re
 from urllib.parse import urlsplit, unquote
+from ..conversion_logging import measured
 
 
 def children(node, tag):
@@ -663,6 +664,7 @@ class Projection:
         return {k:v for k,v in result.items() if v not in ('',None,[],{})}
 
 
+@measured('source_evidence_copying')
 def source_records(package):
     records = getattr(package, '_archive_source_records', None)
     if records is None:
@@ -670,6 +672,7 @@ def source_records(package):
     return list(deepcopy(records))
 
 
+@measured('residual_reconciliation')
 def finalize(data, records=None):
     """Finalize after each mapping/merge; private source occurrences survive only in memory."""
     from .codec import MINiMLCodec

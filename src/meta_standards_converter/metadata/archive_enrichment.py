@@ -9,6 +9,7 @@
 """Accession-bound enrichment supporting native archive converters."""
 import re
 from urllib.parse import parse_qs, urlsplit
+from ..conversion_logging import measured
 
 
 def linked_accessions(package):
@@ -305,6 +306,7 @@ def _merge_entity(target, extra, prefer, protected=(), *, issues=None, selection
             target[key] = deepcopy(value)
 
 
+@measured('merging')
 def merge_archive_metadata(package, other, *, prefer=False, linked_accession=None):
     """Merge an explicitly related package; peer additions require a shared read study."""
     from copy import deepcopy

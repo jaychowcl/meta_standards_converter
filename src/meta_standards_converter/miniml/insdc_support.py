@@ -15,6 +15,7 @@ from urllib.parse import urlsplit, quote, unquote
 
 from .codec import MINiMLCodec
 from ..sources.archive_support import identifier
+from ..conversion_logging import measured
 
 
 def text(node, path, default=None):
@@ -365,6 +366,7 @@ def biosample_characteristic(name, item):
     return value
 
 
+@measured('supplementary_projection')
 def fill_linked_metadata(records, series, samples, protocols, paths):
     """Project linked fields only when their entity binding is explicit."""
     from .archive_publications import project_publications

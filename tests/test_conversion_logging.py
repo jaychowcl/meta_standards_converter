@@ -98,6 +98,35 @@ def test_heartbeat_is_throttled_with_fake_clock(caplog):
     assert len([e for e in events(caplog) if e["event_type"] == "progress"]) == 2
 
 
+def test_statistics_count_typed_runs_without_serializing_samples(monkeypatch):
+    from meta_standards_converter.conversion_logging import statistics
+    from meta_standards_converter.miniml.model import MINiMLPackage, Series, SourceInfo, Sample, SRARun
+    package=MINiMLPackage(Series(iid='ERP1'),SourceInfo('ENA'),samples=(
+        Sample(iid='SAMEA1',sra_runs=(SRARun(run='ERR1'),SRARun(run='ERR2'))),))
+    def forbidden(self):raise AssertionError('telemetry must not materialize sample metadata')
+    monkeypatch.setattr(Sample,'to_mapping',forbidden)
+    assert statistics(package)=={'packages':1,'samples':1,'runs':2}
+
+
+def test_native_processing_exposes_separate_stage_timings(caplog,tmp_path):
+    from meta_standards_converter.conversion_logging import operation
+    from meta_standards_converter.miniml.sra_parser import SRAParser
+    from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
+    from meta_standards_converter.metadata.preparation_scope import preparation_session,retrieve_once
+    from meta_standards_converter.converters import Converter
+    from tests.test_native_archive_parsers import fixture_records
+    with caplog.at_level(logging.DEBUG),operation('stages',heartbeat=False):
+        package=SRAParser().parse(fixture_records('sra'))
+        merged,_=merge_archive_metadata(package,package)
+        with preparation_session():retrieve_once('native',lambda:merged)
+        result=Converter().convert(merged,out_type='json',enrichment='off',outdir=tmp_path)
+    assert result.items[0].execution=='succeeded'
+    timings={e['stage']:e['duration_seconds'] for e in events(caplog) if e['event_type']=='stage_finished'}
+    assert {'indexing','entity_construction','supplementary_projection','merging',
+            'copying','source_evidence_copying','residual_reconciliation','model_decoding','validation','export'}<=timings.keys()
+    assert all(duration>=0 for duration in timings.values())
+
+
 def test_debug_statistics_collected_without_enabled_logger():
     from meta_standards_converter.conversion_logging import operation, count
     log = logging.getLogger("meta_standards_converter")

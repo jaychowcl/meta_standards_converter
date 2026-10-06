@@ -5501,6 +5501,13 @@ partial coverage; unknown implementation errors still propagate. Native checkpoi
 validate the already canonically decoded package directly, avoiding a redundant
 serialize/decode cycle. Injected parser implementations keep their existing path.
 
+Operational spans expose `indexing`, `entity_construction`,
+`supplementary_projection`, `merging`, `copying`, `source_evidence_copying`,
+`residual_reconciliation`, `model_decoding`, `validation` and `export`. Body transfer
+has its own span, separate from transport header latency. Nested spans are inclusive
+and must not be summed as independent wall time. Statistics count typed run tuples
+directly; collecting timing data does not serialize every sample.
+
 ENA Browser recovery reconciles explicit requested identities before accepting
 records. Truncated or malformed batches split from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch

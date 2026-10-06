@@ -18,6 +18,7 @@ from typing import Any, Mapping, Sequence
 from uuid import uuid4
 
 from .model import MINiMLPackage, MINiMLValidationIssue
+from ..conversion_logging import measured
 
 
 MINIML_STRICT_COMPATIBILITY_POLICY_VERSION = "miniml-3.0-source-compat-v1"
@@ -89,6 +90,7 @@ class MINiMLCodec:
 
         return MINiMLV1Migrator().migrate(value)
 
+    @measured('model_decoding')
     def decode(self, value: Mapping[str, Any], *, strict: bool = False) -> MINiMLDecodeResult:
         package = MINiMLPackage.from_mapping(value.to_mapping()) if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
         diagnostics = package.validate()

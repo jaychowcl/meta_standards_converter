@@ -115,7 +115,7 @@ class ArchiveHTTP:
                         self.downloaded_bytes += len(chunk)
                     yield chunk
             bounded = SimpleNamespace(headers=response.headers, iter_content=counted_chunks)
-            with response_deadline(response, self.profile.metadata_response_timeout_seconds) as check, stage('body_transfer', level='DEBUG'):
+            with response_deadline(response, self.profile.metadata_response_timeout_seconds) as check, stage('body_transfer'):
                 raw = read_limited_response(bounded, max_bytes=self.profile.max_xml_bytes, chunk_size=65536)
         except (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError,
                 requests.exceptions.ContentDecodingError) as exc:

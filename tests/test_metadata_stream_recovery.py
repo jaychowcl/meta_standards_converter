@@ -85,6 +85,16 @@ def test_metadata_response_deadline_defaults():
     assert get_resource_profile('large').metadata_response_timeout_seconds == 900
 
 
+def test_body_transfer_is_timed_inside_a_real_conversion_operation(caplog):
+    import logging
+    from meta_standards_converter.conversion_logging import operation
+    from tests.test_conversion_logging import events
+    with caplog.at_level(logging.DEBUG),operation('stream',heartbeat=False):
+        value=ArchiveHTTP('ena',requester=client(Mock(return_value=response([b'<SET/>'])))).get('https://example.org')
+    assert value.tag=='SET'
+    assert any(e['stage']=='body_transfer' and e['event_type']=='stage_finished' for e in events(caplog))
+
+
 @pytest.mark.parametrize('cancel',[False,True])
 def test_slow_trickle_has_a_wall_clock_deadline_and_releases_connection(monkeypatch,cancel):
     profile = replace(get_resource_profile(), metadata_response_timeout_seconds=1.5 if cancel else .15)
