@@ -121,8 +121,11 @@ class ENASource:
                     break
                 except Exception as error:
                     failures.append(error)
-                    payload_failure = isinstance(error, (BatchPayloadFailure, ET.ParseError,
-                        requests.Timeout, requests.exceptions.ChunkedEncodingError))
+                    # Native streaming already spent its unchanged-request retry
+                    # budget. Only a tagged large body or XML parse failure may
+                    # enter batch repair; a header timeout is service-wide.
+                    payload_failure = isinstance(error, (BatchPayloadFailure, ET.ParseError)) or (
+                        not accounted and isinstance(error, requests.exceptions.ChunkedEncodingError))
                     emit('xml_batch_recovery', level='WARNING', kind=kind,
                          requested=len(batch), physical_attempts=allowance.used,
                          error_type=type(error).__name__, split=payload_failure and len(batch)>25)

@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 import socket
-from threading import Lock, Timer
+from threading import Lock, Thread, Event
 import time
 
 import requests
@@ -66,7 +66,7 @@ def _socket(response):
 @contextmanager
 def response_deadline(response, seconds):
     """Interrupt a trickling socket, including waits inside iter_content()."""
-    from ..metadata.retrieval_budget import _active, _check_cancelled
+    from ..metadata.retrieval_budget import _active, _check_cancelled, _cancelled
     budget = _active.get()
     started = getattr(response, '_msc_request_started_at', None)
     started = started if isinstance(started, (int, float)) else time.monotonic()
@@ -75,6 +75,7 @@ def response_deadline(response, seconds):
         deadline = min(deadline, time.monotonic() + budget.remaining())
     lock, state = Lock(), {'active': True, 'expired': False}
     sock = _socket(response)
+    cancelled, finished = _cancelled.get(), Event()
 
     def expire():
         with lock:
@@ -94,9 +95,13 @@ def response_deadline(response, seconds):
         if state['expired'] or time.monotonic() >= deadline:
             raise MetadataResponseTimeout('metadata response deadline exceeded')
 
-    timer = Timer(max(0, deadline - time.monotonic()), expire)
-    timer.daemon = True
-    timer.start()
+    def monitor():
+        while not finished.wait(min(.1, max(0, deadline-time.monotonic()))):
+            if time.monotonic() >= deadline or (cancelled is not None and cancelled.is_set()):
+                expire()
+                return
+    watcher = Thread(target=monitor, name='msc-metadata-deadline', daemon=True)
+    watcher.start()
     try:
         check()
         try:
@@ -108,4 +113,5 @@ def response_deadline(response, seconds):
     finally:
         with lock:
             state['active'] = False
-        timer.cancel()
+        finished.set()
+        watcher.join()

@@ -2472,7 +2472,8 @@ The `body_transfer` stage measures body reading separately from response headers
 whole metadata response, including slow trickles inside a buffered read. The
 resource-profile `metadata_response_timeout_seconds` is 300 seconds for standard
 and 900 for large, capped by the operation deadline. A timer interrupts only the
-currently owned socket; cancellation disarms it before connection reuse. The
+currently owned socket; a short-lived watcher also interrupts cancellation during
+a buffered body read and is joined before connection reuse. The
 module's `meta_standards_converter.helpers.metadata_stream.AttemptAllowance`,
 `meta_standards_converter.helpers.metadata_stream.charge_attempt`,
 `attempt_allowance` and `split_payload` provide internal accounting for bounded XML batch recovery.
@@ -5502,7 +5503,9 @@ records. Truncated or malformed batches split from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch
 shares eight physical attempts, including redirects and transport retries, and
 unchanged requests retain at most three retries. Provider-wide HTTP failures do
-not fan out. Failed/incomplete payloads remain visible to the evidence recorder.
+not fan out, including timeouts before headers. Exhausted small-body transport
+retries cannot acquire a second batch-level retry allowance. Failed/incomplete
+payloads remain visible to the evidence recorder.
 
 `meta_standards_converter.miniml.ena_coverage.scoped_rows` checks explicit study
 identity; `meta_standards_converter.miniml.ena_coverage.scoped_sample_refs` includes

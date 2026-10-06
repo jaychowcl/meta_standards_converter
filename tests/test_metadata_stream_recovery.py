@@ -9,7 +9,7 @@
 """A successful HTTP status does not establish a complete metadata response."""
 from dataclasses import replace
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from threading import Thread
+from threading import Thread, Event, Timer
 from types import SimpleNamespace
 from unittest.mock import Mock
 import socket
@@ -19,7 +19,7 @@ import pytest
 import requests
 
 from meta_standards_converter.helpers.request_helper import RateLimitedRequester, RequestSettings
-from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _BudgetExhausted
+from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _BudgetExhausted, _cancelled, _RetrievalCancelled
 from meta_standards_converter.runtime_contracts import get_resource_profile
 from meta_standards_converter.sources.archive_support import ArchiveHTTP
 
@@ -40,8 +40,9 @@ def client(get, retries=3):
         get=get, host_gate=Mock(wait=Mock(return_value=0)), random_value=lambda: 0)
 
 
-def test_body_failure_retries_in_the_same_request_budget_and_retains_byte_charges(tmp_path):
-    first = response([b'<SET>', requests.exceptions.ChunkedEncodingError('truncated')])
+@pytest.mark.parametrize('error',[requests.exceptions.ChunkedEncodingError,requests.exceptions.ContentDecodingError])
+def test_body_failure_retries_in_the_same_request_budget_and_retains_byte_charges(tmp_path,error):
+    first = response([b'<SET>', error('truncated')])
     second = response([b'<SET/>'])
     get = Mock(side_effect=[first, second]); requester = client(get)
     archive = ArchiveHTTP('ena_portal', requester=requester, evidence_dir=tmp_path)
@@ -84,8 +85,11 @@ def test_metadata_response_deadline_defaults():
     assert get_resource_profile('large').metadata_response_timeout_seconds == 900
 
 
-def test_slow_trickle_has_a_wall_clock_deadline_and_releases_connection(monkeypatch):
-    profile = replace(get_resource_profile(), metadata_response_timeout_seconds=.15)
+@pytest.mark.parametrize('cancel',[False,True])
+def test_slow_trickle_has_a_wall_clock_deadline_and_releases_connection(monkeypatch,cancel):
+    profile = replace(get_resource_profile(), metadata_response_timeout_seconds=1.5 if cancel else .15)
+    stopped=Event();token=_cancelled.set(stopped)
+    canceller=Timer(.05,stopped.set) if cancel else None
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             self.send_response(200); self.send_header('Content-Length', '1000'); self.end_headers()
@@ -105,10 +109,13 @@ def test_slow_trickle_has_a_wall_clock_deadline_and_releases_connection(monkeypa
     requester = client(requests.get, retries=0)
     started = time.monotonic()
     try:
-        with pytest.raises(requests.Timeout, match='metadata response deadline'):
+        if canceller:canceller.start()
+        with pytest.raises(_RetrievalCancelled if cancel else requests.Timeout):
             ArchiveHTTP('ena_portal', requester=requester, resource_profile=profile).get(
                 f'http://127.0.0.1:{server.server_port}/', fmt='text')
         assert time.monotonic() - started < 1.0
         assert requester.provider_attempts == 1
     finally:
+        if canceller:canceller.cancel()
+        _cancelled.reset(token)
         server.shutdown(); server.server_close(); thread.join()

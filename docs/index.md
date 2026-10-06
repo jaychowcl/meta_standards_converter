@@ -541,7 +541,7 @@ Full flag and Python API details remain in the canonical routes below.
   link: [Open section](codebase.md#native-archive-fidelity)
 
 - id: native-archive-workflows
-  title: Independent native provider workflows
+  title: Independent native provider workflows and bounded recovery
   anchor: native-archive-workflows
   purpose: Documents independent native workflows, immutable construction checkpoints, scoped relationship and residual-occurrence indexes, candidate sharing and bounded ENA/BioSamples overlap with deterministic merging, cancellation and shared byte budgets.
   keywords: sample alias index, experiment inventory index, workflow binding, original platform associations, linear normalization, native_failure, NativeProviderFailure, missing-record recovery, batch split, eight attempts, membership_complete, fallback_samples, record_coverage, SRASource, ENASource, History, Portal, Browser, umbrella, sample expansion, network_workers, two lanes, cancellation, aggregate bytes

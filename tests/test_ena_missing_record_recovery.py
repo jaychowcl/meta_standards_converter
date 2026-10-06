@@ -85,6 +85,29 @@ def test_physical_batch_limit_includes_connection_retries_and_redirects():
     assert transport.call_count == requester.provider_attempts
 
 
+def test_unchanged_small_batch_does_not_multiply_transport_retries():
+    from collections import Counter
+    from tests.test_metadata_stream_recovery import response,client
+    calls=[]
+    def get(url,**kwargs):
+        calls.append(url)
+        return response([requests.exceptions.ChunkedEncodingError('truncated')])
+    target=records()
+    source=ENASource(http=ArchiveHTTP('ena_portal',requester=client(get)))
+    source.verified_xml([f'SAMEA{i}' for i in range(100)],target,'sample')
+    assert len(calls)<=8
+    assert max(Counter(calls).values())<=4
+
+
+def test_pre_header_timeout_does_not_fan_out_batches():
+    from tests.test_metadata_stream_recovery import client
+    get=Mock(side_effect=requests.ReadTimeout('headers unavailable'))
+    source=ENASource(http=ArchiveHTTP('ena_portal',requester=client(get)))
+    source.verified_xml([f'SAMEA{i}' for i in range(100)],records(),'sample')
+    assert get.call_count==4
+    assert len({call.args[0] for call in get.call_args_list})==1
+
+
 def missing_sample_records():
     value = records()
     value.xml = [ET.fromstring('''<STUDY_SET><STUDY accession="ERP1"><DESCRIPTOR><STUDY_TITLE>Recovery fixture</STUDY_TITLE></DESCRIPTOR></STUDY></STUDY_SET>'''),

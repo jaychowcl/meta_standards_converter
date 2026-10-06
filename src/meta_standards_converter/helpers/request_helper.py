@@ -642,6 +642,7 @@ class RateLimitedRequester:
                 requests.exceptions.ConnectionError,
                 requests.exceptions.Timeout,
                 requests.exceptions.ChunkedEncodingError,
+                requests.exceptions.ContentDecodingError,
             ) as error:
                 if attempt >= self.settings.max_retries:
                     self._emit_request_event(
