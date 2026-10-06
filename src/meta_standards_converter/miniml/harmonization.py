@@ -10,7 +10,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from contextlib import contextmanager
+from contextvars import ContextVar
 import re
 from typing import Any, Iterable, Mapping, MutableMapping, MutableSequence, Sequence
 
@@ -19,6 +21,20 @@ _HZ_PATTERN = re.compile(
     r"^hz_(?P<body>[a-z][a-z0-9_]*?)(?P<qualifier>_hierarchy_depth|_id|_onto)?"
     r"(?:\((?P<index>[1-9][0-9]*)\))?$"
 )
+_WIRE_SCHEMA = ContextVar("harmonized_wire_schema", default="3.1")
+
+
+@contextmanager
+def wire_schema(version: str):
+    if version not in {"3.0", "3.1"}:
+        raise _model_error(f"unsupported harmonized wire schema {version!r}")
+    token = _WIRE_SCHEMA.set(version)
+    try:
+        yield
+    finally:
+        _WIRE_SCHEMA.reset(token)
+
+
 _LEGACY_COLLISION_PATTERN = re.compile(r"^hz_[a-z][a-z0-9_]*_[1-9][0-9]*$")
 
 
@@ -45,6 +61,8 @@ class HarmonizedValue:
             r"[a-z][a-z0-9_]*", self.field
         ) is None:
             raise _model_error(f"invalid harmonized field {self.field!r}")
+        if "__ancestor_depth_" in self.field:
+            raise _model_error("__ancestor_depth_ is reserved in harmonized fields")
         if self.value is None or (isinstance(self.value, str) and not self.value.strip()):
             raise _model_error("harmonized value must be nonblank")
         if isinstance(self.index, bool) or not isinstance(self.index, int) or self.index < 0:
@@ -68,8 +86,19 @@ class HarmonizedValue:
     def suffix(self) -> str:
         return "" if self.index == 0 else f"({self.index})"
 
-    def to_mapping(self) -> dict[str, Any]:
+    @property
+    def prefix(self) -> str:
         prefix = f"hz_{self.field}"
+        if _WIRE_SCHEMA.get() != "3.0" and self.hierarchy_depth:
+            prefix += f"__ancestor_depth_{self.hierarchy_depth}"
+        return prefix
+
+    @property
+    def value_name(self) -> str:
+        return f"{self.prefix}{self.suffix}"
+
+    def to_mapping(self) -> dict[str, Any]:
+        prefix = self.prefix
         result: dict[str, Any] = {f"{prefix}{self.suffix}": self.value}
         if self.term_accession_number is not None:
             result[f"{prefix}_id{self.suffix}"] = self.term_accession_number
@@ -95,60 +124,55 @@ def is_harmonized_key(value: Any) -> bool:
     return isinstance(value, str) and value.startswith("hz_")
 
 
-def parse_harmonized_key(key: str) -> tuple[str, str, int]:
-    if _LEGACY_COLLISION_PATTERN.fullmatch(key):
-        raise _model_error(
-            f"invalid harmonized field {key!r}; collisions use parentheses"
-        )
+def parse_harmonized_key_details(key: str) -> tuple[str, str, int, int | None]:
     match = _HZ_PATTERN.fullmatch(key)
     if match is None:
         raise _model_error(f"invalid harmonized field {key!r}")
     qualifier = match.group("qualifier") or ""
     field = match.group("body")
-    role = {
-        "": "value",
-        "_id": "id",
-        "_onto": "onto",
-        "_hierarchy_depth": "hierarchy_depth",
-    }[qualifier]
-    index = int(match.group("index") or 0)
+    depth = None
+    if "__ancestor_depth_" in field:
+        field, encoded = field.rsplit("__ancestor_depth_", 1)
+        if not encoded.isdecimal() or encoded.startswith("0"):
+            raise _model_error(f"invalid ancestor depth in {key!r}")
+        depth = int(encoded)
+    elif _LEGACY_COLLISION_PATTERN.fullmatch(key):
+        raise _model_error(f"invalid harmonized field {key!r}; collisions use parentheses")
+    role = {"": "value", "_id": "id", "_onto": "onto", "_hierarchy_depth": "hierarchy_depth"}[qualifier]
+    return field, role, int(match.group("index") or 0), depth
+
+
+def parse_harmonized_key(key: str) -> tuple[str, str, int]:
+    """Compatibility view; use details when grouping by hierarchy depth."""
+    field, role, index, _ = parse_harmonized_key_details(key)
     return field, role, index
 
 
 def parse_harmonized_mapping(value: Mapping[str, Any]) -> tuple[HarmonizedValue, ...]:
-    groups: dict[tuple[str, int], dict[str, Any]] = {}
+    groups = {}
     for raw_key, item in value.items():
         if not is_harmonized_key(raw_key):
             continue
-        field, role, index = parse_harmonized_key(str(raw_key))
-        group = groups.setdefault((field, index), {})
+        field, role, index, encoded_depth = parse_harmonized_key_details(str(raw_key))
+        group = groups.setdefault((field, encoded_depth, index), {})
         if role in group:
             raise _model_error(f"duplicate harmonized {role} for hz_{field}")
         group[role] = item
-
-    result: list[HarmonizedValue] = []
-    for (field, index), group in sorted(
-        groups.items(), key=lambda item: (item[0][0], item[0][1])
+    result = []
+    for (field, encoded_depth, index), group in sorted(
+        groups.items(), key=lambda item: (item[0][0], item[0][1] or 0, item[0][2])
     ):
         if "value" not in group:
-            raise _model_error(
-                f"harmonized companions for hz_{field}({index}) exist without a "
-                "corresponding value"
-            )
-        result.append(
-            HarmonizedValue(
-                field=field,
-                value=group["value"],
-                term_source_ref=(
-                    None if group.get("onto") is None else str(group["onto"])
-                ),
-                term_accession_number=(
-                    None if group.get("id") is None else str(group["id"])
-                ),
-                hierarchy_depth=group.get("hierarchy_depth"),
-                index=index,
-            )
-        )
+            raise _model_error(f"harmonized companions for hz_{field}({index}) exist without a corresponding value")
+        depth = group.get("hierarchy_depth", encoded_depth)
+        if encoded_depth is not None and depth != encoded_depth:
+            raise _model_error(f"conflicting hierarchy depth for hz_{field}")
+        result.append(HarmonizedValue(
+            field=field, value=group["value"],
+            term_source_ref=None if group.get("onto") is None else str(group["onto"]),
+            term_accession_number=None if group.get("id") is None else str(group["id"]),
+            hierarchy_depth=depth, index=index,
+        ))
     return tuple(result)
 
 
@@ -158,7 +182,7 @@ def harmonized_mapping(values: Iterable[HarmonizedValue]) -> dict[str, Any]:
     for value in values:
         if not isinstance(value, HarmonizedValue):
             raise TypeError("harmonized values must be HarmonizedValue instances")
-        identity = (value.field, value.index)
+        identity = (value.prefix, value.index)
         if identity in identities:
             raise _model_error(
                 f"duplicate harmonized value group hz_{value.field}{value.suffix}"
@@ -202,9 +226,10 @@ def iter_harmonized_values(
 
 
 def next_harmonized_index(
-    values: Iterable[HarmonizedValue], *, field: str
+    values: Iterable[HarmonizedValue], *, field: str, hierarchy_depth: int | None = None
 ) -> int:
-    indexes = {value.index for value in values if value.field == field}
+    indexes = {value.index for value in values if value.field == field
+               and (_WIRE_SCHEMA.get() == "3.0" or (value.hierarchy_depth or 0) == (hierarchy_depth or 0))}
     index = 0
     while index in indexes:
         index += 1
@@ -263,7 +288,7 @@ def append_harmonized_value(
         term_source_ref=value.term_source_ref,
         term_accession_number=value.term_accession_number,
         hierarchy_depth=value.hierarchy_depth,
-        index=next_harmonized_index(existing, field=value.field),
+        index=next_harmonized_index(existing, field=value.field, hierarchy_depth=value.hierarchy_depth),
     )
     if isinstance(destination, MutableMapping):
         destination.update(appended.to_mapping())
@@ -278,6 +303,77 @@ def harmonized_value_mappings(
     return tuple(item.to_annotation_mapping() for item in iter_harmonized_values(value))
 
 
+def rewrite_harmonized_names(document: Any, *, schema_version: str = "3.1") -> Any:
+    """Rename groups on a copy, preserving raw rows, source order and extensions.
+
+    Legacy canonicalization is handled by the original renderer, not by trying
+    to reverse this migration. New collision ordinals are scoped to depth.
+    """
+    def rename_map(flat):
+        iter_harmonized_values(flat)  # Validate companions before rewriting.
+        by_wire = {}
+        for key in flat:
+            if not is_harmonized_key(key):
+                continue
+            field, role, index, depth = parse_harmonized_key_details(key)
+            if role != "value":
+                continue
+            group = {}
+            for companion, item in flat.items():
+                if is_harmonized_key(companion):
+                    cf, _, ci, cd = parse_harmonized_key_details(companion)
+                    if (cf, ci, cd) == (field, index, depth):
+                        group[companion] = item
+            by_wire[key] = iter_harmonized_values(group)[0]
+        replacements, used = {}, set()
+        for key in flat:
+            if key not in by_wire:
+                continue
+            value = by_wire[key]
+            ordinal = value.index if not value.hierarchy_depth or "__ancestor_depth_" in key else 0
+            while (value.prefix, ordinal) in used:
+                ordinal += 1
+            used.add((value.prefix, ordinal))
+            rendered = replace(value, index=ordinal)
+            field, _, index, encoded = parse_harmonized_key_details(key)
+            for companion in flat:
+                if not is_harmonized_key(companion):
+                    continue
+                cf, role, ci, cd = parse_harmonized_key_details(companion)
+                if (cf, ci, cd) == (field, index, encoded):
+                    qualifier = {"value": "", "id": "_id", "onto": "_onto", "hierarchy_depth": "_hierarchy_depth"}[role]
+                    replacements[companion] = f"{rendered.prefix}{qualifier}{rendered.suffix}"
+        return replacements
+
+    def visit(value):
+        if isinstance(value, Mapping):
+            names = rename_map(value)
+            return {names.get(k, k): (v if k == "extensions" else visit(v)) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            flat = {}
+            for row in value:
+                if isinstance(row, Mapping):
+                    key = row.get("name", row.get("tag"))
+                    if is_harmonized_key(key) and "value" in row:
+                        if key in flat:
+                            raise _model_error(f"duplicate harmonized row {key!r}")
+                        flat[key] = row.get("value")
+            names = rename_map(flat)
+            rows = []
+            for row in value:
+                rewritten = visit(row)
+                if isinstance(rewritten, dict):
+                    for key in ("name", "tag"):
+                        if rewritten.get(key) in names:
+                            rewritten[key] = names[rewritten[key]]
+                rows.append(rewritten)
+            return rows
+        return value
+
+    with wire_schema(schema_version):
+        return visit(document)
+
+
 __all__ = [
     "HarmonizedValue",
     "append_harmonized_value",
@@ -288,5 +384,8 @@ __all__ = [
     "named_harmonized_rows",
     "next_harmonized_index",
     "parse_harmonized_key",
+    "parse_harmonized_key_details",
+    "rewrite_harmonized_names",
+    "wire_schema",
     "parse_harmonized_mapping",
 ]

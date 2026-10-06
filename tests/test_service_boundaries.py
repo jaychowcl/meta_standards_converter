@@ -17,7 +17,7 @@ def test_geo_parser_is_network_free_and_preserves_fixture_packages():
     assert len(packages) == 1
     assert packages[0].series.iid == "GSE328265"
     assert packages[0]["sample"][0]["iid"] == "GSM9651991"
-    assert all(package.miniml_schema_version == '3.0' for package in packages)
+    assert all(package.miniml_schema_version == '3.1' for package in packages)
 
 
 

@@ -26,7 +26,7 @@ def test_decode_accepts_packages_and_envelopes_without_mutating(tmp_path):
         loaded = source.decode(value, fallback='source')
         assert loaded == source.load(path)
         assert value == original
-        assert source.decode(loaded.groups[0].packages).groups[0].packages == loaded.groups[0].packages
+        assert [p.to_mapping() for p in source.decode(loaded.groups[0].packages).groups[0].packages] == [p.to_mapping() for p in loaded.groups[0].packages]
 
 
 def test_loaded_table_matches_file_api_and_has_no_writes(tmp_path):

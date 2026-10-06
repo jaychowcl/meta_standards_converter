@@ -29,7 +29,7 @@ from .harmonization import HarmonizedValue, append_harmonized_value
 from .model import MINIML_SCHEMA_VERSION, MINiMLModelError, MINiMLPackage
 
 
-PATCH_SCHEMA_VERSION = "3.1"
+PATCH_SCHEMA_VERSION = "3.2"
 PATCH_EXTENSION_SCHEMA_VERSION = "1.0"
 PATCH_EXTENSION_KEY = "msc_harmonization"
 _SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -63,18 +63,19 @@ def _plain(value: Any) -> Any:
 
 def canonical_miniml_document(
     value: MINiMLPackage | Mapping[str, Any] | Iterable[Mapping[str, Any]],
+    *, schema_version: str = MINIML_SCHEMA_VERSION,
 ) -> dict[str, Any] | list[dict[str, Any]]:
     """Strictly decode and encode one package or a non-empty package sequence."""
 
     codec = MINiMLCodec()
     if isinstance(value, MINiMLPackage):
-        return codec.encode(codec.decode(value).package)
+        return codec.encode(codec.decode(value).package, schema_version=schema_version)
     if isinstance(value, Mapping):
-        return codec.encode(codec.decode(value).package)
+        return codec.encode(codec.decode(value).package, schema_version=schema_version)
     if isinstance(value, (list, tuple)):
         if not value:
             raise MINiMLModelError("MINiML package collection must not be empty")
-        return codec.encode_many(codec.decode_many(value).packages)
+        return codec.encode_many(codec.decode_many(value).packages, schema_version=schema_version)
     raise TypeError("MINiML document must be a package mapping or package sequence")
 
 
@@ -95,10 +96,11 @@ def _without_retained_patches(value: Any) -> Any:
 
 def miniml_source_fingerprint(
     value: MINiMLPackage | Mapping[str, Any] | Iterable[Mapping[str, Any]],
+    *, schema_version: str = MINIML_SCHEMA_VERSION,
 ) -> str:
     """Hash canonical biological content, excluding only retained patches."""
 
-    canonical = _without_retained_patches(canonical_miniml_document(value))
+    canonical = _without_retained_patches(canonical_miniml_document(value, schema_version=schema_version))
     payload = json.dumps(
         canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
@@ -169,7 +171,7 @@ def _validated_operation(value: Any, *, schema_version: str) -> dict[str, Any]:
     if not isinstance(value, Mapping):
         raise MINiMLModelError("MINiML harmonization operation must be an object")
     allowed = {"path", "harmonized_value"}
-    if schema_version == PATCH_SCHEMA_VERSION:
+    if schema_version in {"3.1", PATCH_SCHEMA_VERSION}:
         allowed.add("source_evidence")
     if set(value) - allowed or not {"path", "harmonized_value"}.issubset(value):
         raise MINiMLModelError(
@@ -198,12 +200,13 @@ class MINiMLHarmonizationPatch:
     miniml_schema_version: str = MINIML_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
-        if self.schema_version not in {"3.0", PATCH_SCHEMA_VERSION}:
+        if self.schema_version not in {"3.0", "3.1", PATCH_SCHEMA_VERSION}:
             raise MINiMLModelError(
-                "MINiML harmonization patch schema_version must be '3.0' or '3.1'"
+                "MINiML harmonization patch schema_version must be '3.0', '3.1' or '3.2'"
             )
-        if self.miniml_schema_version != MINIML_SCHEMA_VERSION:
-            raise MINiMLModelError("MINiML harmonization patch requires MINiML 3.0")
+        expected_version = "3.1" if self.schema_version == "3.2" else "3.0"
+        if self.miniml_schema_version != expected_version:
+            raise MINiMLModelError(f"patch {self.schema_version} requires MINiML {expected_version}")
         fingerprint = str(self.base_sha256 or "").lower()
         if _SHA256.fullmatch(fingerprint) is None:
             raise MINiMLModelError(
@@ -256,7 +259,7 @@ class MINiMLHarmonizationPatch:
         return hashlib.sha256(payload).hexdigest()
 
     def matches(self, document: Any) -> bool:
-        return self.base_sha256 == miniml_source_fingerprint(document)
+        return self.base_sha256 == miniml_source_fingerprint(document, schema_version=self.miniml_schema_version)
 
     def to_mapping(self) -> dict[str, Any]:
         return {
@@ -432,6 +435,7 @@ def apply_miniml_harmonization_patch(
         typed.patch_id in _package_patch_ids(packages[index]) for index in partitions
     ):
         return canonical
+    canonical = canonical_miniml_document(document, schema_version=typed.miniml_schema_version)
     if not typed.matches(canonical):
         raise MINiMLModelError(
             "MINiML harmonization patch base document fingerprint differs"
@@ -443,10 +447,12 @@ def apply_miniml_harmonization_patch(
     result_packages = result if isinstance(result, list) else [result]
     for package_index, operations in sorted(partitions.items()):
         package = result_packages[package_index]
-        source_sha256 = miniml_source_fingerprint(package)
-        for operation in operations:
-            _apply_add(package, operation)
-        result_sha256 = miniml_source_fingerprint(package)
+        source_sha256 = miniml_source_fingerprint(package, schema_version=typed.miniml_schema_version)
+        from .harmonization import wire_schema
+        with wire_schema(typed.miniml_schema_version):
+            for operation in operations:
+                _apply_add(package, operation)
+        result_sha256 = miniml_source_fingerprint(package, schema_version=typed.miniml_schema_version)
         extensions = package.setdefault("extensions", {})
         retained = extensions.setdefault(
             PATCH_EXTENSION_KEY,
@@ -492,7 +498,7 @@ def validate_harmonization_extension_mapping(value: Any) -> None:
             raise MINiMLModelError("malformed retained harmonization patch fragment")
         if fragment["schema_version"] != PATCH_EXTENSION_SCHEMA_VERSION:
             raise MINiMLModelError("retained patch schema_version must be '1.0'")
-        if fragment["patch_schema_version"] not in {"3.0", PATCH_SCHEMA_VERSION}:
+        if fragment["patch_schema_version"] not in {"3.0", "3.1", PATCH_SCHEMA_VERSION}:
             raise MINiMLModelError("unsupported retained patch schema version")
         for key in ("patch_id", "source_sha256", "result_sha256"):
             if not isinstance(fragment[key], str) or _SHA256.fullmatch(fragment[key]) is None:

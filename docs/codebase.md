@@ -21,7 +21,7 @@ moving study metadata and expression assets among GEO MINiML, the package's
 parsed JSON model, ArrayExpress MAGE-TAB, delimited sample tables, and AnnData
 H5AD. CLI modules are thin batch adapters. Converter classes own use-case
 orchestration; fetchers and parsers own repository-specific I/O; MAGE-TAB
-constructors and H5AD/tabular projectors own output models. The current distribution is **MSC 8.0.0**.
+constructors and H5AD/tabular projectors own output models. The current distribution is **MSC 8.0.0**. Current output contracts are MINiML 3.1 and patch 3.2; [legacy compatibility](#harmonization-depth-contract) is explicit.
 
 Start with [the design and class map](#oop-design), then follow one
 [principal workflow](#principal-workflows). Use the
@@ -168,6 +168,53 @@ credentials, or tokens.
   writable state to the configured output tree.
 
 <a id="typed-mage-tab-model"></a>
+<a id="harmonization-depth-contract"></a>
+## Depth-aware harmonization and review transport
+
+Current writers emit MINiML **3.1**, harmonization patches **3.2**, and direct
+`hz_<field>` values. Ancestors use `hz_<field>__ancestor_depth_N`; ontology and
+depth companions share that prefix. Repeated values at one depth use `(1)`,
+`(2)`; direct and unknown-depth indexes are preserved. Semantic field names and
+integer depths remain separate. The `__ancestor_depth_` marker is reserved.
+All MINiML, MAGE-TAB, table and AnnData writers share the MSC name renderer.
+
+Readers accept legacy MINiML 3.0 groups and new groups; a depth encoded in a
+name must agree with its companion. New named rows and mapping members use the
+new spelling without changing raw metadata, protocol definitions or retained
+patch evidence. An absent depth remains unknown. No existing files are migrated
+in place.
+
+`canonical_miniml_document(..., schema_version="3.0")` and
+`miniml_source_fingerprint(..., schema_version="3.0")` preserve the original
+canonicalization for old sources. New patches normalize a copy to 3.1 before
+fingerprinting and application. Patch 3.0/3.1 verification and application use
+MINiML 3.0 first, then upgrade the result; stored source/result hashes retain
+their original meaning. An existing retained patch ID remains idempotent.
+Defaults are the new versions; the legacy selector is only for compatibility.
+
+Atlas readers accept 1.0 and 1.1. Publication review 1.1 adds model confidence
+and a policy record with version, action, exclusion eligibility, review-required
+flag and reason. Only high-confidence `not_relevant` can be excluded; low or
+medium negatives, unsure and missing confidence require review. MSC validates
+this data contract without importing AC or deciding whether filtering is enabled.
+
+Public helper additions:
+- `meta_standards_converter.miniml.harmonization.wire_schema`: context-local,
+  exception-safe legacy rendering, never a process-global toggle.
+- `meta_standards_converter.miniml.harmonization.parse_harmonized_key_details`:
+  field, role, index and optional encoded depth; the original three-part parser
+  remains a compatibility view.
+- `meta_standards_converter.miniml.harmonization.rewrite_harmonized_names`:
+  copy-based current spelling migration preserving raw rows and extensions.
+
+Verification: `tests/test_harmonization_depth_contract.py` contains a frozen
+pre-change legacy hash/patch fixture, exact compatibility and tamper checks,
+independent depth collisions, named rows and SDRF round trips.
+`tests/test_atlas_v1_reader.py` covers old/new Atlas review policy transport.
+Purposeful decision (2026-10-06): version canonical bytes rather than changing
+what old source-bound hashes mean. No live provider evidence or accepted pins
+are changed by this format revision.
+
 <a id="proposed-enriched-miniml-core"></a>
 ## Enriched MINiML-compatible core
 
@@ -4315,7 +4362,7 @@ sample evidence. Ambiguous sample/channel bindings warn rather than guessing.
 envelopes remain readable; an embedded `harmonization_overrides` property is
 rejected with direct-converter migration guidance. Curator produces harmonization
 patches; it does not own export-profile configuration. MINiML 3,
-patch 3.1, Atlas publication and GSK's own projection policy remain intact.
+patch 3.2, Atlas 1.0/1.1 publication and GSK's own projection policy use the depth-aware contract described above.
 
 Harmonized evidence exports by default: tables and AnnData use
 `msc.characteristics.hz_<field>` and assay `hz_value`, `hz_unit`, `_id` and
@@ -6182,3 +6229,11 @@ value is normalized by that declaration.
 | `meta_standards_converter.metadata.preparation.scoped_method` | Explicit run/channel identity precedes sample identity and description. |
 | `meta_standards_converter.metadata.preparation.library_evidence_levels` | Return ordered evidence scopes shared by biological and rendering decisions. |
 | `meta_standards_converter.metadata.provenance.repository_name` | Typed evidence or supporting operation for the fidelity contracts above. |
+
+The whole-conversion accounting helpers are unchanged by this serialization release:
+`meta_standards_converter.converters.unified.outcomes.failure` produces a sanitized
+failure envelope and optional retry time;
+`meta_standards_converter.converters.unified.outcomes.snapshot` captures per-service
+request counters; `meta_standards_converter.converters.unified.outcomes.delta`
+computes nonnegative increments;
+`meta_standards_converter.converters.unified.outcomes.add` totals those increments.

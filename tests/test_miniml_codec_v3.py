@@ -74,7 +74,7 @@ def test_codec_decodes_typed_enrichment_from_v3_input() -> None:
     assert isinstance(result.package.series.pubmed_publications[0], PubMedPublication)
     assert isinstance(result.package.samples[0].sra_runs[0], SRARun)
     assert isinstance(result.package.samples[0].sra_runs[0].fastq_files[0], FASTQFile)
-    assert MINiMLCodec().encode(result.package)["miniml_schema_version"] == "3.0"
+    assert MINiMLCodec().encode(result.package)["miniml_schema_version"] == "3.1"
 
 
 def test_codec_returns_warnings_and_strict_mode_promotes_them() -> None:

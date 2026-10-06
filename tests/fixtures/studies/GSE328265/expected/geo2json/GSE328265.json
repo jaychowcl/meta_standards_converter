@@ -1,6 +1,6 @@
 [
   {
-    "miniml_schema_version": "3.0",
+    "miniml_schema_version": "3.1",
     "source": {
       "format": "GEO MINiML",
       "version": "0.5.0",

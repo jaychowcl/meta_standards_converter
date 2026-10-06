@@ -246,7 +246,7 @@ def test_resolver_replaces_destinations_from_typed_annotations():
     assert characteristics["organism part"]["value"] == "lung"
     assert characteristics["organism part"]["term_accession_number"] == "UBERON:0002048"
     assert any(
-        row.get("name") == "hz_high_level_tissue"
+        row.get("name") == "hz_high_level_tissue__ancestor_depth_1"
         for row in channel["characteristics"]
     )
     assert original["sample"][0]["channel"][0]["organism"][0]["value"] == "human"

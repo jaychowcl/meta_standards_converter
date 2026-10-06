@@ -161,7 +161,7 @@
             "entity_type": "package",
             "package_index": 0,
             "path": "miniml_schema_version",
-            "value": "3.0",
+            "value": "3.1",
             "value_type": "string"
           },
           {
@@ -258,7 +258,7 @@
       "metadata_source": "",
       "metadata_source_name": "",
       "metadata_source_uri": "",
-      "packages_json": "[{\"contributor\": [], \"database\": [], \"miniml_schema_version\": \"3.0\", \"organization\": [], \"platform\": [], \"sample\": [{\"accession\": [{\"value\": \"PBMC3K_SAMPLE\"}], \"channel\": [{\"organism\": [{\"taxid\": \"9606\", \"value\": \"Homo sapiens\"}], \"source\": {\"value\": \"peripheral blood mononuclear cells\"}}], \"iid\": \"PBMC3K_SAMPLE\", \"title\": \"PBMCs\"}], \"series\": {\"accession\": [{\"value\": \"PBMC3K\"}], \"iid\": \"PBMC3K\", \"title\": \"PBMC3k four-cell six-gene contract\"}, \"source\": {\"format\": \"test\"}}]",
+      "packages_json": "[{\"contributor\": [], \"database\": [], \"miniml_schema_version\": \"3.1\", \"organization\": [], \"platform\": [], \"sample\": [{\"accession\": [{\"value\": \"PBMC3K_SAMPLE\"}], \"channel\": [{\"organism\": [{\"taxid\": \"9606\", \"value\": \"Homo sapiens\"}], \"source\": {\"value\": \"peripheral blood mononuclear cells\"}}], \"iid\": \"PBMC3K_SAMPLE\", \"title\": \"PBMCs\"}], \"series\": {\"accession\": [{\"value\": \"PBMC3K\"}], \"iid\": \"PBMC3K\", \"title\": \"PBMC3k four-cell six-gene contract\"}, \"source\": {\"format\": \"test\"}}]",
       "path_base": "artifact_parent",
       "publication_policy": "citation_metadata_only",
       "schema_version": "1.0",

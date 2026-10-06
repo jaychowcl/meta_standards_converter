@@ -60,8 +60,8 @@ def test_miniml_v3_round_trips_flat_harmonized_values() -> None:
     result = MINiMLCodec().decode(_package(), strict=True)
     encoded = MINiMLCodec.encode(result.package)
 
-    assert MINIML_SCHEMA_VERSION == "3.0"
-    assert encoded["sample"] == _package()["sample"]
+    assert MINIML_SCHEMA_VERSION == "3.1"
+    assert encoded["sample"][0]["channel"][0]["source"] == _package()["sample"][0]["channel"][0]["source"]
     assert encoded["series"] == _package()["series"]
     assert "annotations" not in repr(encoded)
 
@@ -79,7 +79,7 @@ def test_miniml_v3_round_trips_flat_harmonized_values() -> None:
             hierarchy_depth=0,
         )
     ]
-    assert [value.index for value in characteristic_values] == [0, 1]
+    assert [value.index for value in characteristic_values] == [0, 0]
     assert [value.value for value in characteristic_values] == [
         "idiopathic pulmonary fibrosis",
         "pulmonary fibrosis",
@@ -132,11 +132,11 @@ def test_append_harmonized_value_allocates_aligned_mapping_collision() -> None:
         ),
     )
 
-    assert appended.index == 1
-    assert destination["hz_disease(1)"] == "pulmonary fibrosis"
-    assert destination["hz_disease_id(1)"] == "MONDO:0003782"
-    assert destination["hz_disease_onto(1)"] == "MONDO"
-    assert destination["hz_disease_hierarchy_depth(1)"] == 1
+    assert appended.index == 0
+    assert destination["hz_disease__ancestor_depth_1"] == "pulmonary fibrosis"
+    assert destination["hz_disease__ancestor_depth_1_id"] == "MONDO:0003782"
+    assert destination["hz_disease__ancestor_depth_1_onto"] == "MONDO"
+    assert destination["hz_disease__ancestor_depth_1_hierarchy_depth"] == 1
 
 
 def test_append_harmonized_value_writes_named_rows_and_reuses_exact_identity() -> None:
@@ -159,10 +159,10 @@ def test_append_harmonized_value_writes_named_rows_and_reuses_exact_identity() -
     second = append_harmonized_value(destination, candidate, name_key="tag")
 
     assert first == second
-    assert first.index == 1
+    assert first.index == 0
     assert (
         destination.count(
-            {"tag": "hz_disease(1)", "value": "pulmonary fibrosis"}
+            {"tag": "hz_disease__ancestor_depth_1", "value": "pulmonary fibrosis"}
         )
         == 1
     )
@@ -171,10 +171,10 @@ def test_append_harmonized_value_writes_named_rows_and_reuses_exact_identity() -
         "hz_disease_id",
         "hz_disease_onto",
         "hz_disease_hierarchy_depth",
-        "hz_disease(1)",
-        "hz_disease_id(1)",
-        "hz_disease_onto(1)",
-        "hz_disease_hierarchy_depth(1)",
+        "hz_disease__ancestor_depth_1",
+        "hz_disease__ancestor_depth_1_id",
+        "hz_disease__ancestor_depth_1_onto",
+        "hz_disease__ancestor_depth_1_hierarchy_depth",
     }
 
 

@@ -17,10 +17,10 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 from uuid import uuid4
 
-from .model import MINiMLPackage, MINiMLValidationIssue
+from .model import MINIML_SCHEMA_VERSION, MINiMLPackage, MINiMLValidationIssue
 
 
-MINIML_STRICT_COMPATIBILITY_POLICY_VERSION = "miniml-3.0-source-compat-v1"
+MINIML_STRICT_COMPATIBILITY_POLICY_VERSION = "miniml-3.1-source-compat-v2"
 
 
 class MINiMLCompatibilityError(ValueError):
@@ -90,7 +90,11 @@ class MINiMLCodec:
         return MINiMLV1Migrator().migrate(value)
 
     def decode(self, value: Mapping[str, Any], *, strict: bool = False) -> MINiMLDecodeResult:
-        package = MINiMLPackage.from_mapping(value.to_mapping()) if isinstance(value, MINiMLPackage) else MINiMLPackage.from_mapping(value)
+        if isinstance(value, MINiMLPackage):
+            from .harmonization import wire_schema
+            with wire_schema(value.miniml_schema_version):
+                value = value._source_mapping()
+        package = MINiMLPackage.from_mapping(value)
         diagnostics = package.validate()
         if strict and diagnostics:
             structural = tuple(
@@ -113,15 +117,15 @@ class MINiMLCodec:
         return MINiMLBatchDecodeResult(tuple(packages), tuple(diagnostics))
 
     @staticmethod
-    def encode(package: MINiMLPackage) -> dict[str, Any]:
+    def encode(package: MINiMLPackage, *, schema_version: str = MINIML_SCHEMA_VERSION) -> dict[str, Any]:
         if not isinstance(package, MINiMLPackage):
             raise TypeError("package must be a MINiMLPackage")
-        canonical = MINiMLPackage.from_mapping(package.to_mapping())
+        canonical = MINiMLPackage.from_mapping(package.to_mapping() if schema_version == MINIML_SCHEMA_VERSION else package.to_mapping(schema_version=schema_version))
         canonical.validate()
-        return canonical.to_mapping()
+        return canonical.to_mapping() if schema_version == MINIML_SCHEMA_VERSION else canonical.to_mapping(schema_version=schema_version)
 
-    def encode_many(self, packages: Sequence[MINiMLPackage]) -> list[dict[str, Any]]:
-        return [self.encode(package) for package in packages]
+    def encode_many(self, packages: Sequence[MINiMLPackage], *, schema_version: str = MINIML_SCHEMA_VERSION) -> list[dict[str, Any]]:
+        return [self.encode(package, schema_version=schema_version) for package in packages]
 
     def load(self, path: str | Path, *, strict: bool = False) -> MINiMLBatchDecodeResult:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))

@@ -24,7 +24,7 @@ from meta_standards_converter.miniml import (
 
 def complete_package() -> dict:
     return {
-        "miniml_schema_version": "3.0",
+        "miniml_schema_version": "3.1",
         "source": {
             "format": "GEO MINiML",
             "version": "0.5.4",
@@ -148,7 +148,7 @@ def test_strict_codec_accepts_source_duplicate_sample_titles_with_unique_iids() 
 
     result = MINiMLCodec().decode(canonical, strict=True)
 
-    assert MINIML_STRICT_COMPATIBILITY_POLICY_VERSION == "miniml-3.0-source-compat-v1"
+    assert MINIML_STRICT_COMPATIBILITY_POLICY_VERSION == "miniml-3.1-source-compat-v2"
     assert [(issue.code, issue.path, issue.severity) for issue in result.diagnostics] == [
         ("xsd_uniqueness", "/sample/1/title", "warning")
     ]
@@ -217,7 +217,7 @@ def test_complete_xsd_derived_package_round_trips_through_python_model() -> None
 def test_v3_singletons_are_normalized_without_dropping_extensions() -> None:
     model = MINiMLPackage.from_mapping(
         {
-            "miniml_schema_version": "3.0",
+            "miniml_schema_version": "3.1",
             "source": {"format": "test"},
             "contributor": {
                 "iid": "contributor-1",
@@ -266,15 +266,15 @@ def test_compatibility_validation_reports_xsd_deviations_as_warnings() -> None:
 @pytest.mark.parametrize(
     ("payload", "message"),
     [
-        ({"miniml_schema_version": "3.0", "series": []}, "series must be an object"),
-        ({"miniml_schema_version": "3.0", "series": {}}, "series requires iid or accession"),
+        ({"miniml_schema_version": "3.1", "series": []}, "series must be an object"),
+        ({"miniml_schema_version": "3.1", "series": {}}, "series requires iid or accession"),
         (
-            {"miniml_schema_version": "3.0", "source": {"format": "test"}, "series": {"iid": "GSE1"}, "sample": ["bad"]},
+            {"miniml_schema_version": "3.1", "source": {"format": "test"}, "series": {"iid": "GSE1"}, "sample": ["bad"]},
             r"sample\[0\] must be an object",
         ),
         (
             {
-                "miniml_schema_version": "3.0",
+                "miniml_schema_version": "3.1",
                 "source": {"format": "test"},
                 "series": {"iid": "GSE1"},
                 "sample": [{"iid": "GSM1"}, {"iid": "GSM1"}],

@@ -47,7 +47,7 @@ class MINiMLV1Migrator:
         source_version = legacy.pop("version", None)
         schema_location = legacy.pop("schema_location", None)
         source_documents = self._documents(mage_tab)
-        legacy["miniml_schema_version"] = "3.0"
+        legacy["miniml_schema_version"] = "3.1"
         legacy["source"] = {
             "format": source_format,
             **({"version": str(source_version)} if source_version is not None else {}),
@@ -65,7 +65,7 @@ class MINiMLV1Migrator:
                         "Raw IDF/SDRF source layout is not part of MSC MINiML 3.0.",
                     )
                 )
-        package = MINiMLPackage.from_mapping(legacy)
+        package = MINiMLPackage.from_mapping(MINiMLPackage.from_mapping(legacy).to_mapping())
         diagnostics.extend(package.validate())
         return MINiMLMigrationResult(package, tuple(diagnostics))
 

@@ -170,7 +170,7 @@ def test_v3_is_typed_source_neutral_and_preserves_semantic_order() -> None:
     result = MINiMLCodec().decode(package_v3())
     package = result.package
 
-    assert MINIML_SCHEMA_VERSION == "3.0"
+    assert MINIML_SCHEMA_VERSION == "3.1"
     assert package.source.format == "MAGE-TAB"
     assert [protocol.name for protocol in package.series.protocols] == [
         "P-extract",
@@ -186,7 +186,7 @@ def test_v3_is_typed_source_neutral_and_preserves_semantic_order() -> None:
     assert characteristic.name == "age"
     assert characteristic.unit.term_accession_number == "UO:0000036"
     assert characteristic.unit.to_mapping()["hz_unit"] == "year"
-    assert MINiMLCodec().encode(package)["miniml_schema_version"] == "3.0"
+    assert MINiMLCodec().encode(package)["miniml_schema_version"] == "3.1"
 
 
 @pytest.mark.parametrize("version", [None, "1.0"])
@@ -297,7 +297,7 @@ def test_explicit_v1_migrator_folds_mage_tab_and_hz_fields() -> None:
     result = MINiMLV1Migrator().migrate(legacy)
     rendered = MINiMLCodec().encode(result.package)
 
-    assert rendered["miniml_schema_version"] == "3.0"
+    assert rendered["miniml_schema_version"] == "3.1"
     assert "mage_tab" not in rendered
     assert "roundtrip" not in str(rendered)
     assert rendered["series"]["protocols"][0]["name"] == "P-extract"

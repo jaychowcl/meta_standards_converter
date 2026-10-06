@@ -532,7 +532,7 @@ class TestAE2JSONConverter(unittest.TestCase):
 
         self.assertEqual(1, len(packages))
         package = packages[0]
-        self.assertEqual("3.0", package["miniml_schema_version"])
+        self.assertEqual("3.1", package["miniml_schema_version"])
         self.assertEqual(
             "https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf",
             package["source"]["schema_location"],
@@ -576,7 +576,7 @@ class TestAE2JSONConverter(unittest.TestCase):
         package = AE2JSONConverter(fetcher=fetcher).convert("E-MTAB-1")[0]
 
         self.assertIsInstance(package, MINiMLPackage)
-        self.assertEqual("3.0", package.miniml_schema_version)
+        self.assertEqual("3.1", package.miniml_schema_version)
         self.assertEqual(package, MINiMLPackage.from_mapping(package.to_mapping()))
 
     def test_e_mtab_6486_values_are_losslessly_normalized_for_strict_miniml(self):
