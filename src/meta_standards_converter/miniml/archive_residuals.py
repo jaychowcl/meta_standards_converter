@@ -37,6 +37,56 @@ def accession(node):
     return node.get('attributes', {}).get('accession') or child_text(node, 'IDENTIFIERS/PRIMARY_ID')
 
 
+def _identity_keys(value):
+    if not isinstance(value, dict):
+        return
+    fields = ('iid', 'run', 'name', 'kind', 'value', 'sample_ref', 'protocol_ref', 'pubmed_id', 'doi', 'pmcid')
+    for key in fields:
+        item = value.get(key)
+        if type(item) in (str, int, float, bool) and item != '':
+            yield (key, item)
+    steps = value.get('steps')
+    if isinstance(steps, list) and steps:
+        yield ('steps_length', len(steps))
+        for index, step in enumerate(steps):
+            if isinstance(step, dict):
+                for key in fields:
+                    item = step.get(key)
+                    if type(item) in (str, int, float, bool) and item != '':
+                        yield (('step', index, key), item)
+
+
+class _OccurrenceIndex:
+    """Necessary identity predicates narrow candidates; full comparison decides."""
+    def __init__(self, values):
+        self.values = list(values)
+        self.used = set()
+        self.index = {} if len(self.values) >= 16 else None
+        if self.index is not None:
+            for index, value in enumerate(self.values):
+                for key in _identity_keys(value):
+                    self.index.setdefault(key, []).append(index)
+
+    def __len__(self):
+        return len(self.values) - len(self.used)
+
+    def remaining(self):
+        return (i for i in range(len(self.values)) if i not in self.used)
+
+    def candidates(self, value):
+        keys = list(_identity_keys(value)) if self.index is not None else []
+        positions = min((self.index.get(k, []) for k in keys), key=len) if keys else range(len(self.values))
+        return (i for i in positions if i not in self.used)
+
+    def matching(self, key, value):
+        positions = self.index.get((key, value), []) if self.index is not None and type(value) in (str, int, float, bool) else self.remaining()
+        return [i for i in positions if i not in self.used and isinstance(self.values[i], dict) and self.values[i].get(key) == value]
+
+    def take(self, index):
+        self.used.add(index)
+        return self.values[index]
+
+
 def contains(expected, actual):
     """A coupled source value is represented by a compatible richer value."""
     if isinstance(expected, dict):
@@ -47,6 +97,13 @@ def contains(expected, actual):
             for k,v in expected.items() if v not in (None, '', [], {}))
     if isinstance(expected, list):
         if not isinstance(actual, list): return False
+        if len(actual) >= 16:
+            available = _OccurrenceIndex(actual)
+            for value in expected:
+                match = next((i for i in available.candidates(value) if contains(value, available.values[i])), None)
+                if match is None: return False
+                available.take(match)
+            return True
         available = list(actual)
         for value in expected:
             match = next((i for i, item in enumerate(available) if contains(value, item)), None)
@@ -156,45 +213,47 @@ def diff(source, target, *, field=None):
                     result.setdefault(key, source[key])
         return result or None
     if isinstance(source, list):
+        from collections import Counter
         result = []
-        available = list(target) if isinstance(target,list) else []
-        source_paths = [_path_signature(p) for p in source] if field == 'assay_paths' else []
-        target_paths = [_path_signature(p) for p in available] if field == 'assay_paths' else []
+        available = _OccurrenceIndex(target if isinstance(target,list) else [])
+        source_paths = Counter(_path_signature(p) for p in source) if field == 'assay_paths' else {}
+        target_paths = Counter(_path_signature(p) for p in available.values) if field == 'assay_paths' else {}
+        path_positions = {_path_signature(p): i for i,p in enumerate(available.values)} if field == 'assay_paths' else {}
         for item in source:
-            match = next((i for i,x in enumerate(available) if contains(item,x)), None)
+            match = next((i for i in available.candidates(item) if contains(item,available.values[i])), None)
             if match is not None:
-                available.pop(match)
+                available.take(match)
                 continue
             if field == 'assay_paths':
                 signature = _path_signature(item)
-                if signature is not None and source_paths.count(signature) == target_paths.count(signature) == 1:
-                    match = next((i for i, p in enumerate(available) if _path_signature(p) == signature), None)
-                    if match is not None:
-                        delta = _path_diff(item, available.pop(match))
+                if signature is not None and source_paths.get(signature) == target_paths.get(signature) == 1:
+                    match = path_positions.get(signature)
+                    if match is not None and match not in available.used:
+                        delta = _path_diff(item, available.take(match))
                         if delta is not None: result.append(delta)
                         continue
             candidate = None
             # Native channel projection is unambiguous only for the single
             # channel of an already matched sample, never by biological title.
             if field == 'channel' and len(source) == len(available) == 1:
-                candidate = available[0]
+                candidate = next(available.remaining())
             if isinstance(item,dict):
                 if field == 'pubmed_publication':
                     from .publication_identifiers import publication_identity
                     identity = publication_identity(item)
-                    options = [x for x in available if isinstance(x, dict)
+                    options = [i for i in available.remaining() if isinstance(x := available.values[i], dict)
                                and identity.items() & publication_identity(x).items()
                                and all(identity[k] == publication_identity(x)[k] for k in identity.keys() & publication_identity(x).keys())]
-                    if len(options) == 1 or (options and all(x == options[0] for x in options)):
+                    if len(options) == 1 or (options and all(available.values[i] == available.values[options[0]] for i in options)):
                         candidate = options[0]
                 identity = next((k for k in ('iid','run','name') if item.get(k)), None)
                 if identity:
-                    options = [x for x in available if isinstance(x,dict) and x.get(identity)==item[identity]]
+                    options = available.matching(identity, item[identity])
                     if len(options)==1: candidate=options[0]
-            delta = diff(item, candidate, field=field)
+            delta = diff(item, available.values[candidate] if candidate is not None else None, field=field)
             if delta is not None: result.append(delta)
             if candidate is not None:
-                available.remove(candidate)
+                available.take(candidate)
         return result or None
     return deepcopy(source) if source not in (None, '', [], {}) else None
 

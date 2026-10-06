@@ -5481,6 +5481,12 @@ boundary. Typed constructors reuse already certified frozen fields; foreign valu
 subclasses and uncertified containers still take the defensive-copy path. Mutable
 JSON returned by `to_mapping()` never aliases the immutable package.
 
+Residual reconciliation indexes large candidate lists by necessary explicit identity
+fields and ordered workflow-step identities. It still checks the complete coupled
+source value before consuming one target occurrence. Source order, greedy matching,
+ambiguous identities, duplicate occurrences and richer target values keep the same
+semantics. Empty or unhashable identity fields fall back to full comparison.
+
 ENA Browser recovery reconciles explicit requested identities before accepting
 records. Truncated or malformed batches split from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch
