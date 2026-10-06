@@ -119,7 +119,10 @@ def test_range_evidence_is_invocation_local_and_missing_members_stay_unresolved(
     http = HTTP(lambda *_: ET.fromstring('<RUN_SET><RUN accession="ERR001"/></RUN_SET>'))
     source = ENASource(http=http)
     source.fetch_reference_ranges(records)
-    assert requested(http) == [['ERR001', 'ERR002'], ['ERR002', 'ERR003']]
+    # Complete XML that omits an identity receives one bounded missing-only
+    # recovery request. Previously received identities are never downloaded again.
+    assert requested(http) == [['ERR001', 'ERR002'], ['ERR002'],
+                               ['ERR002', 'ERR003'], ['ERR002', 'ERR003']]
     assert records.linked == []
     fresh = range_records(('ERR001-ERR001',))
     source.fetch_reference_ranges(fresh)

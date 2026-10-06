@@ -5508,6 +5508,16 @@ has its own span, separate from transport header latency. Nested spans are inclu
 and must not be summed as independent wall time. Statistics count typed run tuples
 directly; collecting timing data does not serialize every sample.
 
+Purposeful inventory decision: retain separate Portal `read_experiment`,
+`read_run` and file-report retrieval. Equal captured rows do not establish an
+interchangeable endpoint contract: experiment/run result types differ, Browser
+XML retains unindexed metadata, and file reports use a separate data cache.
+Consolidation requires equivalent membership and field coverage; no universal
+equivalence was established. See the official
+[advanced-search contract](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/advanced-search.html)
+and [file-report contract](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access/file-reports.html).
+This choice preserves coverage rather than deriving absence from a smaller report.
+
 ENA Browser recovery reconciles explicit requested identities before accepting
 records and checks their entity types. BioProject/BioSample and other explicit
 INSDC accession aliases remain valid, and repeated source occurrences inside a
@@ -5539,6 +5549,14 @@ Native outcomes keep this internal evidence for partial packages and when no pac
 is returned. The facade preserves the existing error envelope and `retry_at` fields,
 so a valid partial artifact may still carry a retryable retrieval failure. Serialized
 native outcome fields are unchanged; resolved failures remain only in request history.
+
+The facade's request accounting helpers are
+`meta_standards_converter.converters.unified.outcomes.snapshot` (one snapshot per
+distinct service), `meta_standards_converter.converters.unified.outcomes.delta`
+(nonnegative observed changes), and
+`meta_standards_converter.converters.unified.outcomes.add` (aggregate counters).
+`meta_standards_converter.converters.unified.outcomes.failure` preserves safe
+error classification and cooldowns at the conversion boundary.
 
 ```text
 sra2json / SRA2JSONConverter
