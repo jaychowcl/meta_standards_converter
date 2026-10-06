@@ -296,6 +296,7 @@ class ResourceProfile:
     disk_headroom_fraction: float = 0.10
     available_memory_fraction: float = 0.70
     force_memory_fraction: float = 0.90
+    metadata_response_timeout_seconds: float = 300
 
     def __post_init__(self) -> None:
         for field in fields(self):
@@ -346,6 +347,7 @@ STANDARD_RESOURCE_PROFILE = ResourceProfile(
 
 LARGE_RESOURCE_PROFILE = ResourceProfile(
     name="large",
+    metadata_response_timeout_seconds=900,
     max_redirects=5,
     connect_timeout_seconds=30,
     read_timeout_seconds=300,

@@ -546,6 +546,18 @@ class RateLimitedRequester:
                 kwargs.pop('cookies', None)
             url = target
 
+    def consume(self, url, consumer, **kwargs):
+        """Consume a streamed body within the existing physical retry loop."""
+        response = self.get(url, _consume_response=consumer, **kwargs)
+        try:
+            response.raise_for_status()
+            return response._msc_consumed
+        finally:
+            # Successful consumers already close their response, including when
+            # decoding fails. Error/redirect terminal responses still need closing.
+            if not getattr(response, '_msc_body_consumed', False):
+                response.close()
+
     def _request_policy(self, url: str, params: Any) -> tuple[str, float]:
         """Classify by URL, not the source that happened to create this client."""
         parsed = urlsplit(url)
@@ -573,6 +585,7 @@ class RateLimitedRequester:
     def _request(self, url, **kwargs):
         from ..metadata.retrieval_budget import _active, _check_cancelled
         budget = _active.get()
+        consumer = kwargs.pop('_consume_response', None)
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.settings.timeout
 
@@ -609,11 +622,20 @@ class RateLimitedRequester:
                     count("rate_wait_seconds", float(waited or 0))
                     effective = dict(kwargs)
                     _check_cancelled()
+                    from .metadata_stream import charge_attempt
+                    charge_attempt()
                     if budget: effective['timeout'] = budget.attempt(effective['timeout'])
                     count("provider_attempts")
                     with self._metrics_lock:
                         self.provider_attempts += 1
+                    request_started = time.monotonic()
                     response = self._get(url, **effective)
+                    response._msc_request_started_at = request_started
+                    if consumer is not None and response.status_code < 400 and not (
+                            response.status_code in {301, 302, 303, 307, 308}
+                            and response.headers.get('Location')):
+                        response._msc_consumed = consumer(response)
+                        response._msc_body_consumed = True
                 finally:
                     self._release_host_slot(state)
             except (

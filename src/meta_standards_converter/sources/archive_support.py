@@ -91,19 +91,34 @@ class ArchiveHTTP:
             remaining = self.profile.max_aggregate_download_bytes - self.downloaded_bytes
         if remaining <= 0:
             raise ValueError("Archive aggregate download budget exhausted")
+        if isinstance(self.requester, RateLimitedRequester):
+            return self.requester.consume(url, lambda response: self._consume(response, fmt),
+                                          params=params, stream=True)
         response = self.requester.get(url, params=params, stream=True)
+        return self._consume(response, fmt)
+
+    def _consume(self, response, fmt):
+        from ..helpers.metadata_stream import response_deadline, split_payload, BatchPayloadFailure
+        from ..metadata.retrieval_budget import _check_cancelled
+        from ..conversion_logging import stage
+        import requests
         try:
             response.raise_for_status()
             def counted_chunks(**kwargs):
                 for chunk in response.iter_content(**kwargs):
-                    _check_cancelled()
+                    check()
                     with self._download_lock:
                         if self.downloaded_bytes + len(chunk) > self.profile.max_aggregate_download_bytes:
                             raise XMLSizeLimitError('Archive aggregate download budget exhausted')
                         self.downloaded_bytes += len(chunk)
                     yield chunk
             bounded = SimpleNamespace(headers=response.headers, iter_content=counted_chunks)
-            raw = read_limited_response(bounded, max_bytes=min(self.profile.max_xml_bytes, remaining), chunk_size=65536)
+            with response_deadline(response, self.profile.metadata_response_timeout_seconds) as check, stage('body_transfer', level='DEBUG'):
+                raw = read_limited_response(bounded, max_bytes=self.profile.max_xml_bytes, chunk_size=65536)
+        except (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError) as exc:
+            if split_payload.get():
+                raise BatchPayloadFailure(type(exc).__name__) from exc
+            raise
         finally:
             response.close()
         if self.evidence_dir:

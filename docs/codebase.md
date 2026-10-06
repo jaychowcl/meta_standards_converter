@@ -2461,6 +2461,23 @@ directory; otherwise the validated runtime-directory fallback applies.
 API-key parameters. Mixed old/new MSC revisions and unrelated software do not
 necessarily share the new service keys; the provider's IP/key quota still applies.
 
+`RateLimitedRequester.consume` lets native `ArchiveHTTP` consume response bodies
+inside that same retry loop and in-flight slot. Connection, header and body
+failures share three retries, rather than multiplying nested retry allowances.
+Failed streamed bytes still count against the aggregate allowance; every response
+is closed. Injected requesters supporting only `get` retain their existing contract.
+The `body_transfer` stage measures body reading separately from response headers.
+
+`meta_standards_converter.helpers.metadata_stream.response_deadline` bounds the
+whole metadata response, including slow trickles inside a buffered read. The
+resource-profile `metadata_response_timeout_seconds` is 300 seconds for standard
+and 900 for large, capped by the operation deadline. A timer interrupts only the
+currently owned socket; cancellation disarms it before connection reuse. The
+module's `AttemptAllowance`, `charge_attempt`, `attempt_allowance` and
+`split_payload` provide internal accounting for bounded XML batch recovery.
+`MetadataResponseTimeout`, `BatchPayloadFailure` and `BatchRequestLimit` retain
+distinct timeout, payload-recovery and local-allowance failure boundaries.
+
 The defaults leave headroom below the published
 [ENA 50/s ceiling](https://ena-docs.readthedocs.io/en/latest/retrieval/programmatic-access.html#rate-limits)
 and [NCBI 3/s anonymous or 10/s keyed ceiling](https://support.nlm.nih.gov/kbArticle/?pn=KA-05317).
