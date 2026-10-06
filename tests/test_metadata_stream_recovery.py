@@ -80,6 +80,17 @@ def test_injected_requester_without_consumption_extension_is_supported():
     assert set(requester.get.call_args.kwargs) == {'params', 'stream'}
 
 
+def test_oversized_chunk_exhausts_remaining_credit_before_any_later_request():
+    profile=replace(get_resource_profile(),max_aggregate_download_bytes=4)
+    get=Mock(return_value=response([b'<SET/>']))
+    archive=ArchiveHTTP('ena',requester=client(get),resource_profile=profile)
+    with pytest.raises(ValueError,match='aggregate'):
+        archive.get('https://example.org/first')
+    with pytest.raises(ValueError,match='budget exhausted'):
+        archive.get('https://example.org/second')
+    assert get.call_count==1
+
+
 def test_metadata_response_deadline_defaults():
     assert get_resource_profile('standard').metadata_response_timeout_seconds == 300
     assert get_resource_profile('large').metadata_response_timeout_seconds == 900

@@ -111,6 +111,10 @@ class ArchiveHTTP:
                     check()
                     with self._download_lock:
                         if self.downloaded_bytes + len(chunk) > self.profile.max_aggregate_download_bytes:
+                            # Consume the remaining allowance even when this
+                            # chunk cannot be retained. Later calls must not
+                            # reuse the credit after an oversized failed body.
+                            self.downloaded_bytes = self.profile.max_aggregate_download_bytes
                             raise XMLSizeLimitError('Archive aggregate download budget exhausted')
                         self.downloaded_bytes += len(chunk)
                     yield chunk

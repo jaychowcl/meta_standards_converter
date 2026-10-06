@@ -289,7 +289,7 @@ Full flag and Python API details remain in the canonical routes below.
   link: [Open section](codebase.md#docker-guide)
 
 - id: request-helper
-  title: Service-aware request policy and streamed-response ownership
+  title: Service-aware request policy, aggregate limits and streamed-response ownership
   anchor: request-helper
   purpose: Defines URL-specific provider defaults, shared service budgets and NCBI aliases, cross-process cooldowns, in-flight limits, conversion-scoped connection pools, retries, redirects, and safe telemetry.
   keywords: metadata_response_timeout_seconds, response_deadline, body_transfer, streamed body retries, AttemptAllowance, HTTP Session, connection pooling, cookie isolation, transport_scope, RateLimitedRequester, HostRequestGate, HostRequestCooldownDeferred, slot, lease, model concurrency, RequestSettings, request_delay, NCBIApplicationIdentity, tool, email, api_key, ENA, BioSamples, BioStudies, hostname, flock, Retry-After, max_inline_wait, jitter, provider_attempts, retry_count, rate_wait_seconds, 403, 429

@@ -2465,7 +2465,10 @@ necessarily share the new service keys; the provider's IP/key quota still applie
 inside that same retry loop and in-flight slot. Connection, header and body
 failures share three retries, rather than multiplying nested retry allowances.
 Failed streamed bytes still count against the aggregate allowance; every response
-is closed. Injected requesters supporting only `get` retain their existing contract.
+is closed. A chunk exceeding the remaining allowance exhausts that allowance,
+preventing later calls from reusing credit after a failed oversized body. The
+response recorder separately retains the actual received bytes, including that
+final chunk. Injected requesters supporting only `get` retain their existing contract.
 The `body_transfer` stage measures body reading separately from response headers.
 
 `meta_standards_converter.helpers.metadata_stream.response_deadline` bounds the
