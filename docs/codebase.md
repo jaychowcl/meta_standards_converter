@@ -2441,6 +2441,13 @@ defaults. Parallel callers share the same start budget; worker count does not
 multiply the permitted request rate. Separate services on EBI can have independent
 start budgets while still sharing their host's process in-flight ceiling.
 
+Conversion entrypoints own per-thread HTTP sessions, sharing TCP connections within
+a conversion and closing every session on success, failure or interruption. Nested
+converter calls share the scope; separate calls retain independent live retrieval.
+Sessions reject stored response cookies and disable adapter retries. Injected
+transports remain caller-owned; low-level calls outside a conversion retain their
+existing request lifetime. Redirects and retries remain visible to the requester.
+
 Every retry and redirect is gated and counted, including calls outside a metadata
 budget. `Retry-After` cooldowns survive process exit and the final failed attempt
 publishes the cooldown for other callers even when its own retries are exhausted.

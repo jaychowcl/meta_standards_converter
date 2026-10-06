@@ -511,7 +511,8 @@ class RateLimitedRequester:
     ):
         self.service = service
         self.settings = settings or DEFAULT_REQUEST_SETTINGS.get(service, RequestSettings())
-        self._get = get or requests.get
+        from .http_transport import get as pooled_get
+        self._get = get or pooled_get
         self._sleep = sleep or time.sleep
         self._clock = clock or time.monotonic
         self._wall_clock = clock or time.time
@@ -669,7 +670,11 @@ class RateLimitedRequester:
             # observe the provider's cooldown before starting their next request.
             if attempt >= self.settings.max_retries:
                 self._emit_request_event(host, "failed", attempt + 1, elapsed, response.status_code)
-                response.raise_for_status()
+                try:
+                    response.raise_for_status()
+                except BaseException:
+                    response.close()
+                    raise
                 return response
             count("retries")
             self.retry_count += 1

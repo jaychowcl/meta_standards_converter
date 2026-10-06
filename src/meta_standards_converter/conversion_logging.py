@@ -330,6 +330,11 @@ def outcome(result):
 def logged_conversion(fn):
     @wraps(fn)
     def wrapped(*args, **kwargs):
+        from .helpers.http_transport import transport_scope
+        with transport_scope():
+            return invoke(*args, **kwargs)
+
+    def invoke(*args, **kwargs):
         if current() is not None:
             emit("converter_delegated", level="DEBUG", converter=fn.__qualname__)
             with labels():
