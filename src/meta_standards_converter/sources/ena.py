@@ -78,24 +78,27 @@ class ENASource:
         from collections import deque
         import requests
         from ..helpers.metadata_stream import (AttemptAllowance, attempt_allowance,
-            split_payload, BatchPayloadFailure, BatchRequestLimit, _UnchangedRequestLimit)
+            split_payload, BatchPayloadFailure, BatchRequestLimit, _UnchangedRequestLimit,
+            _BatchHeaderTimeout)
         from ..helpers.request_helper import RateLimitedRequester
         from ..metadata.retrieval_budget import _BudgetExhausted, _check_cancelled
         from ..conversion_logging import emit
         allowance = AttemptAllowance()
         token = attempt_allowance.set(allowance)
-        queue = deque([(list(dict.fromkeys(accessions)), 0)])
+        queue = deque([(list(dict.fromkeys(accessions)), 0, None)])
         clean, found, failures = None, set(), []
+        headers_available = False
         accounted = isinstance(self.http, ArchiveHTTP) and isinstance(self.http.requester, RateLimitedRequester)
         try:
             while queue and allowance.used < allowance.maximum:
                 _check_cancelled()
-                batch, repeated = queue.popleft()
+                batch, repeated, probe_followup = queue.popleft()
                 batch = [acc for acc in batch if acc not in found]
                 if not batch:
                     continue
                 split = split_payload.set(len(batch) > 25)
                 payload_failure = False
+                header_stall = False
                 try:
                     if not accounted:
                         allowance.charge(tuple(batch))
@@ -137,10 +140,11 @@ class ENASource:
                 except Exception as error:
                     failures.append(error)
                     # Native streaming already spent its unchanged-request retry
-                    # budget. Only a tagged large body or XML parse failure may
-                    # enter batch repair; a header timeout is service-wide.
+                    # budget. Large body/XML failures permit repair. A header
+                    # stall requires verified single-record availability first.
                     payload_failure = isinstance(error, (BatchPayloadFailure, ET.ParseError)) or (
                         not accounted and isinstance(error, requests.exceptions.ChunkedEncodingError))
+                    header_stall = isinstance(error, _BatchHeaderTimeout)
                     emit('xml_batch_recovery', level='WARNING', kind=kind,
                          requested=len(batch), physical_attempts=allowance.used,
                          error_type=type(error).__name__, split=payload_failure and len(batch)>25)
@@ -149,14 +153,22 @@ class ENASource:
                 finally:
                     split_payload.reset(split)
                 missing = [acc for acc in batch if acc not in found]
+                if probe_followup is not None:
+                    if missing:
+                        continue  # No verified small response: do not fan out.
+                    headers_available = True
+                    missing = [acc for acc in probe_followup if acc not in found]
+                elif header_stall and not headers_available and missing:
+                    queue.appendleft((missing[:1], 0, missing[1:]))
+                    continue
                 if not missing:
                     continue
                 if len(missing) > 25:
                     middle = len(missing)//2
-                    queue.appendleft((missing[middle:], 0))
-                    queue.appendleft((missing[:middle], 0))
+                    queue.appendleft((missing[middle:], 0, None))
+                    queue.appendleft((missing[:middle], 0, None))
                 elif repeated < (3 if payload_failure else 1):
-                    queue.appendleft((missing, repeated+1))
+                    queue.appendleft((missing, repeated+1, None))
         finally:
             attempt_allowance.reset(token)
         missing_ids = sorted(set(accessions) - found)

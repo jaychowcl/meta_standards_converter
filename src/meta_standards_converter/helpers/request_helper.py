@@ -644,6 +644,16 @@ class RateLimitedRequester:
                 requests.exceptions.ChunkedEncodingError,
                 requests.exceptions.ContentDecodingError,
             ) as error:
+                from .metadata_stream import split_payload, _BatchHeaderTimeout
+                if split_payload.get() and isinstance(error, requests.exceptions.ReadTimeout):
+                    # An availability check in ENASource distinguishes a slow
+                    # batch from an unavailable service before splitting it.
+                    self._host_gate.defer(gate_key,
+                        delay_seconds=self._retry_delay(response=None, attempt=attempt),
+                        clock=self._wall_clock)
+                    self._emit_request_event(host, 'failed', attempt+1,
+                                             self._clock()-started, None)
+                    raise _BatchHeaderTimeout('Large XML request headers stalled') from error
                 if attempt >= self.settings.max_retries:
                     self._emit_request_event(
                         host,

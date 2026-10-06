@@ -25,6 +25,10 @@ class BatchPayloadFailure(Exception):
     """A batch payload should be retried with fewer explicitly requested IDs."""
 
 
+class _BatchHeaderTimeout(BatchPayloadFailure):
+    """A large XML request connected but did not produce timely headers."""
+
+
 class BatchRequestLimit(Exception):
     """An original XML batch exhausted its shared recovery allowance."""
 

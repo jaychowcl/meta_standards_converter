@@ -121,11 +121,52 @@ def test_unchanged_small_batch_does_not_multiply_transport_retries():
 
 def test_pre_header_timeout_does_not_fan_out_batches():
     from tests.test_metadata_stream_recovery import client
-    get=Mock(side_effect=requests.ReadTimeout('headers unavailable'))
+    get=Mock(side_effect=requests.ConnectTimeout('connection unavailable'))
     source=ENASource(http=ArchiveHTTP('ena_portal',requester=client(get)))
     source.verified_xml([f'SAMEA{i}' for i in range(100)],records(),'sample')
     assert get.call_count==4
     assert len({call.args[0] for call in get.call_args_list})==1
+
+
+def test_large_header_stall_splits_only_after_verified_single_record_succeeds():
+    from tests.test_metadata_stream_recovery import response, client
+    calls=[]
+    def get(url, **kwargs):
+        ids=url.rsplit('/',1)[-1].split(',');calls.append(ids)
+        if len(ids)>25:raise requests.ReadTimeout('headers stalled for large batch')
+        return response([ET.tostring(xml_samples(ids))])
+    target=records()
+    root=ENASource(http=ArchiveHTTP('ena_portal',requester=client(get))).verified_xml(
+        [f'SAMEA{i}' for i in range(100)],target,'sample')
+    assert {n.get('accession') for n in root}=={f'SAMEA{i}' for i in range(100)}
+    assert len(calls)<=8 and calls[1]==['SAMEA0']
+    assert not target.issues
+
+
+def test_unavailable_single_record_prevents_header_stall_batch_fanout():
+    from tests.test_metadata_stream_recovery import client
+    calls=[]
+    def get(url,**kwargs):
+        calls.append(url.rsplit('/',1)[-1].split(','))
+        raise requests.ReadTimeout('service unavailable')
+    target=records()
+    assert ENASource(http=ArchiveHTTP('ena_portal',requester=client(get))).verified_xml(
+        [f'SAMEA{i}' for i in range(100)],target,'sample') is None
+    assert [len(ids) for ids in calls]==[100,1,1,1,1]
+    assert target.failures
+
+
+def test_wrong_entity_probe_cannot_authorize_header_stall_recovery():
+    from tests.test_metadata_stream_recovery import response, client
+    calls=[]
+    def get(url,**kwargs):
+        ids=url.rsplit('/',1)[-1].split(',');calls.append(ids)
+        if len(ids)>1:raise requests.ReadTimeout('headers stalled')
+        return response([b'<RUN_SET><RUN accession="SAMEA0"/></RUN_SET>'])
+    target=records()
+    assert ENASource(http=ArchiveHTTP('ena_portal',requester=client(get))).verified_xml(
+        [f'SAMEA{i}' for i in range(100)],target,'sample') is None
+    assert [len(ids) for ids in calls]==[100,1]
 
 
 def test_malformed_xml_and_transport_failures_share_unchanged_request_cap():

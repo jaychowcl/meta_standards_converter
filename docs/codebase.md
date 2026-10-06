@@ -5528,7 +5528,13 @@ shares eight physical attempts, including redirects and transport retries, and
 unchanged requests retain at most three retries. A malformed XML response does
 not reset that unchanged-request allowance. Errors
 from transport and parsing therefore cannot multiply the physical retry count.
-Provider-wide failures do not fan out, including timeouts before headers. Exhausted small-body transport
+Connection failures and provider HTTP errors do not fan out. A large request that
+connects but stalls before headers receives one single-record availability check.
+Only an exact, correctly typed response enables smaller batches; an unavailable or
+wrong-identity check stops repair. The check and all its retries share the original
+eight-request allowance, and even a successful check does not lift provider cooldowns.
+This separates a slow batch from a service outage without assuming that every
+header timeout permits splitting. Exhausted small-body transport
 retries cannot acquire a second batch-level retry allowance. Failed/incomplete
 payloads remain visible to the evidence recorder.
 
