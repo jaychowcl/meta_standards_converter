@@ -70,6 +70,26 @@ def test_recovery_is_bounded_and_rejects_unrequested_records():
     assert any('SAMEA1' in issue for issue in target.issues)
 
 
+def test_verified_batches_preserve_duplicate_source_occurrences():
+    value=xml_samples(['SAMEA1','SAMEA1'])
+    value[0].set('alias','first');value[1].set('alias','second')
+    root=ENASource(http=HTTP(lambda *args:value)).verified_xml(['SAMEA1'],records(),'sample')
+    assert [node.get('alias') for node in root]==['first','second']
+
+
+def test_study_accepts_explicit_bioproject_alias():
+    value=ET.fromstring('<STUDY_SET><STUDY accession="ERP1"><IDENTIFIERS><PRIMARY_ID>ERP1</PRIMARY_ID><EXTERNAL_ID namespace="BioProject">PRJEB1</EXTERNAL_ID></IDENTIFIERS></STUDY></STUDY_SET>')
+    root=ENASource(http=HTTP(lambda *args:value)).verified_xml(['PRJEB1'],records(),'project')
+    assert root is not None and root[0].get('accession')=='ERP1'
+
+
+def test_matching_identity_in_wrong_entity_type_is_rejected():
+    value=ET.fromstring('<EXPERIMENT_SET><EXPERIMENT accession="SAMEA1"/></EXPERIMENT_SET>')
+    target=records()
+    assert ENASource(http=HTTP(lambda *args:value)).verified_xml(['SAMEA1'],target,'sample') is None
+    assert any('missing XML record SAMEA1' in issue for issue in target.issues)
+
+
 def test_physical_batch_limit_includes_connection_retries_and_redirects():
     def get(url, **kwargs):
         if url.endswith('/redirect'):

@@ -5509,7 +5509,10 @@ and must not be summed as independent wall time. Statistics count typed run tupl
 directly; collecting timing data does not serialize every sample.
 
 ENA Browser recovery reconciles explicit requested identities before accepting
-records. Truncated or malformed batches split from 100 to 50 to 25; successful
+records and checks their entity types. BioProject/BioSample and other explicit
+INSDC accession aliases remain valid, and repeated source occurrences inside a
+complete response remain separate evidence. Truncated or malformed batches split
+from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch
 shares eight physical attempts, including redirects and transport retries, and
 unchanged requests retain at most three retries. Provider-wide HTTP failures do

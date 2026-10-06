@@ -105,15 +105,28 @@ class ENASource:
                     wanted = set(batch)
                     for node in root:
                         aliases = {identifier(node)} | {n.text for n in node.findall('IDENTIFIERS/PRIMARY_ID')} | {n.text for n in node.findall('IDENTIFIERS/SECONDARY_ID')}
-                        # BioSample external identifiers are explicit aliases.
+                        # Explicit archive accessions are aliases; arbitrary
+                        # submitter names and unrelated external labels are not.
                         aliases.update(n.text for n in node.findall('IDENTIFIERS/EXTERNAL_ID')
-                                       if (n.text or '').startswith('SAM'))
+                                       if re.fullmatch(r'(?:SAM(?:N|EA|D)\d+|PRJ(?:NA|EB|DB|DA)\d+|[SED]R[PSRXZ]\d+|GC[AF]_\d+(?:\.\d+)?)',n.text or ''))
                         matches = wanted & aliases
                         matches.update(acc for acc in batch if re.fullmatch(r'GC[AF]_\d+', acc)
                             and any(re.fullmatch(re.escape(acc) + r'\.\d+', a or '') for a in aliases))
-                        if matches and not any(n.tag.lower() == 'error' for n in node.iter()):
-                            if matches - found:
-                                clean.append(node)
+                        allowed = {'sample':{'SAMPLE'},'experiment':{'EXPERIMENT'},'run':{'RUN'},
+                                   'study':{'STUDY'},'project':{'PROJECT','STUDY'},
+                                   'analysis':{'ANALYSIS'},'assembly':{'ASSEMBLY'}}.get(kind.removeprefix('read_'))
+                        if allowed is None:
+                            allowed=set()
+                            for acc in matches:
+                                for pattern,tags in [(r'SAM(?:N|EA|D)\d+|[SED]RS\d+',{'SAMPLE'}),
+                                    (r'[SED]RX\d+',{'EXPERIMENT'}),(r'[SED]RR\d+',{'RUN'}),
+                                    (r'[SED]RP\d+',{'STUDY'}),(r'PRJ(?:NA|EB|DB|DA)\d+',{'PROJECT','STUDY'}),
+                                    (r'[SED]RZ\d+',{'ANALYSIS'}),(r'GC[AF]_\d+(?:\.\d+)?',{'ASSEMBLY'})]:
+                                    if re.fullmatch(pattern,acc):allowed.update(tags)
+                        if matches and node.tag in allowed and not any(n.tag.lower() == 'error' for n in node.iter()):
+                            # Preserve duplicate occurrences within a complete
+                            # response; subsequent retries request only missing IDs.
+                            clean.append(node)
                             found.update(matches)
                 except _BudgetExhausted:
                     raise
