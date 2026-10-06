@@ -11,6 +11,20 @@ from copy import deepcopy
 from .protocol_text import comparable_protocol_text
 
 
+def _bound_steps(data):
+    """Index explicit/single-sample bindings, retaining every ordered occurrence."""
+    result = {}
+    for path in data.get('series', {}).get('assay_paths', []):
+        steps = path.get('steps', [])
+        refs = {step.get('sample_ref') for step in steps} - {None}
+        sole = next(iter(refs)) if len(refs) == 1 else None
+        for step in steps:
+            ref = step.get('sample_ref') or sole
+            if ref is not None:
+                result.setdefault(ref, []).append(step)
+    return result
+
+
 def _literal(value):
     return value.get('value') if isinstance(value, dict) else value
 

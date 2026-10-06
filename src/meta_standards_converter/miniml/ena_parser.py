@@ -42,7 +42,11 @@ class ENAParser:
         rows = {}
         for row in records.indexed.get('read_run', []):
             rows.setdefault(row.get('run_accession'), []).append(row)
+        experiment_rows = {}
+        for row in records.indexed.get('read_experiment', []):
+            experiment_rows.setdefault(row.get('experiment_accession'), []).append(row)
         protocols, paths = [], []
+        protocol_names = set()
         for run_id, run in entities.get('RUN', {}).items():
             experiment = entities.get('EXPERIMENT', {}).get(identifier(run.find('EXPERIMENT_REF')))
             if experiment is None:
@@ -58,16 +62,16 @@ class ENAParser:
             if not files:
                 files = m.files_from_sra(run)
             protocol = m.protocol_for(experiment)
-            if protocol and not any(p['name'] == protocol['name'] for p in protocols):
+            if protocol and protocol['name'] not in protocol_names:
                 protocols.append(protocol)
+                protocol_names.add(protocol['name'])
             for member in members:
                 sample = samples.get(aliases.get(member, member))
                 if sample is None:
                     records.issues.append(f'{run_id}: unresolved sample {member}')
                     continue
                 value = m.attach_run(sample, experiment, run, records.seed.study, files)
-                indexed = [r for r in records.indexed.get('read_experiment', [])
-                           if r.get('experiment_accession') == value['experiment']] + rows.get(run_id, [])
+                indexed = experiment_rows.get(value['experiment'], []) + rows.get(run_id, [])
                 for key in ('instrument_model', 'instrument_platform'):
                     candidates = {r[key] for r in indexed if r.get(key)}
                     if not value.get(key) and len(candidates) == 1:

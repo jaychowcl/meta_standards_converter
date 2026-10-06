@@ -156,7 +156,21 @@ def local_platforms(data):
         families = retained.get(('run', run.get('run')), set()) | retained.get(('experiment', run.get('experiment')), set())
         if not informative(run.get('instrument_platform')) and len(families) == 1:
             run['instrument_platform'] = next(iter(families))
-    original_runs = deepcopy(all_runs)
+    # Association uses only the original references and two instrument fields.
+    # Index all non-empty field subsets before filling platform references.
+    from itertools import combinations
+    original_refs, unbound_facts = {}, {}
+    for run in all_runs:
+        facts = {key: run.get(key) for key in keys}
+        ref = run.get('platform_ref')
+        if ref:
+            original_refs.setdefault(ref.get('ref'), []).append(facts)
+        else:
+            for size in (1, 2):
+                for subset in combinations(keys, size):
+                    key = tuple(sorted((k, facts[k]) for k in subset))
+                    unbound_facts.setdefault(key, []).append(facts)
+    associated_facts = {}
     by_experiment = {}
     for sample in data.get('sample', []):
         refs = []
@@ -178,9 +192,12 @@ def local_platforms(data):
                     continue
                 # A model-only declaration cannot acquire one arbitrarily chosen
                 # family when its associated runs explicitly disagree.
-                associated = [r for r in original_runs if r.get('platform_ref', {}).get('ref') == p['iid']
-                              or (not r.get('platform_ref') and all(r.get(k) == v for k, v in existing.items()))]
-                if any(k not in existing and any(r.get(k) != value for r in associated)
+                scope = (p['iid'], tuple(sorted(existing.items())))
+                if scope not in associated_facts:
+                    associated = original_refs.get(p['iid'], []) + unbound_facts.get(scope[1], [])
+                    associated_facts[scope] = {k: {r.get(k) for r in associated} for k in keys}
+                associated = associated_facts[scope]
+                if any(k not in existing and bool(associated[k] - {value})
                        for k, value in facts.items()):
                     continue
                 candidates.append(p)
@@ -211,7 +228,7 @@ def local_platforms(data):
             if step['kind'] == 'assay':
                 refs = by_experiment.get((step.get('sample_ref'), step.get('name')), set())
                 if len(refs) == 1:
-                    platform = next(p for p in platforms if p['iid'] == next(iter(refs)))
+                    platform = known[next(iter(refs))]
                     if not any(c.get('name') == 'Platform_title' for c in step.get('comments', [])):
                         step.setdefault('comments', []).append({'name': 'Platform_title', 'value': platform['title']})
 

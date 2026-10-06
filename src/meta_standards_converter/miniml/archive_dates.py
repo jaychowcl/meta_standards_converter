@@ -8,6 +8,7 @@
 # =============================================================================
 """Explicit administrative attribute projections for native archive packages."""
 from collections import Counter
+from .archive_paths import _bound_steps
 
 _RULES = {
     'ena first public': ('ENA', 'release_date'),
@@ -35,6 +36,7 @@ def normalize_archive_dates(data):
         return
     samples = {s['iid']: s for s in data.get('sample', [])}
     wanted = {iid: Counter() for iid in samples}
+    bound = _bound_steps(data)
 
     def clean(owner):
         counts = Counter()
@@ -59,12 +61,8 @@ def normalize_archive_dates(data):
         annotations = {}
         for channel in sample.get('channel', []):
             wanted[iid] += clean(channel)
-        for path in data.get('series', {}).get('assay_paths', []):
-            refs = {step.get('sample_ref') for step in path.get('steps', [])} - {None}
-            for step in path.get('steps', []):
-                ref = step.get('sample_ref') or (next(iter(refs)) if len(refs) == 1 else None)
-                if ref == iid:
-                    wanted[iid] |= clean(step)
+        for step in bound.get(iid, []):
+            wanted[iid] |= clean(step)
         statuses = sample.setdefault('status', [])
         existing = Counter((s.get('database'), field, s[field])
                            for s in statuses for field in ('release_date', 'last_update_date') if s.get(field))

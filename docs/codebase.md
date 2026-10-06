@@ -5466,6 +5466,14 @@ are involved. Source: [archive workflows](../src/meta_standards_converter/metada
 <a id="native-archive-workflows"></a>
 ### Provider workflows and boundaries
 
+Native processing builds scoped indexes for sample aliases, experiment inventories,
+sample-bound workflow steps, organization occurrences and original platform/run
+associations. Index values preserve source order and all candidates: ambiguous joins
+remain ambiguous, pool memberships remain plural, and duplicate occurrences are not
+collapsed by an identifier lookup. Administrative normalization traverses paths once
+per pass instead of rescanning all paths for every sample. Platform association reads
+only original references and instrument facts before filling any references.
+
 ENA Browser recovery reconciles explicit requested identities before accepting
 records. Truncated or malformed batches split from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch

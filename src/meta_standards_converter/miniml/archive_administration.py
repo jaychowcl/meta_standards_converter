@@ -12,6 +12,7 @@ from copy import deepcopy
 import hashlib
 import json
 import re
+from .archive_paths import _bound_steps
 
 _CENTERS = {'insdc center name', 'insdc center alias', 'broker name'}
 _IDS = {'external id', 'sra accession', 'insdc secondary accession'}
@@ -50,6 +51,11 @@ def normalize_administration(data):
         return
     organizations = data.setdefault('organization', [])
     org_ids = {o['iid'] for o in organizations}
+    bound = _bound_steps(data)
+    organization_scope = {}
+    for index, organization in enumerate(organizations):
+        for occurrence in organization.get('source_occurrences') or [organization]:
+            organization_scope.setdefault(occurrence.get('sample_accession'), set()).add(index)
     for sample in data.get('sample', []):
         def clean(node, *, biological=True):
             wanted = Counter()
@@ -68,11 +74,8 @@ def normalize_administration(data):
         wanted = Counter()
         for channel in sample.get('channel', []):
             wanted += clean(channel)
-        for path in data.get('series', {}).get('assay_paths', []):
-            refs = {s.get('sample_ref') for s in path['steps']} - {None}
-            for step in path['steps']:
-                if step.get('sample_ref') == sample['iid'] or (not step.get('sample_ref') and refs == {sample['iid']}):
-                    wanted |= clean(step, biological=step.get('kind') in {'source', 'sample'})
+        for step in bound.get(sample['iid'], []):
+            wanted |= clean(step, biological=step.get('kind') in {'source', 'sample'})
         for literal, count in wanted.items():
             item = json.loads(literal)
             destination = administrative_destination(item, provider, sample)
@@ -99,7 +102,9 @@ def normalize_administration(data):
                     if relation not in sample.setdefault('relation', []):
                         sample['relation'].append(relation)
         accessions = {sample['iid'], *[a['value'] for a in sample.get('accession', [])]}
-        for organization in organizations:
+        candidates = set().union(*(organization_scope.get(acc, set()) for acc in accessions))
+        for index in sorted(candidates):
+            organization = organizations[index]
             occurrences = [o for o in organization.get('source_occurrences') or [organization]
                            if o.get('sample_accession') in accessions]
             if not occurrences:

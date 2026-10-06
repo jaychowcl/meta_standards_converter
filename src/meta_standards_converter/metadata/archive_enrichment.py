@@ -342,9 +342,16 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     _merge_entity(data['series'], extra['series'], prefer,
                   {'iid', 'sample_ref', 'assay_paths', 'protocols'}, issues=issues, selection=selection, path='/series')
     native_samples, extra_samples = data.get('sample', []), extra.get('sample', [])
-    joins = {i: [j for j, s in enumerate(extra_samples) if entity_ids(n, sample=True) & entity_ids(s, sample=True)]
-             for i, n in enumerate(native_samples)}
-    reverse = {j: [i for i, js in joins.items() if j in js] for j in range(len(extra_samples))}
+    alias_index = {}
+    for j, sample in enumerate(extra_samples):
+        for alias in entity_ids(sample, sample=True):
+            alias_index.setdefault(alias, set()).add(j)
+    joins, reverse = {}, {j: [] for j in range(len(extra_samples))}
+    for i, sample in enumerate(native_samples):
+        joins[i] = sorted(set().union(*(alias_index.get(alias, set())
+                                       for alias in entity_ids(sample, sample=True))))
+        for j in joins[i]:
+            reverse[j].append(i)
     matched = {}
     from ..miniml.archive_libraries import FIELDS as library_fields
     original_channels = {s['iid']: deepcopy(s.get('channel', [])) for s in native_samples}
