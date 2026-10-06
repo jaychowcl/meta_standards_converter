@@ -2473,7 +2473,9 @@ whole metadata response, including slow trickles inside a buffered read. The
 resource-profile `metadata_response_timeout_seconds` is 300 seconds for standard
 and 900 for large, capped by the operation deadline. A timer interrupts only the
 currently owned socket; a short-lived watcher also interrupts cancellation during
-a buffered body read and is joined before connection reuse. The
+a buffered body read and is joined when body processing exits. Expiry rechecks
+response ownership so a socket already released to an injected shared pool cannot
+be interrupted after another caller borrows it. The
 module's `meta_standards_converter.helpers.metadata_stream.AttemptAllowance`,
 `meta_standards_converter.helpers.metadata_stream.charge_attempt`,
 `attempt_allowance` and `split_payload` provide internal accounting for bounded XML batch recovery.

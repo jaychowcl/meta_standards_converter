@@ -96,7 +96,9 @@ def response_deadline(response, seconds):
             if not state['active']:
                 return
             state['expired'] = True
-            if sock is not None:
+            # A completed response may already have returned its socket to an
+            # injected shared pool. Never interrupt a later borrower's request.
+            if sock is not None and _socket(response) is sock:
                 try:
                     sock.shutdown(socket.SHUT_RDWR)
                 except OSError:

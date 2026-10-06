@@ -129,3 +129,20 @@ def test_slow_trickle_has_a_wall_clock_deadline_and_releases_connection(monkeypa
         if canceller:canceller.cancel()
         _cancelled.reset(token)
         server.shutdown(); server.server_close(); thread.join()
+
+
+def test_deadline_does_not_shutdown_a_socket_already_returned_to_a_pool():
+    from types import SimpleNamespace
+    from meta_standards_converter.helpers.metadata_stream import response_deadline
+    owned, peer=socket.socketpair()
+    value=SimpleNamespace(raw=SimpleNamespace(_connection=SimpleNamespace(sock=owned)))
+    try:
+        with pytest.raises(requests.Timeout),response_deadline(value,.02):
+            # urllib3 has consumed the response and released its connection.
+            # An injected shared session may now lend that socket elsewhere.
+            value.raw._connection=None
+            time.sleep(.06)
+        peer.sendall(b'usable')
+        assert owned.recv(6)==b'usable'
+    finally:
+        owned.close();peer.close()
