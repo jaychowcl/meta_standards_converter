@@ -83,6 +83,33 @@ def test_study_accepts_explicit_bioproject_alias():
     assert root is not None and root[0].get('accession')=='ERP1'
 
 
+@pytest.mark.parametrize('kind', ['record', 'study'])
+def test_project_accepts_explicit_read_study_alias_without_repair(kind):
+    # Browser ERP001058 returns PROJECT/PRJEB2784 with this explicit binding.
+    value = ET.fromstring('<PROJECT_SET><PROJECT accession="PRJEB2784">'
+        '<IDENTIFIERS><PRIMARY_ID>PRJEB2784</PRIMARY_ID>'
+        '<SECONDARY_ID>ERP001058</SECONDARY_ID><SECONDARY_ID>ERP001058</SECONDARY_ID>'
+        '</IDENTIFIERS></PROJECT></PROJECT_SET>')
+    fetch = Mock(return_value=value)
+    target = StudyRecords(StudySeed('ERP001058', 'PRJEB2784'))
+    root = ENASource(http=HTTP(fetch)).verified_xml(['ERP001058'], target, kind)
+    assert root is not None and root[0].get('accession') == 'PRJEB2784'
+    assert len(root[0].findall('IDENTIFIERS/SECONDARY_ID')) == 2
+    assert not target.issues and not target.failures
+    assert fetch.call_count == 1
+
+
+@pytest.mark.parametrize('secondary', ['', '<SECONDARY_ID>ERP2</SECONDARY_ID>'])
+def test_project_requires_an_explicit_matching_read_study_alias(secondary):
+    value = ET.fromstring('<PROJECT_SET><PROJECT accession="PRJEB1" alias="ERP1">'
+        '<IDENTIFIERS><PRIMARY_ID>PRJEB1</PRIMARY_ID>' + secondary +
+        '<SUBMITTER_ID>ERP1</SUBMITTER_ID></IDENTIFIERS></PROJECT></PROJECT_SET>')
+    target = records()
+    root = ENASource(http=HTTP(lambda *args: value)).verified_xml(['ERP1'], target)
+    assert root is None
+    assert any('missing XML record ERP1' in issue for issue in target.issues)
+
+
 def test_matching_identity_in_wrong_entity_type_is_rejected():
     value=ET.fromstring('<EXPERIMENT_SET><EXPERIMENT accession="SAMEA1"/></EXPERIMENT_SET>')
     target=records()

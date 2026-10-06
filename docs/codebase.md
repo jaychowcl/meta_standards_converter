@@ -5524,7 +5524,13 @@ and [file-report contract](https://ena-docs.readthedocs.io/en/latest/retrieval/p
 This choice preserves coverage rather than deriving absence from a smaller report.
 
 ENA Browser recovery reconciles explicit requested identities before accepting
-records and checks their entity types. BioProject/BioSample and other explicit
+records and checks their entity types. A read-study accession can return a PROJECT
+record whose explicit primary/secondary/archive identifiers bind that accession,
+as ERP001058 does through PRJEB2784. Both STUDY and explicitly bound PROJECT records
+therefore satisfy study retrieval; submitter names and unrelated projects do not.
+This purposeful compatibility decision avoids a false missing-record diagnostic
+and an unnecessary repair request when Browser returns the project representation.
+BioProject/BioSample and other explicit
 INSDC accession aliases remain valid, and repeated source occurrences inside a
 complete response remain separate evidence. Truncated or malformed batches split
 from 100 to 50 to 25; successful

@@ -116,14 +116,14 @@ class ENASource:
                         matches.update(acc for acc in batch if re.fullmatch(r'GC[AF]_\d+', acc)
                             and any(re.fullmatch(re.escape(acc) + r'\.\d+', a or '') for a in aliases))
                         allowed = {'sample':{'SAMPLE'},'experiment':{'EXPERIMENT'},'run':{'RUN'},
-                                   'study':{'STUDY'},'project':{'PROJECT','STUDY'},
+                                   'study':{'STUDY','PROJECT'},'project':{'PROJECT','STUDY'},
                                    'analysis':{'ANALYSIS'},'assembly':{'ASSEMBLY'}}.get(kind.removeprefix('read_'))
                         if allowed is None:
                             allowed=set()
                             for acc in matches:
                                 for pattern,tags in [(r'SAM(?:N|EA|D)\d+|[SED]RS\d+',{'SAMPLE'}),
                                     (r'[SED]RX\d+',{'EXPERIMENT'}),(r'[SED]RR\d+',{'RUN'}),
-                                    (r'[SED]RP\d+',{'STUDY'}),(r'PRJ(?:NA|EB|DB|DA)\d+',{'PROJECT','STUDY'}),
+                                    (r'[SED]RP\d+',{'STUDY','PROJECT'}),(r'PRJ(?:NA|EB|DB|DA)\d+',{'PROJECT','STUDY'}),
                                     (r'[SED]RZ\d+',{'ANALYSIS'}),(r'GC[AF]_\d+(?:\.\d+)?',{'ASSEMBLY'})]:
                                     if re.fullmatch(pattern,acc):allowed.update(tags)
                         if matches and node.tag in allowed and not any(n.tag.lower() == 'error' for n in node.iter()):
