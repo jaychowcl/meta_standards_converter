@@ -522,6 +522,7 @@ class RateLimitedRequester:
         self.provider_attempts = 0
         self.retry_count = 0
         self.rate_wait_seconds = 0.0
+        self._metrics_lock = threading.Lock()
 
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         """GET one URL, accounting for each retry and redirect under its policy."""
@@ -570,13 +571,14 @@ class RateLimitedRequester:
         return key, interval
 
     def _request(self, url, **kwargs):
-        from ..metadata.retrieval_budget import _active
+        from ..metadata.retrieval_budget import _active, _check_cancelled
         budget = _active.get()
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.settings.timeout
 
         response = None
         for attempt in range(self.settings.max_retries + 1):
+            _check_cancelled()
             if budget: budget.check(request=True)
             host = (urlsplit(url).hostname or "").lower()
             gate_key, interval = self._request_policy(url, kwargs.get("params"))
@@ -597,17 +599,20 @@ class RateLimitedRequester:
                     try:
                         waited = self._host_gate.wait(
                             gate_key, min_interval_seconds=interval,
-                            max_wait_seconds=maximum, sleep=self._sleep, clock=self._wall_clock)
+                            max_wait_seconds=maximum, sleep=self._cancellable_sleep, clock=self._wall_clock)
                     except HostRequestCooldownDeferred:
                         if remaining is not None and maximum == remaining:
                             budget.stop('deadline cannot accommodate provider rate-limit wait')
                         raise
-                    self.rate_wait_seconds += float(waited or 0)
+                    with self._metrics_lock:
+                        self.rate_wait_seconds += float(waited or 0)
                     count("rate_wait_seconds", float(waited or 0))
                     effective = dict(kwargs)
+                    _check_cancelled()
                     if budget: effective['timeout'] = budget.attempt(effective['timeout'])
                     count("provider_attempts")
-                    self.provider_attempts += 1
+                    with self._metrics_lock:
+                        self.provider_attempts += 1
                     response = self._get(url, **effective)
                 finally:
                     self._release_host_slot(state)
@@ -632,7 +637,8 @@ class RateLimitedRequester:
                     clock=self._wall_clock,
                 )
                 count("retries")
-                self.retry_count += 1
+                with self._metrics_lock:
+                    self.retry_count += 1
                 logger.debug(
                     "HTTP retry service=%s host=%s exception=%s "
                     "next_attempt=%s delay_seconds=%.3f",
@@ -677,7 +683,8 @@ class RateLimitedRequester:
                     raise
                 return response
             count("retries")
-            self.retry_count += 1
+            with self._metrics_lock:
+                self.retry_count += 1
             logger.debug(
                 "HTTP retry service=%s host=%s status=%s next_attempt=%s delay_seconds=%.3f",
                 self.service,
@@ -712,6 +719,17 @@ class RateLimitedRequester:
                 attributes={"host": host, "attempts": attempts, "status_code": status_code},
             )
 
+    def _cancellable_sleep(self, delay):
+        from ..metadata.retrieval_budget import _cancelled, _check_cancelled
+        if _cancelled.get() is None:
+            return self._sleep(delay)
+        while delay > 0:
+            _check_cancelled()
+            step = min(delay, .1)
+            self._sleep(step)
+            delay -= step
+        _check_cancelled()
+
     def _acquire_host_slot(self, host: str) -> dict[str, Any]:
         state = self._state_for_host(host)
         with state["condition"]:
@@ -719,9 +737,13 @@ class RateLimitedRequester:
                 state["max_in_flight"], self.settings.max_in_flight
             )
             while state["in_flight"] >= state["max_in_flight"]:
-                from ..metadata.retrieval_budget import _active
+                from ..metadata.retrieval_budget import _active, _cancelled, _check_cancelled
+                _check_cancelled()
                 budget = _active.get()
-                state["condition"].wait(timeout=budget.remaining() if budget else None)
+                timeout = budget.remaining() if budget else None
+                if _cancelled.get() is not None:
+                    timeout = min(timeout, .1) if timeout is not None else .1
+                state["condition"].wait(timeout=timeout)
             state["in_flight"] += 1
         return state
 

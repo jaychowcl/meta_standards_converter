@@ -15,6 +15,17 @@ from threading import RLock
 
 _active = ContextVar('msc_metadata_budget', default=None)
 _phase = ContextVar('msc_metadata_retrieval_phase', default='discovery')
+_cancelled = ContextVar('msc_retrieval_cancelled', default=None)
+
+
+class _RetrievalCancelled(BaseException):
+    """Internal worker shutdown; never swallow as an optional provider failure."""
+
+
+def _check_cancelled():
+    event = _cancelled.get()
+    if event is not None and event.is_set():
+        raise _RetrievalCancelled()
 
 
 class _BudgetExhausted(RuntimeError):

@@ -13,11 +13,13 @@ from typing import Any
 import hashlib
 import json
 import re
+import threading
+from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
 from meta_standards_converter.helpers.request_helper import RateLimitedRequester, RequestSettings, NCBIApplicationIdentity
 from meta_standards_converter.runtime_contracts import get_resource_profile, require_disk_headroom
-from meta_standards_converter.xml_safety import parse_xml, read_limited_response
+from meta_standards_converter.xml_safety import parse_xml, read_limited_response, XMLSizeLimitError
 
 
 @dataclass(frozen=True)
@@ -76,20 +78,32 @@ class ArchiveHTTP:
             settings=RequestSettings.from_resource_profile(self.profile))
         self.identity = NCBIApplicationIdentity()
         self.downloaded_bytes = 0
+        self._download_lock = threading.RLock()
         self.evidence_dir = Path(evidence_dir) if evidence_dir else None
 
     def get(self, url, params=None, fmt='xml'):
+        from ..metadata.retrieval_budget import _check_cancelled
+        _check_cancelled()
         params = dict(params or {})
         if url.startswith(('https://eutils.ncbi.nlm.nih.gov/', 'https://pmc.ncbi.nlm.nih.gov/tools/idconv/')):
             params.update(self.identity.params())
-        remaining = self.profile.max_aggregate_download_bytes - self.downloaded_bytes
+        with self._download_lock:
+            remaining = self.profile.max_aggregate_download_bytes - self.downloaded_bytes
         if remaining <= 0:
             raise ValueError("Archive aggregate download budget exhausted")
         response = self.requester.get(url, params=params, stream=True)
         try:
             response.raise_for_status()
-            raw = read_limited_response(response, max_bytes=min(self.profile.max_xml_bytes, remaining))
-            self.downloaded_bytes += len(raw)
+            def counted_chunks(**kwargs):
+                for chunk in response.iter_content(**kwargs):
+                    _check_cancelled()
+                    with self._download_lock:
+                        if self.downloaded_bytes + len(chunk) > self.profile.max_aggregate_download_bytes:
+                            raise XMLSizeLimitError('Archive aggregate download budget exhausted')
+                        self.downloaded_bytes += len(chunk)
+                    yield chunk
+            bounded = SimpleNamespace(headers=response.headers, iter_content=counted_chunks)
+            raw = read_limited_response(bounded, max_bytes=min(self.profile.max_xml_bytes, remaining), chunk_size=65536)
         finally:
             response.close()
         if self.evidence_dir:
@@ -99,8 +113,9 @@ class ArchiveHTTP:
             # No credentials, request URLs or field-level provenance in the evidence names.
             digest = hashlib.sha256(raw).hexdigest()
             path = self.evidence_dir / (digest + ('.xml' if fmt == 'xml' else '.json' if fmt == 'json' else '.txt'))
-            if not path.exists():
-                path.write_bytes(raw)
+            with self._download_lock:
+                if not path.exists():
+                    path.write_bytes(raw)
         if fmt == 'xml':
             root = parse_xml(raw, max_bytes=self.profile.max_xml_bytes)
             if root.tag == 'ERROR' or root.find('.//ERROR') is not None:

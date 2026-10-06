@@ -5468,6 +5468,18 @@ ena2json / ENA2JSONConverter
     atomic study JSON -> per-study outcome
 ```
 
+ENA supplementary retrieval overlaps two independent lanes when the resource
+profile allows at least two network workers: sorted cross-reference accessions
+and inventory-bound individual BioSamples records. One worker retains serial
+retrieval. Both lanes inherit the operation, metadata budget and transport scope;
+only the caller merges results, in the original source order. Fatal failures cancel
+sibling dispatch and interrupt pacing waits; in-flight requests retain bounded
+timeouts. Completed evidence and diagnostics survive a supplementary cutoff.
+ArchiveHTTP charges streamed chunks against one locked aggregate byte allowance
+and synchronizes evidence writes; each response closes even on budget exhaustion.
+This purposeful scheduling decision preserves curated BioSamples semantics,
+metadata membership and output ordering while overlapping independent services.
+
 Sources own their provider's discovery and retrieval; parsers perform no network
 access. `StudyRecords` is a transport container, not an archive entity graph.
 Supporting mapping functions project field meanings without deciding retrieval

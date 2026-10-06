@@ -543,8 +543,8 @@ Full flag and Python API details remain in the canonical routes below.
 - id: native-archive-workflows
   title: Independent native provider workflows
   anchor: native-archive-workflows
-  purpose: Documents independent native provider workflows.
-  keywords: SRASource, ENASource, History, Portal, Browser, umbrella, sample expansion
+  purpose: Documents independent native workflows and bounded ENA/BioSamples overlap with deterministic merging, cancellation and shared byte budgets.
+  keywords: SRASource, ENASource, History, Portal, Browser, umbrella, sample expansion, network_workers, two lanes, cancellation, aggregate bytes
   link: [Open section](codebase.md#native-archive-workflows)
 
 - id: native-archive-cli

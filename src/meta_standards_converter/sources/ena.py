@@ -313,16 +313,11 @@ class ENASource:
         for root in records.xml:
             references.update(identifier(n) for n in root.iter() if n.tag in
                               ('STUDY','PROJECT','SAMPLE','EXPERIMENT','RUN','ANALYSIS','ASSEMBLY') and identifier(n))
-        for accession in sorted(references): self.cross_references(accession, records)
+        self._fetch_independent_links(records, sorted(references), inventory['sample'])
         from .archive_support import publication_ids
         taxa = set()
         for root in records.xml:
             taxa.update(n.text for n in root.findall('.//SAMPLE_NAME/TAXON_ID') if n.text)
-        for acc in inventory['sample']:
-            if acc.startswith('SAM'):
-                obj = self.linked_json('https://www.ebi.ac.uk/biosamples/samples/' + acc, acc, 'accession', records)
-                if obj is not None:
-                    records.linked.append({'provider': 'biosamples', 'kind': 'sample', 'accession': acc, 'metadata': obj})
         self.fetch_biosamples([acc for acc in inventory['sample'] if acc.startswith('SAM')], records)
         for taxid in sorted(taxa):
             obj = self.linked_json('https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/' + taxid, taxid, 'taxId', records)
@@ -337,3 +332,54 @@ class ENASource:
                 if root is not None:
                     records.xml.append(root)
         return records
+
+    def _fetch_independent_links(self, records, references, samples):
+        """Two bounded lanes; only the caller merges evidence into StudyRecords."""
+        from ..metadata.retrieval_budget import _cancelled, _check_cancelled, _RetrievalCancelled
+        def xrefs(target):
+            for accession in references:
+                _check_cancelled()
+                self.cross_references(accession, target)
+        def biosamples(target):
+            for accession in samples:
+                _check_cancelled()
+                if accession.startswith('SAM'):
+                    obj = self.linked_json('https://www.ebi.ac.uk/biosamples/samples/' + accession,
+                                           accession, 'accession', target)
+                    if obj is not None:
+                        target.linked.append({'provider': 'biosamples', 'kind': 'sample',
+                                              'accession': accession, 'metadata': obj})
+        workers = getattr(getattr(self.http, 'profile', None), 'network_workers', 1)
+        if workers < 2 or not references or not any(s.startswith('SAM') for s in samples):
+            xrefs(records)
+            biosamples(records)
+            return
+        from concurrent.futures import ThreadPoolExecutor, wait, FIRST_EXCEPTION
+        from threading import Event
+        from ..conversion_logging import context_callable
+        stopped = Event()
+        token = _cancelled.set(stopped)
+        parts = [StudyRecords(records.seed), StudyRecords(records.seed)]
+        executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='msc-ena-links')
+        futures = []
+        def run(fn, part):
+            try:
+                fn(part)
+            except BaseException:
+                stopped.set()
+                raise
+        try:
+            futures = [executor.submit(context_callable(run), fn, part)
+                       for fn, part in zip((xrefs, biosamples), parts)]
+            wait(futures, return_when=FIRST_EXCEPTION)
+            errors = [f.exception() for f in futures if f.done() and f.exception() is not None]
+            if errors:
+                raise next((e for e in errors if not isinstance(e, _RetrievalCancelled)), errors[0])
+        finally:
+            stopped.set()
+            executor.shutdown(wait=True, cancel_futures=True)
+            _cancelled.reset(token)
+            records.linked.extend(row for row in parts[0].linked if row not in records.linked)
+            records.issues.extend(issue for issue in parts[0].issues if issue not in records.issues)
+            records.linked.extend(parts[1].linked)
+            records.issues.extend(parts[1].issues)
