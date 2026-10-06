@@ -5487,6 +5487,16 @@ source value before consuming one target occurrence. Source order, greedy matchi
 ambiguous identities, duplicate occurrences and richer target values keep the same
 semantics. Empty or unhashable identity fields fall back to full comparison.
 
+Native parsers separate entity construction from supplementary projection. During a
+bounded import, an operation-local checkpoint stores immutable construction JSON,
+a hash of the core XML/inventories and a strictly validated typed package. Final
+projection reuses that construction when the core hash still agrees; changed core
+evidence triggers reconstruction. The checkpoint is never shared across converter
+calls. Invalid supplementary model values retain the accepted package with explicit
+partial coverage; unknown implementation errors still propagate. Native checkpoints
+validate the already canonically decoded package directly, avoiding a redundant
+serialize/decode cycle. Injected parser implementations keep their existing path.
+
 ENA Browser recovery reconciles explicit requested identities before accepting
 records. Truncated or malformed batches split from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch

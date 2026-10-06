@@ -88,12 +88,15 @@ def _load_native(source, parser, seed, *, _outcome=None):
     from ..metadata.retrieval_budget import _active, _phase, _budget_stage, _BudgetExhausted, _coverage
     from ..miniml import MINiMLCodec
     from ..miniml.codec import MINiMLCompatibilityError
-    budget, candidate, captured = _active.get(), None, None
+    from ..miniml.native_checkpoint import _checkpoint, _complete, _valid_native
+    budget, candidate, captured, checkpoint = _active.get(), None, None, None
     def core(records):
-        nonlocal candidate, captured
+        nonlocal candidate, captured, checkpoint
         captured = records
         if not records.xml and not any(records.indexed.values()): return
-        try: candidate = MINiMLCodec().decode(parser.parse(records), strict=True).package
+        try:
+            checkpoint = _checkpoint(parser,records)
+            candidate = checkpoint.package if checkpoint is not None else MINiMLCodec().decode(parser.parse(records),strict=True).package
         except MINiMLCompatibilityError: pass
         _phase.set('native_supplementary')  # Restored by the enclosing stage scope.
     try:
@@ -106,11 +109,21 @@ def _load_native(source, parser, seed, *, _outcome=None):
             if error is not None:
                 raise error
             raise ValueError('No native metadata records retrieved')
+        if checkpoint is not None:
+            from ..miniml.model import MINiMLModelError
+            try:
+                return _complete(checkpoint,parser,records), records.issues
+            except (MINiMLCompatibilityError, MINiMLModelError) as error:
+                from ..miniml.native_checkpoint import _projection_failed
+                records.issues.append(f'native supplementary projection: {type(error).__name__}; valid native candidate retained')
+                records.failures.append(error)
+                return _projection_failed(checkpoint,error), records.issues
         return parser.parse(records), records.issues
     except _BudgetExhausted as exc:
         if candidate is None: raise
         try:
-            candidate = MINiMLCodec().decode(parser.parse(captured), strict=True).package
+            candidate = (_valid_native(_complete(checkpoint,parser,captured)) if checkpoint is not None
+                         else MINiMLCodec().decode(parser.parse(captured), strict=True).package)
         except Exception:
             pass  # Supplementary records cannot invalidate the accepted core.
         return _coverage(candidate, budget), [*captured.issues, str(exc) + '; valid native candidate retained']

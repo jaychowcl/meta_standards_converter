@@ -15,6 +15,10 @@ from ..sources.archive_support import identifier
 class SRAParser:
     @measured("parse")
     def parse(self, records):
+        return m.finish('sra', records, *self._construct(records))
+
+    @measured('entity_construction')
+    def _construct(self, records):
         packages = [p for root in records.xml for p in root.findall('.//EXPERIMENT_PACKAGE')]
         packages = [p for p in packages if identifier(p.find('EXPERIMENT/STUDY_REF')) == records.seed.study]
         study = next((p.find('STUDY') for p in packages if identifier(p.find('STUDY')) == records.seed.study), None)
@@ -61,4 +65,4 @@ class SRAParser:
                     sample = samples[member]
                     value = m.attach_run(sample, experiment, run, records.seed.study, files)
                     paths.extend(m.assay_paths(sample, value, experiment, files, protocol))
-        return m.finish('sra', records, series, list(samples.values()), protocols, paths)
+        return series, list(samples.values()), protocols, paths

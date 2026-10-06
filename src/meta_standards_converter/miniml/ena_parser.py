@@ -15,6 +15,10 @@ from ..sources.archive_support import identifier
 class ENAParser:
     @measured("parse")
     def parse(self, records):
+        return m.finish('ena', records, *self._construct(records))
+
+    @measured('entity_construction')
+    def _construct(self, records):
         entities = {}
         for root in records.xml:
             for node in root:
@@ -83,7 +87,7 @@ class ENAParser:
                 paths.extend(m.assay_paths(sample, value, experiment, files, protocol))
         from .ena_coverage import record_coverage
         record_coverage(records, full_entities, list(samples.values()))
-        return m.finish('ena', records, series, list(samples.values()), protocols, paths)
+        return series, list(samples.values()), protocols, paths
 
 
 def _indexed_entities(records, entities):
