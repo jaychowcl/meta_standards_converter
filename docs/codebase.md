@@ -5474,6 +5474,9 @@ remain ambiguous, pool memberships remain plural, and duplicate occurrences are 
 collapsed by an identifier lookup. Administrative normalization traverses paths once
 per pass instead of rescanning all paths for every sample. Platform association reads
 only original references and instrument facts before filling any references.
+Workflow merging also scopes file matching and final acquisition checks through
+the existing path index. Newly appended branches join that index immediately, so
+later source occurrences still see them in their original encounter order.
 
 Operation-local preparation copies retain separate result shells, diagnostics and
 mutable source evidence, but share construction-certified immutable model branches.

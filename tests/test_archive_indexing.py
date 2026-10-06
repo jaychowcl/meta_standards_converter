@@ -113,3 +113,20 @@ def test_ena_experiment_inventory_is_indexed_once(monkeypatch):
     assert CountedList.visits < n*12
     assert len(samples)==n
     assert all(len(sample['sra_run'])==1 for sample in samples)
+
+
+def test_workflow_file_projection_visits_only_the_bound_samples_paths():
+    from meta_standards_converter.metadata.archive_workflows import merge_workflows
+    n=96
+    samples=[{'iid':f'S{i}','channel':[{'characteristics':[]}],
+              'supplementary_data':[{'value':f'https://example.org/{i}.tsv','type':'tsv'}]} for i in range(n)]
+    paths=CountedList([{'steps':[{'kind':'source','sample_ref':f'S{i}'},
+           {'kind':'derived_array_data_file','name':f'{i}.tsv','link':{'value':f'https://example.org/{i}.tsv'}}]} for i in range(n)])
+    data={'source':{'format':'ENA'},'sample':deepcopy(samples),'series':{'assay_paths':paths}}
+    extra={'source':{'format':'MAGE-TAB'},'sample':samples,'series':{'iid':'E-MTAB-1','assay_paths':[]}}
+    CountedList.visits=0
+    issues=[]
+    merge_workflows(data,extra,{s['iid']:s['iid'] for s in samples},{},True,issues)
+    assert CountedList.visits<n*30
+    assert not issues and len(data['series']['assay_paths'])==n
+    assert all(p['steps'][-1]['link']['type']=='tsv' for p in data['series']['assay_paths'])

@@ -394,6 +394,10 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                      for s in p['steps'] if is_file(s))}
     samples = {s['iid']: s for s in data['sample']}
     source_samples = {matched[s['iid']]: s for s in extra.get('sample', []) if s['iid'] in matched}
+    source_groups = {}
+    for sample in extra.get('sample', []):
+        if sample['iid'] in matched:
+            source_groups.setdefault(matched[sample['iid']], []).append(sample)
     # Refresh native biological projections before accepting authored workflows.
     # The actual incoming channel has priority; a scoped path can retain its own
     # compatible annotations when that channel supplies only a plain literal.
@@ -483,10 +487,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                 if not compatible(set(key), {run.get('run'), run.get('experiment')}):
                     continue
                 supplied = path_facts(choices[0])
-                for source in extra.get('sample', []):
-                    if matched.get(source['iid']) == target:
-                        supplied.extend(r for r in source.get('sra_run', []) if r.get('run') == run['run']
-                                        and (not r.get('experiment') or r['experiment'] == run.get('experiment')))
+                for source in source_groups.get(target, []):
+                    supplied.extend(r for r in source.get('sra_run', []) if r.get('run') == run['run']
+                                    and (not r.get('experiment') or r['experiment'] == run.get('experiment')))
                 facts = resolve_library_facts(run, supplied, issues, run['run'], selection=selection, path=f"/sample/{target}/sra_run/{run['run']}")
                 selected_runs.append(facts)
                 apply_library_facts(run, [], facts)
@@ -556,7 +559,7 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                 for link in source.get(field, []):
                     if link.get('value'):
                         node = file_node(link, kind)
-                        matches = [s for p in paths if {n.get('sample_ref') for n in p['steps'] if n.get('sample_ref')} == {target}
+                        matches = [s for p in current_index.find(target, set()) if {n.get('sample_ref') for n in p['steps'] if n.get('sample_ref')} == {target}
                                    for s in p['steps'] if s['kind'] == kind and (
                                        s.get('link', {}).get('value') == _file_uri(link['value'])
                                        or (s.get('name') == node['name'] == link['value']
@@ -568,7 +571,9 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                                 for comment in node.get('comments', []):
                                     if comment not in s.setdefault('comments', []): s['comments'].append(deepcopy(comment))
                         else:
-                            paths.append({'steps': [_biological_node(samples[target]), node]})
+                            added = {'steps': [_biological_node(samples[target]), node]}
+                            paths.append(added)
+                            current_index.add(added)
     if prefer:
         from .workflow_continuations import _reconcile_continuations
         _reconcile_continuations(paths, generated, issues)
@@ -582,6 +587,7 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                     step.get('characteristics', []), _biological_node(sample).get('characteristics', []))
     # Scalar material fields are safe only when every native acquisition for
     # that sample received the explicit incoming workflow.
-    return {target for target in samples if any(t == target for t, _ in explicit)
-            and all((target, tuple(sorted(path_ids(p)))) in explicit for p in originals
-                    if path_ids(p) and any(s.get('sample_ref') == target for s in p['steps']))}
+    explicit_targets = {target for target, _ in explicit}
+    return {target for target in samples if target in explicit_targets
+            and all((target, tuple(sorted(original_index.scopes[id(p)]))) in explicit
+                    for p in original_index.find(target, set()) if original_index.scopes[id(p)])}
