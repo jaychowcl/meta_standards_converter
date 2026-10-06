@@ -128,6 +128,20 @@ def test_pre_header_timeout_does_not_fan_out_batches():
     assert len({call.args[0] for call in get.call_args_list})==1
 
 
+def test_malformed_xml_and_transport_failures_share_unchanged_request_cap():
+    from tests.test_metadata_stream_recovery import response, client
+    calls=[]
+    def get(url, **kwargs):
+        calls.append(url)
+        if len(calls)%2:
+            raise requests.ConnectionError('connect')
+        return response([b'<SAMPLE_SET>'])
+    target=records()
+    source=ENASource(http=ArchiveHTTP('ena_portal',requester=client(get)))
+    assert source.verified_xml(['SAMEA1'],target,'sample') is None
+    assert len(calls)==4
+
+
 def missing_sample_records():
     value = records()
     value.xml = [ET.fromstring('''<STUDY_SET><STUDY accession="ERP1"><DESCRIPTOR><STUDY_TITLE>Recovery fixture</STUDY_TITLE></DESCRIPTOR></STUDY></STUDY_SET>'''),

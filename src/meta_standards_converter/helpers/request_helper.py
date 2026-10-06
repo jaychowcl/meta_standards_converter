@@ -623,7 +623,7 @@ class RateLimitedRequester:
                     effective = dict(kwargs)
                     _check_cancelled()
                     from .metadata_stream import charge_attempt
-                    charge_attempt()
+                    charge_attempt(url, effective.get('params'))
                     if budget: effective['timeout'] = budget.attempt(effective['timeout'])
                     count("provider_attempts")
                     with self._metrics_lock:

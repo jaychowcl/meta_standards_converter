@@ -9,7 +9,7 @@
 """Wall-clock bounds and physical-attempt accounting for metadata streams."""
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import socket
 from threading import Lock, Thread, Event
 import time
@@ -29,14 +29,23 @@ class BatchRequestLimit(Exception):
     """An original XML batch exhausted its shared recovery allowance."""
 
 
+class _UnchangedRequestLimit(BatchRequestLimit):
+    """The unchanged wire request has already used its three retries."""
+
+
 @dataclass
 class AttemptAllowance:
     maximum: int = 8
     used: int = 0
+    requests: dict = field(default_factory=dict, repr=False)
 
-    def charge(self):
+    def charge(self, identity=None):
         if self.used >= self.maximum:
             raise BatchRequestLimit('XML batch physical request allowance exhausted')
+        if identity is not None:
+            if self.requests.get(identity, 0) >= 4:
+                raise _UnchangedRequestLimit('Unchanged XML request allowance exhausted')
+            self.requests[identity] = self.requests.get(identity, 0) + 1
         self.used += 1
 
 
@@ -44,10 +53,11 @@ attempt_allowance = ContextVar('msc_xml_attempt_allowance', default=None)
 split_payload = ContextVar('msc_split_xml_payload', default=False)
 
 
-def charge_attempt():
+def charge_attempt(url=None, params=None):
     allowance = attempt_allowance.get()
     if allowance is not None:
-        allowance.charge()
+        # Request identity is private and never emitted; params may contain a key.
+        allowance.charge((url, repr(params)) if url is not None else None)
 
 
 def _socket(response):

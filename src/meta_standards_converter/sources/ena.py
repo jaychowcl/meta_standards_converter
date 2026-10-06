@@ -78,7 +78,7 @@ class ENASource:
         from collections import deque
         import requests
         from ..helpers.metadata_stream import (AttemptAllowance, attempt_allowance,
-            split_payload, BatchPayloadFailure, BatchRequestLimit)
+            split_payload, BatchPayloadFailure, BatchRequestLimit, _UnchangedRequestLimit)
         from ..helpers.request_helper import RateLimitedRequester
         from ..metadata.retrieval_budget import _BudgetExhausted, _check_cancelled
         from ..conversion_logging import emit
@@ -98,7 +98,7 @@ class ENASource:
                 payload_failure = False
                 try:
                     if not accounted:
-                        allowance.charge()
+                        allowance.charge(tuple(batch))
                     root = self.xml(batch)
                     if clean is None:
                         clean = ET.Element(root.tag)
@@ -130,6 +130,8 @@ class ENASource:
                             found.update(matches)
                 except _BudgetExhausted:
                     raise
+                except _UnchangedRequestLimit:
+                    continue
                 except BatchRequestLimit:
                     break
                 except Exception as error:

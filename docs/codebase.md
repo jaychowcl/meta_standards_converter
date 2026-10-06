@@ -5525,8 +5525,10 @@ complete response remain separate evidence. Truncated or malformed batches split
 from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch
 shares eight physical attempts, including redirects and transport retries, and
-unchanged requests retain at most three retries. Provider-wide HTTP failures do
-not fan out, including timeouts before headers. Exhausted small-body transport
+unchanged requests retain at most three retries. A malformed XML response does
+not reset that unchanged-request allowance. Errors
+from transport and parsing therefore cannot multiply the physical retry count.
+Provider-wide failures do not fan out, including timeouts before headers. Exhausted small-body transport
 retries cannot acquire a second batch-level retry allowance. Failed/incomplete
 payloads remain visible to the evidence recorder.
 
