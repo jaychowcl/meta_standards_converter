@@ -61,9 +61,33 @@ def preparation_session():
         _memo.reset(token)
 
 
+def _candidate_copy(value):
+    """Copy mutable shells/evidence, sharing only construction-certified branches."""
+    from copy import deepcopy
+    from dataclasses import is_dataclass
+    from ..miniml.model import _certified_immutable
+    memo, visited = {}, set()
+    def remember(node):
+        if id(node) in visited:
+            return
+        visited.add(id(node))
+        if _certified_immutable(node):
+            memo[id(node)] = node
+        elif type(node) in (list, tuple):
+            for child in node:
+                remember(child)
+        elif type(node) is dict:
+            for child in node.values():
+                remember(child)
+        elif is_dataclass(node) and not isinstance(node, type):
+            for child in vars(node).values():
+                remember(child)
+    remember(value)
+    return deepcopy(value, memo)
+
+
 def retrieve_once(key, call):
     """Reuse evidence only within one facade invocation; legacy calls are unchanged."""
-    from copy import deepcopy
     memo = _memo.get()
     if memo is None:
         return call()
@@ -76,7 +100,7 @@ def retrieve_once(key, call):
             value = call()
             from .retrieval_budget import _active
             if _active.get() and _active.get().exhausted: return value
-            memo[key] = (True, deepcopy(value))
+            memo[key] = (True, _candidate_copy(value))
         except Exception as exc:
             from .retrieval_budget import _BudgetExhausted
             if isinstance(exc, _BudgetExhausted): raise
@@ -84,7 +108,7 @@ def retrieve_once(key, call):
     ok, value = memo[key]
     if not ok:
         raise value
-    return deepcopy(value)
+    return _candidate_copy(value)
 
 
 def convert_source(converter, accession, **options):

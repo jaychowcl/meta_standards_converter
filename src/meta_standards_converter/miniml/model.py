@@ -88,22 +88,23 @@ def _freeze_json(value: Any) -> Any:
 def _deep_freeze_constructor(cls):
     """Make direct dataclass construction as immutable as mapping decoding."""
     original = cls.__init__
+    model_fields = fields(cls)
     # Mapping models retain their wire-materializing behavior in _freeze_json.
     # A frozen dataclass alone is not evidence that its nested values are safe.
     if not issubclass(cls, Mapping):
-        _IMMUTABLE_MODEL_FIELDS[cls] = frozenset(item.name for item in fields(cls))
+        _IMMUTABLE_MODEL_FIELDS[cls] = frozenset(item.name for item in model_fields)
 
     @wraps(original)
     def immutable_init(self, *args, **kwargs):
         if _IMMUTABLE_CERTIFICATE in vars(self):
             object.__delattr__(self, _IMMUTABLE_CERTIFICATE)
         original(self, *args, **kwargs)
-        for model_field in fields(self):
+        for model_field in model_fields if type(self) is cls else fields(self):
             value = getattr(self, model_field.name)
             if isinstance(value, Mapping):
-                frozen = _FrozenJSONMapping(value)
+                frozen = _freeze_json(value)
             elif isinstance(value, (list, tuple)):
-                frozen = tuple(_freeze_json(item) for item in value)
+                frozen = _freeze_json(value)
             else:
                 continue
             object.__setattr__(self, model_field.name, frozen)
@@ -1543,6 +1544,8 @@ class MINiMLPackage(Mapping[str, Any]):
     miniml_schema_version: str = MINIML_SCHEMA_VERSION
 
     def __post_init__(self) -> None:
+        if not self.series.extras and type(self.extensions) is _FrozenJSONMapping and _certified_immutable(self.extensions):
+            return
         extensions = _plain(self.extensions)
         for key, item in self.series.extras.items():
             if key == "msc_harmonization":

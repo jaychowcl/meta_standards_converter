@@ -5474,6 +5474,13 @@ collapsed by an identifier lookup. Administrative normalization traverses paths 
 per pass instead of rescanning all paths for every sample. Platform association reads
 only original references and instrument facts before filling any references.
 
+Operation-local preparation copies retain separate result shells, diagnostics and
+mutable source evidence, but share construction-certified immutable model branches.
+This does not change general `deepcopy` behavior or the strict codec reconstruction
+boundary. Typed constructors reuse already certified frozen fields; foreign values,
+subclasses and uncertified containers still take the defensive-copy path. Mutable
+JSON returned by `to_mapping()` never aliases the immutable package.
+
 ENA Browser recovery reconciles explicit requested identities before accepting
 records. Truncated or malformed batches split from 100 to 50 to 25; successful
 children are retained. Missing identities alone are retried. Each original batch
