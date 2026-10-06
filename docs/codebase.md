@@ -2444,6 +2444,9 @@ start budgets while still sharing their host's process in-flight ceiling.
 Conversion entrypoints own per-thread HTTP sessions, sharing TCP connections within
 a conversion and closing every session on success, failure or interruption. Nested
 converter calls share the scope; separate calls retain independent live retrieval.
+`meta_standards_converter.helpers.http_transport.transport_scope` owns this lifecycle;
+`meta_standards_converter.helpers.http_transport.get` selects the scoped pool or
+the existing single-request fallback.
 Sessions reject stored response cookies and disable adapter retries. Injected
 transports remain caller-owned; low-level calls outside a conversion retain their
 existing request lifetime. Redirects and retries remain visible to the requester.
