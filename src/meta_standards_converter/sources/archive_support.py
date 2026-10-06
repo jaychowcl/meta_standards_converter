@@ -32,6 +32,7 @@ class StudySeed:
 class Resolution:
     studies: list[StudySeed] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
+    failures: list[Exception] = field(default_factory=list, repr=False, compare=False)
 
 
 @dataclass
@@ -41,6 +42,7 @@ class StudyRecords:
     indexed: dict[str, list[dict]] = field(default_factory=dict)
     linked: list[dict] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
+    failures: list[Exception] = field(default_factory=list, repr=False, compare=False)
 
 
 def accession_kind(value):
@@ -152,4 +154,6 @@ def attempt(records, label, call):
         from ..metadata.retrieval_budget import _BudgetExhausted
         if isinstance(error, _BudgetExhausted): raise
         records.issues.append(f'{label}: {type(error).__name__}')
+        if hasattr(records, 'failures'):
+            records.failures.append(error)
         return None

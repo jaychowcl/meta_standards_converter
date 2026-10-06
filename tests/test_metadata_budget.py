@@ -167,7 +167,7 @@ def test_ena_partial_xref_is_not_cached_as_complete():
     with pytest.raises(_BudgetExhausted): source.cross_references('ERP1',records)
     assert 'ERP1' not in source._xrefs
     source.cross_references('ERP1', records)
-    assert source._xrefs['ERP1'] == ([row], [])
+    assert source._xrefs['ERP1'] == ([row], [], [])
 
 
 def test_unbounded_options_keep_existing_fetch_signature():

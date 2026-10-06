@@ -430,6 +430,10 @@ class Converter:
                         loaded.origins = tuple(source_label(source) for source in sources)
                         loaded.companions = dict(spec.companions)
                         item.provider = loaded.provider
+                        if getattr(loaded, '_native_failure', None) is not None:
+                            item.error, item.retry_at = outcomes.failure(
+                                loaded._native_failure, stage='load',
+                                provider=item.provider, item_id=item.id)
                         bind(provider=loaded.provider)
                         item.content_id = loaded.content_id
                         item.origins = loaded.origins

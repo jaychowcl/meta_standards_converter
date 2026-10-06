@@ -380,7 +380,11 @@ class InputHandler:
             for s in result.studies
             for issue in s.issues
         ]
+        from ..archive_results import native_failure
+        error = native_failure(getattr(s, 'error', None) for s in result.studies)
         if not result.packages:
+            if error is not None:
+                raise error
             from meta_standards_converter.metadata.retrieval_budget import _active
             budget = _active.get()
             detail = f'; metadata budget exhausted: {budget.events}' if budget and budget.exhausted else ''
@@ -391,7 +395,9 @@ class InputHandler:
                     "source_partial", "Native import was incomplete", "load", "warning"
                 )
             )
-        return self._metadata(result.packages, provider, diagnostics, enriched=True)
+        loaded = self._metadata(result.packages, provider, diagnostics, enriched=True)
+        loaded._native_failure = error
+        return loaded
 
     def _archive_xml(self, spec, context):
         from meta_standards_converter.xml_safety import parse_xml

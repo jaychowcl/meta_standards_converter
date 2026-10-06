@@ -544,7 +544,7 @@ Full flag and Python API details remain in the canonical routes below.
   title: Independent native provider workflows
   anchor: native-archive-workflows
   purpose: Documents independent native workflows and bounded ENA/BioSamples overlap with deterministic merging, cancellation and shared byte budgets.
-  keywords: SRASource, ENASource, History, Portal, Browser, umbrella, sample expansion, network_workers, two lanes, cancellation, aggregate bytes
+  keywords: native_failure, NativeProviderFailure, missing-record recovery, batch split, eight attempts, membership_complete, fallback_samples, record_coverage, SRASource, ENASource, History, Portal, Browser, umbrella, sample expansion, network_workers, two lanes, cancellation, aggregate bytes
   link: [Open section](codebase.md#native-archive-workflows)
 
 - id: native-archive-cli

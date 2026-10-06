@@ -29,7 +29,7 @@ class ENASource:
                     and row.get('Target Primary Accession')==accession.rsplit('.',1)[0]
                     and row.get('Target Secondary Accession') in ('',None,accession.rsplit('.',1)[0]))
         if accession not in self._xrefs:
-            rows, issues, offset = [], [], 0
+            rows, issues, failures, offset = [], [], [], 0
             seen_pages = set()
             while True:
                 try:
@@ -50,10 +50,12 @@ class ENASource:
                     from ..metadata.retrieval_budget import _BudgetExhausted
                     if isinstance(error, _BudgetExhausted): raise
                     issues.append(f'ENA cross references {accession}: {type(error).__name__}')
+                    failures.append(error)
                     break
-            self._xrefs[accession] = rows, issues
-        rows, issues = self._xrefs[accession]
+            self._xrefs[accession] = rows, issues, failures
+        rows, issues, failures = self._xrefs[accession]
         records.issues.extend(i for i in issues if i not in records.issues)
+        records.failures.extend(failures)
         grouped = {}
         for row in rows:
             owner = row['Target Primary Accession'] if family_scope(row) else accession
@@ -73,21 +75,80 @@ class ENASource:
         return self.http.get(self.browser + ','.join(accessions), {'includeLinks': 'true'})
 
     def verified_xml(self, accessions, result, kind='record'):
-        root = attempt(result, f'{kind} XML', lambda: self.xml(accessions))
-        if root is None:
-            return None
-        clean, found = ET.Element(root.tag), set()
-        for node in root:
-            aliases = {identifier(node)} | {n.text for n in node.findall('IDENTIFIERS/*')}
-            matches = {acc for acc in accessions if acc in aliases or
-                       (re.fullmatch(r'GC[AF]_\d+', acc) and any(
-                           re.fullmatch(re.escape(acc) + r'\.\d+', a or '') for a in aliases))}
-            if matches and not any(n.tag.lower() == 'error' for n in node.iter()):
-                clean.append(node)
-                found.update(matches)
-        for missing in sorted(set(accessions) - found):
+        from collections import deque
+        import requests
+        from ..helpers.metadata_stream import (AttemptAllowance, attempt_allowance,
+            split_payload, BatchPayloadFailure, BatchRequestLimit)
+        from ..helpers.request_helper import RateLimitedRequester
+        from ..metadata.retrieval_budget import _BudgetExhausted, _check_cancelled
+        from ..conversion_logging import emit
+        allowance = AttemptAllowance()
+        token = attempt_allowance.set(allowance)
+        queue = deque([(list(dict.fromkeys(accessions)), 0)])
+        clean, found, failures = None, set(), []
+        accounted = isinstance(self.http, ArchiveHTTP) and isinstance(self.http.requester, RateLimitedRequester)
+        try:
+            while queue and allowance.used < allowance.maximum:
+                _check_cancelled()
+                batch, repeated = queue.popleft()
+                batch = [acc for acc in batch if acc not in found]
+                if not batch:
+                    continue
+                split = split_payload.set(len(batch) > 25)
+                payload_failure = False
+                try:
+                    if not accounted:
+                        allowance.charge()
+                    root = self.xml(batch)
+                    if clean is None:
+                        clean = ET.Element(root.tag)
+                    wanted = set(batch)
+                    for node in root:
+                        aliases = {identifier(node)} | {n.text for n in node.findall('IDENTIFIERS/PRIMARY_ID')} | {n.text for n in node.findall('IDENTIFIERS/SECONDARY_ID')}
+                        # BioSample external identifiers are explicit aliases.
+                        aliases.update(n.text for n in node.findall('IDENTIFIERS/EXTERNAL_ID')
+                                       if (n.text or '').startswith('SAM'))
+                        matches = wanted & aliases
+                        matches.update(acc for acc in batch if re.fullmatch(r'GC[AF]_\d+', acc)
+                            and any(re.fullmatch(re.escape(acc) + r'\.\d+', a or '') for a in aliases))
+                        if matches and not any(n.tag.lower() == 'error' for n in node.iter()):
+                            if matches - found:
+                                clean.append(node)
+                            found.update(matches)
+                except _BudgetExhausted:
+                    raise
+                except BatchRequestLimit:
+                    break
+                except Exception as error:
+                    failures.append(error)
+                    payload_failure = isinstance(error, (BatchPayloadFailure, ET.ParseError,
+                        requests.Timeout, requests.exceptions.ChunkedEncodingError))
+                    emit('xml_batch_recovery', level='WARNING', kind=kind,
+                         requested=len(batch), physical_attempts=allowance.used,
+                         error_type=type(error).__name__, split=payload_failure and len(batch)>25)
+                    if not payload_failure:
+                        continue
+                finally:
+                    split_payload.reset(split)
+                missing = [acc for acc in batch if acc not in found]
+                if not missing:
+                    continue
+                if len(missing) > 25:
+                    middle = len(missing)//2
+                    queue.appendleft((missing[middle:], 0))
+                    queue.appendleft((missing[:middle], 0))
+                elif repeated < (3 if payload_failure else 1):
+                    queue.appendleft((missing, repeated+1))
+        finally:
+            attempt_allowance.reset(token)
+        missing_ids = sorted(set(accessions) - found)
+        if missing_ids and failures:
+            result.issues.append(f'{kind} XML: {type(failures[-1]).__name__}')
+            if hasattr(result, 'failures'):
+                result.failures.extend(failures)
+        for missing in missing_ids:
             result.issues.append(f'{kind}: missing XML record {missing}')
-        return clean if len(clean) else None
+        return clean if clean is not None and len(clean) else None
 
     def linked_json(self, url, accession, id_field, result):
         obj = attempt(result, f'linked {accession}', lambda: self.http.get(url, fmt='json'))
@@ -383,3 +444,5 @@ class ENASource:
             records.issues.extend(issue for issue in parts[0].issues if issue not in records.issues)
             records.linked.extend(parts[1].linked)
             records.issues.extend(parts[1].issues)
+            records.failures.extend(parts[0].failures)
+            records.failures.extend(parts[1].failures)

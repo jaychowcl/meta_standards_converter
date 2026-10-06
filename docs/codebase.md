@@ -2473,9 +2473,12 @@ whole metadata response, including slow trickles inside a buffered read. The
 resource-profile `metadata_response_timeout_seconds` is 300 seconds for standard
 and 900 for large, capped by the operation deadline. A timer interrupts only the
 currently owned socket; cancellation disarms it before connection reuse. The
-module's `AttemptAllowance`, `charge_attempt`, `attempt_allowance` and
-`split_payload` provide internal accounting for bounded XML batch recovery.
-`MetadataResponseTimeout`, `BatchPayloadFailure` and `BatchRequestLimit` retain
+module's `meta_standards_converter.helpers.metadata_stream.AttemptAllowance`,
+`meta_standards_converter.helpers.metadata_stream.charge_attempt`,
+`attempt_allowance` and `split_payload` provide internal accounting for bounded XML batch recovery.
+`meta_standards_converter.helpers.metadata_stream.MetadataResponseTimeout`,
+`meta_standards_converter.helpers.metadata_stream.BatchPayloadFailure` and
+`meta_standards_converter.helpers.metadata_stream.BatchRequestLimit` retain
 distinct timeout, payload-recovery and local-allowance failure boundaries.
 
 The defaults leave headroom below the published
@@ -5462,6 +5465,33 @@ are involved. Source: [archive workflows](../src/meta_standards_converter/metada
 
 <a id="native-archive-workflows"></a>
 ### Provider workflows and boundaries
+
+ENA Browser recovery reconciles explicit requested identities before accepting
+records. Truncated or malformed batches split from 100 to 50 to 25; successful
+children are retained. Missing identities alone are retried. Each original batch
+shares eight physical attempts, including redirects and transport retries, and
+unchanged requests retain at most three retries. Provider-wide HTTP failures do
+not fan out. Failed/incomplete payloads remain visible to the evidence recorder.
+
+`meta_standards_converter.miniml.ena_coverage.scoped_rows` checks explicit study
+identity; `meta_standards_converter.miniml.ena_coverage.scoped_sample_refs` includes
+verified experiment descriptors and pool members.
+`meta_standards_converter.miniml.ena_coverage.fallback_samples` projects only
+supported inventory fields and explicit sample identities when full XML is absent.
+`meta_standards_converter.miniml.ena_coverage.record_coverage` reconciles expected,
+received, fallback and unresolved identities against the typed model. Incomplete
+coverage is retained as an INSDC `retrieval_coverage` record: membership completeness
+does not imply complete field coverage. Existing bound BioSamples evidence enriches
+restored samples; unrelated records and ambiguous alias joins never establish a run
+attachment. No biological values are fabricated to make a record complete.
+
+`meta_standards_converter.converters.archive_results.native_failure` retains safe
+retry classification and the latest cooldown in a copy-safe
+`meta_standards_converter.converters.archive_results.NativeProviderFailure`.
+Native outcomes keep this internal evidence for partial packages and when no package
+is returned. The facade preserves the existing error envelope and `retry_at` fields,
+so a valid partial artifact may still carry a retryable retrieval failure. Serialized
+native outcome fields are unchanged; resolved failures remain only in request history.
 
 ```text
 sra2json / SRA2JSONConverter

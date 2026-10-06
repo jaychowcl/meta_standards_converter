@@ -25,6 +25,7 @@ class StudyImportOutcome:
     package: MINiMLPackage | None = None
     output: str | None = None
     issues: list[str] = field(default_factory=list)
+    error: Exception | None = field(default=None, repr=False, compare=False)
 
     def to_mapping(self):
         return {'study': self.study, 'primary': self.primary, 'status': self.status,
@@ -48,7 +49,40 @@ class ArchiveImportResult:
         return {'accession': self.accession, 'studies': [s.to_mapping() for s in self.studies]}
 
 
-def _load_native(source, parser, seed):
+class NativeProviderFailure(RuntimeError):
+    """Copy-safe, redacted provider failure retained by operation-local memoization."""
+
+
+def native_failure(errors):
+    """Preserve a transient provider failure and the latest applicable cooldown."""
+    from .unified.outcomes import failure
+    from ..runtime_contracts import RetryCategory
+    from ..helpers.metadata_stream import BatchPayloadFailure
+    candidates = []
+    for error in errors:
+        if error is None:
+            continue
+        if isinstance(error, BatchPayloadFailure) and error.__cause__ is not None:
+            error = error.__cause__
+        envelope, retry_at = failure(error, stage='load', provider=None, item_id=None)
+        candidates.append((envelope.retry_category == RetryCategory.RETRYABLE, retry_at or 0, error))
+    if not candidates:
+        return None
+    transient, retry_at, original = max(candidates, key=lambda item: item[:2])
+    if isinstance(original, NativeProviderFailure):
+        return original
+    error = NativeProviderFailure(f'Native provider retrieval failed ({type(original).__name__})')
+    error.retry_at = retry_at or None
+    error.request_trace = {'errors': [{'retry_category': 'retryable' if transient else 'terminal'}]}
+    response = getattr(original, 'response', None)
+    status = getattr(response, 'status_code', None)
+    if isinstance(status, int):
+        from types import SimpleNamespace
+        error.response = SimpleNamespace(status_code=status)
+    return error
+
+
+def _load_native(source, parser, seed, *, _outcome=None):
     """Retain a strictly valid core before optional provider discovery can stop."""
     from inspect import signature
     from ..metadata.retrieval_budget import _active, _phase, _budget_stage, _BudgetExhausted, _coverage
@@ -66,7 +100,11 @@ def _load_native(source, parser, seed):
         with _budget_stage('native_core'):
             options = {'_on_core': core} if budget and '_on_core' in signature(source.fetch).parameters else {}
             records = source.fetch(seed, **options)
+            captured = records
         if not records.xml and not any(records.indexed.values()):
+            error = native_failure(getattr(records, 'failures', []))
+            if error is not None:
+                raise error
             raise ValueError('No native metadata records retrieved')
         return parser.parse(records), records.issues
     except _BudgetExhausted as exc:
@@ -76,6 +114,9 @@ def _load_native(source, parser, seed):
         except Exception:
             pass  # Supplementary records cannot invalidate the accepted core.
         return _coverage(candidate, budget), [*captured.issues, str(exc) + '; valid native candidate retained']
+    finally:
+        if _outcome is not None and captured is not None:
+            _outcome.error = native_failure(getattr(captured, 'failures', []))
 
 
 @measured("publication")

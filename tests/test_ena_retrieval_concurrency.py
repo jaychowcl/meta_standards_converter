@@ -106,6 +106,7 @@ def test_independent_failure_preserves_other_lane_and_issue_order():
     ENASource(http=transport)._fetch_independent_links(result, ['ERP1'], ['SAMEA1'])
     assert [r['provider'] for r in result.linked] == ['ena']
     assert result.issues == ['linked SAMEA1: ValueError']
+    assert len(result.failures) == 1 and isinstance(result.failures[0], ValueError)
 
 
 def test_concurrent_streams_share_byte_budget_and_close(tmp_path):

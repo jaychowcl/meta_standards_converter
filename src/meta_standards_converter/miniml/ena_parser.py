@@ -20,18 +20,25 @@ class ENAParser:
             for node in root:
                 if node.tag in ('STUDY', 'PROJECT', 'SAMPLE', 'EXPERIMENT', 'RUN'):
                     entities.setdefault(node.tag, {})[identifier(node)] = node
+        full_entities = {kind: dict(values) for kind, values in entities.items()}
         _indexed_entities(records, entities)
         study = entities.get('STUDY', {}).get(records.seed.study)
         if study is None:
             study = entities.get('PROJECT', {}).get(records.seed.primary)
         series = m.study_record(study, records.seed)
-        samples, aliases = {}, {}
+        samples, aliases, owners = {}, {}, {}
         for accession, node in entities.get('SAMPLE', {}).items():
             ids = m.accessions(node, accession)
             primary = next((a['value'] for a in ids if a['database'] == 'BioSample'), accession)
             for a in ids:
-                aliases[a['value']] = primary
+                owners.setdefault(a['value'], set()).add(primary)
             samples[primary] = m.sample_record(node, primary)
+        for alias, values in owners.items():
+            if len(values) == 1:
+                aliases[alias] = next(iter(values))
+            else:
+                aliases[alias] = None
+                records.issues.append(f'{alias}: ambiguous sample alias; run attachment withheld')
         rows = {}
         for row in records.indexed.get('read_run', []):
             rows.setdefault(row.get('run_accession'), []).append(row)
@@ -70,6 +77,8 @@ class ENAParser:
                 if statistics:
                     value['indexed_statistics'] = statistics
                 paths.extend(m.assay_paths(sample, value, experiment, files, protocol))
+        from .ena_coverage import record_coverage
+        record_coverage(records, full_entities, list(samples.values()))
         return m.finish('ena', records, series, list(samples.values()), protocols, paths)
 
 
@@ -88,12 +97,17 @@ def _indexed_entities(records, entities):
     for kind, tag, key in [('sample', 'SAMPLE', 'sample_accession'),
                            ('read_experiment', 'EXPERIMENT', 'experiment_accession'),
                            ('read_run', 'RUN', 'run_accession')]:
-        for row in records.indexed.get(kind, []):
+        from .ena_coverage import fallback_samples
+        rows = list(records.indexed.get(kind, []))
+        if kind == 'sample':
+            rows.extend(fallback_samples(records))
+        present_aliases = {n.text for node in entities.get(tag, {}).values() for n in node.findall('IDENTIFIERS/*')}
+        for row in rows:
             acc = row.get(key)
             if not acc:
                 continue
             present = entities.setdefault(tag, {})
-            if acc in present or any(acc == i.text for n in present.values() for i in n.findall('IDENTIFIERS/*')):
+            if acc in present or acc in present_aliases:
                 continue
             node = ET.Element(tag, accession=acc)
             put(node, 'IDENTIFIERS/PRIMARY_ID', acc)
@@ -128,4 +142,7 @@ def _indexed_entities(records, entities):
             elif row.get('experiment_accession'):
                 ET.SubElement(node, 'EXPERIMENT_REF', accession=row['experiment_accession'])
             present[acc] = node
-            records.issues.append(f'{acc}: using indexed metadata without full Browser record')
+            present_aliases.update(n.text for n in node.findall('IDENTIFIERS/*'))
+            issue = f'{acc}: using indexed metadata without full Browser record'
+            if issue not in records.issues:
+                records.issues.append(issue)

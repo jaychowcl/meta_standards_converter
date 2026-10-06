@@ -13,7 +13,7 @@ from pathlib import Path
 from meta_standards_converter.sources.ena import ENASource
 from meta_standards_converter.miniml.ena_parser import ENAParser
 from meta_standards_converter.runtime_contracts import get_resource_profile
-from .archive_results import ArchiveImportResult, StudyImportOutcome, output_name, publish_json
+from .archive_results import ArchiveImportResult, StudyImportOutcome, output_name, publish_json, native_failure
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +40,13 @@ class ENA2JSONConverter:
             with stage("discovery"):
                 resolution = _resolution if _resolution is not None else self.source.resolve(accession)
         except Exception as error:
-            result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=[type(error).__name__]))
+            result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=[type(error).__name__], error=native_failure([error])))
             logger.debug('%s: resolution failed (%s)', accession, type(error).__name__)
             resolution = None
         if resolution is not None:
             if not resolution.studies:
-                result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=resolution.issues))
+                result.studies.append(StudyImportOutcome(str(accession), str(accession), 'failed', issues=resolution.issues,
+                    error=native_failure(getattr(resolution, 'failures', []))))
                 logger.debug('%s: no study resolved (%s)', accession, '; '.join(resolution.issues))
             progress(0, len(resolution.studies), "studies")
             for seed_index, seed in enumerate(resolution.studies, 1):
@@ -65,7 +66,7 @@ class ENA2JSONConverter:
                 try:
                     with stage("load"):
                         from .archive_results import _load_native
-                        package, issues = _load_native(self.source, self.parser, seed)
+                        package, issues = _load_native(self.source, self.parser, seed, _outcome=outcome)
                     outcome.issues.extend(issues)
                     from meta_standards_converter.metadata.archive_enrichment import LinkedArchiveEnricher, merge_archive_metadata, linked_accessions
                     from ..metadata.preparation_scope import converter_enrichment_enabled
@@ -79,11 +80,13 @@ class ENA2JSONConverter:
                             peer_result = peer.convert(seed.study, evidence_dir=evidence_dir)
                             for peer_outcome in peer_result.studies:
                                 outcome.issues.extend(peer_outcome.issues)
+                                outcome.error = native_failure([outcome.error, peer_outcome.error])
                             for extra in peer_result.packages:
                                 package, issues = merge_archive_metadata(package, extra, prefer=False)
                                 outcome.issues.extend(issues)
                         except Exception as error:
                             outcome.issues.append(f'peer enrichment unavailable: {type(error).__name__}')
+                            outcome.error = native_failure([outcome.error, error])
                     if enrich_from_geo_ae and converter_enrichment_enabled():
                         try:
                             enricher = self.linked_enricher or LinkedArchiveEnricher(resource_profile=self.profile)
@@ -91,6 +94,7 @@ class ENA2JSONConverter:
                             outcome.issues.extend(issues)
                         except Exception as error:
                             outcome.issues.append(f'GEO/ArrayExpress enrichment unavailable: {type(error).__name__}')
+                            outcome.error = native_failure([outcome.error, error])
                     else:
                         links = linked_accessions(package)
                         if links:
@@ -103,6 +107,7 @@ class ENA2JSONConverter:
                             outcome.issues.extend(getattr(publication_enricher, 'publication_issues', []))
                         except Exception as error:
                             outcome.issues.append(f'publication enrichment unavailable: {type(error).__name__}')
+                            outcome.error = native_failure([outcome.error, error])
                     from ..metadata.archive_diagnostics import consistency_issues
                     outcome.issues.extend(consistency_issues(package.to_mapping()))
                     if out is not None:
@@ -113,6 +118,7 @@ class ENA2JSONConverter:
                     outcome.status = 'partial' if outcome.issues else 'complete'
                 except Exception as error:
                     outcome.issues.append(type(error).__name__)
+                    outcome.error = native_failure([error])
                 for issue in outcome.issues:
                     logger.debug('%s: %s', seed.study, issue)
                 logger.debug('%s: %s', seed.primary, outcome.status)
