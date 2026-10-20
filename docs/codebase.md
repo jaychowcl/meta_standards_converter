@@ -1529,6 +1529,15 @@ only typed series identity fields, without serializing unrelated source evidence
 This is export-local reuse; shared codec/model contracts and JSON export do not
 change.
 
+When a validated nonempty canonical assay-path list supplies the final SDRF, the
+built-in constructor prepares the handler's protocols, paths and audit but skips
+the table that the semantic overlay would replace. The overlay renders the final
+table once, at its original position after IDF preparation. Protocol registration,
+run/publication evidence, IDF validation ordering and audit warnings are retained.
+Inputs without canonical paths and injected or overridden builders/renderers keep
+the existing full rendering route. The private `_prepare_paths` split separates
+these preparation effects from column planning and row materialization.
+
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>

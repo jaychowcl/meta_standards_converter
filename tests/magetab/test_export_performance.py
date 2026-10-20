@@ -166,3 +166,56 @@ def test_private_view_is_discarded_after_failure_and_next_export_is_clean(monkey
     assert package.to_mapping() == before
     assert native_files.project_native_files is original
     assert constructor.miniml2magetab(package) == expected
+
+
+@pytest.mark.parametrize("forced", [None, "bulk_sequencing", "generic"])
+def test_canonical_table_renders_once_and_retains_preparation_and_audit(monkeypatch, forced):
+    from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
+    from meta_standards_converter.magetab.sdrf.renderer import SDRFRenderer
+
+    class InjectedConstructor(SDRFConstructor):
+        builds = 0
+
+        def build(self, handler):
+            self.builds += 1
+            return super().build(handler)
+
+    package = MINiMLCodec().decode(legacy()).package
+    injected = InjectedConstructor()
+    reference = AEConstructor(sdrf_constructor=injected, pubmed_client=PubMed(), insdc_client=NoRuns())
+    expected = reference.miniml2magetab(package, platform_handler=forced)
+    assert injected.builds == 1
+    calls = []
+    original = SDRFRenderer.render_paths
+
+    def render(self, columns, paths):
+        calls.append((len(columns), len(paths)))
+        return original(self, columns, paths)
+
+    monkeypatch.setattr(SDRFRenderer, "render_paths", render)
+    candidate = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    assert candidate.miniml2magetab(package, platform_handler=forced) == expected
+    assert candidate.sdrf_constructor.last_sdrf_audit == injected.last_sdrf_audit
+    assert len(calls) == 1
+
+
+def test_inputs_without_canonical_paths_keep_fallback_rendering(monkeypatch):
+    from meta_standards_converter.magetab.sdrf.renderer import SDRFRenderer
+    package = MINiMLCodec().decode({
+        "miniml_schema_version": "3.0", "source": {"format": "test"},
+        "series": {"iid": "GSE1", "title": "Sparse", "sample_ref": [{"ref": "S1"}]},
+        "sample": [{"iid": "S1", "title": "Sample", "channel": [{"source": "source"}]}],
+    }).package
+    calls = []
+    original = SDRFRenderer.render_paths
+
+    def render(self, columns, paths):
+        calls.append(len(paths))
+        return original(self, columns, paths)
+
+    monkeypatch.setattr(SDRFRenderer, "render_paths", render)
+    constructor = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    rows = constructor.miniml2magetab(package)
+    table = next(r[1] for r in rows if r[0] == "SDRF File")
+    assert table[0][0] == "Source Name" and len(table) == 2
+    assert len(calls) == 1

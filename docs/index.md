@@ -25,7 +25,7 @@ Full flag and Python API details remain in the canonical routes below.
   title: MAGE-TAB export measurements and reuse
   anchor: magetab-export-performance
   purpose: Export-only stage measurements, validated private view, work counts, memory interpretation and fidelity boundaries.
-  keywords: projection, package resolution, protocols, compatibility neighborhoods, non-transitive, sparse definitions, file projection, sample source indexes, file locations, column planning, inclusive, exclusive, CPU, peak RSS
+  keywords: projection, package resolution, protocols, compatibility neighborhoods, non-transitive, sparse definitions, file projection, sample source indexes, file locations, canonical assay paths, single SDRF render, preparation audit, column planning, inclusive, exclusive, CPU, peak RSS
   link: [Open section](codebase.md#magetab-export-performance)
 
 - id: unified-cli

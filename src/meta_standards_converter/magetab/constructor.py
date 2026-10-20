@@ -116,7 +116,15 @@ class AEConstructor:
             handler, technology_type = self.sdrf_constructor.create_operation_handler(
                 data, protocol_registry, handler.run_evidence,
             )
-        sdrf = self.sdrf_constructor.build(handler)
+        canonical_paths = data.get('series', {}).get('assay_paths', [])
+        if (type(self.sdrf_constructor) is SDRFConstructor and canonical_paths
+                and self.sdrf_constructor._prepare_for_canonical_paths(handler)):
+            # A nonempty validated path list always supplies a semantic table.
+            # Keep protocol/audit preparation, then materialize that table once
+            # in the overlay at its original place in the IDF workflow.
+            sdrf = []
+        else:
+            sdrf = self.sdrf_constructor.build(handler)
         # Keep IDF validation before its publication lookup, as in the old flow.
         prefix_rows = self.idf_constructor.prefix_rows(data)
         with phase("magetab_publication_evidence"):
