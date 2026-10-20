@@ -219,3 +219,52 @@ def test_inputs_without_canonical_paths_keep_fallback_rendering(monkeypatch):
     table = next(r[1] for r in rows if r[0] == "SDRF File")
     assert table[0][0] == "Source Name" and len(table) == 2
     assert len(calls) == 1
+
+
+def test_sample_binding_indexes_once_and_refreshes_between_operations():
+    from meta_standards_converter.magetab.harmonized import bind_sample_groups
+
+    class Samples(list):
+        visits = 0
+
+        def __iter__(self):
+            type(self).visits += len(self)
+            return super().__iter__()
+
+    size = 128
+    samples = Samples([{"iid": f"S{i}", "channel": [{"hz_tissue": f"tissue{i}"}]}
+                       for i in range(size)])
+    paths = [{"steps": [{"kind": "source", "sample_ref": f"S{i}", "name": f"source{i}"}]}
+             for i in range(size)]
+    before = deepcopy(paths)
+    package = {"sample": samples}
+    result = bind_sample_groups(package, paths)
+    assert paths == before
+    assert all(p["steps"][0]["characteristics"] == [{"name": "hz_tissue", "value": f"tissue{i}"}]
+               for i, p in enumerate(result))
+    assert Samples.visits <= 2 * size
+    samples[0] = {"iid": "S0", "channel": [{"hz_tissue": "changed"}]}
+    assert bind_sample_groups(package, paths)[0]["steps"][0]["characteristics"] == [
+        {"name": "hz_tissue", "value": "changed"}]
+
+
+def test_indexed_binding_preserves_pools_ambiguity_occurrences_and_channel_scope():
+    from meta_standards_converter.magetab.harmonized import bind_sample_groups
+    samples = [
+        {"iid": "S1", "channel": [{"hz_tissue": "one", "source": "root-one"},
+                                  {"hz_tissue": "two", "source": "root-two"}]},
+        {"iid": "S2", "channel": [{"hz_tissue": "other"}]},
+    ]
+    node = {"kind": "source", "sample_ref": "S1", "name": "root-two"}
+    paths = [
+        {"steps": [node, deepcopy(node)]},
+        {"steps": [{"kind": "source", "sample_ref": "S1", "name": "unmatched"}]},
+        {"steps": [deepcopy(node), {"kind": "source", "sample_ref": "S2", "name": "pool-member"}]},
+        {"steps": [{"kind": "source", "sample_ref": "missing", "name": "unknown"}]},
+    ]
+    before = deepcopy(paths)
+    result = bind_sample_groups({"sample": samples}, paths)
+    assert len(result) == 4 and len(result[0]["steps"]) == 2
+    assert result[0]["steps"][0]["characteristics"] == [{"name": "hz_tissue", "value": "two"}]
+    assert "characteristics" not in result[0]["steps"][1]
+    assert result[1:] == before[1:] and paths == before

@@ -12,6 +12,7 @@ from collections.abc import Mapping
 import re
 
 from meta_standards_converter.miniml.harmonization import HarmonizedValue, iter_harmonized_values, parse_harmonized_key
+from ._performance import measured_phase, work
 
 
 def columns(value, prefix="Characteristics", used=None):
@@ -48,6 +49,10 @@ def _ordered_values(container):
 def _path_binding(package, path):
     """Identify a biological channel using explicit sample, source and label evidence."""
     samples = {str(s.get("iid")): s for s in package.get("sample", [])}
+    return _binding_from_samples(samples, path)
+
+
+def _binding_from_samples(samples, path):
     steps = path.get("steps", [])
     bindings = [(node, samples.get(str(node.get("sample_ref") or node.get("name"))))
                 for node in steps if node.get("kind") in {"sample", "source"}]
@@ -143,14 +148,17 @@ def read_group(header, row, index):
     return match[1].lower(), (None if value == "" else HarmonizedValue(field, value, source, accession, depth, ordinal)), end
 
 
+@measured_phase("magetab_sample_binding")
 def bind_sample_groups(package, paths):
     """Attach sample evidence to explicit paths only through unambiguous identities."""
     import copy
     import logging
     from meta_standards_converter.miniml.harmonization import named_harmonized_rows
     result = copy.deepcopy(paths or [])
+    samples = {str(s.get("iid")): s for s in package.get("sample", [])}
+    work(samples=len(samples), paths=len(result))
     for path in result:
-        binding = _path_binding(package, path)
+        binding = _binding_from_samples(samples, path)
         if binding is None:
             continue
         node, channel = binding

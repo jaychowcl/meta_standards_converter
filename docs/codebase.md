@@ -1538,6 +1538,12 @@ Inputs without canonical paths and injected or overridden builders/renderers kee
 the existing full rendering route. The private `_prepare_paths` split separates
 these preparation effects from column planning and row materialization.
 
+Harmonized sample-to-path binding builds its sample identity map once per call,
+after export transformations, and keeps path occurrences in source order. The
+existing source/channel evidence rules still reject pooled or ambiguous bindings.
+Each call builds a fresh index, so later calls observe changed samples without
+retaining package state. `magetab_sample_binding` reports this work separately.
+
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>
