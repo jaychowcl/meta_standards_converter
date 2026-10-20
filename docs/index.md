@@ -547,6 +547,13 @@ Full flag and Python API details remain in the canonical routes below.
   keywords: sample alias index, experiment inventory index, workflow binding, original platform associations, linear normalization, native_failure, NativeProviderFailure, missing-record recovery, batch split, eight attempts, membership_complete, fallback_samples, record_coverage, SRASource, ENASource, History, Portal, Browser, umbrella, sample expansion, network_workers, two lanes, cancellation, aggregate bytes
   link: [Open section](codebase.md#native-archive-workflows)
 
+- id: sra-publication-concurrency
+  title: Bounded SRA publication-link concurrency
+  anchor: sra-publication-concurrency
+  purpose: Explains two-worker ELink retrieval, ordered source-bound citation merging, serial compatibility, cancellation, shared limits and stage timings.
+  keywords: SRASource, ELink, publication_links, network_workers, 100 UIDs, publication ownership, cache lock, publication_link_retrieval, publication_owner_resolution, publication_link_merge, golden outputs
+  link: [Open section](codebase.md#sra-publication-concurrency)
+
 - id: native-archive-cli
   title: Native command flags and outcomes
   anchor: native-archive-cli
