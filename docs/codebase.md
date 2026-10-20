@@ -1488,6 +1488,22 @@ context is released on success and failure and does not alter the shared codec.
 Regression coverage lives in `tests/magetab/test_export_performance.py`; native
 file, protocol export and operation-logging tests remain complementary gates.
 
+Protocol export normalizes comparison values once per supplied definition and
+compares distinct definitions only within matching normalized-description groups.
+Comparison-equivalent definitions share an immutable neighborhood of original
+positions; authored definitions, duplicate occurrences and registered identifiers
+remain separate until the existing compatibility rules allow coalescing.
+Group lookup uses these neighborhoods without changing source order or registered
+name precedence. A sparse definition cannot bridge two conflicting richer
+definitions, and a definition compatible with multiple registered names remains
+unbound. The `protocol_candidate_pairs` count now measures distinct comparison
+pairs; `protocol_definition_classes` identifies shared comparison work.
+
+Purposeful decision: this index preserves non-transitive compatibility rather than
+using a transitive union or a description-only deduplication rule. Protocol export
+regressions include sparse ambiguity, empty descriptions, type aliases, registered
+collisions, reference bindings and bounded normalization/comparison work.
+
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>
