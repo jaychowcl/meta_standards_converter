@@ -35,6 +35,85 @@ def projected(data):
     return data['series']['assay_paths']
 
 
+def test_native_sample_lookup_visits_paths_linearly():
+    class Steps(list):
+        visits = 0
+
+        def __iter__(self):
+            type(self).visits += len(self)
+            return super().__iter__()
+
+    size = 128
+    data = {'source': {'format': 'ENA'},
+            'sample': [{'iid': f'S{i}'} for i in range(size)],
+            'series': {'assay_paths': [
+                {'steps': Steps([{'kind': 'source', 'name': f'S{i}', 'sample_ref': f'S{i}'},
+                                 {'kind': 'scan', 'name': f'RUN{i}'}])}
+                for i in range(size)]}}
+    paths = projected(data)
+    assert len(paths) == size
+    # Bound traversal work, not wall time: independent samples must not each
+    # scan the whole study to discover their source occurrences.
+    assert Steps.visits < 80 * size
+
+
+def test_source_annotation_matching_is_scoped_before_comparison():
+    from meta_standards_converter.magetab.native_file_selection import source_annotations
+    from meta_standards_converter.magetab.native_files import _record, _comments
+
+    class Identity(str):
+        comparisons = 0
+        __hash__ = str.__hash__
+
+        def __eq__(self, other):
+            type(self).comparisons += 1
+            return super().__eq__(other)
+
+    size = 128
+    paths = []
+    for i in range(size):
+        source = {'kind': 'source', 'name': f'S{i}', 'sample_ref': Identity(f'S{i}')}
+        paths.extend([
+            {'steps': [deepcopy(source), {'kind': 'scan', 'name': f'RUN{i}'}]},
+            {'steps': [deepcopy(source), {'kind': 'derived_array_data_file', 'name': f'{i}.tsv',
+                                         'link': {'value': f'https://results/{i}.tsv'}}]},
+        ])
+    result = source_annotations(paths, {f'S{i}' for i in range(size)}, _record, _comments)
+    assert len(result) == size
+    assert all(('SAMPLE_FILE_URI', f'https://results/{i}.tsv') in comments(path)
+               for i, path in enumerate(result))
+    assert Identity.comparisons < 20 * size
+
+
+def test_assembly_report_lookup_retains_sample_scope_and_ambiguous_sources():
+    data = {'source': {'format': 'ENA'}, 'sample': [
+        {'iid': 'S1', 'supplementary_data': [
+            {'type': 'assembly report', 'value': 'https://results/shared.tsv'},
+            {'type': 'assembly report', 'value': 'https://results/shared.tsv'},
+        ]},
+        {'iid': 'S2', 'supplementary_data': [
+            {'type': 'assembly report', 'value': 'https://results/shared.tsv'}]},
+    ], 'series': {'assay_paths': [
+        {'steps': [{'kind': 'source', 'name': 'aliquot-1', 'sample_ref': 'S1'},
+                   {'kind': 'scan', 'name': 'R1'}]},
+        {'steps': [{'kind': 'source', 'name': 'aliquot-2', 'sample_ref': 'S1'},
+                   {'kind': 'scan', 'name': 'R2'}]},
+        {'steps': [{'kind': 'source', 'name': 'S2', 'sample_ref': 'S2'},
+                   {'kind': 'scan', 'name': 'R3'},
+                   {'kind': 'derived_array_data_file', 'name': 'shared.tsv',
+                    'link': {'value': 'https://results/shared.tsv'}}]},
+    ]}}
+    paths = projected(data)
+    assert [p['steps'][1]['name'] for p in paths[:3]] == ['R1', 'R2', 'R3']
+    # A report on S2 does not suppress S1's report; conflicting aliquot facts
+    # do not get assigned to its sample-level result.
+    assert len(paths) == 4
+    source = paths[3]['steps'][0]
+    assert (source['name'], source['sample_ref']) == ('S1', 'S1')
+    assert [v for k, v in comments(paths[3]) if k == 'SAMPLE_FILE_URI'] == ['https://results/shared.tsv']
+    assert all(not any(k == 'SAMPLE_FILE_URI' for k, v in comments(p)) for p in paths[:2])
+
+
 def comments(path):
     return [(c['name'],c['value']) for s in path['steps'] for c in s.get('comments',[])]
 

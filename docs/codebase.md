@@ -1504,6 +1504,15 @@ using a transitive union or a description-only deduplication rule. Protocol expo
 regressions include sparse ambiguity, empty descriptions, type aliases, registered
 collisions, reference bindings and bounded normalization/comparison work.
 
+Native file projection builds ordered source-occurrence and sample-scoped file
+location indexes after sparse-branch completion. Adding a supported sample report
+updates the indexes before later links are considered. Source annotations are
+matched only against the same explicitly bound sample, while every compatible
+source occurrence and conflicting aliquot remains available to the existing rules.
+These indexes live inside one projection call; they never merge sample identities
+or choose a run for an unbound file. Regression tests bound relationship traversal
+work and preserve duplicate links, scoped reports and ambiguous source facts.
+
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>
