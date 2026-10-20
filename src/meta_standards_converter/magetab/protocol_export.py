@@ -8,6 +8,7 @@
 # =============================================================================
 """Protocol identity allocation on the operation-local MAGE-TAB export copy."""
 from copy import deepcopy
+from ._performance import measured_phase, work
 import logging
 import re
 
@@ -52,12 +53,14 @@ def _registered(name):
     return match[1] if match else None
 
 
+@measured_phase("magetab_protocol_matching")
 def prepare_protocols(data):
     """Retain all definitions, coalesce compatible equivalents and rewrite references."""
     from meta_standards_converter.miniml.archive_protocols import prepare_native_protocols
     prepare_native_protocols(data)
     series = data.get('series', {})
     protocols = series.get('protocols', [])
+    work(protocol_definitions=len(protocols))
     if not protocols:
         return
     reserved = {_registered(p['name']) or p['name'] for p in protocols
@@ -66,6 +69,7 @@ def prepare_protocols(data):
     bindings = {}
     # Compatibility is not transitive: an incomplete record must not choose
     # arbitrarily between conflicting richer definitions.
+    work(protocol_candidate_pairs=len(protocols) ** 2)
     neighbors = [{j for j, other in enumerate(protocols) if _compatible(source, other)}
                  for source in protocols]
     registered_choices = [{_registered(protocols[j]['name']) for j in neighborhood

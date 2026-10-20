@@ -8,6 +8,7 @@
 # =============================================================================
 """Typed, editable MAGE-TAB extension for MINiML-compatible JSON packages."""
 from __future__ import annotations
+from ._performance import measured_phase
 import copy
 import re
 from meta_standards_converter.metadata.provenance import (
@@ -275,6 +276,7 @@ def render_model(model: dict) -> list | None:
     return rows
 
 
+@measured_phase("magetab_semantic_overlay")
 def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
     """Render ordered MSC MINiML semantics over constructor-generated IDF/SDRF rows."""
     rows = copy.deepcopy(core_rows)

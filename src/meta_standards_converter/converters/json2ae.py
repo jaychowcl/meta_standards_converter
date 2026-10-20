@@ -19,6 +19,7 @@ from meta_standards_converter.sources.json import JSONPackageSource
 from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
+from meta_standards_converter.magetab._performance import measured_phase
 
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,7 @@ class JSON2AEConverter(JSONHandler):
 
         return self._packages_from_loaded(loaded, replacement_profile=replacement_profile)
 
+    @measured_phase("magetab_package_resolution")
     def _packages_from_loaded(self, loaded, *, replacement_profile=None):
         for warning in loaded.warnings:
             logger.warning("%s", warning)

@@ -12,6 +12,7 @@ This module operates only on the constructor's private export copy. Stored
 MINiML keeps every file occurrence. Derived files remain explicit workflow nodes.
 """
 from copy import deepcopy
+from ._performance import measured_phase, work
 import json
 import re
 
@@ -270,11 +271,13 @@ def _complete_branches(paths, sample_ids, raw_inventories=None):
     return retained
 
 
+@measured_phase("magetab_file_projection")
 def project_native_files(data):
     """Consolidate native raw-file paths, keeping run-scoped archive annotations."""
     if str(data.get('source', {}).get('format', '')).upper() not in {'ENA', 'SRA'}:
         return
     series = data.get('series', {})
+    work(input_paths=len(series.get('assay_paths', [])), samples=len(data.get('sample', [])))
     original_inventory = {}
     paths = _complete_branches(series.get('assay_paths', []), {s['iid'] for s in data.get('sample', [])}, original_inventory)
     from urllib.parse import unquote, urlsplit

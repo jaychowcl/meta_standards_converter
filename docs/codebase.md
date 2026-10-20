@@ -1461,6 +1461,33 @@ resolve profile -> [enrich] -> construct -> [write]; return`.
 
 **Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py), and [`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py).
 
+<a id="magetab-export-performance"></a>
+### MAGE-TAB export measurements and reuse
+
+Export emits `magetab_*` stages through the existing operational-event interface:
+package resolution, model reconstruction, normalization, protocol matching, native
+file projection, routing, evidence lookup, protocol registration, path construction,
+column planning, row rendering, IDF construction, semantic overlay, validation and
+writing. Existing enclosing `export`, `projection` and `serialization` stages remain.
+These are observational attributes, not fields in MINiML or MAGE-TAB.
+
+Each export phase reports inclusive `wall_seconds` and `process_cpu_seconds`.
+`exclusive_instrumented_wall_seconds` and `exclusive_instrumented_cpu_seconds`
+subtract only directly nested measured export phases; ordinary logging spans are
+not subtracted. Do not add inclusive parent and child durations. CPU time belongs
+to the process and can include concurrent activity.
+
+`peak_rss_bytes` and `initial_peak_rss_bytes` are process-lifetime high-water marks,
+labelled `peak_rss_scope=process_lifetime_high_water`, not per-phase allocations.
+Unavailable RSS is null. Protocol definition/candidate-pair counts, path counts and
+column-group counts explain scaling without logging metadata contents.
+
+Purposeful decision: instrumentation changes no source precedence, protocol binding,
+row/column ordering, validation or rendering route. The export-only measurement
+context is released on success and failure and does not alter the shared codec.
+Regression coverage lives in `tests/magetab/test_export_performance.py`; native
+file, protocol export and operation-logging tests remain complementary gates.
+
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>
