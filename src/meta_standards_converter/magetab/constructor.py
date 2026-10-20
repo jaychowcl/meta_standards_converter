@@ -48,6 +48,11 @@ from ._performance import phase
 
 class AEConstructor:
     def __init__(self, idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None):
+        # Injected collaborators may intentionally transform the private view
+        # after handler preparation. Preserve their eager-table contract.
+        self._canonical_table_preparation = (
+            idf_constructor is None and sdrf_constructor is None and evidence_resolver is None
+        )
         self.evidence = evidence_resolver or MAGETabEvidenceResolver(pubmed_client, insdc_client)
         self.idf_constructor = idf_constructor or IDFConstructor()
         self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
@@ -117,7 +122,10 @@ class AEConstructor:
                 data, protocol_registry, handler.run_evidence,
             )
         canonical_paths = data.get('series', {}).get('assay_paths', [])
-        if (type(self.sdrf_constructor) is SDRFConstructor and canonical_paths
+        if (self._canonical_table_preparation
+                and type(self.idf_constructor) is IDFConstructor
+                and type(self.evidence) is MAGETabEvidenceResolver
+                and type(self.sdrf_constructor) is SDRFConstructor and canonical_paths
                 and self.sdrf_constructor._prepare_for_canonical_paths(handler)):
             # A nonempty validated path list always supplies a semantic table.
             # Keep protocol/audit preparation, then materialize that table once

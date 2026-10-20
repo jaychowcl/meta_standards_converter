@@ -268,3 +268,34 @@ def test_indexed_binding_preserves_pools_ambiguity_occurrences_and_channel_scope
     assert result[0]["steps"][0]["characteristics"] == [{"name": "hz_tissue", "value": "two"}]
     assert "characteristics" not in result[0]["steps"][1]
     assert result[1:] == before[1:] and paths == before
+
+
+@pytest.mark.parametrize("collaborator", ["idf", "evidence"])
+def test_injected_collaborators_keep_eager_fallback_table(collaborator):
+    from meta_standards_converter.magetab.idf import IDFConstructor
+    from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
+    from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
+
+    class LegacyBuilder(SDRFConstructor):
+        pass
+
+    class ChangingIDF(IDFConstructor):
+        def prefix_rows(self, data):
+            data["series"]["assay_paths"].clear()
+            return super().prefix_rows(data)
+
+    class ChangingEvidence(MAGETabEvidenceResolver):
+        def publications(self, data):
+            data["series"]["assay_paths"].clear()
+            return super().publications(data)
+
+    def constructor(sdrf=None):
+        return AEConstructor(
+            sdrf_constructor=sdrf,
+            idf_constructor=ChangingIDF() if collaborator == "idf" else None,
+            evidence_resolver=ChangingEvidence(PubMed(), NoRuns()) if collaborator == "evidence" else None,
+            pubmed_client=PubMed(), insdc_client=NoRuns())
+
+    package = MINiMLCodec().decode(legacy()).package
+    expected = constructor(LegacyBuilder()).miniml2magetab(package)
+    assert constructor().miniml2magetab(package) == expected

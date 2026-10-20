@@ -1534,8 +1534,10 @@ built-in constructor prepares the handler's protocols, paths and audit but skips
 the table that the semantic overlay would replace. The overlay renders the final
 table once, at its original position after IDF preparation. Protocol registration,
 run/publication evidence, IDF validation ordering and audit warnings are retained.
-Inputs without canonical paths and injected or overridden builders/renderers keep
-the existing full rendering route. The private `_prepare_paths` split separates
+Inputs without canonical paths and injected IDF/SDRF constructors, evidence
+resolvers or overridden builders/renderers keep the existing full rendering route.
+An injected collaborator can change paths after preparation; its eager fallback
+table therefore remains available. The private `_prepare_paths` split separates
 these preparation effects from column planning and row materialization.
 
 Harmonized sample-to-path binding builds its sample identity map once per call,
