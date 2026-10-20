@@ -59,7 +59,10 @@ class AEConstructor:
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
         with phase("magetab_model_reconstruction"):
-            data = MINiMLCodec().encode(MINiMLCodec().decode(data).package)
+            # Decode validates external/changed typed inputs as well as mappings.
+            # Its canonical package needs one detached view, not another complete
+            # encode/decode/validation cycle before private export mutations.
+            data = MINiMLCodec().decode(data).package.to_mapping()
         with phase("magetab_normalization"):
             from ..miniml.publication_identifiers import clean_publication_identifiers
             clean_publication_identifiers(data)

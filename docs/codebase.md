@@ -1513,6 +1513,22 @@ These indexes live inside one projection call; they never merge sample identitie
 or choose a run for an unbound file. Regression tests bound relationship traversal
 work and preserve duplicate links, scoped reports and ambiguous source facts.
 
+The constructor decodes and validates incoming metadata once, then materializes
+one detached canonical mapping for normalization and IDF/SDRF preparation. It no
+longer encodes that freshly decoded model through another reconstruction. Mutable
+branches belong to the export; immutable scalar values can be shared safely.
+No prepared mapping is retained on the constructor after the call or an exception.
+
+With no replacement profile, JSON-to-MAGE-TAB validates built-in package groups
+directly instead of performing a disabled-profile encode/copy/decode round trip.
+Replacement profiles and custom group resolvers retain their existing resolution
+path. Injected constructors still receive typed `MINiMLPackage` values. External or
+changed typed inputs are revalidated at the constructor boundary, including
+duplicate identities and malformed schema content. Study identity checks inspect
+only typed series identity fields, without serializing unrelated source evidence.
+This is export-local reuse; shared codec/model contracts and JSON export do not
+change.
+
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>

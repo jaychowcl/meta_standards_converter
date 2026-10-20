@@ -11,6 +11,9 @@ from meta_standards_converter.sources.json import DatasetPackageGroup, SourceLoa
 from tests.test_archive_export_cleanup import legacy
 from tests.test_archive_publications import NoRuns, PubMed
 from tests.test_conversion_logging import events
+from meta_standards_converter.miniml import MINiMLPackage
+from copy import deepcopy
+from dataclasses import replace
 
 
 def test_export_stages_report_work_cpu_and_process_peak_without_changing_output(caplog, tmp_path):
@@ -66,3 +69,100 @@ def test_export_phase_excludes_nested_instrumented_work_and_restores_failure_con
     assert completed["outer"]["attributes"]["exclusive_instrumented_wall_seconds"] == 6
     assert completed["outer"]["attributes"]["exclusive_instrumented_cpu_seconds"] == 3
     assert completed["next"]["attributes"]["exclusive_instrumented_wall_seconds"] == 1
+
+
+def count_package_construction(monkeypatch):
+    calls = []
+    original = MINiMLPackage.from_mapping.__func__
+
+    def construct(cls, value):
+        calls.append(None)
+        return original(cls, value)
+
+    monkeypatch.setattr(MINiMLPackage, "from_mapping", classmethod(construct))
+    return calls
+
+
+def test_constructor_validates_once_and_owns_one_detached_export_view(monkeypatch):
+    package = MINiMLCodec().decode(legacy()).package
+    before = package.to_mapping()
+    constructor = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    expected = constructor.miniml2magetab(package)
+    calls = count_package_construction(monkeypatch)
+    assert constructor.miniml2magetab(package) == expected
+    assert package.to_mapping() == before
+    assert len(calls) == 1
+
+
+def test_default_resolution_validates_once_without_disabled_profile_roundtrip(monkeypatch):
+    package = MINiMLCodec().decode(legacy()).package
+    source = SourceLoadResult((DatasetPackageGroup("study", (package,)),))
+    converter = JSON2AEConverter()
+    calls = count_package_construction(monkeypatch)
+    actual = converter._packages_from_loaded(source)
+    assert actual == [package]
+    assert actual[0] is not package  # The external typed input is revalidated.
+    assert len(calls) == 1
+
+
+def test_study_identity_lookup_does_not_materialize_the_whole_package(monkeypatch):
+    package = MINiMLCodec().decode(legacy()).package
+    expected = JSON2AEConverter()._usable_study_accession(package)
+
+    def forbidden(*args):
+        raise AssertionError("Identity lookup traversed all samples and source evidence")
+
+    monkeypatch.setattr(MINiMLPackage, "to_mapping", forbidden)
+    assert JSON2AEConverter()._usable_study_accession(package) == expected
+
+
+def test_changed_external_typed_input_is_not_trusted_by_export():
+    package = MINiMLCodec().decode(legacy()).package
+    malformed = replace(package, samples=package.samples + package.samples)
+    with pytest.raises(ValueError, match="duplicate sample iid"):
+        AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns()).miniml2magetab(malformed)
+    with pytest.raises(ValueError, match="duplicate sample iid"):
+        JSON2AEConverter()._packages_from_loaded(
+            SourceLoadResult((DatasetPackageGroup("bad", (malformed,)),)))
+
+
+def test_custom_group_resolution_and_injected_constructor_keep_their_contract():
+    package = MINiMLCodec().decode(legacy()).package
+    supplied = []
+
+    class CustomGroup(DatasetPackageGroup):
+        def resolved(self, *, replacement_profile=None):
+            supplied.append(replacement_profile)
+            return DatasetPackageGroup("changed", (replace(package, series=replace(
+                package.series, title="injected resolution")),))
+
+    class Constructor:
+        def miniml2magetab(self, data):
+            assert isinstance(data, MINiMLPackage)
+            return data.series.title
+
+    result = JSON2AEConverter(ae_constructor=Constructor()).convert_loaded(
+        SourceLoadResult((CustomGroup("original", (package,)),)), enrich=False)
+    assert result == ["injected resolution"]
+    assert supplied == [None]
+
+
+def test_private_view_is_discarded_after_failure_and_next_export_is_clean(monkeypatch):
+    package = MINiMLCodec().decode(legacy()).package
+    before = deepcopy(package.to_mapping())
+    constructor = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    expected = constructor.miniml2magetab(package)
+    from meta_standards_converter.magetab import native_files
+    original = native_files.project_native_files
+
+    def fail(data):
+        data["sample"].clear()
+        raise RuntimeError("projection failure")
+
+    with monkeypatch.context() as scoped:
+        scoped.setattr(native_files, "project_native_files", fail)
+        with pytest.raises(RuntimeError, match="projection failure"):
+            constructor.miniml2magetab(package)
+    assert package.to_mapping() == before
+    assert native_files.project_native_files is original
+    assert constructor.miniml2magetab(package) == expected
