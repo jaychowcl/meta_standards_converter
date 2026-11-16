@@ -13,6 +13,15 @@ These are offline, independently invoked input-to-artifact examples for all seve
 
 ## Corpus and provenance
 
+`sra_publication_concurrency.json` freezes the existing native SRA fixture's
+publication links, canonical JSON and IDF/SDRF output from serial commit `893e27e`.
+Its synthetic PubMed identifiers test experiment, project and sample ownership.
+It was generated without network access before the concurrency implementation;
+`test_sra_publication_concurrency.py` checks exact serial/concurrent equivalence.
+The consolidated 3.1 fixture changes only `miniml_schema_version` from 3.0 to 3.1;
+all scientific values and IDF/SDRF cells remain unchanged. The generated IDF date
+is frozen at 2026-10-20 so the comparison is independent of the test date.
+
 | Case | Origin and reduction | Workflows |
 | --- | --- | --- |
 | `studies/GSE328265` | Existing public GEO XML reduced to GSM9651991 and its sample reference; other study/platform evidence retained. PubMed, SRA and ENA responses captured on 2026-09-10. | GEO2JSON, GEO2AE, JSON2AE, JSON2TSV |

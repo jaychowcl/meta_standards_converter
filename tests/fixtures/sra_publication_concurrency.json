@@ -1,0 +1,2668 @@
+{
+  "linked": [
+    {
+      "provider": "sra",
+      "kind": "publication_reference",
+      "accession": "SRX7812918",
+      "metadata": {
+        "pubmed_id": "123"
+      }
+    },
+    {
+      "provider": "sra",
+      "kind": "publication_reference",
+      "accession": "PRJNA609050",
+      "metadata": {
+        "pubmed_id": "124"
+      }
+    },
+    {
+      "provider": "sra",
+      "kind": "publication_reference",
+      "accession": "SAMN14218700",
+      "metadata": {
+        "pubmed_id": "125"
+      }
+    }
+  ],
+  "issues": [],
+  "json": {
+    "miniml_schema_version": "3.1",
+    "source": {
+      "format": "SRA"
+    },
+    "database": [
+      {
+        "iid": "BioProject",
+        "name": "BioProject"
+      },
+      {
+        "iid": "BioSample",
+        "name": "BioSample"
+      },
+      {
+        "iid": "SRA",
+        "name": "SRA"
+      }
+    ],
+    "organization": [
+      {
+        "web_link": "http://www.uwo.ca",
+        "type": "institute",
+        "iid": "sra:EXPERIMENT_PACKAGE:SRX7812918:organization-2",
+        "name": "University of Western Ontario",
+        "address": {
+          "line": [
+            "Microbiology and Immunology",
+            "University of Western Ontario",
+            "1151 Richmond Street",
+            "Ontario"
+          ],
+          "city": "London",
+          "postal_code": "N6A3K7",
+          "country": "Canada"
+        }
+      },
+      {
+        "sample_accession": "SAMN14218700",
+        "role": "owner",
+        "web_link": "http://www.uwo.ca",
+        "iid": "sra:BioSample:SAMN14218700:organization-2",
+        "name": "University of Western Ontario"
+      },
+      {
+        "web_link": "http://www.uwo.ca",
+        "role": "owner",
+        "type": "institute",
+        "iid": "sra:DocumentSummary:609050:organization-1-0-0",
+        "name": "University of Western Ontario"
+      },
+      {
+        "role": "center_name",
+        "iid": "sra:STUDY:SRP250911:center_name",
+        "name": "BioProject"
+      }
+    ],
+    "contributor": [
+      {
+        "iid": "sra:EXPERIMENT_PACKAGE:SRX7812918:organization-2:contact-0",
+        "person": {
+          "first": "Brendan",
+          "last": "Daisley"
+        },
+        "email": "bdaisley@uwo.ca",
+        "address": {
+          "line": [
+            "Microbiology and Immunology",
+            "University of Western Ontario",
+            "1151 Richmond Street",
+            "Ontario"
+          ],
+          "city": "London",
+          "postal_code": "N6A3K7",
+          "country": "Canada"
+        },
+        "organization_ref": {
+          "ref": "sra:EXPERIMENT_PACKAGE:SRX7812918:organization-2"
+        },
+        "extensions": {
+          "secondary_email": "brendan.daisley@gmail.com"
+        }
+      },
+      {
+        "iid": "sra:BioSample:SAMN14218700:organization-2:contact-0",
+        "person": {
+          "first": "Brendan",
+          "last": "Daisley"
+        },
+        "organization_ref": {
+          "ref": "sra:BioSample:SAMN14218700:organization-2"
+        }
+      }
+    ],
+    "platform": [
+      {
+        "instrument_model": "Illumina MiSeq",
+        "instrument_platform": "ILLUMINA",
+        "iid": "sra:platform:20603d6a4bfeb0ae",
+        "title": "Illumina MiSeq",
+        "technology": "high-throughput sequencing"
+      }
+    ],
+    "sample": [
+      {
+        "pubmed_publication": [
+          {
+            "pubmed_id": "125"
+          }
+        ],
+        "pubmed_id": [
+          "125"
+        ],
+        "comments": [
+          {
+            "name": "BioSampleModel",
+            "value": "Metagenome or environmental"
+          }
+        ],
+        "iid": "SRS6225446",
+        "accession": [
+          {
+            "value": "SRS6225446",
+            "database": "SRA"
+          },
+          {
+            "value": "SAMN14218700",
+            "database": "BioSample"
+          }
+        ],
+        "status": [
+          {
+            "submission_date": "2020-02-27T05:49:05.680",
+            "release_date": "2020-02-27T00:00:00.000",
+            "last_update_date": "2020-02-27T06:27:29.867",
+            "database": "BioSample"
+          },
+          {
+            "database": "BioSample",
+            "comment": [
+              {
+                "name": "access",
+                "value": "public"
+              }
+            ]
+          },
+          {
+            "database": "BioSample",
+            "comment": [
+              {
+                "name": "record status",
+                "value": "live"
+              }
+            ]
+          }
+        ],
+        "title": "patient_50",
+        "type": "SRA",
+        "channel_count": "1",
+        "channel": [
+          {
+            "source": {
+              "value": "PC_50_Rectal_fecal_matter"
+            },
+            "organism": [
+              {
+                "value": "human gut metagenome",
+                "taxid": "408170"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "host",
+                "value": "Homo sapiens"
+              },
+              {
+                "name": "isolation_source",
+                "value": "PC_50_Rectal_fecal_matter"
+              },
+              {
+                "name": "collection_date",
+                "value": "2018-09-18"
+              },
+              {
+                "name": "geo_loc_name",
+                "value": "Canada: London"
+              },
+              {
+                "name": "lat_lon",
+                "value": "43.01 N 81.27 W"
+              }
+            ]
+          }
+        ],
+        "description": "PC_50_Rectal fecal matter from prostate cancer patient",
+        "platform_ref": {
+          "ref": "sra:platform:20603d6a4bfeb0ae"
+        },
+        "library_strategy": "AMPLICON",
+        "library_source": "GENOMIC",
+        "library_selection": "PCR",
+        "contact_ref": [
+          {
+            "ref": "sra:BioSample:SAMN14218700:organization-2:contact-0"
+          }
+        ],
+        "raw_data": [
+          {
+            "value": "s3://sra-pub-src-7/SRR11192680/PC_50-R1.fastq.1",
+            "type": "fastq",
+            "checksum": "3895aac24d545815e24fb9ba96d9f8e4"
+          },
+          {
+            "value": "s3://sra-pub-src-7/SRR11192680/PC_50-R2.fastq.1",
+            "type": "fastq",
+            "checksum": "6a4abd595e2d00516438d2089ee61522"
+          },
+          {
+            "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+            "type": "SRA Normalized",
+            "checksum": "711d9cba8945260a66f88ce585ef9926"
+          },
+          {
+            "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+            "type": "SRA Normalized",
+            "checksum": "711d9cba8945260a66f88ce585ef9926"
+          },
+          {
+            "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+            "type": "SRA Lite",
+            "checksum": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+          },
+          {
+            "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+            "type": "SRA Lite",
+            "checksum": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+          },
+          {
+            "value": "s3://sra-pub-zq-4/SRR11192680/SRR11192680.sralite.1",
+            "type": "SRA Lite",
+            "checksum": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+          },
+          {
+            "value": "gs://sra-pub-zq-102/SRR11192680/SRR11192680.zq.1",
+            "type": "SRA Lite",
+            "checksum": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+          }
+        ],
+        "relation": [
+          {
+            "type": "bioproject",
+            "target": "609050"
+          },
+          {
+            "type": "PubMed",
+            "target": "125"
+          },
+          {
+            "type": "sample owner",
+            "target": "sra:BioSample:SAMN14218700:organization-2"
+          }
+        ],
+        "sra_accession": [
+          "SRX7812918"
+        ],
+        "ena_accession": [
+          "SRP250911"
+        ],
+        "sra_run": [
+          {
+            "instrument_platform": "ILLUMINA",
+            "files": [
+              {
+                "filename": "PC_50-R1.fastq",
+                "bytes": "27801140",
+                "md5": "3895aac24d545815e24fb9ba96d9f8e4",
+                "format": "fastq",
+                "role": "Original",
+                "url": "s3://sra-pub-src-7/SRR11192680/PC_50-R1.fastq.1",
+                "free_egress": "-",
+                "access_type": "Use Cloud Data Delivery",
+                "org": "AWS",
+                "uri": "s3://sra-pub-src-7/SRR11192680/PC_50-R1.fastq.1"
+              },
+              {
+                "filename": "PC_50-R2.fastq",
+                "bytes": "26592578",
+                "md5": "6a4abd595e2d00516438d2089ee61522",
+                "format": "fastq",
+                "role": "Original",
+                "url": "s3://sra-pub-src-7/SRR11192680/PC_50-R2.fastq.1",
+                "free_egress": "-",
+                "access_type": "Use Cloud Data Delivery",
+                "org": "AWS",
+                "uri": "s3://sra-pub-src-7/SRR11192680/PC_50-R2.fastq.1"
+              },
+              {
+                "filename": "SRR11192680",
+                "bytes": "11676636",
+                "md5": "711d9cba8945260a66f88ce585ef9926",
+                "format": "SRA Normalized",
+                "role": "Primary ETL",
+                "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+                "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680"
+              },
+              {
+                "filename": "SRR11192680",
+                "bytes": "11676636",
+                "md5": "711d9cba8945260a66f88ce585ef9926",
+                "format": "SRA Normalized",
+                "role": "Primary ETL",
+                "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+                "free_egress": "worldwide",
+                "access_type": "anonymous",
+                "org": "AWS",
+                "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680"
+              },
+              {
+                "filename": "SRR11192680.sralite",
+                "bytes": "6100928",
+                "md5": "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+                "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1"
+              },
+              {
+                "filename": "SRR11192680.sralite",
+                "bytes": "6100928",
+                "md5": "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+                "free_egress": "worldwide",
+                "access_type": "anonymous",
+                "org": "NCBI",
+                "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1"
+              },
+              {
+                "filename": "SRR11192680.sralite",
+                "bytes": "6100928",
+                "md5": "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "s3://sra-pub-zq-4/SRR11192680/SRR11192680.sralite.1",
+                "free_egress": "s3.us-east-1",
+                "access_type": "aws identity",
+                "org": "AWS",
+                "uri": "s3://sra-pub-zq-4/SRR11192680/SRR11192680.sralite.1"
+              },
+              {
+                "filename": "SRR11192680.sralite",
+                "bytes": "6100928",
+                "md5": "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "gs://sra-pub-zq-102/SRR11192680/SRR11192680.zq.1",
+                "free_egress": "gs.us-east1",
+                "access_type": "gcp identity",
+                "org": "GCP",
+                "uri": "gs://sra-pub-zq-102/SRR11192680/SRR11192680.zq.1"
+              }
+            ],
+            "statistics": {
+              "tag": "Statistics",
+              "attributes": {
+                "nreads": "2",
+                "nspots": "54892"
+              },
+              "children": [
+                {
+                  "tag": "Read",
+                  "attributes": {
+                    "index": "0",
+                    "count": "54892",
+                    "average": "224.03",
+                    "stdev": "0.32"
+                  },
+                  "children": []
+                },
+                {
+                  "tag": "Read",
+                  "attributes": {
+                    "index": "1",
+                    "count": "54892",
+                    "average": "213.02",
+                    "stdev": "0.17"
+                  },
+                  "children": []
+                }
+              ]
+            },
+            "platform_ref": {
+              "ref": "sra:platform:20603d6a4bfeb0ae"
+            },
+            "run": "SRR11192680",
+            "study": "SRP250911",
+            "experiment": "SRX7812918",
+            "sample": "SRS6225446",
+            "biosample": "SAMN14218700",
+            "library_layout": "PAIRED",
+            "library_selection": "PCR",
+            "library_source": "GENOMIC",
+            "library_strategy": "AMPLICON",
+            "scan_name": "PC_50-R1.fastq",
+            "instrument_model": "Illumina MiSeq",
+            "fastq_files": [
+              {
+                "format": "fastq",
+                "role": "Original",
+                "url": "s3://sra-pub-src-7/SRR11192680/PC_50-R1.fastq.1",
+                "free_egress": "-",
+                "access_type": "Use Cloud Data Delivery",
+                "org": "AWS",
+                "uri": "s3://sra-pub-src-7/SRR11192680/PC_50-R1.fastq.1",
+                "filename": "PC_50-R1.fastq",
+                "md5": "3895aac24d545815e24fb9ba96d9f8e4",
+                "bytes": "27801140"
+              },
+              {
+                "format": "fastq",
+                "role": "Original",
+                "url": "s3://sra-pub-src-7/SRR11192680/PC_50-R2.fastq.1",
+                "free_egress": "-",
+                "access_type": "Use Cloud Data Delivery",
+                "org": "AWS",
+                "uri": "s3://sra-pub-src-7/SRR11192680/PC_50-R2.fastq.1",
+                "filename": "PC_50-R2.fastq",
+                "md5": "6a4abd595e2d00516438d2089ee61522",
+                "bytes": "26592578"
+              }
+            ],
+            "read_lengths": [
+              "224.03",
+              "213.02"
+            ]
+          }
+        ]
+      }
+    ],
+    "series": {
+      "iid": "SRP250911",
+      "accession": [
+        {
+          "value": "SRP250911",
+          "database": "SRA"
+        },
+        {
+          "value": "PRJNA609050",
+          "database": "BioProject"
+        }
+      ],
+      "title": "Microbiota analysis of prostate cancer patients",
+      "pubmed_id": [
+        "124"
+      ],
+      "summary": "The goal of this study was to identify how the oral prostate cancer drug, abiraterone acetate, influences the gut microbiota and vice versa.",
+      "type": [
+        {
+          "value": "Other"
+        }
+      ],
+      "contributor_ref": [
+        {
+          "ref": "sra:EXPERIMENT_PACKAGE:SRX7812918:organization-2:contact-0"
+        }
+      ],
+      "sample_ref": [
+        {
+          "ref": "SRS6225446"
+        }
+      ],
+      "relation": [
+        {
+          "experiment_ref": "SRX7812918",
+          "publication": {
+            "pubmed_id": "123"
+          },
+          "type": "experiment publication",
+          "target": "123"
+        },
+        {
+          "type": "PubMed",
+          "target": "124"
+        }
+      ],
+      "pubmed_publication": [
+        {
+          "pubmed_id": "124",
+          "doi": null,
+          "author_list": null,
+          "title": null,
+          "status": null,
+          "status_term_source_ref": null,
+          "status_term_accession_number": null
+        }
+      ],
+      "assay_paths": [
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "PC_50-R1.fastq",
+              "link": {
+                "value": "s3://sra-pub-src-7/SRR11192680/PC_50-R1.fastq.1",
+                "type": "fastq"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "3895aac24d545815e24fb9ba96d9f8e4"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "27801140"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "fastq"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "PC_50-R2.fastq",
+              "link": {
+                "value": "s3://sra-pub-src-7/SRR11192680/PC_50-R2.fastq.1",
+                "type": "fastq"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "6a4abd595e2d00516438d2089ee61522"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "26592578"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "fastq"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Original"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "SRR11192680",
+              "link": {
+                "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+                "type": "SRA Normalized"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "711d9cba8945260a66f88ce585ef9926"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "11676636"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "SRA Normalized"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Primary ETL"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "SRR11192680",
+              "link": {
+                "value": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+                "type": "SRA Normalized"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "711d9cba8945260a66f88ce585ef9926"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "11676636"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "SRA Normalized"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Primary ETL"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "SRR11192680.sralite",
+              "link": {
+                "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+                "type": "SRA Lite"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "6100928"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "SRA Lite"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Primary ETL"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "SRR11192680.sralite",
+              "link": {
+                "value": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+                "type": "SRA Lite"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "6100928"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "SRA Lite"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Primary ETL"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "SRR11192680.sralite",
+              "link": {
+                "value": "s3://sra-pub-zq-4/SRR11192680/SRR11192680.sralite.1",
+                "type": "SRA Lite"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "6100928"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "SRA Lite"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Primary ETL"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "SRS6225446",
+              "sample_ref": "SRS6225446",
+              "characteristics": [
+                {
+                  "name": "host",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "isolation_source",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "collection_date",
+                  "value": "2018-09-18"
+                },
+                {
+                  "name": "geo_loc_name",
+                  "value": "Canada: London"
+                },
+                {
+                  "name": "lat_lon",
+                  "value": "43.01 N 81.27 W"
+                },
+                {
+                  "name": "organism",
+                  "value": "human gut metagenome",
+                  "term_source_ref": "NCBITaxon",
+                  "term_accession_number": "408170"
+                }
+              ],
+              "description": "PC_50_Rectal_fecal_matter",
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN14218700"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "patient_50"
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "PC_50_Rectal_fecal_matter"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "PC_50_Rectal fecal matter from prostate cancer patient"
+                }
+              ]
+            },
+            {
+              "kind": "assay",
+              "name": "SRX7812918",
+              "sample_ref": "SRS6225446",
+              "description": "16S rRNA sequencing",
+              "technology_type": {
+                "value": "sequencing assay"
+              },
+              "comments": [
+                {
+                  "name": "LIBRARY_STRATEGY",
+                  "value": "AMPLICON"
+                },
+                {
+                  "name": "LIBRARY_SOURCE",
+                  "value": "GENOMIC"
+                },
+                {
+                  "name": "LIBRARY_SELECTION",
+                  "value": "PCR"
+                },
+                {
+                  "name": "LIBRARY_LAYOUT",
+                  "value": "PAIRED"
+                },
+                {
+                  "name": "INSTRUMENT_MODEL",
+                  "value": "Illumina MiSeq"
+                },
+                {
+                  "name": "INSTRUMENT_PLATFORM",
+                  "value": "ILLUMINA"
+                },
+                {
+                  "name": "Platform_title",
+                  "value": "Illumina MiSeq"
+                }
+              ]
+            },
+            {
+              "kind": "scan",
+              "name": "SRR11192680",
+              "comments": [
+                {
+                  "name": "ENA_RUN",
+                  "value": "SRR11192680"
+                },
+                {
+                  "name": "ENA_EXPERIMENT",
+                  "value": "SRX7812918"
+                },
+                {
+                  "name": "ENA_SAMPLE",
+                  "value": "SRS6225446"
+                }
+              ]
+            },
+            {
+              "kind": "array_data_file",
+              "name": "SRR11192680.sralite",
+              "link": {
+                "value": "gs://sra-pub-zq-102/SRR11192680/SRR11192680.zq.1",
+                "type": "SRA Lite"
+              },
+              "comments": [
+                {
+                  "name": "MD5",
+                  "value": "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+                },
+                {
+                  "name": "BYTES",
+                  "value": "6100928"
+                },
+                {
+                  "name": "FORMAT",
+                  "value": "SRA Lite"
+                },
+                {
+                  "name": "ROLE",
+                  "value": "Primary ETL"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {
+      "insdc": {
+        "version": "2.0",
+        "records": [
+          {
+            "provider": "sra",
+            "kind": "EXPERIMENT_PACKAGE",
+            "accession": "SRX7812918",
+            "metadata": {
+              "tag": "EXPERIMENT_PACKAGE",
+              "children": [
+                {
+                  "tag": "Pool",
+                  "children": [
+                    {
+                      "tag": "Member",
+                      "attributes": {
+                        "member_name": "",
+                        "sample_name": "PC_50",
+                        "sample_title": "patient_50",
+                        "spots": "54892",
+                        "bases": "23990155",
+                        "tax_id": "408170",
+                        "organism": "human gut metagenome",
+                        "accession": "SRS6225446"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "provider": "sra",
+            "kind": "EXPERIMENT",
+            "accession": "SRX7812918",
+            "metadata": {
+              "tag": "EXPERIMENT",
+              "attributes": {
+                "alias": "PC_50",
+                "accession": "SRX7812918"
+              },
+              "children": [
+                {
+                  "tag": "TITLE",
+                  "text": "16S rRNA seq of Homo sapiens: prostate cancer patient rectal sample"
+                },
+                {
+                  "tag": "DESIGN",
+                  "children": [
+                    {
+                      "tag": "LIBRARY_DESCRIPTOR",
+                      "children": [
+                        {
+                          "tag": "LIBRARY_NAME",
+                          "text": "PC_50"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "provider": "sra",
+            "kind": "SUBMISSION",
+            "accession": "SRA1048657",
+            "metadata": {
+              "tag": "SUBMISSION",
+              "attributes": {
+                "lab_name": "Microbiology and Immunology",
+                "center_name": "University of Western Ontario",
+                "alias": "SUB7041173",
+                "accession": "SRA1048657"
+              },
+              "children": [
+                {
+                  "tag": "IDENTIFIERS",
+                  "children": [
+                    {
+                      "tag": "PRIMARY_ID",
+                      "text": "SRA1048657"
+                    },
+                    {
+                      "tag": "SUBMITTER_ID",
+                      "attributes": {
+                        "namespace": "University of Western Ontario"
+                      },
+                      "text": "SUB7041173"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "provider": "sra",
+            "kind": "STUDY",
+            "accession": "SRP250911",
+            "metadata": {
+              "tag": "STUDY",
+              "attributes": {
+                "alias": "PRJNA609050",
+                "accession": "SRP250911"
+              }
+            }
+          },
+          {
+            "provider": "sra",
+            "kind": "SAMPLE",
+            "accession": "SRS6225446",
+            "metadata": {
+              "tag": "SAMPLE",
+              "attributes": {
+                "alias": "PC_50",
+                "accession": "SRS6225446"
+              },
+              "children": [
+                {
+                  "tag": "IDENTIFIERS",
+                  "children": [
+                    {
+                      "tag": "SUBMITTER_ID",
+                      "attributes": {
+                        "namespace": "pda|bdaisley",
+                        "label": "Sample name"
+                      },
+                      "text": "PC_50"
+                    }
+                  ]
+                },
+                {
+                  "tag": "SAMPLE_LINKS",
+                  "children": [
+                    {
+                      "tag": "SAMPLE_LINK",
+                      "children": [
+                        {
+                          "tag": "XREF_LINK",
+                          "children": [
+                            {
+                              "tag": "LABEL",
+                              "text": "PRJNA609050"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "provider": "sra",
+            "kind": "RUN",
+            "accession": "SRR11192680",
+            "metadata": {
+              "tag": "RUN",
+              "attributes": {
+                "total_spots": "54892",
+                "total_bases": "23990155",
+                "size": "11674819",
+                "load_done": "true",
+                "published": "2020-02-27 08:07:09",
+                "is_public": "true",
+                "cluster_name": "public",
+                "has_taxanalysis": "1",
+                "static_data_available": "1",
+                "accession": "SRR11192680"
+              },
+              "children": [
+                {
+                  "tag": "IDENTIFIERS",
+                  "children": [
+                    {
+                      "tag": "SUBMITTER_ID",
+                      "attributes": {
+                        "namespace": "SUB7041173",
+                        "label": "40"
+                      },
+                      "text": "PC_50-R1.fastq"
+                    }
+                  ]
+                },
+                {
+                  "tag": "EXPERIMENT_REF",
+                  "children": [
+                    {
+                      "tag": "IDENTIFIERS",
+                      "children": [
+                        {
+                          "tag": "SUBMITTER_ID",
+                          "attributes": {
+                            "namespace": "SUB7041173"
+                          },
+                          "text": "PC_50"
+                        }
+                      ]
+                    }
+                  ],
+                  "attributes": {
+                    "accession": "SRX7812918"
+                  }
+                },
+                {
+                  "tag": "Pool",
+                  "children": [
+                    {
+                      "tag": "Member",
+                      "attributes": {
+                        "member_name": "",
+                        "sample_name": "PC_50",
+                        "sample_title": "patient_50",
+                        "spots": "54892",
+                        "bases": "23990155",
+                        "tax_id": "408170",
+                        "organism": "human gut metagenome",
+                        "accession": "SRS6225446"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "SRAFiles",
+                  "children": [
+                    {
+                      "tag": "SRAFile",
+                      "attributes": {
+                        "cluster": "public",
+                        "date": "2020-02-27 06:25:40",
+                        "version": "1",
+                        "sratoolkit": "0",
+                        "filename": "PC_50-R1.fastq"
+                      }
+                    },
+                    {
+                      "tag": "SRAFile",
+                      "attributes": {
+                        "cluster": "public",
+                        "date": "2020-02-27 06:25:41",
+                        "version": "1",
+                        "sratoolkit": "0",
+                        "filename": "PC_50-R2.fastq"
+                      }
+                    },
+                    {
+                      "tag": "SRAFile",
+                      "attributes": {
+                        "cluster": "public",
+                        "date": "2020-02-27 06:25:56",
+                        "version": "1",
+                        "sratoolkit": "1",
+                        "filename": "SRR11192680"
+                      }
+                    },
+                    {
+                      "tag": "SRAFile",
+                      "attributes": {
+                        "cluster": "public",
+                        "date": "2020-06-20 07:48:31",
+                        "version": "1",
+                        "sratoolkit": "1",
+                        "filename": "SRR11192680.sralite"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "CloudFiles",
+                  "children": [
+                    {
+                      "tag": "CloudFile",
+                      "attributes": {
+                        "filetype": "fastq",
+                        "provider": "s3",
+                        "location": "s3.us-east-1"
+                      }
+                    },
+                    {
+                      "tag": "CloudFile",
+                      "attributes": {
+                        "filetype": "run",
+                        "provider": "s3",
+                        "location": "s3.us-east-1"
+                      }
+                    },
+                    {
+                      "tag": "CloudFile",
+                      "attributes": {
+                        "filetype": "run.zq",
+                        "provider": "gs",
+                        "location": "gs.us-east1"
+                      }
+                    },
+                    {
+                      "tag": "CloudFile",
+                      "attributes": {
+                        "filetype": "run.zq",
+                        "provider": "s3",
+                        "location": "s3.us-east-1"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "Databases",
+                  "children": [
+                    {
+                      "tag": "Database",
+                      "children": [
+                        {
+                          "tag": "Table",
+                          "attributes": {
+                            "name": "SEQUENCE"
+                          },
+                          "children": [
+                            {
+                              "tag": "Statistics",
+                              "attributes": {
+                                "source": "meta"
+                              },
+                              "children": [
+                                {
+                                  "tag": "Rows",
+                                  "attributes": {
+                                    "count": "54892"
+                                  }
+                                },
+                                {
+                                  "tag": "Elements",
+                                  "attributes": {
+                                    "count": "23990155"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "Bases",
+                  "attributes": {
+                    "cs_native": "false",
+                    "count": "23990155"
+                  },
+                  "children": [
+                    {
+                      "tag": "Base",
+                      "attributes": {
+                        "value": "A",
+                        "count": "5877553"
+                      }
+                    },
+                    {
+                      "tag": "Base",
+                      "attributes": {
+                        "value": "C",
+                        "count": "6114049"
+                      }
+                    },
+                    {
+                      "tag": "Base",
+                      "attributes": {
+                        "value": "G",
+                        "count": "6003908"
+                      }
+                    },
+                    {
+                      "tag": "Base",
+                      "attributes": {
+                        "value": "T",
+                        "count": "5994531"
+                      }
+                    },
+                    {
+                      "tag": "Base",
+                      "attributes": {
+                        "value": "N",
+                        "count": "114"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "provider": "sra",
+            "kind": "BioSample",
+            "accession": "SAMN14218700",
+            "metadata": {
+              "tag": "BioSample",
+              "attributes": {
+                "id": "14218700",
+                "accession": "SAMN14218700"
+              },
+              "children": [
+                {
+                  "tag": "Ids",
+                  "children": [
+                    {
+                      "tag": "Id",
+                      "attributes": {
+                        "db_label": "Sample name"
+                      },
+                      "text": "PC_50"
+                    }
+                  ]
+                },
+                {
+                  "tag": "Description",
+                  "children": [
+                    {
+                      "tag": "Comment",
+                      "children": [
+                        {
+                          "tag": "Paragraph",
+                          "text": "PC_50_Rectal fecal matter from prostate cancer patient"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "Models",
+                  "children": [
+                    {
+                      "tag": "Model",
+                      "text": "Metagenome or environmental"
+                    }
+                  ]
+                },
+                {
+                  "tag": "Package",
+                  "attributes": {
+                    "display_name": "Metagenome or environmental; version 1.0"
+                  },
+                  "text": "Metagenome.environmental.1.0"
+                },
+                {
+                  "tag": "Attributes",
+                  "children": [
+                    {
+                      "tag": "Attribute",
+                      "attributes": {
+                        "harmonized_name": "host",
+                        "attribute_name": "host"
+                      }
+                    },
+                    {
+                      "tag": "Attribute",
+                      "attributes": {
+                        "harmonized_name": "isolation_source",
+                        "attribute_name": "isolation_source"
+                      }
+                    },
+                    {
+                      "tag": "Attribute",
+                      "attributes": {
+                        "harmonized_name": "collection_date",
+                        "attribute_name": "collection_date"
+                      }
+                    },
+                    {
+                      "tag": "Attribute",
+                      "attributes": {
+                        "harmonized_name": "geo_loc_name",
+                        "attribute_name": "geo_loc_name"
+                      }
+                    },
+                    {
+                      "tag": "Attribute",
+                      "attributes": {
+                        "harmonized_name": "lat_lon",
+                        "attribute_name": "lat_lon"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "tag": "Links",
+                  "children": [
+                    {
+                      "tag": "Link",
+                      "attributes": {
+                        "type": "entrez",
+                        "target": "bioproject",
+                        "label": "PRJNA609050"
+                      },
+                      "text": "609050"
+                    }
+                  ]
+                },
+                {
+                  "tag": "Status",
+                  "attributes": {
+                    "when": "2020-02-27T05:49:05.679"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "provider": "sra",
+            "kind": "DocumentSummary",
+            "accession": "PRJNA609050",
+            "metadata": {
+              "tag": "DocumentSummary",
+              "children": [
+                {
+                  "tag": "Project",
+                  "children": [
+                    {
+                      "tag": "ProjectID",
+                      "children": [
+                        {
+                          "tag": "ArchiveID",
+                          "attributes": {
+                            "archive": "NCBI",
+                            "id": "609050",
+                            "accession": "PRJNA609050"
+                          }
+                        },
+                        {
+                          "tag": "LocalID",
+                          "text": "bp0"
+                        },
+                        {
+                          "tag": "LocalID",
+                          "text": "bp0"
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "ProjectDescr",
+                      "children": [
+                        {
+                          "tag": "Relevance",
+                          "children": [
+                            {
+                              "tag": "Medical",
+                              "text": "yes"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "ProjectType",
+                      "children": [
+                        {
+                          "tag": "ProjectTypeSubmission",
+                          "children": [
+                            {
+                              "tag": "Target",
+                              "attributes": {
+                                "capture": "eWhole",
+                                "material": "eGenome",
+                                "sample_scope": "eMultispecies"
+                              }
+                            },
+                            {
+                              "tag": "Method",
+                              "attributes": {
+                                "method_type": "eSequencing"
+                              }
+                            },
+                            {
+                              "tag": "Objectives",
+                              "children": [
+                                {
+                                  "tag": "Data",
+                                  "attributes": {
+                                    "data_type": "eRawSequenceReads"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "IntendedDataTypeSet",
+                              "children": [
+                                {
+                                  "tag": "DataType",
+                                  "text": "raw sequence reads"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "ProjectDataTypeSet",
+                              "children": [
+                                {
+                                  "tag": "DataType",
+                                  "text": "raw sequence reads"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "Submission",
+                  "attributes": {
+                    "last_update": "2020-02-27",
+                    "submission_id": "SUB7041173",
+                    "submitted": "2020-02-27"
+                  },
+                  "children": [
+                    {
+                      "tag": "Description",
+                      "children": [
+                        {
+                          "tag": "Access",
+                          "text": "public"
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "Action",
+                      "attributes": {
+                        "action_id": "SUB7041173-bp0"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "magetab": [
+    [
+      "MAGE-TAB Version",
+      "1.1"
+    ],
+    [
+      "Investigation Title",
+      "Microbiota analysis of prostate cancer patients"
+    ],
+    [
+      "Experiment Description",
+      "The goal of this study was to identify how the oral prostate cancer drug, abiraterone acetate, influences the gut microbiota and vice versa."
+    ],
+    [
+      "Experimental Design",
+      "Other"
+    ],
+    [
+      "Experimental Design Term Source REF",
+      null
+    ],
+    [
+      "Experimental Design Term Accession Number",
+      null
+    ],
+    [
+      "Experimental Factor Name"
+    ],
+    [
+      "Experimental Factor Type"
+    ],
+    [
+      "Experimental Factor Term Source REF"
+    ],
+    [
+      "Experimental Factor Term Accession Number"
+    ],
+    [
+      "Person Last Name",
+      "Daisley",
+      "Daisley"
+    ],
+    [
+      "Person First Name",
+      "Brendan",
+      "Brendan"
+    ],
+    [
+      "Person Mid Initials",
+      null,
+      null
+    ],
+    [
+      "Person Email",
+      "bdaisley@uwo.ca;brendan.daisley@gmail.com",
+      null
+    ],
+    [
+      "Person Phone",
+      null,
+      null
+    ],
+    [
+      "Person Fax",
+      null,
+      null
+    ],
+    [
+      "Person Address",
+      "University of Western Ontario, Microbiology and Immunology, University of Western Ontario, 1151 Richmond Street, Ontario, London, N6A3K7, Canada",
+      null
+    ],
+    [
+      "Person Affiliation",
+      "University of Western Ontario",
+      "University of Western Ontario"
+    ],
+    [
+      "Person Roles",
+      null,
+      null
+    ],
+    [
+      "Person Roles Term Source Ref",
+      null,
+      null
+    ],
+    [
+      "Person Roles Term Accession Number",
+      null,
+      null
+    ],
+    [
+      "Date of Experiment"
+    ],
+    [
+      "Public Release Date",
+      null
+    ],
+    [
+      "PubMed ID",
+      "124"
+    ],
+    [
+      "Publication DOI",
+      null
+    ],
+    [
+      "Publication Author List",
+      null
+    ],
+    [
+      "Publication Title",
+      null
+    ],
+    [
+      "Publication Status",
+      null
+    ],
+    [
+      "Publication Status Term Source REF",
+      null
+    ],
+    [
+      "Publication Status Term Accession Number",
+      null
+    ],
+    [
+      "Protocol Name"
+    ],
+    [
+      "Protocol Type"
+    ],
+    [
+      "Protocol Term Source REF"
+    ],
+    [
+      "Protocol Term Accession Number"
+    ],
+    [
+      "Protocol Description"
+    ],
+    [
+      "Protocol Hardware"
+    ],
+    [
+      "Protocol Software"
+    ],
+    [
+      "Protocol Parameters"
+    ],
+    [
+      "Protocol Contact"
+    ],
+    [
+      "Protocol Performer"
+    ],
+    [
+      "SDRF File",
+      [
+        [
+          "Source Name",
+          "Comment[BioSD_SAMPLE]",
+          "Comment[Sample_title]",
+          "Comment[Sample_source_name]",
+          "Comment[Sample_description]",
+          "Characteristics[host]",
+          "Characteristics[isolation_source]",
+          "Characteristics[collection_date]",
+          "Characteristics[geo_loc_name]",
+          "Characteristics[lat_lon]",
+          "Characteristics[organism]",
+          "Term Source REF",
+          "Term Accession Number",
+          "Description",
+          "Assay Name",
+          "Comment[LIBRARY_STRATEGY]",
+          "Comment[LIBRARY_SOURCE]",
+          "Comment[LIBRARY_SELECTION]",
+          "Comment[LIBRARY_LAYOUT]",
+          "Comment[INSTRUMENT_MODEL]",
+          "Comment[INSTRUMENT_PLATFORM]",
+          "Comment[Platform_title]",
+          "Description",
+          "Technology Type",
+          "Scan Name",
+          "Comment[ENA_RUN]",
+          "Comment[ENA_EXPERIMENT]",
+          "Comment[ENA_SAMPLE]",
+          "Comment[FASTQ_FILE_NAME]",
+          "Comment[FASTQ_URI]",
+          "Comment[FASTQ_FORMAT]",
+          "Comment[FASTQ_ROLE]",
+          "Comment[FASTQ_BYTES]",
+          "Comment[FASTQ_MD5]",
+          "Comment[ARCHIVE_FILE_NAME]",
+          "Comment[ARCHIVE_FILE_URI]",
+          "Comment[ARCHIVE_FILE_FORMAT]",
+          "Comment[ARCHIVE_FILE_ROLE]",
+          "Comment[ARCHIVE_FILE_BYTES]",
+          "Comment[ARCHIVE_FILE_MD5]",
+          "Comment[ARCHIVE_FILE_NAME]",
+          "Comment[ARCHIVE_FILE_URI]",
+          "Comment[ARCHIVE_FILE_FORMAT]",
+          "Comment[ARCHIVE_FILE_ROLE]",
+          "Comment[ARCHIVE_FILE_BYTES]",
+          "Comment[ARCHIVE_FILE_MD5]",
+          "Comment[ARCHIVE_FILE_NAME]",
+          "Comment[ARCHIVE_FILE_URI]",
+          "Comment[ARCHIVE_FILE_FORMAT]",
+          "Comment[ARCHIVE_FILE_ROLE]",
+          "Comment[ARCHIVE_FILE_BYTES]",
+          "Comment[ARCHIVE_FILE_MD5]",
+          "Comment[ARCHIVE_FILE_NAME]",
+          "Comment[ARCHIVE_FILE_URI]",
+          "Comment[ARCHIVE_FILE_FORMAT]",
+          "Comment[ARCHIVE_FILE_ROLE]",
+          "Comment[ARCHIVE_FILE_BYTES]",
+          "Comment[ARCHIVE_FILE_MD5]"
+        ],
+        [
+          "SRS6225446",
+          "SAMN14218700",
+          "patient_50",
+          "PC_50_Rectal_fecal_matter",
+          "PC_50_Rectal fecal matter from prostate cancer patient",
+          "Homo sapiens",
+          "PC_50_Rectal_fecal_matter",
+          "2018-09-18",
+          "Canada: London",
+          "43.01 N 81.27 W",
+          "human gut metagenome",
+          "NCBITaxon",
+          "408170",
+          "PC_50_Rectal_fecal_matter",
+          "SRX7812918",
+          "AMPLICON",
+          "GENOMIC",
+          "PCR",
+          "PAIRED",
+          "Illumina MiSeq",
+          "ILLUMINA",
+          "Illumina MiSeq",
+          "16S rRNA sequencing",
+          "sequencing assay",
+          "SRR11192680",
+          "SRR11192680",
+          "SRX7812918",
+          "SRS6225446",
+          "PC_50-R1.fastq",
+          "s3://sra-pub-src-7/SRR11192680/PC_50-R1.fastq.1",
+          "fastq",
+          "Original",
+          "27801140",
+          "3895aac24d545815e24fb9ba96d9f8e4",
+          "SRR11192680",
+          "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+          "SRA Normalized",
+          "Primary ETL",
+          "11676636",
+          "711d9cba8945260a66f88ce585ef9926",
+          "SRR11192680.sralite",
+          "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+          "SRA Lite",
+          "Primary ETL",
+          "6100928",
+          "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+          "SRR11192680.sralite",
+          "s3://sra-pub-zq-4/SRR11192680/SRR11192680.sralite.1",
+          "SRA Lite",
+          "Primary ETL",
+          "6100928",
+          "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+          "SRR11192680.sralite",
+          "gs://sra-pub-zq-102/SRR11192680/SRR11192680.zq.1",
+          "SRA Lite",
+          "Primary ETL",
+          "6100928",
+          "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+        ],
+        [
+          "SRS6225446",
+          "SAMN14218700",
+          "patient_50",
+          "PC_50_Rectal_fecal_matter",
+          "PC_50_Rectal fecal matter from prostate cancer patient",
+          "Homo sapiens",
+          "PC_50_Rectal_fecal_matter",
+          "2018-09-18",
+          "Canada: London",
+          "43.01 N 81.27 W",
+          "human gut metagenome",
+          "NCBITaxon",
+          "408170",
+          "PC_50_Rectal_fecal_matter",
+          "SRX7812918",
+          "AMPLICON",
+          "GENOMIC",
+          "PCR",
+          "PAIRED",
+          "Illumina MiSeq",
+          "ILLUMINA",
+          "Illumina MiSeq",
+          "16S rRNA sequencing",
+          "sequencing assay",
+          "SRR11192680",
+          "SRR11192680",
+          "SRX7812918",
+          "SRS6225446",
+          "PC_50-R2.fastq",
+          "s3://sra-pub-src-7/SRR11192680/PC_50-R2.fastq.1",
+          "fastq",
+          "Original",
+          "26592578",
+          "6a4abd595e2d00516438d2089ee61522",
+          "SRR11192680",
+          "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR11192680/SRR11192680",
+          "SRA Normalized",
+          "Primary ETL",
+          "11676636",
+          "711d9cba8945260a66f88ce585ef9926",
+          "SRR11192680.sralite",
+          "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos12/sra-pub-zq-1216/SRR011/192/SRR11192680.sralite.1",
+          "SRA Lite",
+          "Primary ETL",
+          "6100928",
+          "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+          "SRR11192680.sralite",
+          "s3://sra-pub-zq-4/SRR11192680/SRR11192680.sralite.1",
+          "SRA Lite",
+          "Primary ETL",
+          "6100928",
+          "7d331b62a9ccdb6c0556e2a7fdf0bc9d",
+          "SRR11192680.sralite",
+          "gs://sra-pub-zq-102/SRR11192680/SRR11192680.zq.1",
+          "SRA Lite",
+          "Primary ETL",
+          "6100928",
+          "7d331b62a9ccdb6c0556e2a7fdf0bc9d"
+        ]
+      ]
+    ],
+    [
+      "Term Source Name",
+      "NCBITaxon"
+    ],
+    [
+      "Term Source File",
+      null
+    ],
+    [
+      "Term Source Version",
+      null
+    ],
+    [
+      "Investigation Accession",
+      "SRP250911"
+    ],
+    [
+      "Comment[SecondaryAccession]",
+      "SRP250911"
+    ],
+    [
+      "Comment[SecondaryAccessionTermSourceRef]",
+      "SRA"
+    ],
+    [
+      "Comment[SecondaryAccession]",
+      "PRJNA609050"
+    ],
+    [
+      "Comment[SecondaryAccessionTermSourceRef]",
+      "BioProject"
+    ],
+    [
+      "Comment[ArrayExpressAccession]"
+    ],
+    [
+      "Comment[SRAReleaseDate]"
+    ],
+    [
+      "Comment[SRALastUpdateDate]"
+    ],
+    [
+      "Comment[ArrayExpressSubmissionDate]",
+      "2026-10-20"
+    ]
+  ]
+}

@@ -5788,6 +5788,46 @@ parent umbrella into sibling studies. Batch resolution precedes publication so
 read studies sharing a primary project receive `<primary>__<read-study>.json`.
 Repeated references to the same study are processed once per CLI batch.
 
+<a id="sra-publication-concurrency"></a>
+#### SRA publication-link concurrency
+
+`SRASource.linked_publications` retains the existing 100-UID batches for SRA,
+BioProject and BioSample publication links. With `network_workers >= 2`, at most
+two ELink batches are submitted at once. Each worker inherits the caller's
+operation, transport session scope, metadata budget and cancellation context and
+returns its own links, issues and failures. The existing requester still enforces
+shared service pacing, cooldowns, physical-request accounting and streamed byte
+limits; concurrency does not raise a provider's request-rate allowance.
+
+After all retrieval workers have joined, the coordinator processes results in the
+original source/destination/batch order. It resolves SRA citation owners against
+verified experiment membership before attaching references. Sample and experiment
+citations do not become study publications. This deliberate phase boundary keeps
+dependent owner lookups from creating a third simultaneous request. One configured
+worker, or an injected client without a worker profile, retains the original serial
+request order, including interleaved owner lookups.
+
+Publication-link cache reads and successful writes are synchronized; network calls
+run outside the cache lock. The cache retains its existing source-instance lifetime.
+Ordinary batch failures preserve successful batches with ordered diagnostics and
+structured failures. Cancellation, exhausted metadata budgets and fatal failures
+stop scheduling, cancel pending work, join workers and restore the caller's
+cancellation context without setting its event. Caller cancellation remains visible
+inside both workers. The first fatal failure is retained before cancelling siblings,
+so a later cleanup failure cannot replace its cause.
+
+The `publication_link_retrieval`, `publication_owner_resolution` and
+`publication_link_merge` spans separate retrieval wall time, dependent ownership
+checks and result assembly. Serial retrieval emits one span per batch; concurrent
+retrieval emits one span for the complete retrieval phase. Compare their sums at
+equal input coverage. Request-header and body-transfer measurements remain separate.
+Source-stage timings do not establish whole-conversion savings.
+
+`tests/test_sra_publication_concurrency.py` covers worker limits, reversed completion,
+serial/injected-client compatibility, cancellation, quotas, cleanup and source-bound
+citations. `tests/fixtures/sra_publication_concurrency.json` freezes serial JSON and
+IDF/SDRF output from the pre-concurrency implementation for exact equivalence checks.
+
 <a id="native-archive-cli"></a>
 ### Native command reference
 

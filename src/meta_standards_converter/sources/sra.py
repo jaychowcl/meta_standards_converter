@@ -8,8 +8,24 @@
 # =============================================================================
 """Native Entrez discovery and retrieval; never implicitly calls ENA."""
 from meta_standards_converter.provider_issues import provider_boundary
+from threading import Event, RLock
 import xml.etree.ElementTree as ET
+from ..conversion_logging import context_callable, stage
 from .archive_support import ArchiveHTTP, Resolution, StudyRecords, StudySeed, accession_kind, attempt, chunks, identifier
+
+
+class _PublicationCancellation:
+    """Cancel sibling work without losing or modifying the caller's cancellation."""
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.local = Event()
+
+    def is_set(self):
+        return self.local.is_set() or (self.parent is not None and self.parent.is_set())
+
+    def set(self):
+        self.local.set()
 
 
 class SRASource:
@@ -20,11 +36,14 @@ class SRASource:
         self.http = http or ArchiveHTTP('ncbi_eutils', requester, resource_profile, evidence_dir)
         self._projects = {}
         self._publication_links = {}
+        self._publication_links_lock = RLock()
 
     @provider_boundary(provider='pubmed', operation='publication_retrieval')
     def publication_links(self, dbfrom, db, ids, name):
         key = (dbfrom, db, tuple(ids), name)
-        if key in self._publication_links: return self._publication_links[key]
+        with self._publication_links_lock:
+            if key in self._publication_links:
+                return self._publication_links[key]
         root = self.http.get(self.base+'elink.fcgi', {'dbfrom':dbfrom,'db':db,
             'id':list(ids),'linkname':name,'cmd':'neighbor'})
         if any(n.tag.lower()=='error' for n in root.iter()): raise ValueError('Entrez link error')
@@ -43,11 +62,10 @@ class SRASource:
             if source_ids[0] in result: raise ValueError('duplicate link source')
             result[source_ids[0]] = list(dict.fromkeys(values))
         if set(result)!=set(ids): raise ValueError('missing Entrez link source')
-        self._publication_links[key] = result
-        return result
+        with self._publication_links_lock:
+            return self._publication_links.setdefault(key, result)
 
     def linked_publications(self, records, sra_ids):
-        from ..xml_safety import parse_xml
         targets = {'sra': {uid:None for uid in sra_ids}, 'bioproject':{}, 'biosample':{}}
         for root in records.xml:
             for node in root.findall('.//ProjectID/ArchiveID'):
@@ -55,29 +73,138 @@ class SRASource:
             for node in root.findall('.//BioSample'):
                 if node.get('id'): targets['biosample'][node.get('id')] = node.get('accession')
         experiments = {identifier(n) for root in records.xml for n in root.findall('.//EXPERIMENT')}
-        for dbfrom, members in targets.items():
-            for db in (('pubmed',) if dbfrom=='biosample' else ('pubmed','pmc')):
-                for batch in chunks(sorted(members)):
-                    links = attempt(records, dbfrom+' publication links', lambda: self.publication_links(dbfrom,db,batch,dbfrom+'_'+db)) or {}
-                    for uid, values in links.items():
-                        if not values: continue
-                        if dbfrom=='sra' and not members[uid]:
-                            summary = attempt(records, 'SRA citation owner', lambda: self.http.get(self.base+'esummary.fcgi',
-                                {'db':'sra','id':uid,'retmode':'json'}, 'json'))
-                            entry = (summary or {}).get('result',{}).get(uid,{})
-                            fragment = entry.get('expxml') or entry.get('ExpXml')
-                            if fragment and str(entry.get('uid',uid))==uid:
-                                xml = attempt(records, 'SRA citation experiment', lambda: parse_xml('<ROOT>'+fragment+'</ROOT>', max_bytes=getattr(getattr(self.http,'profile',None),'max_xml_bytes',32*1024*1024)))
-                                node = xml.find('.//Experiment') if xml is not None else None
-                                acc = node.get('acc') if node is not None else None
-                                if acc in experiments: members[uid] = acc
-                            if not members[uid]:
-                                records.issues.append(f'SRA {uid}: unresolved publication owner')
-                                continue
-                        for value in values:
-                            metadata = {'pubmed_id':value} if db=='pubmed' else {'pmcid':'PMC'+value}
-                            record = {'provider':'sra','kind':'publication_reference','accession':members[uid],'metadata':metadata}
-                            if record not in records.linked: records.linked.append(record)
+        jobs = [(dbfrom, db, batch)
+                for dbfrom, members in targets.items()
+                for db in (('pubmed',) if dbfrom == 'biosample' else ('pubmed', 'pmc'))
+                for batch in chunks(sorted(members))]
+        workers = getattr(getattr(self.http, 'profile', None), 'network_workers', 1)
+        if workers < 2 or len(jobs) < 2:
+            # Keep legacy request ordering, including dependent owner lookups.
+            for job in jobs:
+                with stage('publication_link_retrieval', batches=1, workers=1):
+                    result = self._publication_batch(records.seed, job)
+                self._merge_publication_batch(records, job, result, targets, experiments)
+            return
+        with stage('publication_link_retrieval', batches=len(jobs), workers=2):
+            results = self._publication_batches(records.seed, jobs)
+        # No retrieval worker remains while this coordinator resolves owners.
+        for job, result in zip(jobs, results):
+            self._merge_publication_batch(records, job, result, targets, experiments)
+
+    @staticmethod
+    def _publication_checkpoint():
+        from ..metadata.retrieval_budget import _active, _check_cancelled
+        _check_cancelled()
+        budget = _active.get()
+        if budget is not None:
+            budget.check()
+
+    def _publication_batch(self, seed, job):
+        self._publication_checkpoint()
+        dbfrom, db, batch = job
+        part = StudyRecords(seed)
+        links = attempt(part, dbfrom + ' publication links',
+                        lambda: self.publication_links(dbfrom, db, batch, dbfrom + '_' + db))
+        return links or {}, part
+
+    def _publication_batches(self, seed, jobs):
+        """Keep at most two submitted batches; publish results only after joining."""
+        from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+        from ..metadata.retrieval_budget import _cancelled
+
+        self._publication_checkpoint()
+        stopped = _PublicationCancellation(_cancelled.get())
+        executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='msc-sra-publications')
+        token = _cancelled.set(stopped)
+        results = [None] * len(jobs)
+        pending = {}
+        remaining = iter(enumerate(jobs))
+        failures, failure_lock = [], RLock()
+
+        def remember_failure(error):
+            # Preserve the initiating failure, even if sibling cleanup fails.
+            with failure_lock:
+                if not failures:
+                    failures.append(error)
+                stopped.set()
+
+        def run(job):
+            try:
+                return self._publication_batch(seed, job)
+            except BaseException as error:
+                remember_failure(error)
+                raise
+
+        def submit():
+            self._publication_checkpoint()
+            item = next(remaining, None)
+            if item is None:
+                return False
+            index, job = item
+            future = executor.submit(context_callable(run), job)
+            pending[future] = index
+            return True
+
+        try:
+            submit()
+            submit()
+            while pending:
+                done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                for future in sorted(done, key=pending.__getitem__):
+                    index = pending.pop(future)
+                    results[index] = future.result()
+                for _ in done:
+                    submit()
+        except BaseException as error:
+            remember_failure(error)
+        finally:
+            stopped.set()
+            try:
+                executor.shutdown(wait=True, cancel_futures=True)
+            finally:
+                _cancelled.reset(token)
+        if failures:
+            raise failures[0]
+        return results
+
+    def _merge_publication_batch(self, records, job, result, targets, experiments):
+        from ..xml_safety import parse_xml
+
+        self._publication_checkpoint()
+        dbfrom, db, _ = job
+        links, part = result
+        members = targets[dbfrom]
+        with stage('publication_link_merge'):
+            records.issues.extend(part.issues)
+            records.failures.extend(part.failures)
+        for uid, values in links.items():
+            if not values:
+                continue
+            self._publication_checkpoint()
+            if dbfrom == 'sra' and not members[uid]:
+                with stage('publication_owner_resolution'):
+                    summary = attempt(records, 'SRA citation owner', lambda: self.http.get(
+                        self.base + 'esummary.fcgi', {'db': 'sra', 'id': uid, 'retmode': 'json'}, 'json'))
+                    entry = (summary or {}).get('result', {}).get(uid, {})
+                    fragment = entry.get('expxml') or entry.get('ExpXml')
+                    if fragment and str(entry.get('uid', uid)) == uid:
+                        xml = attempt(records, 'SRA citation experiment', lambda: parse_xml(
+                            '<ROOT>' + fragment + '</ROOT>',
+                            max_bytes=getattr(getattr(self.http, 'profile', None), 'max_xml_bytes', 32*1024*1024)))
+                        node = xml.find('.//Experiment') if xml is not None else None
+                        acc = node.get('acc') if node is not None else None
+                        if acc in experiments:
+                            members[uid] = acc
+                    if not members[uid]:
+                        records.issues.append(f'SRA {uid}: unresolved publication owner')
+                        continue
+            with stage('publication_link_merge'):
+                for value in values:
+                    metadata = {'pubmed_id': value} if db == 'pubmed' else {'pmcid': 'PMC' + value}
+                    record = {'provider': 'sra', 'kind': 'publication_reference',
+                              'accession': members[uid], 'metadata': metadata}
+                    if record not in records.linked:
+                        records.linked.append(record)
 
     def search(self, term, db='sra'):
         from .entrez_records import EntrezRecords
