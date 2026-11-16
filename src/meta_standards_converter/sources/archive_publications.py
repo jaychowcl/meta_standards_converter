@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Explicit, entity-bound citation identifiers; no literature discovery."""
+from meta_standards_converter.provider_issues import provider_boundary
 import re
 from urllib.parse import urlsplit, unquote
 from .archive_support import identifier, attempt
@@ -110,6 +111,7 @@ def study_accessions(records):
     return values - {None}
 
 
+@provider_boundary(provider='pubmed', operation='publication_retrieval')
 def resolve_identifier(kind, value, http):
     """Resolve one explicit DOI/PMCID and verify the returned identity."""
     if kind == 'pmcid':

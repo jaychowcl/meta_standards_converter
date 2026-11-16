@@ -1185,6 +1185,35 @@ Converter().convert(outdir="exports", out_type="json",
 <a id="unified-results"></a>
 ### Outcomes and publication
 
+Diagnostics optionally include `provider_issue`: a stable `reason`, `operation`,
+existing safe `error` envelope and optional `retry_at`. Remote invalid JSON/XML,
+exhausted transport failures and HTTP failures use `provider_response_invalid`,
+`provider_transport_failure` and `provider_http_failure`. Local parsing, budget
+limits and scientific disagreements do not receive provider retry tags.
+Auxiliary BioSamples and PMC identifier requests retain their own provider
+identity even when invoked by an SRA/ENA source service.
+Facts are collected at remote boundaries per input, deduplicated by correlation
+ID, and retained through handled failures and operation-scoped memoization.
+No global exception tracer is used. Recovered request attempts do not create
+unresolved tags. Existing warnings, fallbacks, pacing and retry counts remain.
+Missing native packages preserve the underlying provider cause instead of only
+the final `InputError`. Callers retry the whole conversion; MSC does not schedule
+recovery. The optional field is omitted from legacy diagnostic serialization.
+Focused coverage: `tests/test_provider_recovery.py`.
+
+Recovery interfaces: `meta_standards_converter.provider_issues.ProviderIssue`
+stores the typed fact; `meta_standards_converter.provider_issues.provider_boundary`
+and `meta_standards_converter.provider_issues.record` classify remote failures.
+`meta_standards_converter.provider_issues.collect_provider_issues` owns the
+per-input lifetime; `meta_standards_converter.provider_issues.snapshot` and
+`meta_standards_converter.provider_issues.restore` preserve memoized facts;
+`meta_standards_converter.provider_issues.recover` marks an explicitly recovered
+alternative. These helpers do not perform retrieval or schedule retries.
+`meta_standards_converter.converters.unified.outcomes.failure` preserves safe
+causes, while `meta_standards_converter.converters.unified.outcomes.snapshot`,
+`meta_standards_converter.converters.unified.outcomes.delta` and
+`meta_standards_converter.converters.unified.outcomes.add` account for requests.
+
 Each `ConversionItemResult` also exposes `error` (a `SafeErrorEnvelope` or
 `None`), `retry_at` (an optional absolute retry time), and `metrics`
 (`RequestMetrics`). The envelope preserves transient versus terminal failure

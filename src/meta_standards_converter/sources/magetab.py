@@ -13,6 +13,7 @@ from __future__ import annotations
 import csv
 from dataclasses import dataclass
 import io
+from meta_standards_converter.provider_issues import provider_boundary, record
 import json
 import os
 from pathlib import Path
@@ -182,6 +183,7 @@ class AEWebFetcher:
         name = str(row.get("Name") or os.path.basename(path))
         return TextResource(name, resource.text, resource.origin)
 
+    @provider_boundary(provider='biostudies', operation='linked_metadata')
     def _fetch_http(self, url: str) -> TextResource:
         response, resolved_url = self._request(url)
         try:
@@ -193,6 +195,7 @@ class AEWebFetcher:
         name = os.path.basename(urlparse(resolved_url).path) or "metadata.txt"
         return TextResource(name, text, resolved_url)
 
+    @provider_boundary(provider='biostudies', operation='linked_metadata')
     def _fetch_json(self, url: str, **kwargs):
         response, _ = self._request(url, **kwargs)
         try:
@@ -203,6 +206,7 @@ class AEWebFetcher:
         try:
             return json.loads(content.decode("utf-8-sig"))
         except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            record(error, provider="biostudies")
             raise ValueError("BioStudies returned invalid UTF-8 JSON metadata.") from error
 
     def _request(self, url: str, **kwargs):

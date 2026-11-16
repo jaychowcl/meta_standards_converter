@@ -10,6 +10,7 @@
 Handler class for INSDC/SRA metadata.
 '''
 
+from meta_standards_converter.provider_issues import provider_boundary
 import re
 import xml.etree.ElementTree as ET
 import requests
@@ -71,6 +72,7 @@ class INSDCWebfetcher():
 
         return matches
 
+    @provider_boundary(provider='sra', operation='run_inventory')
     def fetch_sra_xml(self, nrx: str) -> list:
         '''
         lookup nrx accession to get nrr accessions
@@ -155,6 +157,7 @@ class INSDCWebfetcher():
                     return value
         return None
 
+    @provider_boundary(provider='ena', operation='run_inventory')
     def fetch_ena_file_report(self, accession: str) -> list:
         url = "https://www.ebi.ac.uk/ena/portal/api/filereport"
         params = {

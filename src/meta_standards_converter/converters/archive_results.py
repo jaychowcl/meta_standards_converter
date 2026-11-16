@@ -72,6 +72,16 @@ def native_failure(errors):
     if isinstance(original, NativeProviderFailure):
         return original
     error = NativeProviderFailure(f'Native provider retrieval failed ({type(original).__name__})')
+    # Keep the redacted provider identity across the copy-safe native wrapper.
+    # Retaining the original exception would also retain response bodies/URLs.
+    cause, seen = original, set()
+    while cause is not None and id(cause) not in seen:
+        seen.add(id(cause))
+        issue = getattr(cause, '_msc_provider_issue', None)
+        if issue is not None:
+            error._msc_provider_issue = issue
+            break
+        cause = cause.__cause__
     error.retry_at = retry_at or None
     error.request_trace = {'errors': [{'retry_category': 'retryable' if transient else 'terminal'}]}
     response = getattr(original, 'response', None)

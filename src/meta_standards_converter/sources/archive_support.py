@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Transport and result containers; no shared archive discovery workflow."""
+from meta_standards_converter.provider_issues import provider_boundary, _remote_provider
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -83,6 +84,7 @@ class ArchiveHTTP:
         self._download_lock = threading.RLock()
         self.evidence_dir = Path(evidence_dir) if evidence_dir else None
 
+    @provider_boundary(provider=lambda *args, **kwargs: _remote_provider(args, kwargs))
     def get(self, url, params=None, fmt='xml'):
         from ..metadata.retrieval_budget import _check_cancelled
         _check_cancelled()

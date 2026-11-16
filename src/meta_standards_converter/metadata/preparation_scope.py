@@ -90,6 +90,7 @@ def _candidate_copy(value):
 
 def retrieve_once(key, call):
     """Reuse evidence only within one facade invocation; legacy calls are unchanged."""
+    from meta_standards_converter.provider_issues import snapshot, restore
     memo = _memo.get()
     if memo is None:
         return call()
@@ -98,16 +99,22 @@ def retrieve_once(key, call):
         count("preparation_cache_hits")
         emit("preparation_cache_hit", level="DEBUG")
     if key not in memo:
+        before = snapshot()
         try:
             value = call()
             from .retrieval_budget import _active
             if _active.get() and _active.get().exhausted: return value
-            memo[key] = (True, _candidate_copy(value))
+            memo[key] = (
+                True,
+                _candidate_copy(value),
+                {k: v for k, v in snapshot().items() if before.get(k) != v},
+            )
         except Exception as exc:
             from .retrieval_budget import _BudgetExhausted
             if isinstance(exc, _BudgetExhausted): raise
-            memo[key] = (False, exc)
-    ok, value = memo[key]
+            memo[key] = (False, exc, {k: v for k, v in snapshot().items() if before.get(k) != v})
+    ok, value, issues = memo[key]
+    restore(issues)
     if not ok:
         raise value
     return _candidate_copy(value)

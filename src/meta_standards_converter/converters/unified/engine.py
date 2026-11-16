@@ -349,6 +349,7 @@ class Converter:
             seen = {}
             stopped = False
             from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _without_budget
+            from meta_standards_converter.provider_issues import collect_provider_issues
             for spec, kind, chosen, inp, out, error, item_id, preparation in planned:
                 item = ConversionItemResult(
                     item_id,
@@ -357,7 +358,7 @@ class Converter:
                     forced=bool(chosen),
                 )
                 result.items.append(item)
-                with item_scope(item, total=len(planned), index=len(result.items)), _budget_scope(
+                with item_scope(item, total=len(planned), index=len(result.items)), collect_provider_issues(item), _budget_scope(
                     runtime['metadata_timeout_seconds'], runtime['metadata_max_requests']):
                     sources = (
                         spec.sources

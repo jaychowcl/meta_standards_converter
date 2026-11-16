@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Native Entrez discovery and retrieval; never implicitly calls ENA."""
+from meta_standards_converter.provider_issues import provider_boundary
 import xml.etree.ElementTree as ET
 from .archive_support import ArchiveHTTP, Resolution, StudyRecords, StudySeed, accession_kind, attempt, chunks, identifier
 
@@ -20,6 +21,7 @@ class SRASource:
         self._projects = {}
         self._publication_links = {}
 
+    @provider_boundary(provider='pubmed', operation='publication_retrieval')
     def publication_links(self, dbfrom, db, ids, name):
         key = (dbfrom, db, tuple(ids), name)
         if key in self._publication_links: return self._publication_links[key]
@@ -119,6 +121,7 @@ class SRASource:
             'id': ','.join(ids), 'linkname': name, 'cmd': 'neighbor'})
         return list(dict.fromkeys(n.text for n in root.findall('.//LinkSetDb/Link/Id') if n.text))
 
+    @provider_boundary(provider='sra', operation='study_resolution')
     def resolve(self, accession):
         accession, kind = accession_kind(accession)
         result = Resolution()
@@ -165,6 +168,7 @@ class SRASource:
             result.issues.append(f'{accession}: no public read study resolved')
         return result
 
+    @provider_boundary(provider='sra', operation='metadata_retrieval')
     def fetch(self, seed, *, _on_core=None):
         records = StudyRecords(seed)
         ids, records.issues = self.search(f'{seed.study}[ACCN]')
