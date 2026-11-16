@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from functools import wraps
 from json import JSONDecodeError
 import xml.etree.ElementTree as ET
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 
 from .runtime_contracts import RetryCategory, SafeErrorEnvelope
 
@@ -102,7 +102,16 @@ def _remote_provider(args, kwargs):
     if host == 'pmc.ncbi.nlm.nih.gov':
         return 'pubmed'
     if 'eutils.ncbi' in host:
-        return (kwargs.get('params') or (args[2] if len(args) > 2 and isinstance(args[2], dict) else {})).get('db') or 'ncbi'
+        params = kwargs.get('params', args[2] if len(args) > 2 else None)
+        # requests accepts mappings, ordered pairs and already encoded queries.
+        # Provider attribution must not narrow that existing transport contract.
+        try:
+            query = (params.decode('ascii') if isinstance(params, bytes) else
+                     params if isinstance(params, str) else urlencode(params or {}, doseq=True))
+            databases = parse_qs(query).get('db') or parse_qs(urlsplit(url).query).get('db')
+            return databases[0] if databases else 'ncbi'
+        except (TypeError, ValueError, UnicodeError):
+            return 'ncbi'
     if 'geo' in url:
         return 'geo'
     return {'ena_portal': 'ena', 'ncbi_eutils': 'ncbi'}.get(

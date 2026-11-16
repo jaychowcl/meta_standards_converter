@@ -206,10 +206,11 @@ their original meaning. An existing retained patch ID remains idempotent.
 Defaults are the new versions; the legacy selector is only for compatibility.
 
 Atlas readers accept 1.0 and 1.1. Publication review 1.1 adds model confidence
-and a policy record with version, action, exclusion eligibility, review-required
-flag and reason. Only high-confidence `not_relevant` can be excluded; low or
-medium negatives, unsure and missing confidence require review. MSC validates
-this data contract without importing AC or deciding whether filtering is enabled.
+and an optional historical policy record with version, action, exclusion
+eligibility, review-required flag and reason. When present, that historical
+record must follow its original high-confidence exclusion rules. Missing records
+remain optional. MSC validates transport without importing AC, synthesizing policy
+actions, or deciding the producer's current filtering behavior.
 
 Public helper additions:
 - `meta_standards_converter.miniml.harmonization.wire_schema`: context-local,
@@ -283,10 +284,10 @@ and [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py
 | Contract | Current version | Role |
 | --- | --- | --- |
 | MSC distribution | 8.0.0 | Python/CLI compatibility and version-specific checkpoint namespace |
-| MSC MINiML | 3.0 | Canonical metadata; v2 is rejected |
-| Harmonization patch | 3.1 | Source-bound decisions applied additively by MSC |
+| MSC MINiML | 3.1 | Canonical metadata; reads 3.0/3.1 and rejects v2 |
+| Harmonization patch | 3.2 | Source-bound decisions; historical 3.1 hashes remain verifiable |
 | Patch extension ledger | 1.0 | Retained operations in `extensions.msc_harmonization` |
-| Atlas document | 1.0 | Independent producer wire format accepted by MSC's local reader |
+| Atlas document | 1.0/1.1 | Independent producer wire formats accepted by MSC's local reader |
 | H5AD metadata | 2.0 | Dotted observation fields and normalized sample values |
 | Exported assay metadata | 3.0 | Occurrence structures with `hz_value`, `hz_unit` and companions |
 | MINiML AnnData transport | 1.0 | Canonical packages and typed field ledger in `uns["msc_miniml"]` |
@@ -1546,6 +1547,14 @@ file projection, routing, evidence lookup, protocol registration, path construct
 column planning, row rendering, IDF construction, semantic overlay, validation and
 writing. Existing enclosing `export`, `projection` and `serialization` stages remain.
 These are observational attributes, not fields in MINiML or MAGE-TAB.
+
+The implementation helpers are
+`meta_standards_converter.magetab._performance.phase` (`name, **counts`) (a scoped
+measurement context), `meta_standards_converter.magetab._performance.measured_phase`
+(a decorator using that context), and
+`meta_standards_converter.magetab._performance.work` (incremental work counts on
+the current phase). Their signatures and lifetime are internal to export; they
+do not change the public converter result.
 
 Each export phase reports inclusive `wall_seconds` and `process_cpu_seconds`.
 `exclusive_instrumented_wall_seconds` and `exclusive_instrumented_cpu_seconds`

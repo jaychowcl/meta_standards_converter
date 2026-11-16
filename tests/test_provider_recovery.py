@@ -203,3 +203,22 @@ def test_auxiliary_provider_identity(url, provider):
         with pytest.raises(ValueError):
             ArchiveHTTP('ena_portal',requester=Requester()).get(url,fmt='json')
     assert issues(item)[0]['error']['provider']==provider
+
+
+@pytest.mark.parametrize('params', [
+    {'db': 'pubmed', 'api_key': 'test-secret'},
+    [('db', 'pubmed'), ('api_key', 'test-secret')],
+    'db=pubmed&api_key=test-secret', b'db=pubmed&api_key=test-secret',
+])
+def test_provider_failure_accepts_requests_parameter_forms_without_leaking_them(params):
+    from meta_standards_converter.provider_issues import collect_provider_issues, provider_boundary
+    class Client:
+        @provider_boundary()
+        def get(self, url, params=None):
+            raise requests.Timeout('private transport detail')
+    item = ConversionItemResult('one', 'remote')
+    with collect_provider_issues(item), pytest.raises(requests.Timeout):
+        Client().get('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi', params=params)
+    assert issues(item)[0]['error']['provider'] == 'pubmed'
+    assert 'test-secret' not in str(issues(item))
+    assert 'private transport detail' not in str(issues(item))

@@ -109,7 +109,7 @@ def test_body_transfer_is_timed_inside_a_real_conversion_operation(caplog):
 @pytest.mark.parametrize('cancel',[False,True])
 def test_slow_trickle_has_a_wall_clock_deadline_and_releases_connection(monkeypatch,cancel):
     profile = replace(get_resource_profile(), metadata_response_timeout_seconds=1.5 if cancel else .15)
-    stopped=Event();token=_cancelled.set(stopped)
+    stopped=Event()
     canceller=Timer(.05,stopped.set) if cancel else None
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -129,6 +129,7 @@ def test_slow_trickle_has_a_wall_clock_deadline_and_releases_connection(monkeypa
     thread = Thread(target=server.serve_forever, daemon=True); thread.start()
     requester = client(requests.get, retries=0)
     started = time.monotonic()
+    token = _cancelled.set(stopped)
     try:
         if canceller:canceller.start()
         with pytest.raises(_RetrievalCancelled if cancel else requests.Timeout):
