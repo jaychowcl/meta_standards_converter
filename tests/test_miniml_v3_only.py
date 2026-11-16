@@ -86,7 +86,7 @@ def test_legacy_ingestion_constructs_v3_without_annotation_intermediates(monkeyp
 
     def capture(cls, value):
         seen.append(copy.deepcopy(value))
-        assert value["miniml_schema_version"] == "3.0"
+        assert value["miniml_schema_version"] == "3.1"
         assert '"annotations"' not in json.dumps(value)
         return original(cls, value)
 
@@ -143,7 +143,7 @@ def test_legacy_assay_value_and_unit_construct_v3_directly(monkeypatch):
     original = MINiMLPackage.from_mapping.__func__
 
     def capture(cls, value):
-        assert value["miniml_schema_version"] == "3.0"
+        assert value["miniml_schema_version"] == "3.1"
         assert '"annotations"' not in json.dumps(value)
         return original(cls, value)
 

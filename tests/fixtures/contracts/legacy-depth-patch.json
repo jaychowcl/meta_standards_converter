@@ -1,0 +1,81 @@
+{
+  "source": {
+    "miniml_schema_version": "3.0",
+    "source": {
+      "format": "test"
+    },
+    "series": {
+      "iid": "GSE1"
+    },
+    "sample": [
+      {
+        "iid": "GSM1",
+        "channel": [
+          {
+            "source": {
+              "value": "T cell",
+              "hz_cell_type": "T cell",
+              "hz_cell_type_hierarchy_depth": 0,
+              "hz_cell_type(1)": "lymphocyte",
+              "hz_cell_type_hierarchy_depth(1)": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "canonical": {
+    "miniml_schema_version": "3.0",
+    "source": {
+      "format": "test"
+    },
+    "database": [],
+    "organization": [],
+    "contributor": [],
+    "platform": [],
+    "sample": [
+      {
+        "iid": "GSM1",
+        "channel": [
+          {
+            "source": {
+              "value": "T cell",
+              "hz_cell_type": "T cell",
+              "hz_cell_type_hierarchy_depth": 0,
+              "hz_cell_type(1)": "lymphocyte",
+              "hz_cell_type_hierarchy_depth(1)": 1
+            }
+          }
+        ]
+      }
+    ],
+    "series": {
+      "iid": "GSE1"
+    }
+  },
+  "sha256": "7747de29ae70f47db6461f72515e48e8f1f77714b2867c9edf36aac95c8128e3",
+  "patch": {
+    "schema_version": "3.1",
+    "miniml_schema_version": "3.0",
+    "base_sha256": "7747de29ae70f47db6461f72515e48e8f1f77714b2867c9edf36aac95c8128e3",
+    "adds": [
+      {
+        "path": "/sample/0/channel/0/source",
+        "harmonized_value": {
+          "field": "cell_type",
+          "value": "leukocyte",
+          "hierarchy_depth": 2
+        },
+        "source_evidence": {
+          "target_id": "t1",
+          "derivation": "original",
+          "source_field_path": "/sample/0/channel/0/source",
+          "match_kind": "exact_value",
+          "source_field": "cell_type",
+          "source_label": "T cell",
+          "source_value_path": "/sample/0/channel/0/source/value"
+        }
+      }
+    ]
+  }
+}

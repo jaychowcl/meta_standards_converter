@@ -61,7 +61,7 @@ def _operation(*, path: str = "/sample/0/channel/0/source", label: str = "ADPKD"
     }
 
 
-def test_patch_31_applies_hz_values_and_retains_immutable_provenance() -> None:
+def test_patch_32_applies_hz_values_and_retains_immutable_provenance() -> None:
     source = _package()
     patch = MINiMLHarmonizationPatch(
         base_sha256=miniml_source_fingerprint(source),
@@ -79,7 +79,7 @@ def test_patch_31_applies_hz_values_and_retains_immutable_provenance() -> None:
     assert len(fragments) == 1
     fragment = fragments[0]
     assert fragment["schema_version"] == "1.0"
-    assert fragment["patch_schema_version"] == "3.1"
+    assert fragment["patch_schema_version"] == "3.2"
     assert fragment["package_index"] == 0
     assert fragment["status"] == "applied"
     assert fragment["operations"][0]["source_evidence"]["source_label"] == "ADPKD"
@@ -119,7 +119,7 @@ def test_patch_30_is_readable_and_has_no_source_provenance() -> None:
         {
             "schema_version": "3.0",
             "miniml_schema_version": "3.0",
-            "base_sha256": miniml_source_fingerprint(source),
+            "base_sha256": miniml_source_fingerprint(source, schema_version="3.0"),
             "adds": [
                 {
                     "path": "/sample/0/channel/0/source",

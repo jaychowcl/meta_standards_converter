@@ -20,6 +20,22 @@ ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "contracts" / "atlas-document-v1.json"
 
 
+def test_reader_accepts_atlas_11_publication_policy_and_keeps_10_readable():
+    old = json.loads(FIXTURE.read_text())
+    assert AtlasV1Reader().from_mapping(old).datasets
+    payload = json.loads(FIXTURE.read_text())
+    payload['schema_version'] = '1.1'
+    payload['publications'][0]['review'] = {
+        'judgement': 'not_relevant', 'confidence': 'medium', 'criteria': [], 'evidence': [],
+        'policy': {'version': 1, 'action': 'retain', 'exclusion_eligible': False,
+                   'review_required': True, 'reason': 'insufficient_confidence'},
+    }
+    assert AtlasV1Reader().from_mapping(payload).datasets
+    payload['publications'][0]['review']['policy']['action'] = 'exclude'
+    with pytest.raises(AtlasV1Error, match='policy'):
+        AtlasV1Reader().from_mapping(payload)
+
+
 def test_owner_contract_fixture_yields_only_harmonized_dataset_metadata():
     result = AtlasV1Reader().load(FIXTURE)
 

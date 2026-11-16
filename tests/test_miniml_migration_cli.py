@@ -37,7 +37,7 @@ def test_python_model_accepts_migrated_and_complete_typed_packages() -> None:
 
     assert MINiMLCodec().decode(migrated, strict=True).package.to_mapping() == migrated
     decoded = MINiMLCodec().decode(package_v3(), strict=True).package.to_mapping()
-    assert decoded["miniml_schema_version"] == "3.0"
+    assert decoded["miniml_schema_version"] == "3.1"
     assert "annotations" not in json.dumps(decoded)
 
 
@@ -49,7 +49,7 @@ def test_miniml_migrate_cli_writes_v3_and_diagnostics(tmp_path, capsys) -> None:
     assert main([str(source), str(destination)]) == 0
 
     payload = json.loads(destination.read_text(encoding="utf-8"))
-    assert payload["miniml_schema_version"] == "3.0"
+    assert payload["miniml_schema_version"] == "3.1"
     assert payload["source"]["format"] == "MAGE-TAB"
     assert json.loads(capsys.readouterr().out)["packages_migrated"] == 1
 

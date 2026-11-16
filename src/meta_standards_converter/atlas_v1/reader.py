@@ -119,9 +119,26 @@ def _review(value: Any, name: str) -> None:
     if value is None:
         return
     review = _mapping(value, name)
-    _only(review, {"judgement", "criteria", "evidence"}, name)
+    _only(review, {"judgement", "confidence", "policy", "criteria", "evidence"}, name)
     if review.get("judgement") not in _JUDGEMENTS:
         raise AtlasV1Error(f"{name}.judgement is not a supported value")
+    confidence = review.get("confidence")
+    if confidence is not None and confidence not in {"low", "medium", "high"}:
+        raise AtlasV1Error(f"{name}.confidence is invalid")
+    if review.get("policy") is not None:
+        policy = _mapping(review["policy"], f"{name}.policy")
+        required = {"version", "action", "exclusion_eligible", "review_required", "reason"}
+        if set(policy) != required or type(policy["version"]) is not int or policy["version"] != 1:
+            raise AtlasV1Error(f"{name}.policy has an invalid shape or version")
+        if any(type(policy[key]) is not bool for key in ("exclusion_eligible", "review_required")):
+            raise AtlasV1Error(f"{name}.policy flags must be boolean")
+        eligible = review["judgement"] == "not_relevant" and confidence == "high"
+        needs_review = confidence is None or review["judgement"] == "unsure" or (review["judgement"] == "not_relevant" and not eligible)
+        if policy["exclusion_eligible"] != eligible or policy["review_required"] != needs_review:
+            raise AtlasV1Error(f"{name}.policy contradicts the model assessment")
+        if policy["action"] not in {"retain", "exclude"} or (policy["action"] == "exclude" and not eligible):
+            raise AtlasV1Error(f"{name}.policy cannot exclude this assessment")
+        _nonblank(policy["reason"], f"{name}.policy.reason")
     for index, raw in enumerate(_list(review.get("criteria"), f"{name}.criteria")):
         criterion = _mapping(raw, f"{name}.criteria[{index}]")
         _only(
@@ -206,7 +223,7 @@ class AtlasV1Reader:
             )
         _only(data, _TOP_LEVEL_FIELDS, "AtlasDocument")
         version = str(data.get("schema_version", ""))
-        if version != SCHEMA_VERSION:
+        if version not in {"1.0", "1.1"}:
             raise AtlasV1Error(f"unsupported Atlas schema version: {version!r}")
 
         atlas = _mapping(data.get("atlas"), "atlas")

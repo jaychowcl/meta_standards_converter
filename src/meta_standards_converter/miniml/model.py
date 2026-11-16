@@ -29,7 +29,8 @@ from .harmonization import (
 )
 
 
-MINIML_SCHEMA_VERSION = "3.0"
+MINIML_SCHEMA_VERSION = "3.1"
+SUPPORTED_MINIML_SCHEMA_VERSIONS = {"3.0", "3.1"}
 
 
 class MINiMLModelError(ValueError):
@@ -1575,9 +1576,9 @@ class MINiMLPackage(Mapping[str, Any]):
     def from_mapping(cls, value: Mapping[str, Any]) -> "MINiMLPackage":
         data = _mapping(value, "MINiML package")
         version = data.get("miniml_schema_version")
-        if version != MINIML_SCHEMA_VERSION:
+        if version not in SUPPORTED_MINIML_SCHEMA_VERSIONS:
             raise MINiMLModelError(
-                "runtime decoding requires MSC MINiML schema version '3.0'; supply v3 or regenerate from source"
+                "runtime decoding requires MSC MINiML schema version '3.0' or '3.1'; supply v3 or regenerate from source"
             )
         known = {
             "miniml_schema_version", "source", "database", "organization",
@@ -1608,6 +1609,7 @@ class MINiMLPackage(Mapping[str, Any]):
             validate_harmonization_extension_mapping(retained)
         package = cls(
             series=series,
+            miniml_schema_version=version,
             source=SourceInfo.from_mapping(data.get("source")),
             databases=_objects(data.get("database"), Database.from_mapping, "database"),
             organizations=_objects(data.get("organization"), Organization.from_mapping, "organization"),
@@ -1624,7 +1626,21 @@ class MINiMLPackage(Mapping[str, Any]):
         with Path(path).open(encoding="utf-8") as handle:
             return cls.from_mapping(json.load(handle))
 
-    def to_mapping(self) -> dict[str, Any]:
+    def to_mapping(self, *, schema_version: str = MINIML_SCHEMA_VERSION) -> dict[str, Any]:
+        from .harmonization import wire_schema, rewrite_harmonized_names
+
+        if schema_version not in SUPPORTED_MINIML_SCHEMA_VERSIONS:
+            raise MINiMLModelError(f"unsupported MINiML version {schema_version!r}")
+        if schema_version == "3.0" and self.miniml_schema_version != "3.0":
+            raise MINiMLModelError("legacy fingerprint requires a MINiML 3.0 source")
+        with wire_schema(self.miniml_schema_version):
+            result = self._source_mapping()
+        if schema_version == "3.1":
+            result = rewrite_harmonized_names(result)
+        result["miniml_schema_version"] = schema_version
+        return result
+
+    def _source_mapping(self) -> dict[str, Any]:
         extensions = _plain(self.extensions)
         for key, item in self.series.extras.items():
             if key == "msc_harmonization":

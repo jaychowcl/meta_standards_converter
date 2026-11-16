@@ -11,7 +11,7 @@ from dataclasses import replace
 from collections.abc import Mapping
 import re
 
-from meta_standards_converter.miniml.harmonization import HarmonizedValue, iter_harmonized_values, parse_harmonized_key
+from meta_standards_converter.miniml.harmonization import HarmonizedValue, iter_harmonized_values, parse_harmonized_key_details
 
 
 def columns(value, prefix="Characteristics", used=None):
@@ -19,17 +19,17 @@ def columns(value, prefix="Characteristics", used=None):
     used = set() if used is None else used
     result = []
     for item in _ordered_values(value):
-        while (item.field, item.index) in used:
+        while (item.prefix, item.index) in used:
             item = replace(item, index=item.index + 1)
-        used.add((item.field, item.index))
-        label = f"hz_{item.field}{item.suffix}"
+        used.add((item.prefix, item.index))
+        label = item.value_name
         result.append((f"{prefix}[{label}]", item.value))
         if item.term_source_ref is not None:
             result.append(("Term Source REF", item.term_source_ref))
         if item.term_accession_number is not None:
             result.append(("Term Accession Number", item.term_accession_number))
         if item.hierarchy_depth is not None:
-            result.append((f"Comment[hz_{item.field}_hierarchy_depth{item.suffix}]", item.hierarchy_depth))
+            result.append((f"Comment[{item.prefix}_hierarchy_depth{item.suffix}]", item.hierarchy_depth))
     return result
 
 
@@ -39,10 +39,10 @@ def _ordered_values(container):
     order = {}
     for key in keys:
         if str(key).startswith("hz_"):
-            field, role, index = parse_harmonized_key(key)
+            field, role, index, depth = parse_harmonized_key_details(key)
             if role == "value":
-                order.setdefault((field, index), len(order))
-    return sorted(values, key=lambda item: order.get((item.field, item.index), len(order)))
+                order.setdefault((field, depth or 0, index), len(order))
+    return sorted(values, key=lambda item: order.get((item.field, item.hierarchy_depth or 0, item.index), len(order)))
 
 
 def _path_binding(package, path):
@@ -122,11 +122,13 @@ def read_group(header, row, index):
     match = re.fullmatch(r"(Characteristics|Factor Value|Parameter Value|Comment)\[(hz_[^]]+)\]", header[index], re.I)
     if not match:
         return None
-    field, role, ordinal = parse_harmonized_key(match[2])
+    field, role, ordinal, encoded_depth = parse_harmonized_key_details(match[2])
     if role != "value":
         return None
     end = index + 1
-    source = accession = depth = None
+    source = accession = None
+    depth = encoded_depth
+    value_prefix = match[2].split("(", 1)[0]
     while end < len(header):
         label = header[end]
         value = row[end] if end < len(row) else ""
@@ -134,8 +136,10 @@ def read_group(header, row, index):
             source = value or None
         elif label == "Term Accession Number":
             accession = value or None
-        elif label == f"Comment[hz_{field}_hierarchy_depth{'('+str(ordinal)+')' if ordinal else ''}]":
+        elif label == f"Comment[{value_prefix}_hierarchy_depth{'('+str(ordinal)+')' if ordinal else ''}]":
             depth = int(value) if value != "" else None
+            if encoded_depth is not None and depth != encoded_depth:
+                raise ValueError("conflicting hierarchy depth in SDRF")
         else:
             break
         end += 1
@@ -157,14 +161,14 @@ def bind_sample_groups(package, paths):
         rows = node.setdefault("characteristics", [])
         existing = list(iter_harmonized_values(rows))
         existing.extend(v for row in rows for v in iter_harmonized_values(row))
-        used = {(v.field, v.index) for v in existing}
+        used = {(v.prefix, v.index) for v in existing}
         for container in channel_groups(channel):
             for value in iter_harmonized_values(container):
                 if any(replace(v, index=0) == replace(value, index=0) for v in existing):
                     continue
-                while (value.field, value.index) in used:
+                while (value.prefix, value.index) in used:
                     value = replace(value, index=value.index+1)
-                used.add((value.field, value.index))
+                used.add((value.prefix, value.index))
                 existing.append(value)
                 rows.extend(named_harmonized_rows([value]))
     return result
