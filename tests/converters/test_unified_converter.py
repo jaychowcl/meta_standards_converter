@@ -242,8 +242,10 @@ def test_manifest_companions_are_not_discovered_twice(tmp_path):
             {"id": "bound", "sources": [str(idf)], "companions": {"sdrf": str(sdrf)}}
         ],
     }
-    result = Converter().convert(tmp_path, out_type="json", input_manifest=manifest)
+    # This fixture checks manifest ownership, not remote supplementary enrichment.
+    result = Converter().convert(tmp_path, out_type="json", input_manifest=manifest, enrichment="off")
     assert len(result.items) == 1, result.to_dict()
+    assert result.status in {"complete", "partial"}, result.to_dict()
 
 
 def test_no_destination_does_not_use_current_directory(tmp_path, monkeypatch):

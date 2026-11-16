@@ -10,6 +10,7 @@
 
 import json
 from pathlib import Path
+import platform
 
 import pytest
 
@@ -183,7 +184,11 @@ def test_raw_metadata_export_does_not_require_processing(tmp_path):
         "fastq",
     ],
 )
-def test_forced_handlers_reject_wrong_content_without_outputs(kind, tmp_path):
+def test_forced_handlers_reject_wrong_content_without_outputs(kind, tmp_path, monkeypatch):
+    if kind == "h5ad":
+        # h5py's first import probes the CPU via uname. Keep this input-format
+        # test independent of import order without permitting child processes.
+        monkeypatch.setattr(platform._Processor, "get", classmethod(lambda cls: ""))
     path = tmp_path / "wrong.json"
     path.write_text(json.dumps(package()))
     result = Converter().convert(
@@ -262,8 +267,9 @@ def test_manifest_xml_sources_take_precedence_over_directory_grouping(tmp_path):
             }
         )
     )
-    result = Converter().convert(tmp_path, input_manifest=manifest, out_type="json")
+    result = Converter().convert(tmp_path, input_manifest=manifest, out_type="json", enrichment="off")
     assert len(result.items) == 1, result.to_dict()
+    assert result.status in {"complete", "partial"}, result.to_dict()
 
 
 def test_metadata_routes_do_not_import_scientific_dependencies(monkeypatch):

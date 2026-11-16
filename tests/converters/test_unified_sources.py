@@ -325,7 +325,7 @@ def test_native_records_object_is_defensive_and_not_mutated(provider):
     records = StudyRecords(StudySeed(study, study), xml=roots)
     before = deepcopy(records)
     result = Converter().convert(
-        records, out_type="json", force_in_type=provider + "_records"
+        records, out_type="json", force_in_type=provider + "_records", enrichment="off"
     )
     assert result.status in {"complete", "partial"}, result.to_dict()
     assert records.issues == before.issues
