@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from .._performance import measured_phase, work
 from collections import OrderedDict
 from .model import SDRFPath, ColumnGroup, SDRFEdge, SDRFAttr
 
@@ -16,7 +17,9 @@ class SDRFRenderer:
     def __init__(self, *, preserve_order=False):
         self.preserve_order = preserve_order
 
+    @measured_phase("magetab_column_planning")
     def plan_columns(self, paths: list[SDRFPath]) -> list[ColumnGroup]:
+        work(paths=len(paths))
         columns = OrderedDict()
         constraints = set()
         for path in paths:
@@ -59,7 +62,9 @@ class SDRFRenderer:
         target.companions = list(companion_columns.values())
 
 
+    @measured_phase("magetab_row_rendering")
     def render_paths(self, columns: list[ColumnGroup], paths: list[SDRFPath]) -> list:
+        work(paths=len(paths), column_groups=len(columns))
         # MAGE-TAB 1.1 section 2.3.3: factors follow all graph elements.
         # Project existing keys without changing the plan, trees or row values.
         ordinary, factors = [], []

@@ -59,3 +59,108 @@ def test_registered_collision_and_no_speculative_repairs(caplog):
     assert len(names)==len(set(names))==4 and 'P-MTAB-1' in names
     assert 'conflicting' in caplog.text.lower()
     once=deepcopy(data);prepare_protocols(data);assert data==once
+
+
+def test_distinct_descriptions_do_not_require_all_pairs(monkeypatch):
+    from meta_standards_converter.magetab import protocol_export
+    calls = []
+    original = protocol_export._compatible
+
+    def counted(a, b):
+        calls.append((a["name"], b["name"]))
+        return original(a, b)
+
+    monkeypatch.setattr(protocol_export, "_compatible", counted)
+    data = {"source": {"format": "GEO"}, "series": {
+        "iid": "GSE1",
+        "protocols": [definition(f"p{i}", f"distinct procedure {i}") for i in range(64)],
+        "assay_paths": [],
+    }}
+    protocol_export.prepare_protocols(data)
+    assert len(data["series"]["protocols"]) == 64
+    assert len(calls) <= 128
+
+
+def test_repeated_definitions_are_normalized_once_per_occurrence(monkeypatch):
+    from meta_standards_converter.magetab import protocol_export
+    calls = []
+    original = protocol_export._value
+
+    def counted(value, description=False):
+        calls.append(None)
+        return original(value, description)
+
+    monkeypatch.setattr(protocol_export, "_value", counted)
+    data = {"source": {"format": "GEO"}, "series": {
+        "iid": "GSE1", "protocols": [definition(f"p{i}") for i in range(64)],
+        "assay_paths": [{"steps": [{"kind": "protocol_application", "protocol_ref": f"p{i}"}]}
+                        for i in range(64)],
+    }}
+    protocol_export.prepare_protocols(data)
+    assert len(data["series"]["protocols"]) == 1
+    assert {p["steps"][0]["protocol_ref"] for p in data["series"]["assay_paths"]} == {"P-GSE1-1"}
+    assert len(calls) <= 64 * 20
+
+
+@pytest.mark.parametrize("order", [(0, 1, 2), (1, 2, 0), (2, 0, 1)])
+def test_sparse_protocol_cannot_bridge_conflicting_richer_definitions(order):
+    from meta_standards_converter.magetab.protocol_export import prepare_protocols
+    definitions = [
+        {"name": "first", "description": "same", "hardware": ["machine A"]},
+        {"name": "sparse", "description": "same"},
+        {"name": "last", "description": "same", "hardware": ["machine B"]},
+    ]
+    data = {"source": {"format": "GEO"}, "series": {
+        "iid": "GSE1", "protocols": [definitions[i] for i in order],
+        "assay_paths": [{"steps": [{"kind": "protocol_application", "protocol_ref": p["name"]}]}
+                        for p in definitions],
+    }}
+    prepare_protocols(data)
+    assert len(data["series"]["protocols"]) == 3
+    refs = [path["steps"][0]["protocol_ref"] for path in data["series"]["assay_paths"]]
+    assert len(set(refs)) == 3
+    assert [p.get("hardware") for p in data["series"]["protocols"]] == [
+        definitions[i].get("hardware") for i in order
+    ]
+
+
+def test_registered_ambiguity_and_empty_descriptions_keep_separate_definitions():
+    from meta_standards_converter.magetab.protocol_export import prepare_protocols
+    definitions = [
+        {"name": "first:P-MTAB-1", "description": "same"},
+        {"name": "unbound", "description": "same"},
+        {"name": "last:P-MTAB-2", "description": "same"},
+        {"name": "empty", "description": ""},
+        {"name": "missing"},
+        {"name": "spaces", "description": "   "},
+    ]
+    data = {"source": {"format": "GEO"}, "series": {
+        "iid": "GSE1", "protocols": definitions, "assay_paths": [],
+    }}
+    prepare_protocols(data)
+    assert len(data["series"]["protocols"]) == 6
+    assert {p["name"] for p in data["series"]["protocols"]} >= {"P-MTAB-1", "P-MTAB-2"}
+
+
+def test_prepared_compatibility_preserves_sparse_types_aliases_and_literal_values():
+    from meta_standards_converter.magetab import protocol_export as implementation
+    variants = [
+        {"description": "same"},
+        {"description": "same", "type": "nucleic acid library construction protocol"},
+        {"description": "same", "type": {"value": "library construction protocol"}},
+        {"description": "same", "type": {"term_source_ref": "EFO"}},
+        {"description": "same", "type": {"value": "library construction protocol", "term_source_ref": "OTHER"}},
+        {"description": "same", "hardware": ["A"]},
+        {"description": "same", "hardware": ["B"], "parameters": ["0"]},
+        {"description": "same", "hardware": [], "contacts": None},
+        {"description": "   "},
+        {"description": ""},
+        {},
+        {"description": "20 µg RNA's preparation"},
+        {"description": "20 ug RNA’s preparation"},
+    ]
+    for left in variants:
+        for right in variants:
+            assert implementation._prepared_compatible(
+                implementation._prepared(left), implementation._prepared(right)
+            ) == implementation._compatible(left, right)

@@ -12,6 +12,7 @@ This module operates only on the constructor's private export copy. Stored
 MINiML keeps every file occurrence. Derived files remain explicit workflow nodes.
 """
 from copy import deepcopy
+from ._performance import measured_phase, work
 import json
 import re
 
@@ -270,21 +271,38 @@ def _complete_branches(paths, sample_ids, raw_inventories=None):
     return retained
 
 
+@measured_phase("magetab_file_projection")
 def project_native_files(data):
     """Consolidate native raw-file paths, keeping run-scoped archive annotations."""
     if str(data.get('source', {}).get('format', '')).upper() not in {'ENA', 'SRA'}:
         return
     series = data.get('series', {})
+    work(input_paths=len(series.get('assay_paths', [])), samples=len(data.get('sample', [])))
     original_inventory = {}
     paths = _complete_branches(series.get('assay_paths', []), {s['iid'] for s in data.get('sample', [])}, original_inventory)
+    sources_by_sample, locations_by_sample = {}, {}
+
+    def index_path(path):
+        steps = path['steps']
+        refs = {s.get('sample_ref') for s in steps if s.get('sample_ref') is not None}
+        locations = {s.get('link', {}).get('value') for s in steps}
+        for ref in refs:
+            locations_by_sample.setdefault(ref, set()).update(locations)
+        for step in steps:
+            if step['kind'] in ('source', 'sample'):
+                sources_by_sample.setdefault(step.get('sample_ref'), []).append(step)
+
+    # Completion changes path identities and bindings. Index its final result,
+    # retaining every source occurrence and every explicitly scoped location.
+    for path in paths:
+        index_path(path)
     from urllib.parse import unquote, urlsplit
     for sample in data.get('sample', []):
-        sources = [s for p in paths for s in p['steps'] if s['kind'] in ('source', 'sample') and s.get('sample_ref') == sample['iid']]
+        sources = list(sources_by_sample.get(sample['iid'], ()))
         for link in sample.get('supplementary_data', []):
             if link.get('type') != 'assembly report' or not link.get('value') or not sources:
                 continue
-            if any(s.get('link', {}).get('value') == link['value'] for p in paths for s in p['steps']
-                   if any(n.get('sample_ref') == sample['iid'] for n in p['steps'])):
+            if link['value'] in locations_by_sample.get(sample['iid'], ()):
                 continue
             node = {'kind': 'derived_array_data_file', 'name': unquote(urlsplit(link['value']).path.rsplit('/', 1)[-1]), 'link': deepcopy(link)}
             annotation = _comments(_record(node), 'SAMPLE_FILE_', fixed=True)
@@ -293,7 +311,9 @@ def project_native_files(data):
             # A sample-level report cannot inherit an arbitrary aliquot's facts.
             source = deepcopy(sources[0]) if all(s == sources[0] for s in sources) else {
                 'kind': 'source', 'name': sample['iid'], 'sample_ref': sample['iid']}
-            paths.append({'steps': [source, node]})
+            path = {'steps': [source, node]}
+            paths.append(path)
+            index_path(path)
     from .native_file_selection import source_annotations, primary_sets, _coalesced
     paths = source_annotations(paths, {s['iid'] for s in data.get('sample', [])}, _record, _comments)
     groups, order, archives, inventories = {}, [], {}, {}

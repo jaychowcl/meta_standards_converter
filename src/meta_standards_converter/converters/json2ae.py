@@ -15,10 +15,11 @@ from typing import Any, Mapping
 
 from meta_standards_converter.magetab.technology import series_identity
 from meta_standards_converter.magetab.constructor import AEConstructor
-from meta_standards_converter.sources.json import JSONPackageSource
+from meta_standards_converter.sources.json import JSONPackageSource, DatasetPackageGroup
 from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.helpers.json_helper import JSONHandler
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
+from meta_standards_converter.magetab._performance import measured_phase
 
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,7 @@ class JSON2AEConverter(JSONHandler):
 
         return self._packages_from_loaded(loaded, replacement_profile=replacement_profile)
 
+    @measured_phase("magetab_package_resolution")
     def _packages_from_loaded(self, loaded, *, replacement_profile=None):
         for warning in loaded.warnings:
             logger.warning("%s", warning)
@@ -109,6 +111,13 @@ class JSON2AEConverter(JSONHandler):
             raise ValueError("JSON source contains no convertible package groups.")
         packages = []
         for original_group in loaded.groups:
+            if (replacement_profile is None and type(original_group) is DatasetPackageGroup
+                    and all(type(p) is MINiMLPackage for p in original_group.packages)):
+                # With no replacement profile, built-in resolution only copies
+                # and revalidates the unchanged packages. Keep that validation
+                # boundary without encoding, deep-copying and decoding again.
+                packages.extend(MINiMLCodec().decode_many(original_group.packages).packages)
+                continue
             group = original_group.resolved(replacement_profile=replacement_profile)
             for warning in getattr(group.harmonization_resolution, "warnings", ()):
                 logger.warning("%s", warning)
@@ -122,4 +131,9 @@ class JSON2AEConverter(JSONHandler):
         return packages
 
     def _usable_study_accession(self, package: MINiMLPackage) -> str | None:
-        return series_identity(package.to_mapping())
+        if type(package) is not MINiMLPackage:
+            return series_identity(package.to_mapping())
+        return series_identity({"series": {
+            "iid": package.series.iid,
+            "accession": [{"value": accession.value} for accession in package.series.accessions],
+        }})

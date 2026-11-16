@@ -43,10 +43,16 @@ from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 
 
 from .preparation import preparation_operation
+from ._performance import phase
 
 
 class AEConstructor:
     def __init__(self, idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None):
+        # Injected collaborators may intentionally transform the private view
+        # after handler preparation. Preserve their eager-table contract.
+        self._canonical_table_preparation = (
+            idf_constructor is None and sdrf_constructor is None and evidence_resolver is None
+        )
         self.evidence = evidence_resolver or MAGETabEvidenceResolver(pubmed_client, insdc_client)
         self.idf_constructor = idf_constructor or IDFConstructor()
         self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
@@ -57,66 +63,86 @@ class AEConstructor:
         """
         converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
         """
-        data = MINiMLCodec().encode(MINiMLCodec().decode(data).package)
-        from ..miniml.publication_identifiers import clean_publication_identifiers
-        clean_publication_identifiers(data)
-        from meta_standards_converter.miniml.file_references import clean_native_file_placeholders
-        clean_native_file_placeholders(data)
-        from meta_standards_converter.miniml.archive_dates import normalize_archive_dates
-        normalize_archive_dates(data)
-        from meta_standards_converter.miniml.archive_administration import normalize_administration
-        normalize_administration(data)
-        from ..miniml.archive_factors import restore_native_factors
-        restore_native_factors(data)
-        from ..miniml.archive_entities import local_platforms, coalesce_organizations, repository_databases
-        if data.get("source", {}).get("format") in {"ENA", "SRA"}:
-            from ..miniml.archive_entities import declare_ontologies
-            declare_ontologies(data)
-        local_platforms(data)
-        coalesce_organizations(data)
-        declarations = repository_databases(data)
-        if declarations:
-            data.setdefault('extensions', {}).setdefault('insdc', {'version': '2.0', 'records': []})['records'].extend(declarations)
-        from ..miniml.archive_paths import complete_native_paths
-        from ..miniml.archive_libraries import synchronize_library_facts
-        synchronize_library_facts(data)
-        complete_native_paths(data)
-        from meta_standards_converter.miniml.archive_results import normalize_result_bundles
-        normalize_result_bundles(data)
+        with phase("magetab_model_reconstruction"):
+            # Decode validates external/changed typed inputs as well as mappings.
+            # Its canonical package needs one detached view, not another complete
+            # encode/decode/validation cycle before private export mutations.
+            data = MINiMLCodec().decode(data).package.to_mapping()
+        with phase("magetab_normalization"):
+            from ..miniml.publication_identifiers import clean_publication_identifiers
+            clean_publication_identifiers(data)
+            from meta_standards_converter.miniml.file_references import clean_native_file_placeholders
+            clean_native_file_placeholders(data)
+            from meta_standards_converter.miniml.archive_dates import normalize_archive_dates
+            normalize_archive_dates(data)
+            from meta_standards_converter.miniml.archive_administration import normalize_administration
+            normalize_administration(data)
+            from ..miniml.archive_factors import restore_native_factors
+            restore_native_factors(data)
+            from ..miniml.archive_entities import local_platforms, coalesce_organizations, repository_databases
+            if data.get("source", {}).get("format") in {"ENA", "SRA"}:
+                from ..miniml.archive_entities import declare_ontologies
+                declare_ontologies(data)
+            local_platforms(data)
+            coalesce_organizations(data)
+            declarations = repository_databases(data)
+            if declarations:
+                data.setdefault('extensions', {}).setdefault('insdc', {'version': '2.0', 'records': []})['records'].extend(declarations)
+            from ..miniml.archive_paths import complete_native_paths
+            from ..miniml.archive_libraries import synchronize_library_facts
+            synchronize_library_facts(data)
+            complete_native_paths(data)
+            from meta_standards_converter.miniml.archive_results import normalize_result_bundles
+            normalize_result_bundles(data)
         from meta_standards_converter.magetab.protocol_export import prepare_protocols
         prepare_protocols(data)
         from meta_standards_converter.magetab.native_files import project_native_files
         project_native_files(data)
-        forced = platform_handler is not None
-        if forced:
-            technology_type = validate_platform_handler(platform_handler)
-        else:
-            technology_type = self._detect_ae_technology(data=data)
-        protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
-        handler = self.sdrf_constructor.create_handler(
-            data=data, protocol_registry=protocol_registry, technology_type=technology_type,
-        )
-        evidence_type = technology_type
-        if not forced and technology_type == 'generic' and any(
-            resolve_technology(sample, data=data).handler not in {'array', 'generic'}
-            for sample in handler.ordered_samples()
-        ):
-            # A mixed IDF summary must not suppress sequencing source evidence.
-            evidence_type = 'sequencing'
-        handler.run_evidence = self.evidence.sample_runs(handler, evidence_type)
+        with phase("magetab_routing"):
+            forced = platform_handler is not None
+            if forced:
+                technology_type = validate_platform_handler(platform_handler)
+            else:
+                technology_type = self._detect_ae_technology(data=data)
+            protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
+            handler = self.sdrf_constructor.create_handler(
+                data=data, protocol_registry=protocol_registry, technology_type=technology_type,
+            )
+            evidence_type = technology_type
+            if not forced and technology_type == 'generic' and any(
+                resolve_technology(sample, data=data).handler not in {'array', 'generic'}
+                for sample in handler.ordered_samples()
+            ):
+                # A mixed IDF summary must not suppress sequencing source evidence.
+                evidence_type = 'sequencing'
+        with phase("magetab_run_evidence"):
+            handler.run_evidence = self.evidence.sample_runs(handler, evidence_type)
         if not forced:
             handler, technology_type = self.sdrf_constructor.create_operation_handler(
                 data, protocol_registry, handler.run_evidence,
             )
-        sdrf = self.sdrf_constructor.build(handler)
+        canonical_paths = data.get('series', {}).get('assay_paths', [])
+        if (self._canonical_table_preparation
+                and type(self.idf_constructor) is IDFConstructor
+                and type(self.evidence) is MAGETabEvidenceResolver
+                and type(self.sdrf_constructor) is SDRFConstructor and canonical_paths
+                and self.sdrf_constructor._prepare_for_canonical_paths(handler)):
+            # A nonempty validated path list always supplies a semantic table.
+            # Keep protocol/audit preparation, then materialize that table once
+            # in the overlay at its original place in the IDF workflow.
+            sdrf = []
+        else:
+            sdrf = self.sdrf_constructor.build(handler)
         # Keep IDF validation before its publication lookup, as in the old flow.
         prefix_rows = self.idf_constructor.prefix_rows(data)
-        publication_details = self.evidence.publications(data)
-        idf = self.idf_constructor.miniml2idf(
-            data=data, prefix_rows=prefix_rows, publication_details=publication_details,
-            protocol_registry=protocol_registry,
-            technology_type=technology_type,
-        )
+        with phase("magetab_publication_evidence"):
+            publication_details = self.evidence.publications(data)
+        with phase("magetab_idf_construction"):
+            idf = self.idf_constructor.miniml2idf(
+                data=data, prefix_rows=prefix_rows, publication_details=publication_details,
+                protocol_registry=protocol_registry,
+                technology_type=technology_type,
+            )
         sdrf_index = self._sdrf_row_index(rows=idf)
         if sdrf_index is None:
             raise ValueError("IDF does not contain an SDRF File row.")
@@ -157,7 +183,8 @@ class AEConstructor:
             if row is not None:
                 row.extend([None] * (len(names) - len(row)))
         from .validation import validate_magetab
-        return validate_magetab(result)
+        with phase("magetab_validation"):
+            return validate_magetab(result)
 
     def _detect_ae_technology(self, data: dict) -> str:
         return detect_ae_technology(data)

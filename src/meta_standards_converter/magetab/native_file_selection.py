@@ -53,14 +53,17 @@ def source_annotations(paths, sample_ids, record, comments):
             values = entry[2]
             if value not in values:
                 values.append(value)
+    annotations_by_sample = {}
+    for binding, (sid, source, values) in annotations.items():
+        annotations_by_sample.setdefault(sid, []).append((binding, source, values))
     attached = set()
     for path in kept:
         for step in path.get('steps', []):
             sid = step.get('sample_ref')
             if step['kind'] not in ('source', 'sample'):
                 continue
-            for binding, (bound, source, values) in annotations.items():
-                if bound == sid and contains(source, step):
+            for binding, source, values in annotations_by_sample.get(sid, ()):
+                if contains(source, step):
                     for value in values:
                         step.setdefault('comments', []).extend(comments(value, 'SAMPLE_FILE_', fixed=True))
                     attached.add(binding)

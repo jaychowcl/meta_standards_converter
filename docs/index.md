@@ -21,6 +21,13 @@ Full flag and Python API details remain in the canonical routes below.
 
 ## Canonical routes
 
+- id: magetab-export-performance
+  title: MAGE-TAB export measurements and reuse
+  anchor: magetab-export-performance
+  purpose: Export-only stage measurements, validated private view, scoped sample/path indexes, injected-collaborator fidelity boundaries and memory interpretation.
+  keywords: projection, package resolution, protocols, compatibility neighborhoods, non-transitive, sparse definitions, file projection, sample source indexes, file locations, canonical assay paths, single SDRF render, preparation audit, column planning, inclusive, exclusive, CPU, peak RSS
+  link: [Open section](codebase.md#magetab-export-performance)
+
 - id: unified-cli
   title: Unified conversion command
   anchor: unified-cli

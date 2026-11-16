@@ -98,6 +98,19 @@ class SDRFConstructor():
         self.last_sdrf_audit = handler.audit
         return sdrf
 
+    def _prepare_for_canonical_paths(self, handler):
+        """Prepare the default handler when semantic paths supply the final table."""
+        from .renderer import SDRFRenderer
+        if (type(self) is not SDRFConstructor
+                or getattr(self.build, '__func__', None) is not SDRFConstructor.build
+                or getattr(handler.build, '__func__', None) is not _BaseSDRFHandler.build
+                or getattr(handler.plan_columns, '__func__', None) is not SDRFRenderer.plan_columns
+                or getattr(handler.render_paths, '__func__', None) is not SDRFRenderer.render_paths):
+            return False
+        handler._prepare_paths()
+        self.last_sdrf_audit = handler.audit
+        return True
+
     def _detect_sdrf_technology(self, data: dict) -> str:
         return detect_ae_technology(data)
 

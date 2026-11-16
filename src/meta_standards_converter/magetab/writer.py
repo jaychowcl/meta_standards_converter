@@ -8,12 +8,14 @@
 # =============================================================================
 """Write constructed MAGE-TAB tables to IDF/SDRF files."""
 from meta_standards_converter.conversion_logging import measured
+from ._performance import measured_phase
 import copy
 import csv
 import os
 
 class MAGETabWriter:
     @measured("serialization")
+    @measured_phase("magetab_writing")
     def write(self, magetab:list, out:str = None) -> str:
         '''
         Write magetab to idf and sdrf

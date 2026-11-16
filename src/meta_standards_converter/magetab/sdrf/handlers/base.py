@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from ..._performance import phase
 from meta_standards_converter.magetab.sdrf.renderer import SDRFRenderer
 from collections import OrderedDict
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
@@ -60,10 +61,18 @@ class _BaseSDRFHandler(SDRFRenderer):
         return [value]
 
     def build(self) -> list:
-        self.preregister_protocols()
-        paths = self.build_paths()
+        paths = self._prepare_paths()
         columns = self.plan_columns(paths=paths)
         return self.render_paths(columns=columns, paths=paths)
+
+    def _prepare_paths(self) -> list:
+        """Retain registration and diagnostic effects without materializing a table."""
+        with phase("magetab_protocol_registration"):
+            self.preregister_protocols()
+        with phase("magetab_path_construction") as span:
+            paths = self.build_paths()
+            span.update(paths=len(paths))
+        return paths
 
     def preregister_protocols(self) -> None:
         for sample in self.ordered_samples():

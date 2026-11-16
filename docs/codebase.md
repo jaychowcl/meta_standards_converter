@@ -1537,6 +1537,91 @@ resolve profile -> [enrich] -> construct -> [write]; return`.
 
 **Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py), and [`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py).
 
+<a id="magetab-export-performance"></a>
+### MAGE-TAB export measurements and reuse
+
+Export emits `magetab_*` stages through the existing operational-event interface:
+package resolution, model reconstruction, normalization, protocol matching, native
+file projection, routing, evidence lookup, protocol registration, path construction,
+column planning, row rendering, IDF construction, semantic overlay, validation and
+writing. Existing enclosing `export`, `projection` and `serialization` stages remain.
+These are observational attributes, not fields in MINiML or MAGE-TAB.
+
+Each export phase reports inclusive `wall_seconds` and `process_cpu_seconds`.
+`exclusive_instrumented_wall_seconds` and `exclusive_instrumented_cpu_seconds`
+subtract only directly nested measured export phases; ordinary logging spans are
+not subtracted. Do not add inclusive parent and child durations. CPU time belongs
+to the process and can include concurrent activity.
+
+`peak_rss_bytes` and `initial_peak_rss_bytes` are process-lifetime high-water marks,
+labelled `peak_rss_scope=process_lifetime_high_water`, not per-phase allocations.
+Unavailable RSS is null. Protocol definition/candidate-pair counts, path counts and
+column-group counts explain scaling without logging metadata contents.
+
+Purposeful decision: instrumentation changes no source precedence, protocol binding,
+row/column ordering, validation or rendering route. The export-only measurement
+context is released on success and failure and does not alter the shared codec.
+Regression coverage lives in `tests/magetab/test_export_performance.py`; native
+file, protocol export and operation-logging tests remain complementary gates.
+
+Protocol export normalizes comparison values once per supplied definition and
+compares distinct definitions only within matching normalized-description groups.
+Comparison-equivalent definitions share an immutable neighborhood of original
+positions; authored definitions, duplicate occurrences and registered identifiers
+remain separate until the existing compatibility rules allow coalescing.
+Group lookup uses these neighborhoods without changing source order or registered
+name precedence. A sparse definition cannot bridge two conflicting richer
+definitions, and a definition compatible with multiple registered names remains
+unbound. The `protocol_candidate_pairs` count now measures distinct comparison
+pairs; `protocol_definition_classes` identifies shared comparison work.
+
+Purposeful decision: this index preserves non-transitive compatibility rather than
+using a transitive union or a description-only deduplication rule. Protocol export
+regressions include sparse ambiguity, empty descriptions, type aliases, registered
+collisions, reference bindings and bounded normalization/comparison work.
+
+Native file projection builds ordered source-occurrence and sample-scoped file
+location indexes after sparse-branch completion. Adding a supported sample report
+updates the indexes before later links are considered. Source annotations are
+matched only against the same explicitly bound sample, while every compatible
+source occurrence and conflicting aliquot remains available to the existing rules.
+These indexes live inside one projection call; they never merge sample identities
+or choose a run for an unbound file. Regression tests bound relationship traversal
+work and preserve duplicate links, scoped reports and ambiguous source facts.
+
+The constructor decodes and validates incoming metadata once, then materializes
+one detached canonical mapping for normalization and IDF/SDRF preparation. It no
+longer encodes that freshly decoded model through another reconstruction. Mutable
+branches belong to the export; immutable scalar values can be shared safely.
+No prepared mapping is retained on the constructor after the call or an exception.
+
+With no replacement profile, JSON-to-MAGE-TAB validates built-in package groups
+directly instead of performing a disabled-profile encode/copy/decode round trip.
+Replacement profiles and custom group resolvers retain their existing resolution
+path. Injected constructors still receive typed `MINiMLPackage` values. External or
+changed typed inputs are revalidated at the constructor boundary, including
+duplicate identities and malformed schema content. Study identity checks inspect
+only typed series identity fields, without serializing unrelated source evidence.
+This is export-local reuse; shared codec/model contracts and JSON export do not
+change.
+
+When a validated nonempty canonical assay-path list supplies the final SDRF, the
+built-in constructor prepares the handler's protocols, paths and audit but skips
+the table that the semantic overlay would replace. The overlay renders the final
+table once, at its original position after IDF preparation. Protocol registration,
+run/publication evidence, IDF validation ordering and audit warnings are retained.
+Inputs without canonical paths and injected IDF/SDRF constructors, evidence
+resolvers or overridden builders/renderers keep the existing full rendering route.
+An injected collaborator can change paths after preparation; its eager fallback
+table therefore remains available. The private `_prepare_paths` split separates
+these preparation effects from column planning and row materialization.
+
+Harmonized sample-to-path binding builds its sample identity map once per call,
+after export transformations, and keeps path occurrences in source order. The
+existing source/channel evidence rules still reject pooled or ambiguous bindings.
+Each call builds a fresh index, so later calls observe changed samples without
+retaining package state. `magetab_sample_binding` reports this work separately.
+
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>
