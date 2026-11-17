@@ -88,12 +88,16 @@ class INSDCWebfetcher():
             },
             stream=True,
         )
-        response.raise_for_status()
-
-        content = read_limited_response(
-            response,
-            max_bytes=self.resource_profile.max_xml_bytes,
-        )
+        try:
+            response.raise_for_status()
+            content = read_limited_response(
+                response,
+                max_bytes=self.resource_profile.max_xml_bytes,
+            )
+        finally:
+            # An unread HTTP error or rejected body still owns the pooled
+            # connection. Release it before another sample borrows that slot.
+            response.close()
         root = parse_xml(
             content,
             max_bytes=self.resource_profile.max_xml_bytes,

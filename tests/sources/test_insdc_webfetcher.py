@@ -25,6 +25,30 @@ from meta_standards_converter.sources.insdc import INSDCWebfetcher  # noqa: E402
 
 
 class TestINSDCWebfetcher(unittest.TestCase):
+    def test_streamed_sra_response_releases_pool_after_http_or_body_failure(self):
+        # A one-connection blocking pool cannot serve the next sample while an
+        # unread failed response owns its only slot. Model that ownership without
+        # allowing a regression test to hang or require a live NCBI request.
+        from meta_standards_converter.xml_safety import XMLSizeLimitError
+
+        for failure in (requests.HTTPError('400'), XMLSizeLimitError('oversize')):
+            with self.subTest(failure=type(failure).__name__):
+                response = Mock(headers={})
+                response.raise_for_status.side_effect = failure if isinstance(failure, requests.HTTPError) else None
+                response.iter_content.side_effect = failure if isinstance(failure, XMLSizeLimitError) else None
+                requester = Mock()
+                def borrow(*args, **kwargs):
+                    if requester.get.call_count > 1 and not response.close.called:
+                        raise AssertionError('previous response still owns the pool slot')
+                    return response
+                requester.get.side_effect = borrow
+                fetcher = INSDCWebfetcher(ncbi_requester=requester)
+                with self.assertRaises(type(failure)):
+                    fetcher.fetch_sra_xml('SRX1')
+                with self.assertRaises(type(failure)):
+                    fetcher.fetch_sra_xml('SRX2')
+                self.assertEqual(2, response.close.call_count)
+
     def testextract_sra_accessions_finds_sra_style_accessions(self):
         self.assertEqual(
             ["SRX1", "ERR22", "drr333"],
@@ -56,6 +80,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
         )
         response.raise_for_status.assert_called_once()
         self.assertEqual("EXPERIMENT_PACKAGE_SET", root.tag)
+        response.close.assert_called_once()
 
     def testfetch_sra_xml_rejects_entity_declarations(self):
         content = b'<!DOCTYPE x [<!ENTITY y "boom">]><x>&y;</x>'
@@ -69,6 +94,7 @@ class TestINSDCWebfetcher(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "DTD/entity"):
             INSDCWebfetcher(ncbi_requester=requester).fetch_sra_xml("SRX1")
+        response.close.assert_called_once()
 
     def test_fetch_ena_file_report_uses_ena_requester(self):
         response = Mock()
