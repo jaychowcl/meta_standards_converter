@@ -32,7 +32,7 @@ CATALOGUE = {
     'projection_invalid': ('The requested output failed validation.', 'Correct the source annotations or projector diagnostics before exporting.'),
     'missing_optional_dependency': ('Expression conversion requires optional dependencies; install meta-standards-converter[h5ad] or use the full Docker image.', 'Install meta-standards-converter[h5ad] or use the full Docker image.'),
     'missing_runtime': ('A required processing tool or container runtime is unavailable.', 'Install and configure the required processing runtime, then retry.'),
-    'processing_failed': ('The expression processing pipeline failed.', 'Inspect the processing log and correct the pipeline inputs or runtime before retrying.'),
+    'processing_failed': ('Nextflow expression processing failed; see nextflow.log.', 'Inspect the processing log and correct the pipeline inputs or runtime before retrying.'),
     'processing_output_missing': ('Processing did not produce the required expression output.', 'Inspect the processing log and check the selected pipeline and inputs.'),
     'memory_limit': ('The operation exceeds the available memory budget.', 'Use a smaller input or a host with more memory; review the resource profile.'),
     'retrieval_budget_exhausted': ('Metadata retrieval exhausted the configured budget.', 'Increase the retrieval budget or supply local metadata files.'),
@@ -47,6 +47,13 @@ CATALOGUE = {
     'conversion_failed': ('An unexpected internal error stopped this operation.', 'Report this diagnostic and correlation ID with a DEBUG log.'),
     'source_partial': ('Optional source metadata is incomplete.', 'Retain usable output; inspect the source diagnostic before retrying.'),
     'source_fallback': ('An alternative verified source supplied partial metadata.', 'Supply the original source files to restore missing source-specific metadata.'),
+    'source_failed': ('Required source metadata is unavailable.', 'Check the source diagnostics or supply verified local metadata.'),
+    'fallback_failed': ('The alternative source could not supply valid metadata.', 'Check both source diagnostics or supply the original IDF and SDRF files.'),
+    'source_warning': ('Source metadata needs review.', 'Review the reported source condition before using the affected annotations.'),
+    'metadata_warning': ('Metadata validation found a condition requiring review.', 'Review the reported field; retain explicitly sourced annotations.'),
+    'projection_warning': ('Output construction found a condition requiring review.', 'Review the affected output fields and source annotations.'),
+    'conversion_partial': ('Some requested conversions did not complete.', 'Retain usable artifacts and inspect the affected input diagnostics before retrying.'),
+    'sample_skipped': ('A sample could not be processed.', 'Review the sample assets and resource limits, then retry that input.'),
 }
 
 
@@ -142,6 +149,9 @@ def diagnose(error, *, stage, provider=None, item_id=None, location=None, severi
     from .runtime_contracts import SafeErrorEnvelope
     from .conversion_logging import emit
     envelope, _ = failure(error, stage=stage, provider=provider, item_id=item_id)
+    preserved = getattr(error, '_msc_preserved_diagnostic', None)
+    if isinstance(preserved, Diagnostic):
+        return replace(preserved, stage=stage, severity=severity, correlation_id=envelope.correlation_id)
     code, message = _classify(error, stage)
     issue = next((getattr(c, '_msc_provider_issue', None) for c in _causes(error)
                   if getattr(c, '_msc_provider_issue', None) is not None), None)
@@ -161,9 +171,9 @@ def diagnose(error, *, stage, provider=None, item_id=None, location=None, severi
             message += ' ' + '; '.join(details)
     if envelope.http_status is not None and f'HTTP {envelope.http_status}' not in message:
         message += f' HTTP {envelope.http_status}.'
-    if code == 'conversion_failed' and not getattr(error, '_msc_debug_recorded', False):
+    if code == 'conversion_failed' and getattr(error, '_msc_debug_recorded', None) != envelope.correlation_id:
         emit('internal_failure', level='DEBUG', correlation_id=envelope.correlation_id, causes=_frames(error))
-        error._msc_debug_recorded = True
+        error._msc_debug_recorded = envelope.correlation_id
     safe_location = SafeErrorEnvelope.from_exception(error, location=location or getattr(error, 'location', None) or getattr(error, 'filename', None)).location
     return Diagnostic(code, message, stage, severity, action=action,
                       provider=envelope.provider, operation=issue.operation if issue else None,
@@ -178,3 +188,37 @@ def enrich(diagnostic):
         provider=diagnostic.provider or (issue.error.provider if issue else None),
         operation=diagnostic.operation or (issue.operation if issue else None),
         correlation_id=diagnostic.correlation_id or (issue.error.correlation_id if issue else None))
+
+
+def legacy_diagnostics(result):
+    """Adapt legacy result lists while retaining their original public fields."""
+    from .converters.unified.contracts import Diagnostic
+    from .operational_events import redact
+    values = list(getattr(result, 'diagnostics', ()) or ())
+    error = getattr(result, 'error', None)
+    if isinstance(error, Exception) and not values:
+        values.append(diagnose(error, stage='load', location=getattr(result, 'study', None),
+                               severity='error' if getattr(result, 'status', None) == 'failed' else 'warning'))
+    for attr, code, severity in (('warnings', 'projection_warning', 'warning'),
+                                  ('errors', 'projection_invalid', 'error'),
+                                  ('failures', 'conversion_partial', 'error'),
+                                  ('issues', 'source_partial', 'warning')):
+        if attr in {'failures', 'issues'} and values:
+            # Explicit captured failures carry the precise cause. Their legacy
+            # strings remain in the original field, not a second diagnostic.
+            if getattr(result, 'diagnostics', None) or isinstance(error, Exception):
+                continue
+        messages = getattr(result, attr, ())
+        if not isinstance(messages, (tuple, list)):
+            continue
+        if attr == 'issues' and getattr(result, 'status', None) == 'failed':
+            code, severity = 'source_failed', 'error'
+        values.extend(Diagnostic(code, redact(message), 'load' if attr == 'issues' else 'projection', severity)
+                      for message in messages if isinstance(message, str))
+    return tuple(enrich(d) for d in values)
+
+
+def diagnostic_mapping(result):
+    """Add structured diagnostics to legacy reports, omitting an empty addition."""
+    values = legacy_diagnostics(result)
+    return {'diagnostics': [d.to_dict() for d in values]} if values else {}

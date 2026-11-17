@@ -8,6 +8,7 @@
 # =============================================================================
 """Native import outcomes and independent atomic file publication."""
 from meta_standards_converter.conversion_logging import measured, count, progress
+from meta_standards_converter.diagnostics import diagnostic_mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
@@ -26,9 +27,10 @@ class StudyImportOutcome:
     output: str | None = None
     issues: list[str] = field(default_factory=list)
     error: Exception | None = field(default=None, repr=False, compare=False)
+    diagnostics: list = field(default_factory=list)
 
     def to_mapping(self):
-        return {'study': self.study, 'primary': self.primary, 'status': self.status,
+        return {**diagnostic_mapping(self), 'study': self.study, 'primary': self.primary, 'status': self.status,
                 'output': self.output, 'issues': list(self.issues)}
 
 
@@ -82,6 +84,10 @@ def native_failure(errors):
             error._msc_provider_issue = issue
             break
         cause = cause.__cause__
+    from ..diagnostics import diagnose
+    error._msc_preserved_diagnostic = diagnose(original, stage='load')
+    if hasattr(original, '_msc_failure'):
+        error._msc_failure = original._msc_failure
     error.retry_at = retry_at or None
     error.request_trace = {'errors': [{'retry_category': 'retryable' if transient else 'terminal'}]}
     response = getattr(original, 'response', None)
@@ -145,13 +151,15 @@ def _load_native(source, parser, seed, *, _outcome=None, publications=None):
 
 
 @measured("publication")
-def publish_json(path, value, overwrite=False):
+def publish_json(path, value, overwrite=False, *, sort_keys=False):
+    from ..operational_events import _guard_output
+    _guard_output([path])
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name('.' + path.name + '.' + uuid4().hex + '.tmp')
     try:
         with temporary.open('x', encoding='utf-8') as handle:
-            json.dump(value, handle, indent=2, ensure_ascii=False)
+            json.dump(value, handle, indent=2, ensure_ascii=False, sort_keys=sort_keys)
             handle.write('\n')
             handle.flush()
             os.fsync(handle.fileno())

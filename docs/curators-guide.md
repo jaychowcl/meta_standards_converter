@@ -165,7 +165,13 @@ Most conversion settings have individual flags and map into the Python
 `Converter.convert(options={...})` mapping; logging and result reports are CLI controls.
 See the [Python options reference](codebase.md#unified-routes) for keys and applicability.
 
-The terminal summary lists status totals and output paths; the result report retains detailed diagnostics.
+Each completed input gets a compact summary with usable output paths and up to
+five diagnostic groups, followed by command totals. Each group states the problem
+and a recovery action. Partial output written is distinct from no output produced.
+Use `-v` for all groups; the result report and DEBUG log retain detailed evidence.
+Related warnings from one provider failure share a correlation ID. For example,
+a verified ENA fallback reports BioStudies access denial together with the ENA
+substitution and the missing ArrayExpress-specific metadata.
 `--report-json PATH` saves a machine-readable result report without scientific payloads;
 `--report-json -` emits JSON-only stdout. Human summaries, logs and progress always use stderr.
 
@@ -182,6 +188,16 @@ Log files capture DEBUG by default independently of the console. Use
 `--log-file-level INFO` only when a reduced file is desired. The default file format
 is readable text; JSONL is suitable for automated inspection. See the
 [logging and progress reference](codebase.md#conversion-logging).
+
+For `missing_file`, check the named input and companions; for `permission_denied`
+or `disk_full`, correct the destination before retrying. Provider retry eligibility
+and cooldown are separate from warning severity: confirmed BioStudies access
+denial is terminal for automatic retry, while transient optional failures may be
+retried. For `conversion_failed`, retain the correlation ID and capture a DEBUG
+JSONL log; it includes safe stack locations, never raw exception payloads.
+If a log or report fails after conversion, the command returns nonzero and already
+written conversion artifacts remain available. These controls also apply to
+`miniml-migrate`, which retains its JSON summary on stdout.
 
 ## Reading conversion results
 

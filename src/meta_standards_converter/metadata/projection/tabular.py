@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.diagnostics import diagnostic_mapping
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, Sequence
 from meta_standards_converter.metadata.provenance import patch_provenance_columns
@@ -51,6 +52,7 @@ class TabularConversionResult:
     output_path: str | None = None
     manifest_path: str | None = None
     bundle_pointer_path: str | None = None
+    diagnostics: tuple = ()
 
     @property
     def partial(self) -> bool:
@@ -58,6 +60,7 @@ class TabularConversionResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            **diagnostic_mapping(self),
             "operation": "manifest",
             "status": "partial" if self.partial else "complete",
             "row_count": self.row_count,

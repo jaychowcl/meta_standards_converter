@@ -49,6 +49,7 @@ def test_miniml_migrate_cli_writes_v3_and_diagnostics(tmp_path, capsys) -> None:
     assert main([str(source), str(destination)]) == 0
 
     payload = json.loads(destination.read_text(encoding="utf-8"))
+    assert destination.read_text() == json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + '\n'
     assert payload["miniml_schema_version"] == "3.1"
     assert payload["source"]["format"] == "MAGE-TAB"
     assert json.loads(capsys.readouterr().out)["packages_migrated"] == 1

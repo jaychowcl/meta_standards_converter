@@ -66,3 +66,37 @@ def test_unknown_failure_has_safe_debug_stack(caplog):
     assert events[0]['attributes']['causes'][0]['frames']
     assert 'private_payload_canary' not in caplog.text
     assert 'private_payload_canary' not in json.dumps(item.to_dict())
+
+
+def test_wrapping_preserves_an_existing_nonprovider_cause():
+    from meta_standards_converter.converters.unified.outcomes import failure
+    with operation('test', heartbeat=False):
+        try:
+            raise PermissionError('private_payload_canary')
+        except PermissionError as original:
+            first, _ = failure(original, stage='publication', provider=None, item_id='one')
+            try:
+                raise RuntimeError('private wrapper') from original
+            except RuntimeError as wrapped:
+                second, _ = failure(wrapped, stage='conversion', provider=None, item_id='one')
+        assert first.correlation_id == second.correlation_id
+
+
+def test_same_exception_in_distinct_operations_gets_distinct_debug_evidence(caplog):
+    error = RuntimeError('private_payload_canary')
+    with caplog.at_level(logging.DEBUG):
+        results = [Converter(handlers=[FailingSource(error)]).convert('GSE1', out_type='json').items[0] for _ in range(2)]
+    assert results[0].error.correlation_id != results[1].error.correlation_id
+    events = [r.msc_event for r in caplog.records if hasattr(r, 'msc_event') and r.msc_event['event_type']=='internal_failure']
+    assert len(events) == 2
+
+
+def test_broken_external_logger_cannot_replace_original_exception():
+    from meta_standards_converter.operational_events import OperationalEventEmitter
+    class Broken:
+        def log(self, *args, **kwargs):
+            raise OSError('private sink')
+    emitter = OperationalEventEmitter(repository='test', logger=Broken())
+    with pytest.raises(ValueError, match='original'):
+        with operation('test', heartbeat=False, emitter=emitter):
+            raise ValueError('original')

@@ -102,6 +102,8 @@ class DurableArtifactBundlePublisher:
         if not roles or set(roles) != set(staged):
             raise ValueError("staged artifacts and destinations must have identical roles")
         normalized = {role: Path(destinations[role]) for role in roles}
+        from .operational_events import _guard_output
+        _guard_output(normalized.values())
         roots = {path.parent.resolve() for path in normalized.values()}
         if len(roots) != 1:
             raise ValueError("bundle destinations must share one parent directory")

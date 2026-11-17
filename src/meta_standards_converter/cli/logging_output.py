@@ -70,6 +70,7 @@ class ProgressRenderer:
         self.clock = clock
         self.width = width or (lambda: shutil.get_terminal_size((80, 24)).columns)
         self.mode = "off" if quiet else mode
+        self.quiet = quiet
         self.live = self.mode == "auto" and bool(getattr(stream, "isatty", lambda: False)())
         self.animate = animate
         self.total = total
@@ -192,34 +193,69 @@ class ConsoleHandler(logging.Handler):
         self.threshold = threshold
         self.progress = ProgressRenderer(stream, mode=mode, quiet=quiet, total=total)
         self.setFormatter(EventFormatter())
-        self.repeats = {}
         self.results = Counter()
+        self.pending = {}
+        self.runs_with_items = set()
         self._msc_owned = True
 
     def emit(self, record):
+        from .summaries import _Groups, _item_lines
         event = event_for(record)
         self.progress.update(event)
-        if event["event_type"] == "conversion_finished":
-            self.results[event["status"]] += 1
-            self.flush_repeats(event["run_id"])
+        kind, attrs, run_id = event['event_type'], event['attributes'], event['run_id']
+        key = (run_id, attrs.get('item_id'))
+        if kind == 'diagnostic':
+            if record.levelno < self.threshold:
+                return
+            self.pending.setdefault(key, _Groups(verbose=self.threshold <= logging.INFO)).add(
+                attrs | {'stage': event['stage'], 'severity': event['level'].lower()})
+            return
+        if kind == 'item_finished' or (kind == 'conversion_finished' and run_id not in self.runs_with_items):
+            if kind == 'item_finished':
+                self.runs_with_items.add(run_id)
+            self.results[event['status']] += 1
+            if attrs.get('diagnostic'):
+                d = attrs['diagnostic']
+                if getattr(logging, d.get('severity', 'error').upper()) >= self.threshold:
+                    self.pending.setdefault(key, _Groups(verbose=self.threshold <= logging.INFO)).add(d)
+            group = self.pending.pop(key, None)
+            if not self.progress.quiet:
+                for line in _item_lines(attrs.get('source'), attrs.get('item_id'), event['status'], attrs.get('artifact_paths') or {}):
+                    self.progress.message(line)
+            if group:
+                for line in group.lines():
+                    self.progress.message(line)
+            if kind == 'conversion_finished':
+                self.flush_repeats(run_id)
+            return
+        if kind == 'conversion_finished':
+            self.flush_repeats(run_id)
+            self.runs_with_items.discard(run_id)
+            return
+        if kind == 'provider_issue' and self.threshold > logging.DEBUG:
+            return
         if record.levelno < self.threshold:
             return
-        if self.progress.mode == "plain" and record.levelno >= logging.INFO and event["event_type"] in {"conversion_started", "conversion_finished", "stage_started", "stage_finished", "progress"}:
+        if self.progress.mode == 'plain' and record.levelno >= logging.INFO and kind in {'conversion_started', 'stage_started', 'stage_finished', 'progress'}:
             return
-        if record.levelno == logging.WARNING and event["event_type"] == "diagnostic":
-            attrs = event["attributes"]
-            key = (event["run_id"], attrs.get("item_id"), event["stage"], attrs.get("code"))
-            self.repeats[key] = self.repeats.get(key, 0) + 1
-            if self.repeats[key] > 1:
-                return
         self.progress.message(self.format(record))
 
     def flush_repeats(self, run_id=None):
-        for key, count in list(self.repeats.items()):
+        for key, group in list(self.pending.items()):
             if run_id is None or key[0] == run_id:
-                if count > 1:
-                    self.progress.message(f"WARNING item={key[1]} stage={key[2]} code={key[3]}: {count} occurrences (details in log/report)")
-                del self.repeats[key]
+                for line in group.lines():
+                    self.progress.message(line)
+                del self.pending[key]
+
+    def finish_command(self, code, reporting_failed=False):
+        if self.progress.quiet:
+            return
+        status = 'complete' if code == 0 else 'partial' if self.results['complete'] or self.results['partial'] else 'failed'
+        if reporting_failed:
+            status += '; reporting failed'
+        self.progress.message('Conversion: ' + status)
+        if self.results:
+            self.progress.message(' '.join(f'{key}={self.results[key]}' for key in ('complete', 'partial', 'failed', 'skipped')))
 
     def close(self):
         self.flush_repeats()
@@ -233,6 +269,48 @@ def register_configuration(args, logger, handlers, previous):
         session.update(args=args, logger=logger, handlers=handlers, previous=previous)
 
 
+def _sink_failed():
+    session = _session.get()
+    if session is not None and not session.get('reporting_failed'):
+        session['reporting_failed'] = True
+        # Deliberately bypass logging: a failing handler cannot report itself.
+        try:
+            sys.stderr.write('ERROR [reporting_failed]: A requested log could not be written. Check the destination; conversion artifacts are retained.\n')
+        except (OSError, ValueError):
+            pass  # A closed stderr must not replace the conversion error.
+
+
+class SafeFileHandler(logging.FileHandler):
+    """Disable a failed sink without logging's raw traceback fallback."""
+    failed = False
+
+    def handleError(self, record):
+        self.failed = True
+        _sink_failed()
+
+    def emit(self, record):
+        if not self.failed:
+            try:
+                super().emit(record)
+            except Exception:
+                self.handleError(record)
+
+    def flush(self):
+        if not self.failed:
+            try:
+                super().flush()
+            except Exception:
+                self.handleError(None)
+
+    def close(self):
+        try:
+            super().close()
+        except Exception:
+            self.handleError(None)
+            self.stream = None
+            logging.Handler.close(self)
+
+
 def cli_entrypoint(fn):
     """Release CLI-owned sinks even when argparse, conversion or output fails."""
     @wraps(fn)
@@ -240,25 +318,36 @@ def cli_entrypoint(fn):
         _cli_lock.acquire()
         session = {}
         token = _session.set(session)
+        from meta_standards_converter.operational_events import _sink_failure, _reserved_outputs
+        failure_token = _sink_failure.set(_sink_failed)
+        reserved_token = _reserved_outputs.set(frozenset())
         code = None
         try:
-            code = fn(*args, **kwargs)
-            configured = session.get("args")
-            command = fn.__module__.rsplit(".", 1)[-1]
-            if configured is not None and not configured.quiet and command in {"geo2ae", "geo2json", "json2ae", "ae2json", "sra2json", "ena2json"}:
-                console = next((h for h in session["handlers"] if isinstance(h, ConsoleHandler)), None)
-                states = dict(console.results) if console else {}
-                human_summary("complete" if code == 0 else "partial/failed", counts=states)
+            try:
+                code = fn(*args, **kwargs)
+            except Exception as error:
+                from meta_standards_converter.diagnostics import RequestError
+                from .common import record_safe_cli_error
+                if isinstance(error, RequestError):
+                    sys.stderr.write('error: ' + str(error) + '\n')
+                    raise SystemExit(2) from None
+                record_safe_cli_error(logging.getLogger(fn.__module__), error,
+                                      location=fn.__module__.rsplit('.', 1)[-1], stage='command')
+                code = 1
+            for handler in session.get('handlers', ()):
+                if isinstance(handler, logging.FileHandler):
+                    # Closing can itself fail. Finalize requested files before
+                    # deciding the exit code and printing command totals.
+                    session['logger'].removeHandler(handler)
+                    handler.close()
+            failed = bool(session.get('reporting_failed'))
+            if failed:
+                code = 1
+            console = next((h for h in session.get('handlers', ()) if isinstance(h, ConsoleHandler)), None)
+            if console is not None:
+                console.flush_repeats()
+                console.finish_command(code, failed)
             return code
-        except Exception as error:
-            from meta_standards_converter.diagnostics import RequestError
-            from .common import record_safe_cli_error
-            if isinstance(error, RequestError):
-                sys.stderr.write('error: ' + str(error) + '\n')
-                raise SystemExit(2) from None
-            record_safe_cli_error(logging.getLogger(fn.__module__), error,
-                                  location=fn.__module__.rsplit('.', 1)[-1], stage='command')
-            return 1
         finally:
             try:
                 for handler in session.get("handlers", ()):
@@ -268,6 +357,8 @@ def cli_entrypoint(fn):
                     session["logger"].setLevel(session["previous"][0])
                     session["logger"].propagate = session["previous"][1]
             finally:
+                _sink_failure.reset(failure_token)
+                _reserved_outputs.reset(reserved_token)
                 _session.reset(token)
                 _cli_lock.release()
     return wrapped

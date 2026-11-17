@@ -46,7 +46,8 @@ class Diagnostic:
     correlation_id: str | None = None
 
     def to_dict(self):
-        value = {key: value for key, value in vars(self).items()
+        from meta_standards_converter.diagnostics import enrich
+        value = {key: value for key, value in vars(enrich(self)).items()
                  if key != 'provider_issue' and value is not None}
         if self.provider_issue is not None:
             value['provider_issue'] = self.provider_issue.to_dict()

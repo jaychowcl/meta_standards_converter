@@ -19,6 +19,8 @@ from meta_standards_converter.sources.errors import MetadataSourceError
 
 
 def failure(error, *, stage, provider, item_id):
+    from meta_standards_converter.conversion_logging import current
+    run = current()
     cause = error
     seen = set()
     while cause is not None and id(cause) not in seen:
@@ -26,12 +28,10 @@ def failure(error, *, stage, provider, item_id):
         issue = getattr(cause, '_msc_provider_issue', None)
         if issue is not None:
             return issue.error, issue.retry_at
+        cached = getattr(cause, '_msc_failure', None)
+        if cached is not None and (run is None or cached[0] == run.id):
+            return cached[1:]
         cause = cause.__cause__
-    from meta_standards_converter.conversion_logging import current
-    run = current()
-    cached = getattr(error, '_msc_failure', None)
-    if cached is not None and (run is None or cached[0] == run.id):
-        return cached[1:]
     response = getattr(error, "response", None)
     status = getattr(response, "status_code", None)
     transient = isinstance(error, (
@@ -49,7 +49,7 @@ def failure(error, *, stage, provider, item_id):
         status, provider, transient = error.http_status, error.provider, error.retryable
     envelope = SafeErrorEnvelope.from_exception(
         error, provider=provider, stage=stage, item_id=item_id,
-        http_status=status,
+        http_status=status, location=getattr(error, "accession", None),
         retry_category=RetryCategory.RETRYABLE if transient else RetryCategory.TERMINAL,
     )
     retry_at = getattr(error, "retry_at", getattr(response, "_thematic_atlases_retry_at", None))

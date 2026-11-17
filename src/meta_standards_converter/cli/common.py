@@ -125,7 +125,7 @@ def log_level(args) -> int:
 
 
 def configure_logging(args, *, stream=None) -> None:
-    from .logging_output import ConsoleHandler, EventFormatter, register_configuration
+    from .logging_output import ConsoleHandler, EventFormatter, SafeFileHandler, register_configuration
     preflight_reporting(args)
     package_logger = logging.getLogger("meta_standards_converter")
     previous = (package_logger.level, package_logger.propagate)
@@ -147,7 +147,8 @@ def configure_logging(args, *, stream=None) -> None:
     package_logger.addHandler(handler)
     register_configuration(args, package_logger, handlers, previous)
     if args.log_file:
-        file_handler = logging.FileHandler(args.log_file, mode="w", encoding="utf-8")
+        Path(args.log_file).parent.mkdir(parents=True, exist_ok=True)
+        file_handler = SafeFileHandler(args.log_file, mode="w", encoding="utf-8")
         file_handler._msc_owned = True
         file_handler.setLevel(getattr(args, "log_file_level", "DEBUG"))
         file_handler.setFormatter(EventFormatter(jsonl=getattr(args, "log_format", "text") == "jsonl", timestamps=True))
@@ -168,6 +169,11 @@ def record_safe_cli_error(
     from dataclasses import replace
     from meta_standards_converter.diagnostics import diagnose
     from meta_standards_converter.converters.unified.outcomes import failure
+    if stage in {'report', 'logging'}:
+        from .logging_output import _session
+        session = _session.get()
+        if session is not None:
+            session['reporting_failed'] = True
     envelope, _ = failure(error, stage=stage, provider=provider, item_id=None)
     safe_location = SafeErrorEnvelope.from_exception(error, location=location).location
     envelope = replace(envelope, location=envelope.location or safe_location)
@@ -175,8 +181,20 @@ def record_safe_cli_error(
         error, stage=envelope.stage or stage, provider=provider, location=location)
     error._msc_diagnostic = diagnostic
     if not getattr(error, '_msc_logged_envelope', None):
-        logger.error('%s [%s]: %s Action: %s [correlation_id=%s]', diagnostic.stage,
-                     diagnostic.code, diagnostic.message, diagnostic.action, diagnostic.correlation_id)
+        from .logging_output import _session
+        message = (f'{diagnostic.stage} [{diagnostic.code}]: {diagnostic.message} '
+                   f'Action: {diagnostic.action} [correlation_id={diagnostic.correlation_id}]')
+        session = _session.get()
+        if session is not None and not session.get('handlers'):
+            # Preflight failed before installing any command-owned handler.
+            sys.stderr.write('ERROR ' + message + '\n')
+        else:
+            try:
+                logger.error('%s', message)
+            except Exception:
+                from meta_standards_converter.operational_events import _report_sink_failure
+                _report_sink_failure()
+                sys.stderr.write('ERROR ' + message + '\n')
         error._msc_logged_envelope = envelope
     return envelope
 
@@ -219,6 +237,24 @@ def preflight_reporting(args):
             parent = parent.parent
         if not parent.is_dir() or not os.access(parent, os.W_OK):
             raise RequestError('Report/log destination parent is not writable; choose another destination.')
+    # A permission hint alone cannot establish that report publication can be
+    # initialized (ACLs, mounts and capacity can disagree with os.access).
+    # Probe a detached file now; never truncate the requested report itself.
+    import tempfile
+    from meta_standards_converter.diagnostics import OperationalError
+    for value in (getattr(args, 'report', None), getattr(args, 'report_json', None)):
+        if value and value != '-':
+            path = Path(value).resolve()
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                with tempfile.TemporaryFile(dir=path.parent):
+                    pass
+            except OSError as error:
+                raise OperationalError('reporting_failed', location=path.name) from error
+    from meta_standards_converter.operational_events import _reserved_outputs
+    from .logging_output import _session
+    if _session.get() is not None:
+        _reserved_outputs.set(frozenset(auxiliary))
 
 
 def add_replacement_profile_arguments(parser):

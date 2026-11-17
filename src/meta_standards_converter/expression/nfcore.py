@@ -8,6 +8,7 @@
 # =============================================================================
 from __future__ import annotations
 from meta_standards_converter.conversion_logging import measured
+from meta_standards_converter.diagnostics import OperationalError
 import json
 import csv
 import logging
@@ -179,7 +180,7 @@ class NFCoreRunner:
             warnings=self._extract_warnings(completed.stdout, completed.stderr),
         )
         if completed.returncode:
-            raise RuntimeError(f"Nextflow {pipeline} failed; see {log_path}")
+            raise OperationalError('processing_failed', location=log_path)
         if pipeline == "scrnaseq":
             processed, retained = self._scrnaseq_assets(result_dir, assets, reference)
         else:
@@ -233,7 +234,7 @@ class NFCoreRunner:
         if runtime and not self.which(runtime):
             missing.append(runtime)
         if missing:
-            raise RuntimeError(f"Missing nf-core runtime requirements: {', '.join(missing)}")
+            raise OperationalError('missing_runtime')
         require_rootless = os.environ.get(
             "META_STANDARDS_REQUIRE_ROOTLESS_DOCKER", ""
         ).strip().lower() in {"1", "true", "yes", "on"}
@@ -344,7 +345,7 @@ class NFCoreRunner:
                 if sample_id.lower() in str(path.relative_to(result_dir)).lower()
             ]
             if not candidates:
-                raise RuntimeError(f"nf-core/scrnaseq produced no H5AD for {sample_id}.")
+                raise OperationalError('processing_output_missing')
             chosen = max(candidates, key=self._scrnaseq_rank)
             processed[sample_id] = Asset(
                 sample_id,
@@ -370,7 +371,7 @@ class NFCoreRunner:
     def _rnaseq_assets(self, result_dir: Path, inputs: dict[str, Asset], reference: dict):
         counts = sorted(result_dir.glob("**/*.merged.gene_counts.tsv"))
         if not counts:
-            raise RuntimeError("nf-core/rnaseq produced no merged gene-count matrix.")
+            raise OperationalError('processing_output_missing')
         counts_path = counts[0]
         tpm_candidate = Path(str(counts_path).replace(".merged.gene_counts.tsv", ".merged.gene_tpm.tsv"))
         tpm_path = str(tpm_candidate) if tpm_candidate.exists() else None

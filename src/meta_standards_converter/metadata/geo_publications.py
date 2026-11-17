@@ -119,7 +119,7 @@ class GEOParentPublications:
                         parent_package = parent_candidates[0]
                 except Exception as error:
                     issues.append(f"{child_accession}: parent {parent_accession} publication retrieval failed ({type(error).__name__})")
-                    logger.warning(
+                    logger.debug(
                         "%s: parent-series publication lookup degraded "
                         "parent=%s error_type=%s",
                         child_accession,

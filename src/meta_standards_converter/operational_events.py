@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from contextvars import ContextVar
 from datetime import datetime, timezone
 import json
 import logging
@@ -24,6 +25,24 @@ from urllib.parse import urlsplit, urlunsplit
 EVENT_SCHEMA_VERSION = "1.0"
 _SENSITIVE_KEY = re.compile(r"(?:api[_-]?key|authorization|credential|password|secret|token)", re.I)
 _LABEL = re.compile(r"[^a-zA-Z0-9_:.-]+")
+_sink_failure = ContextVar('msc_sink_failure', default=None)
+_reserved_outputs = ContextVar('msc_reporting_paths', default=frozenset())
+
+
+def _report_sink_failure():
+    callback = _sink_failure.get()
+    if callback is not None:
+        try:
+            callback()
+        except Exception:
+            pass  # A broken stderr must not replace the original failure either.
+
+
+def _guard_output(paths):
+    reserved = _reserved_outputs.get()
+    if reserved and any(Path(path).resolve() in reserved for path in paths):
+        from .converters.unified.contracts import InputError
+        raise InputError('output_collision', 'Conversion output conflicts with a reserved log/report path; choose another destination.')
 
 
 def redact(value: Any, *, key: str = "") -> Any:
@@ -75,10 +94,16 @@ class OperationalEventEmitter:
             metric["count"] += 1
             metric["duration_seconds"] += float(duration_seconds or 0)
             if self.jsonl_path is not None:
-                self.jsonl_path.parent.mkdir(parents=True, exist_ok=True)
-                with self.jsonl_path.open("a", encoding="utf-8") as stream:
-                    stream.write(payload + "\n")
-        self.logger.log(getattr(logging, level.upper(), logging.INFO), payload, extra={"msc_event": event})
+                try:
+                    self.jsonl_path.parent.mkdir(parents=True, exist_ok=True)
+                    with self.jsonl_path.open("a", encoding="utf-8") as stream:
+                        stream.write(payload + "\n")
+                except Exception:
+                    _report_sink_failure()
+        try:
+            self.logger.log(getattr(logging, level.upper(), logging.INFO), payload, extra={"msc_event": event})
+        except Exception:
+            _report_sink_failure()
         return event
 
     def metrics(self) -> dict[str, Any]:

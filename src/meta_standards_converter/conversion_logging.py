@@ -301,23 +301,14 @@ def result_diagnostics(result):
         for item in items:
             with labels(item_id=item.id):
                 result_diagnostics(item)
-    diagnostics = getattr(result, "diagnostics", None)
-    if isinstance(diagnostics, (tuple, list)):
-        from .diagnostics import enrich
-        if isinstance(diagnostics, list):
-            diagnostics[:] = [enrich(d) for d in diagnostics]
-        for d in diagnostics:
-            d = enrich(d)
-            severity = "debug" if d.code in {"duplicate_input", "fail_fast", "enrichment_skipped"} else "error" if d.code in {"sample_skipped", "source_failed"} else d.severity
-            details = d.to_dict()
-            for key in ('code', 'message', 'severity', 'stage'):
-                details.pop(key, None)
-            diagnostic(d.code, d.message, severity=severity, stage_name=d.stage, **details)
-    for attr, severity in (("warnings", "warning"), ("errors", "error"), ("failures", "error"), ("issues", "warning")):
-        values = getattr(result, attr, None)
-        if isinstance(values, (tuple, list)):
-            for value in values:
-                diagnostic(attr, str(value), severity="error" if attr == "issues" and getattr(result, "status", None) == "failed" else severity)
+    from .diagnostics import legacy_diagnostics
+    diagnostics = legacy_diagnostics(result)
+    for d in diagnostics:
+        severity = "debug" if d.code in {"duplicate_input", "fail_fast", "enrichment_skipped"} else d.severity
+        details = d.to_dict()
+        for key in ('code', 'message', 'severity', 'stage'):
+            details.pop(key, None)
+        diagnostic(d.code, d.message, severity=severity, stage_name=d.stage, **details)
     for attr in ("studies", "conversions"):
         values = getattr(result, attr, None)
         if isinstance(values, dict):
@@ -363,6 +354,7 @@ def logged_conversion(fn):
             result_diagnostics(result)
             run.status = outcome(result)
             run.statistics.update(statistics(result))
+            run.statistics['artifact_paths'] = _artifact_paths(result)
             return result
     return wrapped
 
@@ -374,13 +366,42 @@ def item_scope(item, *, total, index):
         yield
         return
     run.failure_stage = None
-    with labels(item_id=item.id):
+    with labels(item_id=item.id, source=item.source):
         emit("item_started", status="running", index=index, inputs=total, source=item.source)
+        interrupted = False
         try:
             yield
+        except (KeyboardInterrupt, SystemExit):
+            interrupted = True
+            raise
         finally:
             result_diagnostics(item)
             count("inputs_finished")
-            emit("item_finished", status=item.status, index=index, inputs=total,
+            emit("item_finished", status='interrupted' if interrupted else item.status, index=index, inputs=total,
                  finished=index, execution=item.execution, completeness=item.completeness,
-                 validation=item.validation, datasets=len(item.dataset_ids), artifacts=len(item.artifacts))
+                 validation=item.validation, datasets=len(item.dataset_ids), artifacts=len(item.artifacts), artifact_paths=dict(item.artifacts))
+
+
+def _artifact_paths(value, seen=None):
+    """Read known result attributes only; never serialize scientific payloads."""
+    seen = set() if seen is None else seen
+    if id(value) in seen:
+        return {}
+    seen.add(id(value))
+    paths = {}
+    for attr in ('artifacts', 'sample_h5ads'):
+        found = getattr(value, attr, None)
+        if isinstance(found, dict):
+            paths.update({str(k): str(v) for k, v in found.items() if isinstance(v, str)})
+    for attr in ('output', 'output_path', 'manifest_path', 'combined_h5ad', 'obs_path', 'var_path', 'uns_path', 'bundle_pointer_path'):
+        found = getattr(value, attr, None)
+        if isinstance(found, str):
+            paths[attr] = found
+    for attr in ('items', 'studies', 'conversions'):
+        children = getattr(value, attr, None)
+        if isinstance(children, dict):
+            children = list(children.values())
+        if isinstance(children, (list, tuple)):
+            for index, child in enumerate(children):
+                paths.update({f'{index}.{k}': v for k, v in _artifact_paths(child, seen).items()})
+    return paths

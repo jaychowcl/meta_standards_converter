@@ -111,8 +111,8 @@ def test_warning_console_groups_but_jsonl_keeps_occurrences(tmp_path):
         emitter.emit('diagnostic',component='test',level='WARNING',run_id='run',stage='validation',
                      attributes={'item_id':'one','code':'missing_optional','message':f'entity {index}'})
     emitter.emit('conversion_finished',component='test',run_id='run',status='complete')
-    assert stream.getvalue().count('entity ')==1
-    assert '4 occurrences' in stream.getvalue()
+    assert stream.getvalue().count('entity ')==4  # Same code does not mean the same affected entity.
+    assert '4 occurrences' not in stream.getvalue()
     assert len(path.read_text().splitlines())==5
 
 

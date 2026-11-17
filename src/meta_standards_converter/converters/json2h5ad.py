@@ -398,7 +398,7 @@ class JSON2H5ADConverter:
                     **options,
                 )
             except Exception as error:
-                result.failures.append(_safe_group_failure(error, group.dataset_id))
+                result.failures.append(_safe_group_failure(error, group.dataset_id, result.diagnostics))
                 continue
             result.conversions[group.dataset_id] = converted
         return result
@@ -570,6 +570,8 @@ class JSON2H5ADConverter:
             )
             emit("memory_admission", level="DEBUG", sample_id=sample_id, admitted=admitted, estimated_bytes=estimated_peak_bytes, limit_bytes=limit_bytes)
             if not admitted:
+                from meta_standards_converter.diagnostics import diagnose, OperationalError
+                result.diagnostics.append(diagnose(OperationalError('memory_limit'), stage='expression', location=sample_id))
                 result.failures.append(
                     f"{sample_id}: skipped by memory admission; estimated peak "
                     f"{estimated_peak_bytes} bytes exceeds {limit_bytes} bytes"

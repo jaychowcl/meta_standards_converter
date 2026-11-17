@@ -90,11 +90,14 @@ class MetadataPreparation:
         policy = context.preparation_policy
         records, diagnostics = [], []
         from meta_standards_converter.metadata.source_fallback import recorded
+        from meta_standards_converter.provider_issues import snapshot
         for evidence in recorded(package):
             records.append(dict(evidence, operation='source_fallback', status='partial', provider='ena'))
             diagnostics.append(Diagnostic('source_fallback',
                 f"{evidence.get('requested_accession')}: loaded verified ENA study {evidence.get('study')}; ArrayExpress-specific metadata was unavailable. Supply its IDF/SDRF files to restore that metadata.",
-                'load', 'warning'))
+                'load', 'warning', provider='ena', operation='source_fallback',
+                correlation_id=next((issue.error.correlation_id for issue, _ in snapshot().values()
+                    if issue.error.provider == 'biostudies' and issue.error.location == evidence.get('requested_accession')), None)))
         ids = study_ids(package)
         identity = package.to_mapping().get("series", {}).get("iid") or (ids[0] if ids else "input")
 
@@ -124,7 +127,11 @@ class MetadataPreparation:
                     candidate, issues = fn(MINiMLCodec().decode(package, strict=True).package)
                 package = MINiMLCodec().decode(candidate, strict=True).package
                 record["status"] = "partial" if issues else "completed"
-                diagnostics.extend(Diagnostic("source_partial", f"{identity}: {name}: {issue}", "preparation", "warning") for issue in issues)
+                causes = [issue for issue, recovered in snapshot().values() if not recovered and issue.operation == name]
+                cause = causes[0] if len(causes) == 1 else None
+                diagnostics.extend(Diagnostic("source_partial", f"{identity}: {name}: {issue}", "preparation", "warning",
+                    provider=cause.error.provider if cause else None, operation=name,
+                    correlation_id=cause.error.correlation_id if cause else None) for issue in issues)
                 diagnostics.append(Diagnostic("enrichment_completed", f"{identity}: {name} {record['status']}", "preparation", "info"))
             except MINiMLCompatibilityError as exc:
                 record.update(status="failed", reason="invalid_candidate")
@@ -138,7 +145,10 @@ class MetadataPreparation:
                     record.update(status='partial', reason='metadata_budget_exhausted')
                     message = f'{identity}: {name}: {exc}; valid candidate retained'
                 else: message = f"{identity}: {name} failed ({type(exc).__name__})"
-                diagnostics.append(Diagnostic("source_partial", message, "preparation", "warning"))
+                from meta_standards_converter.diagnostics import diagnose
+                from dataclasses import replace
+                cause = diagnose(exc, stage='preparation', location=identity, severity='warning')
+                diagnostics.append(replace(cause, code='source_partial', message=message, operation=name))
 
         from meta_standards_converter.metadata.reconciliation import inspect_recorded_conflicts
         def has_recorded_evidence():

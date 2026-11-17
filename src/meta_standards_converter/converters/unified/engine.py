@@ -47,15 +47,6 @@ from meta_standards_converter.sources.contracts import RequestMetrics
 from meta_standards_converter.sources.errors import MetadataSourceError
 
 
-def _missing_scientific_dependency(exc):
-    scientific = {"anndata", "numpy", "pandas", "scipy", "h5py", "scanpy"}
-    return any(
-        isinstance(error, ImportError)
-        and (error.name or "").split(".")[0] in scientific
-        for error in (exc, exc.__cause__)
-    )
-
-
 def source_label(source):
     if isinstance(source, (str, os.PathLike)):
         value = str(source)

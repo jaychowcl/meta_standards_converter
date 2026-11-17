@@ -35,7 +35,7 @@ def run_cli(parser, converter_type, argv):
     if args.evidence_dir and hasattr(converter.source, "http"):
         converter.source.http.evidence_dir = Path(args.evidence_dir)
     from ..conversion_logging import (
-        operation, stage, labels, emit, count, result_diagnostics, outcome, statistics,
+        operation, stage, labels, emit, count, result_diagnostics, outcome, statistics, _artifact_paths,
     )
     seen, reports, failed = set(), [], False
     from ..sources.archive_support import Resolution
@@ -66,11 +66,16 @@ def run_cli(parser, converter_type, argv):
                 for key in ("studies", "packages", "samples", "runs"):
                     if key in details:
                         count(key, details[key])
-                emit("item_finished", status=status, index=index, inputs=len(args.accession),
+                emit("item_finished", status=status, index=index, inputs=len(args.accession), artifact_paths=_artifact_paths(result),
                      **{key: value for key, value in details.items() if key not in totals})
         if args.report:
             try:
-                publish_json(args.report, {'imports': reports}, args.overwrite)
+                from ..operational_events import _reserved_outputs
+                token = _reserved_outputs.set(frozenset())
+                try:
+                    publish_json(args.report, {'imports': reports}, args.overwrite)
+                finally:
+                    _reserved_outputs.reset(token)
             except OSError as error:
                 from .common import record_safe_cli_error
                 record_safe_cli_error(logging.getLogger(__name__), error, location=args.report, stage='report')

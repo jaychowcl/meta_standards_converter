@@ -110,6 +110,7 @@ class JSON2OBSConverter:
                 conversions=results,
                 failures=tuple(converted.failures),
                 warnings=tuple(converted.warnings),
+                diagnostics=tuple(converted.diagnostics),
             )
         return self.components.export(
             converted,

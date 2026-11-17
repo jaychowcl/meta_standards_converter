@@ -2125,6 +2125,12 @@ Import legacy unversioned/1.0 source JSON directly as MSC MINiML 3.0. MINiML 2.0
 | `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
 | `source` | text | `required` | Legacy MINiML JSON file. |
 | `destination` | text | `required` | Destination for MSC MINiML 3.0 JSON. |
+| `-v`, `--verbose` | repeatable flag | 0 | INFO with `-v`, DEBUG with `-vv`. |
+| `-q`, `--quiet` | flag | false | Only errors on stderr. |
+| `--log-file` | path | none | Protected destination for a detailed log. |
+| `--log-format` | `text`, `jsonl` | `text` | File format. |
+| `--log-file-level` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` | `DEBUG` | File threshold independent of console. |
+| `--progress` | `auto`, `plain`, `off` | `auto` | Shared progress controls. |
 
 [Execution and failure behavior](#workflow-miniml-migrate); [parser source](../src/meta_standards_converter/cli/miniml_migrate.py).
 
@@ -4061,7 +4067,7 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `ArchiveImportResult.to_mapping` [source](../src/meta_standards_converter/converters/archive_results.py#L48) | `to_mapping(self)` | Follows the owning stage contract. |
 | `meta_standards_converter.converters.archive_results.NativeProviderFailure` [source](../src/meta_standards_converter/converters/archive_results.py#L52) | `NativeProviderFailure` | Copy-safe, redacted provider failure retained by operation-local memoization. |
 | `meta_standards_converter.converters.archive_results.native_failure` [source](../src/meta_standards_converter/converters/archive_results.py#L56) | `native_failure(errors)` | Preserve a transient provider failure and the latest applicable cooldown. |
-| `meta_standards_converter.converters.archive_results.publish_json` [source](../src/meta_standards_converter/converters/archive_results.py#L148) | `publish_json(path, value, overwrite=False)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.archive_results.publish_json` [source](../src/meta_standards_converter/converters/archive_results.py#L148) | `publish_json(path, value, overwrite=False, *, sort_keys=False)` | Follows the owning stage contract. |
 | `meta_standards_converter.converters.archive_results.output_name` [source](../src/meta_standards_converter/converters/archive_results.py#L168) | `output_name(seed, seeds)` | Follows the owning stage contract. |
 
 
@@ -4803,8 +4809,8 @@ retain their existing scientific contracts.
 
 | Console | Behavior |
 | --- | --- |
-| default | WARNING/ERROR, automatic interactive progress, compact final human result |
-| `-v` | INFO stage progress and statistics |
+| default | Automatic interactive progress; one compact summary per input, then command totals |
+| `-v` | INFO stage progress, statistics and every diagnostic group |
 | `-vv` | DEBUG decisions, requests and nested stage detail |
 | `--quiet` | ERROR only; no progress or human summary; machine-readable output remains |
 
@@ -4812,8 +4818,27 @@ retain their existing scientific contracts.
 `--log-format jsonl` for one v1 event per line, or `--log-file-level INFO` to explicitly
 reduce file detail. Ordinary module records are normalized into the same envelope.
 Files contain semantic events, not animation frames; raw payloads and exception dumps
-are excluded. Diagnostic console warnings are grouped by run/item/stage/code;
-individual occurrences remain in the file and applicable result diagnostics.
+are excluded. Unexpected internal failures include at most five chained exception
+types and twenty module/function/line frames per cause at DEBUG. No source lines,
+locals or raw exception messages are recorded.
+
+Console diagnostics group by correlated cause and input. Uncorrelated diagnostics
+combine only when code, provider, operation, stage, location and message agree.
+Default summaries retain the five most important groups (errors first), count
+additional groups, and show usable output paths and recovery actions. `-v` shows
+all groups; file events and structured reports retain individual occurrences.
+A verified ENA fallback groups the original BioStudies denial and ENA consequence,
+while optional failures from other providers remain separate. The human summary
+states partial output written, failure with retained artifacts, or no output
+produced. Report-publication failure changes the command outcome after conversion.
+
+The CLI-owned `meta_standards_converter.cli.logging_output.SafeFileHandler` disables
+a failed file sink and emits one controlled stderr notice, without logging's raw
+traceback fallback. A log failure returns nonzero while retaining conversion
+artifacts. A destination that cannot be initialized fails before conversion.
+Reserved log/report paths cannot become conversion artifacts. Caller-owned
+logging handlers remain installed; an emitter failure cannot replace a conversion
+exception. Python warning filters are not changed globally.
 
 `--progress auto` uses an ASCII bar only when stderr is a terminal. Redirected
 output has no control sequences and follows normal log verbosity. `--progress plain`
@@ -4907,6 +4932,10 @@ validation from unexpected `ValueError` failures.
 `meta_standards_converter.diagnostics.OperationalError` supplies controlled codes
 and safe locations for processing failures. Scientific validation codes remain
 owned by their validators; this catalogue does not alter document versions.
+`meta_standards_converter.diagnostics.legacy_diagnostics` adapts standalone warning,
+error and failure lists; `meta_standards_converter.diagnostics.diagnostic_mapping`
+adds their structured representation to reports. Original fields remain available,
+and scientific artifact manifests retain their existing serialization.
 
 
 `meta_standards_converter.runtime_contracts.OperationStatusV2` is the clean
@@ -6011,7 +6040,7 @@ facades. Their ownership and signatures are listed here for source retrieval:
 | `meta_standards_converter.cli.ena2json.main` | `main(argv=None)` |
 | `meta_standards_converter.converters.archive_results.StudyImportOutcome` | `to_mapping(self)` |
 | `meta_standards_converter.converters.archive_results.ArchiveImportResult` | `packages(self); ok(self); to_mapping(self)` |
-| `meta_standards_converter.converters.archive_results.publish_json` | `publish_json(path, value, overwrite=False)` |
+| `meta_standards_converter.converters.archive_results.publish_json` | `publish_json(path, value, overwrite=False, *, sort_keys=False)` |
 | `meta_standards_converter.converters.archive_results.output_name` | `output_name(seed, seeds)` |
 | `meta_standards_converter.converters.sra2json.SRA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |
 | `meta_standards_converter.converters.ena2json.ENA2JSONConverter` | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None); convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None)` |

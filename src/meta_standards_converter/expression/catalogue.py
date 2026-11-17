@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.diagnostics import diagnostic_mapping
 from meta_standards_converter.conversion_logging import measured
 from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
 import json
@@ -51,6 +52,7 @@ class ConversionResult:
     failures: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     memory_report: list[dict[str, Any]] = field(default_factory=list)
+    diagnostics: list = field(default_factory=list)
 
     @property
     def primary_h5ad(self) -> str | None:
@@ -65,6 +67,7 @@ class ConversionResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            **diagnostic_mapping(self),
             "operation": "h5ad",
             "status": "partial" if self.partial else "complete",
             "study_accession": self.study_accession,
@@ -88,6 +91,7 @@ class BatchConversionResult:
     conversions: dict[str, ConversionResult] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     failures: list[str] = field(default_factory=list)
+    diagnostics: list = field(default_factory=list)
 
     @property
     def partial(self) -> bool:
@@ -97,6 +101,7 @@ class BatchConversionResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            **diagnostic_mapping(self),
             "operation": "h5ad",
             "status": "partial" if self.partial else "complete",
             "datasets": {
@@ -431,13 +436,13 @@ class DatasetBundleRecoveryError(RuntimeError):
         )
 
 
-def _safe_group_failure(error: BaseException, dataset_id: str) -> str:
-    envelope = SafeErrorEnvelope.from_exception(
-        error,
-        provider="meta_standards_converter",
-        stage="json2h5ad_group_conversion",
-        item_id=dataset_id,
-    )
+def _safe_group_failure(error: BaseException, dataset_id: str, diagnostics=None) -> str:
+    from meta_standards_converter.diagnostics import diagnose
+    from meta_standards_converter.converters.unified.outcomes import failure
+    envelope, _ = failure(error, provider='meta_standards_converter', stage='expression', item_id=dataset_id)
+    diagnostic = diagnose(error, stage='expression', item_id=dataset_id, location=dataset_id)
+    if diagnostics is not None:
+        diagnostics.append(diagnostic)
     return (
         f"{dataset_id}: {envelope.error_type} "
         f"[correlation_id={envelope.correlation_id}]"

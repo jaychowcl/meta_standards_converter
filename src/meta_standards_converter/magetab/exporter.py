@@ -29,14 +29,14 @@ class MAGETabExporter:
     @measured_phase("magetab_package_resolution")
     def _packages_from_loaded(self, loaded, *, replacement_profile=None):
         for warning in loaded.warnings:
-            logger.warning("%s", warning)
+            logger.debug("%s", warning)
         if not loaded.groups:
             raise ValueError("JSON source contains no convertible package groups.")
         packages = []
         for original_group in loaded.groups:
             group = original_group.resolved(replacement_profile=replacement_profile)
             for warning in getattr(group.harmonization_resolution, "warnings", ()):
-                logger.warning("%s", warning)
+                logger.debug("%s", warning)
             packages.extend(group.packages)
 
         for index, package in enumerate(packages, start=1):

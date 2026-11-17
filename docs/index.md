@@ -466,8 +466,8 @@ Full flag and Python API details remain in the canonical routes below.
 - id: conversion-logging
   title: Conversion logging and progress
   anchor: conversion-logging
-  purpose: Explain levels, correlated stages, counters, text/JSONL files, terminal bars, quiet mode and stdout/stderr contracts.
-  keywords: logging, progress, auto, plain, off, DEBUG, INFO, WARNING, ERROR, log-file-level, log-format, JSONL, heartbeat, run_id
+  purpose: Explain cause grouping, compact summaries, safe DEBUG frames, logging failures, levels, progress and stdout/stderr contracts.
+  keywords: logging, progress, auto, plain, off, DEBUG, INFO, WARNING, ERROR, log-file-level, log-format, JSONL, heartbeat, run_id, correlation_id, reporting_failed, partial output
   link: [Open section](codebase.md#conversion-logging)
 
 - id: operational-events-v1
@@ -481,7 +481,7 @@ Full flag and Python API details remain in the canonical routes below.
   title: Runtime contracts v2
   anchor: runtime-contracts-v2
   purpose: Defines independent status axes, safe error serialization, standard/large disk and RAM profiles, explicit overrides, memory admission, and disk preflight.
-  keywords: status 2.0, execution, completeness, evidence confidence, validation, publication, SafeErrorEnvelope, resource profile, standard, large, 8 GiB, 32 GiB, 70 percent available RAM, 90 percent force memory, disk headroom
+  keywords: status 2.0, execution, completeness, evidence confidence, validation, publication, SafeErrorEnvelope, Diagnostic, action, exception classification, resource profile, standard, large, 8 GiB, 32 GiB, 70 percent available RAM, 90 percent force memory, disk headroom
   link: [Open section](codebase.md#runtime-contracts-v2)
 
 - id: secure-retrieval-and-xml

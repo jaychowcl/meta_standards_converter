@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from meta_standards_converter.diagnostics import diagnostic_mapping
 from meta_standards_converter.conversion_logging import measured
 import json
 import tempfile
@@ -36,6 +37,7 @@ class AnnDataMetadataExportResult:
     errors: tuple[str, ...] = ()
     failures: tuple[str, ...] = ()
     bundle_pointer_path: str | None = None
+    diagnostics: tuple = ()
 
     @property
     def partial(self) -> bool:
@@ -50,6 +52,7 @@ class AnnDataMetadataExportResult:
         if self.uns_path:
             artifacts["uns"] = self.uns_path
         return {
+            **diagnostic_mapping(self),
             "operation": "anndata_metadata",
             "status": "partial" if self.partial else "complete",
             "study_accession": self.study_accession,
@@ -77,6 +80,7 @@ class AnnDataMetadataBatchResult:
     conversions: dict[str, AnnDataMetadataExportResult]
     failures: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
+    diagnostics: tuple = ()
 
     @property
     def partial(self) -> bool:
@@ -84,6 +88,7 @@ class AnnDataMetadataBatchResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            **diagnostic_mapping(self),
             "operation": "anndata_metadata",
             "status": "partial" if self.partial else "complete",
             "datasets": {
@@ -191,11 +196,12 @@ class AnnDataComponentExporter:
                 uns=uns,
                 uns_path=str(destinations["uns"]) if include_uns else None,
                 warnings=tuple(conversion.warnings),
+                diagnostics=tuple(conversion.diagnostics),
                 errors=tuple(conversion.errors),
                 failures=tuple(conversion.failures),
             )
             staged["manifest"].write_text(
-                json.dumps(result.to_dict(), indent=2, ensure_ascii=False, sort_keys=True)
+                json.dumps({k: v for k, v in result.to_dict().items() if k != 'diagnostics'}, indent=2, ensure_ascii=False, sort_keys=True)
                 + "\n",
                 encoding="utf-8",
             )
