@@ -445,8 +445,9 @@ class GEOParser:
     def _normalized_text(self, text: str | None) -> str | None:
         if text is None:
             return None
-        normalized = re.sub(r"\s+", " ", text).strip()
-        return normalized or None
+        # XML parsing already decodes entities and normalizes XML line endings.
+        # Whitespace inside a nonblank field belongs to its author, not MSC.
+        return text if text.strip() else None
 
     def _local_name(self, tag: str) -> str:
         if "}" in tag:

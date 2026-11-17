@@ -512,7 +512,7 @@ class TestIDFConstructor(unittest.TestCase):
             comment_indexes,
         )
         self.assertLess(rows.index(["Investigation Title", "Example"]), comment_indexes[0])
-        self.assertLess(rows.index(["Date of Experiment", "2026-05-18"]), comment_indexes[0])
+        self.assertLess(rows.index(["Date of Experiment"]), comment_indexes[0])
         self.assertLess(rows.index(["Public Release Date", "2026-06-05"]), comment_indexes[0])
         self.assertLess(rows.index(["SDRF File"]), comment_indexes[0])
         term_source_index = next(index for index, row in enumerate(rows) if row[0] == "Term Source Name")
@@ -523,9 +523,9 @@ class TestIDFConstructor(unittest.TestCase):
                 ["Comment[SecondaryAccessionTermSourceRef]", "GEO"],
                 ["Comment[ArrayExpressAccession]", "E-GEOD-1"],
                 ["Comment[RelatedExperiment]", "GSE2"],
+                ["Comment[GEOSubmissionDate]", "2026-05-18"],
                 ["Comment[GEOReleaseDate]", "2026-06-05"],
                 ["Comment[GEOLastUpdateDate]", "2026-06-06"],
-                ["Comment[ArrayExpressSubmissionDate]", "2026-05-26"],
             ],
             rows[comment_indexes[0]:],
         )
@@ -564,7 +564,7 @@ class TestIDFConstructor(unittest.TestCase):
 
         title_index = rows.index(["Investigation Title", "Example"])
         self.assertEqual(
-            ["Experiment Description", "Summary text. Design text"],
+            ["Experiment Description", "Summary text Design text"],
             rows[title_index + 1],
         )
         comment_rows = [row for row in rows if IDFConstructor()._is_comment_row(row)]
@@ -1259,8 +1259,8 @@ class TestIDFConstructor(unittest.TestCase):
             )
 
         self.assertEqual(
-            ["Date of Experiment", "2026-05-18", "not-a-date"],
-            self.row(rows, "Date of Experiment"),
+            ["Comment[GEOSubmissionDate]", "2026-05-18", "not-a-date"],
+            self.row(rows, "Comment[GEOSubmissionDate]"),
         )
         self.assertEqual(
             ["Public Release Date", "2026-05-18"],
@@ -1274,12 +1274,9 @@ class TestIDFConstructor(unittest.TestCase):
             ["Comment[GEOLastUpdateDate]", "2026-06-05", ""],
             self.row(rows, "Comment[GEOLastUpdateDate]"),
         )
-        self.assertEqual(
-            ["Comment[ArrayExpressSubmissionDate]", "2026-05-26"],
-            self.row(rows, "Comment[ArrayExpressSubmissionDate]"),
-        )
+        self.assertFalse(any(r[0] == "Comment[ArrayExpressSubmissionDate]" for r in rows))
 
-    def test_idf_dates_arrayexpress_submission_date_is_one_current_date_for_multiple_series(self):
+    def test_idf_dates_do_not_invent_arrayexpress_submission_for_geo_series(self):
         constructor = IDFConstructor()
         with patch.object(constructor, "_current_idf_date", return_value="2026-05-26"):
             rows = constructor._idf_dates(
@@ -1291,10 +1288,7 @@ class TestIDFConstructor(unittest.TestCase):
                 }
             )
 
-        self.assertEqual(
-            ["Comment[ArrayExpressSubmissionDate]", "2026-05-26"],
-            self.row(rows, "Comment[ArrayExpressSubmissionDate]"),
-        )
+        self.assertFalse(any(r[0] == "Comment[ArrayExpressSubmissionDate]" for r in rows))
 
     def test_idf_dates_public_release_date_is_empty_without_release_dates(self):
         rows = IDFConstructor()._idf_dates({"source": {"format": "GEO MINiML"}, "series": {"status": [{"submission_date": "2026-05-18"}]}})
@@ -1863,7 +1857,7 @@ class TestAEConstructor(unittest.TestCase):
 
         self.assertEqual(["Investigation Title", '"Quoted" study'], self.row(magetab, "Investigation Title"))
         self.assertEqual(
-            ["Experiment Description", 'John\'s "summary". "design"'],
+            ["Experiment Description", 'John\'s "summary" "design"'],
             self.row(magetab, "Experiment Description"),
         )
         self.assertEqual(["Person Last Name", '"Smith"'], self.row(magetab, "Person Last Name"))

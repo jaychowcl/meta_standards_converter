@@ -12,6 +12,8 @@ from meta_standards_converter.magetab.sdrf.handlers.single_cell import _SingleCe
 
 class _SpatialSequencingSDRFHandler(_SingleCellSequencingSDRFHandler):
     def extra_library_attrs(self, sample: dict, channel: dict, run: dict | None) -> list[SDRFAttr]:
+        if self.geo_source:
+            return []
         # Spatial presets are outside the scoped single-cell chemistry change.
         attrs = []
         construction = self.library_construction(sample, channel, run)
@@ -41,6 +43,8 @@ class _SpatialSequencingSDRFHandler(_SingleCellSequencingSDRFHandler):
         return None
 
     def extra_assay_attrs(self, sample: dict, run: dict | None) -> list[SDRFAttr]:
+        if self.geo_source:
+            return []
         attrs = super().extra_assay_attrs(sample=sample, run=run)
         filename = self.clean(run.get("submitted_file_name") if run else None) or ""
         lower_filename = filename.lower()

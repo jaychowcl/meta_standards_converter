@@ -62,12 +62,12 @@ def _decode_normalization(value):
         envelope = json.loads(value)
         if not isinstance(envelope, dict) or envelope.get('schema_version') != '1.0': return None
         record = envelope['record']; fact = record['metadata']
-        if record.get('kind') != 'text_normalization' or not isinstance(fact['path'], str): return None
+        if record.get('kind') not in {'text_normalization', 'text_normalization_suggestion'} or not isinstance(fact['path'], str): return None
         statements = fact['statements']
         if not isinstance(statements, list) or len(statements) != 2: return None
         if not all(isinstance(s, dict) and all(k in s for k in ('provider', 'accession', 'value')) for s in statements): return None
         choice = _text_choice(*statements, fact['path'])
-        if choice and choice[1] == record: return record
+        if choice and {**choice[1], 'kind': record['kind']} == record: return record
     except (ValueError, TypeError, KeyError): pass
     return None
 
@@ -78,7 +78,7 @@ def _normalization_comments(data, rows=None, warn=None):
     data = package_mapping(data)
     if rows is not None:
         rows[:] = [r for r in rows if not (r and r[0] == 'Comment[MSCTextNormalization]' and all(_decode_normalization(v) for v in r[1:]))]
-        values = dict.fromkeys(_json({'schema_version': '1.0', 'record': r}) for r in data.get('extensions', {}).get('insdc', {}).get('records', []) if r.get('kind') == 'text_normalization')
+        values = dict.fromkeys(_json({'schema_version': '1.0', 'record': r}) for r in data.get('extensions', {}).get('insdc', {}).get('records', []) if r.get('kind') in {'text_normalization', 'text_normalization_suggestion'})
         rows.extend(['Comment[MSCTextNormalization]', value] for value in values)
     else:
         kept = []

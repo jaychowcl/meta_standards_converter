@@ -267,7 +267,11 @@ class IDFConstructor():
         """
         extracts experimental design and factors from miniml json to return list of lists as header as first element in lists
         """
+        from .text import geo_origin, literal
+        geo = geo_origin(data)
         def clean(value):
+            if geo:
+                return literal(value)
             if value is None:
                 return None
             cleaned = " ".join(str(value).replace("\t", " ").replace("\n", " ").split())
@@ -294,7 +298,7 @@ class IDFConstructor():
                 name = clean(variable.get("name") or variable.get("factor") or variable.get("tag"))
                 typed = variable.get("type")
                 factor_type = clean(typed.get("value")) if isinstance(typed, dict) else clean(typed)
-                factor_type = factor_type or name
+                factor_type = factor_type if geo else factor_type or name
                 source = clean(typed.get("term_source_ref")) if isinstance(typed, dict) else None
                 accession = clean(typed.get("term_accession_number")) if isinstance(typed, dict) else None
                 if name and not any(item[0].lower() == name.lower() for item in declared_factors):
@@ -329,7 +333,7 @@ class IDFConstructor():
         factor_names = (
             [item[0] for item in declared_factors]
             if declared_factors
-            else [] if data.get("source", {}).get("format") in {"SRA", "ENA"}
+            else [] if geo or data.get("source", {}).get("format") in {"SRA", "ENA"}
             else [
                 factors[tag_key]["name"]
                 for tag_key in factor_order
@@ -411,25 +415,24 @@ class IDFConstructor():
         series = series if isinstance(series, list) else [series]
         statuses = [s for item in series for s in item.get("status", [])]
         normalize = (lambda value: value) if native else self._normalized_idf_date
-        values = lambda field: [normalize(s[field]) for s in statuses if s.get(field)]
         experiments = [normalize(item["experiment_date"]) for item in series if item.get("experiment_date")]
         generic_releases = [normalize(s["release_date"]) for s in statuses
                             if s.get("date_source") == "Public Release Date" and s.get("release_date")]
         releases = generic_releases or [normalize(s["release_date"]) for s in statuses
             if s.get("release_date") and (not native or s.get("database", provider) == provider)]
-        rows = [["Date of Experiment", *(experiments if experiments else
-                                        [] if native else values("submission_date"))],
+        rows = [["Date of Experiment", *experiments],
                 ["Public Release Date", self._earliest_idf_date([v[:10] for v in releases])]]
         # An explicit status scope takes precedence over package provenance.
         for database in dict.fromkeys([provider, *[s.get("database") for s in statuses]]):
             if not database:
                 continue
-            for field, label in (("release_date", "ReleaseDate"), ("last_update_date", "LastUpdateDate")):
+            fields = [("release_date", "ReleaseDate"), ("last_update_date", "LastUpdateDate")]
+            if database == 'GEO': fields.insert(0, ('submission_date', 'SubmissionDate'))
+            for field, label in fields:
                 scoped = [normalize(s[field]) for s in statuses if field in s
                           and s.get("database", provider) == database
                           and s.get("date_source") != "Public Release Date"]
                 rows.append([f"Comment[{database}{label}]", *scoped])
-        rows.append(["Comment[ArrayExpressSubmissionDate]", self._current_idf_date()])
         return rows
 
     def _current_idf_date(self):
@@ -513,16 +516,10 @@ class IDFConstructor():
         summaries = handler._from_path(data, "series.summary")
         designs = handler._from_path(data, "series.overall_design")
 
-        # Combine summaries and designs first
-        combined = []
-        for s, d in zip(summaries, designs):
-            s_clean = (s or "").replace(chr(9), " ")
-            d_clean = (d or "").replace(chr(9), " ")
-
-            if d_clean:
-                combined.append(f"{s_clean}. {d_clean}".strip())
-            else:
-                combined.append(s_clean.strip())
+        # Preserve source fragments, including a summary with no design.
+        from itertools import zip_longest
+        combined = [' '.join(value for value in (s, d) if value)
+                    for s, d in zip_longest(summaries, designs)]
 
         experiment_description = [
             "Experiment Description",

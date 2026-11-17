@@ -33,6 +33,8 @@ class _BaseSDRFHandler(SDRFRenderer):
     def __init__(self, parent, data: dict, protocol_registry=None):
         self.parent = parent
         self.data = data
+        from ...text import geo_origin
+        self.geo_source = geo_origin(data)
         self.run_evidence = {}
         self.path_scope = None
         self.samples = [x for x in self._as_list(data.get("sample")) if isinstance(x, dict)]
@@ -61,7 +63,8 @@ class _BaseSDRFHandler(SDRFRenderer):
         return [value]
 
     def build(self) -> list:
-        paths = self.prepare_paths()
+        from ...export_files import exclude_derived_paths
+        paths = exclude_derived_paths(self.prepare_paths())
         columns = self.plan_columns(paths=paths)
         return self.render_paths(columns=columns, paths=paths)
 
@@ -135,7 +138,7 @@ class _BaseSDRFHandler(SDRFRenderer):
         provider = self.provider(channel=channel)
         if provider:
             attrs.append(SDRFAttr(label="Provider", value=provider))
-        attrs.append(SDRFAttr(label="Material Type", value=self.material_type(channel=channel)))
+        attrs.append(SDRFAttr(label="Material Type", value=self.material_type(channel=channel), required=self.geo_source))
         # Legacy greedy GEO fallback:
         # attrs.extend(_GEOFallbackComments(self).geo_fallback_attrs(sample=sample, channel=channel))
         attrs.extend(self.extra_source_attrs(sample=sample, channel=channel))
@@ -205,7 +208,7 @@ class _BaseSDRFHandler(SDRFRenderer):
             seen_tags[tag] = seen_tags.get(tag, 0) + 1
             if seen_tags[tag] > 1:
                 self.audit.warnings.append(f"Repeated Characteristics[{tag}] preserved as {seen_tags[tag]} columns.")
-            lower_tag = tag.lower()
+            lower_tag = tag if self.geo_source else tag.lower()
             value = self.clean(characteristic.get("value"))
             if lower_tag in required_attrs and required_attrs[lower_tag].value is None:
                 required_attrs[lower_tag].value = value
@@ -235,8 +238,13 @@ class _BaseSDRFHandler(SDRFRenderer):
         from meta_standards_converter.metadata.interpretation import MINiMLMetadataService
         service = MINiMLMetadataService()
         attrs = []
-        for item in biological_characteristics([channel], "organism_part", slug=service.metadata_slug):
-            for value in service.values(item.get("value")):
+        if self.geo_source:
+            items = [item for item in channel.get('characteristics', [])
+                     if (item.get('name') or item.get('tag')) == 'organism part']
+        else:
+            items = biological_characteristics([channel], "organism_part", slug=service.metadata_slug)
+        for item in items:
+            for value in ([item.get('value')] if self.geo_source else service.values(item.get("value"))):
                 attr = SDRFAttr("Characteristics[organism part]", value,
                                 attrs=self.ontology_companions(item), required=True)
                 if attr not in attrs:
@@ -256,7 +264,9 @@ class _BaseSDRFHandler(SDRFRenderer):
             return None
         return self.clean(organism.get("name") or organism.get("value")) or None
 
-    def material_type(self, channel: dict):
+    def material_type(self, channel: dict, *, extracted=False):
+        if self.geo_source:
+            return self.clean(channel.get('molecule') if extracted else channel.get('material_type'))
         if channel.get("material_type"):
             return self.clean(channel.get("material_type"))
         molecule = channel.get("molecule")
@@ -320,6 +330,8 @@ class _BaseSDRFHandler(SDRFRenderer):
     def protocol_edge(self, kind: str, text: str | None, sample: dict, required: bool = False) -> SDRFEdge | None:
         ref = self.protocol_registry.get_ref(kind=kind, text=text)
         if not ref and required:
+            if self.geo_source:
+                return SDRFEdge(protocol_ref=self.protocol_registry.ensure_required(kind=kind))
             self.audit.warnings.append(f"Protocol text missing for {kind} in sample {self.sample_accession(sample=sample)}; Protocol REF left blank.")
             return SDRFEdge(protocol_ref=None)
         if not ref:
@@ -469,6 +481,9 @@ class _BaseSDRFHandler(SDRFRenderer):
         return None
 
     def clean(self, value):
+        if self.geo_source:
+            from ...text import literal
+            return literal(value)
         if value is None:
             return None
         if isinstance(value, dict) and "value" in value:
@@ -498,7 +513,7 @@ class _BaseSDRFHandler(SDRFRenderer):
         if variable_tags:
             return variable_tags
 
-        if self.data.get("source", {}).get("format") in {"SRA", "ENA"}:
+        if self.geo_source or self.data.get("source", {}).get("format") in {"SRA", "ENA"}:
             return []
         values_by_tag = {}
         for sample in self.samples:

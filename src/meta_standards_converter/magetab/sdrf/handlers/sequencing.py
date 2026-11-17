@@ -23,6 +23,8 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
             for channel in self.channels(sample=sample):
                 self.preregister_extraction_protocols(sample=sample, channel=channel)
                 for run in runs:
+                    if self.geo_source:
+                        self.protocol_registry.ensure_required(kind='library construction')
                     self.protocol_registry.get_ref(
                         kind="library construction",
                         text=self.library_protocol_text(sample=sample, channel=channel, run=run),
@@ -65,7 +67,7 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
 
     def extract_node(self, sample: dict, channel: dict, run: dict | None) -> SDRFNode:
         accession = self.sample_accession(sample=sample)
-        attrs = [SDRFAttr(label="Material Type", value=self.material_type(channel=channel))]
+        attrs = [SDRFAttr(label="Material Type", value=self.material_type(channel=channel, extracted=True), required=self.geo_source)]
         attrs.extend(self.library_attrs(sample=sample, run=run))
         attrs.extend(self.extra_library_attrs(sample=sample, channel=channel, run=run))
         # Legacy greedy SRA library fallback:
@@ -82,7 +84,7 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
         }
         for label, value in values.items():
             value = self.clean(value)
-            if label == "Comment[LIBRARY_SOURCE]" and value:
+            if label == "Comment[LIBRARY_SOURCE]" and value and not self.geo_source:
                 value = value.upper()
             if value:
                 attrs.append(SDRFAttr(label=label, value=value))
@@ -101,6 +103,8 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
         return []
 
     def library_protocol_text(self, sample: dict, channel: dict, run: dict | None) -> str | None:
+        if self.geo_source:
+            return None
         values = [
             sample.get("library_layout"),
             sample.get("library_strategy"),

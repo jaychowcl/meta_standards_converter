@@ -68,7 +68,8 @@ def test_ncbi_assembly_reports_and_synonyms_are_sample_scoped():
     assert link['assembly_accession']=='GCF_1.2' and link['type']=='assembly report'
     from tests.test_protocol_export import render
     table=next(r[1] for r in render(data) if r[0]=='SDRF File')
-    assert 'ftp://example.org/stats.txt' in str(table)
+    assert 'ftp://example.org/stats.txt' not in str(table)
+    assert link in data['sample'][0]['supplementary_data']
 
 
 def test_analysis_reference_fetch_is_bounded_and_validates_sample_binding():

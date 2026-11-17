@@ -345,7 +345,9 @@ def test_native_sdrf_columns_preserve_each_acquisition_and_result_path(sparse_fi
     sparse={'steps':[source,processing,{**result,'name':'sample.tsv','link':{'value':'https://results/sample.tsv'}}]}
     data['series']['assay_paths']=[sparse,full] if sparse_first else [full,sparse]
     rows={r[0]:r[1:] for r in render(data)};table=rows['SDRF File'][0];header=table[0]
-    assert header.index('Extract Name')<header.index('Assay Name')<header.index('Scan Name')<header.index('Derived Array Data File')
+    assert header.index('Extract Name')<header.index('Assay Name')<header.index('Scan Name')
+    assert 'Derived Array Data File' not in header
+    assert 'counts.tsv' not in str(table) and 'sample.tsv' not in str(table)
     descriptions=dict(zip(rows['Protocol Name'],rows['Protocol Description']))
     for row in table[1:]:
         methods=[descriptions[v] for k,v in zip(header,row) if k=='Protocol REF' and v]

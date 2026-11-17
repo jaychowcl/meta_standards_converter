@@ -110,17 +110,17 @@
             "characteristics": [
               {
                 "name": "tissue",
-                "value": "CSF"
+                "value": "\nCSF\n      "
               }
             ],
             "molecule": {
               "value": "total RNA"
             },
-            "extract_protocol": "Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines. Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics"
+            "extract_protocol": "\nFrozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.\nChromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics\n      "
           }
         ],
-        "description": "Library name: Ctrl_1",
-        "data_processing": "Seurat v5.1.0 in R v4.5.1 Assembly: GRCh38 Supplementary files format and content: h5 files for each sample",
+        "description": "\nLibrary name: Ctrl_1\n    ",
+        "data_processing": "\nSeurat v5.1.0 in R v4.5.1\nAssembly: GRCh38\nSupplementary files format and content: h5 files for each sample\n    ",
         "platform_ref": {
           "ref": "GPL30173"
         },
@@ -137,7 +137,7 @@
         ],
         "supplementary_data": [
           {
-            "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5",
+            "value": "\nftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5\n    ",
             "type": "H5"
           }
         ],
@@ -201,8 +201,8 @@
       "web_link": [
         "https://link.springer.com/article/10.1186/s12974-026-03861-9#"
       ],
-      "summary": "This SuperSeries is composed of the SubSeries listed below.",
-      "overall_design": "Refer to individual Series",
+      "summary": "\nThis SuperSeries is composed of the SubSeries listed below.\n    ",
+      "overall_design": "\nRefer to individual Series\n    ",
       "type": [
         {
           "value": "Expression profiling by high throughput sequencing"
@@ -220,7 +220,7 @@
       ],
       "supplementary_data": [
         {
-          "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE328nnn/GSE328265/suppl/GSE328265_RAW.tar",
+          "value": "\nftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE328nnn/GSE328265/suppl/GSE328265_RAW.tar\n    ",
           "type": "TAR"
         }
       ],

@@ -73,4 +73,4 @@ class ProtocolRegistry:
     def clean(value):
         if value is None:
             return None
-        return " ".join(str(value).replace("\t", " ").replace("\n", " ").split())
+        return str(value) if str(value).strip() else None

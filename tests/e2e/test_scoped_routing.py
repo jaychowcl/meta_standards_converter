@@ -13,6 +13,7 @@ from meta_standards_converter.magetab.exporter import MAGETabExporter
 from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import hashlib
 import json
+import re
 import csv
 from dataclasses import asdict
 import xml.etree.ElementTree as ET
@@ -44,23 +45,15 @@ def test_real_routing_regressions(case,workspace,monkeypatch):
         assert geo==expected.read_text()
     rows=list(csv.reader(next((workspace/'geo').glob('*.sdrf.txt')).open(),delimiter='\t'))
     values=dict(zip(rows[0],rows[1]))
-    assert values.get('Comment[library construction]')==('10x 3 prime v2' if case['id']=='GSM5388031' else '10x 3 prime v3.1')
-    assert values['Comment[end bias]']=='3 prime tag'
-    if case['id']=='mixed':
-        col=rows[0].index('Comment[library construction]')
-        assert [row[col] for row in rows[1:]]==['10x 3 prime v3.1','10x Visium']
-        assert rows[0].count('Comment[sample barcode read]')==2
-        assert [v for h,v in zip(rows[0],rows[1]) if h=='Comment[sample barcode read]']==['index1','index2']
-        assert [v for h,v in zip(rows[0],rows[1]) if h=='Comment[sample barcode size]']==['10','10']
-    else:
-        for key in ('cell barcode size','umi barcode size','cdna read','sample barcode read'):
-            assert 'Comment['+key+']' not in values
+    for key in ('library construction', 'end bias', 'cell barcode size', 'umi barcode size',
+                'cdna read', 'sample barcode read', 'sample barcode size'):
+        assert 'Comment[' + key + ']' not in values
     retained=converted(Converter(), str(next((workspace / 'geo').glob('*.idf.txt'))), out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0].to_mapping()
     assert retained['sample']
     original_protocols=[node.text for node in ET.fromstring(raw).iter() if node.tag.endswith('}Extract-Protocol')]
     retained_protocols=[c.get('extract_protocol') for sample in retained['sample'] for c in sample['channel']]
     for protocol in original_protocols:
-        assert ' '.join(protocol.split()) in retained_protocols
+        assert re.sub(r'\r\n|[\t\r\n]', ' ', protocol) in retained_protocols
     # Material Type owns these populated comments, including repeated index
     # attributes, independently for each source row.
     assert len(retained['series']['assay_paths'])==len(rows)-1

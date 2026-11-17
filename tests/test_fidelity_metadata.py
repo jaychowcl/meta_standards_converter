@@ -61,9 +61,10 @@ def test_date_labels_follow_repository_provenance(fmt, accession, provider, monk
     value["source"]["format"] = fmt
     value["series"]["status"] = [{"submission_date": "2025-01-01", "release_date": "2025-02-01"}]
     rows = dict((r[0], r[1:]) for r in constructor._idf_dates(value))
-    assert rows["Comment[ArrayExpressSubmissionDate]"] == ["2026-09-21"]
+    assert "Comment[ArrayExpressSubmissionDate]" not in rows
     assert rows["Public Release Date"] == ["2025-02-01"]
-    if fmt == "GEO MINiML": assert rows["Date of Experiment"] == ["2025-01-01"]
+    assert rows["Date of Experiment"] == []
+    if provider == "GEO": assert rows["Comment[GEOSubmissionDate]"] == ["2025-01-01"]
     if provider:
         assert rows[f"Comment[{provider}ReleaseDate]"] == ["2025-02-01"]
     if provider != "GEO": assert "Comment[GEOReleaseDate]" not in rows

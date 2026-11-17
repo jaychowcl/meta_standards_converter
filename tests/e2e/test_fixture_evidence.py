@@ -10,6 +10,7 @@
 import csv
 import hashlib
 import json
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from importlib.metadata import version
@@ -35,7 +36,7 @@ def test_geo_expectation_preserves_provider_facts():
     assert channel["organism"] == [{"value": "Homo sapiens", "taxid": "9606"}]
     assert channel["source"]["value"] == sample.findtext("m:Channel/m:Source", namespaces=ns)
     assert channel["molecule"]["value"] == sample.findtext("m:Channel/m:Molecule", namespaces=ns)
-    assert channel["extract_protocol"] == " ".join(sample.findtext("m:Channel/m:Extract-Protocol", namespaces=ns).split())
+    assert channel["extract_protocol"] == sample.findtext("m:Channel/m:Extract-Protocol", namespaces=ns)
     assert expected_sample["relation"] == [dict(n.attrib) for n in sample.findall("m:Relation", ns)]
     pubmed = ET.parse(GEO / "provider_responses/pubmed.xml")
     publication = package["series"]["pubmed_publication"][0]
@@ -63,7 +64,16 @@ def test_magetab_expectations_preserve_protocol_bindings_and_evidence():
         assert len(header) == len(sample)
         assert sample[header.index("Source Name")] == "GSM9651991"
         assert sample[header.index("Comment[ENA_RUN]")] == "SRR37976431"
-        assert sample[header.index("Characteristics[tissue]")] == "CSF"
+        if converter == "geo2ae":
+            source = ET.parse(GEO / "inputs/geo.xml").getroot()
+            ns = {"m": source.tag.split("}")[0][1:]}
+            tissue = source.findtext("m:Sample/m:Channel/m:Characteristics[@tag='tissue']", namespaces=ns)
+        else:
+            source = json.loads((GEO / "inputs/miniml.json").read_text())
+            if isinstance(source, list):
+                source = source[0]
+            tissue = next(c["value"] for c in source["sample"][0]["channel"][0]["characteristics"] if c["name"] == "tissue")
+        assert sample[header.index("Characteristics[tissue]")] == re.sub(r"\r\n|[\t\r\n]", " ", tissue)
         assert sample[header.index("Characteristics[organism]")] == "Homo sapiens"
         for index, column in enumerate(header):
             if column == "Protocol REF": assert sample[index] in idf["Protocol Name"]

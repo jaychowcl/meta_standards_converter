@@ -43,9 +43,9 @@ def test_verified_mex_is_one_result_with_companions_and_minimal_residual():
     assert all(set(r['metadata']) <= {'database'} for r in residual if r['kind']=='MINiML')
     assert finalize(result).to_mapping()==result
     table=next(r[1] for r in render(result) if r[0]=='SDRF File')
-    assert table[0].count('Derived Array Data File')==1
-    assert 'Comment[MATRIX_BARCODES_URI]' in table[0] and 'Comment[MATRIX_FEATURES_MD5]' in table[0]
-    assert 'sample_barcodes.tsv.gz' in str(table) and 'sample_features.tsv.gz' in str(table)
+    assert 'Derived Array Data File' not in table[0]
+    assert not any(h.startswith('Comment[MATRIX_') for h in table[0])
+    assert all('sample_'+name not in str(table) for name in ('barcodes.tsv.gz','features.tsv.gz','matrix.mtx.gz'))
     assert len(original['series']['assay_paths'][0]['steps'])>len(steps)
 
 
@@ -68,7 +68,7 @@ def test_mex_requires_common_result_identity_and_processing_event(change):
 
 def test_saved_native_export_copy_normalizes_without_changing_input():
     data=mex();before=deepcopy(data);table=next(r[1] for r in render(data) if r[0]=='SDRF File')
-    assert table[0].count('Derived Array Data File')==1
+    assert 'Derived Array Data File' not in table[0]
     assert data==before
 
 
@@ -99,10 +99,10 @@ def test_assembly_support_annotations_are_idempotent_and_do_not_borrow_aliquot_f
     assert supported(data)[0]['sample_ref']==sid and not supported(data)[0].get('characteristics')
 
 
-def test_legacy_native_without_paths_keeps_assembly_support_on_source():
+def test_legacy_native_without_paths_omits_assembly_support_from_export():
     data=package();data['series']['assay_paths']=[]
     data['sample'][0]['supplementary_data']=[{'value':'https://data/stats.txt','type':'assembly report','assembly_accession':'GCA1'}]
     before=deepcopy(data);table=next(r[1] for r in render(data) if r[0]=='SDRF File')
-    assert 'Comment[SAMPLE_FILE_URI]' in table[0] and 'https://data/stats.txt' in str(table)
+    assert 'Comment[SAMPLE_FILE_URI]' not in table[0] and 'https://data/stats.txt' not in str(table)
     assert not any(r[i]=='https://data/stats.txt' or r[i]=='stats.txt' for r in table[1:] for i,h in enumerate(table[0]) if h.startswith('Derived'))
     assert data==before

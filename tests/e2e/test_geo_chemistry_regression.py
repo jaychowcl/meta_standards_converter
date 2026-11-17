@@ -20,6 +20,8 @@ def test_auto_handler_must_not_contradict_explicit_five_prime_protocol(workspace
     converted(Converter(), 'GSE328265', out_type='magetab', preparation=PreparationPolicy(enrichment='standard', expand_studies=False, linked_metadata=False, peer_provider=False), outdir='out')
     with (workspace / "out/E-GEOD-328265.sdrf.txt").open() as handle:
         header, row = list(csv.reader(handle, delimiter="\t"))
-    assert row[header.index("Comment[end bias]")] == "5 prime tag"
+    assert "Comment[end bias]" not in header
+    assert "Comment[library construction]" not in header
+    assert 'Single Cell 5′' in (workspace / 'out/E-GEOD-328265.idf.txt').read_text()
     assert "Comment[cdna read size]" not in header
     assert "Comment[umi barcode size]" not in header

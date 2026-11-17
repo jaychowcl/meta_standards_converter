@@ -33,6 +33,7 @@ class SourceSelection:
     def __init__(self, data, extra, issues, *, mode=None):
         self.mode = mode
         self.current = {'provider': provider(data), 'accession': data['series']['iid']}
+        self.geo_primary = self.current['provider'] == 'GEO'
         self.incoming = {'provider': provider(extra), 'accession': extra['series']['iid']}
         self.issues, self.records, self.selections = issues, [], {}
         for record in data.get('extensions', {}).get('insdc', {}).get('records', []):
@@ -40,7 +41,7 @@ class SourceSelection:
                 self.selections.update(deepcopy(record['metadata'].get('selections', {})))
 
     def prefer(self, old, new, path, default, *, scientific=False):
-        if self.mode not in {'standard', 'curators'}:
+        if self.mode not in {'standard', 'curators'} and not self.geo_primary:
             return default
         from .archive_enrichment import informative
         previous = self.selections.get(path, {})
@@ -52,16 +53,23 @@ class SourceSelection:
             text_choice = _text_choice(left, right, path)
             if text_choice is not None:
                 chosen, record = text_choice
-                self.selections[path] = right if chosen else left
+                if self.geo_primary:
+                    record = {**record, 'kind': 'text_normalization_suggestion'}
                 if record not in self.records: self.records.append(record)
-                return chosen
-        chosen = informative(new) and (not informative(old) or (
-            self.mode == 'standard' and _RANK.get(right['provider'], 0) > _RANK.get(left['provider'], 0)))
+                if not self.geo_primary:
+                    self.selections[path] = right if chosen else left
+                    return chosen
+        supplied = old not in (None, '', [], {}) if self.geo_primary else informative(old)
+        chosen = informative(new) and (not supplied or (
+            self.mode == 'standard' and not self.geo_primary
+            and _RANK.get(right['provider'], 0) > _RANK.get(left['provider'], 0)))
         selected = right if chosen else left
         reason = 'primary input value retained' if self.mode == 'curators' else 'AE > GEO > native; retain current value for equal source rank'
-        if not informative(old) and informative(new): reason = 'missing value completed'
+        if self.geo_primary: reason = 'GEO primary input value retained; enrichment is additive'
+        if not supplied and informative(new): reason = 'missing value completed'
         if informative(selected['value']): self.selections[path] = selected
-        if scientific and informative(old) and informative(new) and _meaning(old) != _meaning(new):
+        different = old != new if self.geo_primary else _meaning(old) != _meaning(new)
+        if (scientific or self.geo_primary) and supplied and informative(new) and different:
             metadata = {'field': path.rsplit('/', 1)[-1], 'path': path,
                         'statements': [left, right], 'selected': selected, 'reason': reason, 'mode': self.mode}
             record = {'provider': right['provider'], 'kind': 'source_conflict', 'accession': right['accession'], 'metadata': metadata}

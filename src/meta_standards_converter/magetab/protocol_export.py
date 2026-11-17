@@ -53,7 +53,7 @@ def _registered(name):
     return match[1] if match else None
 
 
-def _prepared(source):
+def _prepared(source, *, verbatim=False):
     """Normalize one definition without changing its authored representation."""
     fields = {}
     for key, value in source.items():
@@ -66,6 +66,8 @@ def _prepared(source):
             label = ' '.join(str(values.get('value', '')).split()).casefold()
             values['value'] = aliases.get(label, label)
             fields[key] = {k: _value(v) for k, v in values.items() if v not in (None, '')}
+        elif key == 'description' and verbatim:
+            fields[key] = value
         else:
             fields[key] = _value(value, key == 'description')
     return bool(source.get('description')), fields
@@ -147,7 +149,9 @@ def prepare_protocols(data):
     bindings = {}
     # Compatibility is not transitive: an incomplete record must not choose
     # arbitrarily between conflicting richer definitions.
-    prepared = [_prepared(source) for source in protocols]
+    from .text import geo_origin
+    verbatim = geo_origin(data)
+    prepared = [_prepared(source, verbatim=verbatim) for source in protocols]
     neighbors, registered_choices = _neighborhoods(protocols, prepared)
     # Registered definitions have naming priority, regardless of source order.
     for position, source in sorted(enumerate(protocols), key=lambda item: not bool(_registered(item[1]['name']))):
@@ -174,7 +178,7 @@ def prepare_protocols(data):
                     group['definition'][key].update(additions)
                     changed = changed or bool(additions)
             if changed:
-                group['prepared'] = _prepared(group['definition'])
+                group['prepared'] = _prepared(group['definition'], verbatim=verbatim)
         bindings[source['name']] = group
     used = set()
     counter = 1

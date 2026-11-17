@@ -13,6 +13,8 @@ from meta_standards_converter.magetab.sdrf.handlers.sequencing import _BulkSeque
 
 class _SingleCellSequencingSDRFHandler(_SequencingSDRFHandler):
     def extra_library_attrs(self, sample: dict, channel: dict, run: dict | None) -> list[SDRFAttr]:
+        if self.geo_source:
+            return []
         from meta_standards_converter.magetab.chemistry import resolve_chemistry
         result = resolve_chemistry(sample, channel=channel, run=run, series=self.data.get("series"))
         for diagnostic in result.diagnostics:
@@ -22,6 +24,8 @@ class _SingleCellSequencingSDRFHandler(_SequencingSDRFHandler):
         return [SDRFAttr(label=f"Comment[{name}]", value=value) for name, value in result.attributes]
 
     def extra_assay_attrs(self, sample: dict, run: dict | None) -> list[SDRFAttr]:
+        if self.geo_source:
+            return []
         biosample = self.biosample_accession(sample=sample)
         return [SDRFAttr(label="Comment[technical replicate group]", value=biosample)] if biosample else []
 

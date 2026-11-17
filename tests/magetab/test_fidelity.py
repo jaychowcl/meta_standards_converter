@@ -116,10 +116,8 @@ def test_recorded_archive_panel_preserves_ordered_fields_and_rows(accession):
     assert result.status == "complete", result.to_dict()
     actual = next(r[1] for r in result.items[0].payload[0] if r[0] == "SDRF File")
     expected = table(path.with_name(accession + ".sdrf.txt"))
-    # Empty optional file nodes have no scientific identity to preserve.
-    omit = {i for i, h in enumerate(expected[0]) if h == "Derived Array Data File"
-            and all(not row[i].strip() for row in expected[1:])}
-    expected = [[v for i, v in enumerate(row) if i not in omit] for row in expected]
+    from tests.support.deposited_fidelity import without_derived_files
+    expected = without_derived_files(expected)
     normalize = lambda row: tuple("" if v is None else str(v).strip() for v in row)
     def columns(headers):
         counts = Counter()

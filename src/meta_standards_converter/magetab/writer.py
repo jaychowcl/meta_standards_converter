@@ -149,7 +149,8 @@ class MAGETabWriter:
 
 
     def _write_tsv(self, path: str, rows: list) -> None:
+        from .text import tsv_cell
         with open(path, "w", encoding="utf-8", newline="") as handle:
             writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
             for row in rows:
-                writer.writerow(["" if value is None else value for value in row])
+                writer.writerow([tsv_cell(value) for value in row])

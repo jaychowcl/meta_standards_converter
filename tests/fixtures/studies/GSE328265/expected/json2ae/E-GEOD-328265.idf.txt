@@ -1,6 +1,6 @@
 MAGE-TAB Version	1.1
 Investigation Title	A CSF Disease-Associated Macrophage Signature defines Progressive Multiple Sclerosis
-Experiment Description	This SuperSeries is composed of the SubSeries listed below.. Refer to individual Series
+Experiment Description	This SuperSeries is composed of the SubSeries listed below. Refer to individual Series
 Experimental Design	Expression profiling by high throughput sequencing
 Experimental Design Term Source REF	
 Experimental Design Term Accession Number	
@@ -19,7 +19,7 @@ Person Affiliation	University Hospital Münster
 Person Roles	
 Person Roles Term Source Ref	
 Person Roles Term Accession Number	
-Date of Experiment	2026-04-16
+Date of Experiment
 Public Release Date	2026-05-17
 PubMed ID	42129775
 Publication DOI	10.1186/s12974-026-03861-9
@@ -32,7 +32,7 @@ Protocol Name	P-GSE328265-1	P-GSE328265-2	P-GSE328265-3	P-GSE328265-4	P-GSE32826
 Protocol Type	normalization data transformation protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	sample collection protocol	nucleic acid sequencing protocol
 Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO
 Protocol Term Accession Number	EFO_0003816	EFO_0002944	EFO_0004184	EFO_0005518	EFO_0004170
-Protocol Description	Seurat v5.1.0 in R v4.5.1 Assembly: GRCh38 Supplementary files format and content: h5 files for each sample	Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines. Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics	RNA-Seq | transcriptomic | cDNA | PAIRED | RNA-Seq | TRANSCRIPTOMIC | cDNA		
+Protocol Description	Seurat v5.1.0 in R v4.5.1 Assembly: GRCh38 Supplementary files format and content: h5 files for each sample	Frozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines. Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics			
 Protocol Hardware					
 Protocol Software					
 SDRF File	E-GEOD-328265.sdrf.txt
@@ -46,9 +46,9 @@ Comment[SecondaryAccession]	SRP689887
 Comment[SecondaryAccessionTermSourceRef]	SRA
 Comment[ArrayExpressAccession]	E-GEOD-328265
 Comment[RelatedExperiment]	GSE327243	GSE328264
+Comment[GEOSubmissionDate]	2026-04-16
 Comment[GEOReleaseDate]	2026-05-17
 Comment[GEOLastUpdateDate]	2026-05-18
-Comment[ArrayExpressSubmissionDate]	<RUN_DATE>
 Comment[AEExperiment]
 Comment[AEExperimentType]	RNA-seq of coding RNA from single cells
 Comment[AECurator]

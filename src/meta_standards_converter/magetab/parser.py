@@ -61,7 +61,7 @@ class AEParser:
             "Person Phone", "Person Fax", "Person Address", "Person Affiliation", "Person Roles",
             "Person Roles Term Source Ref", "Person Roles Term Accession Number",
             "Date of Experiment", "Public Release Date", "Comment[GEOReleaseDate]",
-            "Comment[GEOLastUpdateDate]", "Comment[ArrayExpressSubmissionDate]",
+            "Comment[GEOLastUpdateDate]", "Comment[GEOSubmissionDate]", "Comment[ArrayExpressSubmissionDate]",
             *[f"Comment[{database}{label}]" for database in ("ArrayExpress", "ENA", "SRA", "INSDC")
               for label in ("ReleaseDate", "LastUpdateDate")],
             "PubMed ID", "Publication DOI", "Publication Author List", "Publication Title",
@@ -457,7 +457,7 @@ class AEParser:
         comments = []
         reserved = {
             "secondaryaccession", "secondaryaccessiontermsourceref", "arrayexpressaccession",
-            "relatedexperiment", "georeleasedate", "geolastupdatedate", "arrayexpresssubmissiondate",
+            "relatedexperiment", "georeleasedate", "geolastupdatedate",
         }
         reserved.update(f"{database}{label}".casefold()
                         for database in ("ArrayExpress", "ENA", "SRA", "INSDC")
@@ -525,7 +525,7 @@ class AEParser:
         return {
             name.strip(): {
                 "type": types[index].strip() if index < len(types) else "",
-                "description": descriptions[index].strip() if index < len(descriptions) else "",
+                "description": descriptions[index] if index < len(descriptions) else "",
             }
             for index, name in enumerate(names)
             if name.strip()

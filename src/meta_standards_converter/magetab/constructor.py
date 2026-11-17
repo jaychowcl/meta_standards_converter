@@ -106,6 +106,8 @@ class AEConstructor:
         prepare_protocols(data)
         from meta_standards_converter.magetab.native_files import project_native_files
         project_native_files(data)
+        from .export_files import prepare_export_files
+        prepare_export_files(data)
         with phase("magetab_routing"):
             protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
             if platform_handler is not None:

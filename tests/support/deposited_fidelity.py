@@ -65,6 +65,24 @@ NODE_HEADERS = frozenset({'Source Name', 'Sample Name', 'Extract Name', 'Labeled
 QUALIFIER_HEADERS = frozenset({'Term Source REF', 'Term Accession Number', 'Performer', 'Date'})
 
 
+def without_derived_files(table):
+    """Independent expected export projection; original deposited bytes stay sealed.
+
+    Remove file nodes and their owned metadata only. Explicit scientific fields
+    (and all their qualifiers) survive. No values or row occurrences normalize.
+    """
+    indices, excluded = [], False
+    for index, original in enumerate(table[0]):
+        header = HEADER_ALIASES.get(original, original)
+        if header in NODE_HEADERS:
+            excluded = header in {'Derived Array Data File', 'Derived Array Data Matrix File'}
+        elif header.startswith(('Factor Value[', 'Characteristics[', 'Parameter Value[')):
+            excluded = False
+        if not excluded and not header.startswith('Comment[SAMPLE_FILE_'):
+            indices.append(index)
+    return [[row[i] for i in indices] for row in table]
+
+
 def load_deposited_reference(root, accession):
     """Read one source IDF/SDRF pair only after its recorded hashes match."""
     root = Path(root)

@@ -48,6 +48,10 @@ MSC 9 uses `Converter.convert` with immutable `PreparationPolicy` and
 [MSC 9 migration guide](docs/codebase.md#unified-compatibility) for Python examples,
 removed classes, configuration changes and input manifests v2.
 
+GEO exports preserve supplied annotations and leave missing curation unfilled.
+MAGE-TAB excludes derived files; JSON retains them. See [source fidelity and output
+changes](docs/codebase.md#geo-source-fidelity) for the text, date and file contracts.
+
 ## Docs
 
 - [Curator guide](docs/curators-guide.md): installation, repository examples,

@@ -15,6 +15,7 @@ import csv
 import io
 import hashlib
 import json
+import re
 from pathlib import Path
 import pytest
 
@@ -42,19 +43,19 @@ def test_chemistry_complete_converter_outputs(case,workspace,monkeypatch):
     assert geo_sdrf==(ROOT/(case['id']+'.sdrf.txt')).read_text()
     warnings=exporter.constructor.sdrf_constructor.last_sdrf_audit.warnings
     codes=[w.split(' chemistry ',1)[1].split(':',1)[0] for w in warnings if ' chemistry ' in w]
-    assert codes==case.get('diagnostics',[])
+    assert codes == []  # GEO export retains prose without deriving chemistry claims.
 
 
     reparsed=converted(Converter(), str(next((workspace / 'geo').glob('*.idf.txt'))), out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))
     retained=reparsed[0].to_mapping()
     # Original protocol and every repeated SDRF column survive the real parser.
     fields=json.loads((ROOT/(case['id']+'.json')).read_text())
-    # IDF protocol registration has always flattened whitespace. Compare the
-    # published description exactly, rather than changing that separate contract.
+    # Only TSV transport characters change; ordinary spaces remain authored.
     idf_rows=list(csv.reader(next((workspace/'geo').glob('*.idf.txt')).open(),delimiter='\t'))
     descriptions=next(r[1:] for r in idf_rows if r[0]=='Protocol Description')
-    assert ' '.join(fields['protocol'].split()) in descriptions
-    assert ' '.join(fields['protocol'].split()) in [c.get('extract_protocol') for s in retained['sample'] for c in s['channel']]
+    published = re.sub(r'\r\n|[\t\r\n]', ' ', fields['protocol'])
+    assert published in descriptions
+    assert published in [c.get('extract_protocol') for s in retained['sample'] for c in s['channel']]
     from meta_standards_converter.miniml import MINiMLCodec
     path=workspace/'roundtrip.json'
     path.write_text(json.dumps(MINiMLCodec().encode_many(reparsed)))
@@ -71,4 +72,4 @@ def test_chemistry_complete_converter_outputs(case,workspace,monkeypatch):
     assert original[0][start+1] == 'Material Type'
     assert extract['material_type']['value'] == original[1][start+1]
     assert not extract.get('comments')
-    assert [(c['name'],c['value']) for c in extract['material_type']['comments']] == [(h[8:-1],v) for h,v in list(zip(*original))[start:end] if h.startswith('Comment[')]
+    assert [(c['name'],c['value']) for c in extract['material_type'].get('comments', [])] == [(h[8:-1],v) for h,v in list(zip(*original))[start:end] if h.startswith('Comment[')]

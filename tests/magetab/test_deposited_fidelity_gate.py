@@ -15,7 +15,7 @@ import pytest
 
 from tests.support.deposited_fidelity import (
     DEPOSITED_PANEL, assert_deposited_sdrf, assert_deposited_protocol_qualifiers,
-    load_deposited_reference,
+    load_deposited_reference, without_derived_files,
 )
 from tests.support.recorded_replay import ReplayTransport
 
@@ -162,6 +162,7 @@ def test_reference_loader_rejects_bytes_not_matching_recorded_source(tmp_path):
 @pytest.mark.parametrize('accession', DEPOSITED_PANEL)
 def test_full_deposited_panel_preserves_scoped_source_occurrences(accession):
     reference = load_deposited_reference(FIXTURES, accession)
+    reference['sdrf'] = without_derived_files(reference['sdrf'])
     isolation = ReplayTransport(Path(__file__).parents[1]/'fixtures/recorded_provider/success.manifest.json')
     with isolation.offline():
         from meta_standards_converter.converters import Converter
@@ -200,6 +201,7 @@ def test_protocol_only_gate_retains_row_and_application_scope(index):
                                            ('E-GEOD-52564',34),('E-GEOD-60450',48)])
 def test_actual_exports_retain_946_protocol_qualifiers_with_graph_row_identity(accession,count):
     reference=load_deposited_reference(FIXTURES,accession)
+    reference['sdrf'] = without_derived_files(reference['sdrf'])
     isolation=ReplayTransport(Path(__file__).parents[1]/'fixtures/recorded_provider/success.manifest.json')
     with isolation.offline():
         from meta_standards_converter.converters import Converter

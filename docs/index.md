@@ -21,6 +21,13 @@ Full flag and Python API details remain in the canonical routes below.
 
 ## Canonical routes
 
+- id: geo-source-fidelity
+  title: GEO source fidelity and derived-file export exclusion
+  anchor: geo-source-fidelity
+  purpose: Explicit GEO annotations, additive enrichment, retained text, curator boundaries, detached file projection and intentional output migration.
+  keywords: verbatim, tissue, organism part, replicate, inferred factors, chemistry, barcode, derived files, raw files, TSV, submission date, text_normalization_suggestion
+  link: [Open section](codebase.md#geo-source-fidelity)
+
 - id: magetab-export-performance
   title: MAGE-TAB export measurements and reuse
   anchor: magetab-export-performance

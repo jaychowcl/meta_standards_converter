@@ -91,3 +91,37 @@ optional date-cell rendering, the added detailed-modality field/evidence, and
 removal of source-description fallback from canonical tissue and dependent
 material projections. Source metadata, PBMC counts, dtypes, axes and retained
 MINiML were checked unchanged. Existing chemistry SDRFs remain byte-identical.
+
+
+## GEO source fidelity and derived-file export review (2026-11-17)
+
+The current MAGE-TAB contract omits derived files for every route while JSON
+retains them. GEO exports no longer infer anatomy from tissue, factors from
+variation, chemistry/barcode attributes from prose, or technical replicate groups
+from BioSample IDs. The earlier chemistry-rendering expectations above describe
+the previous contract; chemistry detection remains tested independently for routing.
+Explicit supplied annotations remain supported.
+
+Reviewed changes to the GEO JSON golden are eight source text values retaining
+XML field whitespace, including the original supplementary-file strings. The
+source XML, stored historical input JSON, provider responses and source hashes
+are unchanged. The two GEO MAGE-TAB routes remove processed-file and inferred
+annotation columns; they retain raw FASTQ identity, checksums and row counts.
+GEO library source keeps its case; source material stays blank when unspecified,
+and extracted molecule keeps `total RNA`. Required library protocol IDs remain,
+with blank descriptions instead of synthesized attribute lists. GEO submission
+date moves to its provenance comment; no ArrayExpress submission date is generated.
+Summary/design composition adds only a space. New source imports preserve original
+whitespace; historical JSON retains its previously normalized text.
+
+Seven chemistry SDRFs and three routing IDF/SDRF pairs reflect the same explicit
+source rule, including mixed spatial/single-cell routing. Original protocol prose
+remains in IDF with only tab/newline transport adaptation. Scientific input JSON/XML
+and their recorded hashes remain unchanged. The checksum inventory changes only
+for reviewed output artifacts. The deposited-source oracle separately projects
+out derived files and their owned metadata before comparing all remaining rows,
+fields and protocol/ontology qualifiers; deposited evidence is never rewritten.
+
+The SRA publication-concurrency output golden removes only the generated
+`Comment[ArrayExpressSubmissionDate]` row. Its JSON, publication links and issues
+are identical; both serial and concurrent retrieval retain the same expected output.

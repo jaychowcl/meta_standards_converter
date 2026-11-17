@@ -3045,15 +3045,15 @@ Sequencing behavior:
 - SRA accessions are extracted from sample relations and cached per handler.
 - SRA records contribute library layout/source/strategy/selection, run/experiment/sample accessions, submitted file names, MD5, instrument model, read lengths, and FASTQ metadata.
 - GEO values take precedence over conflicting SRA values, and warnings are recorded in `SDRFAudit`.
-- `Comment[LIBRARY_SOURCE]` is rendered uppercase in the SDRF only; library source text used for protocol descriptions keeps its original cleaned casing.
-- Library construction is distinct from extraction: its synthesized description uses only available layout/strategy/source/selection metadata and its IDF type maps to `nucleic acid library construction protocol` (`EFO_0004184`).
+- GEO library-source values retain their supplied case; see [source fidelity](#geo-source-fidelity).
+- GEO library construction keeps its structural protocol reference and EFO type, with an empty description unless authored protocol data supplies it. Library attributes are not synthesized into prose.
 - A populated `sample.scan_protocol` is registered and referenced before the sequencing scan node.
 - Shared sequencing paths render FASTQs as `Comment[readN file]`, `Comment[FASTQ_URI]`, and `Comment[MD5]` companion columns.
 - Bulk and plate sequencing paths emit one SDRF row per FASTQ URI, with duplicate sample/source metadata allowed across rows.
 - More than two FASTQs are preserved; shared sequencing uses additional read comments, while bulk and plate sequencing use additional rows.
 - When no SRA FASTQs exist, sequencing raw files from GEO supplementary/raw data can become read comments.
-- Sequencing handlers emit supplementary processed assets as `Derived Array Data File` columns while raw reads remain FASTQ comments.
-- Single-cell handlers add library construction, technical replicate, read geometry, isolation, or spatial read-index comments where their subclass supports it.
+- All MAGE-TAB exports exclude processed/derived files before column planning; raw reads remain FASTQ comments. JSON retains the original file inventory.
+- GEO exports retain explicit annotations and omit inferred chemistry, technical replicate groups and spatial barcode presets. Technology detection still selects table structure.
 
 <a id="array-and-generic-handlers"></a>
 <a id="array-sdrf-flow"></a>
@@ -3082,8 +3082,8 @@ Array behavior:
 - `Array Design REF` is taken from the sample platform accession and has nested `Term Source REF = ArrayExpress`.
 - `.tif` and `.tiff` files render as `Image File`.
 - `.cel`, `.gpr`, `.idat`, `.exp`, `.rpt`, `.cab`, and similar raw array files render as `Array Data File`.
-- Matrix-like supplementary files render as `Derived Array Data Matrix File`; other processed assets render as `Derived Array Data File`.
-- Repeated raw and derived files are preserved as repeated columns and recorded as warnings.
+- Matrix and other derived files remain in JSON and are omitted from MAGE-TAB.
+- Repeated raw files remain represented; derived-file exclusion preserves row multiplicity and independent row annotations.
 
 <a id="base-sdrf-handler"></a>
 <a id="legacy-fallback-notes"></a>
@@ -3099,11 +3099,11 @@ Base handler behavior shared by generic, sequencing, and array handlers:
 - Sample title and description render as mapped sample comment columns when present.
 - `Characteristics[organism]`, `Characteristics[organism part]`, `Characteristics[developmental stage]`, `Characteristics[disease]`, and `Characteristics[genotype]` are always planned for source nodes and may be blank.
 - `Characteristics[organism]` reads each channel organism's legacy `name` field first, then falls back to the parsed MINiML `value` field produced from `<Organism taxid="...">text</Organism>`.
-- Explicit `organism part` wins; otherwise `tissue` wins; otherwise channel `source` is used as fallback.
+- For GEO, organism part requires an explicit characteristic; tissue retains its own label. Channel source never supplies anatomy.
 - Repeated characteristics with the same tag are preserved as repeated columns and recorded as warnings.
-- Provider and material type are mapped from channel biomaterial provider and molecule/source context.
-- Factor values come from series variables when present, otherwise from characteristic tags with more than one value.
-- Required blank protocol refs are emitted as blank cells with audit warnings but do not create IDF protocol rows.
+- GEO source material requires an explicit source value; extracted material retains the exact supplied molecule, such as `total RNA`.
+- GEO factor values require declared variables or canonical Factor Value annotations; variation across characteristics does not declare a factor.
+- Required GEO library-construction steps receive structural protocol references with blank descriptions; missing extraction text may leave a blank reference and an audit warning.
 - `normalized_extension()` strips archive suffixes such as `.gz`, `.zip`, `.bz2`, and `.xz` before classifying the underlying extension.
 
 Legacy greedy GEO and SRA fallback comment classes are kept only as commented reference code at the bottom of `ae_sdrf_handlers.py`. They have no runtime effect.
@@ -5031,7 +5031,7 @@ Public source symbols:
 <a id="sample-library-routing"></a>
 ## Sample and library technology routing
 
-GEO platform technology categories are matched exactly after whitespace normalization and casefolding: in situ oligonucleotide, spotted oligonucleotide, mixed spotted oligonucleotide, spotted DNA/cDNA, spotted peptide or protein, antibody, tissue, and oligonucleotide beads. This shared array decision preserves sequencing precedence, sample-specific platform filtering, explicit overrides and existing fallback detection; sample prose cannot supply these categories. GSE100 is a full-source regression with four samples and eight channel rows retaining GPL221. All existing chemistry/version and spatial preset behavior is preserved.
+GEO platform technology categories are matched exactly after whitespace normalization and casefolding: in situ oligonucleotide, spotted oligonucleotide, mixed spotted oligonucleotide, spotted DNA/cDNA, spotted peptide or protein, antibody, tissue, and oligonucleotide beads. This shared array decision preserves sequencing precedence, sample-specific platform filtering, explicit overrides and existing fallback detection; sample prose cannot supply these categories. GSE100 is a full-source regression with four samples and eight channel rows retaining GPL221. Technology routing remains available; GEO annotation output follows [explicit source fidelity](#geo-source-fidelity).
 
 `meta_standards_converter.magetab.technology.resolve_technology(sample, channel=None, run=None, *, data=None)` is a pure decision service, exported from `magetab`. It returns a handler key, original evidence with paths, and diagnostics. `detect_ae_technology(data)` supplies an IDF summary key, not a study-wide SDRF assignment.
 
@@ -6259,11 +6259,11 @@ specificity.
 Release/update comment labels follow repository provenance or explicit status
 scope. MAGE-TAB's generic Public Release Date is retained as a separately sourced
 statement. Distinct release dates remain alongside their repository scopes and
-produce a parser warning. ArrayExpressSubmissionDate remains the conversion date;
-Date of Experiment retains its accepted submission-date fallback on non-native
-inputs. Native SRA/ENA require an explicit experiment date for that field.
+produce a parser warning. Date of Experiment requires an explicit experiment date.
+ArrayExpressSubmissionDate is retained only when supplied; MSC does not generate
+a submission date. GEO submission dates remain in Comment[GEOSubmissionDate].
 
-Canonical biological aliases are curated: `OrganismPart`, `organism_part`,
+For native archive interpretation, canonical biological aliases are curated: `OrganismPart`, `organism_part`,
 `organism part` and `tissue` contribute to organism part; compact, underscore and
 space spellings of developmental stage contribute to developmental stage.
 Distinct explicit values remain in stable source order. Original characteristics
@@ -6286,13 +6286,13 @@ processing branches and conflicting or unbound scopes remain separate.
 
 ### Source selection and evidence
 
-The facade scopes `metadata.reconciliation.selection_policy` to each preparation
+The facade passes preparation mode explicitly to source reconciliation in each preparation
 stage. The existing `prefer` merge argument continues to govern identity and
 membership joins; it is not the scientific value-precedence policy.
 
 | Mode | Canonical selection | Conflict handling |
 | --- | --- | --- |
-| `standard` | Explicit AE > GEO > SRA/ENA, independent of entry route. | Preserve alternatives, selected source and reason; warn at the preparation stage. |
+| `standard` | GEO primary input values remain authoritative; otherwise explicit AE > GEO > SRA/ENA. | Preserve alternatives, selected source and reason; warn at the preparation stage. |
 | `curators` | Preserve populated primary-input values. | Inspect already supplied alternatives only; no other-repository comparison fetch. |
 | `off` | No supplementary reconciliation. | Preserve supplied metadata and existing evidence. |
 
@@ -6320,12 +6320,14 @@ across Python hash seeds without changing source selection or scientific values.
 Source text is decoded from provider bytes, respecting XML encoding declarations
 and UTF-8 text/JSON contracts rather than an HTTP library's guessed charset.
 Possible inherited encoding corruption stays unchanged with a preparation warning.
-In standard reconciliation, an exactly joined prose field may use a clean
-alternative only when it corroborates a reversible UTF-8/CP1252 or UTF-8/Latin-1
+For non-GEO primary inputs, standard reconciliation may use a clean exactly joined
+prose alternative only when it corroborates a reversible UTF-8/CP1252 or UTF-8/Latin-1
 transformation. Both source statements and the transformation remain in a
 `text_normalization` record and versioned `Comment[MSCTextNormalization]`.
 No cross-field inference or character substitution occurs. Curators keeps its
-primary statement; unknown normalization comment versions remain recoverable.
+primary statement. GEO primary inputs retain theirs and record a
+`text_normalization_suggestion` instead of applying the correction; unknown
+normalization comment versions remain recoverable.
 
 ### Optional metadata retrieval limits
 
@@ -6551,9 +6553,10 @@ strict expected failure, rather than becoming a broad normalization rule.
 
 Use `--artifacts-dir` with a fresh directory to retain actual payloads for reviewing
 a mismatch. Existing payload files are never overwritten. Exact comparisons may
-declare the generated `Comment[ArrayExpressSubmissionDate]` as a runtime date;
-the actual value must be today's date and occur once in each table. No scientific
-value is normalized by that declaration.
+retain historical runtime-date declarations when reviewing older evidence. Current
+exports do not generate `Comment[ArrayExpressSubmissionDate]`; supplied dates are
+source data. The deposited-source oracle applies the explicit derived-file
+projection before comparing every remaining row, value and qualifier.
 
 ### Fidelity service symbols
 
@@ -6589,3 +6592,78 @@ failure envelope and optional retry time;
 request counters; `meta_standards_converter.converters.unified.outcomes.delta`
 computes nonnegative increments;
 `meta_standards_converter.converters.unified.outcomes.add` totals those increments.
+
+
+<a id="geo-source-fidelity"></a>
+## GEO source fidelity and MAGE-TAB file projection
+
+Implemented in MSC 9 without new Python arguments, CLI flags or schema versions.
+Standard enrichment, independent study expansion and runtime defaults are unchanged.
+The named commands and `Converter.convert` use the same export boundary.
+
+```text
+GEO XML -> GEOParser (decoded authored text) -> canonical JSON
+          -> shared preparation (GEO values retained; missing facts enriched)
+          -> AEConstructor.prepare (detached data)
+             -> consolidate native acquisition/file paths
+             -> prepare export files (exclude derived nodes and generated file comments)
+             -> select canonical or fallback SDRF paths
+             -> exclude derived attributes -> plan columns
+          -> render each document once -> validate -> MAGETabWriter (TSV-safe cells)
+```
+
+GEO JSON retains decoded field text, including case, punctuation and whitespace;
+whitespace-only XML formatting nodes are empty. XML entity decoding and XML line
+ending rules still apply. Comparisons may use normalized keys, but output values
+do not use those keys. Even an authored placeholder such as `not provided` remains
+source evidence. Linked sources add missing facts; conflicts keep both statements,
+the selected value and its reason. Corroborated encoding alternatives are stored as
+`text_normalization_suggestion` evidence for GEO, without applying the suggestion.
+
+GEO characteristics retain their names and values. Tissue does not populate organism
+part; variable characteristics do not create factors. Curator-supplied anatomy,
+replicate, genotype, factors, chemistry and barcode attributes remain available.
+Absent curation is left blank. Prose-derived chemistry, technical replicate groups
+and fixed spatial barcode recipes are omitted. Internal technology detection and
+required structural protocol types/identifiers remain available. Source material
+and extract molecule are distinct, and protocol prose is preserved. Summary and
+overall design are joined with one space without added punctuation.
+
+All MAGE-TAB routes omit derived-file nodes/attributes and their owned file metadata,
+including generated native sample/study file comments. Raw reads, raw array data,
+images, independent factors and qualifiers, and row occurrences remain. Scientific
+annotations on an omitted file are moved to a retained assay or source carrier.
+Source-authored prose mentioning a filename remains intact. This projection only
+changes the private export view; x2json and saved canonical JSON retain every file.
+Canonical paths and fallback handlers receive the same policy before column planning.
+
+`MAGETabWriter` replaces each tab or line-break sequence with one space at final TSV
+serialization; other whitespace is retained. Rendering and protocol registration
+preserve the original text. Imported IDF protocol descriptions retain their text too.
+Experiment dates require explicit experiment-date evidence. GEO submission dates are
+published as `Comment[GEOSubmissionDate]`; an ArrayExpress submission date is never
+manufactured and remains available when explicitly supplied.
+
+Existing JSON remains supported. Earlier normalization cannot be reversed from lost
+text: regenerate JSON from GEO to recover original whitespace. Comparing new direct
+GEO output with historical JSON can therefore show text differences; fresh GEO -> JSON
+-> MAGE-TAB and direct GEO -> MAGE-TAB agree under equivalent preparation settings.
+MINiML, manifest, harmonization and consumer document versions are unchanged.
+
+Validation uses source-literal and conflict regressions, canonical/fallback and native
+file ownership tests, whole-output goldens, mixed routing and multiple-document paths.
+The deposited-source comparison projects only derived-file columns and their owned
+metadata from its expected view; sealed source evidence stays unchanged. Export
+performance tests continue to require detached data, no provider calls and one final
+render per document. New GSE234602 evidence and three paired offline measurements live
+outside the original benchmark; historical checkpoints and downloaded curation stay intact.
+
+Internal interfaces at this boundary:
+
+- `meta_standards_converter.magetab.export_files.prepare_export_files` removes derived
+  canonical nodes and generated file comments after native consolidation.
+- `meta_standards_converter.magetab.export_files.exclude_derived_paths` applies the
+  same exclusion to typed SDRF paths before column planning.
+- `meta_standards_converter.magetab.text.geo_origin` identifies GEO provenance;
+  `meta_standards_converter.magetab.text.literal` unwraps text without normalization;
+  `meta_standards_converter.magetab.text.tsv_cell` performs final TSV escaping.

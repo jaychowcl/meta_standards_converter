@@ -103,6 +103,8 @@ class SDRFConstructor():
             documents = plan_miniml_assay_documents(bind_sample_groups(handler.data, canonical_paths))
         else:
             documents = {"study.sdrf.txt": paths}
+        from ..export_files import exclude_derived_paths
+        documents = {name: exclude_derived_paths(values) for name, values in documents.items()}
         renderer = SDRFRenderer(preserve_order=preserve_order)
         self.last_sdrf_audit = handler.audit
         return SDRFExportPlan(tuple(SDRFDocumentPlan(name, values, renderer.plan_columns(values), preserve_order)

@@ -49,6 +49,11 @@ Retrieve DDBJ accessions through ENA:
 
 `msc-convert DRP123456 --in-type ena --out-type magetab --out magetabs`
 
+GEO exports retain source annotations and leave missing curator fields blank.
+They do not infer organism part, factors or barcode recipes. Derived files remain
+in JSON and are excluded from MAGE-TAB for every source. See the [source fidelity
+contract](codebase.md#geo-source-fidelity), including guidance for older JSON.
+
 ## Main options
 
 These correspond to the main arguments of `Converter.convert()`.
@@ -66,7 +71,7 @@ Enrichment presets:
 
 | Mode | Canonical selection | Conflicts and retrieval |
 | --- | --- | --- |
-| `standard` | Explicit ArrayExpress > GEO > SRA/ENA, independent of the entry route. | Retrieve applicable linked sources; retain alternatives and warn with the selected source and reason. |
+| `standard` | Preserve populated GEO primary-input values; otherwise explicit ArrayExpress > GEO > SRA/ENA. | Retrieve applicable linked sources; retain alternatives and warn with the selected source and reason. |
 | `curators` | Preserve the primary input source's existing populated value. | Native/publication preparation; inspect supplied conflict evidence without fetching other study repositories for comparison. |
 | `off` | Preserve supplied metadata. | No supplementary reconciliation. |
 

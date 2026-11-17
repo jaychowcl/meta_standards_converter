@@ -261,6 +261,9 @@ def _merge_entity(target, extra, prefer, protected=(), *, issues=None, selection
         if selection is not None and key not in additive | {'status', 'characteristics'}:
             choose = selection.prefer(target.get(key), value, path + '/' + key, prefer,
                                       scientific=key in library_fields | {'organism', 'molecule'})
+        missing = (target.get(key) in (None, '', [], {})
+                   if selection is not None and selection.geo_primary
+                   else not informative(target.get(key)))
         if key == 'pubmed_publication':
             target[key] = _merge_publications(target.get(key, []), value, choose, issues=issues,
                                              scope=target.get('iid') or target.get('run') or 'entity')
@@ -283,6 +286,12 @@ def _merge_entity(target, extra, prefer, protected=(), *, issues=None, selection
             for item in value:
                 groups.setdefault(item['name'], []).append(item)
             current = target.setdefault(key, [])
+            if selection is not None and selection.geo_primary:
+                for name, group in groups.items():
+                    old = [v for v in current if v['name'] == name]
+                    if selection.prefer(old, group, path + '/characteristics/' + name, False, scientific=True):
+                        current.extend(deepcopy(group))
+                continue
             if selection is not None and selection.mode in {'standard', 'curators'}:
                 # Biological occurrences are multivalued, not a scalar source contest.
                 current[:] = complete_characteristic_groups(current, value)
@@ -294,14 +303,14 @@ def _merge_entity(target, extra, prefer, protected=(), *, issues=None, selection
                     current[:] = [v for v in current if v['name'] != name] + complete_characteristic_groups(group, old)
                 elif not old:
                     current.extend(deepcopy(group))
-        elif key == 'organism' and informative(value) and (choose or not informative(target.get(key))):
+        elif key == 'organism' and informative(value) and (choose or missing):
             organisms = deepcopy(value)
             for organism in organisms:
                 same = [o for o in target.get(key, []) if o.get('value', '').strip().casefold() == organism.get('value', '').strip().casefold()]
                 if len(same) == 1 and not organism.get('taxid') and same[0].get('taxid'):
                     organism['taxid'] = same[0]['taxid']
             target[key] = organisms
-        elif informative(value) and (choose or not informative(target.get(key))):
+        elif informative(value) and (choose or missing):
             # Replace complete typed values (including units / term references) together.
             target[key] = deepcopy(value)
 
@@ -449,7 +458,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
     for sample in native_samples:
         for key in ('library_strategy', 'library_selection', 'library_source'):
             values = {r.get(key) for r in sample.get('sra_run', [])}
-            if len(values) > 1:
+            if len(values) > 1 and not selection.geo_primary:
                 sample.pop(key, None)
     data['series']['sample_ref'] = [{'ref': s['iid']} for s in native_samples]
     from ..miniml.archive_entities import declare_ontologies

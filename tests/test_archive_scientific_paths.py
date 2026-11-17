@@ -46,8 +46,8 @@ def test_saved_native_projection_is_idempotent_and_study_files_are_scoped():
     data=result.to_mapping();data['series']['supplementary_data']=[{'value':'https://example.org/study-matrix.txt','type':'TXT'}]
     before=deepcopy(data);rows=render(data)
     values={r[0]:r[1:] for r in rows}
-    assert values['Comment[Study supplementary file]']==['https://example.org/study-matrix.txt']
-    assert values['Comment[Study supplementary file type]']==['TXT']
+    assert 'Comment[Study supplementary file]' not in values
+    assert 'Comment[Study supplementary file type]' not in values
     assert 'https://example.org/study-matrix.txt' not in str(values['SDRF File'])
     assert rows==render(data)
     assert data==before

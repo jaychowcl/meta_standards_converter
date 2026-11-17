@@ -59,7 +59,7 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
             kind="Extract Name",
             key=f"extract:{accession}",
             value=accession,
-            attrs=[SDRFAttr(label="Material Type", value=self.material_type(channel=channel))],
+            attrs=[SDRFAttr(label="Material Type", value=self.material_type(channel=channel, extracted=True))],
         )
 
     def labeled_extract_node(self, sample: dict, channel: dict) -> SDRFNode:

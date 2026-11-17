@@ -131,7 +131,8 @@ def test_reduced_source_package_renders_exact_scoped_recorded_file_occurrences(s
     expected_rows = [row for row in rows
                      if row[headers.index('Source Name')] == metadata['selected_sample']
                      and row[headers.index('Comment[ENA_RUN]')] in ('', metadata['selected_run'])]
-    expected = table_occurrences([headers, *expected_rows])
+    from tests.support.deposited_fidelity import without_derived_files
+    expected = table_occurrences(without_derived_files([headers, *expected_rows]))
     with replay.offline():
         package = MINiMLCodec().decode(json.loads(replay.read(f'{study}.package')), strict=True).package
         rendered = AEConstructor().miniml2magetab(package)
