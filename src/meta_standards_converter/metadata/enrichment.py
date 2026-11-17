@@ -14,6 +14,7 @@ from meta_standards_converter.conversion_logging import measured, progress
 
 import xml.etree.ElementTree as ET
 import logging
+from meta_standards_converter.conversion_logging import _retained_warning
 import time
 from copy import deepcopy
 
@@ -147,7 +148,7 @@ class MINiMLEnricher:
                 message = f"Conflicting publication identifiers for {series.get('iid')}: {supplied} resolve to different PMIDs; retaining the source citation without hydration."
                 if message not in self.publication_issues:
                     self.publication_issues.append(message)
-                    logger.debug(message)
+                    _retained_warning(logger, message)
             elif resolved:
                 publication['pubmed_id'] = resolved.pop()
         pubmed_ids = valid_pubmed_ids(self._as_list(series.get("pubmed_id")))
@@ -221,7 +222,7 @@ class MINiMLEnricher:
                 cache[key] = None
                 issue = f'{kind} {value}: {type(error).__name__}'
                 self.publication_issues.append(issue)
-                logger.debug('%s', issue)
+                _retained_warning(logger, '%s', issue)
         return cache[key]
 
     @provider_boundary(provider='sra', operation='run_inventory')
@@ -254,7 +255,7 @@ class MINiMLEnricher:
                 except (requests.RequestException, ET.ParseError) as error:
                     record(error, provider="sra")
                     self._sra_failures = getattr(self, "_sra_failures", 0) + 1
-                    logger.debug('SRA refresh %s failed (%s); retaining saved metadata', accession, type(error).__name__)
+                    _retained_warning(logger, 'SRA refresh %s failed (%s); retaining saved metadata', accession, type(error).__name__)
                     continue
             self._merge_saved_runs(runs, fetched)
             sample["sra_run"] = runs
@@ -344,7 +345,7 @@ class MINiMLEnricher:
             self._pubmed_failures = getattr(self, "_pubmed_failures", 0) + 1
             issue = f'PubMed {pubmed_id}: {type(error).__name__}'
             self.publication_issues.append(issue)
-            logger.debug('%s', issue)
+            _retained_warning(logger, '%s', issue)
             doi, authors, title, status, source_ref, accession = (None, None, None, None, None, None)
 
         result = {

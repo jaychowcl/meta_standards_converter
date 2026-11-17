@@ -248,7 +248,7 @@ class JSON2TSVConverter(JSON2DelimitedConverter):
                 manifest_path=str(manifest),
             )
             staged_manifest.write_text(
-                json.dumps(result.to_dict(), indent=2, ensure_ascii=False, sort_keys=True)
+                json.dumps({k: v for k, v in result.to_dict().items() if k != 'diagnostics'}, indent=2, ensure_ascii=False, sort_keys=True)
                 + "\n",
                 encoding="utf-8",
             )

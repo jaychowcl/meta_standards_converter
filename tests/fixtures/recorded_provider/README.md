@@ -32,6 +32,8 @@ not a replacement for the full 18-study provider audit.
   that one 403 body exercise the default initial attempt plus three retries;
   this is not evidence of four separate captured live requests. The failure
   cannot be replaced by a later 200 response.
+* `http403/diagnostics.manifest.json` reuses the original 403 response bytes and retry count with MSC 9 actionable diagnostic expectations. The original `manifest.json` is retained as historical evidence.
+
 * `http403/budget.manifest.json` is explicitly a synthetic budget fault at a
   recorded request identity. Its purpose is to verify expected exhaustion and
   harness-error separation; it is not a captured provider failure.

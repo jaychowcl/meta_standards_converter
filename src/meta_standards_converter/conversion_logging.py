@@ -31,6 +31,11 @@ def current():
     return _run.get()
 
 
+def _retained_warning(logger, message, *args):
+    """Report a helper's retained issue once at the owning operation boundary."""
+    logger.log(logging.DEBUG if current() is not None else logging.WARNING, message, *args)
+
+
 def context_callable(fn):
     """Capture the submitting operation when dispatching a worker."""
     context = copy_context()

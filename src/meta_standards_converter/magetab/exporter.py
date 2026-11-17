@@ -8,6 +8,7 @@
 # =============================================================================
 """Render prepared package groups, including explicit replacement profiles."""
 import logging
+from meta_standards_converter.conversion_logging import _retained_warning
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
 from meta_standards_converter.sources.json import DatasetPackageGroup
 from .constructor import AEConstructor
@@ -29,14 +30,14 @@ class MAGETabExporter:
     @measured_phase("magetab_package_resolution")
     def _packages_from_loaded(self, loaded, *, replacement_profile=None):
         for warning in loaded.warnings:
-            logger.debug("%s", warning)
+            _retained_warning(logger, "%s", warning)
         if not loaded.groups:
             raise ValueError("JSON source contains no convertible package groups.")
         packages = []
         for original_group in loaded.groups:
             group = original_group.resolved(replacement_profile=replacement_profile)
             for warning in getattr(group.harmonization_resolution, "warnings", ()):
-                logger.debug("%s", warning)
+                _retained_warning(logger, "%s", warning)
             packages.extend(group.packages)
 
         for index, package in enumerate(packages, start=1):

@@ -37,12 +37,12 @@ def test_v2_migration_is_not_a_public_api():
     assert not hasattr(MINiMLCodec, "migrate_v2")
 
 
-def test_v2_migration_cli_does_not_write_output(tmp_path):
+def test_v2_migration_cli_does_not_write_output(tmp_path, capsys):
     from meta_standards_converter.cli.miniml_migrate import main
     source, destination = tmp_path / "old.json", tmp_path / "new.json"
     source.write_text(json.dumps(obsolete_package()))
-    with pytest.raises(ValueError, match="3.0"):
-        main([str(source), str(destination)])
+    assert main([str(source), str(destination)]) == 1
+    assert 'invalid_metadata' in capsys.readouterr().err
     assert not destination.exists()
 
 
