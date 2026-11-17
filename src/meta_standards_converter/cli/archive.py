@@ -48,7 +48,7 @@ def run_cli(parser, converter_type, argv):
                     try:
                         resolutions.append(converter.source.resolve(accession))
                     except Exception as error:
-                        resolutions.append(Resolution(issues=[type(error).__name__]))
+                        resolutions.append(Resolution(issues=[type(error).__name__], failures=[error]))
         seeds = list(dict.fromkeys(seed for resolution in resolutions for seed in resolution.studies))
         totals = dict.fromkeys(("complete", "partial", "failed", "skipped"), 0)
         for index, (accession, resolution) in enumerate(zip(args.accession, resolutions), 1):
@@ -72,7 +72,8 @@ def run_cli(parser, converter_type, argv):
             try:
                 publish_json(args.report, {'imports': reports}, args.overwrite)
             except OSError as error:
-                logging.getLogger(__name__).error('Report publication failed: %s', type(error).__name__)
+                from .common import record_safe_cli_error
+                record_safe_cli_error(logging.getLogger(__name__), error, location=args.report, stage='report')
                 failed = True
         run.statistics.update(totals | {"inputs": len(args.accession)})
         run.status = "failed" if totals["failed"] == len(args.accession) else "partial" if failed else "complete"

@@ -122,9 +122,15 @@ def operation(component, *, clock=time.monotonic, heartbeat=True, emitter=None):
         yield run
     except BaseException as error:
         run.status = "interrupted" if isinstance(error, (KeyboardInterrupt, SystemExit)) else "failed"
-        safe = SafeErrorEnvelope.from_exception(error, stage=run.failure_stage,
-                                                correlation_id=run.id)
-        run.statistics["error"] = safe.to_dict()
+        from .converters.unified.outcomes import failure
+        from .diagnostics import diagnose
+        safe, _ = failure(error, stage=run.failure_stage or 'conversion',
+                          provider=_labels.get().get('provider'), item_id=_labels.get().get('item_id'))
+        run.statistics['error'] = safe.to_dict()
+        if isinstance(error, Exception):
+            d = diagnose(error, stage=run.failure_stage or 'conversion', location=_labels.get().get('source'))
+            error._msc_diagnostic = d
+            run.statistics['diagnostic'] = d.to_dict()
         try:
             error._msc_logged_envelope = safe
         except (AttributeError, TypeError):
@@ -297,9 +303,16 @@ def result_diagnostics(result):
                 result_diagnostics(item)
     diagnostics = getattr(result, "diagnostics", None)
     if isinstance(diagnostics, (tuple, list)):
+        from .diagnostics import enrich
+        if isinstance(diagnostics, list):
+            diagnostics[:] = [enrich(d) for d in diagnostics]
         for d in diagnostics:
+            d = enrich(d)
             severity = "debug" if d.code in {"duplicate_input", "fail_fast", "enrichment_skipped"} else "error" if d.code in {"sample_skipped", "source_failed"} else d.severity
-            diagnostic(d.code, d.message, severity=severity, stage_name=d.stage)
+            details = d.to_dict()
+            for key in ('code', 'message', 'severity', 'stage'):
+                details.pop(key, None)
+            diagnostic(d.code, d.message, severity=severity, stage_name=d.stage, **details)
     for attr, severity in (("warnings", "warning"), ("errors", "error"), ("failures", "error"), ("issues", "warning")):
         values = getattr(result, attr, None)
         if isinstance(values, (tuple, list)):

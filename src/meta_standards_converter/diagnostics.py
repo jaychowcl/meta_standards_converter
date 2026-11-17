@@ -30,7 +30,7 @@ CATALOGUE = {
     'invalid_encoding': ('The input cannot be decoded using its required encoding.', 'Supply a correctly encoded source file.'),
     'invalid_metadata': ('Metadata failed validation.', 'Correct the reported metadata fields or regenerate from the original source.'),
     'projection_invalid': ('The requested output failed validation.', 'Correct the source annotations or projector diagnostics before exporting.'),
-    'missing_optional_dependency': ('Expression conversion requires optional dependencies.', 'Install meta-standards-converter[h5ad] or use the full Docker image.'),
+    'missing_optional_dependency': ('Expression conversion requires optional dependencies; install meta-standards-converter[h5ad] or use the full Docker image.', 'Install meta-standards-converter[h5ad] or use the full Docker image.'),
     'missing_runtime': ('A required processing tool or container runtime is unavailable.', 'Install and configure the required processing runtime, then retry.'),
     'processing_failed': ('The expression processing pipeline failed.', 'Inspect the processing log and correct the pipeline inputs or runtime before retrying.'),
     'processing_output_missing': ('Processing did not produce the required expression output.', 'Inspect the processing log and check the selected pipeline and inputs.'),

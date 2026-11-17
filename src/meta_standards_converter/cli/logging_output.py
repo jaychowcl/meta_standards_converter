@@ -250,6 +250,15 @@ def cli_entrypoint(fn):
                 states = dict(console.results) if console else {}
                 human_summary("complete" if code == 0 else "partial/failed", counts=states)
             return code
+        except Exception as error:
+            from meta_standards_converter.diagnostics import RequestError
+            from .common import record_safe_cli_error
+            if isinstance(error, RequestError):
+                sys.stderr.write('error: ' + str(error) + '\n')
+                raise SystemExit(2) from None
+            record_safe_cli_error(logging.getLogger(fn.__module__), error,
+                                  location=fn.__module__.rsplit('.', 1)[-1], stage='command')
+            return 1
         finally:
             try:
                 for handler in session.get("handlers", ()):

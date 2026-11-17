@@ -267,10 +267,10 @@ def main(argv=None, *, command="msc-convert", output_type=None, default_in_type=
             Path(args.log_file).parent.mkdir(parents=True, exist_ok=True)
         configure_logging(args, stream=sys.stderr)
         result = Converter().convert(args.inputs or None, **kwargs)
-    except (ValueError, TypeError) as error:
-        envelope = record_safe_cli_error(logger, error, location="msc-convert", stage="conversion")
-        parser.error(f"Conversion request failed: {envelope.error_type} [correlation_id={envelope.correlation_id}]")
     except Exception as error:
+        from meta_standards_converter.diagnostics import RequestError
+        if isinstance(error, RequestError):
+            parser.error(str(error))
         record_safe_cli_error(logger, error, location='msc-convert', stage='conversion')
         return 1
     if not args.quiet:

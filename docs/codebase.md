@@ -4925,9 +4925,13 @@ persistence-safe error shape. `from_exception()` records only the exception
 class, provider, URL-without-userinfo/query/fragment or path basename, HTTP
 status, retry category, stage/item, and correlation ID. Raw exception text is
 not serialized. `meta_standards_converter.cli.common.record_safe_cli_error`
-is the single CLI boundary: every converter logs only this safe metadata, never
-a traceback or raw exception message, and structured CLI summaries persist the
-same envelope. The independent enums and error/status types are:
+is the shared CLI boundary: every command retains the safe envelope and an
+actionable diagnostic, including `miniml-migrate`. Unexpected `ValueError` is an
+execution failure; only explicit request validation produces usage exit code 2.
+`meta_standards_converter.cli.common.preflight_reporting` checks input, asset,
+configuration, destination and log/report collisions before opening auxiliary
+files. Migration accepts the shared logging/progress flags and publishes JSON
+atomically. Existing command output shapes and conversion exit codes remain. The independent enums and error/status types are:
 
 - `meta_standards_converter.runtime_contracts.ExecutionStatus`;
 - `meta_standards_converter.runtime_contracts.CompletenessStatus`;

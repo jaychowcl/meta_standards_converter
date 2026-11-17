@@ -269,9 +269,7 @@ def test_usage_failure_during_conversion_does_not_dump_exception(tmp_path, monke
         def convert(self, *args, **kwargs):
             raise ValueError('raw_scientific_payload_canary')
     monkeypatch.setattr(convert,'Converter',Broken)
-    with pytest.raises(SystemExit) as raised:
-        convert.main(['GSE1','--out-type','json','--out',str(tmp_path)])
-    assert raised.value.code==2
+    assert convert.main(['GSE1','--out-type','json','--out',str(tmp_path)]) == 1
     captured=capsys.readouterr()
     assert 'raw_scientific_payload_canary' not in captured.err
-    assert 'ValueError' in captured.err
+    assert 'conversion_failed' in captured.err

@@ -188,22 +188,26 @@ class Converter:
         output_options=None,
         runtime: RuntimeOptions | None = None,
     ):
-        if out_type not in TARGETS:
-            raise ValueError(f"Unsupported output type: {out_type}")
-        forced = None if in_type == "auto" else kind_name(in_type)
-        preparation = PreparationPolicy() if preparation is None else preparation
-        runtime = RuntimeOptions() if runtime is None else runtime
-        if not isinstance(preparation, PreparationPolicy):
-            raise TypeError("preparation must be a PreparationPolicy")
-        if not isinstance(runtime, RuntimeOptions):
-            raise TypeError("runtime must be RuntimeOptions")
-        runtime = runtime.to_dict()
-        if outfile is not None and outdir is not None:
-            raise ValueError("outfile and outdir are mutually exclusive")
-        if outfile is not None and out_type == "magetab":
-            raise ValueError("MAGE-TAB requires outdir")
-        base_input = input_settings(input_options)
-        base_output = settings(output_options, OUTPUT[out_type], "output options")
+        from meta_standards_converter.diagnostics import RequestError
+        try:
+            if out_type not in TARGETS:
+                raise ValueError(f"Unsupported output type: {out_type}")
+            forced = None if in_type == "auto" else kind_name(in_type)
+            preparation = PreparationPolicy() if preparation is None else preparation
+            runtime = RuntimeOptions() if runtime is None else runtime
+            if not isinstance(preparation, PreparationPolicy):
+                raise TypeError("preparation must be a PreparationPolicy")
+            if not isinstance(runtime, RuntimeOptions):
+                raise TypeError("runtime must be RuntimeOptions")
+            runtime = runtime.to_dict()
+            if outfile is not None and outdir is not None:
+                raise ValueError("outfile and outdir are mutually exclusive")
+            if outfile is not None and out_type == "magetab":
+                raise ValueError("MAGE-TAB requires outdir")
+            base_input = input_settings(input_options)
+            base_output = settings(output_options, OUTPUT[out_type], "output options")
+        except (ValueError, TypeError) as error:
+            raise RequestError(str(error)) from error
         result = ConversionBatchResult()
         with ExitStack() as stack:
             context = ExecutionContext(self, runtime, out_type, outfile, outdir, stack)

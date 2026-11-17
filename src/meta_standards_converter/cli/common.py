@@ -13,6 +13,8 @@ Shared command-line helpers.
 import argparse
 import logging
 import sys
+import os
+from pathlib import Path
 
 from meta_standards_converter.magetab.constructor import PLATFORM_HANDLER_KEYS
 from meta_standards_converter.runtime_contracts import (
@@ -124,6 +126,7 @@ def log_level(args) -> int:
 
 def configure_logging(args, *, stream=None) -> None:
     from .logging_output import ConsoleHandler, EventFormatter, register_configuration
+    preflight_reporting(args)
     package_logger = logging.getLogger("meta_standards_converter")
     previous = (package_logger.level, package_logger.propagate)
     for handler in package_logger.handlers[:]:
@@ -162,23 +165,60 @@ def record_safe_cli_error(
 ) -> SafeErrorEnvelope:
     """Log and return a durable error without serializing its raw message."""
 
-    existing = getattr(error, "_msc_logged_envelope", None)
-    if isinstance(existing, SafeErrorEnvelope):
-        return existing
-    envelope = SafeErrorEnvelope.from_exception(
-        error,
-        provider=provider,
-        location=location,
-        stage=stage,
-    )
-    logger.error(
-        "%s: %s failed error_type=%s correlation_id=%s",
-        envelope.location or "input",
-        stage,
-        envelope.error_type,
-        envelope.correlation_id,
-    )
+    from dataclasses import replace
+    from meta_standards_converter.diagnostics import diagnose
+    from meta_standards_converter.converters.unified.outcomes import failure
+    envelope, _ = failure(error, stage=stage, provider=provider, item_id=None)
+    safe_location = SafeErrorEnvelope.from_exception(error, location=location).location
+    envelope = replace(envelope, location=envelope.location or safe_location)
+    diagnostic = getattr(error, '_msc_diagnostic', None) or diagnose(
+        error, stage=envelope.stage or stage, provider=provider, location=location)
+    error._msc_diagnostic = diagnostic
+    if not getattr(error, '_msc_logged_envelope', None):
+        logger.error('%s [%s]: %s Action: %s [correlation_id=%s]', diagnostic.stage,
+                     diagnostic.code, diagnostic.message, diagnostic.action, diagnostic.correlation_id)
+        error._msc_logged_envelope = envelope
     return envelope
+
+
+def preflight_reporting(args):
+    """Protect all command inputs/configuration before an auxiliary file opens."""
+    from meta_standards_converter.diagnostics import RequestError
+    from .convert import _paths
+    auxiliary = [Path(p).resolve() for p in (
+        getattr(args, 'log_file', None), getattr(args, 'report', None),
+        getattr(args, 'report_json', None)) if p and p != '-']
+    if not auxiliary:
+        return
+    if len(set(auxiliary)) != len(auxiliary):
+        raise RequestError('Report and log must have different paths.')
+    names = ('inputs', 'json_path', 'source', 'input_manifest', 'asset_manifest',
+             'replacement_profile_file', 'explicit_assets_file', 'fasta', 'gtf', 'gff',
+             'params_file', 'nextflow_config', 'destination', 'outfile')
+    protected = set(_paths([getattr(args, name, None) for name in names]))
+    assets = getattr(args, 'asset', None) or []
+    if assets or getattr(args, 'asset_manifest', None):
+        from meta_standards_converter.expression.assets import AssetManifest
+        manifest = AssetManifest()
+        try:
+            entries = [manifest.parse_spec(value) for value in assets]
+            if getattr(args, 'asset_manifest', None):
+                entries.extend(manifest.load(args.asset_manifest))
+            protected.update(_paths(entries))
+        except (ValueError, OSError) as error:
+            raise RequestError('Cannot validate asset paths for log/report protection; check the asset manifest.') from error
+    directories = [Path(getattr(args, name)).resolve() for name in ('outdir', 'out')
+                   if getattr(args, name, None)]
+    for path in auxiliary:
+        if path in protected or '.artifact-bundles' in path.parts or any(root.is_relative_to(path) for root in directories):
+            raise RequestError('Report/log path conflicts with an input, configuration or conversion destination.')
+        if path.exists() and (not path.is_file() or not getattr(args, 'overwrite', False)):
+            raise RequestError('Report/log destination exists; choose another path or explicitly enable overwrite.')
+        parent = path.parent
+        while not parent.exists():
+            parent = parent.parent
+        if not parent.is_dir() or not os.access(parent, os.W_OK):
+            raise RequestError('Report/log destination parent is not writable; choose another destination.')
 
 
 def add_replacement_profile_arguments(parser):

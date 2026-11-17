@@ -183,7 +183,8 @@ class InputHandler:
         from meta_standards_converter.metadata.source_fallback import annotate
         from .preparation import study_ids
         from dataclasses import replace
-        original_diagnostic = Diagnostic(original.code, str(original), 'load', 'warning')
+        from meta_standards_converter.diagnostics import diagnose
+        original_diagnostic = diagnose(original, stage='load', severity='warning', location=token)
         try:
             source = self._native_source('ena', context)
             mapping = context.session.retrieve(('ae_fallback', id(source), token),

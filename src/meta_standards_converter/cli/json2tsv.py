@@ -76,6 +76,7 @@ def main(argv=None) -> int:
                     "source": safe_error.location,
                     "status": "failed",
                     "error": safe_error.to_dict(),
+                    "diagnostics": [error._msc_diagnostic.to_dict()],
                 }
             )
             continue

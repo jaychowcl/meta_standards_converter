@@ -183,7 +183,7 @@ class TestJSON2H5ADCLI(unittest.TestCase):
             orchestrator.convert.call_args_list,
         )
         self.assertIn(
-            "ERROR meta_standards_converter.cli.json2h5ad: GSE1.json: h5ad_conversion failed error_type=NotImplementedError",
+            "h5ad_conversion [conversion_failed]",
             stderr.getvalue(),
         )
         self.assertNotIn("Traceback (most recent call last):", stderr.getvalue())
