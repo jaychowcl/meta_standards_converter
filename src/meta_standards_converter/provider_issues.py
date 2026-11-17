@@ -89,7 +89,7 @@ def record(error, provider=None):
     if current is not None and issue.error.correlation_id not in current:
         current[issue.error.correlation_id] = (issue, False)
         from .conversion_logging import emit
-        emit('provider_issue', level='WARNING', **issue.to_dict())
+        emit('provider_issue', level='WARNING', provider=issue.error.provider, **issue.to_dict())
     return issue
 
 
@@ -154,7 +154,8 @@ def collect_provider_issues(item):
             item.diagnostics.append(Diagnostic(
                 'provider_recovered' if recovered else 'source_partial',
                 f'{issue.error.provider}: {issue.operation}: {issue.reason}',
-                'retrieval', 'info' if recovered else 'warning', provider_issue=issue))
+                'retrieval', 'info' if recovered else 'warning', provider_issue=issue,
+                provider=issue.error.provider, operation=issue.operation, correlation_id=issue.error.correlation_id))
             if not recovered:
                 unresolved.append(issue)
         if unresolved:

@@ -4889,6 +4889,26 @@ enter events. Qualified symbols are
 <a id="runtime-contracts-v2"></a>
 ## Runtime contracts v2
 
+Operational failures are classified by `meta_standards_converter.diagnostics.diagnose`;
+`meta_standards_converter.diagnostics.enrich` adds catalogue guidance to existing
+diagnostics without changing their severity. Known file, syntax, validation,
+resource, provider and publication errors have controlled messages and actions.
+Unexpected exceptions use `conversion_failed` and bounded DEBUG stack locations
+(module/function/line and exception types only). Raw exception messages, source
+lines, local variables and response bodies are excluded.
+
+`Diagnostic` retains its original arguments and adds optional `action`, `provider`,
+`operation`, `location` and `correlation_id`; absent additions are omitted from
+reports. `ProviderIssue` and `SafeErrorEnvelope` remain the recovery authority.
+A cause keeps its correlation ID through wrapping and cached retrieval. Provider
+issue records are emitted once at their owning recovery boundary.
+`meta_standards_converter.diagnostics.RequestError` distinguishes explicit request
+validation from unexpected `ValueError` failures.
+`meta_standards_converter.diagnostics.OperationalError` supplies controlled codes
+and safe locations for processing failures. Scientific validation codes remain
+owned by their validators; this catalogue does not alter document versions.
+
+
 `meta_standards_converter.runtime_contracts.OperationStatusV2` is the clean
 status-2.0 boundary. It keeps execution, completeness, evidence confidence,
 validation, and publication disposition independent, preserves stable terminal

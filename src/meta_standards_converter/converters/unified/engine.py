@@ -348,36 +348,13 @@ class Converter:
                     item.status = "failed"
                     item.execution = "failed"
                     item.completeness = "partial" if item.artifacts else "unknown"
-                    if isinstance(exc, (InputError, MetadataSourceError)):
-                        code, message = exc.code, str(exc)
-                        if isinstance(exc, MetadataSourceError):
-                            item.provider = exc.provider
-                    elif isinstance(exc, _BudgetExhausted):
-                        code, message = 'retrieval_budget_exhausted', 'Metadata loading exhausted the configured retrieval budget. Increase the budget or supply local metadata files.'
-                    elif _missing_scientific_dependency(exc):
-                        code, message = (
-                            "missing_optional_dependency",
-                            "Expression conversion requires optional dependencies; install "
-                            "meta-standards-converter[h5ad] or use the full Docker image.",
-                        )
-                    elif type(exc).__name__ in {
-                        "MINiMLModelError",
-                        "MINiMLCompatibilityError",
-                        "AtlasV1Error",
-                    }:
-                        code, message = "invalid_metadata", str(exc)
-                    elif type(exc).__name__ in {
-                        "TabularProjectionError",
-                        "AnnDataProjectionError",
-                        "MAGETabValidationError",
-                    }:
-                        code, message = "projection_invalid", str(exc)
-                    else:
-                        code, message = (
-                            "conversion_failed",
-                            f"Conversion failed ({type(exc).__name__})",
-                        )
-                    item.diagnostics.append(Diagnostic(code, message, context.stage))
+                    from meta_standards_converter.diagnostics import diagnose
+                    diagnostic = diagnose(exc, stage=context.stage, provider=item.provider,
+                                          item_id=item.id, location=item.source)
+                    if isinstance(exc, MetadataSourceError):
+                        item.provider = exc.provider
+                    code = diagnostic.code
+                    item.diagnostics.append(diagnostic)
                     if code in {
                         "type_mismatch",
                         "invalid_accession",

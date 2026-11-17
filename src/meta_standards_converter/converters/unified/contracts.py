@@ -39,9 +39,15 @@ class Diagnostic:
     stage: str = "input"
     severity: str = "error"
     provider_issue: ProviderIssue | None = None
+    action: str | None = None
+    provider: str | None = None
+    operation: str | None = None
+    location: str | None = None
+    correlation_id: str | None = None
 
     def to_dict(self):
-        value = {key: value for key, value in vars(self).items() if key != 'provider_issue'}
+        value = {key: value for key, value in vars(self).items()
+                 if key != 'provider_issue' and value is not None}
         if self.provider_issue is not None:
             value['provider_issue'] = self.provider_issue.to_dict()
         return value

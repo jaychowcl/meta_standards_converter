@@ -27,6 +27,11 @@ def failure(error, *, stage, provider, item_id):
         if issue is not None:
             return issue.error, issue.retry_at
         cause = cause.__cause__
+    from meta_standards_converter.conversion_logging import current
+    run = current()
+    cached = getattr(error, '_msc_failure', None)
+    if cached is not None and (run is None or cached[0] == run.id):
+        return cached[1:]
     response = getattr(error, "response", None)
     status = getattr(response, "status_code", None)
     transient = isinstance(error, (
@@ -50,6 +55,7 @@ def failure(error, *, stage, provider, item_id):
     retry_at = getattr(error, "retry_at", getattr(response, "_thematic_atlases_retry_at", None))
     if not isinstance(retry_at, (int, float)) or not math.isfinite(retry_at):
         retry_at = None
+    error._msc_failure = (run.id if run else None, envelope, retry_at)
     return envelope, retry_at
 
 
