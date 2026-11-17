@@ -210,6 +210,12 @@ def _human_summary(result):
     human_summary(result.status, counts=counts,
                   artifacts=((item.id, name, path) for item in result.items
                              for name, path in item.artifacts.items()))
+    for item in result.items:
+        publication = ('partial output written' if item.status == 'partial' else 'output written') if item.artifacts else 'no output produced'
+        print(f'{item.id}: {item.status}; {publication}', file=sys.stderr)
+        for diagnostic in item.diagnostics:
+            if diagnostic.severity in {'error', 'warning'}:
+                print(f'  {diagnostic.stage} [{diagnostic.code}]: {diagnostic.message}', file=sys.stderr)
 
 
 
@@ -267,7 +273,7 @@ def main(argv=None, *, command="msc-convert", output_type=None, default_in_type=
     except Exception as error:
         record_safe_cli_error(logger, error, location='msc-convert', stage='conversion')
         return 1
-    if args.report_json != '-' and not args.quiet:
+    if not args.quiet:
         _human_summary(result)
     if args.report_json:
         try:

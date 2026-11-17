@@ -1139,6 +1139,7 @@ produce a partial diagnostic; invalid enrichment candidates are rejected before 
 
 Injection interfaces are explicit: `geo_source.load(accession, remove_empty=...)`,
 `ae_source.load(source, sdrf_sources=...)`, native `load(accession, publications=..., evidence_dir=...)`,
+and ENA `resolve_arrayexpress(accession)` returning a verified study/project mapping,
 `enricher.enrich_selected(data, publications=..., run_metadata=..., session=...)`, and
 `linked_enricher.enrich_selected(data, accessions=..., session=..., mode=...)`.
 Services receive immutable packages; renderers receive prepared, detached export data.
@@ -1162,6 +1163,16 @@ Missing native packages preserve the underlying provider cause instead of only
 the final `InputError`. Callers retry the whole conversion; MSC does not schedule
 recovery. The optional field is omitted from legacy diagnostic serialization.
 Focused coverage: `tests/test_provider_recovery.py`.
+
+BioStudies availability has explicit terminal reasons: `source_inaccessible` and
+`source_not_found`. Confirmed access denial bypasses immediate HTTP retries only
+for the BioStudies study-info request; unrecognized 403, 429 and 5xx responses
+retain bounded retries and cooldowns. Accessible studies can report `missing_idf`,
+`missing_sdrf`, `ambiguous_idf` or `ambiguous_sdrf`. An empty `{}`, malformed JSON,
+invalid listing shape or incomplete pagination is `provider_response_invalid`,
+never evidence that files are absent. Safe diagnostics retain accession, provider,
+HTTP status where present, stage and recovery guidance without response bodies.
+See [verified ENA fallback](#workflow-ae2json).
 
 Recovery interfaces: `meta_standards_converter.provider_issues.ProviderIssue`
 stores the typed fact; `meta_standards_converter.provider_issues.provider_boundary`
@@ -1495,8 +1506,15 @@ retaining package state. `magetab_sample_binding` reports this work separately.
 ae2json.main → cli.convert.main → Converter.convert(out_type="json")
   → validate request and discover inputs
   → AE accession → MAGETabMetadataSource.load → AEWebFetcher.resolve
+      → BioStudies study info → validated paginated file listing → IDF/SDRF
+      → inaccessible/not found/missing required files:
+          ENASource.resolve_arrayexpress → exact study_alias search
+          → public Browser study/project record with exact ArrayExpress link
+          → one verified study after alias deduplication
+          → NativeMetadataSource.load via the same PreparationSession
   IDF/SDRF files → load_magetab → companion discovery → same source service
-  both → AEParser.parse(MAGETabInput) → MINiMLPackage groups
+  MAGE-TAB → AEParser.parse(MAGETabInput) → MINiMLPackage groups
+  ENA fallback → ENAParser → MINiMLPackage groups + source-fallback provenance
   → validate loaded metadata ── invalid → failed item
   → StudyFamilies.expand → MetadataPreparation.prepare
        optional retrieval failure → retain valid candidate + partial diagnostics
@@ -1514,6 +1532,51 @@ Pseudocode: `plan(request); for input: load → validate → prepare → validat
 **Evidence:** [engine](../src/meta_standards_converter/converters/unified/engine.py),
 [loaders](../src/meta_standards_converter/converters/unified/loaders.py),
 [source services](../src/meta_standards_converter/sources/metadata.py).
+
+Fallback applies only to accession loading and is independent of enrichment and
+study expansion. Supplied local IDF/SDRF files remain authoritative. Parsing,
+validation, ambiguous bundles and malformed provider responses do not trigger
+source substitution. Alias matches discover candidates; titles and accession
+resemblance never establish a relationship. Public record identifiers deduplicate
+project/read-study aliases, and an exact ArrayExpress URL or cross-reference must
+verify one unique study. A failed or budget-limited candidate inspection cannot
+establish uniqueness. No public converter is called recursively.
+
+The requested accession remains the input identity; the actual provider is ENA.
+The normal output naming rules apply. `extensions.insdc.records` records the
+verified mapping, evidence links and fallback reason as `source_fallback`;
+`Comment[MSCSourceFallback]` carries the same provenance in MAGE-TAB. Reports
+retain the original source diagnostic and a `source_fallback` preparation record.
+Valid output has `execution=succeeded`, `validation=valid`, `completeness=partial`
+because ArrayExpress-specific metadata was unavailable. Reloading saved JSON keeps
+that incomplete status even with enrichment off. If fallback fails, both the
+original problem and fallback failure appear, with no output from the failed item.
+
+The operation caches access denials across initial loading and linked enrichment,
+including default option variations, avoiding request/fallback loops. Optional
+BioSamples failures retain valid native metadata and separate retryable provider
+facts. Consumers keep valid partial packages; confirmed access denial alone does
+not schedule automatic retries, while an explicit manual retry remains possible.
+The CLI prints `partial output written` or `no output produced`, diagnostic stages
+and recovery actions on stderr, including with JSON-only stdout. Complete returns
+exit zero; partial/failed returns nonzero. No CLI or document schema version changed.
+
+Regression coverage: `tests/sources/test_ae_source_failures.py`,
+`tests/sources/test_ae_ena_mapping.py`, and `tests/converters/test_ae_fallback.py`.
+Both E-MTAB-16245 → ERP185477/PRJEB104172 and E-MTAB-13162 → ERP149729/PRJEB64550
+exercise the same evidence-based resolver; neither mapping is hardcoded.
+
+Source-boundary interfaces:
+`meta_standards_converter.sources.errors.MetadataSourceError` carries a controlled
+code, accession, provider and HTTP status; response bodies never become messages.
+`meta_standards_converter.sources.ae_fallback.resolve_arrayexpress` returns
+`meta_standards_converter.sources.ae_fallback.VerifiedENAStudy` after inspecting
+public identifier/link evidence. `meta_standards_converter.metadata.source_fallback.annotate`
+returns a detached package with portable mapping evidence;
+`meta_standards_converter.metadata.source_fallback.recorded` reads that evidence
+for policy-independent partial reporting. Archive HTTP, ENA and SRA sources expose
+their requester metrics explicitly so discovery, fallback loading and peer requests
+reach the existing structured outcome counters.
 
 <a id="workflow-json2h5ad"></a>
 ### `json2h5ad`: MINiML/Atlas v1 JSON to H5AD

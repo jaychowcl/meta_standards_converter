@@ -32,6 +32,7 @@ from meta_standards_converter.xml_safety import (
     XMLSizeLimitError,
     read_limited_response,
 )
+from .errors import MetadataSourceError
 
 
 @dataclass(frozen=True)
@@ -128,24 +129,26 @@ class AEWebFetcher:
         ]
         return MAGETabInput(idf, tuple(resources), source, "url")
 
+    @provider_boundary(provider='biostudies', operation='source_loading')
     def _resolve_accession(self, accession: str) -> MAGETabInput:
         accession = accession.strip().upper()
+        info_url = f"{self.API_ROOT}/studies/{quote(accession, safe='')}/info"
+        info = self._fetch_json(info_url, accession=accession,
+            response_check=lambda response: self._check_access(response, accession))
+        base_url = info.get("httpLink") if isinstance(info, dict) else None
+        if not isinstance(base_url, str) or not self._is_http(base_url):
+            raise MetadataSourceError('provider_response_invalid', accession)
         files_url = f"{self.API_ROOT}/files/{quote(accession, safe='')}"
-        rows = self._biostudies_file_rows(files_url)
+        rows = self._biostudies_file_rows(files_url, accession)
         idf_rows = [row for row in rows if self._file_kind(row) == "idf"]
         sdrf_rows = [row for row in rows if self._file_kind(row) == "sdrf"]
         if len(idf_rows) != 1:
-            raise ValueError(
-                f"BioStudies accession {accession} must expose exactly one IDF; found {len(idf_rows)}."
-            )
+            raise MetadataSourceError('missing_idf' if not idf_rows else 'ambiguous_idf', accession)
         if not sdrf_rows:
-            raise ValueError(f"BioStudies accession {accession} exposes no SDRF files.")
-
-        info_url = f"{self.API_ROOT}/studies/{quote(accession, safe='')}/info"
-        info = self._fetch_json(info_url)
-        base_url = info.get("httpLink") if isinstance(info, dict) else None
-        if not base_url or not self._is_http(base_url):
-            raise ValueError(f"BioStudies accession {accession} has no HTTP download link.")
+            raise MetadataSourceError('missing_sdrf', accession)
+        paths = [str(row.get('path') or row.get('Name')) for row in sdrf_rows]
+        if len(paths) != len(set(paths)):
+            raise MetadataSourceError('ambiguous_sdrf', accession)
 
         idf = self._fetch_api_file(base_url, idf_rows[0])
         sdrfs = tuple(self._fetch_api_file(base_url, row) for row in sdrf_rows)
@@ -155,24 +158,53 @@ class AEWebFetcher:
         } for row in rows if (path := str(row.get('path') or row.get('Name') or '').lstrip('/')))
         return MAGETabInput(idf, sdrfs, accession, "accession", catalogue)
 
-    def _biostudies_file_rows(self, files_url: str) -> list[dict]:
+    def _biostudies_file_rows(self, files_url: str, accession: str) -> list[dict]:
         rows: list[dict] = []
+        expected_total = None
+        seen_pages = set()
         while True:
             payload = self._fetch_json(
                 files_url,
+                accession=accession,
                 params={"start": len(rows), "length": self.FILE_PAGE_SIZE},
             )
-            page = payload.get("data", []) if isinstance(payload, dict) else []
-            page = [row for row in page if isinstance(row, dict)]
+            page = payload.get("data") if isinstance(payload, dict) else None
+            if not isinstance(page, list) or any(not isinstance(row, dict) or
+                    not isinstance(row.get('path') or row.get('Name'), str) or
+                    not (row.get('path') or row.get('Name')).strip() for row in page):
+                raise MetadataSourceError('provider_response_invalid', accession)
+            signature = json.dumps(page, sort_keys=True)
+            if page and signature in seen_pages:
+                raise MetadataSourceError('provider_response_invalid', accession)
+            seen_pages.add(signature)
             rows.extend(page)
 
-            total = payload.get("recordsFiltered") if isinstance(payload, dict) else None
+            total = payload.get("recordsFiltered")
             try:
+                if isinstance(total, (bool, float)):
+                    raise ValueError
                 total = int(total) if total is not None else None
             except (TypeError, ValueError):
-                total = None
-            if not page or total is None or len(rows) >= total:
+                raise MetadataSourceError('provider_response_invalid', accession) from None
+            if (total is not None and (total < len(rows) or not page and len(rows) < total)
+                    or expected_total is not None and total != expected_total):
+                raise MetadataSourceError('provider_response_invalid', accession)
+            expected_total = total
+            if total is None or len(rows) == total:
                 return rows
+
+    def _check_access(self, response, accession):
+        """Only explicit BioStudies study denial bypasses the shared retry policy."""
+        if response.status_code == 404:
+            raise MetadataSourceError('source_not_found', accession, http_status=404)
+        if response.status_code == 403:
+            content = self._read_response(response)
+            try:
+                payload = json.loads(content.decode('utf-8-sig'))
+            except (ValueError, UnicodeError):
+                return
+            if isinstance(payload, dict) and payload.get('errorMessage') == 'Study not accessible':
+                raise MetadataSourceError('source_inaccessible', accession, http_status=403)
 
     def _fetch_api_file(self, base_url: str, row: dict) -> TextResource:
         path = str(row.get("path") or row.get("Name") or "").lstrip("/")
@@ -196,7 +228,7 @@ class AEWebFetcher:
         return TextResource(name, text, resolved_url)
 
     @provider_boundary(provider='biostudies', operation='linked_metadata')
-    def _fetch_json(self, url: str, **kwargs):
+    def _fetch_json(self, url: str, *, accession='study', **kwargs):
         response, _ = self._request(url, **kwargs)
         try:
             response.raise_for_status()
@@ -207,9 +239,10 @@ class AEWebFetcher:
             return json.loads(content.decode("utf-8-sig"))
         except (UnicodeDecodeError, json.JSONDecodeError) as error:
             record(error, provider="biostudies")
-            raise ValueError("BioStudies returned invalid UTF-8 JSON metadata.") from error
+            raise MetadataSourceError('provider_response_invalid', accession,
+                                      http_status=response.status_code) from error
 
-    def _request(self, url: str, **kwargs):
+    def _request(self, url: str, response_check=None, **kwargs):
         current = url
         request_kwargs = dict(kwargs)
         for redirect_count in range(self.resource_profile.max_redirects + 1):
@@ -218,8 +251,16 @@ class AEWebFetcher:
                 current,
                 stream=True,
                 allow_redirects=False,
+                **({'_response_check': response_check} if response_check is not None and
+                   isinstance(self.requester, RateLimitedRequester) else {}),
                 **request_kwargs,
             )
+            if response_check is not None and not isinstance(self.requester, RateLimitedRequester):
+                try:
+                    response_check(response)
+                except BaseException:
+                    response.close()
+                    raise
             if response.status_code not in self.REDIRECT_STATUSES:
                 return response, current
             location = response.headers.get("Location")

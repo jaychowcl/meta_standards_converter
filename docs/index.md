@@ -221,8 +221,8 @@ Full flag and Python API details remain in the canonical routes below.
 - id: workflow-ae2json
   title: ae2json: MAGE-TAB to parsed JSON
   anchor: workflow-ae2json
-  purpose: Traces bounded local, policy-approved HTTPS, and paginated BioStudies resolution through strict typed JSON output.
-  keywords: ae2json, BioStudies, E-MTAB-1, duplicate term sources, unresolved references, E-MTAB-6486, pagination, IDF, SDRF, canonical labels, legacy label aliases, factor normalization, material type, resource profile, egress, AEParser, typed model
+  purpose: Traces bounded local, HTTPS and BioStudies loading, classified source errors, verified ENA fallback and valid partial output.
+  keywords: ae2json, BioStudies, E-MTAB-16245, E-MTAB-13162, ERP185477, ERP149729, source_inaccessible, source_not_found, missing_idf, ambiguous_idf, provider_response_invalid, verified ENA fallback, source_fallback, partial output, pagination, IDF, SDRF, AEParser
   link: [Open section](codebase.md#workflow-ae2json)
 
 - id: workflow-json2h5ad

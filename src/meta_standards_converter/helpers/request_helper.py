@@ -588,6 +588,7 @@ class RateLimitedRequester:
         from ..metadata.retrieval_budget import _active, _check_cancelled
         budget = _active.get()
         consumer = kwargs.pop('_consume_response', None)
+        response_check = kwargs.pop('_response_check', None)
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.settings.timeout
 
@@ -633,6 +634,14 @@ class RateLimitedRequester:
                     request_started = time.monotonic()
                     response = self._get(url, **effective)
                     response._msc_request_started_at = request_started
+                    if response_check is not None:
+                        try:
+                            response_check(response)
+                        except BaseException:
+                            response.close()
+                            self._emit_request_event(host, 'failed', attempt + 1,
+                                                     self._clock() - started, response.status_code)
+                            raise
                     if consumer is not None and response.status_code < 400 and not (
                             response.status_code in {301, 302, 303, 307, 308}
                             and response.headers.get('Location')):

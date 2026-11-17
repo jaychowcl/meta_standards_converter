@@ -158,17 +158,59 @@ class InputHandler:
         raise InputError("unsupported_input", "No loader registered for input")
 
     def _accession(self, spec, context):
-        from meta_standards_converter.sources.metadata import NativeMetadataSource
         token = str(spec.sources).strip().upper()
         if self.kind == "geo_accession":
             packages = context.session.load(context.geo_source(), token, remove_empty=context.input_options.get("remove_empty", True))
             return metadata_input(packages, "geo")
         if self.kind == "ae_accession":
-            packages = context.session.load(context.ae_source(), token, **context.input_options)
-            return metadata_input(packages, "biostudies")
+            from meta_standards_converter.sources.errors import MetadataSourceError
+            try:
+                packages = context.session.load(context.ae_source(), token, **context.input_options)
+                return metadata_input(packages, "biostudies")
+            except MetadataSourceError as error:
+                if error.code not in error.FALLBACK_CODES:
+                    raise
+                return self._ae_fallback(token, context, error)
         provider = self.kind.split("_")[0]
-        source = context.service(provider + "_source", lambda: NativeMetadataSource(provider, resource_profile=context.profile))
-        result = context.session.load(source, token, publications=context.preparation_policy.allows("publications"), **context.input_options)
+        return self._native(token, provider, context, **context.input_options)
+
+    @staticmethod
+    def _native_source(provider, context):
+        from meta_standards_converter.sources.metadata import NativeMetadataSource
+        return context.service(provider + "_source", lambda: NativeMetadataSource(provider, resource_profile=context.profile))
+
+    def _ae_fallback(self, token, context, original):
+        from meta_standards_converter.metadata.source_fallback import annotate
+        from .preparation import study_ids
+        from dataclasses import replace
+        original_diagnostic = Diagnostic(original.code, str(original), 'load', 'warning')
+        try:
+            source = self._native_source('ena', context)
+            mapping = context.session.retrieve(('ae_fallback', id(source), token),
+                lambda: source.resolve_arrayexpress(token))
+            loaded = self._native(mapping.study, 'ena', context)
+            groups = []
+            for group in loaded.metadata.groups:
+                packages = []
+                for package in group.packages:
+                    if not set(study_ids(package)) & {mapping.study, mapping.project}:
+                        raise InputError('fallback_invalid', 'ENA metadata does not match the verified study; supply the ArrayExpress IDF and SDRF files.')
+                    packages.append(annotate(package, token, mapping, original.code))
+                groups.append(replace(group, packages=tuple(packages)))
+            loaded.metadata = replace(loaded.metadata, groups=tuple(groups))
+            loaded.content_id = canonical_identity(loaded.metadata)
+            loaded.diagnostics.insert(0, original_diagnostic)
+            return loaded
+        except Exception as error:
+            # Keep the original condition and the independent fallback failure.
+            # The final exception retains its own retry eligibility.
+            error._msc_source_diagnostics = [original_diagnostic, Diagnostic(
+                'fallback_failed', 'Verified ENA fallback could not provide usable metadata. Supply the ArrayExpress IDF and SDRF files.', 'load')]
+            raise
+
+    def _native(self, token, provider, context, **options):
+        source = self._native_source(provider, context)
+        result = context.session.load(source, token, publications=context.preparation_policy.allows("publications"), **options)
         diagnostics = [
             Diagnostic("source_" + s.status, f"{s.study}: {issue}", "load", "warning")
             for s in result.studies

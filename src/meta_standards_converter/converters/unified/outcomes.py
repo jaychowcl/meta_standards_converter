@@ -15,6 +15,7 @@ from urllib3.exceptions import ProtocolError
 
 from meta_standards_converter.runtime_contracts import RetryCategory, SafeErrorEnvelope
 from meta_standards_converter.sources.contracts import RequestMetrics, request_metrics
+from meta_standards_converter.sources.errors import MetadataSourceError
 
 
 def failure(error, *, stage, provider, item_id):
@@ -39,6 +40,8 @@ def failure(error, *, stage, provider, item_id):
         item.get("retry_category") == "retryable"
         for item in trace.get("errors", []) if isinstance(item, dict)
     )
+    if isinstance(error, MetadataSourceError):
+        status, provider, transient = error.http_status, error.provider, error.retryable
     envelope = SafeErrorEnvelope.from_exception(
         error, provider=provider, stage=stage, item_id=item_id,
         http_status=status,

@@ -44,6 +44,7 @@ from .requests import (PreparationPolicy, RuntimeOptions, input_settings,
                        output_settings, merge_input_options)
 from . import outcomes
 from meta_standards_converter.sources.contracts import RequestMetrics
+from meta_standards_converter.sources.errors import MetadataSourceError
 
 
 def _missing_scientific_dependency(exc):
@@ -217,6 +218,7 @@ class Converter:
         seen = {}
         stopped = False
         from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _without_budget
+        from meta_standards_converter.metadata.retrieval_budget import _BudgetExhausted
         from meta_standards_converter.provider_issues import collect_provider_issues
         for spec, kind, chosen, inp, out, error, item_id, preparation in planned:
             item = ConversionItemResult(
@@ -324,6 +326,7 @@ class Converter:
                         d.code
                         in {
                             "source_partial",
+                            "source_fallback",
                             "source_failed",
                             "conversion_partial",
                             "sample_skipped",
@@ -337,6 +340,7 @@ class Converter:
                     item.validation = "invalid" if invalid else "valid"
                     item.status = "partial" if incomplete or invalid else "complete"
                 except Exception as exc:
+                    item.diagnostics.extend(getattr(exc, '_msc_source_diagnostics', ()))
                     item.error, item.retry_at = outcomes.failure(
                         exc, stage=context.stage, provider=item.provider,
                         item_id=item.id,
@@ -344,8 +348,12 @@ class Converter:
                     item.status = "failed"
                     item.execution = "failed"
                     item.completeness = "partial" if item.artifacts else "unknown"
-                    if isinstance(exc, InputError):
+                    if isinstance(exc, (InputError, MetadataSourceError)):
                         code, message = exc.code, str(exc)
+                        if isinstance(exc, MetadataSourceError):
+                            item.provider = exc.provider
+                    elif isinstance(exc, _BudgetExhausted):
+                        code, message = 'retrieval_budget_exhausted', 'Metadata loading exhausted the configured retrieval budget. Increase the budget or supply local metadata files.'
                     elif _missing_scientific_dependency(exc):
                         code, message = (
                             "missing_optional_dependency",

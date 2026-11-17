@@ -289,7 +289,7 @@ class TestAEWebFetcher(unittest.TestCase):
 
     def test_accession_rejects_ambiguous_idf_discovery(self):
         requester = Mock()
-        requester.get.return_value = response(payload={
+        listing = response(payload={
             "data": [
                 {"Name": "one.idf.txt", "Type": "IDF File", "path": "one.idf.txt"},
                 {"Name": "two.idf.txt", "Type": "IDF File", "path": "two.idf.txt"},
@@ -297,7 +297,10 @@ class TestAEWebFetcher(unittest.TestCase):
             ]
         })
 
-        with self.assertRaisesRegex(ValueError, "exactly one IDF"):
+        requester.get.side_effect = lambda url, **kwargs: (
+            response(payload={'httpLink': 'https://ftp.ebi.ac.uk/study'})
+            if url.endswith('/info') else listing)
+        with self.assertRaisesRegex(ValueError, "multiple IDF"):
             AEWebFetcher(
                 requester=requester,
                 retrieval_policy=public_policy(),

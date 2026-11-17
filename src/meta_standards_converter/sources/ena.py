@@ -22,6 +22,10 @@ class ENASource:
         self.http = http or ArchiveHTTP('ena_portal', requester, resource_profile, evidence_dir)
         self._xrefs = {}
 
+    def metrics(self):
+        from .contracts import request_metrics
+        return request_metrics(self.http)
+
     def cross_references(self, accession, records):
         """Fetch bounded JSON pages; TSV has no header and loses its first row."""
         def family_scope(row):
@@ -69,11 +73,16 @@ class ENASource:
         rows = self.http.get(self.portal + 'search', {'result': result, 'query': query,
             'fields': fields, 'format': 'json', 'limit': 0, 'includeMetagenomes': 'true'}, 'json')
         if not isinstance(rows, list):
-            raise ValueError('ENA search must return an array')
+            from .errors import MetadataSourceError
+            raise MetadataSourceError('provider_response_invalid', 'study', provider='ena')
         return rows
 
     def xml(self, accessions):
         return self.http.get(self.browser + ','.join(accessions), {'includeLinks': 'true'})
+
+    def resolve_arrayexpress(self, accession):
+        from .ae_fallback import resolve_arrayexpress
+        return resolve_arrayexpress(self, accession)
 
     def verified_xml(self, accessions, result, kind='record'):
         from collections import deque

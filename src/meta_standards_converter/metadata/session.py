@@ -75,9 +75,20 @@ class PreparationSession:
         return _candidate_copy(value)
 
     def load(self, source, accession, **options):
+        from ..sources.errors import MetadataSourceError
         key = ("source", id(source), accession,
                tuple(sorted((k, repr(v)) for k, v in options.items())))
-        return self.retrieve(key, lambda: source.load(accession, **options))
+        unavailable = ('unavailable_source', id(source), accession)
+        if unavailable in self.memo:
+            return self.retrieve(unavailable, lambda: None)
+        try:
+            return self.retrieve(key, lambda: source.load(accession, **options))
+        except MetadataSourceError as error:
+            # Access does not depend on parser options. Reuse the same issue and
+            # failure during linked enrichment, without retrying or substituting.
+            if error.code in {'source_inaccessible', 'source_not_found'} and key in self.memo:
+                self.memo[unavailable] = self.memo[key]
+            raise
 
 
 def retrieve_once(key, call, *, session=None):

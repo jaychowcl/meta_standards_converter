@@ -191,6 +191,26 @@ introduces invalid metadata is rejected; the last valid package can still be
 published with partial completeness. Read the diagnostic operation and path to
 identify what could not be accepted.
 
+For ArrayExpress accessions, MSC checks BioStudies accessibility before discovering
+IDF/SDRF files. Confirmed inaccessible/not-found studies and accessible studies
+missing required files automatically try ENA. MSC requires one public ENA study
+with an explicit link to the requested ArrayExpress accession; an alias or similar
+title is insufficient. Ambiguous files, malformed responses and parsing errors
+remain failures. Local IDF/SDRF inputs are never substituted automatically.
+
+A verified fallback writes valid **partial** output because ArrayExpress-specific
+annotations are unavailable. The report and `Comment[MSCSourceFallback]` identify
+the ENA study, mapping evidence and original problem. JSON preserves that provenance
+and remains partial on later export. This loading fallback also applies with
+`--enrichment off --no-expand-studies`. Supply the study's original IDF and SDRF
+files to recover ArrayExpress metadata. A confirmed access denial is not
+automatically retried; temporary provider failures retain their own retry status.
+
+The summary distinguishes `partial output written` from `no output produced`, with
+the failure stage and suggested action. Exit zero means complete; partial and
+failed conversions return nonzero, so inspect the report and output paths before
+discarding results. See the [source-loading call graph](codebase.md#workflow-ae2json).
+
 Default MAGE-TAB preserves deposited archive metadata. Array-design identifiers
 keep their actual namespace; protocol, factor and vocabulary references are
 checked before writing. This does not guarantee an Atlas processing layout.

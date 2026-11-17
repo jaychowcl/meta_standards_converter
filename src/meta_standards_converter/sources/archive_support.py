@@ -101,6 +101,10 @@ class ArchiveHTTP:
         response = self.requester.get(url, params=params, stream=True)
         return self._consume(response, fmt)
 
+    def metrics(self):
+        from .contracts import request_metrics
+        return request_metrics(self.requester)
+
     def _consume(self, response, fmt):
         from ..helpers.metadata_stream import response_deadline, split_payload, BatchPayloadFailure
         from ..metadata.retrieval_budget import _check_cancelled

@@ -38,6 +38,10 @@ class SRASource:
         self._publication_links = {}
         self._publication_links_lock = RLock()
 
+    def metrics(self):
+        from .contracts import request_metrics
+        return request_metrics(self.http)
+
     @provider_boundary(provider='pubmed', operation='publication_retrieval')
     def publication_links(self, dbfrom, db, ids, name):
         key = (dbfrom, db, tuple(ids), name)

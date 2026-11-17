@@ -430,7 +430,7 @@ def test_preparation_contributions_count_real_fastq_relationships_and_duplicates
     assert rebound["native_file_identities"] != after["native_file_identities"]
 
 
-@pytest.mark.parametrize("name,attempts", [("manifest.json", 7), ("budget.manifest.json", 1)])
+@pytest.mark.parametrize("name,attempts", [("manifest.json", 7), ("budget-access-check.manifest.json", 1)])
 def test_retained_403_and_declared_budget_have_expected_failure_goldens(name, attempts):
     from scripts.audit_recorded_provider import audit
     root = Path(__file__).parent / "fixtures/recorded_provider/http403"

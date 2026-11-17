@@ -89,6 +89,12 @@ class MetadataPreparation:
         context = self.context
         policy = context.preparation_policy
         records, diagnostics = [], []
+        from meta_standards_converter.metadata.source_fallback import recorded
+        for evidence in recorded(package):
+            records.append(dict(evidence, operation='source_fallback', status='partial', provider='ena'))
+            diagnostics.append(Diagnostic('source_fallback',
+                f"{evidence.get('requested_accession')}: loaded verified ENA study {evidence.get('study')}; ArrayExpress-specific metadata was unavailable. Supply its IDF/SDRF files to restore that metadata.",
+                'load', 'warning'))
         ids = study_ids(package)
         identity = package.to_mapping().get("series", {}).get("iid") or (ids[0] if ids else "input")
 

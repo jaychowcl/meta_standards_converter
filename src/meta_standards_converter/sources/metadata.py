@@ -72,6 +72,12 @@ class NativeMetadataSource:
         self.source = source if source is not None else Source(resource_profile=resource_profile)
         self.parser = parser if parser is not None else Parser()
 
+    def resolve_arrayexpress(self, accession):
+        """Discover and verify alternative loading evidence, without loading it."""
+        if self.provider != 'ena':
+            raise ValueError('ArrayExpress fallback requires ENA')
+        return self.source.resolve_arrayexpress(accession)
+
     def load(self, accession, *, publications=True, evidence_dir=None):
         from ..converters.archive_results import ArchiveImportResult, StudyImportOutcome, _load_native, native_failure
         from ..metadata.archive_diagnostics import consistency_issues

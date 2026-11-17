@@ -62,6 +62,7 @@ def record(error, provider=None):
     from dataclasses import replace
     import requests
     from .converters.unified.outcomes import failure
+    from .sources.errors import MetadataSourceError
     issue = getattr(error, '_msc_provider_issue', None)
     cause = error.__cause__
     seen = set()
@@ -71,7 +72,9 @@ def record(error, provider=None):
         cause = cause.__cause__
     if issue is None:
         envelope, retry_at = failure(error, stage='retrieval', provider=provider, item_id=None)
-        if isinstance(error, (JSONDecodeError, ET.ParseError, UnicodeDecodeError)):
+        if isinstance(error, MetadataSourceError):
+            reason = error.code
+        elif isinstance(error, (JSONDecodeError, ET.ParseError, UnicodeDecodeError)):
             reason = 'provider_response_invalid'
             envelope = replace(envelope, retry_category=RetryCategory.RETRYABLE)
         elif envelope.http_status is not None:
