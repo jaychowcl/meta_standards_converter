@@ -7,6 +7,10 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Observable MSC 7 export contracts, independent of provider access."""
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import copy
 import csv
 import inspect
@@ -15,7 +19,7 @@ import importlib
 
 import pytest
 
-from meta_standards_converter.converters import JSON2AEConverter, JSON2TSVConverter, JSON2H5ADConverter, JSON2OBSConverter
+from meta_standards_converter.converters import JSON2TSVConverter, JSON2H5ADConverter, JSON2OBSConverter
 from meta_standards_converter.miniml import MINiMLCodec, iter_harmonized_values
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.sources.json import JSONPackageSource
@@ -56,7 +60,7 @@ def test_generated_sdrf_exposes_local_groups_and_companions():
     assert row[header.index("Characteristics[disease]")] == "IPF"
     assert original == before
 
-@pytest.mark.parametrize("converter,method", [(JSON2AEConverter,"convert"),(JSON2TSVConverter,"convert_source"),(JSON2TSVConverter,"export_manifest"),(JSON2H5ADConverter,"convert"),(JSON2H5ADConverter,"convert_source"),(JSON2OBSConverter,"convert")])
+@pytest.mark.parametrize("converter,method", [(MAGETabExporter,"render"),(JSON2TSVConverter,"convert_source"),(JSON2TSVConverter,"export_manifest"),(JSON2H5ADConverter,"convert"),(JSON2H5ADConverter,"convert_source"),(JSON2OBSConverter,"convert")])
 def test_direct_profile_is_keyword_only(converter, method):
     parameters = inspect.signature(getattr(converter, method)).parameters
     assert parameters["replacement_profile"].kind == inspect.Parameter.KEYWORD_ONLY
@@ -65,7 +69,7 @@ def test_direct_profile_is_keyword_only(converter, method):
 def test_native_profile_changes_standard_value_retaining_hz(tmp_path):
     source = tmp_path / "input.json"
     source.write_text(json.dumps(package()))
-    rows = JSON2AEConverter().convert(str(source), enrich=False, platform_handler="generic", replacement_profile=PROFILE)
+    rows = converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'generic', 'replacement_profile': PROFILE})
     header, row = table(rows[0])
     assert row[header.index("Characteristics[disease]")] == "idiopathic pulmonary fibrosis"
     assert "Characteristics[hz_disease]" in header
@@ -89,7 +93,8 @@ def test_cli_direct_profile_and_invalid_input(command, tmp_path):
     with pytest.raises(SystemExit) as error:
         cli.main([str(tmp_path / "missing.json"), "--replacement-profile", "[]", *extra])
     assert error.value.code == 2
-    args = cli._parser().parse_args(["input.json", "--replacement-profile", json.dumps(PROFILE), *extra])
+    parser = importlib.import_module('meta_standards_converter.cli.convert')._parser('json2ae', 'magetab', 'json') if command == 'json2ae' else cli._parser()
+    args = parser.parse_args(["input.json", "--replacement-profile", json.dumps(PROFILE), *extra])
     assert args.replacement_profile == json.dumps(PROFILE)
 
 
@@ -170,7 +175,7 @@ def test_explicit_replacements_and_assay_characteristics_stay_local(tmp_path):
         {'kind':'assay','name':'A1','characteristics':[{'name':'hz_instrument','value':'machine'}]},
     ]}]
     source=tmp_path/'input.json'; source.write_text(json.dumps(p))
-    output=JSON2AEConverter().convert(str(source), enrich=False, platform_handler='generic', replacement_profile=PROFILE)[0]
+    output=converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'generic', 'replacement_profile': PROFILE})[0]
     h,r=table(output)
     assert r[h.index('Characteristics[disease]')] == 'idiopathic pulmonary fibrosis'
     parsed=reparse(output)
@@ -217,7 +222,7 @@ def test_all_python_outputs_preserve_evidence_and_optional_replacements(tmp_path
     anndata.AnnData(sparse.csr_matrix([[1]]),obs=pd.DataFrame(index=['cell1']),var=pd.DataFrame(index=['gene1'])).write_h5ad(expression)
     options={'replacement_profile':PROFILE} if enabled else {}
     expected='idiopathic pulmonary fibrosis' if enabled else 'IPF'
-    rows=JSON2AEConverter().convert(str(source),enrich=False,platform_handler='generic',**options)
+    rows=converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'generic', **options})
     h,r=table(rows[0]); assert r[h.index('Characteristics[disease]')]==expected
     assert r[h.index('Characteristics[hz_disease]')]=='idiopathic pulmonary fibrosis'
     for format in ('tsv','csv'):
@@ -334,7 +339,7 @@ def test_explicit_profile_updates_organism_and_source_standard_occurrences(tmp_p
     ]
     profile={'schema_version':'1.0','replacements':{'organism':['species'],'source':['tissue']}}
     source=tmp_path/'input.json';source.write_text(json.dumps(p))
-    output=JSON2AEConverter().convert(str(source),enrich=False,platform_handler='generic',replacement_profile=profile)[0]
+    output=converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'generic', 'replacement_profile': profile})[0]
     h,r=table(output)
     assert r[h.index('Characteristics[organism]')]=='Homo sapiens'
     assert r[h.index('Comment[Sample_source_name]')]=='lung'
@@ -358,7 +363,7 @@ def test_cli_direct_profile_file_reaches_written_artifact(command, atlas, tmp_pa
     profile=tmp_path/'profile.json';profile.write_text(json.dumps(PROFILE))
     out=tmp_path/'out'
     args=[str(source),'--outdir' if command=='json2obs' else '--out',str(out),'--replacement-profile-file',str(profile)]
-    if command=='json2ae':args+=['--no-enrich','--platform-handler','generic']
+    if command=='json2ae':args+=['--enrichment', 'off', '--no-expand-studies','--platform-handler','generic']
     if command in {'json2h5ad','json2obs'}:
         expression=tmp_path/'counts.h5ad'
         anndata.AnnData(sparse.csr_matrix([[1]]),obs=pd.DataFrame(index=['cell']),var=pd.DataFrame(index=['gene'])).write_h5ad(expression)
@@ -386,7 +391,7 @@ def test_atlas_profile_applies_to_every_selected_group(tmp_path):
         dataset.update(dataset_id=f'GSE{index}',metadata=p,source_ordinal=index-1)
     atlas['summary'].update(completed_dataset_count=2,failed_dataset_count=0)
     source=tmp_path/'atlas.json';source.write_text(json.dumps(atlas))
-    outputs=JSON2AEConverter().convert(str(source),enrich=False,platform_handler='generic',replacement_profile=PROFILE)
+    outputs=converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'generic', 'replacement_profile': PROFILE})
     assert len(outputs)==2
     for output in outputs:
         h,r=table(output)

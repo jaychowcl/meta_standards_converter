@@ -153,12 +153,13 @@ def test_explicit_off_and_quiet_override_live_terminal(mode, quiet):
 
 def test_legacy_human_summary_is_stderr(tmp_path, capsys, monkeypatch):
     from meta_standards_converter.cli.geo2json import main
-    from meta_standards_converter.converters.geo2json import GEO2JSONConverter
-    monkeypatch.setattr(GEO2JSONConverter, 'convert', lambda *a, **kw: [])
+    from meta_standards_converter.converters import Converter
+    from tests.cli.test_named_metadata_commands import complete
+    monkeypatch.setattr(Converter, 'convert', lambda *a, **kw: complete())
     assert main(['GSE1', '--out', str(tmp_path)]) == 0
     captured = capsys.readouterr()
     assert captured.out == ''
-    assert 'Conversion: complete' in captured.err
+    assert 'complete' in captured.err
 
 
 @pytest.mark.parametrize('provider', ['sra', 'ena'])

@@ -7,13 +7,17 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Regression for MSC-TEST-001: explicit 5-prime evidence must survive rendering."""
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import csv
-from meta_standards_converter.converters import GEO2AEConverter
+
 from tests.support.contracts import GEO
 
 def test_auto_handler_must_not_contradict_explicit_five_prime_protocol(workspace, replay):
     assert "Single Cell 5′" in (GEO / "inputs/geo.xml").read_text()
-    GEO2AEConverter().convert("GSE328265", out="out")
+    converted(Converter(), 'GSE328265', out_type='magetab', preparation=PreparationPolicy(enrichment='standard', expand_studies=False, linked_metadata=False, peer_provider=False), outdir='out')
     with (workspace / "out/E-GEOD-328265.sdrf.txt").open() as handle:
         header, row = list(csv.reader(handle, delimiter="\t"))
     assert row[header.index("Comment[end bias]")] == "5 prime tag"

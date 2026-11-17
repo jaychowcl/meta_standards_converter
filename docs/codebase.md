@@ -21,7 +21,7 @@ moving study metadata and expression assets among GEO MINiML, the package's
 parsed JSON model, ArrayExpress MAGE-TAB, delimited sample tables, and AnnData
 H5AD. CLI modules are thin batch adapters. Converter classes own use-case
 orchestration; fetchers and parsers own repository-specific I/O; MAGE-TAB
-constructors and H5AD/tabular projectors own output models. The current distribution is **MSC 8.0.0**. Current output contracts are MINiML 3.1 and patch 3.2; [legacy compatibility](#harmonization-depth-contract) is explicit.
+constructors and H5AD/tabular projectors own output models. The current distribution is **MSC 9.0.0**. Current output contracts are MINiML 3.1 and patch 3.2; [legacy compatibility](#harmonization-depth-contract) is explicit.
 
 Start with [the design and class map](#oop-design), then follow one
 [principal workflow](#principal-workflows). Use the
@@ -33,7 +33,7 @@ historical evidence, not a claim that external providers were retested.
 ```text
 Users: CLI / Python / Docker / rootless Compose
                          |
-            unified API / nine converters
+            Converter.convert + source/preparation/export services
        +-----------------+--------------------+
        |                 |                    |
  GEO/AE/SRA/ENA     local JSON/files    explicit/discovered assets
@@ -97,7 +97,7 @@ boundary, concurrency and credential-presence checks.
 - **Rationale:** Not documented.
 - **Consequences:** CLI failures can be isolated per input, while Python callers retain exceptions and injectable collaborators.
 - **Affected components:** `cli/*`, `converters/*`, logging configuration, and output status handling.
-- **Evidence:** [`pyproject.toml`](../pyproject.toml), [`cli/geo2ae.py`](../src/meta_standards_converter/cli/geo2ae.py), and [`converters/geo2ae.py`](../src/meta_standards_converter/converters/geo2ae.py).
+- **Evidence:** [`pyproject.toml`](../pyproject.toml), [`cli/geo2ae.py`](../src/meta_standards_converter/cli/geo2ae.py), and [`converters/geo2ae.py`](../src/meta_standards_converter/converters/unified/engine.py).
 
 <a id="decision-magetab-round-trips"></a>
 ### AD-002: Preserve MAGE-TAB round trips beside the mapped core
@@ -283,7 +283,7 @@ and [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py
 
 | Contract | Current version | Role |
 | --- | --- | --- |
-| MSC distribution | 8.0.0 | Python/CLI compatibility and version-specific checkpoint namespace |
+| MSC distribution | 9.0.0 | Python/CLI compatibility and version-specific checkpoint namespace |
 | MSC MINiML | 3.1 | Canonical metadata; reads 3.0/3.1 and rejects v2 |
 | Harmonization patch | 3.2 | Source-bound decisions; historical 3.1 hashes remain verifiable |
 | Patch extension ledger | 1.0 | Retained operations in `extensions.msc_harmonization` |
@@ -360,12 +360,10 @@ CLI parser -> converter instance -> conversion-scoped services and data
 
 | Relationship | Actual design | State and change implications |
 | --- | --- | --- |
-| `GEO2JSONConverter`, `GEO2AEConverter`, `JSON2AEConverter` → `JSONHandler` | Inherit generic JSON helpers; compose the substantive services | Inheritance supplies utilities, not a shared workflow state machine |
-| `GEO2JSONConverter` / `GEO2AEConverter` → `GEOSource` | Constructor injection; `parser` defaults to the source service | `GEOSource` owns related-Series retrieval; its `GEOParser` collaborator is network-free |
 | `JSON2TSVConverter` → `JSON2DelimitedConverter` | Specializes delimiter/output selection | Shared base owns grouping, projection, deterministic columns, validation and writing |
 | `JSON2OBSConverter` → `JSON2H5ADConverter` + `AnnDataComponentExporter` | Composition, not inheritance | Build a temporary per-sample catalogue, export metadata components, then clean up temporary matrices |
 | `JSON2H5ADConverter` → planner, reader, downloader, runner, metadata service | Constructor-injected collaborators | Converter owns sequencing, admission, checkpoints and publication; collaborators own their specific operations |
-| `AEConstructor` → evidence resolver, IDF/SDRF builders, protocol registry | Per-operation composition | Resolve network evidence before pure rendering; registry identity must agree across IDF and SDRF |
+| `AEConstructor` → export plan, IDF/SDRF builders, protocol registry | Per-operation composition | Receives prepared evidence; registry identity agrees across IDF and SDRF |
 | SDRF technology handlers → base/array/sequencing specializations | Inheritance within one rendering domain | Override technology behavior without placing retrieval policy in row rendering |
 | Projectors and source contracts → `Protocol` interfaces | Structural typing | Callers can inject compatible objects without subclassing MSC implementations |
 | `MINiMLPackage` → series, samples, channels, paths, named values | Frozen typed records with mapping codecs | Replace/copy records for transformations; `to_mapping()` produces the serializable boundary |
@@ -469,16 +467,27 @@ database service, or plugin discovery mechanism is exposed.
   `RetrievalService` consumes the resource profile behind the supported
   `AssetDownloader` facade.
 <a id="core-magetab-construction"></a>
-- Neutral `magetab.protocols.ProtocolRegistry` and technology/file detection feed
-  `IDFConstructor` and `SDRFConstructor`; typed MAGE-TAB
-  records, and technology handlers form the MAGE-TAB construction subsystem.
-  Constructor and SDRF modules now depend one-way on that neutral module; they
-  contain no mutual or late imports. Import `ProtocolRegistry` from `magetab.protocols`; do not depend on incidental
-  imports inside constructor modules.
+### Network-free MAGE-TAB construction
 
-Definitions, signatures, state, internal calls, external operations, and
-failure behavior are detailed in
-[Public API and callable reference](#public-api-and-callable-reference).
+`MAGETabExporter.render` resolves each group/profile then calls
+`AEConstructor.miniml2magetab` → `prepare` → `render`. Preparation validates once and
+owns a detached mapping, protocol registry, technology selection, prefix rows and an
+`SDRFExportPlan`. Canonical assay paths are selected when present; otherwise technology
+handlers provide paths. Each document carries paths, planned columns and audit state.
+
+`SDRFConstructor.prepare` registers protocols and audit effects once, before column
+planning. `SDRFConstructor.render` invokes `SDRFRenderer.render_paths` once per document.
+Compatible document layouts retain the existing consolidation contract; incompatible
+layouts fail explicitly. No discarded intermediate SDRF is rendered. Injected builders
+implement the same `prepare`/`render` interfaces; there are no type/method-identity gates.
+Collaborators must not change plan input after preparation. Caller metadata remains detached.
+
+Rendering builds the IDF from prepared publication/run evidence, then performs semantic
+annotation, factor declarations, provenance comments and final validation explicitly.
+Constructors/renderers have no provider clients and cannot supplement missing evidence.
+**Evidence:** [constructor](../src/meta_standards_converter/magetab/constructor.py),
+[SDRF plan/render](../src/meta_standards_converter/magetab/sdrf/constructor.py),
+[regression](../tests/magetab/test_export_boundary.py).
 
 <a id="public-api-reference"></a>
 ## Public API reference
@@ -744,60 +753,48 @@ They are documented implementation seams rather than additions to
 <a id="unified-converter"></a>
 ## Unified converter API
 
-`Converter` is the common Python entrypoint. It composes registered input
-handlers and existing conversion services. Legacy converter classes retain
-their own public signatures and defaults; they do not inherit a new base class.
-This keeps provider retrieval, scientific decisions, protocol registries,
-metrics, and checkpoint ownership in their existing services.
+`Converter.convert` is the canonical Python metadata orchestration boundary in MSC 9.
+`geo2json`, `ae2json`, `json2ae` and `geo2ae` are thin CLI adapters to this API.
+They share defaults, output naming, atomic publication, diagnostics and structured outcomes.
 
 ```python
-from pathlib import Path
-from meta_standards_converter.converters import Converter, InputSpec
+from meta_standards_converter.converters import Converter, InputSpec, PreparationPolicy, RuntimeOptions
 
-converter = Converter()
-result = converter.convert(
-    "GSE234602",
-    out_type="csv",
-    enrichment="curators",
-    options={"outfile": Path("exports/samples.csv"), "expand_studies": False},
+result = Converter().convert(
+    "GSE234602", out_type="csv", outfile="exports/samples.csv",
+    preparation=PreparationPolicy(enrichment="curators", expand_studies=False),
+    runtime=RuntimeOptions(resource_profile="large", resource_overrides={"max_xml_bytes": 67108864}),
 )
-for outcome in result.items:
-    print(outcome.id, outcome.status, outcome.dataset_ids, outcome.artifacts)
-    print([diagnostic.message for diagnostic in outcome.diagnostics])
+for item in result.items:
+    print(item.execution, item.completeness, item.validation, item.artifacts)
 ```
-
-This example retrieves the GEO accession directly, disables related-study expansion
-for a single-file output, and writes `exports/samples.csv`. No previously generated
-JSON file is needed.
-
-The primary signature is:
 
 ```python
 Converter(*, services=None, handlers=None).convert(
     input=None, outdir=None, *, out_type, in_type="auto",
-    enrichment="standard", options=None,
+    preparation: PreparationPolicy | None = None,
+    runtime: RuntimeOptions | None = None,
+    input_options=None, output_options=None, outfile=None, input_manifest=None,
 ) -> ConversionBatchResult
 ```
 
-`outdir` may be the second positional argument. Accessions and approved URLs are
-retrieved automatically; supplied files and objects are loaded directly.
-`in_type="auto"` detects the reader; an explicit input type selects one reader
-but does not bypass structural, companion or retrieval-policy validation.
-`options` is a flat mapping of applicable advanced settings. Misspelled,
-irrelevant, incompatible and contradictory explicit settings raise before execution.
+`None` selects immutable default policy/options. Preparation defaults are `standard`
+enrichment, `expand_studies=True`, `linked_metadata=True`, `peer_provider=True`.
+Runtime defaults are the standard resource profile, no overwrite, no fail-fast,
+no recursive discovery, no raw processing, and no optional metadata budget.
+`RuntimeOptions.resource_overrides` is defensively copied and immutable; host and
+reserved-path collections are normalized to tuples. See [settings](#unified-routes).
 
-The previous keyword-only arguments remain compatibility aliases:
-`force_in_type`, `outfile`, `input_manifest`, `input_options`, `output_options`,
-and `runtime_options`. Equivalent duplicate values are accepted; contradictions
-are rejected centrally. `InputSpec` and manifest mappings retain their existing
-fields and version 1.0 format; per-input settings override call-level defaults.
-Set `enrichment` and `expand_studies` in an input's `input_options` to override
-its preparation policy. No downstream caller migration is required.
+`InputSpec.preparation` optionally replaces the whole call policy for that input.
+A policy with only `enrichment="off"` still has expansion enabled. To disable all
+optional retrieval set both `enrichment="off"` and `expand_studies=False`.
+Fetching an accession or a required remote companion remains source loading.
+`input_options` and `output_options` contain only applicable format settings;
+obsolete, misspelled or irrelevant configuration is rejected before execution.
+Input type selection never bypasses structural or retrieval-policy validation.
 
-`out_type` is one of `json`, `magetab`, `tsv`, `csv`, `h5ad`, or
-`obs`. JSON always denotes MSC MINiML **3.0**, including when the source is
-Atlas, Curator, GEO or an archive provider. It is not an Atlas/native-provider
-serializer. Saved older schemas require an explicit migration outside this API.
+MINiML 3.1, harmonization patch 3.2 and Atlas document versions are unchanged.
+See [MSC 9 migration](#unified-compatibility) for removed interfaces.
 
 <a id="unified-cli"></a>
 ## Unified command-line interface
@@ -821,9 +818,8 @@ H5AD/OBS still require the scientific extra, and raw processing requires explici
 
 Only explicitly supplied settings are forwarded. Manifest per-input settings
 retain their API precedence. The facade rejects irrelevant settings and conflicting
-presets/legacy overrides; contradictory positive/negative CLI switches are usage
-errors. `--related` and `--related-series` are aliases for `--expand-studies`;
-expansion is already on by default and independent of enrichment.
+settings; contradictory positive/negative CLI switches are usage errors. Expansion
+is on by default and independent of enrichment. Removed aliases are usage errors.
 
 Human summaries show status totals and artifact paths. Detailed diagnostic codes remain
 in the result report and logs. Logs and progress use stderr (`-v`: INFO, `-vv`: DEBUG,
@@ -853,8 +849,8 @@ directory; input-manifest paths retain the existing manifest-relative semantics.
 | `-h` / `--help` | show this help message and exit |
 | `inputs` | Set inputs. |
 | `--out-type` | Set out type. Choices: `csv`, `h5ad`, `json`, `magetab`, `obs`, `tsv`. |
-| `--in-type` / `--force-in-type` | Set in type. Choices: `auto`, `ae_accession`, `anndata`, `atlas`, `atlas_v1`, `curator`, `ena`, `ena_accession`, `ena_records`, `ena_xml`, `fastq`, `geo`, `geo_accession`, `geo_archive`, `geo_xml`, `h5ad`, `json`, `magetab`, `matrix`, `miniml`, `msc_miniml`, `sra`, `sra_accession`, `sra_records`, `sra_xml`. |
-| `--input-manifest` | Version 1.0 JSON input manifest; may accompany positional inputs. |
+| `--in-type` | Set in type. Choices: `auto`, `ae_accession`, `anndata`, `atlas`, `atlas_v1`, `curator`, `ena`, `ena_accession`, `ena_records`, `ena_xml`, `fastq`, `geo`, `geo_accession`, `geo_archive`, `geo_xml`, `h5ad`, `json`, `magetab`, `matrix`, `miniml`, `msc_miniml`, `sra`, `sra_accession`, `sra_records`, `sra_xml`. |
+| `--input-manifest` | Version 2.0 JSON input manifest; may accompany positional inputs. |
 | `--out` / `--outdir` / `-o` | Output directory (default: current directory). |
 | `--outfile` | Exact single-file output; incompatible with MAGE-TAB and batch inputs. |
 | `--list-input-types` | Set list input types. |
@@ -862,26 +858,24 @@ directory; input-manifest paths retain the existing manifest-relative semantics.
 | `--platform-handler` | Force IDF and SDRF generation through the selected platform handler. Choices: `plate_single_cell_sequencing`, `droplet_single_cell_sequencing`, `tenx_v2_droplet_single_cell_sequencing`, `tenx_v3_droplet_single_cell_sequencing`, `single_cell_sequencing`, `spatial_sequencing`, `bulk_sequencing`, `sequencing`, `array`, `generic`. |
 | `--list-platform-handlers` | List available platform handler keys and exit. |
 | `--enrichment` | Set enrichment. Choices: `standard`, `curators`, `off`. |
-| `--expand-studies` / `--related` / `--related-series` | Expand verified related studies (default: enabled). |
-| `--no-expand-studies` / `--no-related` | Disable expand studies. |
-| `--enrich` | Compatibility enrichment switch; prefer --enrichment. |
-| `--no-enrich` | Disable enrich. |
-| `--include-peer` | Allow peer archive enrichment. |
-| `--no-include-peer` | Disable include peer. |
-| `--enrich-from-geo-ae` | Allow linked GEO/ArrayExpress metadata enrichment. |
-| `--no-enrich-from-geo-ae` | Disable enrich from geo ae. |
+| `--expand-studies` | Expand verified related studies (default: enabled). |
+| `--no-expand-studies` | Disable expand studies. |
+| `--peer-provider` | Allow peer archive enrichment with standard preparation. |
+| `--no-peer-provider` | Disable peer provider. |
+| `--linked-metadata` | Allow linked GEO/ArrayExpress enrichment with standard preparation. |
+| `--no-linked-metadata` | Disable linked metadata. |
 | `--remove-empty` | Remove empty parsed GEO fields. |
 | `--no-remove-empty` | Disable remove empty. |
 | `--evidence-dir` | Set evidence dir. |
 | `--sdrf-source` | Set sdrf sources. |
 | `--orientation` | Orientation of an input matrix. Choices: `auto`, `genes-by-observations`, `observations-by-genes`. |
-| `--aggregate` | Enable aggregate. |
+| `--aggregate` | Aggregate datasets within one logical metadata input. |
 | `--no-aggregate` | Disable aggregate. |
-| `--allow-invalid` | Enable allow invalid. |
+| `--allow-invalid` | Allow outputs with projector-reported validation errors. |
 | `--no-allow-invalid` | Disable allow invalid. |
-| `--include-var` | Enable include var. |
+| `--include-var` | Include feature metadata in OBS output. |
 | `--no-include-var` | Disable include var. |
-| `--include-uns` | Enable include uns. |
+| `--include-uns` | Include unstructured metadata in OBS output. |
 | `--no-include-uns` | Disable include uns. |
 | `--replacement-profile` | Replacement profile as inline JSON; supplying it activates replacements. |
 | `--replacement-profile-file` | Path to a replacement profile JSON object. |
@@ -891,15 +885,15 @@ directory; input-manifest paths retain the existing manifest-relative semantics.
 | `--explicit-assets-file` | JSON file containing an array of Asset field mappings. |
 | `--matrix-orientation` | Set matrix orientation. Choices: `auto`, `genes-by-observations`, `observations-by-genes`. |
 | `--pipeline` | Set pipeline. Choices: `auto`, `rnaseq`, `scrnaseq`. |
-| `--allow-processing` | Enable allow processing. |
+| `--allow-processing` | Permit raw-read pipeline execution; references are still required. |
 | `--no-allow-processing` | Disable allow processing. |
-| `--force-reprocess` | Enable force reprocess. |
+| `--force-reprocess` | Rebuild from raw reads instead of using processed assets. |
 | `--no-force-reprocess` | Disable force reprocess. |
-| `--accept-inferred-reference` | Enable accept inferred reference. |
+| `--accept-inferred-reference` | Allow a supported reference inferred from organism metadata. |
 | `--no-accept-inferred-reference` | Disable accept inferred reference. |
-| `--resume` | Enable resume. |
+| `--resume` | Resume from workflow and processing checkpoints. |
 | `--no-resume` | Disable resume. |
-| `--force-memory` | Enable force memory. |
+| `--force-memory` | On resume, bypass the profile ceiling but retain the available-memory safety ceiling. |
 | `--no-force-memory` | Disable force memory. |
 | `--allow-unverified-combination` | Deprecated compatibility option; never combines matrices. |
 | `--no-allow-unverified-combination` | Disable allow unverified combination. |
@@ -913,49 +907,26 @@ directory; input-manifest paths retain the existing manifest-relative semantics.
 | `--work-dir` | Set work dir. |
 | `--processed-checkpoint-dir` | Set processed checkpoint dir. |
 | `--execution-profile` / `--profile` | Nextflow execution profile. |
-| `--overwrite` | Enable overwrite. |
+| `--overwrite` | Replace existing conversion outputs and report/log files. |
 | `--no-overwrite` | Disable overwrite. |
-| `--fail-fast` | Enable fail fast. |
+| `--fail-fast` | Skip later inputs after the first unsuccessful input. |
 | `--no-fail-fast` | Disable fail fast. |
-| `--recursive` | Enable recursive. |
+| `--recursive` | Discover inputs recursively, excluding caches and nested outputs. |
 | `--no-recursive` | Disable recursive. |
 | `--resource-profile` | Set resource profile. Choices: `standard`, `large`. |
 | `--resource-override` | Set resource override. |
+| `--metadata-timeout-seconds` | Set metadata timeout seconds. |
+| `--metadata-max-requests` | Set metadata max requests. |
 | `--insdc-default` | Set insdc default. Choices: `ena`, `sra`. |
 | `--allowed-host` / `--asset-host` | Set allowed hosts. |
 | `--reserved-path` | Reserve an additional path against discovery/publication. |
 | `--report-json` | Write a structured result summary; use - for JSON-only stdout. |
 | `-v` / `--verbose` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
 | `-q` / `--quiet` | Only emit ERROR logs. |
-| `--log-file` | Optional detailed log file; defaults to DEBUG independently of console verbosity. |
-| `--log-format` | File format: `text` (default) or `jsonl`. |
-| `--log-file-level` | File threshold: DEBUG (default), INFO, WARNING, ERROR or CRITICAL. |
-| `--progress` | `auto` (default), `plain` markers, or `off`; quiet disables progress. |
-
-Structured inputs use the existing version 1.0 `--input-manifest`, including
-companions, metadata and per-input options. `--asset ACCESSION=PATH_OR_URL` is
-repeatable, while `--asset-manifest` reads the existing CSV/TSV asset format.
-For the complete Asset field interface, `--explicit-assets` accepts a JSON array
-of Asset mappings or `--explicit-assets-file` reads that array from disk; required
-fields are `scope_id`, `path` and `kind`. Python service/handler injection and
-in-memory objects remain Python-only. Replacement profiles accept inline JSON or
-a JSON file through the existing mutually exclusive flags.
-
-Additional terminal examples (supply your own existing files and manifest):
-
-```bash
-msc-convert study.json --out-type csv --enrichment off --out tables
-msc-convert --input-manifest inputs.json --out-type json --out packages
-msc-convert matrix.tsv --in-type matrix --orientation genes-by-observations \
-  --out-type h5ad --out expression
-msc-convert sample.h5ad --out-type obs --include-var --include-uns --out observations
-msc-convert study.json --out-type json --outfile converted.json --report-json -
-```
-
-CLI tests cover all six outputs, typed flag dispatch, fixture-backed GEO
-preparation, reports, exit codes, collisions, manifests, and raw permission gates.
-Discovery regression tests cover equal/ancestor destinations, nested exclusions
-and symlinks. These offline tests do not claim live provider or pipeline execution.
+| `--log-file` | Optional file path to write logs. |
+| `--log-format` | Log file format (default: text). Choices: `text`, `jsonl`. |
+| `--log-file-level` | File threshold, independent of console verbosity (default: DEBUG). Choices: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`. |
+| `--progress` | Terminal progress; quiet disables it (default: auto). Choices: `auto`, `plain`, `off`. |
 
 <a id="unified-cli-guide"></a>
 ### Curator guide
@@ -987,7 +958,7 @@ for Python calls.
 
 Automatic INSDC accession routing uses SRA for SR*, PRJNA* and SAMN*; ENA for
 ER*, PRJEB* and SAMEA*. Other supported DDBJ/INSDC prefixes use
-`runtime_options["insdc_default"]` (`"ena"` by default; `"sra"` permitted).
+`RuntimeOptions.insdc_default` (`"ena"` by default; `"sra"` permitted).
 Forcing a provider overrides this choice, without fallback or automatic merging
 of peer evidence. Native peer/GEO-AE enrichment remains explicitly configurable.
 
@@ -1017,9 +988,9 @@ are request errors. Explicit bindings take precedence and still undergo parser
 and relationship validation.
 
 Ordinary strings are paths, approved remote URLs, or accessions. Inline JSON/XML
-strings require an explicit `force_in_type` or `InputSpec.in_type`. A missing
+strings require an explicit `in_type` or `InputSpec.in_type`. A missing
 `Path`, including `Path("GSE1")`, is an input failure and never a retrieval
-request. `force_in_type` selects exactly one handler: it bypasses detection,
+request. `in_type` selects exactly one handler: it bypasses detection,
 not schema, companion, resource or retrieval-policy checks.
 
 Detection uses bounded document reads and structural signatures, without
@@ -1040,42 +1011,26 @@ outcomes; exact duplicate paths are skipped, and conflicting settings for the
 same source are reported.
 
 <a id="unified-manifest"></a>
-### Versioned input manifests
+### Input manifest version 2
 
-A manifest is a mapping or JSON path with exactly `schema_version: "1.0"` and
-an ordered, nonempty `inputs` array. Each entry requires a unique `id` and
-nonempty `sources` array. Optional fields are `in_type`, `companions`,
-`metadata`, `input_options`, and `output_options`. Unknown fields fail before
-execution. Relative source, companion, metadata and supported option paths
-resolve against the manifest directory; mapping manifests use the current
-directory.
+A mapping or JSON path must declare `schema_version: "2.0"` and an ordered `inputs`
+array. Version 1 is rejected with migration guidance. Relative paths resolve against
+the manifest directory. Companion bindings, input IDs and per-format options retain
+their existing meanings. `preparation` is a full replacement policy, not a merge.
 
 ```json
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "inputs": [
-    {
-      "id": "study_a",
-      "sources": ["metadata/study.idf.txt"],
-      "in_type": "magetab",
-      "companions": {"sdrf": ["metadata/study.sdrf.txt"]}
-    },
-    {
-      "id": "library_b",
-      "sources": ["counts/library_b.tsv"],
-      "in_type": "matrix",
-      "metadata": "metadata/library_b.json",
-      "input_options": {"orientation": "genes-by-observations"}
-    }
+    {"id": "geo", "sources": "GSE234602", "preparation": {"enrichment": "curators", "expand_studies": false}},
+    {"id": "saved", "sources": "study.json", "preparation": {"enrichment": "off", "expand_studies": false},
+     "output_options": {"platform_handler": "generic"}}
   ]
 }
 ```
 
-`converter.convert(input_manifest="inputs.json", out_type="h5ad",
-outdir="catalogues")` processes entries in order. A supplied directory can add
-unbound sources; manifest-owned source and companion paths are excluded from
-automatic discovery. Manifest/per-input settings override call-level defaults.
-There are no silent coercions of misspelled or irrelevant options.
+Move preparation fields out of `input_options` into `preparation` when migrating.
+Runtime policy is operation-owned and cannot be overridden inside a manifest entry.
 
 <a id="unified-routes"></a>
 ### Loaded data, routes and options
@@ -1117,118 +1072,77 @@ expression matrices implicitly. Standalone full matrix loads use existing
 memory estimators and resource-profile limits. Caller-owned packages, mappings
 and AnnData objects are not mutated.
 
-Use these names in the flat `options` mapping (each is accepted only on an
-applicable route):
+Settings have one owner. Preparation and runtime settings are immutable public
+objects; dictionaries contain only format-specific options.
 
-| Scope | Options |
+| Owner | Settings |
 | --- | --- |
-| Preparation | `expand_studies=True` |
-| Destination and manifest | `outfile`, `input_manifest`; `outdir` remains a direct argument |
-| Reader | `remove_empty` for GEO, `sdrf_sources` for MAGE-TAB/AE, `evidence_dir` for native accession imports |
-| Matrix | `matrix_orientation`: `auto`, `genes-by-observations`, `observations-by-genes` |
-| JSON and sample tables | `aggregate=False`; no expression aggregation |
-| MAGE-TAB | `platform_handler`, `replacement_profile` |
-| Projection | `allow_invalid=False`, `replacement_profile` on tables/expression routes |
-| Expression asset selection | `explicit_assets`, `asset_manifest`, `asset_specs`, `force_reprocess` |
-| Processing/reference | `pipeline`, `genome`, `fasta`, `gtf`, `gff`, `accept_inferred_reference` |
-| Pipeline execution | `execution_profile` (legacy `profile`), `revision`, `params_file`, `nextflow_config`, `work_dir` |
-| Checkpoints/combination | `resume`, `force_memory`, `processed_checkpoint_dir`, `allow_unverified_combination` |
-| OBS components | `include_var`, `include_uns` |
-| Runtime | `overwrite=False`, `fail_fast=False`, `recursive=False`, `allow_processing=False`, `resource_profile="standard"`, `resource_overrides=None`, `insdc_default="ena"`, `allowed_hosts=()`, `reserved_paths=()` |
-| Optional metadata limits | `metadata_timeout_seconds=None`, `metadata_max_requests=None`; positive seconds/integer attempts shared across one input's metadata retrieval |
+| `PreparationPolicy` | `enrichment`, `expand_studies`, `linked_metadata`, `peer_provider` |
+| `RuntimeOptions` | `overwrite`, `fail_fast`, `recursive`, `allow_processing`, `resource_profile`, `resource_overrides`, `insdc_default`, `allowed_hosts`, `reserved_paths`, `metadata_timeout_seconds`, `metadata_max_requests` |
+| `input_options` | GEO `remove_empty`; AE `sdrf_sources`; native `evidence_dir`; matrix `orientation` |
+| `output_options` | Applicable `aggregate`, `platform_handler`, `replacement_profile`, projection/OBS options, expression assets and pipeline/reference/checkpoint settings |
+| Direct arguments | `outdir`, `outfile`, `input_manifest`, `in_type`, `out_type` |
 
-Companions and explicit metadata use `InputSpec(..., companions=..., metadata=...)`
-or manifest bindings. Standalone H5AD/AnnData accepts only the applicable OBS
-component flags; matrices additionally accept orientation. Processing/projector
-settings on standalone expression routes are rejected. Existing scientific,
-reference and matrix-combination defaults are unchanged. `force_memory` requires
-`resume=True`; `gtf` and `gff` are mutually exclusive. Host exceptions retain the
-existing scheme/address/redirect/size restrictions.
+For complete per-format sets see [option validation](../src/meta_standards_converter/converters/unified/options.py).
+Raw processing still requires permission and references; matrix-combination rules are unchanged.
 
-The flat mapping and legacy stage dictionaries also accept `orientation` (matrix reader), `profile`
-(pipeline), `enrich`, `related_series`, `include_peer`, and
-`enrich_from_geo_ae` on their original routes. `related_series` aliases family
-expansion for a GEO accession. Legacy `enrich=False` maps an omitted preset to
-`off`; an explicitly conflicting preset is rejected. Repository overrides can
-restrict the implicit standard preset; explicit contradictory presets are errors.
+| Format | `input_options` keys |
+| --- | --- |
+| geo_accession | `remove_empty` |
+| sra_accession | `evidence_dir` |
+| ena_accession | `evidence_dir` |
+| ae_accession | `sdrf_sources` |
+| magetab | `sdrf_sources` |
+| geo_xml | `remove_empty` |
+| geo_archive | `remove_empty` |
+| matrix | `orientation` |
+
+| Destination | `output_options` keys |
+| --- | --- |
+| json | `aggregate` |
+| magetab | `platform_handler`, `replacement_profile` |
+| tsv | `aggregate`, `allow_invalid`, `replacement_profile` |
+| csv | `aggregate`, `allow_invalid`, `replacement_profile` |
+| h5ad | `accept_inferred_reference`, `allow_invalid`, `allow_unverified_combination`, `asset_manifest`, `asset_specs`, `explicit_assets`, `fasta`, `force_memory`, `force_reprocess`, `genome`, `gff`, `gtf`, `matrix_orientation`, `nextflow_config`, `params_file`, `pipeline`, `processed_checkpoint_dir`, `profile`, `replacement_profile`, `resume`, `revision`, `work_dir` |
+| obs | `accept_inferred_reference`, `allow_invalid`, `allow_unverified_combination`, `asset_manifest`, `asset_specs`, `explicit_assets`, `fasta`, `force_memory`, `force_reprocess`, `genome`, `gff`, `gtf`, `include_uns`, `include_var`, `matrix_orientation`, `nextflow_config`, `params_file`, `pipeline`, `processed_checkpoint_dir`, `profile`, `replacement_profile`, `resume`, `revision`, `work_dir` |
 
 <a id="unified-preparation"></a>
 ### Enrichment presets and study expansion
 
-The facade resolves one preparation policy for each input, independently of its
-destination. It uses the existing parsers, enrichers and precedence rules.
-
-| Preset | Supplementary retrieval |
+| Preset | Optional preparation |
 | --- | --- |
-| `standard` (default) | Applicable publication/run enrichment, linked GEO/AE metadata and SRA/ENA peer evidence. |
-| `curators` | Source-native preparation and publication enrichment; no supplementary retrieval from other study repositories. |
-| `off` | No supplementary enrichment; required source loading, structural preparation and separately enabled family expansion remain. |
+| `standard` | Publications, applicable run evidence, permitted peer and linked repository metadata, guarded GEO parent publications |
+| `curators` | Publications and recorded conflict checks; no run refresh or peer/linked repository retrieval |
+| `off` | No optional enrichment or reconciliation; supplied conflicts remain reportable |
 
-**`enrichment="off"` does not disable accession retrieval or study expansion.**
-All presets default to `expand_studies=True`. Set
-`options={"expand_studies": False}` to disable additional family expansion.
-The parent/child traversal follows typed GEO SuperSeries/SubSeries relations
-(including provider `SuperSeries of`/`SubSeries of` spelling), verified ENA
-project XML edges and verified NCBI BioProject hierarchy links. Study/project
-resolution required to interpret the requested accession is distinct from
-expansion into additional studies. General related links, citations and free
-text do not authorize family traversal. BioStudies generic related studies are
-not treated as a hierarchy.
+Expansion is an independent boolean in every preset. `StudyFamilies` follows verified
+hierarchy edges, sorts and deduplicates studies, detects cycles and retains valid partial
+results after provider failure. Publication-only relatives without convertible samples
+can provide evidence but cannot become output study groups.
 
-Original groups stay first; discovered neighbors are sorted and traversed
-breadth-first with visited identities. Each study remains a separate group.
-Expansion stays with the selected source repository under all presets; forced
-providers remain authoritative. Failed members leave completed groups available
-and report partial coverage. Standalone expression objects with no applicable
-metadata skip preparation and never acquire inferred study metadata.
+The explicit stages are request validation/discovery → source load/parse → loaded
+validation → expansion/preparation → prepared validation → output construction → publication.
+`MetadataPreparation` invokes injected source and enrichment services directly. A
+`PreparationSession` belongs to one `convert` operation and is passed explicitly to
+retrieval consumers. Cached candidates are detached; provider issues replay on cache
+hits. Budget exhaustion is not cached as a successful retrieval. Budgets retain their
+per-input lifetime, while provider clients, request/session caches and prepared-package
+reuse last only for the current operation. Metrics and budget instrumentation retain
+their established scoped implementation; they do not select enrichment/export behavior.
 
-Source provenance is derived from the selected reader or recognized package
-`source.format`, including `GEO MINiML`. Ambiguous provenance cannot authorize
-cross-repository retrieval under `curators`. Existing evidence is retained even
-when its repository is excluded from new retrieval. Peer merges keep native
-priority and request the exact read-study identifier, never a broader project;
-linked evidence uses the existing verified merge precedence. GEO/AE links to
-another experiment within the same repository do not trigger metadata merging.
+GEO parent publication inheritance runs before publication enrichment for both accession
+and saved-file routes. Exactly one parent and one PMID, reciprocal child membership, and
+no direct child publication are required. Provenance is retained in
+`extensions.publication_inheritance`. Retrieving parent evidence does not add the parent
+to output when expansion is disabled. Optional failures retain the last valid package and
+produce a partial diagnostic; invalid enrichment candidates are rejected before replacement.
 
-The execution flow is source loading → strict MINiML compatibility validation → family expansion
-→ peer/linked enrichment where applicable → standard preparation → export.
-Native import and MAGE-TAB evidence services honor operation-scoped policy using
-`ContextVar` scopes, restored even after errors. Export does not start a second
-supplementary retrieval pass. In the facade, GEO-to-MAGE-TAB now composes
-GEO2JSON and JSON2AE; recorded-evidence tests establish equal artifacts and
-retrieval calls to the legacy direct route under equivalent explicit settings.
-Legacy x2x methods/CLIs retain their own defaults and signatures.
-
-Preparation records report the operation, dataset/provider, target where relevant,
-and completed/partial/failed/skipped status with disabled or inapplicable reasons.
-Retrieval and package results are reused within a facade call; the next call has
-a fresh operation scope. There is no new persistent cache. Enrichment failures
-produce partial outcomes while retaining valid source metadata and successful
-prior operations. Default services are operation-local; injected services retain
-caller ownership and metrics. A selective custom enricher implements
-`enrich_selected(data, publications=..., run_metadata=...)`; an enrich-only
-collaborator cannot safely satisfy `curators` and yields a preparation diagnostic.
-
-```python
-# Public accession: enrichment plus verified study-family expansion.
-Converter().convert("GSE328265", "exports", out_type="magetab")
-
-# Saved metadata: publication/native preparation, excluding other repositories.
-Converter().convert("study.json", "tables", out_type="csv", enrichment="curators")
-
-# Deterministic source-only conversion: no supplementary lookup or family expansion.
-Converter().convert("study.idf.txt", out_type="json", enrichment="off",
-                    options={"expand_studies": False})
-
-# One exact matrix output with explicit axis interpretation.
-Converter().convert("counts.tsv", out_type="h5ad", enrichment="off",
-                    options={"outfile": "counts.h5ad",
-                             "matrix_orientation": "genes-by-observations"})
-
-# Ordered explicit bindings and per-input settings from a versioned manifest.
-Converter().convert(outdir="exports", out_type="json",
-                    options={"input_manifest": "inputs.json"})
-```
+Injection interfaces are explicit: `geo_source.load(accession, remove_empty=...)`,
+`ae_source.load(source, sdrf_sources=...)`, native `load(accession, publications=..., evidence_dir=...)`,
+`enricher.enrich_selected(data, publications=..., run_metadata=..., session=...)`, and
+`linked_enricher.enrich_selected(data, accessions=..., session=..., mode=...)`.
+Services receive immutable packages; renderers receive prepared, detached export data.
+See [network-free construction](#core-magetab-construction).
 
 <a id="unified-results"></a>
 ### Outcomes and publication
@@ -1320,230 +1234,176 @@ atomic no-replace/replace primitives publish files or coherent bundles.
 Atomicity is per artifact bundle, not a batch-wide transaction. Earlier
 successful outcomes/artifacts remain recorded after later failures.
 
+<a id="msc9-validation"></a>
+### MSC 9 fidelity and performance review
+
+The hidden-constructor regression first failed because the old constructor called
+PubMed despite disabled enrichment. Rendering now passes provider-call and
+provider-client-construction prohibition tests. Other gates cover canonical and
+fallback paths, mixed technologies, multiple SDRF documents, injected services,
+detached input data and operation-owned caches.
+
+Reviewed expected-output changes are limited to the new defaults and preparation
+contract, explicit GEO database declarations in three routing IDF goldens, and
+MSC version provenance changing from 8.0.0 to 9.0.0 in the two PBMC export goldens.
+No SDRF golden cells or MINiML/patch/Atlas document versions changed. Related-study
+failure produces the unified valid partial outcome. Parent publication evidence
+is shared by accession and saved-file routes; a publication-only parent without
+convertible samples remains evidence and is not emitted as an output package.
+
+Three fresh-process offline pairs compare accepted MSC 8 commit
+`2416c2446cd3e001cb8a6878e7313856d8be009c` with this implementation. Each process
+loads the existing GSE328265 GEO XML, E-MTAB-1 IDF/SDRF and GSE328265 MINiML JSON
+fixtures and publishes GEO→JSON, AE→JSON and JSON→MAGE-TAB artifacts. Both use
+explicit enrichment off and expansion disabled, the same interpreter and fixed
+IDF date; provider sockets are prohibited. Pair order alternates. All artifact
+hashes and renderer counts match in all three pairs.
+
+| Median per three-route process | MSC 8 | MSC 9 | Change |
+| --- | ---: | ---: | ---: |
+| Wall time | 2.7601 s | 2.7595 s | −0.02% |
+| Process CPU | 2.6939 s | 2.6986 s | +0.18% |
+| Process peak RSS | 49,623,040 bytes | 50,434,048 bytes | +1.63% |
+
+The complete offline suite against the installed MSC 9 package passed 2,554 tests
+and 55 subtests (5 live-provider tests skipped). A subsequent expanded CLI/API
+parity and documentation check passed 102 tests. Wheels built and imported with
+the retired converter modules absent. The generic documentation-skill validator
+reports the same pre-existing README/decision-template differences as the baseline;
+the repository-specific documentation checks pass.
+
+These small fixtures establish output fidelity and no material timing change;
+they do not measure provider latency or large-study throughput. Raw measurements
+and the reproduction scripts are local validation artifacts under the integration
+checkout's `.dev/msc-metadata-cleanup-20261117/`. Historical benchmark evidence is
+unchanged.
+
 <a id="unified-compatibility"></a>
-### Shared services, compatibility and tests
+### MSC 9 migration and service boundaries
 
-`JSONPackageSource.decode(payload)` separates payload decoding from file I/O.
-`JSON2AEConverter.convert_loaded`, `JSON2TSVConverter.project_loaded` /
-`convert_loaded`, `JSON2H5ADConverter.convert_loaded`, and
-`JSON2OBSConverter.convert_loaded` reuse decoded groups without temporary JSON.
-Legacy file methods use the same conversion/projection implementation while
-retaining signatures, return types, filenames, overwrite defaults and exception
-behavior. Original file routes retain source-file hashes. In-memory metadata
-uses deterministic canonical JSON SHA-256 and a
-`urn:msc:miniml:sha256:…` provenance source.
+The standalone Python `GEO2JSONConverter`, `AE2JSONConverter`, `JSON2AEConverter`
+and `GEO2AEConverter` classes and their implementation modules are removed. Use
+`Converter.convert(..., out_type="json" | "magetab")`; read `batch.items` instead of
+expecting a package list or an exception for each input. Each item separates execution,
+completeness and validation and contains payload, artifacts, diagnostics and a safe error.
+A valid partial result is usable metadata. CLI exit status is zero only for a complete batch.
 
-`Converter(services={...})` preserves injected collaborators by identity.
-Service keys include `package_source`, `geo_parser`, `geo2json`, `geo2ae`,
-`ae2json`, `sra2json`, `ena2json`, `json2ae`, `json2tsv`, `json2h5ad`,
-`enricher`, `linked_enricher`, `reader`, `components`, `retrieval`, `available_memory` and
-`memory_estimator`. Default services are created per operation; injected
-instances retain their caller-owned lifecycle. Injected `GEO2AEConverter`
-fetcher/parser/enricher/constructor collaborators are preserved when composing
-the facade route; explicit `geo2json`/`json2ae` injections take precedence.
-Scientific imports remain lazy.
-The unified Python boundary adds no ontology access, migration, provider
-failover, protocol registry sharing, or changes to legacy processing permission.
-
-The contract suites are `tests/converters/test_loaded_inputs.py` and
-`test_unified_{converter,sources,expression,defensive}.py`,
-`test_converter_{presets_api,preparation,expansion}.py` and
-`tests/e2e/test_converter_presets_replay.py` plus the 114-case native and BioStudies
-provider/reader/preset/destination matrix in
-`test_converter_provider_matrix.py`. They cover recorded
-provider fixtures, fake processing, format equivalence, malformed/forced inputs,
-versions, bounded archives/XML, manifests, ambiguous companions, directory
-recursion, duplicates, option scope, permission/reference/orientation/memory
-requirements, in-memory results, immutability, partials and publication failures.
-Existing converter, expression, CLI, e2e and public-service suites protect
-legacy and consumer interfaces. The complete offline suite is
-`python -m pytest -m "not live_api"`; it requires no live provider conversions,
-production pipeline or ontology cache.
-
-
-The following inventory distinguishes the public facade from internal routing helpers.
-Only the three owning-package exports form the unified public surface.
-
-| Definition | Contract |
+| MSC 8 configuration | MSC 9 owner |
 | --- | --- |
-| `meta_standards_converter.converters.unified.requests.PreparationPolicy` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.preset` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.combine` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.aliases` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.input_settings` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.output_settings` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.normalize` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.preparation_options` | Extract preparation flags before validating a reader's own settings. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.apply_preparation_overrides` | Resolve per-input preparation before comparing same-level aliases. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.requests.merge_input_options` | An input-local expansion alias overrides a call-level expansion default. [Source](../src/meta_standards_converter/converters/unified/requests.py) |
-| `meta_standards_converter.converters.unified.preparation.provider_of` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
-| `meta_standards_converter.converters.unified.preparation.study_ids` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
-| `meta_standards_converter.converters.unified.preparation.MetadataPreparation` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/preparation.py) |
-| `meta_standards_converter.converters.unified.families.nodes` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
-| `meta_standards_converter.converters.unified.families.project_records` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
-| `meta_standards_converter.converters.unified.families.recorded_neighbors` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
-| `meta_standards_converter.converters.unified.families.StudyFamilies` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/converters/unified/families.py) |
-| `meta_standards_converter.metadata.preparation_scope.loading_source` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.metadata.preparation_scope.converter_enrichment_enabled` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.metadata.preparation_scope.source_publications_enabled` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.metadata.preparation_scope.exporting_prepared` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.metadata.preparation_scope.exporter_retrieval_enabled` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.metadata.preparation_scope.preparation_session` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.metadata.preparation_scope.retrieve_once` | Reuse evidence only within one facade invocation; legacy calls are unchanged. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.metadata.preparation_scope.convert_source` | Internal preparation service; follows the policy contract above. [Source](../src/meta_standards_converter/metadata/preparation_scope.py) |
-| `meta_standards_converter.converters.unified.contracts.InputSpec` | `InputSpec`. Public facade; see API contract above. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
-| `meta_standards_converter.converters.unified.contracts.Diagnostic` | `Diagnostic`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
-| `meta_standards_converter.converters.unified.contracts.InputError` | `InputError`. A safe, actionable input or capability error. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
-| `meta_standards_converter.converters.unified.contracts.LoadedInput` | `LoadedInput`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
-| `meta_standards_converter.converters.unified.contracts.ConversionItemResult` | `ConversionItemResult`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
-| `meta_standards_converter.converters.unified.contracts.ConversionBatchResult` | `ConversionBatchResult`. Public facade; see API contract above. [Source](../src/meta_standards_converter/converters/unified/contracts.py) |
-| `meta_standards_converter.converters.unified.discovery.kind_name` | `kind_name(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.is_url` | `is_url(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.package_value` | `package_value(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.metadata_kind` | `metadata_kind(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.is_anndata` | `is_anndata(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.read_text` | `read_text(path, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.xml_kind` | `xml_kind(text)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.tenx_member` | `tenx_member(path)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.tenx_directory` | `tenx_directory(path)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.detect` | `detect(value, runtime, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.file_kind` | `file_kind(name)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.idf_references` | `idf_references(path, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.idf_candidates` | `idf_candidates(sdrf, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.manifest_specs` | `manifest_specs(value, limit)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.discovery.expand` | `expand(value, runtime, excluded=())`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/discovery.py) |
-| `meta_standards_converter.converters.unified.engine.source_label` | `source_label(source)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/engine.py) |
-| `meta_standards_converter.converters.unified.engine.ExecutionContext` | `ExecutionContext`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/engine.py) |
-| `meta_standards_converter.converters.unified.engine.Converter` | `Converter`. Public facade; see API contract above. [Source](../src/meta_standards_converter/converters/unified/engine.py) |
-| `meta_standards_converter.converters.unified.expression.ExpressionInput` | `ExpressionInput`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/expression.py) |
-| `meta_standards_converter.converters.unified.expression.load_expression` | `load_expression(kind, spec, context)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/expression.py) |
-| `meta_standards_converter.converters.unified.expression.export_expression` | `export_expression(loaded, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/expression.py) |
-| `meta_standards_converter.converters.unified.handlers.values` | `values(source)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
-| `meta_standards_converter.converters.unified.handlers.safe_name` | `safe_name(value)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
-| `meta_standards_converter.converters.unified.handlers.canonical_identity` | `canonical_identity(loaded)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
-| `meta_standards_converter.converters.unified.handlers.InputHandler` | `InputHandler`. One registered format with recognition, validation and loading boundaries. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
-| `meta_standards_converter.converters.unified.handlers.default_handlers` | `default_handlers()`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/handlers.py) |
-| `meta_standards_converter.converters.unified.options.settings` | `settings(value, allowed, label, *, partial=False)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/options.py) |
-| `meta_standards_converter.converters.unified.publication.reserve` | `reserve(paths, context)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
-| `meta_standards_converter.converters.unified.publication.atomic_write` | `atomic_write(path, writer, overwrite)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
-| `meta_standards_converter.converters.unified.publication.publish_jsons` | `publish_jsons(groups, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
-| `meta_standards_converter.converters.unified.publication.publish_tables` | `publish_tables(tables, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
-| `meta_standards_converter.converters.unified.publication.publish_magetab` | `publish_magetab(tables, context, item)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/publication.py) |
-| `meta_standards_converter.converters.unified.routes.Route` | `Route`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/routes.py) |
-| `meta_standards_converter.converters.unified.routes.select_route` | `select_route(loaded, source_kind, destination)`. Internal adapter; follows the owning module contract. [Source](../src/meta_standards_converter/converters/unified/routes.py) |
-| `meta_standards_converter.metadata.projection.tabular.ProjectedTable` | `ProjectedTable`. A projected sample table before publication. [Source](../src/meta_standards_converter/metadata/projection/tabular.py) |
+| `enrichment`, `expand_studies`, `related_series`, `enrich` | `preparation=PreparationPolicy(...)` with explicit preset and independent expansion |
+| `include_peer`, `enrich_from_geo_ae` | `PreparationPolicy(peer_provider=..., linked_metadata=...)` |
+| Flat `options`, `runtime_options` | `runtime=RuntimeOptions(...)` plus format-specific dictionaries |
+| `force_in_type` | `in_type` |
+| Preparation inside `InputSpec.input_options` | `InputSpec.preparation` (full replacement); manifest v2 |
+| Constructor provider clients / evidence resolver | Prepare publications and runs through the injected `enricher` service |
+| Converter-nested collaborator discovery | Direct `geo_source`, `ae_source`, `sra_source`, `ena_source`, `enricher`, `linked_enricher`, `magetab_exporter` services |
 
-Shared loaded-data methods:
+Named metadata CLIs share `--enrichment`, `--expand-studies`/`--no-expand-studies`,
+`--peer-provider`/`--no-peer-provider`, `--linked-metadata`/`--no-linked-metadata`,
+resource-profile, retrieval-budget and execution flags. Obsolete enrichment/related
+aliases are rejected. `json2ae` selects the JSON reader; the other named adapters use
+normal source detection. All use unified publication and collision rules.
 
-| Definition | Signature |
-| --- | --- |
-| `JSON2AEConverter.convert_loaded` | `convert_loaded(self, loaded, out=None, enrich=True, platform_handler=None, *, replacement_profile=None)` |
-| `JSON2DelimitedConverter.project_loaded` | `project_loaded(self, loaded, *, allow_invalid=False, replacement_profile=None)` |
-| `JSON2DelimitedConverter.convert_loaded` | `convert_loaded(self, loaded, destination, *, allow_invalid=False, overwrite=False, replacement_profile=None)` |
-| `JSON2H5ADConverter.convert_loaded` | `convert_loaded(self, loaded, out=None, *, source_json=None, replacement_profile=None, **options)` |
-| `JSON2OBSConverter.convert_loaded` | `convert_loaded(self, loaded, *, outdir: str | Path, include_var: bool=False, include_uns: bool=False, overwrite: bool=False, replacement_profile: Mapping[str, Any] | None=None, source_json: str | Path | None=None, **options)` |
-| `JSONPackageSource.decode` | `decode(payload, *, fallback="input") -> SourceLoadResult` |
+`MAGETabExporter.render(SourceLoadResult, platform_handler=..., replacement_profile=...)`
+is the pure prepared-data export service. `JSONPackageSource.load/decode` owns grouping.
+Other expression/table converter interfaces retain their established contracts.
+Historical checkpoints and benchmark evidence remain unchanged. The audit replay reader
+explicitly translates frozen MSC 8 request declarations before calling MSC 9; this is not
+an alias in the public API. Consumer dependency constraints are `>=9,<10`.
+
+Validation covers typed policies, manifest migration, source/file equivalence, provider
+failures and budgets, candidate rejection, family cycles, publication provenance, canonical
+and fallback paths, detached data, injected services, and output goldens. See
+[tests](#test-plan) and [export measurements](#magetab-export-performance).
 
 <a id="principal-workflows"></a>
 ## Principal workflows
 
 <a id="workflow-geo2ae"></a>
-### `geo2ae`: GEO to MAGE-TAB
+### `geo2ae: GEO to MAGE-TAB`
 
 ```text
-GSE -> fetch MINiML --failure--> exception
-    -> parse packages --failure--> exception
-    -> enrich each --failure----> exception
-    -> build IDF/SDRF --failure-> exception
-    -> [out?] write files / else return in memory
+geo2ae.main → cli.convert.main → Converter.convert(out_type="magetab")
+  → validate request and discover inputs
+  → GEO loader → fetch/local read → GEOParser.parse → MINiMLPackage groups
+  → validate loaded metadata ── invalid → failed item
+  → StudyFamilies.expand → MetadataPreparation.prepare
+       optional retrieval failure → retain valid candidate + partial diagnostics
+  → validate prepared metadata ── invalid → reject candidate
+  → MAGETabExporter.render → AEConstructor.prepare → AEConstructor.render
+  → optional atomic IDF/SDRF publication
+       construction/publication failure → failed item; retain earlier artifacts
+  → ConversionItemResult; next input unless fail_fast
 ```
 
-1. The CLI validates accessions/options and calls `GEO2AEConverter.convert`.
-2. `GEOWebFetcher.fetch_gse_miniml` performs the GEO FTP HTTP retrieval.
-3. `GEOSource.parse` delegates XML decoding to the pure `GEOParser` and owns optional related-Series retrieval.
-4. Each package is enriched and passed to `AEConstructor.miniml2magetab`.
-5. `out` writes IDF/SDRF; otherwise only the in-memory list is returned.
+1. Load and parse through the format service shown above; no nested public converter call.
+2. Apply the shared [preparation policy](#unified-preparation), independent of output type.
+3. Construct and [publish](#unified-results), retaining per-input status and diagnostics.
 
-Pseudocode: `fetch -> parse -> for package: enrich -> construct -> [write] -> list`.
-
-**Evidence:** [`converters/geo2ae.py`](../src/meta_standards_converter/converters/geo2ae.py), [`cli/geo2ae.py`](../src/meta_standards_converter/cli/geo2ae.py), and [`geo_webfetcher.py`](../src/meta_standards_converter/sources/geo.py).
+Pseudocode: `plan(request); for input: load → validate → prepare → validate → export → publish → outcome`.
+**Evidence:** [engine](../src/meta_standards_converter/converters/unified/engine.py),
+[loaders](../src/meta_standards_converter/converters/unified/loaders.py),
+[source services](../src/meta_standards_converter/sources/metadata.py).
 
 <a id="workflow-geo2json"></a>
-### `geo2json`: GEO to parsed JSON
-
-Contributor/contact reference fields are visited in parsed-document insertion order, with series then samples then platforms traversal and first-occurrence deduplication. This preserves source person order and keeps JSON/IDF output independent of Python hash randomization; GSE60450 supplies the real-source regression.
+### `geo2json: GEO to JSON`
 
 ```text
-GSE -> fetch --failure--> exception
-    -> parse --failure--> exception
-    -> [enrich?] yes -> [one direct parent publication?]
-                         yes -> bounded parent fetch + reciprocal/unique-PMID guard
-                         no  -> retain child publication state
-                      -> enrich each --failure--> exception
-                  no --------------------------> retain parsed packages
-    -> [out?] JSON file / else return only
+geo2json.main → cli.convert.main → Converter.convert(out_type="json")
+  → validate request and discover inputs
+  → GSE accession → GEOMetadataSource.load → GEOWebFetcher.fetch_gse_miniml
+  local XML/archive → load_geo_xml/load_geo_archive
+  both → GEOParser.parse → MINiMLPackage groups
+  → validate loaded metadata ── invalid → failed item
+  → StudyFamilies.expand → MetadataPreparation.prepare
+       optional retrieval failure → retain valid candidate + partial diagnostics
+  → validate prepared metadata ── invalid → reject candidate
+  → JSON payload → optional JSON publication
+       construction/publication failure → failed item; retain earlier artifacts
+  → ConversionItemResult; next input unless fail_fast
 ```
 
-1. The CLI calls `GEO2JSONConverter.convert` once per accession and continues after failures.
-2. GEO fetch and parsing are shared with `geo2ae`.
-3. With enrichment enabled, a child that has no direct publication and exactly one
-   `SubSeries of` parent may inherit exactly one parent PubMed ID. The parent must
-   reciprocally identify the child as a `SuperSeries of` member. Retrieval failure,
-   non-reciprocal linkage, multiple parents, or multiple PubMed IDs leaves the child
-   unchanged. This lookup does not recursively traverse related studies or add the
-   parent as another output package.
-4. Inherited publication provenance is retained under
-   package `extensions.publication_inheritance`; the ordinary PubMed enricher then
-   resolves title, DOI, authors, and status from the inherited identifier.
-5. `enrich=False` bypasses parent-publication, PubMed, and SRA/ENA enrichment.
-6. `json2file` creates the output directory and writes `{GSE}.json` when requested.
+1. Load and parse through the format service shown above; no nested public converter call.
+2. Apply the shared [preparation policy](#unified-preparation), independent of output type.
+3. Construct and [publish](#unified-results), retaining per-input status and diagnostics.
 
-Pseudocode: `packages = parse(fetch(gse)); [inherit guarded parent PMID]; [enrich packages]; [write]; return`.
-
-**Evidence:** [`converters/geo2json.py`](../src/meta_standards_converter/converters/geo2json.py) and [`cli/geo2json.py`](../src/meta_standards_converter/cli/geo2json.py).
+Pseudocode: `plan(request); for input: load → validate → prepare → validate → export → publish → outcome`.
+**Evidence:** [engine](../src/meta_standards_converter/converters/unified/engine.py),
+[loaders](../src/meta_standards_converter/converters/unified/loaders.py),
+[source services](../src/meta_standards_converter/sources/metadata.py).
 
 <a id="workflow-json2ae"></a>
-### `json2ae`: MINiML/Atlas v1 JSON to MAGE-TAB
+### `json2ae: JSON to MAGE-TAB`
 
 ```text
-path -> AtlasV1Reader/JSONPackageSource -> invalid/version/v1 -> exception
-                                      \-> non-harmonized dataset -> warning + skip
-     -> resolve optional profile on copy -> [enrich?]
-     -> construct each package --failure--> exception
-     -> [out?] IDF/SDRF files / else in-memory MAGE-TAB list
+json2ae.main → cli.convert.main → Converter.convert(in_type="json", out_type="magetab")
+  → validate request and discover inputs
+  → JSONPackageSource.load/decode → MINiML or Atlas reader → dataset groups
+  → validate loaded metadata ── invalid → failed item
+  → StudyFamilies.expand → MetadataPreparation.prepare
+       optional retrieval failure → retain valid candidate + partial diagnostics
+  → validate prepared metadata ── invalid → reject candidate
+  → MAGETabExporter.render → resolve replacement profile
+  → AEConstructor.prepare → AEConstructor.render → optional atomic IDF/SDRF publication
+       construction/publication failure → failed item; retain earlier artifacts
+  → ConversionItemResult; next input unless fail_fast
 ```
 
-1. `JSONPackageSource` accepts one parsed MINiML object, a non-empty package
-   list, or a canonical Atlas v1 document.
-2. `AtlasV1Reader` validates version, IDs, references and summary; it retains
-   `harmonized` datasets and emits warnings for other states and their
-   diagnostics. V1 envelopes are rejected. No remaining groups raises
-   `ValueError`.
-3. Exact Atlas metadata wrappers `{"packages": [...]}` expand within the
-   dataset's single group; non-object entries fail before conversion.
-4. Every retained package must be an object with a usable study accession,
-   and all packages are validated before collaborator calls.
-5. Resolve the direct replacement profile per group on conversion copies, then
-   optionally enrich before `AEConstructor.miniml2magetab`. Skipping enrichment
-   does not disable the constructor's separate missing-evidence lookups.
-6. `AEConstructor` renders deterministic IDF/SDRF tables from native protocols,
-   assay paths, named characteristics, units, and typed annotations. It does
-   not replay raw source tables or consult a `mage_tab` sidecar, and it emits
-   canonical MAGE-TAB 1.1 publication-status and protocol ontology companion
-   labels rather than the former MSC aliases.
-7. `out` controls writing; construction errors propagate.
+1. Load and parse through the format service shown above; no nested public converter call.
+2. Apply the shared [preparation policy](#unified-preparation), independent of output type.
+3. Construct and [publish](#unified-results), retaining per-input status and diagnostics.
 
-Pseudocode: `validate(flatten(source.load(path))); warn(skipped); for package:
-resolve profile -> [enrich] -> construct -> [write]; return`.
-
-**Evidence:** [`converters/json2ae.py`](../src/meta_standards_converter/converters/json2ae.py), [`ae_constructor.py`](../src/meta_standards_converter/magetab/constructor.py), and [`ae_model.py`](../src/meta_standards_converter/magetab/semantics.py).
+Pseudocode: `plan(request); for input: load → validate → prepare → validate → export → publish → outcome`.
+**Evidence:** [engine](../src/meta_standards_converter/converters/unified/engine.py),
+[loaders](../src/meta_standards_converter/converters/unified/loaders.py),
+[source services](../src/meta_standards_converter/sources/metadata.py).
 
 <a id="magetab-export-performance"></a>
 ### MAGE-TAB export measurements and reuse
 
 Export emits `magetab_*` stages through the existing operational-event interface:
 package resolution, model reconstruction, normalization, protocol matching, native
-file projection, routing, evidence lookup, protocol registration, path construction,
+file projection, routing, protocol registration, path construction,
 column planning, row rendering, IDF construction, semantic overlay, validation and
 writing. Existing enclosing `export`, `projection` and `serialization` stages remain.
 These are observational attributes, not fields in MINiML or MAGE-TAB.
@@ -1614,16 +1474,11 @@ only typed series identity fields, without serializing unrelated source evidence
 This is export-local reuse; shared codec/model contracts and JSON export do not
 change.
 
-When a validated nonempty canonical assay-path list supplies the final SDRF, the
-built-in constructor prepares the handler's protocols, paths and audit but skips
-the table that the semantic overlay would replace. The overlay renders the final
-table once, at its original position after IDF preparation. Protocol registration,
-run/publication evidence, IDF validation ordering and audit warnings are retained.
-Inputs without canonical paths and injected IDF/SDRF constructors, evidence
-resolvers or overridden builders/renderers keep the existing full rendering route.
-An injected collaborator can change paths after preparation; its eager fallback
-table therefore remains available. The private `_prepare_paths` split separates
-these preparation effects from column planning and row materialization.
+Canonical and fallback paths enter the explicit export plan before rendering.
+Each SDRF document is rendered once, including with injected collaborators. See
+[construction interfaces](#core-magetab-construction). Package/group reuse stays in
+`DatasetPackageGroup.resolved`; it validates immutable data and preserves injected
+resolution behavior without exact-type checks in the exporter.
 
 Harmonized sample-to-path binding builds its sample identity map once per call,
 after export transformations, and keeps path occurrences in source order. The
@@ -1634,26 +1489,31 @@ retaining package state. `magetab_sample_binding` reports this work separately.
 <a id="ae-web-fetcher"></a>
 <a id="ae-parser"></a>
 <a id="workflow-ae2json"></a>
-### `ae2json`: MAGE-TAB to parsed JSON
+### `ae2json: MAGE-TAB to JSON`
 
 ```text
-local/HTTP/accession -> resolve IDF + SDRF(s) --failure--> exception
-                     -> parse semantic model -> direct v3 import --failure--> exception
-                     -> [out?] accession JSON / else return package list
+ae2json.main → cli.convert.main → Converter.convert(out_type="json")
+  → validate request and discover inputs
+  → AE accession → MAGETabMetadataSource.load → AEWebFetcher.resolve
+  IDF/SDRF files → load_magetab → companion discovery → same source service
+  both → AEParser.parse(MAGETabInput) → MINiMLPackage groups
+  → validate loaded metadata ── invalid → failed item
+  → StudyFamilies.expand → MetadataPreparation.prepare
+       optional retrieval failure → retain valid candidate + partial diagnostics
+  → validate prepared metadata ── invalid → reject candidate
+  → JSON payload → optional JSON publication
+       construction/publication failure → failed item; retain earlier artifacts
+  → ConversionItemResult; next input unless fail_fast
 ```
 
-1. `AEWebFetcher.resolve` accepts a bounded local IDF, a policy-approved HTTPS IDF, or a BioStudies accession and optional SDRF overrides.
-2. Every API, IDF, and SDRF response is host/public-address checked, manually redirected under the selected profile, streamed under the per-file ceiling, and charged to the aggregate run limit. Local reads stop at the same ceiling.
-3. Resolution requires exactly one IDF and at least one SDRF.
-4. `AEParser.parse` maps core fields and retains typed/source provenance. It registers referenced accession databases, maps non-MINiML source material types to lossless characteristics, keeps extract molecules in the typed molecule field, and maps MAGE-TAB factors such as `compound` to the nearest XSD factor while retaining the original type value. Canonical publication/protocol ontology companion rows and the four former MSC aliases map to the same typed values; regenerated output is always canonical.
-5. The frozen E-MTAB-6486 IDF/SDRF contract exercises the ENA secondary accession, repeated material columns, and `compound` factor through strict `MINiMLCodec` validation.
-6. `out` writes a sanitized accession filename; otherwise no file is created.
+1. Load and parse through the format service shown above; no nested public converter call.
+2. Apply the shared [preparation policy](#unified-preparation), independent of output type.
+3. Construct and [publish](#unified-results), retaining per-input status and diagnostics.
 
-Term-source declarations merge only when trimmed name, file/URL and version agree (blank optional values equal omission). Conflicting same-name declarations retain unique, deterministic collision-checked internal IDs and their original names/metadata. Bare-name references remain unresolved with parser diagnostics identifying their locations; no arbitrary alias is created. IDF reconstruction retains every conflicting declaration and original reference text. MINiML uniqueness validation remains strict. The full E-MTAB-1 regression retains 45 sample identities and 176 assay paths.
-
-Pseudocode: `resolved = fetcher.resolve(source); package = parser.parse(resolved); [write]; return [package]`.
-
-**Evidence:** [`converters/ae2json.py`](../src/meta_standards_converter/converters/ae2json.py), [`ae_webfetcher.py`](../src/meta_standards_converter/sources/magetab.py), and [`ae_parser.py`](../src/meta_standards_converter/magetab/parser.py).
+Pseudocode: `plan(request); for input: load → validate → prepare → validate → export → publish → outcome`.
+**Evidence:** [engine](../src/meta_standards_converter/converters/unified/engine.py),
+[loaders](../src/meta_standards_converter/converters/unified/loaders.py),
+[source services](../src/meta_standards_converter/sources/metadata.py).
 
 <a id="workflow-json2h5ad"></a>
 ### `json2h5ad`: MINiML/Atlas v1 JSON to H5AD
@@ -1900,7 +1760,7 @@ and [`magetab/sdrf/constructor.py`](../src/meta_standards_converter/magetab/sdrf
 ```text
 src/meta_standards_converter/
 ├── cli/                       # unchanged command names and option contracts
-├── converters/                # GEO2JSON, GEO2AE, AE2JSON, JSON2AE/TSV/H5AD/OBS
+├── converters/                # unified orchestration, native archive and expression/table converters
 ├── sources/                   # GEO, MAGE-TAB/BioStudies, PubMed, INSDC, JSON groups
 ├── miniml/                    # typed models, codec, patches, pure GEO XML parser
 ├── magetab/
@@ -1960,13 +1820,13 @@ The package has no mandatory application config file. Configure conversions with
 
 | Area | CLI / Python configuration | Default |
 | --- | --- | --- |
-| Related GEO studies | `--related` / `related_series=True` | Only the requested Series |
-| Empty MINiML fields | `--remove-empty` or `--keep-empty` / `remove_empty` | Remove empty fields |
-| Remote enrichment | `--no-enrich` / `enrich=False` | Guarded parent-publication, PubMed, and SRA/ENA enrichment enabled |
+| Related GEO studies | `--expand-studies` / `PreparationPolicy.expand_studies` | Verified expansion enabled |
+| Empty MINiML fields | `--remove-empty` or `--no-remove-empty` / `input_options["remove_empty"]` | Remove empty fields |
+| Remote enrichment | `--enrichment` / `PreparationPolicy.enrichment` | Guarded parent-publication, PubMed, and SRA/ENA enrichment enabled |
 | MAGE-TAB platform handler | `--platform-handler` / `platform_handler` | Automatic metadata-based detection |
 | Resource envelope | `--resource-profile`, `--resource-override` / `resource_profile`, `resource_overrides` | Typed `standard` profile |
-| Additional MAGE-TAB source host | `ae2json --source-host` / `source_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
-| Output location | CLI `--out` / Python `out` | CLI defaults vary by command; Python metadata `out=None` returns in memory |
+| Additional MAGE-TAB source host | `--allowed-host` / `RuntimeOptions.allowed_hosts` or an injected retrieval policy | Fixed public provider suffixes only |
+| Output location | CLI `--out` / Python `outdir` | Current directory in CLI; Python returns in memory when omitted |
 | Logging | `-v`, `-vv`, `-q`, `--log-file` | WARNING normally; all conversion CLIs log to stderr and preserve result stdout |
 | H5AD asset override | `--asset`, `--asset-manifest` / `asset_specs`, `asset_manifest`, `explicit_assets` | Discover assets from JSON |
 | Matrix orientation | `--matrix-orientation` / `matrix_orientation` | `auto`; ambiguous delimited matrices fail |
@@ -2030,124 +1890,40 @@ workflow.
 
 
 <a id="command-ae2json"></a>
-#### `ae2json`
+### `ae2json`
 
-Convert local, remote, or BioStudies MAGE-TAB metadata to parsed JSON.
-
-| Argument | Type / values | Default | Meaning |
-| --- | --- | --- | --- |
-| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
-| `source` | text; multiple | `required` | IDF path, HTTP(S) IDF URL, or ArrayExpress/BioStudies accession. |
-| `--sdrf` | text; repeatable | `None` | Explicit SDRF path or HTTP(S) URL. Repeat for multiple SDRFs; requires one source. |
-| `--out` | text | `'.'` | Directory for generated JSON files. |
-| `--resource-profile` | standard / large | `'standard'` | Typed resource envelope. Defaults to standard. |
-| `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
-| `--source-host` | text; repeatable | `[]` | Explicitly allow one exact remote IDF/SDRF hostname. |
-| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
-| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
-| `--log-format` | choice | `text` | File format: text or jsonl. |
-| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
-| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
-
-Mutually exclusive: `-v`, `-q`.
-
-[Execution and failure behavior](#workflow-ae2json); [parser source](../src/meta_standards_converter/cli/ae2json.py).
-
+Thin adapter to the [shared CLI](#unified-cli). The output is
+`json`; all configuration, summaries, reports,
+failure continuation and publication behavior are shared. `json2ae` selects the JSON reader.
+Use `--enrichment off --no-expand-studies` for no optional retrieval.
+See the [workflow](#workflow-ae2json) and [migration guide](#unified-compatibility).
 
 <a id="command-geo2ae"></a>
-#### `geo2ae`
+### `geo2ae`
 
-Convert one or more GEO Series accessions to ArrayExpress MAGE-TAB files.
-
-| Argument | Type / values | Default | Meaning |
-| --- | --- | --- | --- |
-| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
-| `gse` | text; multiple | `required` | GEO Series accession(s), for example GSE234602. |
-| `--related`, `--related-series`, `--get-related-series` | flag | `False` | Include related GEO super/subseries where available. |
-| `--remove-empty` | flag | `True` | Remove empty parsed MINiML fields before conversion. This is the default. |
-| `--keep-empty` | flag | `True` | Preserve empty parsed MINiML fields before conversion. |
-| `--out` | text | `'.'` | Directory for generated IDF and SDRF files. Defaults to the current directory. |
-| `--platform-handler` | plate_single_cell_sequencing / droplet_single_cell_sequencing / tenx_v2_droplet_single_cell_sequencing / tenx_v3_droplet_single_cell_sequencing / single_cell_sequencing / spatial_sequencing / bulk_sequencing / sequencing / array / generic | `None` | Force IDF and SDRF generation through the selected platform handler. |
-| `--list-platform-handlers` | flag | `False` | List available platform handler keys and exit. |
-| `--resource-profile` | standard / large | `'standard'` | Typed resource envelope. Defaults to standard. |
-| `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
-| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
-| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
-| `--log-format` | choice | `text` | File format: text or jsonl. |
-| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
-| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
-
-Mutually exclusive: `--remove-empty`, `--keep-empty`.
-
-Mutually exclusive: `--platform-handler`, `--list-platform-handlers`.
-
-Mutually exclusive: `-v`, `-q`.
-
-[Execution and failure behavior](#workflow-geo2ae); [parser source](../src/meta_standards_converter/cli/geo2ae.py).
-
+Thin adapter to the [shared CLI](#unified-cli). The output is
+`magetab`; all configuration, summaries, reports,
+failure continuation and publication behavior are shared. `json2ae` selects the JSON reader.
+Use `--enrichment off --no-expand-studies` for no optional retrieval.
+See the [workflow](#workflow-geo2ae) and [migration guide](#unified-compatibility).
 
 <a id="command-geo2json"></a>
-#### `geo2json`
+### `geo2json`
 
-Convert one or more GEO Series accessions to parsed MINiML JSON files.
-
-| Argument | Type / values | Default | Meaning |
-| --- | --- | --- | --- |
-| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
-| `gse` | text; multiple | `required` | GEO Series accession(s), for example GSE234602. |
-| `--related`, `--related-series`, `--get-related-series` | flag | `False` | Include related GEO super/subseries where available. |
-| `--remove-empty` | flag | `True` | Remove empty parsed MINiML fields before conversion. This is the default. |
-| `--keep-empty` | flag | `True` | Preserve empty parsed MINiML fields before conversion. |
-| `--no-enrich` | flag | `True` | Skip PubMed/SRA enrichment and write parsed GEO MINiML JSON only. |
-| `--out` | text | `'.'` | Directory for generated JSON files. Defaults to the current directory. |
-| `--resource-profile` | standard / large | `'standard'` | Typed resource envelope. Defaults to standard. |
-| `--resource-override` | parse_resource_override; repeatable | `[]` | Override one typed profile field; repeat for multiple fields. |
-| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
-| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
-| `--log-format` | choice | `text` | File format: text or jsonl. |
-| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
-| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
-
-Mutually exclusive: `--remove-empty`, `--keep-empty`.
-
-Mutually exclusive: `-v`, `-q`.
-
-[Execution and failure behavior](#workflow-geo2json); [parser source](../src/meta_standards_converter/cli/geo2json.py).
-
+Thin adapter to the [shared CLI](#unified-cli). The output is
+`json`; all configuration, summaries, reports,
+failure continuation and publication behavior are shared. `json2ae` selects the JSON reader.
+Use `--enrichment off --no-expand-studies` for no optional retrieval.
+See the [workflow](#workflow-geo2json) and [migration guide](#unified-compatibility).
 
 <a id="command-json2ae"></a>
-#### `json2ae`
+### `json2ae`
 
-Convert canonical Atlas v1 JSON or parsed MINiML JSON to ArrayExpress MAGE-TAB files.
-
-| Argument | Type / values | Default | Meaning |
-| --- | --- | --- | --- |
-| `-h`, `--help` | flag | `'==SUPPRESS=='` | show this help message and exit |
-| `json_path` | text; multiple | `required` | Parsed MINiML or canonical Atlas v1 JSON file(s), for example GSE234602.json. |
-| `--no-enrich` | flag | `True` | Skip PubMed/SRA enrichment and convert the JSON exactly as supplied. |
-| `--out` | text | `'.'` | Directory for generated IDF and SDRF files. Defaults to the current directory. |
-| `--replacement-profile` | text | `None` | Replacement profile as inline JSON; supplying it activates replacements. |
-| `--replacement-profile-file` | text | `None` | Path to a replacement profile JSON object. |
-| `--platform-handler` | plate_single_cell_sequencing / droplet_single_cell_sequencing / tenx_v2_droplet_single_cell_sequencing / tenx_v3_droplet_single_cell_sequencing / single_cell_sequencing / spatial_sequencing / bulk_sequencing / sequencing / array / generic | `None` | Force IDF and SDRF generation through the selected platform handler. |
-| `--list-platform-handlers` | flag | `False` | List available platform handler keys and exit. |
-| `-v`, `--verbose` | flag | `0` | Increase logging verbosity. Use -v for INFO and -vv for DEBUG. |
-| `-q`, `--quiet` | flag | `False` | Only emit ERROR logs. |
-| `--log-file` | text | `None` | Detailed log file, independent of console verbosity. |
-| `--log-format` | choice | `text` | File format: text or jsonl. |
-| `--log-file-level` | choice | `DEBUG` | File threshold: DEBUG, INFO, WARNING, ERROR or CRITICAL. |
-| `--progress` | choice | `auto` | Automatic terminal bar, plain markers, or off; quiet disables progress. |
-
-Mutually exclusive: `--replacement-profile`, `--replacement-profile-file`.
-
-Mutually exclusive: `--platform-handler`, `--list-platform-handlers`.
-
-Mutually exclusive: `-v`, `-q`.
-
-[Execution and failure behavior](#workflow-json2ae); [parser source](../src/meta_standards_converter/cli/json2ae.py).
-
+Thin adapter to the [shared CLI](#unified-cli). The output is
+`magetab`; all configuration, summaries, reports,
+failure continuation and publication behavior are shared. `json2ae` selects the JSON reader.
+Use `--enrichment off --no-expand-studies` for no optional retrieval.
+See the [workflow](#workflow-json2ae) and [migration guide](#unified-compatibility).
 
 <a id="command-json2h5ad"></a>
 #### `json2h5ad`
@@ -2313,80 +2089,25 @@ metadata is exactly `{"packages": [...]}` remains one dataset group while each
 contained MINiML package is converted independently; this preserves related
 series packages without treating them as separate Atlas datasets.
 
-Convert GEO to MAGE-TAB:
+Convert metadata through one public API:
 
 ```python
-from meta_standards_converter.converters.geo2ae import GEO2AEConverter
+from meta_standards_converter.converters import Converter, PreparationPolicy, RuntimeOptions
 
-magetabs = GEO2AEConverter().convert(
-    gse="GSE234602",
-    related_series=False,
-    remove_empty=True,
-    out="output",
-    platform_handler=None,
-)
+converter = Converter()
+geo = converter.convert("GSE234602", "output/geo", out_type="json")
+ae = converter.convert("E-MTAB-1990", "output/ae", out_type="json")
+magetab = converter.convert("study.json", "output/mage", out_type="magetab",
+    preparation=PreparationPolicy(enrichment="off", expand_studies=False),
+    output_options={"platform_handler": "generic"})
+for item in magetab.items:
+    print(item.execution, item.completeness, item.validation, item.artifacts)
 ```
 
-`GEO2AEConverter.convert(...)` returns a list of in-memory MAGE-TAB payloads. `out=None` suppresses file writes; `platform_handler=None` keeps automatic detection.
-
-Convert GEO to JSON:
-
-```python
-from meta_standards_converter.converters.geo2json import GEO2JSONConverter
-
-packages = GEO2JSONConverter().convert(
-    gse="GSE234602",
-    related_series=False,
-    remove_empty=True,
-    enrich=True,
-    out="output",
-)
-```
-
-`GEO2JSONConverter.convert(gse, related_series=False, remove_empty=True, enrich=True, out=None)` returns `list[MINiMLPackage]`; `out` writes `{gse}.json`. Enrichment may perform one bounded direct-parent GEO lookup when a child has no publication, exactly one `SubSeries of` parent, a reciprocal parent relation, and one unambiguous parent PubMed ID. The parent is not returned as another package, and provenance is retained in package `extensions.publication_inheritance`. Legacy nested `series.extensions` inputs remain readable, but canonical encoding hoists all entries to package scope and rejects conflicts.
-
-For callers that collect related studies directly,
-`GEOSource.parse_related_series(..., strict=False)` returns a list-compatible
-`RelatedSeriesParseResult`. Its status 2.0 envelope, attempted/failed accession
-lists, and persistence-safe errors make partial traversal explicit; provider
-exception messages are neither returned nor logged.
-
-Convert parsed JSON to MAGE-TAB:
-
-```python
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
-
-magetabs = JSON2AEConverter().convert(
-    json_path="output/GSE234602.json",
-    out="output",
-    enrich=True,
-    platform_handler=None,
-)
-```
-
-`JSON2AEConverter.convert(json_path, out=None, enrich=True, platform_handler=None)`
-accepts a parsed MINiML object/list or canonical Atlas v1 document and
-returns ordered MAGE-TAB payloads. `json2ae(..., package_source=...)` permits
-injection of a compatible source loader. Forcing a handler regenerates
-IDF/SDRF content instead of reusing unchanged round-trip tables or a
-typed-model-only rendering. Regeneration unions eligible mapped core IDF rows
-and non-structural SDRF columns into the typed model, including separate
-harmonized `hz_*`, `hz_*_id`, and `hz_*_onto` characteristic columns when
-present.
-
-Convert MAGE-TAB to parsed JSON:
-
-```python
-from meta_standards_converter.converters.ae2json import AE2JSONConverter
-
-packages = AE2JSONConverter().convert(
-    source="E-MTAB-1990",
-    out="output",
-    sdrf_sources=None,
-)
-```
-
-`AE2JSONConverter.convert(source, out=None, sdrf_sources=None)` returns a one-package list. Configure the constructor with `resource_profile`, `resource_overrides`, and additional exact `source_hosts`. `sdrf_sources` is a list of explicit local paths or policy-approved HTTPS URLs and follows the same constraints as repeated CLI `--sdrf` values.
+For accession/file loading, optional retrieval, per-input replacement policies and
+injection contracts see [the canonical API](#unified-converter) and
+[MSC 9 migration](#unified-compatibility). Output names and safe failure envelopes
+are the unified converter's contract for every named metadata command.
 
 Convert parsed JSON and expression assets to H5AD:
 
@@ -2707,7 +2428,7 @@ Nextflow, a supported execution runtime and a reference genome/annotation;
 GFF conversion also requires `gffread`. See [reference configuration](#reference-annotation-flow)
 and the [Docker guide](#docker-guide).
 
-- Distribution version `8.0.0` keeps typed immutable MINiML packages the Python conversion boundary. It uses
+- Distribution version `9.0.0` keeps typed immutable MINiML packages the Python conversion boundary. It uses
   H5AD metadata schema 2.0 and
   consumes Atlas document schema 1.0 and MINiML ledger schema 1.0;
   neither build metadata nor production imports depend on ThematicAtlases.
@@ -2735,13 +2456,8 @@ and the [Docker guide](#docker-guide).
   MINiML structural counts, related-series progress, and enrichment hit/failure
   totals. XML, parsed metadata, publication content, tokens, and credentials are
   never logged.
-- `GEO2AEConverter.convert()` keeps parsed and enriched GEO metadata in memory for MAGE-TAB construction.
-- `GEO2JSONConverter.convert()` returns typed `MINiMLPackage` objects, enriched by default, and can write `{accession}.json`.
-- `JSON2AEConverter.convert()` loads one parsed package object or a non-empty package list, enriches it by default, and returns or writes MAGE-TAB outputs.
-- `AE2JSONConverter.convert()` resolves one IDF and one or more SDRFs, returns one MINiML-compatible package in a list, and can write `{accession}.json`.
 - `JSON2H5ADConverter.convert()` selects per-sample H5AD, matrix, or raw FASTQ sources; normalizes them into AnnData; and writes a per-sample H5AD catalogue without matrix integration.
 - `json2tsv --format {tsv,csv}` emits the neutral MSC sample projection; `json2obs` row-aggregates only sample observation metadata. Both are orchestrator methods with CLI wrappers, and both share the public `MINiMLMetadataProvider` interpretation boundary with `json2h5ad`.
-- When `out` is supplied, `GEO2AEConverter.convert()` writes `{accession}.idf.txt` and `{accession}.sdrf.txt`.
 - `geo2ae` `out` controls MAGE-TAB output only; use `geo2json` for parsed JSON snapshots.
 - Processed `json2h5ad` conversion requires the `h5ad` extra. Raw processing directly on the host additionally requires Nextflow, Java, and a supported execution profile/runtime. The project image includes Java 21, pinned Nextflow, the Docker CLI, and `.[h5ad]`.
 
@@ -2758,39 +2474,9 @@ See the canonical [JSON to MAGE-TAB workflow](#workflow-json2ae) for stages, bra
 <a id="end-to-end-ae2json-flow"></a>
 ## End-To-End ae2json Flow
 
-```text
-main(argv)
-  -> parse one or more sources, optional repeated --sdrf, --out,
-     --resource-profile/--resource-override, --source-host, and logging flags
-  -> require exactly one source when --sdrf is present
-  -> for each source:
-       AE2JSONConverter.convert(source, out, sdrf_sources)
-       continue to the next source if conversion fails
-  -> return 1 if any source failed, else 0
-
-ae2json(resource_profile, resource_overrides, source_hosts)
-  .convert(source, out=None, sdrf_sources=None)
-  -> AEWebFetcher.resolve(source, sdrf_sources)
-       existing path: bounded-read the IDF and relative/local/HTTPS SDRFs
-       HTTPS URL: validate egress, stream IDF text, and resolve approved SDRFs
-       accession: paginate bounded BioStudies JSON, query study info, then
-                  validate and stream only the IDF/SDRF metadata files
-  -> AEParser.parse(resolved_input)
-       parse the IDF and rectangular SDRF tables
-       map known investigation, publication, contributor, protocol, sample,
-       platform, factor, characteristic, SRA/FASTQ, and array-file metadata
-       merge repeated sample/platform records in first-seen order
-       keep the first conflicting scalar and record a warning
-       set series.iid from the primary ArrayExpress/investigation accession
-       normalize factor/material values into the strict MINiML 3.0 vocabulary
-       preserve original values in typed fields/characteristics and source digests
-  -> if out, write [{package}] to {study_accession}.json
-  -> return [package]
-```
-
-IDF labels are matched case- and whitespace-insensitively. The parser accepts general MAGE-TAB inputs rather than only files emitted by this project, including MSC's former `Status Term ...` and `Protocol Type Term ...` ontology-companion aliases. Canonical spellings win if both are present. Its public output is immutable MSC MINiML 3.0: repository source format and document name/URI/media type/SHA-256 live under `source`, while typed protocols, variables, assay paths, samples, platforms, and accessions live in their canonical model fields. Raw IDF/SDRF bodies and the former `mage_tab` runtime sidecar are not retained. `series.iid` prefers the explicit ArrayExpress accession and cannot be displaced by a GEO or ENA secondary accession. Values outside the XSD vocabulary are normalized only where required for strict validation, with the original scientific value retained in the adjacent typed value or characteristic rather than discarded.
-
-Accession resolution calls `GET /api/v1/files/{accession}` to discover exactly one IDF and at least one SDRF, calls `GET /api/v1/studies/{accession}/info` for the HTTPS base, and downloads only those metadata files beneath `Files/`. API JSON and MAGE-TAB text are UTF-8/BOM decoded only after streamed declared/actual byte checks. Every URL and redirect is restricted to HTTPS, approved provider or explicit exact hosts, and public DNS answers. Referenced assay data is not downloaded.
+See the canonical [ae2json call graph](#workflow-ae2json). Loading retains bounded
+BioStudies discovery, companion resolution and parsing responsibilities. The parser
+returns `MINiMLPackage`; shared preparation runs after loaded validation.
 
 <a id="geo2json-vs-ae2json"></a>
 ## geo2json Versus ae2json
@@ -2809,7 +2495,7 @@ Both converters return a list of package dictionaries using the same MINiML-comp
 | Factors | Native MINiML `Variable` records when supplied | IDF experimental factors plus SDRF factor values |
 | Protocols | Native GEO protocol elements | Complete typed records in `series.protocols` |
 | Platform/contributors | Referenced GEO records with their available MINiML fields | IDF/SDRF projection, usually a smaller record |
-| PubMed/SRA enrichment | Enabled by default and optional with `enrich=False`/`--no-enrich` | No remote enrichment stage; publication, ENA, run, and file metadata come from IDF/SDRF fields |
+| PubMed/SRA enrichment | Enabled by default and controlled by the shared preparation policy | Shared preparation follows parsing; use the off policy with expansion disabled to preserve source-only behavior |
 | Empty fields | Removed by default or retained with `remove_empty=False`/`--keep-empty` | Omitted unless a mapped source value exists; required extension structure remains present |
 | Assay-row multiplicity | MINiML samples plus optionally enriched `sra_run` lists | Core samples/runs may consolidate rows; every modeled SDRF row remains an independent `series.assay_paths` record |
 | Unsupported metadata | Remains available when it exists as an XML element/attribute | Supported protocol/assay extensions become typed steps; source document names, URIs, media types, and digests remain as provenance, while unmodeled raw layout is deliberately dropped |
@@ -3246,7 +2932,7 @@ The single guarded parent-publication lookup in `geo2json` is a different
 [enrichment path](#workflow-geo2json); it does not enable recursive traversal.
 
 **Evidence:** [GEOSource](../src/meta_standards_converter/sources/geo.py),
-[GEO converter](../src/meta_standards_converter/converters/geo2json.py).
+[GEO converter](../src/meta_standards_converter/converters/unified/engine.py).
 
 <a id="ae-idf-handlers"></a>
 <a id="ae-constructor"></a>
@@ -3254,38 +2940,21 @@ The single guarded parent-publication lookup in `geo2json` is a different
 ### IDF and MAGE-TAB construction flow
 
 ```text
-AEConstructor.miniml2magetab(package, platform_handler=None)
-  -> codec decode/encode -> validate forced handler or detect technology
-  -> create operation ProtocolRegistry and initial SDRF handler
-  -> evidence.sample_runs(handler, technology)             # may retrieve
-  -> [automatic] create_operation_handler by sample/channel/run evidence
-  -> SDRFConstructor.build(handler)                        # pure rendering
-  -> IDFConstructor.prefix_rows(data)                      # validate first
-  -> evidence.publications(data)                          # may retrieve
-  -> IDFConstructor.miniml2idf(... same registry, evidence)
-  -> embed SDRF table -> overlay_miniml_semantics -> return row payload
-converter -> MAGETabWriter.write(payload, out)             # optional filesystem
+prepared SourceLoadResult
+  → MAGETabExporter.render → group.resolved(profile)
+  → AEConstructor.prepare
+      validate + detach data → normalize → protocols/files → technology handler
+      → SDRFConstructor.prepare → canonical/fallback paths → columns + audit
+      → MAGETabExportPlan
+  → AEConstructor.render
+      SDRFConstructor.render → render_paths once per document
+      → IDF construction → semantic annotation → declarations → final validation
+  → engine publication → MAGETabWriter.write inside atomic bundle
 ```
 
-`MAGETabEvidenceResolver` owns PubMed/INSDC collaborators. Available enriched
-run/publication evidence suppresses lookups. A mixed-study generic IDF summary
-must not suppress sequencing evidence needed by individual samples. Explicit
-handler selection overrides automatic per-occurrence routing.
-
-The protocol registry reuses identities for matching protocol kind/text and
-is shared across IDF and SDRF construction. Builders do not create network
-clients. The final semantic overlay retains native explicit assay paths and
-occurrence-local harmonized columns; incompatible source-document graphs fail
-instead of being silently merged.
-
-`MAGETabWriter.write` locates and validates the embedded SDRF, chooses the
-accession-based filenames, and writes IDF/SDRF tables. It owns writing separately
-from `AEConstructor`; metadata output is not the expression bundle publisher.
-
-**Evidence:** [constructor](../src/meta_standards_converter/magetab/constructor.py),
-[evidence resolver](../src/meta_standards_converter/metadata/enrichment.py),
-[writer](../src/meta_standards_converter/magetab/writer.py),
-[semantic overlay](../src/meta_standards_converter/magetab/semantics.py).
+Preparation and rendering interfaces are documented at
+[network-free construction](#core-magetab-construction). Providers are used only
+by source loading and metadata preparation, before the constructor boundary.
 
 <a id="sdrf-handlers"></a>
 <a id="sdrf-dataclasses"></a>
@@ -3443,7 +3112,7 @@ Legacy greedy GEO and SRA fallback comment classes are kept only as commented re
 <a id="sra-pubmed-and-ontology-enrichment"></a>
 ### SRA, PubMed, And Ontology Enrichment
 
-- Normal `GEO2AEConverter.convert()` enrichment happens after `GEOParser.parse()` and before `AEConstructor.miniml2magetab()`.
+- Shared metadata preparation follows `GEOParser.parse()` and precedes `AEConstructor.prepare`.
 - `MINiMLEnricher` writes PubMed metadata to `series.pubmed_publication` and SRA metadata to `sample.sra_accession`/`sample.sra_run`.
 - IDF construction prefers `series.pubmed_publication`; `_lookup_pubmed_id()` remains as a compatibility fallback.
 - SDRF construction prefers `sample.sra_run`; relation-based `_lookup_sra()` remains as a compatibility fallback.
@@ -3501,11 +3170,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `AtlasV1Reader.load` [source](../src/meta_standards_converter/atlas_v1/reader.py#L195) | `load(path: str \| Path) -> AtlasV1ReadResult` | See source; follows the owning type contract. |
 | `AtlasV1Reader.from_mapping` [source](../src/meta_standards_converter/atlas_v1/reader.py#L200) | `from_mapping(value: Mapping[str, Any]) -> AtlasV1ReadResult` | Direct raises: AtlasV1Error. |
 
-### `meta_standards_converter.cli.ae2json`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.cli.ae2json.main` [source](../src/meta_standards_converter/cli/ae2json.py#L55) | `main(argv=None)` | See defining source and workflow contracts. |
 
 ### `meta_standards_converter.cli.common`
 
@@ -3523,23 +3187,8 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `meta_standards_converter.cli.common.add_replacement_profile_arguments` [source](../src/meta_standards_converter/cli/common.py#L170) | `add_replacement_profile_arguments(parser)` | Add explicit, mutually exclusive export replacement policy inputs. |
 | `meta_standards_converter.cli.common.replacement_profile_from_args` [source](../src/meta_standards_converter/cli/common.py#L177) | `replacement_profile_from_args(args, parser)` | Parse once before conversion; malformed policy input must not publish files. |
 
-### `meta_standards_converter.cli.geo2ae`
 
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.cli.geo2ae.main` [source](../src/meta_standards_converter/cli/geo2ae.py#L72) | `main(argv=None) -> int` | See defining source and workflow contracts. |
 
-### `meta_standards_converter.cli.geo2json`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.cli.geo2json.main` [source](../src/meta_standards_converter/cli/geo2json.py#L76) | `main(argv=None) -> int` | See defining source and workflow contracts. |
-
-### `meta_standards_converter.cli.json2ae`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.cli.json2ae.main` [source](../src/meta_standards_converter/cli/json2ae.py#L61) | `main(argv=None) -> int` | See defining source and workflow contracts. |
 
 ### `meta_standards_converter.cli.json2h5ad`
 
@@ -3565,14 +3214,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | --- | --- | --- |
 | `meta_standards_converter.cli.miniml_migrate.main` [source](../src/meta_standards_converter/cli/miniml_migrate.py#L29) | `main(argv=None) -> int` | See defining source and workflow contracts. |
 
-### `meta_standards_converter.converters.ae2json`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.converters.ae2json.AE2JSONConverter` [source](../src/meta_standards_converter/converters/ae2json.py#L28) | `AE2JSONConverter(fetcher=None, parser=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None, source_hosts=())` | See defining source and workflow contracts. |
-| `AE2JSONConverter.metrics` [source](../src/meta_standards_converter/converters/ae2json.py#L29) | `metrics()` | See source; follows the owning type contract. |
-| `AE2JSONConverter.__init__` [source](../src/meta_standards_converter/converters/ae2json.py#L33) | `__init__(fetcher=None, parser=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None, source_hosts=())` | See source; follows the owning type contract. |
-| `AE2JSONConverter.convert` [source](../src/meta_standards_converter/converters/ae2json.py#L55) | `convert(source: str, out: str \| None=None, sdrf_sources: list[str] \| None=None) -> list[MINiMLPackage]` | See source; follows the owning type contract. |
 
 ### `meta_standards_converter.converters.dataset_combination`
 
@@ -3586,32 +3227,8 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `DatasetCombinationPolicy.feature_namespace` [source](../src/meta_standards_converter/converters/dataset_combination.py#L102) | `feature_namespace(adata) -> str` | See source; follows the owning type contract. |
 | `DatasetCombinationPolicy.declared_reference` [source](../src/meta_standards_converter/converters/dataset_combination.py#L124) | `declared_reference(adata) -> str \| None` | See source; follows the owning type contract. |
 
-### `meta_standards_converter.converters.geo2ae`
 
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.converters.geo2ae.GEO2AEConverter` [source](../src/meta_standards_converter/converters/geo2ae.py#L29) | `GEO2AEConverter(enricher=None, geo_fetcher=None, parser=None, ae_constructor=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None)` | Bases: JSONHandler. |
-| `GEO2AEConverter.metrics` [source](../src/meta_standards_converter/converters/geo2ae.py#L30) | `metrics()` | See source; follows the owning type contract. |
-| `GEO2AEConverter.__init__` [source](../src/meta_standards_converter/converters/geo2ae.py#L34) | `__init__(enricher=None, geo_fetcher=None, parser=None, ae_constructor=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None)` | See source; follows the owning type contract. |
-| `GEO2AEConverter.convert` [source](../src/meta_standards_converter/converters/geo2ae.py#L55) | `convert(gse: str, related_series: bool=False, remove_empty: bool=True, out: str=None, platform_handler: str \| None=None)` | fetches MINIML from GEO using gse accession, parses into meta_json, then writes via AEConstructor. |
 
-### `meta_standards_converter.converters.geo2json`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.converters.geo2json.GEO2JSONConverter` [source](../src/meta_standards_converter/converters/geo2json.py#L81) | `GEO2JSONConverter(enricher=None, geo_fetcher=None, parser=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None)` | Bases: JSONHandler. |
-| `GEO2JSONConverter.metrics` [source](../src/meta_standards_converter/converters/geo2json.py#L82) | `metrics()` | See source; follows the owning type contract. |
-| `GEO2JSONConverter.__init__` [source](../src/meta_standards_converter/converters/geo2json.py#L86) | `__init__(enricher=None, geo_fetcher=None, parser=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None)` | See source; follows the owning type contract. |
-| `GEO2JSONConverter.convert` [source](../src/meta_standards_converter/converters/geo2json.py#L105) | `convert(gse: str, related_series: bool=False, remove_empty: bool=True, enrich: bool=True, out: str=None) -> list[MINiMLPackage]` | Fetches GEO MINiML, parses it to JSON packages, optionally enriches, and optionally writes JSON. |
-| `GEO2JSONConverter.json2file` [source](../src/meta_standards_converter/converters/geo2json.py#L267) | `json2file(gse: str, packages: list[MINiMLPackage], out: str) -> str` | See source; follows the owning type contract. |
-
-### `meta_standards_converter.converters.json2ae`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.converters.json2ae.JSON2AEConverter` [source](../src/meta_standards_converter/converters/json2ae.py#L26) | `JSON2AEConverter(enricher=None, ae_constructor=None, package_source=None)` | Convert parsed MINiML JSON packages into MAGE-TAB payloads. Bases: JSONHandler. |
-| `JSON2AEConverter.__init__` [source](../src/meta_standards_converter/converters/json2ae.py#L29) | `__init__(enricher=None, ae_constructor=None, package_source=None)` | See source; follows the owning type contract. |
-| `JSON2AEConverter.convert` [source](../src/meta_standards_converter/converters/json2ae.py#L34) | `convert(json_path: str, out: str=None, enrich: bool=True, platform_handler: str \| None=None, *, replacement_profile: Mapping[str, Any] \| None=None) -> list[list]` | Load parsed MINiML JSON and optionally write IDF/SDRF files. |
 
 ### `meta_standards_converter.converters.json2h5ad`
 
@@ -3795,14 +3412,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `meta_standards_converter.magetab.chemistry.ChemistryResult` [source](../src/meta_standards_converter/magetab/chemistry.py#L36) | `ChemistryResult(manufacturer: 'str \| None', family: 'str \| None', versions: 'tuple[str, ...]', library_role: 'str \| None', index_configuration: 'str \| None', attributes: 'tuple[tuple[str, str], ...]', evidence: 'tuple[ChemistryEvidence, ...]', diagnostics: 'tuple[ChemistryDiagnostic, ...]') -> None` | See defining source and workflow contracts. |
 | `meta_standards_converter.magetab.chemistry.resolve_chemistry` [source](../src/meta_standards_converter/magetab/chemistry.py#L132) | `resolve_chemistry(sample: dict, channel: dict \| None=None, run: dict \| None=None, series: dict \| list \| None=None) -> ChemistryResult` | Resolve applicable facts for one sample/channel and optional library/run. |
 
-### `meta_standards_converter.magetab.constructor`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.magetab.constructor.validate_platform_handler` [source](../src/meta_standards_converter/magetab/constructor.py#L33) | `validate_platform_handler(value: str) -> str` | See defining source and workflow contracts. |
-| `meta_standards_converter.magetab.constructor.AEConstructor` [source](../src/meta_standards_converter/magetab/constructor.py#L44) | `AEConstructor(idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None)` | See defining source and workflow contracts. |
-| `AEConstructor.__init__` [source](../src/meta_standards_converter/magetab/constructor.py#L45) | `__init__(idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None)` | See source; follows the owning type contract. |
-| `AEConstructor.miniml2magetab` [source](../src/meta_standards_converter/magetab/constructor.py#L50) | `miniml2magetab(data: MINiMLPackage, platform_handler: str \| None=None) -> list` | converts miniml json to magetab idf. Walks through sections of idf to extract from miniml Direct raises: ValueError. |
 
 ### `meta_standards_converter.magetab.harmonized`
 
@@ -3823,13 +3432,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `IDFConstructor.miniml2idf` [source](../src/meta_standards_converter/magetab/idf.py#L32) | `miniml2idf(data: dict, protocol_registry=None, technology_type=None, *, prefix_rows=None, publication_details=()) -> list` | converts miniml json to magetab idf. Walks through sections of idf to extract from miniml |
 | `IDFConstructor.prefix_rows` [source](../src/meta_standards_converter/magetab/idf.py#L51) | `prefix_rows(data)` | See source; follows the owning type contract. |
 
-### `meta_standards_converter.magetab.parser`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.magetab.parser.normalized_label` [source](../src/meta_standards_converter/magetab/parser.py#L56) | `normalized_label(value: str) -> str` | See defining source and workflow contracts. |
-| `meta_standards_converter.magetab.parser.AEParser` [source](../src/meta_standards_converter/magetab/parser.py#L60) | `AEParser()` | Project standard MAGE-TAB metadata into the parsed MINiML shape. |
-| `AEParser.parse` [source](../src/meta_standards_converter/magetab/parser.py#L127) | `parse(source: MAGETabInput) -> dict` | Direct raises: ValueError. |
 
 ### `meta_standards_converter.magetab.protocols`
 
@@ -3842,20 +3444,7 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `ProtocolRegistry.records` [source](../src/meta_standards_converter/magetab/protocols.py#L69) | `records() -> list[dict]` | See source; follows the owning type contract. |
 | `ProtocolRegistry.clean` [source](../src/meta_standards_converter/magetab/protocols.py#L73) | `clean(value)` | See source; follows the owning type contract. |
 
-### `meta_standards_converter.magetab.sdrf.constructor`
 
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.magetab.sdrf.constructor.SDRFConstructor` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L25) | `SDRFConstructor()` | See defining source and workflow contracts. |
-| `SDRFConstructor.create_handler` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L43) | `create_handler(data, protocol_registry=None, technology_type=None)` | See source; follows the owning type contract. |
-| `SDRFConstructor.create_operation_handler` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L60) | `create_operation_handler(data, protocol_registry=None, run_evidence=None)` | Plan scoped dispatch, sharing source identities, registry and audit. |
-| `SDRFConstructor.build` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L96) | `build(handler)` | See source; follows the owning type contract. |
-
-### `meta_standards_converter.magetab.sdrf.handlers.base`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.magetab.sdrf.handlers.base.classify_file` [source](../src/meta_standards_converter/magetab/sdrf/handlers/base.py#L20) | `classify_file(path: str) -> str` | See defining source and workflow contracts. |
 
 ### `meta_standards_converter.magetab.sdrf.model`
 
@@ -3884,17 +3473,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `SDRFRenderer.occurrence_key` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L116) | `occurrence_key(counts: dict, label: str) -> str` | See source; follows the owning type contract. |
 | `SDRFRenderer.render_value` [source](../src/meta_standards_converter/magetab/sdrf/renderer.py#L121) | `render_value(value)` | See source; follows the owning type contract. |
 
-### `meta_standards_converter.magetab.semantics`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.magetab.semantics.MAGETabModelError` [source](../src/meta_standards_converter/magetab/semantics.py#L18) | `bases: ValueError` | Raised when the enriched MAGE-TAB model contract is invalid. Bases: ValueError. |
-| `meta_standards_converter.magetab.semantics.validate_model` [source](../src/meta_standards_converter/magetab/semantics.py#L32) | `validate_model(model: dict) -> dict` | Validate and return an enriched MAGE-TAB model version 1. |
-| `meta_standards_converter.magetab.semantics.build_model` [source](../src/meta_standards_converter/magetab/semantics.py#L141) | `build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> dict` | Build a typed model without projecting unsupported values into MINiML fields. |
-| `meta_standards_converter.magetab.semantics.render_model` [source](../src/meta_standards_converter/magetab/semantics.py#L237) | `render_model(model: dict) -> list \| None` | Render a version-1 typed model into the constructor's in-memory MAGE-TAB form. |
-| `meta_standards_converter.magetab.semantics.overlay_miniml_semantics` [source](../src/meta_standards_converter/magetab/semantics.py#L276) | `overlay_miniml_semantics(package: dict, core_rows: list) -> list` | Render ordered MSC MINiML semantics over constructor-generated IDF/SDRF rows. |
-| `meta_standards_converter.magetab.semantics.render_miniml_assay_documents` [source](../src/meta_standards_converter/magetab/semantics.py#L401) | `render_miniml_assay_documents(paths) -> dict[str, list[list]]` | See defining source and workflow contracts. |
-| `meta_standards_converter.magetab.semantics.overlay_core` [source](../src/meta_standards_converter/magetab/semantics.py#L533) | `overlay_core(model_rows: list, core_rows: list) -> list` | Union MINiML projections into model tables while preserving model structure. |
 
 ### `meta_standards_converter.magetab.technology`
 
@@ -3916,23 +3494,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `meta_standards_converter.magetab.writer.MAGETabWriter` [source](../src/meta_standards_converter/magetab/writer.py#L14) | `MAGETabWriter()` | See defining source and workflow contracts. |
 | `MAGETabWriter.write` [source](../src/meta_standards_converter/magetab/writer.py#L15) | `write(magetab: list, out: str=None) -> str` | Write magetab to idf and sdrf Direct raises: ValueError. |
 
-### `meta_standards_converter.metadata.enrichment`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.metadata.enrichment.MetadataEnrichment` [source](../src/meta_standards_converter/metadata/enrichment.py#L34) | `MetadataEnrichment(*args, **kwargs)` | Bases: Protocol. |
-| `MetadataEnrichment.enrich` [source](../src/meta_standards_converter/metadata/enrichment.py#L35) | `enrich(data: MINiMLPackage) -> MINiMLPackage` | See source; follows the owning type contract. |
-| `meta_standards_converter.metadata.enrichment.MINiMLEnricher` [source](../src/meta_standards_converter/metadata/enrichment.py#L38) | `MINiMLEnricher(pubmed_fetcher=None, insdc_fetcher=None, resource_profile: str \| meta_standards_converter.runtime_contracts.ResourceProfile = 'standard', resource_overrides=None)` | See defining source and workflow contracts. |
-| `MINiMLEnricher.metrics` [source](../src/meta_standards_converter/metadata/enrichment.py#L40) | `metrics()` | See source; follows the owning type contract. |
-| `MINiMLEnricher.__init__` [source](../src/meta_standards_converter/metadata/enrichment.py#L44) | `__init__(pubmed_fetcher=None, insdc_fetcher=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None)` | See source; follows the owning type contract. |
-| `MINiMLEnricher.enrich` [source](../src/meta_standards_converter/metadata/enrichment.py#L62) | `enrich(data: MINiMLPackage) -> MINiMLPackage` | See source; follows the owning type contract. |
-| `MINiMLEnricher.enrich_pubmed` [source](../src/meta_standards_converter/metadata/enrichment.py#L88) | `enrich_pubmed(data: dict, *, fill_missing: bool = False) -> dict` | See source; follows the owning type contract. |
-| `MINiMLEnricher.enrich_sra` [source](../src/meta_standards_converter/metadata/enrichment.py#L103) | `enrich_sra(data: dict) -> dict` | See source; follows the owning type contract. |
-| `meta_standards_converter.metadata.enrichment.MAGETabEvidenceResolver` [source](../src/meta_standards_converter/metadata/enrichment.py#L173) | `MAGETabEvidenceResolver(pubmed_client=None, insdc_client=None)` | Resolve only evidence requested by MAGE-TAB construction, per operation. |
-| `MAGETabEvidenceResolver.__init__` [source](../src/meta_standards_converter/metadata/enrichment.py#L176) | `__init__(pubmed_client=None, insdc_client=None)` | See source; follows the owning type contract. |
-| `MAGETabEvidenceResolver.publications` [source](../src/meta_standards_converter/metadata/enrichment.py#L180) | `publications(data)` | See source; follows the owning type contract. |
-| `MAGETabEvidenceResolver.sample_runs` [source](../src/meta_standards_converter/metadata/enrichment.py#L188) | `sample_runs(handler, technology_type)` | See source; follows the owning type contract. |
-| `MAGETabEvidenceResolver.fetch_runs` [source](../src/meta_standards_converter/metadata/enrichment.py#L210) | `fetch_runs(accession)` | See source; follows the owning type contract. |
 
 ### `meta_standards_converter.metadata.harmonization_overrides`
 
@@ -4041,17 +3602,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `MINiMLCodec.load` [source](../src/meta_standards_converter/miniml/codec.py#L126) | `load(path: str \| Path, *, strict: bool=False) -> MINiMLBatchDecodeResult` | See source; follows the owning type contract. |
 | `MINiMLCodec.dump` [source](../src/meta_standards_converter/miniml/codec.py#L130) | `dump(packages: MINiMLPackage \| Sequence[MINiMLPackage], path: str \| Path) -> None` | See source; follows the owning type contract. |
 
-### `meta_standards_converter.miniml.geo_parser`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.miniml.geo_parser.GEOParser` [source](../src/meta_standards_converter/miniml/geo_parser.py#L40) | `GEOParser(resource_profile: 'str' = 'standard', resource_overrides=None)` | See defining source and workflow contracts. |
-| `GEOParser.__init__` [source](../src/meta_standards_converter/miniml/geo_parser.py#L41) | `__init__(resource_profile: str='standard', resource_overrides=None)` | See source; follows the owning type contract. |
-| `GEOParser.parse` [source](../src/meta_standards_converter/miniml/geo_parser.py#L113) | `parse(miniml: str, remove_empty: bool=False) -> list[MINiMLPackage]` | See source; follows the owning type contract. |
-| `GEOParser.parse_mapping` [source](../src/meta_standards_converter/miniml/geo_parser.py#L140) | `parse_mapping(miniml: str) -> list[dict]` | See source; follows the owning type contract. |
-| `GEOParser.remove_empty_fields` [source](../src/meta_standards_converter/miniml/geo_parser.py#L161) | `remove_empty_fields(data)` | See source; follows the owning type contract. |
-| `GEOParser.series_accessions` [source](../src/meta_standards_converter/miniml/geo_parser.py#L351) | `series_accessions(series_packages: list[dict]) -> list[str]` | See source; follows the owning type contract. |
-| `GEOParser.related_accessions` [source](../src/meta_standards_converter/miniml/geo_parser.py#L365) | `related_accessions(series_packages: list[dict]) -> list[str]` | See source; follows the owning type contract. |
 
 ### `meta_standards_converter.miniml.harmonization`
 
@@ -4317,16 +3867,6 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `INSDCWebfetcher.fetch_ena_file_report` [source](../src/meta_standards_converter/sources/insdc.py#L160) | `fetch_ena_file_report(accession: str) -> list` | See source; follows the owning type contract. |
 | `INSDCWebfetcher.fetch_ena_fastq_files` [source](../src/meta_standards_converter/sources/insdc.py#L173) | `fetch_ena_fastq_files(accession: str) -> dict` | See source; follows the owning type contract. |
 
-### `meta_standards_converter.sources.json`
-
-| Definition / member | Signature or bases | Contract / declared failures |
-| --- | --- | --- |
-| `meta_standards_converter.sources.json.DatasetPackageGroup` [source](../src/meta_standards_converter/sources/json.py#L24) | `DatasetPackageGroup(dataset_id: 'str', packages: 'tuple[MINiMLPackage, ...]', source_accession: 'str \| None' = None, source_packages: 'tuple[MINiMLPackage, ...] \| None' = None, harmonization_resolution: 'Any \| None' = None) -> None` | One study-sized group of parsed MINiML packages. |
-| `DatasetPackageGroup.resolved` [source](../src/meta_standards_converter/sources/json.py#L33) | `resolved(*, replacement_profile: Mapping[str, Any] \| None=None) -> 'DatasetPackageGroup'` | See source; follows the owning type contract. |
-| `meta_standards_converter.sources.json.SourceLoadResult` [source](../src/meta_standards_converter/sources/json.py#L52) | `SourceLoadResult(groups: 'tuple[DatasetPackageGroup, ...]', warnings: 'tuple[str, ...]' = (), diagnostics: 'tuple[MINiMLValidationIssue, ...]' = ()) -> None` | Groups and non-fatal source diagnostics. |
-| `meta_standards_converter.sources.json.JSONPackageSource` [source](../src/meta_standards_converter/sources/json.py#L60) | `JSONPackageSource(atlas_reader: 'AtlasV1Reader \| None' = None) -> 'None'` | Recognize native MINiML payloads and canonical Atlas v1 documents. |
-| `JSONPackageSource.__init__` [source](../src/meta_standards_converter/sources/json.py#L63) | `__init__(atlas_reader: AtlasV1Reader \| None=None) -> None` | See source; follows the owning type contract. |
-| `JSONPackageSource.load` [source](../src/meta_standards_converter/sources/json.py#L67) | `load(path: str \| Path) -> SourceLoadResult` | Direct raises: ValueError. |
 
 ### `meta_standards_converter.sources.magetab`
 
@@ -4360,8 +3900,469 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `meta_standards_converter.xml_safety.read_limited_response` [source](../src/meta_standards_converter/xml_safety.py#L130) | `read_limited_response(response: Any, *, max_bytes: int, chunk_size: int=1024 * 1024) -> bytes` | See defining source and workflow contracts. |
 | `meta_standards_converter.xml_safety.stream_limited_response` [source](../src/meta_standards_converter/xml_safety.py#L173) | `stream_limited_response(response: Any, destination, *, max_bytes: int, chunk_size: int=1024 * 1024) -> int` | Stream a response into an open binary file under a hard byte ceiling. |
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Extracted stage interfaces
+
+| Definition | Signature | Contract |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.expression.ExpressionInput` [source](../src/meta_standards_converter/converters/unified/expression.py#L27) | `ExpressionInput` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.expression.load_expression` [source](../src/meta_standards_converter/converters/unified/expression.py#L52) | `load_expression(kind, spec, context)` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.expression.export_expression` [source](../src/meta_standards_converter/converters/unified/expression.py#L412) | `export_expression(loaded, context, item)` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.publication.reserve` [source](../src/meta_standards_converter/converters/unified/publication.py#L22) | `reserve(paths, context)` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.publication.atomic_write` [source](../src/meta_standards_converter/converters/unified/publication.py#L42) | `atomic_write(path, writer, overwrite)` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.publication.publish_jsons` [source](../src/meta_standards_converter/converters/unified/publication.py#L60) | `publish_jsons(groups, context, item)` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.publication.publish_tables` [source](../src/meta_standards_converter/converters/unified/publication.py#L101) | `publish_tables(tables, context, item)` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.publication.publish_magetab` [source](../src/meta_standards_converter/converters/unified/publication.py#L136) | `publish_magetab(tables, context, item)` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.routes.Route` [source](../src/meta_standards_converter/converters/unified/routes.py#L17) | `Route` | See the owning stage contract and source. |
+| `meta_standards_converter.converters.unified.routes.select_route` [source](../src/meta_standards_converter/converters/unified/routes.py#L39) | `select_route(loaded, source_kind, destination)` | See the owning stage contract and source. |
+| `meta_standards_converter.metadata.projection.tabular.ProjectedTable` [source](../src/meta_standards_converter/metadata/projection/tabular.py#L80) | `ProjectedTable` | A projected sample table before publication. |
+
+
+### `meta_standards_converter.cli.ae2json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.ae2json.main` [source](../src/meta_standards_converter/cli/ae2json.py#L13) | `main(argv=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.cli.convert`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.convert.main` [source](../src/meta_standards_converter/cli/convert.py#L220) | `main(argv=None, *, command='msc-convert', output_type=None, default_in_type=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.cli.geo2ae`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.geo2ae.main` [source](../src/meta_standards_converter/cli/geo2ae.py#L13) | `main(argv=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.cli.geo2json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.geo2json.main` [source](../src/meta_standards_converter/cli/geo2json.py#L13) | `main(argv=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.cli.json2ae`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.cli.json2ae.main` [source](../src/meta_standards_converter/cli/json2ae.py#L13) | `main(argv=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.archive_results`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.archive_results.StudyImportOutcome` [source](../src/meta_standards_converter/converters/archive_results.py#L21) | `StudyImportOutcome(study: str, primary: str, status: str, package: MINiMLPackage \| None = None, output: str \| None = None, issues: list[str] = field(default_factory=list), error: Exception \| None = field(default=None, repr=False, compare=False))` | Follows the owning stage contract. |
+| `StudyImportOutcome.to_mapping` [source](../src/meta_standards_converter/converters/archive_results.py#L30) | `to_mapping(self)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.archive_results.ArchiveImportResult` [source](../src/meta_standards_converter/converters/archive_results.py#L36) | `ArchiveImportResult(accession: str, studies: list[StudyImportOutcome] = field(default_factory=list))` | Follows the owning stage contract. |
+| `ArchiveImportResult.packages` [source](../src/meta_standards_converter/converters/archive_results.py#L41) | `packages(self)` | Follows the owning stage contract. |
+| `ArchiveImportResult.ok` [source](../src/meta_standards_converter/converters/archive_results.py#L45) | `ok(self)` | Follows the owning stage contract. |
+| `ArchiveImportResult.to_mapping` [source](../src/meta_standards_converter/converters/archive_results.py#L48) | `to_mapping(self)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.archive_results.NativeProviderFailure` [source](../src/meta_standards_converter/converters/archive_results.py#L52) | `NativeProviderFailure` | Copy-safe, redacted provider failure retained by operation-local memoization. |
+| `meta_standards_converter.converters.archive_results.native_failure` [source](../src/meta_standards_converter/converters/archive_results.py#L56) | `native_failure(errors)` | Preserve a transient provider failure and the latest applicable cooldown. |
+| `meta_standards_converter.converters.archive_results.publish_json` [source](../src/meta_standards_converter/converters/archive_results.py#L148) | `publish_json(path, value, overwrite=False)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.archive_results.output_name` [source](../src/meta_standards_converter/converters/archive_results.py#L168) | `output_name(seed, seeds)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.ena2json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.ena2json.ENA2JSONConverter` [source](../src/meta_standards_converter/converters/ena2json.py#L21) | `ENA2JSONConverter(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None)` | Follows the owning stage contract. |
+| `ENA2JSONConverter.__init__` [source](../src/meta_standards_converter/converters/ena2json.py#L22) | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None)` | Follows the owning stage contract. |
+| `ENA2JSONConverter.convert` [source](../src/meta_standards_converter/converters/ena2json.py#L32) | `convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None) -> ArchiveImportResult` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.sra2json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.sra2json.SRA2JSONConverter` [source](../src/meta_standards_converter/converters/sra2json.py#L21) | `SRA2JSONConverter(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None)` | Follows the owning stage contract. |
+| `SRA2JSONConverter.__init__` [source](../src/meta_standards_converter/converters/sra2json.py#L22) | `__init__(self, source=None, parser=None, linked_enricher=None, peer_converter=None, resource_profile='standard', resource_overrides=None, *, publication_enricher=None)` | Follows the owning stage contract. |
+| `SRA2JSONConverter.convert` [source](../src/meta_standards_converter/converters/sra2json.py#L32) | `convert(self, accession, *, out=None, enrich_from_geo_ae=False, include_peer=False, report_path=None, evidence_dir=None, overwrite=False, seen_studies=None, _resolution=None, _filename_seeds=None) -> ArchiveImportResult` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.contracts`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.contracts.InputSpec` [source](../src/meta_standards_converter/converters/unified/contracts.py#L22) | `InputSpec(sources: Any, id: str \| None = None, in_type: str \| None = None, companions: Mapping[str, Any] = field(default_factory=dict), metadata: Any = None, preparation: PreparationPolicy \| None = None, input_options: Mapping[str, Any] = field(default_factory=dict), output_options: Mapping[str, Any] = field(default_factory=dict))` | One logical input. Sources may include explicitly bound companions. |
+| `meta_standards_converter.converters.unified.contracts.Diagnostic` [source](../src/meta_standards_converter/converters/unified/contracts.py#L36) | `Diagnostic(code: str, message: str, stage: str = 'input', severity: str = 'error', provider_issue: ProviderIssue \| None = None)` | Follows the owning stage contract. |
+| `Diagnostic.to_dict` [source](../src/meta_standards_converter/converters/unified/contracts.py#L43) | `to_dict(self)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.contracts.InputError` [source](../src/meta_standards_converter/converters/unified/contracts.py#L50) | `InputError(self, code, message)` | A safe, actionable input or capability error. |
+| `InputError.__init__` [source](../src/meta_standards_converter/converters/unified/contracts.py#L53) | `__init__(self, code, message)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.contracts.LoadedInput` [source](../src/meta_standards_converter/converters/unified/contracts.py#L59) | `LoadedInput(metadata: Any = None, expression: Any = None, assets: tuple = (), direct_magetab: Any = None, source_path: str \| None = None, content_id: str \| None = None, provider: str \| None = None, enrichment_applied: bool = False, preparation: list[dict] = field(default_factory=list), origins: tuple[str, ...] = (), companions: Mapping[str, Any] = field(default_factory=dict), diagnostics: list[Diagnostic] = field(default_factory=list))` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.contracts.ConversionItemResult` [source](../src/meta_standards_converter/converters/unified/contracts.py#L75) | `ConversionItemResult(id: str, source: str, in_type: str \| None = None, forced: bool = False, provider: str \| None = None, content_id: str \| None = None, origins: tuple[str, ...] = (), companions: dict[str, Any] = field(default_factory=dict), route: tuple[str, ...] = (), dataset_ids: tuple[str, ...] = (), status: str = 'failed', execution: str = 'failed', completeness: str = 'unknown', validation: str = 'unknown', payload: Any = None, artifacts: dict[str, str] = field(default_factory=dict), diagnostics: list[Diagnostic] = field(default_factory=list), preparation: list[dict] = field(default_factory=list), error: SafeErrorEnvelope \| None = None, retry_at: float \| None = None, metrics: RequestMetrics = field(default_factory=RequestMetrics))` | Follows the owning stage contract. |
+| `ConversionItemResult.to_dict` [source](../src/meta_standards_converter/converters/unified/contracts.py#L98) | `to_dict(self)` | Serialize a summary without embedding large or scientific payloads. |
+| `meta_standards_converter.converters.unified.contracts.ConversionBatchResult` [source](../src/meta_standards_converter/converters/unified/contracts.py#L129) | `ConversionBatchResult(items: list[ConversionItemResult] = field(default_factory=list))` | Follows the owning stage contract. |
+| `ConversionBatchResult.status` [source](../src/meta_standards_converter/converters/unified/contracts.py#L133) | `status(self)` | Follows the owning stage contract. |
+| `ConversionBatchResult.partial` [source](../src/meta_standards_converter/converters/unified/contracts.py#L141) | `partial(self)` | Follows the owning stage contract. |
+| `ConversionBatchResult.to_dict` [source](../src/meta_standards_converter/converters/unified/contracts.py#L144) | `to_dict(self)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.discovery`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.discovery.kind_name` [source](../src/meta_standards_converter/converters/unified/discovery.py#L64) | `kind_name(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.is_url` [source](../src/meta_standards_converter/converters/unified/discovery.py#L73) | `is_url(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.package_value` [source](../src/meta_standards_converter/converters/unified/discovery.py#L79) | `package_value(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.metadata_kind` [source](../src/meta_standards_converter/converters/unified/discovery.py#L87) | `metadata_kind(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.is_anndata` [source](../src/meta_standards_converter/converters/unified/discovery.py#L108) | `is_anndata(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.read_text` [source](../src/meta_standards_converter/converters/unified/discovery.py#L116) | `read_text(path, limit)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.xml_kind` [source](../src/meta_standards_converter/converters/unified/discovery.py#L124) | `xml_kind(text)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.tenx_member` [source](../src/meta_standards_converter/converters/unified/discovery.py#L152) | `tenx_member(path)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.tenx_directory` [source](../src/meta_standards_converter/converters/unified/discovery.py#L167) | `tenx_directory(path)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.detect` [source](../src/meta_standards_converter/converters/unified/discovery.py#L179) | `detect(value, runtime, limit)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.file_kind` [source](../src/meta_standards_converter/converters/unified/discovery.py#L279) | `file_kind(name)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.idf_references` [source](../src/meta_standards_converter/converters/unified/discovery.py#L298) | `idf_references(path, limit)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.idf_candidates` [source](../src/meta_standards_converter/converters/unified/discovery.py#L311) | `idf_candidates(sdrf, limit)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.manifest_specs` [source](../src/meta_standards_converter/converters/unified/discovery.py#L325) | `manifest_specs(value, limit)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.discovery.expand` [source](../src/meta_standards_converter/converters/unified/discovery.py#L416) | `expand(value, runtime, excluded=(), *, output_directory=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.engine`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.engine.source_label` [source](../src/meta_standards_converter/converters/unified/engine.py#L58) | `source_label(source)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.engine.ExecutionContext` [source](../src/meta_standards_converter/converters/unified/engine.py#L72) | `ExecutionContext(self, converter, runtime, target, outfile, outdir, stack)` | Follows the owning stage contract. |
+| `ExecutionContext.__init__` [source](../src/meta_standards_converter/converters/unified/engine.py#L73) | `__init__(self, converter, runtime, target, outfile, outdir, stack)` | Follows the owning stage contract. |
+| `ExecutionContext.service` [source](../src/meta_standards_converter/converters/unified/engine.py#L99) | `service(self, key, factory)` | Follows the owning stage contract. |
+| `ExecutionContext.geo_source` [source](../src/meta_standards_converter/converters/unified/engine.py#L107) | `geo_source(self)` | Follows the owning stage contract. |
+| `ExecutionContext.ae_source` [source](../src/meta_standards_converter/converters/unified/engine.py#L111) | `ae_source(self)` | Follows the owning stage contract. |
+| `ExecutionContext.localize` [source](../src/meta_standards_converter/converters/unified/engine.py#L116) | `localize(self, source)` | Follows the owning stage contract. |
+| `ExecutionContext.text` [source](../src/meta_standards_converter/converters/unified/engine.py#L132) | `text(self, source)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.engine.Converter` [source](../src/meta_standards_converter/converters/unified/engine.py#L140) | `Converter(self, *, services=None, handlers=None)` | Route validated input objects to supported destinations. |
+| `Converter.__init__` [source](../src/meta_standards_converter/converters/unified/engine.py#L147) | `__init__(self, *, services=None, handlers=None)` | Follows the owning stage contract. |
+| `Converter.metrics` [source](../src/meta_standards_converter/converters/unified/engine.py#L155) | `metrics(self)` | Cumulative requests made by this converter, including failed calls. |
+| `Converter.convert` [source](../src/meta_standards_converter/converters/unified/engine.py#L176) | `convert(self, input=None, outdir=None, *, out_type, in_type='auto', preparation: PreparationPolicy \| None=None, outfile=None, input_manifest=None, input_options=None, output_options=None, runtime: RuntimeOptions \| None=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.families`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.families.nodes` [source](../src/meta_standards_converter/converters/unified/families.py#L23) | `nodes(tree)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.families.project_records` [source](../src/meta_standards_converter/converters/unified/families.py#L30) | `project_records(package, provider)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.families.recorded_neighbors` [source](../src/meta_standards_converter/converters/unified/families.py#L49) | `recorded_neighbors(package, provider)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.families.StudyFamilies` [source](../src/meta_standards_converter/converters/unified/families.py#L72) | `StudyFamilies(self, context)` | Follows the owning stage contract. |
+| `StudyFamilies.__init__` [source](../src/meta_standards_converter/converters/unified/families.py#L73) | `__init__(self, context)` | Follows the owning stage contract. |
+| `StudyFamilies.expand` [source](../src/meta_standards_converter/converters/unified/families.py#L114) | `expand(self, loaded)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.handlers`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.handlers.InputHandler` [source](../src/meta_standards_converter/converters/unified/handlers.py#L39) | `InputHandler(self, kind)` | One registered format with recognition, validation and loading boundaries. |
+| `InputHandler.__init__` [source](../src/meta_standards_converter/converters/unified/handlers.py#L42) | `__init__(self, kind)` | Follows the owning stage contract. |
+| `InputHandler.probe` [source](../src/meta_standards_converter/converters/unified/handlers.py#L47) | `probe(self, source, context)` | Follows the owning stage contract. |
+| `InputHandler.validate` [source](../src/meta_standards_converter/converters/unified/handlers.py#L53) | `validate(self, spec, context)` | Follows the owning stage contract. |
+| `InputHandler.load` [source](../src/meta_standards_converter/converters/unified/handlers.py#L98) | `load(self, spec, context)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.handlers.default_handlers` [source](../src/meta_standards_converter/converters/unified/handlers.py#L337) | `default_handlers()` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.loaders`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.loaders.values` [source](../src/meta_standards_converter/converters/unified/loaders.py#L19) | `values(source)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.loaders.safe_name` [source](../src/meta_standards_converter/converters/unified/loaders.py#L23) | `safe_name(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.loaders.canonical_identity` [source](../src/meta_standards_converter/converters/unified/loaders.py#L36) | `canonical_identity(loaded)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.loaders.metadata_input` [source](../src/meta_standards_converter/converters/unified/loaders.py#L46) | `metadata_input(packages, provider=None, diagnostics=(), *, enriched=False)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.loaders.load_geo_xml` [source](../src/meta_standards_converter/converters/unified/loaders.py#L56) | `load_geo_xml(text, context)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.loaders.load_json` [source](../src/meta_standards_converter/converters/unified/loaders.py#L72) | `load_json(kind, spec, context)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.loaders.load_magetab` [source](../src/meta_standards_converter/converters/unified/loaders.py#L109) | `load_magetab(kind, spec, context)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.loaders.load_geo_archive` [source](../src/meta_standards_converter/converters/unified/loaders.py#L180) | `load_geo_archive(kind, spec, context)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.options`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.options.settings` [source](../src/meta_standards_converter/converters/unified/options.py#L100) | `settings(value, allowed, label, *, partial=False)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.preparation`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.preparation.provider_of` [source](../src/meta_standards_converter/converters/unified/preparation.py#L23) | `provider_of(package, fallback=None)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.preparation.study_ids` [source](../src/meta_standards_converter/converters/unified/preparation.py#L33) | `study_ids(package)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.preparation.MetadataPreparation` [source](../src/meta_standards_converter/converters/unified/preparation.py#L38) | `MetadataPreparation(self, context)` | Follows the owning stage contract. |
+| `MetadataPreparation.__init__` [source](../src/meta_standards_converter/converters/unified/preparation.py#L39) | `__init__(self, context)` | Follows the owning stage contract. |
+| `MetadataPreparation.prepare` [source](../src/meta_standards_converter/converters/unified/preparation.py#L46) | `prepare(self, loaded)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.converters.unified.requests`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.converters.unified.requests.PreparationPolicy` [source](../src/meta_standards_converter/converters/unified/requests.py#L19) | `PreparationPolicy(enrichment: str = 'standard', expand_studies: bool = True, linked_metadata: bool = True, peer_provider: bool = True)` | Optional enrichment and independent study expansion. |
+| `PreparationPolicy.allows` [source](../src/meta_standards_converter/converters/unified/requests.py#L37) | `allows(self, operation)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.requests.RuntimeOptions` [source](../src/meta_standards_converter/converters/unified/requests.py#L46) | `RuntimeOptions(overwrite: bool = False, fail_fast: bool = False, recursive: bool = False, allow_processing: bool = False, resource_profile: str \| ResourceProfile = 'standard', resource_overrides: Mapping[str, int \| float] \| None = None, insdc_default: str = 'ena', allowed_hosts: tuple[str, ...] = (), reserved_paths: tuple[str, ...] = (), metadata_timeout_seconds: float \| None = None, metadata_max_requests: int \| None = None)` | Execution controls, shared by every source and destination in a call. |
+| `RuntimeOptions.to_dict` [source](../src/meta_standards_converter/converters/unified/requests.py#L70) | `to_dict(self)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.requests.input_settings` [source](../src/meta_standards_converter/converters/unified/requests.py#L75) | `input_settings(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.requests.output_settings` [source](../src/meta_standards_converter/converters/unified/requests.py#L79) | `output_settings(value, target, *, partial=False)` | Follows the owning stage contract. |
+| `meta_standards_converter.converters.unified.requests.merge_input_options` [source](../src/meta_standards_converter/converters/unified/requests.py#L83) | `merge_input_options(defaults, overrides)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.magetab.constructor`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.constructor.validate_platform_handler` [source](../src/meta_standards_converter/magetab/constructor.py#L33) | `validate_platform_handler(value: str) -> str` | Follows the owning stage contract. |
+| `meta_standards_converter.magetab.constructor.MAGETabExportPlan` [source](../src/meta_standards_converter/magetab/constructor.py#L53) | `MAGETabExportPlan(data: dict, protocol_registry: ProtocolRegistry, technology_type: str, prefix_rows: list, sdrf: SDRFExportPlan)` | Follows the owning stage contract. |
+| `meta_standards_converter.magetab.constructor.AEConstructor` [source](../src/meta_standards_converter/magetab/constructor.py#L61) | `AEConstructor(self, idf_constructor=None, sdrf_constructor=None)` | Build MAGE-TAB exclusively from supplied metadata; no provider clients. |
+| `AEConstructor.__init__` [source](../src/meta_standards_converter/magetab/constructor.py#L63) | `__init__(self, idf_constructor=None, sdrf_constructor=None)` | Follows the owning stage contract. |
+| `AEConstructor.miniml2magetab` [source](../src/meta_standards_converter/magetab/constructor.py#L69) | `miniml2magetab(self, data: MINiMLPackage, platform_handler: str \| None=None) -> list` | Follows the owning stage contract. |
+| `AEConstructor.prepare` [source](../src/meta_standards_converter/magetab/constructor.py#L72) | `prepare(self, data: MINiMLPackage, *, platform_handler=None) -> MAGETabExportPlan` | Validate once and build a private export plan, retaining audit effects. |
+| `AEConstructor.render` [source](../src/meta_standards_converter/magetab/constructor.py#L123) | `render(self, plan: MAGETabExportPlan) -> list` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.magetab.exporter`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.exporter.MAGETabExporter` [source](../src/meta_standards_converter/magetab/exporter.py#L19) | `MAGETabExporter(self, constructor=None)` | Follows the owning stage contract. |
+| `MAGETabExporter.__init__` [source](../src/meta_standards_converter/magetab/exporter.py#L20) | `__init__(self, constructor=None)` | Follows the owning stage contract. |
+| `MAGETabExporter.render` [source](../src/meta_standards_converter/magetab/exporter.py#L23) | `render(self, loaded, *, platform_handler=None, replacement_profile=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.magetab.parser`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.parser.normalized_label` [source](../src/meta_standards_converter/magetab/parser.py#L43) | `normalized_label(value: str) -> str` | Follows the owning stage contract. |
+| `meta_standards_converter.magetab.parser.AEParser` [source](../src/meta_standards_converter/magetab/parser.py#L47) | `AEParser` | Project standard MAGE-TAB metadata into the parsed MINiML shape. |
+| `AEParser.parse` [source](../src/meta_standards_converter/magetab/parser.py#L117) | `parse(self, source: MAGETabInput) -> MINiMLPackage` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.magetab.sdrf.constructor`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.sdrf.constructor.SDRFConstructor` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L25) | `SDRFConstructor` | Follows the owning stage contract. |
+| `SDRFConstructor.create_handler` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L43) | `create_handler(self, data, protocol_registry=None, technology_type=None)` | Follows the owning stage contract. |
+| `SDRFConstructor.create_operation_handler` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L60) | `create_operation_handler(self, data, protocol_registry=None, run_evidence=None)` | Plan scoped dispatch, sharing source identities, registry and audit. |
+| `SDRFConstructor.prepare` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L96) | `prepare(self, handler, *, canonical_paths=None, preserve_order=False)` | Register protocols/audit once, then select the final graph before rendering. |
+| `SDRFConstructor.render` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L111) | `render(self, plan)` | Follows the owning stage contract. |
+| `SDRFConstructor.build` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L122) | `build(self, handler)` | Follows the owning stage contract. |
+| `meta_standards_converter.magetab.sdrf.constructor.SDRFDocumentPlan` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L133) | `SDRFDocumentPlan(name: str, paths: list, columns: list, preserve_order: bool = False)` | Follows the owning stage contract. |
+| `meta_standards_converter.magetab.sdrf.constructor.SDRFExportPlan` [source](../src/meta_standards_converter/magetab/sdrf/constructor.py#L141) | `SDRFExportPlan(documents: tuple[SDRFDocumentPlan, ...], audit: object)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.magetab.sdrf.handlers.base`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.sdrf.handlers.base.classify_file` [source](../src/meta_standards_converter/magetab/sdrf/handlers/base.py#L21) | `classify_file(path: str) -> str` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.magetab.semantics`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.magetab.semantics.MAGETabModelError` [source](../src/meta_standards_converter/magetab/semantics.py#L19) | `MAGETabModelError` | Raised when the enriched MAGE-TAB model contract is invalid. |
+| `meta_standards_converter.magetab.semantics.validate_model` [source](../src/meta_standards_converter/magetab/semantics.py#L33) | `validate_model(model: dict) -> dict` | Validate and return an enriched MAGE-TAB model version 1. |
+| `meta_standards_converter.magetab.semantics.build_model` [source](../src/meta_standards_converter/magetab/semantics.py#L142) | `build_model(idf_rows: list[list], sdrfs: list[tuple[str, list[list]]]) -> dict` | Build a typed model without projecting unsupported values into MINiML fields. |
+| `meta_standards_converter.magetab.semantics.render_model` [source](../src/meta_standards_converter/magetab/semantics.py#L240) | `render_model(model: dict) -> list \| None` | Render a version-1 typed model into the constructor's in-memory MAGE-TAB form. |
+| `meta_standards_converter.magetab.semantics.overlay_miniml_semantics` [source](../src/meta_standards_converter/magetab/semantics.py#L280) | `overlay_miniml_semantics(package: dict, core_rows: list) -> list` | Render ordered MSC MINiML semantics over constructor-generated IDF/SDRF rows. |
+| `meta_standards_converter.magetab.semantics.plan_miniml_assay_documents` [source](../src/meta_standards_converter/magetab/semantics.py#L431) | `plan_miniml_assay_documents(paths) -> dict[str, list]` | Compile supplied graph semantics without materializing an SDRF table. |
+| `meta_standards_converter.magetab.semantics.render_miniml_assay_documents` [source](../src/meta_standards_converter/magetab/semantics.py#L440) | `render_miniml_assay_documents(paths, *, preserve_order=False) -> dict[str, list[list]]` | Follows the owning stage contract. |
+| `meta_standards_converter.magetab.semantics.overlay_core` [source](../src/meta_standards_converter/magetab/semantics.py#L626) | `overlay_core(model_rows: list, core_rows: list) -> list` | Union MINiML projections into model tables while preserving model structure. |
+
+
+### `meta_standards_converter.metadata.archive_enrichment`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.archive_enrichment.linked_accessions` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L15) | `linked_accessions(package)` | Follows the owning stage contract. |
+| `meta_standards_converter.metadata.archive_enrichment.informative` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L55) | `informative(value)` | Follows the owning stage contract. |
+| `meta_standards_converter.metadata.archive_enrichment.entity_ids` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L65) | `entity_ids(entity, *, sample=False)` | Only identifier-bearing fields participate in joins, never descriptions. |
+| `meta_standards_converter.metadata.archive_enrichment.complete_characteristic_groups` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L84) | `complete_characteristic_groups(preferred, fallback)` | Complete annotations only on unique, exact, compatible value occurrences. |
+| `meta_standards_converter.metadata.archive_enrichment.merge_archive_metadata` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L310) | `merge_archive_metadata(package, other, *, prefer=False, linked_accession=None, mode=None)` | Merge an explicitly related package; peer additions require a shared read study. |
+| `meta_standards_converter.metadata.archive_enrichment.LinkedArchiveEnricher` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L492) | `LinkedArchiveEnricher(self, resource_profile='standard', geo_source=None, ae_source=None)` | Follows the owning stage contract. |
+| `LinkedArchiveEnricher.__init__` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L493) | `__init__(self, resource_profile='standard', geo_source=None, ae_source=None)` | Follows the owning stage contract. |
+| `LinkedArchiveEnricher.enrich` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L496) | `enrich(self, package, *, session=None, mode=None)` | Follows the owning stage contract. |
+| `LinkedArchiveEnricher.enrich_selected` [source](../src/meta_standards_converter/metadata/archive_enrichment.py#L499) | `enrich_selected(self, package, *, accessions=None, session=None, mode=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.metadata.enrichment`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.enrichment.MetadataEnrichment` [source](../src/meta_standards_converter/metadata/enrichment.py#L39) | `MetadataEnrichment` | Prepare a candidate using explicit retrieval permissions and session. |
+| `MetadataEnrichment.enrich_selected` [source](../src/meta_standards_converter/metadata/enrichment.py#L41) | `enrich_selected(self, data: MINiMLPackage, *, publications: bool, run_metadata: bool, session) -> MINiMLPackage` | Follows the owning stage contract. |
+| `meta_standards_converter.metadata.enrichment.MINiMLEnricher` [source](../src/meta_standards_converter/metadata/enrichment.py#L45) | `MINiMLEnricher(self, pubmed_fetcher=None, insdc_fetcher=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None, *, publication_identifier_resolver=None)` | Follows the owning stage contract. |
+| `MINiMLEnricher.metrics` [source](../src/meta_standards_converter/metadata/enrichment.py#L47) | `metrics(self)` | Follows the owning stage contract. |
+| `MINiMLEnricher.__init__` [source](../src/meta_standards_converter/metadata/enrichment.py#L51) | `__init__(self, pubmed_fetcher=None, insdc_fetcher=None, resource_profile: str \| ResourceProfile='standard', resource_overrides=None, *, publication_identifier_resolver=None)` | Follows the owning stage contract. |
+| `MINiMLEnricher.enrich` [source](../src/meta_standards_converter/metadata/enrichment.py#L73) | `enrich(self, data: MINiMLPackage, *, session=None) -> MINiMLPackage` | Follows the owning stage contract. |
+| `MINiMLEnricher.enrich_selected` [source](../src/meta_standards_converter/metadata/enrichment.py#L77) | `enrich_selected(self, data: MINiMLPackage, *, publications=True, run_metadata=True, session=None) -> MINiMLPackage` | Use the legacy normalization and merge rules with explicit retrieval selection. |
+| `MINiMLEnricher.enrich_pubmed` [source](../src/meta_standards_converter/metadata/enrichment.py#L132) | `enrich_pubmed(self, data: dict, *, fill_missing: bool=False, session=None) -> dict` | Follows the owning stage contract. |
+| `MINiMLEnricher.enrich_sra` [source](../src/meta_standards_converter/metadata/enrichment.py#L228) | `enrich_sra(self, data: dict, *, session=None) -> dict` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.metadata.geo_publications`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.geo_publications.GEOParentPublications` [source](../src/meta_standards_converter/metadata/geo_publications.py#L61) | `GEOParentPublications(self, source, session, available=None)` | Follows the owning stage contract. |
+| `GEOParentPublications.__init__` [source](../src/meta_standards_converter/metadata/geo_publications.py#L62) | `__init__(self, source, session, available=None)` | Follows the owning stage contract. |
+| `GEOParentPublications.inherit` [source](../src/meta_standards_converter/metadata/geo_publications.py#L66) | `inherit(self, *, packages: Sequence[MINiMLPackage], remove_empty: bool) -> tuple[list[MINiMLPackage], list[str]]` | Hydrate one unambiguous direct parent publication without adding packages. |
+
+
+### `meta_standards_converter.metadata.reconciliation`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.reconciliation.provider` [source](../src/meta_standards_converter/metadata/reconciliation.py#L15) | `provider(document)` | Follows the owning stage contract. |
+| `meta_standards_converter.metadata.reconciliation.SourceSelection` [source](../src/meta_standards_converter/metadata/reconciliation.py#L32) | `SourceSelection(self, data, extra, issues, *, mode=None)` | Follows the owning stage contract. |
+| `SourceSelection.__init__` [source](../src/meta_standards_converter/metadata/reconciliation.py#L33) | `__init__(self, data, extra, issues, *, mode=None)` | Follows the owning stage contract. |
+| `SourceSelection.prefer` [source](../src/meta_standards_converter/metadata/reconciliation.py#L42) | `prefer(self, old, new, path, default, *, scientific=False)` | Follows the owning stage contract. |
+| `SourceSelection.prefer_workflow` [source](../src/meta_standards_converter/metadata/reconciliation.py#L75) | `prefer_workflow(self, sample, identifiers)` | Follows the owning stage contract. |
+| `SourceSelection.evidence` [source](../src/meta_standards_converter/metadata/reconciliation.py#L80) | `evidence(self)` | Follows the owning stage contract. |
+| `meta_standards_converter.metadata.reconciliation.inspect_recorded_conflicts` [source](../src/meta_standards_converter/metadata/reconciliation.py#L86) | `inspect_recorded_conflicts(package, mode)` | Inspect supplied alternatives only; this operation never retrieves metadata. |
+
+
+### `meta_standards_converter.metadata.session`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.metadata.session.PreparationSession` [source](../src/meta_standards_converter/metadata/session.py#L39) | `PreparationSession(self)` | Follows the owning stage contract. |
+| `PreparationSession.__init__` [source](../src/meta_standards_converter/metadata/session.py#L40) | `__init__(self)` | Follows the owning stage contract. |
+| `PreparationSession.retrieve` [source](../src/meta_standards_converter/metadata/session.py#L49) | `retrieve(self, key, call)` | Follows the owning stage contract. |
+| `PreparationSession.load` [source](../src/meta_standards_converter/metadata/session.py#L77) | `load(self, source, accession, **options)` | Follows the owning stage contract. |
+| `meta_standards_converter.metadata.session.retrieve_once` [source](../src/meta_standards_converter/metadata/session.py#L83) | `retrieve_once(key, call, *, session=None)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.miniml.geo_parser`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.miniml.geo_parser.GEOParser` [source](../src/meta_standards_converter/miniml/geo_parser.py#L41) | `GEOParser(self, resource_profile: str='standard', resource_overrides=None)` | Follows the owning stage contract. |
+| `GEOParser.__init__` [source](../src/meta_standards_converter/miniml/geo_parser.py#L42) | `__init__(self, resource_profile: str='standard', resource_overrides=None)` | Follows the owning stage contract. |
+| `GEOParser.parse` [source](../src/meta_standards_converter/miniml/geo_parser.py#L115) | `parse(self, miniml: str, remove_empty: bool=False) -> list[MINiMLPackage]` | Follows the owning stage contract. |
+| `GEOParser.parse_mapping` [source](../src/meta_standards_converter/miniml/geo_parser.py#L142) | `parse_mapping(self, miniml: str) -> list[dict]` | Follows the owning stage contract. |
+| `GEOParser.remove_empty_fields` [source](../src/meta_standards_converter/miniml/geo_parser.py#L163) | `remove_empty_fields(self, data)` | Follows the owning stage contract. |
+| `GEOParser.series_accessions` [source](../src/meta_standards_converter/miniml/geo_parser.py#L363) | `series_accessions(self, series_packages: list[dict]) -> list[str]` | Follows the owning stage contract. |
+| `GEOParser.related_accessions` [source](../src/meta_standards_converter/miniml/geo_parser.py#L377) | `related_accessions(self, series_packages: list[dict]) -> list[str]` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.sources.ena`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.ena.ENASource` [source](../src/meta_standards_converter/sources/ena.py#L16) | `ENASource(self, http=None, requester=None, resource_profile='standard', evidence_dir=None)` | Follows the owning stage contract. |
+| `ENASource.__init__` [source](../src/meta_standards_converter/sources/ena.py#L21) | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None)` | Follows the owning stage contract. |
+| `ENASource.cross_references` [source](../src/meta_standards_converter/sources/ena.py#L25) | `cross_references(self, accession, records)` | Fetch bounded JSON pages; TSV has no header and loses its first row. |
+| `ENASource.search` [source](../src/meta_standards_converter/sources/ena.py#L68) | `search(self, result, query, fields='all')` | Follows the owning stage contract. |
+| `ENASource.xml` [source](../src/meta_standards_converter/sources/ena.py#L75) | `xml(self, accessions)` | Follows the owning stage contract. |
+| `ENASource.verified_xml` [source](../src/meta_standards_converter/sources/ena.py#L78) | `verified_xml(self, accessions, result, kind='record')` | Follows the owning stage contract. |
+| `ENASource.linked_json` [source](../src/meta_standards_converter/sources/ena.py#L184) | `linked_json(self, url, accession, id_field, result)` | Follows the owning stage contract. |
+| `ENASource.fetch_biosamples` [source](../src/meta_standards_converter/sources/ena.py#L191) | `fetch_biosamples(self, accessions, records)` | Retrieve owner/contact evidence for the explicitly bound BioSamples. |
+| `ENASource.publications` [source](../src/meta_standards_converter/sources/ena.py#L201) | `publications(self, ids, result)` | Follows the owning stage contract. |
+| `ENASource.resolve` [source](../src/meta_standards_converter/sources/ena.py#L217) | `resolve(self, accession)` | Follows the owning stage contract. |
+| `ENASource.fetch_reference_ranges` [source](../src/meta_standards_converter/sources/ena.py#L248) | `fetch_reference_ranges(self, records)` | Validate bounded ENA accession ranges; keep their records outside membership. |
+| `ENASource.fetch_associated_analyses` [source](../src/meta_standards_converter/sources/ena.py#L302) | `fetch_associated_analyses(self, records)` | Fetch one hop of explicit analysis links without importing their read studies. |
+| `ENASource.fetch` [source](../src/meta_standards_converter/sources/ena.py#L337) | `fetch(self, seed, *, _on_core=None, publications=True)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.sources.json`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.json.DatasetPackageGroup` [source](../src/meta_standards_converter/sources/json.py#L25) | `DatasetPackageGroup(dataset_id: str, packages: tuple[MINiMLPackage, ...], source_accession: str \| None = None, source_packages: tuple[MINiMLPackage, ...] \| None = None, harmonization_resolution: Any \| None = None)` | One study-sized group of parsed MINiML packages. |
+| `DatasetPackageGroup.resolved` [source](../src/meta_standards_converter/sources/json.py#L34) | `resolved(self, *, replacement_profile: Mapping[str, Any] \| None=None) -> 'DatasetPackageGroup'` | Follows the owning stage contract. |
+| `meta_standards_converter.sources.json.SourceLoadResult` [source](../src/meta_standards_converter/sources/json.py#L59) | `SourceLoadResult(groups: tuple[DatasetPackageGroup, ...], warnings: tuple[str, ...] = (), diagnostics: tuple[MINiMLValidationIssue, ...] = ())` | Groups and non-fatal source diagnostics. |
+| `meta_standards_converter.sources.json.JSONPackageSource` [source](../src/meta_standards_converter/sources/json.py#L67) | `JSONPackageSource(self, atlas_reader: AtlasV1Reader \| None=None)` | Recognize native MINiML payloads and canonical Atlas v1 documents. |
+| `JSONPackageSource.__init__` [source](../src/meta_standards_converter/sources/json.py#L70) | `__init__(self, atlas_reader: AtlasV1Reader \| None=None) -> None` | Follows the owning stage contract. |
+| `JSONPackageSource.load` [source](../src/meta_standards_converter/sources/json.py#L75) | `load(self, path: str \| Path) -> SourceLoadResult` | Follows the owning stage contract. |
+| `JSONPackageSource.decode` [source](../src/meta_standards_converter/sources/json.py#L80) | `decode(self, payload: Any, *, fallback: str='input') -> SourceLoadResult` | Decode supplied metadata using the same boundary as file loading. |
+
+
+### `meta_standards_converter.sources.metadata`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.metadata.MetadataSource` [source](../src/meta_standards_converter/sources/metadata.py#L21) | `MetadataSource` | Follows the owning stage contract. |
+| `MetadataSource.load` [source](../src/meta_standards_converter/sources/metadata.py#L22) | `load(self, source: str, **options) -> list[MINiMLPackage]` | Follows the owning stage contract. |
+| `meta_standards_converter.sources.metadata.GEOMetadataSource` [source](../src/meta_standards_converter/sources/metadata.py#L25) | `GEOMetadataSource(self, *, fetcher=None, parser=None, resource_profile='standard')` | Follows the owning stage contract. |
+| `GEOMetadataSource.__init__` [source](../src/meta_standards_converter/sources/metadata.py#L26) | `__init__(self, *, fetcher=None, parser=None, resource_profile='standard')` | Follows the owning stage contract. |
+| `GEOMetadataSource.load` [source](../src/meta_standards_converter/sources/metadata.py#L33) | `load(self, accession, *, remove_empty=True)` | Follows the owning stage contract. |
+| `GEOMetadataSource.metrics` [source](../src/meta_standards_converter/sources/metadata.py#L37) | `metrics(self)` | Follows the owning stage contract. |
+| `meta_standards_converter.sources.metadata.MAGETabMetadataSource` [source](../src/meta_standards_converter/sources/metadata.py#L41) | `MAGETabMetadataSource(self, *, fetcher=None, parser=None, resource_profile='standard', allowed_hosts=())` | Follows the owning stage contract. |
+| `MAGETabMetadataSource.__init__` [source](../src/meta_standards_converter/sources/metadata.py#L42) | `__init__(self, *, fetcher=None, parser=None, resource_profile='standard', allowed_hosts=())` | Follows the owning stage contract. |
+| `MAGETabMetadataSource.load` [source](../src/meta_standards_converter/sources/metadata.py#L53) | `load(self, source, *, sdrf_sources=None)` | Follows the owning stage contract. |
+| `MAGETabMetadataSource.metrics` [source](../src/meta_standards_converter/sources/metadata.py#L56) | `metrics(self)` | Follows the owning stage contract. |
+| `meta_standards_converter.sources.metadata.NativeMetadataSource` [source](../src/meta_standards_converter/sources/metadata.py#L60) | `NativeMetadataSource(self, provider, *, source=None, parser=None, resource_profile='standard')` | Load native records using the existing core/checkpoint recovery boundary. |
+| `NativeMetadataSource.__init__` [source](../src/meta_standards_converter/sources/metadata.py#L62) | `__init__(self, provider, *, source=None, parser=None, resource_profile='standard')` | Follows the owning stage contract. |
+| `NativeMetadataSource.load` [source](../src/meta_standards_converter/sources/metadata.py#L75) | `load(self, accession, *, publications=True, evidence_dir=None)` | Follows the owning stage contract. |
+| `NativeMetadataSource.metrics` [source](../src/meta_standards_converter/sources/metadata.py#L108) | `metrics(self)` | Follows the owning stage contract. |
+
+
+### `meta_standards_converter.sources.sra`
+
+| Definition / member | Signature or bases | Contract / declared failures |
+| --- | --- | --- |
+| `meta_standards_converter.sources.sra.SRASource` [source](../src/meta_standards_converter/sources/sra.py#L31) | `SRASource(self, http=None, requester=None, resource_profile='standard', evidence_dir=None)` | Follows the owning stage contract. |
+| `SRASource.__init__` [source](../src/meta_standards_converter/sources/sra.py#L35) | `__init__(self, http=None, requester=None, resource_profile='standard', evidence_dir=None)` | Follows the owning stage contract. |
+| `SRASource.publication_links` [source](../src/meta_standards_converter/sources/sra.py#L42) | `publication_links(self, dbfrom, db, ids, name)` | Follows the owning stage contract. |
+| `SRASource.linked_publications` [source](../src/meta_standards_converter/sources/sra.py#L68) | `linked_publications(self, records, sra_ids)` | Follows the owning stage contract. |
+| `SRASource.search` [source](../src/meta_standards_converter/sources/sra.py#L209) | `search(self, term, db='sra')` | Follows the owning stage contract. |
+| `SRASource.xml` [source](../src/meta_standards_converter/sources/sra.py#L213) | `xml(self, db, ids)` | Follows the owning stage contract. |
+| `SRASource.project_xml` [source](../src/meta_standards_converter/sources/sra.py#L217) | `project_xml(self, accession, result)` | Resolve the accession namespace before EFetch, then verify the record. |
+| `SRASource.linked_xml` [source](../src/meta_standards_converter/sources/sra.py#L242) | `linked_xml(self, db, ids, result)` | Follows the owning stage contract. |
+| `SRASource.links` [source](../src/meta_standards_converter/sources/sra.py#L246) | `links(self, dbfrom, db, ids, name)` | Follows the owning stage contract. |
+| `SRASource.resolve` [source](../src/meta_standards_converter/sources/sra.py#L252) | `resolve(self, accession)` | Follows the owning stage contract. |
+| `SRASource.fetch` [source](../src/meta_standards_converter/sources/sra.py#L299) | `fetch(self, seed, *, _on_core=None, publications=True)` | Follows the owning stage contract. |
+
 <a id="package-exports"></a>
 ## Owning-package exports
+
+| Export | Contract |
+| --- | --- |
+| `meta_standards_converter.converters.PreparationPolicy` | Owning-package export; see definition and stage contract above. |
+| `meta_standards_converter.converters.RuntimeOptions` | Owning-package export; see definition and stage contract above. |
 
 These are the explicit package `__all__` surfaces. Re-exported names resolve
 to the definitions above; constructors, fields and methods are documented there.
@@ -4385,10 +4386,6 @@ The top-level `meta_standards_converter` package exports no converter facade.
 | `meta_standards_converter.converters.Converter` | `meta_standards_converter.converters.unified.engine.Converter` |
 | `meta_standards_converter.converters.InputSpec` | `meta_standards_converter.converters.unified.contracts.InputSpec` |
 | `meta_standards_converter.converters.ConversionBatchResult` | `meta_standards_converter.converters.unified.contracts.ConversionBatchResult` |
-| `meta_standards_converter.converters.GEO2JSONConverter` | `meta_standards_converter.converters.geo2json.GEO2JSONConverter` |
-| `meta_standards_converter.converters.GEO2AEConverter` | `meta_standards_converter.converters.geo2ae.GEO2AEConverter` |
-| `meta_standards_converter.converters.AE2JSONConverter` | `meta_standards_converter.converters.ae2json.AE2JSONConverter` |
-| `meta_standards_converter.converters.JSON2AEConverter` | `meta_standards_converter.converters.json2ae.JSON2AEConverter` |
 | `meta_standards_converter.converters.JSON2TSVConverter` | `meta_standards_converter.converters.json2tsv.JSON2TSVConverter` |
 | `meta_standards_converter.converters.JSON2H5ADConverter` | `meta_standards_converter.converters.json2h5ad.JSON2H5ADConverter` |
 | `meta_standards_converter.converters.JSON2OBSConverter` | `meta_standards_converter.converters.json2obs.JSON2OBSConverter` |
@@ -4538,7 +4535,7 @@ The top-level `meta_standards_converter` package exports no converter facade.
 <a id="harmonization-overrides"></a>
 ## Converter-owned replacement profiles
 
-MSC owns export replacement policy. `JSON2AEConverter.convert`,
+MSC owns export replacement policy. `Converter.convert`,
 `JSON2TSVConverter.convert_source` / `export_manifest`,
 `JSON2H5ADConverter.convert` / `convert_source`, and `JSON2OBSConverter.convert`
 accept keyword-only `replacement_profile: Mapping[str, Any] | None = None`.
@@ -4567,7 +4564,7 @@ Harmonized evidence exports by default: tables and AnnData use
 `_onto` fields without legacy aliases. H5AD metadata is version `2.0`; the
 exported `msc_assay` ledger is `3.0`. Canonical MINiML transport stays `1.0`.
 Processed checkpoint identity includes normalized policy and converter version;
-MSC 8 writes into its own version-specific directory, separate from historical checkpoints.
+MSC 9 writes into its own version-specific directory, separate from historical checkpoints.
 
 MAGE-TAB renders sample/channel and assay characteristics, factors, parameters
 and units with adjacent ontology companions and optional hierarchy depth.
@@ -4580,12 +4577,12 @@ when replacement is active.
 
 ```python
 profile = {"schema_version": "1.0", "replacements": {"disease": ["disease"]}}
-JSON2AEConverter().convert("study.json", enrich=False, replacement_profile=profile)
+Converter().convert("study.json", out_type="magetab", preparation=PreparationPolicy(enrichment="off", expand_studies=False), output_options={"replacement_profile": profile})
 JSON2TSVConverter().export_manifest("atlas.json", outdir="tables", replacement_profile=profile)
 ```
 
 ```bash
-json2ae study.json --no-enrich --replacement-profile-file export-policy.json --out mage
+json2ae study.json --enrichment off --no-expand-studies --replacement-profile-file export-policy.json --out mage
 json2tsv atlas.json --replacement-profile-file export-policy.json --out tables
 json2h5ad study.json --asset GSM1=counts.h5ad --replacement-profile-file export-policy.json --out h5ad
 json2obs study.json --asset GSM1=counts.h5ad --replacement-profile-file export-policy.json --outdir obs
@@ -4946,7 +4943,7 @@ source hosts require `ae2json --source-host HOST` or an injected policy.
 <a id="msc6-source-services"></a>
 ## Source services
 
-Saved GEO/JSON enrichment is additive: failed, empty or partial SRA refreshes retain resolved runs and accession inventories. Completion is local to the owning sample and requires an unambiguous run ID with compatible experiment/sample/BioSample/study identities. FASTQ entries merge only through exact URI and compatible complete facts; conflicting occurrences remain separate. Existing citation values and coupled publication-status annotations are preserved, with missing details filled through the same hydration contract as native imports. A failed lookup cannot erase a known citation. `--no-enrich` still performs no remote enrichment.
+Saved GEO/JSON enrichment is additive: failed, empty or partial SRA refreshes retain resolved runs and accession inventories. Completion is local to the owning sample and requires an unambiguous run ID with compatible experiment/sample/BioSample/study identities. FASTQ entries merge only through exact URI and compatible complete facts; conflicting occurrences remain separate. Existing citation values and coupled publication-status annotations are preserved, with missing details filled through the same hydration contract as native imports. A failed lookup cannot erase a known citation. `--enrichment off --no-expand-studies` performs no optional retrieval.
 
 `GEOSource` owns retrieval and related-series traversal; `GEOParser` parses supplied
 XML without network calls. Converter-specific enrichment defaults and guarded
@@ -4982,21 +4979,21 @@ json2obs -> JSON2H5ADConverter -> AnnDataComponentExporter -> artifact bundle
 
 `SourcePlanner` retains precedence and selection policy; inject `AssetDiscovery` to supply candidates. `ProcessedAssetReader.read(asset, orientation=..., localize=...)` owns selected-asset reading, with scientific imports delayed until use. `JSON2H5ADConverter` injects readers and projectors, delegates metadata normalization to `AnnDataNormalizer`, projection execution to `AnnDataProjectorRunner`, processed state to `ProcessedCheckpointStore`, and sample catalogue publication to `CataloguePublisher`. Observation export aggregates rows without integrating sample matrices.
 
-`GEOParser` is network-free. `GEOSource` separately retrieves original XML and collects related studies. `INSDCClient.fetch_sra_xml` and `fetch_ena_file_report` permit checkpoint-aware interception. Public cumulative `RequestMetrics` snapshots replace nested requester traversal. ThematicAtlases saves original source evidence before parsing and retains incremental enrichment checkpoints; its checkpoint path does not gain ordinary converter parent-publication inheritance.
+`GEOParser` is network-free. `GEOSource` separately retrieves original XML and collects related studies. `INSDCClient.fetch_sra_xml` and `fetch_ena_file_report` permit checkpoint-aware interception. Public cumulative `RequestMetrics` snapshots replace nested requester traversal. ThematicAtlases consumes unified outcomes and preserves its checkpoint identity and partial-result rules; shared parent-publication preparation applies to its metadata calls.
 
 Protocol registries, SDRF handler audits and caches remain scoped to each build. Shared request gates and retrieval caches retain their existing ownership. Technology inheritance remains intact. MINiML models, ontology policy, Atlas lifecycle, runtime contracts, XML safety, and artifact publication retain their existing responsibilities.
 
-Processed checkpoint fingerprints hash source/package identity, assets, matrix orientation, validation policy and the normalized replacement profile. The path includes a hash of the MSC package version, preventing a different release from reusing or overwriting historical version-specific checkpoints. A different profile changes the fingerprint; this does not imply a separate profile directory. Saved canonical v2 metadata must be regenerated or converted with the preceding release before resuming through MSC 8.
+Processed checkpoint fingerprints hash source/package identity, assets, matrix orientation, validation policy and the normalized replacement profile. The path includes a hash of the MSC package version, preventing a different release from reusing or overwriting historical version-specific checkpoints. A different profile changes the fingerprint; this does not imply a separate profile directory. Saved canonical v2 metadata must be regenerated or converted with the preceding release before resuming through MSC 9.
 
 See [the class map](#oop-design) for relationships and
 [the callable inventory](#public-api-and-callable-reference) for current
 constructors, methods and source locations.
 
-### Explicit MAGE-TAB evidence orchestration
+### Explicit MAGE-TAB preparation and rendering
 
-`meta_standards_converter.metadata.enrichment.MAGETabEvidenceResolver` accepts injected PubMed and INSDC clients. `AEConstructor` creates an operation-local SDRF handler, resolves its ordered sequencing run evidence, renders protocols and paths, validates IDF prefix rows, resolves missing publication details, and constructs the remaining IDF rows. Enriched run/publication evidence suppresses retrieval; array and generic handlers do not trigger SRA retrieval. The SRA fallback still catches only request and XML parsing errors. IDF and SDRF builders no longer create network clients. [Evidence resolver](../src/meta_standards_converter/metadata/enrichment.py), [orchestration](../src/meta_standards_converter/magetab/constructor.py).
-
-Converter-focused tests mirror `sources`, `miniml`, `magetab`, `metadata`, `expression`, `converters`, and `cli` boundaries under `tests/`. Cross-service observable contracts live in `tests/e2e/` and `tests/test_service_boundaries.py`; public import smoke checks live in `tests/test_public_api.py`.
+Publication and run retrieval belongs to `MINiMLEnricher.enrich_selected` under
+`MetadataPreparation`; its session is explicit. `AEConstructor` receives prepared
+data and has no provider clients. See [the call graph](#idf-and-mage-tab-construction-flow).
 
 <a id="converter-test-contracts"></a>
 ## Converter end-to-end test contracts
@@ -5113,7 +5110,7 @@ For generated multi-channel samples with harmonized evidence, `Comment[msc_chann
 <a id="miniml-v3-only-cutover"></a>
 ## MINiML compatibility and migration
 
-MSC 8.0.0, Agentic Curator 6.0.0, ThematicAtlases 6.0.0, and the GSK adapter
+MSC 9.0.0, Agentic Curator 6.0.0, ThematicAtlases 6.0.0, and the GSK adapter
 6.0.0 require canonical MSC MINiML `3.0` at application boundaries. MSC no
 longer exports `MINiMLV2Migrator` or `MINiMLCodec.migrate_v2`; v2 packages are
 rejected, including packages embedded in Atlas metadata and profile-free
@@ -5266,7 +5263,7 @@ already fetched citation status with the shared `Harmonizer.pubstatus2efo` mappi
 Each converter calls its optional `publication_enricher` collaborator after peer
 and GEO/AE enrichment; the default `MINiMLEnricher` hydrates missing native citation
 fields only. It preserves populated values and treats status/ontology as a coupled
-group. Ordinary `json2ae` uses this same publication-only branch; `--no-enrich`
+group. Shared preparation applies the selected preset before `json2ae` rendering; `--enrichment off --no-expand-studies`
 skips it and native constructor evidence cannot initiate a fallback lookup.
 No IDs means no request, while unavailable known IDs produce warnings and converter
 issues without discarding the native package. Complete citations avoid repeat
@@ -5290,7 +5287,7 @@ mapped citation fields while retaining displaced text and an identifying key.
 
 
 `archive_dates.normalize_archive_dates` runs at native residual finalization and
-on the private MAGE-TAB construction copy, including `json2ae --no-enrich`.
+on the private MAGE-TAB construction copy, including `json2ae --enrichment off --no-expand-studies`.
 The explicit attributes `ENA-FIRST-PUBLIC` / `ENA-LAST-UPDATE` map to ENA
 sample release/update status, while `INSDC first public` / `INSDC last update`
 map to INSDC sample status. BioSample status remains separate. Exact literals,
@@ -5522,7 +5519,7 @@ explicit protocol references. Ambiguous/shared references and GEO/AE definitions
 are skipped. Legacy generated library hardware is removed only when its sole
 value equals a sequencer explicitly recorded on a run of that experiment; other
 hardware survives. Existing naming/deduplication then runs and rewrites references.
-No additional requests occur, including during `json2ae --no-enrich`.
+No additional requests occur, including during `json2ae --enrichment off --no-expand-studies`.
 
 Incomplete Browser retrieval can use available ENA indexed fields for a partial
 package. Full-record failures and identifier/count mismatches remain in logs and

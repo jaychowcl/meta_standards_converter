@@ -15,7 +15,7 @@ from tests.test_archive_publications import PubMed, NoRuns
 
 
 def render(data):
-    return AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns()).miniml2magetab(MINiMLCodec().decode(data).package)
+    return AEConstructor().miniml2magetab(MINiMLCodec().decode(data).package)
 
 
 def definition(name, description="20 ug RNA’s preparation", **kwargs):

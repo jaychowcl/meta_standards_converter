@@ -16,11 +16,11 @@ import os
 from pathlib import Path
 import sys
 
-from meta_standards_converter.converters import Converter
+from meta_standards_converter.converters import Converter, PreparationPolicy, RuntimeOptions
 from meta_standards_converter.converters.unified.discovery import (
     ALIASES, KINDS, expand, idf_references, is_url, manifest_specs,
 )
-from meta_standards_converter.converters.unified.options import TARGETS, RUNTIME_DEFAULTS
+from meta_standards_converter.converters.unified.options import TARGETS, INPUT, RUNTIME_DEFAULTS
 from meta_standards_converter.converters.unified.publication import atomic_write
 from meta_standards_converter.runtime_contracts import get_resource_profile
 from .common import (
@@ -42,18 +42,20 @@ def _boolean(group, name, help, *, aliases=(), negative_aliases=()):
                         help='Disable ' + name.replace('-', ' ') + '.')
 
 
-def _parser():
+def _parser(command="msc-convert", output_type=None, default_in_type=None):
     parser = argparse.ArgumentParser(
-        prog='msc-convert',
+        prog=command,
         description='Convert accessions, files, URLs or directories through the unified Converter.',
         epilog='Defaults: automatic input detection, standard enrichment, study expansion on, '
                'output in the current directory, overwrite off. Per-input manifest settings '
                'override command-level defaults. Raw processing requires --allow-processing.',
     )
     parser.add_argument('inputs', nargs='*', metavar='INPUT')
-    parser.add_argument('--out-type', choices=sorted(TARGETS))
-    parser.add_argument('--in-type', '--force-in-type', choices=['auto', *sorted(KINDS | ALIASES.keys())], default=argparse.SUPPRESS)
-    parser.add_argument('--input-manifest', default=argparse.SUPPRESS, help='Version 1.0 JSON input manifest; may accompany positional inputs.')
+    parser.add_argument('--out-type', choices=[output_type] if output_type else sorted(TARGETS), default=output_type)
+    parser.add_argument('--in-type', choices=['auto', *sorted(KINDS | ALIASES.keys())], default=argparse.SUPPRESS)
+    parser.add_argument('--input-manifest', default=argparse.SUPPRESS, help='Version 2.0 JSON input manifest; may accompany positional inputs.')
+    if default_in_type is not None:
+        parser.set_defaults(in_type=default_in_type)
     destination = parser.add_mutually_exclusive_group()
     destination.add_argument('--out', '--outdir', '-o', dest='outdir', help='Output directory (default: current directory).')
     destination.add_argument('--outfile', help='Exact single-file output; incompatible with MAGE-TAB and batch inputs.')
@@ -63,11 +65,10 @@ def _parser():
     add_platform_handler_arguments(parser)
     preparation = parser.add_argument_group('input preparation')
     preparation.add_argument('--enrichment', choices=('standard', 'curators', 'off'), default=argparse.SUPPRESS)
-    _boolean(preparation, 'expand-studies', 'Expand verified related studies (default: enabled).', aliases=('--related', '--related-series'), negative_aliases=('--no-related',))
+    _boolean(preparation, 'expand-studies', 'Expand verified related studies (default: enabled).')
     for name, help in (
-        ('enrich', 'Compatibility enrichment switch; prefer --enrichment.'),
-        ('include-peer', 'Allow peer archive enrichment.'),
-        ('enrich-from-geo-ae', 'Allow linked GEO/ArrayExpress metadata enrichment.'),
+        ('peer-provider', 'Allow peer archive enrichment with standard preparation.'),
+        ('linked-metadata', 'Allow linked GEO/ArrayExpress enrichment with standard preparation.'),
         ('remove-empty', 'Remove empty parsed GEO fields.'),
     ):
         _boolean(preparation, name, help)
@@ -97,6 +98,8 @@ def _parser():
         _boolean(runtime, name, {'overwrite': 'Replace existing conversion outputs and report/log files.', 'fail-fast': 'Skip later inputs after the first unsuccessful input.', 'recursive': 'Discover inputs recursively, excluding caches and nested outputs.'}[name])
     runtime.add_argument('--resource-profile', choices=('standard', 'large'), default=argparse.SUPPRESS)
     runtime.add_argument('--resource-override', action='append', type=parse_resource_override, default=argparse.SUPPRESS, metavar='FIELD=VALUE')
+    runtime.add_argument('--metadata-timeout-seconds', type=float, default=argparse.SUPPRESS)
+    runtime.add_argument('--metadata-max-requests', type=int, default=argparse.SUPPRESS)
     runtime.add_argument('--insdc-default', choices=('ena', 'sra'), default=argparse.SUPPRESS)
     runtime.add_argument('--allowed-host', '--asset-host', dest='allowed_hosts', action='append', default=argparse.SUPPRESS)
     runtime.add_argument('--reserved-path', dest='reserved_paths', action='append', default=argparse.SUPPRESS, help='Reserve an additional path against discovery/publication.')
@@ -214,8 +217,8 @@ from .logging_output import cli_entrypoint
 
 
 @cli_entrypoint
-def main(argv=None):
-    parser = _parser()
+def main(argv=None, *, command="msc-convert", output_type=None, default_in_type=None):
+    parser = _parser(command, output_type, default_in_type)
     args = parser.parse_args(argv)
     if args.list_input_types:
         for kind in sorted(KINDS):
@@ -238,12 +241,21 @@ def main(argv=None):
         _auxiliary_paths(args, options, parser)
     except (ValueError, TypeError, OSError) as error:
         parser.error(str(error))
-    kwargs = {'out_type': args.out_type, 'outdir': args.outdir or (None if args.outfile else '.'), 'options': options}
-    for name in ('in_type', 'enrichment'):
-        if hasattr(args, name):
-            kwargs[name] = getattr(args, name)
-    if args.outfile:
-        options['outfile'] = args.outfile
+    preparation = {key: options.pop(key) for key in ("expand_studies", "linked_metadata", "peer_provider") if key in options}
+    if hasattr(args, "enrichment"):
+        preparation["enrichment"] = args.enrichment
+    runtime = {key: options.pop(key) for key in RUNTIME_DEFAULTS if key in options}
+    manifest = options.pop("input_manifest", None)
+    inputs = {key: options.pop(key) for key in set().union(*INPUT.values()) if key in options}
+    try:
+        kwargs = {"out_type": args.out_type, "outdir": args.outdir or (None if args.outfile else "."),
+                  "preparation": PreparationPolicy(**preparation), "runtime": RuntimeOptions(**runtime),
+                  "input_options": inputs, "output_options": options,
+                  "input_manifest": manifest, "outfile": args.outfile}
+    except (ValueError, TypeError) as error:
+        parser.error(str(error))
+    if hasattr(args, "in_type"):
+        kwargs["in_type"] = args.in_type
     try:
         if args.log_file:
             Path(args.log_file).parent.mkdir(parents=True, exist_ok=True)
@@ -265,7 +277,7 @@ def main(argv=None):
                 report_path = Path(args.report_json).resolve()
                 if any(report_path == Path(path).resolve() for item in result.items for path in item.artifacts.values()):
                     raise ValueError('Report destination is a published conversion artifact')
-                atomic_write(args.report_json, lambda stream: json.dump(result.to_dict(), stream, ensure_ascii=False, indent=2), options.get('overwrite', False))
+                atomic_write(args.report_json, lambda stream: json.dump(result.to_dict(), stream, ensure_ascii=False, indent=2), runtime.get('overwrite', False))
         except Exception as error:
             record_safe_cli_error(logger, error, location='msc-convert', stage='report')
             return 1

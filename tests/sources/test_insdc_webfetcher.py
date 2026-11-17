@@ -20,7 +20,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
+from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.sources.insdc import INSDCWebfetcher  # noqa: E402
 
 
@@ -257,20 +257,25 @@ class TestINSDCWebfetcher(unittest.TestCase):
 
         self.assertEqual("ftp://ncbi.example/r1.fastq.gz", runs[0]["fastq_files"][0]["uri"])
 
-    def test_sdrf_constructor_delegates_sra_lookup_to_fetcher(self):
+    def test_preparation_delegates_sra_lookup_to_fetcher(self):
         fetcher = Mock()
         fetcher.fetch_sra_runs.return_value = [{"run": "SRR1"}]
 
-        result = MAGETabEvidenceResolver(insdc_client=fetcher).fetch_runs("SRX1")
+        fetcher.extract_sra_accessions.return_value = ["SRX1"]
+        package = {"sample": [{"relation": [{"type": "SRA", "target": "SRX1"}]}]}
+        result = MINiMLEnricher(insdc_fetcher=fetcher).enrich_sra(package)["sample"][0]["sra_run"]
 
         fetcher.fetch_sra_runs.assert_called_once_with(accession="SRX1")
         self.assertEqual([{"run": "SRR1"}], result)
 
-    def test_sdrf_constructor_returns_empty_runs_on_fetch_error(self):
+    def test_preparation_retains_empty_runs_on_fetch_error(self):
         fetcher = Mock()
         fetcher.fetch_sra_runs.side_effect = requests.RequestException("network unavailable")
 
-        self.assertEqual([], MAGETabEvidenceResolver(insdc_client=fetcher).fetch_runs("SRX1"))
+        fetcher.extract_sra_accessions.return_value = ["SRX1"]
+        package = {"sample": [{"relation": [{"type": "SRA", "target": "SRX1"}]}]}
+        result = MINiMLEnricher(insdc_fetcher=fetcher).enrich_sra(package)
+        self.assertEqual([], result["sample"][0]["sra_run"])
 
 
 if __name__ == "__main__":

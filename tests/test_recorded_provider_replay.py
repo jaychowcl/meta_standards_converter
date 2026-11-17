@@ -8,6 +8,7 @@
 # =============================================================================
 
 """Fail-closed replay contracts, independent of converter exception handling."""
+from meta_standards_converter.converters import PreparationPolicy
 import copy
 import hashlib
 import json
@@ -236,7 +237,7 @@ def test_reduced_conflict_is_partial_valid_in_all_formats_and_reimports():
     data = json.loads((root / "E-MTAB-16253.reduced.json").read_text())
     expected = records(data)
     for _ in range(2):
-        result = Converter().convert(data, out_type="magetab", enrichment="off", options={"expand_studies": False})
+        result = Converter().convert(data, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
         assert result.items[0].execution == "succeeded"
         assert result.items[0].validation == "valid"
         assert result.items[0].completeness == "partial"
@@ -267,13 +268,13 @@ def test_explicit_local_ae_companions_are_verified_and_no_implicit_reads(tmp_pat
     from scripts.audit_recorded_provider import build_services
     root = Path(__file__).parent / "fixtures/recorded_provider"
     replay = ReplayTransport(root / "success.manifest.json")
-    services = build_services(replay, {"ae2json": {"kind": "local-ae", "files": {
+    services = build_services(replay, {"ae_source": {"kind": "local-ae", "files": {
         "E-MTAB-16847": {"idf": "idf", "sdrfs": ["sdrf"]}}}})
     with replay.offline():
-        assert services["ae2json"].convert("E-MTAB-16847")[0]["series"]["iid"] == "E-MTAB-16847"
+        assert services["ae_source"].load("E-MTAB-16847")[0]["series"]["iid"] == "E-MTAB-16847"
     replay.files.pop("sdrf")
     with pytest.raises(HarnessError, match="unmanifested SDRF"):
-        services["ae2json"].convert("E-MTAB-16847")
+        services["ae_source"].load("E-MTAB-16847")
     with pytest.raises(HarnessError): replay.assert_no_errors()
 
 
@@ -291,7 +292,7 @@ def test_frozen_source_reconstructs_only_json_and_safe_xml(tmp_path):
         manifest["files"][name] = {"path": file.name, "sha256": hashlib.sha256(file.read_bytes()).hexdigest()}
     path.write_text(json.dumps(manifest))
     replay = ReplayTransport(path)
-    service = build_services(replay, {"sra2json": {"kind": "frozen-source", "requested_accessions": ["SRP1"], "resolution": "resolution", "records": {"SRP1": "records"}}})["sra2json"]
+    service = build_services(replay, {"sra_source": {"kind": "frozen-source", "requested_accessions": ["SRP1"], "resolution": "resolution", "records": {"SRP1": "records"}}})["sra_source"]
     source = service.source
     seed = source.resolve("SRP1").studies[0]
     assert seed == StudySeed("SRP1", "SRP1")
@@ -329,7 +330,7 @@ def test_linked_route_requires_explicit_local_services_and_policy():
     from scripts.audit_recorded_provider import validate_route_intent
     scenario = {"route_intent": "linked-only", "services": {}, "options": {}}
     with pytest.raises(HarnessError): validate_route_intent(scenario)
-    scenario["services"] = {"enricher": {"kind": "no-publication"}, "ae2json": {"kind": "local-ae"}}
+    scenario["services"] = {"enricher": {"kind": "no-publication"}, "ae_source": {"kind": "local-ae"}}
     with pytest.raises(HarnessError): validate_route_intent(scenario)
     scenario["options"]["input_options"] = {"include_peer": False, "enrich_from_geo_ae": True}
     scenario.update(formats=["json"], expected={"json": {}})

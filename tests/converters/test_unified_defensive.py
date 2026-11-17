@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Preflight boundaries must not trigger providers, processing or large loads."""
+from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
 
 import json
 from pathlib import Path
@@ -24,10 +25,10 @@ def test_explicit_missing_path_named_like_accession_is_not_retrieved(
     monkeypatch.chdir(tmp_path)
 
     class Never:
-        def convert(self, *args, **kwargs):
+        def load(self, *args, **kwargs):
             pytest.fail("Explicit paths must not reach accession retrieval")
 
-    result = Converter(services={"geo2json": Never()}).convert(
+    result = Converter(services={"geo_source": Never()}).convert(
         Path("GSE1"), out_type="json"
     )
     assert result.items[0].diagnostics[0].code == "missing_file"
@@ -37,12 +38,10 @@ def test_forcing_accession_cannot_reinterpret_missing_path(tmp_path, monkeypatch
     monkeypatch.chdir(tmp_path)
 
     class Never:
-        def convert(self, *args, **kwargs):
+        def load(self, *args, **kwargs):
             pytest.fail("Missing Path reached provider")
 
-    result = Converter(services={"geo2json": Never()}).convert(
-        Path("GSE1"), out_type="json", force_in_type="geo"
-    )
+    result = Converter(services={'geo_source': Never()}).convert(Path('GSE1'), out_type='json', in_type='geo')
     assert result.status == "failed"
     assert result.items[0].diagnostics[0].code == "missing_file"
 
@@ -62,9 +61,7 @@ def test_root_directory_symlink_is_not_traversed(tmp_path, forced):
     (real / "input.json").write_text(json.dumps(package()))
     link = tmp_path / "link"
     link.symlink_to(real, target_is_directory=True)
-    result = Converter().convert(
-        link, out_type="json", force_in_type=forced, runtime_options={"recursive": True}
-    )
+    result = Converter().convert(link, out_type='json', in_type=forced, runtime=RuntimeOptions(**{'recursive': True}))
     assert result.status == "failed"
     assert not result.items[0].dataset_ids
     assert any(d.code == "directory_symlink" for d in result.items[0].diagnostics)
@@ -109,7 +106,7 @@ def test_manifest_binding_removes_unreferenced_companion_from_discovery(tmp_path
     manifest.write_text(
         json.dumps(
             {
-                "schema_version": "1.0",
+                "schema_version": "2.0",
                 "inputs": [
                     {
                         "id": "bound",
@@ -120,7 +117,7 @@ def test_manifest_binding_removes_unreferenced_companion_from_discovery(tmp_path
             }
         )
     )
-    result = Converter().convert(tmp_path, out_type="json", enrichment="off", options={"expand_studies": False}, input_manifest=manifest)
+    result = Converter().convert(tmp_path, out_type='json', input_manifest=manifest, preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert len(result.items) == 1, result.to_dict()
     assert result.status == "partial" and result.items[0].validation == "valid", result.to_dict()
     assert all('source-text encoding' in d.message for d in result.items[0].diagnostics if d.code == 'source_partial')
@@ -129,12 +126,7 @@ def test_manifest_binding_removes_unreferenced_companion_from_discovery(tmp_path
 def test_standalone_matrix_obeys_memory_admission(tmp_path):
     path = tmp_path / "counts.tsv"
     path.write_text("gene\tc1\ng1\t1\n")
-    result = Converter().convert(
-        path,
-        out_type="h5ad",
-        input_options={"orientation": "genes-by-observations"},
-        runtime_options={"resource_overrides": {"max_in_memory_matrix_bytes": 1}},
-    )
+    result = Converter().convert(path, out_type='h5ad', input_options={'orientation': 'genes-by-observations'}, runtime=RuntimeOptions(**{'resource_overrides': {'max_in_memory_matrix_bytes': 1}}))
     assert result.status == "failed"
     assert any(d.code == "memory_limit" for d in result.items[0].diagnostics)
 
@@ -151,14 +143,7 @@ def test_raw_missing_reference_does_not_call_injected_runner(tmp_path):
             calls.append(True)
             raise AssertionError("reference must be checked first")
 
-    result = Converter(
-        services={"json2h5ad": JSON2H5ADConverter(pipeline_runner=Runner())}
-    ).convert(
-        InputSpec(reads, metadata=package()),
-        out_type="h5ad",
-        outdir=tmp_path / "out",
-        runtime_options={"allow_processing": True},
-    )
+    result = Converter(services={'json2h5ad': JSON2H5ADConverter(pipeline_runner=Runner())}).convert(InputSpec(reads, metadata=package()), out_type='h5ad', outdir=tmp_path / 'out', runtime=RuntimeOptions(**{'allow_processing': True}))
     assert not calls
     assert any(d.code == "reference_required" for d in result.items[0].diagnostics)
     assert not (tmp_path / "out").exists()
@@ -217,7 +202,7 @@ def test_probe_is_used_for_replaced_registered_handler():
 
 def test_standalone_sdrf_finds_unique_idf():
     fixture = Path(__file__).parents[2] / "tests/fixtures/studies/E-MTAB-1/inputs"
-    result = Converter().convert(next(fixture.glob("*.sdrf.txt")), out_type="json", enrichment="off", options={"expand_studies": False})
+    result = Converter().convert(next(fixture.glob('*.sdrf.txt')), out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "partial" and result.items[0].validation == "valid", result.to_dict()
     assert all('source-text encoding' in d.message for d in result.items[0].diagnostics if d.code == 'source_partial')
 
@@ -262,12 +247,12 @@ def test_manifest_xml_sources_take_precedence_over_directory_grouping(tmp_path):
     manifest.write_text(
         json.dumps(
             {
-                "schema_version": "1.0",
+                "schema_version": "2.0",
                 "inputs": [{"id": "native", "sources": names, "in_type": "ena_xml"}],
             }
         )
     )
-    result = Converter().convert(tmp_path, input_manifest=manifest, out_type="json", enrichment="off")
+    result = Converter().convert(tmp_path, input_manifest=manifest, out_type='json', preparation=PreparationPolicy(enrichment='off'))
     assert len(result.items) == 1, result.to_dict()
     assert result.status in {"complete", "partial"}, result.to_dict()
 
@@ -299,8 +284,7 @@ def test_directory_input_survives_equal_or_ancestor_output(tmp_path, ancestor):
     source = tmp_path / "inputs" if ancestor else tmp_path
     source.mkdir(exist_ok=True)
     (source / "input.json").write_text(json.dumps(package()))
-    result = Converter().convert(source, out_type="json", outdir=tmp_path,
-                                 enrichment="off")
+    result = Converter().convert(source, out_type='json', outdir=tmp_path, preparation=PreparationPolicy(enrichment='off'))
     assert result.status == "complete", result.to_dict()
     assert len(result.items) == 1
     assert (tmp_path / "GSE1.json").exists()
@@ -325,8 +309,7 @@ def test_reserved_report_path_cannot_be_artifact_parent_or_child(tmp_path, desce
     reserved = output / 'report.json' if descendant else tmp_path / 'bundle'
     if not descendant:
         output = reserved / 'result.json'
-    result = Converter().convert(package(), out_type='json', outfile=output,
-                                 enrichment='off', options={'reserved_paths': [reserved]})
+    result = Converter().convert(package(), out_type='json', outfile=output, runtime=RuntimeOptions(reserved_paths=[reserved]), preparation=PreparationPolicy(enrichment='off'))
     assert result.status == 'failed'
     assert any(d.code == 'output_collision' for d in result.items[0].diagnostics)
     assert not output.exists()

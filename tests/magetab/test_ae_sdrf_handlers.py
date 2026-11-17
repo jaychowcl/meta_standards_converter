@@ -628,13 +628,13 @@ class TestSDRFGraphHandlers(unittest.TestCase):
                 parent = FixedTechParent(tech_type)
                 with patch.object(
                     handler_class,
-                    "build",
-                    return_value=[["Source Name"], ["GSM1"]],
+                    "prepare_paths",
+                    return_value=[],
                 ) as build:
                     sdrf = parent._miniml2sdrf(base_data(sample))
 
                 build.assert_called_once_with()
-                self.assertEqual([["Source Name"], ["GSM1"]], sdrf)
+                self.assertEqual([[]], sdrf)
 
     def test_sequencing_subclasses_inherit_file_comments(self):
         sample = {

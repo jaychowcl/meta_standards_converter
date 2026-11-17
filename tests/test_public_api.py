@@ -12,7 +12,7 @@ import importlib
 
 def test_supported_owning_package_exports_import():
     exports = {
-        "converters": ("Converter", "InputSpec", "ConversionBatchResult", "GEO2JSONConverter", "GEO2AEConverter", "AE2JSONConverter", "JSON2AEConverter", "JSON2TSVConverter", "JSON2H5ADConverter", "JSON2OBSConverter"),
+        "converters": ("Converter", "InputSpec", "ConversionBatchResult", "PreparationPolicy", "RuntimeOptions", "JSON2TSVConverter", "JSON2H5ADConverter", "JSON2OBSConverter"),
         "sources": ("GEOXMLParser", "MAGETabSourceResolver", "PackageLoader"),
         "sources.json": ("JSONPackageSource",),
         "sources.insdc": ("INSDCWebfetcher",),
@@ -27,3 +27,11 @@ def test_supported_owning_package_exports_import():
         module = importlib.import_module("meta_standards_converter." + package)
         for symbol in symbols:
             assert getattr(module, symbol) is not None, (package, symbol)
+
+
+def test_removed_metadata_converter_classes_are_not_public():
+    import pytest
+    module = importlib.import_module("meta_standards_converter.converters")
+    for symbol in ("GEO2JSONConverter", "GEO2AEConverter", "AE2JSONConverter", "JSON2AEConverter"):
+        with pytest.raises(AttributeError):
+            getattr(module, symbol)

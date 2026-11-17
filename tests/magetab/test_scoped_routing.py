@@ -152,8 +152,10 @@ def test_full_construction_shares_lookup_and_registry_across_mixed_samples():
         'sample': samples,
     }
     provider=RecordedINSDC()
-    converter=AEConstructor(insdc_client=provider)
-    rows=converter.miniml2magetab(MINiMLCodec().decode(data).package)
+    converter=AEConstructor()
+    from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+    prepared=MINiMLEnricher(insdc_fetcher=provider).enrich_selected(data, publications=False, run_metadata=True)
+    rows=converter.miniml2magetab(prepared)
     assert provider.calls==['SRX1']
     table=next(r[1] for r in rows if r[0]=='SDRF File')
     assert [r[0] for r in table[1:]]==['GSM1','GSM2']
@@ -167,7 +169,8 @@ def test_full_construction_shares_lookup_and_registry_across_mixed_samples():
     assert set(refs)<=set(names)
     assert next(r for r in rows if r[0]=='Comment[AEExperimentType]')==['Comment[AEExperimentType]']
     # Reuse of the constructor is a new operation, with fresh registry/audit/cache.
-    again=converter.miniml2magetab(MINiMLCodec().decode(data).package)
+    prepared=MINiMLEnricher(insdc_fetcher=provider).enrich_selected(data, publications=False, run_metadata=True)
+    again=converter.miniml2magetab(prepared)
     assert provider.calls==['SRX1','SRX1']
     assert rows==again
 
@@ -266,7 +269,9 @@ def test_mixed_array_does_not_suppress_sequencing_retrieval():
     data={'miniml_schema_version':"3.0",'source':{'format':'test'},'series':{'iid':'GSE1','title':'mixed'},
           'platform':[{'iid':'GPL1','technology':'expression array'}], 'sample':[seq,array]}
     provider=RecordedINSDC()
-    rows=AEConstructor(insdc_client=provider).miniml2magetab(MINiMLCodec().decode(data).package)
+    from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+    prepared=MINiMLEnricher(insdc_fetcher=provider).enrich_selected(data, publications=False, run_metadata=True)
+    rows=AEConstructor().miniml2magetab(prepared)
     assert provider.calls==['SRX1']
     table=next(r[1] for r in rows if r[0]=='SDRF File')
     assert table[1][table[0].index('Comment[ENA_RUN]')]=='SRR1'

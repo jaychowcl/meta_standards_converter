@@ -43,6 +43,11 @@ For other repositories and platform selection, follow the
 [curator guide](docs/curators-guide.md). For H5AD/OBS dependencies and processing
 requirements, see the [runtime guide](docs/codebase.md#runtime-behavior).
 
+MSC 9 uses `Converter.convert` with immutable `PreparationPolicy` and
+`RuntimeOptions`. Named metadata commands share this path. See the
+[MSC 9 migration guide](docs/codebase.md#unified-compatibility) for Python examples,
+removed classes, configuration changes and input manifests v2.
+
 ## Docs
 
 - [Curator guide](docs/curators-guide.md): installation, repository examples,
@@ -52,7 +57,7 @@ requirements, see the [runtime guide](docs/codebase.md#runtime-behavior).
 - [Python API](docs/codebase.md#unified-converter): `Converter.convert()`,
   supported inputs and outputs, and advanced settings.
 - [Docs index](docs/index.md): guides and references by topic.
-- [Codebase docs](docs/codebase.md): canonical architecture, legacy commands,
+- [Codebase docs](docs/codebase.md): canonical architecture, shared commands,
   Python interfaces, Docker setup and testing instructions.
 
 ## Authors

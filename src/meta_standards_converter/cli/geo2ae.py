@@ -6,120 +6,12 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""
-Command line interface for GEO to ArrayExpress MAGE-TAB conversion.
-"""
-
-import argparse
-import logging
-
-from meta_standards_converter.cli.common import (
-    add_logging_arguments,
-    add_platform_handler_arguments,
-    add_resource_profile_arguments,
-    configured_resource_profile,
-    configure_logging,
-    print_platform_handlers,
-    record_safe_cli_error,
-)
-from meta_standards_converter.converters.geo2ae import GEO2AEConverter
-
-logger = logging.getLogger(__name__)
+"""geo2ae: named entrypoint for the shared metadata conversion pipeline."""
+from .convert import main as convert_main
 
 
-def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Convert one or more GEO Series accessions to ArrayExpress MAGE-TAB files."
-    )
-    parser.add_argument(
-        "gse",
-        nargs="*",
-        help="GEO Series accession(s), for example GSE234602.",
-    )
-    parser.add_argument(
-        "--related",
-        "--related-series",
-        "--get-related-series",
-        action="store_true",
-        dest="related_series",
-        help="Include related GEO super/subseries where available.",
-    )
-    cleanup_group = parser.add_mutually_exclusive_group()
-    cleanup_group.add_argument(
-        "--remove-empty",
-        action="store_true",
-        dest="remove_empty",
-        default=True,
-        help="Remove empty parsed MINiML fields before conversion. This is the default.",
-    )
-    cleanup_group.add_argument(
-        "--keep-empty",
-        action="store_false",
-        dest="remove_empty",
-        help="Preserve empty parsed MINiML fields before conversion.",
-    )
-    parser.add_argument(
-        "--out",
-        default=".",
-        help="Directory for generated IDF and SDRF files. Defaults to the current directory.",
-    )
-    add_platform_handler_arguments(parser)
-    add_resource_profile_arguments(parser.add_argument_group("resource policy"))
-    add_logging_arguments(parser)
-    return parser
-
-
-from .logging_output import cli_entrypoint
-
-
-@cli_entrypoint
-def main(argv=None) -> int:
-    parser = _parser()
-    args = parser.parse_args(argv)
-    if args.list_platform_handlers:
-        print_platform_handlers()
-        return 0
-    if not args.gse:
-        parser.error("the following arguments are required: gse")
-    configure_logging(args)
-    converter = GEO2AEConverter(
-        resource_profile=configured_resource_profile(args, parser)
-    )
-    failed = False
-    logger.debug(
-        "Starting geo2ae CLI with %d accession(s), related_series=%s, remove_empty=%s, out=%s",
-        len(args.gse),
-        args.related_series,
-        args.remove_empty,
-        args.out,
-    )
-
-    for gse in args.gse:
-        logger.debug("%s: conversion started", gse)
-        try:
-            convert_options = dict(
-                gse=gse,
-                related_series=args.related_series,
-                remove_empty=args.remove_empty,
-                out=args.out,
-            )
-            if args.platform_handler:
-                convert_options["platform_handler"] = args.platform_handler
-            magetabs = converter.convert(**convert_options)
-        except Exception as error:
-            failed = True
-            record_safe_cli_error(
-                logger,
-                error,
-                location=gse,
-                stage="magetab_conversion",
-                provider="geo",
-            )
-            continue
-
-        logger.debug("%s: converted %d MAGE-TAB output(s) to %s", gse, len(magetabs), args.out)
-
-    return 1 if failed else 0
+def main(argv=None):
+    return convert_main(argv, command='geo2ae', output_type='magetab', default_in_type=None)
 
 
 if __name__ == "__main__":

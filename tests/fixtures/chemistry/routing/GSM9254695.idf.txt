@@ -36,9 +36,9 @@ Protocol Description	Mice underwent transverse aortic constriction (TAC) surgery
 Protocol Hardware						
 Protocol Software						
 SDRF File	E-GEOD-900012.sdrf.txt
-Term Source Name	EFO
-Term Source File	http://www.ebi.ac.uk/efo/efo.owl
-Term Source Version	3.90.0
+Term Source Name	EFO	GEO
+Term Source File	http://www.ebi.ac.uk/efo/efo.owl	
+Term Source Version	3.90.0	
 Investigation Accession	GSE900012
 Comment[SecondaryAccession]	GSE900012
 Comment[SecondaryAccessionTermSourceRef]	GEO

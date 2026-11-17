@@ -17,7 +17,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver  # noqa: E402
+from meta_standards_converter.metadata.enrichment import MINiMLEnricher  # noqa: E402
 from meta_standards_converter.metadata.ontology_mappings import Harmonizer  # noqa: E402
 from meta_standards_converter.sources.pubmed import PubmedWebFetcher  # noqa: E402
 
@@ -133,7 +133,7 @@ class TestPubmedWebFetcher(unittest.TestCase):
             summary,
         )
 
-    def test_idf_constructor_delegates_pubmed_lookup_to_fetcher(self):
+    def test_preparation_delegates_pubmed_lookup_to_fetcher(self):
         fetcher = Mock()
         fetcher.pubmed_summary.return_value = (
             "doi",
@@ -144,10 +144,10 @@ class TestPubmedWebFetcher(unittest.TestCase):
             "EFO_0001796",
         )
 
-        result = MAGETabEvidenceResolver(pubmed_client=fetcher).publications({"series": {"pubmed_id": ["123"]}})[0]
+        result = MINiMLEnricher(pubmed_fetcher=fetcher)._pubmed_publication("123")
 
         fetcher.pubmed_summary.assert_called_once_with(pubmed_id="123")
-        self.assertEqual(fetcher.pubmed_summary.return_value, result)
+        self.assertEqual(fetcher.pubmed_summary.return_value, tuple(result[k] for k in ("doi", "author_list", "title", "status", "status_term_source_ref", "status_term_accession_number")))
 
 
 if __name__ == "__main__":

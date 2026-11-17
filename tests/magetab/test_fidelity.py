@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """MAGE-TAB field meaning survives the typed MINiML boundary."""
+from meta_standards_converter.converters import PreparationPolicy
 from copy import deepcopy
 from collections import Counter
 import csv
@@ -34,8 +35,7 @@ def test_array_roundtrip_is_strict_and_preserves_namespace_and_units():
     package = AEParser().parse(AEWebFetcher().resolve(str(path)))
     MINiMLCodec().decode(package, strict=True)
     assert package.platforms[0].technology == "other"
-    result = Converter().convert(package, out_type="magetab", enrichment="off",
-                                 options={"expand_studies": False})
+    result = Converter().convert(package, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "complete", result.to_dict()
     rows = next(row[1] for row in result.items[0].payload[0] if row[0] == "SDRF File")
     assert rows == table(path.with_name("E-MTAB-16847.sdrf.txt"))
@@ -54,8 +54,7 @@ def test_reference_qualifiers_are_typed_and_backward_compatible():
 
 
 def test_geo_array_declares_the_namespace_of_its_actual_identifier():
-    result = Converter().convert(FIXTURES / "studies/GSE100/inputs/geo.xml",
-        out_type="magetab", enrichment="off", options={"expand_studies": False})
+    result = Converter().convert(FIXTURES / 'studies/GSE100/inputs/geo.xml', out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "complete", result.to_dict()
     idf = result.items[0].payload[0]
     sdrf = next(row[1] for row in idf if row[0] == "SDRF File")
@@ -113,8 +112,7 @@ PANEL = ["E-MTAB-13662", "E-MTAB-14560", "E-MTAB-14566", "E-MTAB-16192",
 @pytest.mark.parametrize("accession", PANEL)
 def test_recorded_archive_panel_preserves_ordered_fields_and_rows(accession):
     path = FIXTURES / "fidelity" / (accession + ".idf.txt")
-    result = Converter().convert(path, out_type="magetab", enrichment="off",
-                                 options={"expand_studies": False})
+    result = Converter().convert(path, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "complete", result.to_dict()
     actual = next(r[1] for r in result.items[0].payload[0] if r[0] == "SDRF File")
     expected = table(path.with_name(accession + ".sdrf.txt"))
@@ -142,8 +140,7 @@ def test_recorded_archive_panel_preserves_ordered_fields_and_rows(accession):
 @pytest.mark.parametrize("target", ["json", "magetab", "tsv", "csv"])
 def test_recorded_erp000263_package_converts_without_enrichment(target):
     value = json.loads((FIXTURES / "fidelity/ERP000263.ena.json").read_text())
-    result = Converter().convert(value, out_type=target, enrichment="off",
-                                 options={"expand_studies": False})
+    result = Converter().convert(value, out_type=target, preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "complete", result.to_dict()
 
 
@@ -168,8 +165,7 @@ def test_node_comments_do_not_migrate_onto_a_characteristic_or_factor():
 def test_native_sra_broker_matches_available_library_facts_without_enrichment():
     value = json.loads((FIXTURES / 'fidelity/ERP185509.sra.json').read_text())[0]
     assert value['series']['iid'] == 'ERP185509'
-    result = Converter().convert(value, out_type='magetab', enrichment='off',
-                                 options={'expand_studies': False})
+    result = Converter().convert(value, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == 'complete', result.to_dict()
     native = next(r[1] for r in result.items[0].payload[0] if r[0] == 'SDRF File')
     broker = table(FIXTURES / 'fidelity/E-MTAB-16253.sdrf.txt')

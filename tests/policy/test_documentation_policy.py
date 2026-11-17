@@ -200,7 +200,7 @@ class DocsIndexTests(unittest.TestCase):
             self.assertRegex(codebase_text, rf"`(?:[^`]*\.)?{re.escape(symbol)}`")
 
         self.assertTrue(
-            {"GEO2JSONConverter", "JSON2H5ADConverter", "JSON2OBSConverter"} <= set(exports)
+            {"Converter", "PreparationPolicy", "RuntimeOptions", "JSON2H5ADConverter", "JSON2OBSConverter"} <= set(exports)
         )
 
         source_root = ROOT / "src" / "meta_standards_converter"
@@ -508,13 +508,19 @@ class DocsIndexTests(unittest.TestCase):
 
         for command, module in modules.items():
             match = re.search(
-                rf"^#### `{command}`\s*$\n(?P<section>.*?)(?=^#### |^### |\Z)",
+                rf"^#{{3,4}} `{command}`\s*$\n(?P<section>.*?)(?=^#### |^### |\Z)",
                 readme_text,
                 re.MULTILINE | re.DOTALL,
             )
             self.assertIsNotNone(match, command)
             section = match.group("section")
-            for action in module._parser()._actions:
+            if command in {"geo2json", "geo2ae", "ae2json", "json2ae"}:
+                self.assertIn("#unified-cli", section)
+                section = readme_text.split('#### `msc-convert`', 1)[1].split('<a id=', 1)[0]
+                parser = modules["msc-convert"]._parser()
+            else:
+                parser = module._parser()
+            for action in parser._actions:
                 if action.option_strings:
                     for option in action.option_strings:
                         self.assertIn(f"`{option}`", section, f"{command}: {option}")
@@ -525,19 +531,21 @@ class DocsIndexTests(unittest.TestCase):
         import inspect
         from meta_standards_converter.converters import Converter
         from meta_standards_converter.converters.unified.options import INPUT, OUTPUT, RUNTIME_DEFAULTS
-        from meta_standards_converter.converters.unified.requests import PREPARATION, PreparationPolicy
+        from dataclasses import fields
+        from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
 
         text = CODEBASE.read_text()
         reference = text.split('<a id="unified-converter"></a>', 1)[1].split('<a id="unified-results"></a>', 1)[0]
-        keys = set().union(*INPUT.values(), *OUTPUT.values(), RUNTIME_DEFAULTS, PREPARATION)
-        keys.update(("outfile", "input_manifest", "execution_profile"))
+        keys = set().union(*INPUT.values(), *OUTPUT.values(), RUNTIME_DEFAULTS, {f.name for f in fields(PreparationPolicy)})
+        keys.update(("outfile", "input_manifest"))
         for key in keys:
             self.assertRegex(reference, rf"`{re.escape(key)}(?:`|=)", key)
         parameters = inspect.signature(Converter.convert).parameters
         self.assertEqual(parameters["in_type"].default, "auto")
-        self.assertEqual(parameters["enrichment"].default, "standard")
+        self.assertIsNone(parameters["preparation"].default)
+        self.assertEqual(PreparationPolicy().enrichment, "standard")
         self.assertTrue(PreparationPolicy().expand_studies)
-        for argument in ("input", "in_type", "out_type", "outdir", "enrichment"):
+        for argument in ("input", "in_type", "out_type", "outdir", "preparation", "runtime"):
             self.assertIn(argument, parameters)
         for document in (README, CURATORS):
             content = document.read_text()

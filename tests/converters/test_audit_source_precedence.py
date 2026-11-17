@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Facade presets select values without changing scientific identity joins."""
+from meta_standards_converter.converters import PreparationPolicy
 from copy import deepcopy
 from meta_standards_converter.converters import Converter
 from meta_standards_converter.miniml import MINiMLCodec
@@ -31,7 +32,7 @@ def package(provider='SRA', layout='SINGLE'):
 
 class Frozen:
     def __init__(self, data): self.data = data; self.calls = []
-    def convert(self, accession, **kwargs):
+    def load(self, accession, **kwargs):
         self.calls.append(accession)
         return [MINiMLCodec().decode(self.data, strict=True).package]
 
@@ -43,15 +44,13 @@ class NoPublication:
 
 def convert(data, incoming, *, mode='standard'):
     converter = Frozen(incoming)
-    linked = LinkedArchiveEnricher(geo_converter=converter, ae_converter=converter)
+    linked = LinkedArchiveEnricher(geo_source=converter, ae_source=converter)
     from meta_standards_converter.converters.archive_results import ArchiveImportResult, StudyImportOutcome
     class Peer:
-        def convert(self, accession, **kwargs):
+        def load(self, accession, **kwargs):
             return ArchiveImportResult(accession, [StudyImportOutcome(accession, accession, 'complete', MINiMLCodec().decode(data, strict=True).package)])
-    facade = Converter(services={'linked_enricher': linked, 'enricher': NoPublication(), 'ena2json': Peer()})
-    kwargs = {'enrichment': mode}
-    result = facade.convert(MINiMLCodec().decode(data, strict=True).package, out_type='json',
-        options={'expand_studies': False}, **kwargs)
+    facade = Converter(services={'linked_enricher': linked, 'enricher': NoPublication(), 'ena_source': Peer()})
+    result = facade.convert(MINiMLCodec().decode(data, strict=True).package, out_type='json', preparation=PreparationPolicy(enrichment=mode, expand_studies=False))
     return result, converter.calls
 
 
@@ -109,12 +108,10 @@ def test_off_preserves_recorded_conflict_without_reconciliation():
 
 def test_equal_rank_peer_keeps_native_and_fills_missing_fact():
     from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
-    from meta_standards_converter.metadata.reconciliation import selection_policy
     a, b = package(), package(layout='PAIRED')
     b['source']['format'] = 'ENA'
     b['sample'][0]['sra_run'][0]['library_selection'] = 'cDNA'
-    with selection_policy('standard'):
-        merged, issues = merge_archive_metadata(MINiMLCodec().decode(a).package, MINiMLCodec().decode(b).package)
+    merged, issues = merge_archive_metadata(MINiMLCodec().decode(a).package, MINiMLCodec().decode(b).package, mode='standard')
     run = merged.to_mapping()['sample'][0]['sra_run'][0]
     assert run['library_layout'] == 'SINGLE'
     assert run['library_selection'] == 'cDNA'
@@ -133,11 +130,9 @@ def test_standard_keeps_distinct_biological_occurrences():
 
 def test_selected_source_provenance_prevents_later_lower_rank_overwrite():
     from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
-    from meta_standards_converter.metadata.reconciliation import selection_policy
     codec = MINiMLCodec()
-    with selection_policy('standard'):
-        first, _ = merge_archive_metadata(codec.decode(package()).package, codec.decode(package('MAGE-TAB', 'PAIRED')).package, prefer=True)
-        second, issues = merge_archive_metadata(first, codec.decode(package('GEO', 'SINGLE')).package, prefer=True)
+    first, _ = merge_archive_metadata(codec.decode(package()).package, codec.decode(package('MAGE-TAB', 'PAIRED')).package, prefer=True, mode='standard')
+    second, issues = merge_archive_metadata(first, codec.decode(package('GEO', 'SINGLE')).package, prefer=True, mode='standard')
     data = second.to_mapping()
     assert data['series']['title'] == 'MAGE-TAB'
     assert data['sample'][0]['sra_run'][0]['library_layout'] == 'PAIRED'

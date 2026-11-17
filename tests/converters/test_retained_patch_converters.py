@@ -7,6 +7,10 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 from __future__ import annotations
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 
 import csv
 import json
@@ -15,7 +19,7 @@ import anndata
 import pandas
 from scipy import sparse
 
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
 from meta_standards_converter.miniml import (
@@ -100,7 +104,7 @@ def test_tsv_exposes_deterministic_patch_provenance_without_overrides(tmp_path) 
 def test_magetab_keeps_raw_characteristic_and_adds_machine_comments(tmp_path) -> None:
     source = tmp_path / "package.json"
     source.write_text(json.dumps(_applied_package()), encoding="utf-8")
-    magetab = JSON2AEConverter().convert(str(source), enrich=False)[0]
+    magetab = converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     sdrf = next(row[1] for row in magetab if row and row[0] == "SDRF File")
     header, values = sdrf[0], sdrf[1]
 

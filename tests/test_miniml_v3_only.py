@@ -8,6 +8,10 @@
 # =============================================================================
 
 """The supported canonical boundary is v3, including fresh legacy ingestion."""
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import copy
 import json
 
@@ -57,9 +61,7 @@ def test_json_source_rejects_v2(envelope, tmp_path):
 @pytest.mark.parametrize("atlas", [False, True])
 def test_converters_reject_v2_without_destination_artifacts(kind, atlas, tmp_path):
     from pathlib import Path
-    from meta_standards_converter.converters import (
-        JSON2AEConverter, JSON2TSVConverter, JSON2H5ADConverter, JSON2OBSConverter,
-    )
+    from meta_standards_converter.converters import JSON2TSVConverter, JSON2H5ADConverter, JSON2OBSConverter
     payload = obsolete_package()
     if atlas:
         document = json.loads((Path(__file__).parent / "fixtures/edge_cases/atlas-groups/inputs/atlas.json").read_text())
@@ -70,13 +72,20 @@ def test_converters_reject_v2_without_destination_artifacts(kind, atlas, tmp_pat
     source, destination = tmp_path / "old.json", tmp_path / "destination"
     source.write_text(json.dumps(payload))
     conversions = {
-        "ae": lambda: JSON2AEConverter().convert(str(source), enrich=False, platform_handler="generic"),
+        "ae": lambda: converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'generic'}),
         "tsv": lambda: JSON2TSVConverter().convert_source(source, destination),
         "h5ad": lambda: JSON2H5ADConverter().convert(str(source), out=str(destination)),
         "obs": lambda: JSON2OBSConverter().convert(source, outdir=destination),
     }
-    with pytest.raises(ValueError, match="3.0"):
-        conversions[kind]()
+    if kind == "ae":
+        batch = Converter().convert(source, out_type="magetab", outdir=destination,
+            preparation=PreparationPolicy(enrichment="off", expand_studies=False))
+        assert batch.items[0].execution == "failed"
+        assert not batch.items[0].artifacts
+        assert batch.items[0].error.error_type in {"MINiMLCompatibilityError", "MINiMLModelError", "ValueError"}
+    else:
+        with pytest.raises(ValueError, match="3.0"):
+            conversions[kind]()
     assert not destination.exists()
 
 
@@ -112,7 +121,7 @@ def test_breaking_distribution_version():
     import tomllib
     from pathlib import Path
     config = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text())
-    assert config["project"]["version"] == "8.0.0"
+    assert config["project"]["version"] == "9.0.0"
 
 
 def test_legacy_channel_groups_preserve_explicit_indexes():

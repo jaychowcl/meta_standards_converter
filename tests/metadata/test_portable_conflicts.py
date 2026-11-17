@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Conflict provenance survives artifacts, scopes and repeated imports."""
+from meta_standards_converter.converters import PreparationPolicy
 import csv,io,json
 from copy import deepcopy
 import pytest
@@ -48,7 +49,7 @@ def records(data):
 def test_facade_roundtrip_keeps_conflicts_without_refetch_or_reselection():
     data=conflicted()
     for _ in range(2):
-        result=Converter().convert(data,out_type='magetab',enrichment='off',options={'expand_studies':False})
+        result=Converter().convert(data, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
         assert result.status=='partial'
         assert result.items[0].validation=='valid'
         assert any('recorded source conflict' in d.message for d in result.items[0].diagnostics)
@@ -62,12 +63,12 @@ def test_facade_roundtrip_keeps_conflicts_without_refetch_or_reselection():
 
 @pytest.mark.parametrize('value',['not JSON',json.dumps({'schema_version':'2.0','record':record()}),json.dumps({'schema_version':'1.0','record':{}})])
 def test_unrecognized_conflict_comments_survive_with_diagnostics(value):
-    tables=Converter().convert(package(),out_type='magetab',enrichment='off').items[0].payload[0]
+    tables=Converter().convert(package(), out_type='magetab', preparation=PreparationPolicy(enrichment='off')).items[0].payload[0]
     tables.append(['Comment[MSCConflict]',value])
     parsed,warnings=import_tables(tables)
     assert not records(parsed)
     assert any('MSCConflict' in w for w in warnings)
-    emitted=Converter().convert(parsed,out_type='magetab',enrichment='off').items[0].payload[0]
+    emitted=Converter().convert(parsed, out_type='magetab', preparation=PreparationPolicy(enrichment='off')).items[0].payload[0]
     assert value in [v for row in emitted if row[0]=='Comment[MSCConflict]' for v in row[1:]]
 
 
@@ -76,7 +77,7 @@ def test_conflicts_project_only_to_affected_sample_or_study(fmt):
     data=conflicted();other=deepcopy(data['sample'][0]);other['iid']='SRS2';other['accession']=[{'value':'SRS2'}];other['sra_run'][0].update(run='SRR2',experiment='SRX2',sample='SRS2')
     data['sample'].append(other);data['series']['sample_ref'].append({'ref':'SRS2'})
     data['extensions']['insdc']['records'].append(record('/series/title'))
-    result=Converter().convert(data,out_type=fmt,enrichment='off')
+    result=Converter().convert(data, out_type=fmt, preparation=PreparationPolicy(enrichment='off'))
     table=next(iter(result.items[0].payload.values()));rows={r['msc.sample.accession']:r for r in table.rows}
     assert len(json.loads(rows['SRS1']['msc.provenance.conflicts']))==2
     assert len(json.loads(rows['SRS2']['msc.provenance.conflicts']))==1
@@ -97,16 +98,16 @@ def test_anndata_conflicts_are_portable(tmp_path):
 
 def test_conflict_values_are_not_whitespace_normalized_by_projection():
     data=conflicted();data['extensions']['insdc']['records'][0]['metadata']['statements'][0]['value']='two  spaces'
-    result=Converter().convert(data,out_type='tsv',enrichment='off')
+    result=Converter().convert(data, out_type='tsv', preparation=PreparationPolicy(enrichment='off'))
     rows=next(iter(result.items[0].payload.values())).rows
     assert json.loads(rows[0]['msc.provenance.conflicts'])[0]['metadata']['statements'][0]['value']=='two  spaces'
 
 
 def test_unrecognized_conflict_summary_remains_source_text():
-    tables=Converter().convert(package(),out_type='magetab',enrichment='off').items[0].payload[0]
+    tables=Converter().convert(package(), out_type='magetab', preparation=PreparationPolicy(enrichment='off')).items[0].payload[0]
     tables.append(['Comment[MSCConflict]',json.dumps({'schema_version':'99.0','record':record()})])
     tables.append(['Comment[MSCConflictSummary]','Original summary for the unknown version'])
     for _ in range(2):
         parsed,warnings=import_tables(tables)
-        tables=Converter().convert(parsed,out_type='magetab',enrichment='off').items[0].payload[0]
+        tables=Converter().convert(parsed, out_type='magetab', preparation=PreparationPolicy(enrichment='off')).items[0].payload[0]
         assert [v for r in tables if r[0]=='Comment[MSCConflictSummary]' for v in r[1:]]==['Original summary for the unknown version']

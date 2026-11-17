@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Independent deposited-source acceptance with row and qualifier ownership."""
+from meta_standards_converter.converters import PreparationPolicy
 from copy import deepcopy
 from pathlib import Path
 
@@ -164,8 +165,7 @@ def test_full_deposited_panel_preserves_scoped_source_occurrences(accession):
     isolation = ReplayTransport(Path(__file__).parents[1]/'fixtures/recorded_provider/success.manifest.json')
     with isolation.offline():
         from meta_standards_converter.converters import Converter
-        result = Converter().convert(FIXTURES/(accession+'.idf.txt'), out_type='magetab',
-            enrichment='off', options={'expand_studies':False})
+        result = Converter().convert(FIXTURES / (accession + '.idf.txt'), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     isolation.assert_complete()
     assert len(result.items) == 1
     item = result.items[0]
@@ -203,8 +203,7 @@ def test_actual_exports_retain_946_protocol_qualifiers_with_graph_row_identity(a
     isolation=ReplayTransport(Path(__file__).parents[1]/'fixtures/recorded_provider/success.manifest.json')
     with isolation.offline():
         from meta_standards_converter.converters import Converter
-        result=Converter().convert(FIXTURES/(accession+'.idf.txt'),out_type='magetab',
-            enrichment='off',options={'expand_studies':False})
+        result=Converter().convert(FIXTURES / (accession + '.idf.txt'), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     isolation.assert_complete()
     assert len(result.items)==1 and len(result.items[0].payload)==1
     tables=[row[1] for row in result.items[0].payload[0] if row[0]=='SDRF File']

@@ -84,7 +84,7 @@ class TestProjectScripts(unittest.TestCase):
         with open(os.path.join(ROOT, "pyproject.toml"), "rb") as handle:
             config = tomllib.load(handle)
         project = config["project"]
-        self.assertEqual(project["version"], "8.0.0")
+        self.assertEqual(project["version"], "9.0.0")
         self.assertEqual(project["requires-python"], ">=3.12")
         self.assertEqual(project["license"], "GPL-3.0-only")
         self.assertEqual(project["license-files"], ["LICENSE"])

@@ -6,6 +6,10 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 from copy import deepcopy
 import json
 import xml.etree.ElementTree as ET
@@ -55,7 +59,7 @@ def test_administrative_dates_are_scoped_counted_and_idempotent():
 def test_idf_partition_happens_after_overlay_and_ae_accession_is_not_secondary():
     data=legacy();data['series']['accession'] += [{'value':'E-MTAB-308','database':'ArrayExpress'},{'value':'GSE1','database':'GEO'}]
     data['series']['comments']=[{'name':'UserNote','value':'keep'}]
-    rows=AEConstructor(pubmed_client=PubMed(),insdc_client=NoRuns()).miniml2magetab(MINiMLCodec().decode(data).package)
+    rows=AEConstructor().miniml2magetab(MINiMLCodec().decode(data).package)
     first=next(i for i,r in enumerate(rows) if r[0].startswith('Comment['))
     assert all(r[0].startswith('Comment[') for r in rows[first:])
     values={r[0]:r[1:] for r in rows}
@@ -67,11 +71,11 @@ def test_idf_partition_happens_after_overlay_and_ae_accession_is_not_secondary()
 
 @pytest.mark.parametrize('enrich',[False,True])
 def test_existing_json_exports_without_admin_characteristics_or_mutation(tmp_path,enrich):
-    from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
     from meta_standards_converter.metadata.enrichment import MINiMLEnricher
     path=tmp_path/'legacy.json';path.write_text(json.dumps(legacy()));before=path.read_bytes()
     client=PubMed();service=MINiMLEnricher(pubmed_fetcher=client,insdc_fetcher=NoRuns())
-    rows=JSON2AEConverter(enricher=service,ae_constructor=AEConstructor(pubmed_client=client,insdc_client=NoRuns())).convert(str(path),enrich=enrich)[0]
+    rows=converted(Converter(services={'enricher': service, 'magetab_exporter': MAGETabExporter(AEConstructor())}), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='standard' if enrich else 'off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     table=next(r[1] for r in rows if r[0]=='SDRF File')
     assert not any(any(key in label for key in ('ENA-FIRST-PUBLIC','ENA-LAST-UPDATE','INSDC last update')) for label in table[0])
     assert 'Characteristics[collection_date]' in table[0]

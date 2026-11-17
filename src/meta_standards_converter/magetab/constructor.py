@@ -11,7 +11,6 @@ Constructor class for ae MAGETAB idf and sdrf
 '''
 from meta_standards_converter.conversion_logging import measured
 from meta_standards_converter.magetab.idf import IDFConstructor
-from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
 from meta_standards_converter.magetab.semantics import overlay_miniml_semantics
 from meta_standards_converter.magetab.protocols import ProtocolRegistry
 from meta_standards_converter.magetab.technology import detect_ae_technology, has_array_files, series_identity, resolve_technology
@@ -46,23 +45,32 @@ from .preparation import preparation_operation
 from ._performance import phase
 
 
+from dataclasses import dataclass
+from .sdrf.constructor import SDRFExportPlan
+
+
+@dataclass(frozen=True)
+class MAGETabExportPlan:
+    data: dict
+    protocol_registry: ProtocolRegistry
+    technology_type: str
+    prefix_rows: list
+    sdrf: SDRFExportPlan
+
+
 class AEConstructor:
-    def __init__(self, idf_constructor=None, sdrf_constructor=None, *, pubmed_client=None, insdc_client=None, evidence_resolver=None):
-        # Injected collaborators may intentionally transform the private view
-        # after handler preparation. Preserve their eager-table contract.
-        self._canonical_table_preparation = (
-            idf_constructor is None and sdrf_constructor is None and evidence_resolver is None
-        )
-        self.evidence = evidence_resolver or MAGETabEvidenceResolver(pubmed_client, insdc_client)
-        self.idf_constructor = idf_constructor or IDFConstructor()
-        self.sdrf_constructor = sdrf_constructor or SDRFConstructor()
+    """Build MAGE-TAB exclusively from supplied metadata; no provider clients."""
+    def __init__(self, idf_constructor=None, sdrf_constructor=None):
+        self.idf_constructor = idf_constructor if idf_constructor is not None else IDFConstructor()
+        self.sdrf_constructor = sdrf_constructor if sdrf_constructor is not None else SDRFConstructor()
 
     @preparation_operation
     @measured("projection")
     def miniml2magetab(self, data: MINiMLPackage, platform_handler: str | None = None) -> list:
-        """
-        converts miniml json to magetab idf. Walks through sections of idf to extract from miniml
-        """
+        return self.render(self.prepare(data, platform_handler=platform_handler))
+
+    def prepare(self, data: MINiMLPackage, *, platform_handler=None) -> MAGETabExportPlan:
+        """Validate once and build a private export plan, retaining audit effects."""
         with phase("magetab_model_reconstruction"):
             # Decode validates external/changed typed inputs as well as mappings.
             # Its canonical package needs one detached view, not another complete
@@ -99,54 +107,35 @@ class AEConstructor:
         from meta_standards_converter.magetab.native_files import project_native_files
         project_native_files(data)
         with phase("magetab_routing"):
-            forced = platform_handler is not None
-            if forced:
-                technology_type = validate_platform_handler(platform_handler)
-            else:
-                technology_type = self._detect_ae_technology(data=data)
             protocol_registry = ProtocolRegistry(series_accession=self._series_accession(data=data))
-            handler = self.sdrf_constructor.create_handler(
-                data=data, protocol_registry=protocol_registry, technology_type=technology_type,
-            )
-            evidence_type = technology_type
-            if not forced and technology_type == 'generic' and any(
-                resolve_technology(sample, data=data).handler not in {'array', 'generic'}
-                for sample in handler.ordered_samples()
-            ):
-                # A mixed IDF summary must not suppress sequencing source evidence.
-                evidence_type = 'sequencing'
-        with phase("magetab_run_evidence"):
-            handler.run_evidence = self.evidence.sample_runs(handler, evidence_type)
-        if not forced:
-            handler, technology_type = self.sdrf_constructor.create_operation_handler(
-                data, protocol_registry, handler.run_evidence,
-            )
-        canonical_paths = data.get('series', {}).get('assay_paths', [])
-        if (self._canonical_table_preparation
-                and type(self.idf_constructor) is IDFConstructor
-                and type(self.evidence) is MAGETabEvidenceResolver
-                and type(self.sdrf_constructor) is SDRFConstructor and canonical_paths
-                and self.sdrf_constructor._prepare_for_canonical_paths(handler)):
-            # A nonempty validated path list always supplies a semantic table.
-            # Keep protocol/audit preparation, then materialize that table once
-            # in the overlay at its original place in the IDF workflow.
-            sdrf = []
-        else:
-            sdrf = self.sdrf_constructor.build(handler)
-        # Keep IDF validation before its publication lookup, as in the old flow.
+            if platform_handler is not None:
+                technology_type = validate_platform_handler(platform_handler)
+                handler = self.sdrf_constructor.create_handler(data=data,
+                    protocol_registry=protocol_registry, technology_type=technology_type)
+            else:
+                handler, technology_type = self.sdrf_constructor.create_operation_handler(data, protocol_registry)
+        sdrf = self.sdrf_constructor.prepare(handler,
+            canonical_paths=data.get("series", {}).get("assay_paths", []),
+            preserve_order=data.get("source", {}).get("format") in {"ENA", "SRA"})
         prefix_rows = self.idf_constructor.prefix_rows(data)
-        with phase("magetab_publication_evidence"):
-            publication_details = self.evidence.publications(data)
+        return MAGETabExportPlan(data, protocol_registry, technology_type, prefix_rows, sdrf)
+
+    def render(self, plan: MAGETabExportPlan) -> list:
+        data = plan.data
+        sdrf = self.sdrf_constructor.render(plan.sdrf)
         with phase("magetab_idf_construction"):
             idf = self.idf_constructor.miniml2idf(
-                data=data, prefix_rows=prefix_rows, publication_details=publication_details,
-                protocol_registry=protocol_registry,
-                technology_type=technology_type,
+                data=data, prefix_rows=plan.prefix_rows,
+                protocol_registry=plan.protocol_registry,
+                technology_type=plan.technology_type,
             )
         sdrf_index = self._sdrf_row_index(rows=idf)
         if sdrf_index is None:
             raise ValueError("IDF does not contain an SDRF File row.")
         idf[sdrf_index] = ["SDRF File", sdrf, *idf[sdrf_index][2:]]
+        return self._finalize(data, idf)
+
+    def _finalize(self, data, idf):
         from .accession_rows import expand_secondary_accession_rows
         result = IDFConstructor()._move_comment_rows_to_bottom(
             expand_secondary_accession_rows(overlay_miniml_semantics(data, idf)))

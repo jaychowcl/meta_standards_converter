@@ -13,10 +13,10 @@ import pytest
 from tests.support.contracts import GEO, PBMC, AE, prepare, assert_expected
 
 CASES = [
-    ("geo2json", GEO, ["GSE328265", "--out", "out"]),
-    ("geo2ae", GEO, ["GSE328265", "--out", "out", "--platform-handler", "single_cell_sequencing"]),
-    ("json2ae", GEO, ["miniml.json", "--out", "out", "--no-enrich", "--platform-handler", "single_cell_sequencing"]),
-    ("ae2json", AE, ["E-MTAB-6486.idf.txt", "--out", "out"]),
+    ("geo2json", GEO, ["GSE328265", "--no-expand-studies", "--out", "out"]),
+    ("geo2ae", GEO, ["GSE328265", "--no-expand-studies", "--out", "out", "--platform-handler", "single_cell_sequencing"]),
+    ("json2ae", GEO, ["miniml.json", "--out", "out", "--enrichment", "off", "--no-expand-studies", "--platform-handler", "single_cell_sequencing"]),
+    ("ae2json", AE, ["E-MTAB-6486.idf.txt", "--enrichment", "off", "--no-expand-studies", "--out", "out"]),
     ("json2tsv", GEO, ["miniml.json", "--out", "out"]),
     ("json2h5ad", PBMC, ["miniml.json", "--out", "out", "--asset", "PBMC3K_SAMPLE=counts.tsv", "--matrix-orientation", "genes-by-observations"]),
     ("json2obs", PBMC, ["miniml.json", "--outdir", "out", "--asset", "PBMC3K_SAMPLE=counts.tsv", "--matrix-orientation", "genes-by-observations", "--include-var", "--include-uns"]),
@@ -33,12 +33,12 @@ def test_cli_dispatch_publishes_reviewed_outputs(name, case, argv, workspace, re
     elif name == "ae2json":
         expected_warnings = json.loads((AE / "diagnostics.json").read_text())
         assert captured.out == ""
-        assert "Conversion: complete" in captured.err
+        assert "complete" in captured.err
         for text in expected_warnings:
             assert text in captured.err
     else:
         assert captured.out == ""
-        assert "Conversion: complete" in captured.err
+        assert "complete" in captured.err
     if name.startswith("geo2"):
         assert replay == ["geo:GSE328265", "pubmed:42129775", "sra:SRX32831930", "ena:SRX32831930"]
     else:

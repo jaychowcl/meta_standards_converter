@@ -10,5 +10,6 @@
 
 from .contracts import InputSpec, ConversionBatchResult
 from .engine import Converter
+from .requests import PreparationPolicy, RuntimeOptions
 
-__all__ = ["Converter", "InputSpec", "ConversionBatchResult"]
+__all__ = ["Converter", "InputSpec", "ConversionBatchResult", "PreparationPolicy", "RuntimeOptions"]

@@ -7,6 +7,10 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Source-faithful protocol detail projection and export contracts."""
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import json
 from copy import deepcopy
 import xml.etree.ElementTree as ET
@@ -116,7 +120,7 @@ def legacy_package():
 
 def test_saved_native_json_export_upgrades_only_in_memory(tmp_path, monkeypatch):
     import requests
-    from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
     from meta_standards_converter.magetab.protocol_export import prepare_protocols
     def forbidden(*args, **kwargs):
         raise AssertionError('no remote lookup allowed')
@@ -125,7 +129,7 @@ def test_saved_native_json_export_upgrades_only_in_memory(tmp_path, monkeypatch)
     original = json.dumps(data)
     path = tmp_path / 'native.json'
     path.write_text(original)
-    output = JSON2AEConverter().convert(str(path), enrich=False)[0]
+    output = converted(Converter(), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     rows = {r[0]: r[1:] for r in output}
     assert rows['Protocol Description'] == ['Hi-C - Arima v2\n\n' + METHOD]
     assert not any(rows['Protocol Hardware'])

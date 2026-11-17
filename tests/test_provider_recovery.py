@@ -6,7 +6,9 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from meta_standards_converter.sources.metadata import NativeMetadataSource
 """Provider recovery facts cross the public conversion boundary without prose parsing."""
+from meta_standards_converter.converters import PreparationPolicy
 import json
 from types import SimpleNamespace
 import xml.etree.ElementTree as ET
@@ -47,8 +49,7 @@ def issues(item):
 ])
 def test_native_resolution_preserves_failure_cause(error, reason):
     source = ENASource(http=ArchiveHTTP('ena_portal', requester=Requester(error=error)))
-    item = Converter(services={'ena2json': ENA2JSONConverter(source=source)}).convert(
-        'SRP250911', in_type='ena_accession', out_type='json', enrichment='off').items[0]
+    item = Converter(services={'ena_source': NativeMetadataSource('ena', source=source)}).convert('SRP250911', in_type='ena_accession', out_type='json', preparation=PreparationPolicy(enrichment='off')).items[0]
     found = issues(item)
     assert len(found) == 1
     assert found[0]['reason'] == reason
@@ -67,8 +68,7 @@ def test_legacy_diagnostic_serialization_is_unchanged():
 
 def test_empty_provider_result_is_not_a_provider_failure():
     source = ENASource(http=ArchiveHTTP('ena_portal', requester=Requester(body=b'[]')))
-    item = Converter(services={'ena2json': ENA2JSONConverter(source=source)}).convert(
-        'SRP250911', in_type='ena_accession', out_type='json', enrichment='off').items[0]
+    item = Converter(services={'ena_source': NativeMetadataSource('ena', source=source)}).convert('SRP250911', in_type='ena_accession', out_type='json', preparation=PreparationPolicy(enrichment='off')).items[0]
     assert issues(item) == []
 
 
@@ -80,7 +80,7 @@ def test_remote_parse_failure_but_not_local_parse_failure(fmt, body):
         with pytest.raises((ValueError, ET.ParseError)):
             ArchiveHTTP('ena_portal', requester=Requester(body)).get('https://www.ebi.ac.uk/ena/test', fmt=fmt)
     assert issues(item)[0]['reason'] == 'provider_response_invalid'
-    local = Converter().convert('<bad>', in_type='geo_xml', out_type='json', enrichment='off').items[0]
+    local = Converter().convert('<bad>', in_type='geo_xml', out_type='json', preparation=PreparationPolicy(enrichment='off')).items[0]
     assert issues(local) == []
 
 
@@ -105,7 +105,7 @@ def test_handled_and_recovered_issues_do_not_make_success_partial():
 
 def test_cached_partial_result_replays_its_structured_issues():
     from meta_standards_converter.provider_issues import collect_provider_issues, provider_boundary
-    from meta_standards_converter.metadata.preparation_scope import preparation_session, retrieve_once
+    from meta_standards_converter.metadata.session import PreparationSession
     @provider_boundary(provider='ena', operation='study_resolution')
     def fail():
         raise requests.Timeout('ignored')
@@ -115,10 +115,10 @@ def test_cached_partial_result_replays_its_structured_issues():
         except requests.Timeout:
             return []
     results = [ConversionItemResult(str(i), 'remote') for i in range(2)]
-    with preparation_session():
+    with PreparationSession() as session:
         for result in results:
             with collect_provider_issues(result):
-                retrieve_once('shared', partial)
+                session.retrieve('shared', partial)
     assert len(issues(results[0])) == len(issues(results[1])) == 1
     assert issues(results[0]) == issues(results[1])
 

@@ -6,112 +6,12 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Command line interface for parsed MINiML JSON to MAGE-TAB conversion."""
-
-import argparse
-import logging
-
-from meta_standards_converter.cli.common import (
-    add_replacement_profile_arguments, replacement_profile_from_args,
-    add_logging_arguments,
-    add_platform_handler_arguments,
-    configure_logging,
-    print_platform_handlers,
-    record_safe_cli_error,
-)
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
+"""json2ae: named entrypoint for the shared metadata conversion pipeline."""
+from .convert import main as convert_main
 
 
-logger = logging.getLogger(__name__)
-
-
-def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=(
-            "Convert canonical Atlas v1 JSON or parsed MINiML JSON "
-            "to ArrayExpress MAGE-TAB files."
-        )
-    )
-    parser.add_argument(
-        "json_path",
-        nargs="*",
-        help=(
-            "Parsed MINiML or canonical Atlas v1 JSON file(s), "
-            "for example GSE234602.json."
-        ),
-    )
-    parser.add_argument(
-        "--no-enrich",
-        action="store_false",
-        dest="enrich",
-        default=True,
-        help="Skip PubMed/SRA enrichment and convert the JSON exactly as supplied.",
-    )
-    parser.add_argument(
-        "--out",
-        default=".",
-        help="Directory for generated IDF and SDRF files. Defaults to the current directory.",
-    )
-    add_replacement_profile_arguments(parser)
-    add_platform_handler_arguments(parser)
-    add_logging_arguments(parser)
-    return parser
-
-
-from .logging_output import cli_entrypoint
-
-
-@cli_entrypoint
-def main(argv=None) -> int:
-    parser = _parser()
-    args = parser.parse_args(argv)
-    replacement_profile = replacement_profile_from_args(args, parser)
-    if args.list_platform_handlers:
-        print_platform_handlers()
-        return 0
-    if not args.json_path:
-        parser.error("the following arguments are required: json_path")
-    configure_logging(args)
-    converter = JSON2AEConverter()
-    failed = False
-    logger.debug(
-        "Starting json2ae CLI with %d JSON file(s), enrich=%s, out=%s",
-        len(args.json_path),
-        args.enrich,
-        args.out,
-    )
-
-    for json_path in args.json_path:
-        logger.debug("%s: conversion started", json_path)
-        try:
-            convert_options = dict(
-                json_path=json_path,
-                enrich=args.enrich,
-                out=args.out,
-            )
-            if args.platform_handler:
-                convert_options["platform_handler"] = args.platform_handler
-            if replacement_profile is not None:
-                convert_options["replacement_profile"] = replacement_profile
-            magetabs = converter.convert(**convert_options)
-        except Exception as error:
-            failed = True
-            record_safe_cli_error(
-                logger,
-                error,
-                location=json_path,
-                stage="magetab_conversion",
-            )
-            continue
-
-        logger.debug(
-            "%s: converted %d MAGE-TAB output(s) to %s",
-            json_path,
-            len(magetabs),
-            args.out,
-        )
-
-    return 1 if failed else 0
+def main(argv=None):
+    return convert_main(argv, command='json2ae', output_type='magetab', default_in_type='json')
 
 
 if __name__ == "__main__":

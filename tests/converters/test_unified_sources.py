@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Source routing preserves provider identity and native parser semantics."""
+from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
 
 import io
 import json
@@ -30,54 +31,21 @@ ROOT = Path(__file__).parents[2]
 def test_geo_accession_and_local_xml_produce_equivalent_artifact_bytes(
     target, tmp_path
 ):
-    from meta_standards_converter.converters.geo2ae import GEO2AEConverter
-    from meta_standards_converter.converters.geo2json import GEO2JSONConverter
-    from meta_standards_converter.converters.json2ae import JSON2AEConverter
-    from meta_standards_converter.magetab.constructor import AEConstructor
-    from meta_standards_converter.miniml.geo_parser import GEOParser
-
+    from meta_standards_converter.sources.metadata import GEOMetadataSource
+    from meta_standards_converter.magetab.exporter import MAGETabExporter
+    from unittest.mock import Mock
     source = ROOT / "tests/fixtures/studies/GSE100/inputs/geo.xml"
-    text = source.read_text()
-
-    class Fetcher:
-        def fetch_gse_miniml(self, **kwargs):
-            return text
-
-    class Parser:
-        def parse(self, **kwargs):
-            return GEOParser().parse(
-                kwargs["miniml"], remove_empty=kwargs.get("remove_empty", True)
-            )
-
-    class Enricher:
-        def enrich(self, data):
-            return data
-
-    constructor = AEConstructor(
-        evidence_resolver=SimpleNamespace(
-            publications=lambda data: [], sample_runs=lambda handler, kind: {}
-        )
-    )
-    services = {
-        "geo2ae": GEO2AEConverter(
-            geo_fetcher=Fetcher(),
-            parser=Parser(),
-            enricher=Enricher(),
-            ae_constructor=constructor,
-        ),
-        "geo2json": GEO2JSONConverter(
-            geo_fetcher=Fetcher(), parser=Parser(), enricher=Enricher()
-        ),
-        "json2ae": JSON2AEConverter(ae_constructor=constructor),
-    }
+    fetcher = Mock()
+    fetcher.fetch_gse_miniml.return_value = source.read_text()
+    services = {"geo_source": GEOMetadataSource(fetcher=fetcher)}
     accession = Converter(services=services).convert(
-        "GSE100", out_type=target, outdir=tmp_path / "accession"
+        "GSE100", out_type=target, outdir=tmp_path / "accession", preparation=PreparationPolicy(enrichment="off", expand_studies=False)
     )
     local = Converter(services=services).convert(
         source,
         out_type=target,
         outdir=tmp_path / "local",
-        output_options={"enrich": False} if target == "magetab" else None,
+        preparation=PreparationPolicy(enrichment="off", expand_studies=False),
     )
     assert accession.status == local.status == "complete", (
         accession.to_dict(),
@@ -95,17 +63,15 @@ def test_geo_accession_and_local_xml_produce_equivalent_artifact_bytes(
     }
     assert expected == actual
     assert len(expected) == (1 if target == "json" else 2)
-    if target == "magetab":
-        # The facade's composed route must preserve the legacy direct construction.
-        assert accession.items[0].payload == services["geo2ae"].convert("GSE100")
 
 
 def test_enrichment_is_applied_at_the_route_stage_that_owns_it():
     calls = []
 
     class Exporter:
-        def convert_loaded(self, loaded, **options):
-            calls.append(options["enrich"])
+        def render(self, loaded, **options):
+            calls.append("render")
+            assert "enrich" not in options
             return [
                 [
                     ["Investigation Accession", "GSE1"],
@@ -114,7 +80,7 @@ def test_enrichment_is_applied_at_the_route_stage_that_owns_it():
             ]
 
     class Importer:
-        def convert(self, *args, **kwargs):
+        def load(self, *args, **kwargs):
             return [MINiMLCodec().decode(package()).package]
 
     class Enricher:
@@ -122,12 +88,12 @@ def test_enrichment_is_applied_at_the_route_stage_that_owns_it():
             calls.append("preparation")
             return data
 
-    converter = Converter(services={"json2ae": Exporter(), "geo2json": Importer(), "enricher": Enricher()})
+    converter = Converter(services={"magetab_exporter": Exporter(), "geo_source": Importer(), "enricher": Enricher()})
     local = converter.convert(
         ROOT / "tests/fixtures/studies/GSE100/inputs/geo.xml", out_type="magetab"
     )
     assert local.status == "complete"
-    assert calls == ["preparation", False]
+    assert calls == ["preparation", "render"]
     from meta_standards_converter.converters.unified.handlers import InputHandler
     from meta_standards_converter.converters.unified.engine import ExecutionContext
     from meta_standards_converter.converters.unified.options import RUNTIME_DEFAULTS
@@ -159,7 +125,7 @@ def test_accession_defaults_and_partial_propagation(accession, provider, tmp_pat
         def __init__(self, name):
             self.name = name
 
-        def convert(self, value, **options):
+        def load(self, value, **options):
             calls.append((self.name, value, options))
             return ArchiveImportResult(
                 value,
@@ -175,22 +141,22 @@ def test_accession_defaults_and_partial_propagation(accession, provider, tmp_pat
             )
 
     converter = Converter(
-        services={"sra2json": Archive("sra"), "ena2json": Archive("ena")}
+        services={"sra_source": Archive("sra"), "ena_source": Archive("ena")}
     )
     result = converter.convert(accession, out_type="csv", outdir=tmp_path)
     assert result.status == "partial", result.to_dict()
     assert calls[0][0] == provider and result.items[0].provider == provider
     assert result.items[0].artifacts
-    forced = converter.convert(accession, out_type="json", force_in_type="sra")
+    forced = converter.convert(accession, out_type='json', in_type='sra')
     assert forced.items[0].provider == "sra"
 
 
 def test_missing_paths_never_reach_provider(tmp_path):
     class Never:
-        def convert(self, *a, **kw):
+        def load(self, *a, **kw):
             raise AssertionError("must not retrieve")
 
-    result = Converter(services={"ae2json": Never()}).convert(
+    result = Converter(services={"ae_source": Never()}).convert(
         tmp_path / "E-MTAB-1.idf.txt", out_type="json"
     )
     assert result.status == "failed"
@@ -200,19 +166,19 @@ def test_missing_paths_never_reach_provider(tmp_path):
 def test_geo_xml_and_archive_have_same_packages(tmp_path):
     source = ROOT / "tests/fixtures/studies/GSE100/inputs/geo.xml"
     converter = Converter()
-    xml = converter.convert(source, out_type="json", enrichment="off", options={"expand_studies": False})
+    xml = converter.convert(source, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert xml.status == "complete", xml.to_dict()
     archive = tmp_path / "family.tgz"
     with tarfile.open(archive, "w:gz") as tar:
         tar.add(source, arcname="GSE100_family.xml")
-    packed = converter.convert(archive, out_type="json", enrichment="off", options={"expand_studies": False})
+    packed = converter.convert(archive, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert packed.status == "complete", packed.to_dict()
     assert packed.items[0].payload == xml.items[0].payload
     with tarfile.open(archive, "w:gz") as tar:
         member = tarfile.TarInfo("../escape.xml")
         member.size = 1
         tar.addfile(member, io.BytesIO(b"x"))
-    assert converter.convert(archive, out_type="json", enrichment="off", options={"expand_studies": False}).status == "failed"
+    assert converter.convert(archive, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False)).status == "failed"
     assert not (tmp_path.parent / "escape.xml").exists()
 
 
@@ -227,8 +193,7 @@ def test_native_record_bundle(provider):
             for kind in ("study", "sample", "experiment", "run")
         ]
     )
-    result = Converter().convert(
-        InputSpec(paths, in_type=provider + "_xml"), out_type="json", enrichment="off", options={"expand_studies": False})
+    result = Converter().convert(InputSpec(paths, in_type=provider + '_xml'), out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status in {"complete", "partial"}, result.to_dict()
     sample = result.items[0].payload[0].to_mapping()["sample"][0]
     assert sample["sra_run"][0]["run"] == "SRR11192680"
@@ -236,7 +201,7 @@ def test_native_record_bundle(provider):
 
 def test_magetab_directory_consumes_sdrf_once():
     directory = ROOT / "tests/fixtures/studies/E-MTAB-1/inputs"
-    result = Converter().convert(directory, out_type="json", enrichment="off", options={"expand_studies": False})
+    result = Converter().convert(directory, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert len(result.items) == 1, result.to_dict()
     assert result.status == "partial" and result.items[0].validation == "valid", result.to_dict()
     assert all('source-text encoding' in d.message for d in result.items[0].diagnostics if d.code == 'source_partial')
@@ -250,7 +215,7 @@ def test_untrusted_remote_url_is_rejected_without_network():
 
 def test_manifest_rejects_unknown_fields_and_conflicting_ids():
     invalid = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "inputs": [{"id": "x", "sources": ["GSE1"], "typo": True}],
     }
     with pytest.raises(ValueError):
@@ -258,7 +223,7 @@ def test_manifest_rejects_unknown_fields_and_conflicting_ids():
 
 
 def test_local_xml_force_does_not_bypass_root_validation():
-    result = Converter().convert("<ROOT/>", force_in_type="geo_xml", out_type="json")
+    result = Converter().convert('<ROOT/>', in_type='geo_xml', out_type='json')
     assert result.status == "failed"
 
 
@@ -268,7 +233,7 @@ def test_discovery_groups_ena_companions_by_directory(tmp_path):
     original = ROOT / "docs/ena/fixtures/SRX7812918"
     for kind in ("study", "sample", "experiment", "run"):
         shutil.copyfile(original / (kind + ".xml"), tmp_path / (kind + ".xml"))
-    result = Converter().convert(tmp_path, out_type="json", enrichment="off", options={"expand_studies": False})
+    result = Converter().convert(tmp_path, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert len(result.items) == 1, result.to_dict()
     assert result.status in {"complete", "partial"}, result.to_dict()
     assert result.items[0].dataset_ids == ("PRJNA609050",)
@@ -291,12 +256,7 @@ def test_native_conflicting_duplicate_records_are_rejected(tmp_path):
 
 
 def test_same_destination_from_different_inputs_is_never_overwritten(tmp_path):
-    result = Converter().convert(
-        [InputSpec(package(), id="a"), InputSpec(package(), id="b")],
-        out_type="json",
-        outdir=tmp_path,
-        runtime_options={"overwrite": True},
-    )
+    result = Converter().convert([InputSpec(package(), id='a'), InputSpec(package(), id='b')], out_type='json', outdir=tmp_path, runtime=RuntimeOptions(**{'overwrite': True}))
     assert [i.status for i in result.items] == ["complete", "failed"]
     assert any(d.code == "output_collision" for d in result.items[1].diagnostics)
 
@@ -324,17 +284,11 @@ def test_native_records_object_is_defensive_and_not_mutated(provider):
     )
     records = StudyRecords(StudySeed(study, study), xml=roots)
     before = deepcopy(records)
-    result = Converter().convert(
-        records, out_type="json", force_in_type=provider + "_records", enrichment="off"
-    )
+    result = Converter().convert(records, out_type='json', in_type=provider + '_records', preparation=PreparationPolicy(enrichment='off'))
     assert result.status in {"complete", "partial"}, result.to_dict()
     assert records.issues == before.issues
     assert [ET.tostring(root) for root in records.xml] == [
         ET.tostring(root) for root in before.xml
     ]
-    rejected = Converter().convert(
-        StudyRecords(StudySeed(study, study)),
-        out_type="json",
-        force_in_type=provider + "_records",
-    )
+    rejected = Converter().convert(StudyRecords(StudySeed(study, study)), out_type='json', in_type=provider + '_records')
     assert rejected.status == "failed"

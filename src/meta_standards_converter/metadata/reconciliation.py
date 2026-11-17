@@ -7,11 +7,8 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Source value selection is independent of archive identity and membership joins."""
-from contextlib import contextmanager
-from contextvars import ContextVar
 from copy import deepcopy
 
-_mode = ContextVar('msc_reconciliation_mode', default=None)
 _RANK = {'ArrayExpress': 3, 'GEO': 2, 'SRA': 1, 'ENA': 1, 'DRA': 1}
 
 
@@ -21,14 +18,6 @@ def provider(document):
             'biostudies': 'ArrayExpress', 'ae': 'ArrayExpress', 'geo miniml': 'GEO', 'geo': 'GEO',
             'sra': 'SRA', 'ena': 'ENA', 'dra': 'DRA'}.get(value, value)
 
-
-@contextmanager
-def selection_policy(mode):
-    token = _mode.set(mode)
-    try:
-        yield
-    finally:
-        _mode.reset(token)
 
 
 def _meaning(value):
@@ -42,7 +31,7 @@ def _meaning(value):
 
 class SourceSelection:
     def __init__(self, data, extra, issues, *, mode=None):
-        self.mode = mode if mode is not None else _mode.get()
+        self.mode = mode
         self.current = {'provider': provider(data), 'accession': data['series']['iid']}
         self.incoming = {'provider': provider(extra), 'accession': extra['series']['iid']}
         self.issues, self.records, self.selections = issues, [], {}

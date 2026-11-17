@@ -22,7 +22,8 @@ if SRC not in sys.path:
 from meta_standards_converter.magetab.constructor import AEConstructor  # noqa: E402
 from meta_standards_converter.magetab.idf import IDFConstructor  # noqa: E402
 from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
-from meta_standards_converter.converters.json2ae import JSON2AEConverter  # noqa: E402
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.json import JSONPackageSource  # noqa: E402
 from meta_standards_converter.sources.json import (  # noqa: E402
     DatasetPackageGroup,
     SourceLoadResult,
@@ -87,12 +88,7 @@ def atlas_dataset(dataset_id, status, metadata, diagnostics=None):
     }
 
 
-class TestJSON2AEConverter(unittest.TestCase):
-    def setUp(self):
-        from unittest.mock import patch
-        patcher = patch("meta_standards_converter.converters.json2ae.MAGETabWriter")
-        self.writer = patcher.start().return_value
-        self.addCleanup(patcher.stop)
+class TestMAGETabExporter(unittest.TestCase):
 
     def write_json(self, directory, payload, name="input.json"):
         path = os.path.join(directory, name)
@@ -106,27 +102,6 @@ class TestJSON2AEConverter(unittest.TestCase):
             json.dump(payload, handle)
         return path
 
-    def test_convert_loads_list_enriches_and_builds_each_package_in_order(self):
-        enricher = MagicMock()
-        constructor = MagicMock()
-        first = package("GSE1")
-        second = package("GSE2")
-        enriched_first = typed({**first, "extensions": {"enriched": True}})
-        enriched_second = typed({**second, "extensions": {"enriched": True}})
-        enricher.enrich.side_effect = [enriched_first, enriched_second]
-        constructor.miniml2magetab.side_effect = ["first-magetab", "second-magetab"]
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = self.write_json(tmpdir, [first, second])
-            result = JSON2AEConverter(enricher=enricher, ae_constructor=constructor).convert(path)
-
-        self.assertEqual(["first-magetab", "second-magetab"], result)
-        self.assertEqual([call(data=typed(first)), call(data=typed(second))], enricher.enrich.call_args_list)
-        self.assertEqual(
-            [call(data=enriched_first), call(data=enriched_second)],
-            constructor.miniml2magetab.call_args_list,
-        )
-        self.writer.write.assert_not_called()
 
     def test_convert_accepts_one_package_object_and_can_skip_enrichment(self):
         enricher = MagicMock()
@@ -136,10 +111,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = JSON2AEConverter(enricher=enricher, ae_constructor=constructor).convert(
-                path,
-                enrich=False,
-            )
+            result = MAGETabExporter(constructor=constructor).render(JSONPackageSource().load(path))
 
         self.assertEqual(["magetab"], result)
         enricher.enrich.assert_not_called()
@@ -152,11 +124,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = JSON2AEConverter(ae_constructor=constructor).convert(
-                path,
-                enrich=False,
-                platform_handler="bulk_sequencing",
-            )
+            result = MAGETabExporter(constructor=constructor).render(JSONPackageSource().load(path), platform_handler='bulk_sequencing')
 
         self.assertEqual(["magetab"], result)
         constructor.miniml2magetab.assert_called_once_with(
@@ -164,26 +132,10 @@ class TestJSON2AEConverter(unittest.TestCase):
             platform_handler="bulk_sequencing",
         )
 
-    def test_convert_writes_each_magetab_when_out_is_supplied(self):
-        constructor = MagicMock()
-        constructor.miniml2magetab.side_effect = ["first", "second"]
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = self.write_json(tmpdir, [package("GSE1"), package("GSE2")])
-            result = JSON2AEConverter(
-                enricher=MagicMock(enrich=lambda data: data),
-                ae_constructor=constructor,
-            ).convert(path, out=tmpdir)
-
-        self.assertEqual(["first", "second"], result)
-        self.assertEqual(
-            [call(magetab="first", out=tmpdir), call(magetab="second", out=tmpdir)],
-            self.writer.write.call_args_list,
-        )
 
     def test_convert_rejects_missing_file(self):
-        with self.assertRaisesRegex(FileNotFoundError, "MINiML JSON file not found"):
-            JSON2AEConverter().convert("missing.json")
+        with self.assertRaisesRegex(FileNotFoundError, "missing.json"):
+            MAGETabExporter().render(JSONPackageSource().load('missing.json'))
 
     def test_convert_rejects_empty_package_list(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -191,14 +143,14 @@ class TestJSON2AEConverter(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError, "JSON source contains no convertible package groups"
             ):
-                JSON2AEConverter().convert(path)
+                MAGETabExporter().render(JSONPackageSource().load(path))
 
     def test_convert_rejects_non_object_package_before_enrichment(self):
         enricher = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, [package(), "invalid"])
             with self.assertRaisesRegex(ValueError, "package 2 must be a JSON object"):
-                JSON2AEConverter(enricher=enricher).convert(path)
+                MAGETabExporter().render(JSONPackageSource().load(path))
         enricher.enrich.assert_not_called()
 
     def test_convert_rejects_package_without_geo_series_accession(self):
@@ -213,7 +165,7 @@ class TestJSON2AEConverter(unittest.TestCase):
                 },
             )
             with self.assertRaisesRegex(ValueError, "series requires iid or accession"):
-                JSON2AEConverter().convert(path)
+                MAGETabExporter().render(JSONPackageSource().load(path))
 
     def test_convert_accepts_non_geo_study_accession(self):
         constructor = MagicMock()
@@ -222,7 +174,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = JSON2AEConverter(ae_constructor=constructor).convert(path, enrich=False)
+            result = MAGETabExporter(constructor=constructor).render(JSONPackageSource().load(path))
 
         self.assertEqual(["magetab"], result)
 
@@ -234,7 +186,7 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
-            result = JSON2AEConverter(ae_constructor=constructor).convert(path, enrich=False)
+            result = MAGETabExporter(constructor=constructor).render(JSONPackageSource().load(path))
 
         decoded = typed(payload)
         self.assertEqual(["magetab"], result)
@@ -272,13 +224,10 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
             with self.assertLogs(
-                "meta_standards_converter.converters.json2ae",
+                "meta_standards_converter.magetab.exporter",
                 level="WARNING",
             ) as logs:
-                result = JSON2AEConverter(ae_constructor=constructor).convert(
-                    path,
-                    enrich=False,
-                )
+                result = MAGETabExporter(constructor=constructor).render(JSONPackageSource().load(path))
 
         self.assertEqual(["first", "second"], result)
         self.assertEqual(
@@ -300,7 +249,7 @@ class TestJSON2AEConverter(unittest.TestCase):
                 ValueError,
                 "no convertible package groups",
             ):
-                JSON2AEConverter().convert(path)
+                MAGETabExporter().render(JSONPackageSource().load(path))
 
     def test_convert_uses_injected_package_source(self):
         constructor = MagicMock()
@@ -317,10 +266,7 @@ class TestJSON2AEConverter(unittest.TestCase):
             ),
         )
 
-        result = JSON2AEConverter(
-            ae_constructor=constructor,
-            package_source=source,
-        ).convert("virtual-atlas.json", enrich=False)
+        result = MAGETabExporter(constructor=constructor).render(source.load('virtual-atlas.json'))
 
         self.assertEqual(["magetab"], result)
         source.load.assert_called_once_with("virtual-atlas.json")
@@ -330,7 +276,7 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, package("GSE-not-numeric"))
             with self.assertRaisesRegex(ValueError, "no usable study accession"):
-                JSON2AEConverter().convert(path)
+                MAGETabExporter().render(JSONPackageSource().load(path))
 
     def test_convert_rejects_malformed_geo_iid(self):
         payload = package("E-MTAB-unused")
@@ -339,28 +285,8 @@ class TestJSON2AEConverter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, payload)
             with self.assertRaisesRegex(ValueError, "no usable study accession"):
-                JSON2AEConverter().convert(path)
+                MAGETabExporter().render(JSONPackageSource().load(path))
 
-    def test_convert_logs_stages_without_metadata_payload(self):
-        constructor = MagicMock()
-        constructor.miniml2magetab.return_value = "magetab"
-        payload = package()
-        payload["extensions"] = {"secret": "do-not-log"}
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = self.write_json(tmpdir, payload)
-            with self.assertLogs("meta_standards_converter.converters.json2ae", level="DEBUG") as logs:
-                result = JSON2AEConverter(
-                    enricher=MagicMock(enrich=lambda data: data),
-                    ae_constructor=constructor,
-                ).convert(path)
-
-        self.assertEqual(["magetab"], result)
-        output = "\n".join(logs.output)
-        self.assertIn("loaded 1 parsed package(s)", output)
-        self.assertIn("enriching parsed package 1", output)
-        self.assertIn("building MAGE-TAB package 1", output)
-        self.assertNotIn("do-not-log", output)
 
     def test_fixture_parsed_package_matches_independent_magetab_expectations(self):
         fixture_path = os.path.join(ROOT, "tests", "GSE328265_family.xml")
@@ -373,11 +299,8 @@ class TestJSON2AEConverter(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = self.write_json(tmpdir, packages)
-            converter_constructor = AEConstructor(
-                pubmed_client=pubmed_fetcher,
-                insdc_client=insdc_fetcher
-            )
-            actual = JSON2AEConverter(ae_constructor=converter_constructor).convert(path, enrich=False)
+            converter_constructor = AEConstructor()
+            actual = MAGETabExporter(constructor=converter_constructor).render(JSONPackageSource().load(path))
 
         self.assertEqual(1, len(actual))
         rows = {row[0]: row[1:] for row in actual[0] if row}

@@ -296,7 +296,7 @@ class SRASource:
         return result
 
     @provider_boundary(provider='sra', operation='metadata_retrieval')
-    def fetch(self, seed, *, _on_core=None):
+    def fetch(self, seed, *, _on_core=None, publications=True):
         records = StudyRecords(seed)
         ids, records.issues = self.search(f'{seed.study}[ACCN]')
         for batch in chunks(ids):
@@ -323,9 +323,9 @@ class SRASource:
         if _on_core is not None: _on_core(records)
         from ..metadata.retrieval_budget import _budget_stage
         with _budget_stage('native_supplementary'):
-            return self._supplement(records, ids)
+            return self._supplement(records, ids, publications=publications)
 
-    def _supplement(self, records, ids):
+    def _supplement(self, records, ids, *, publications=True):
         linked = {'biosample': set(), 'bioproject': set(), 'pubmed': set(), 'taxonomy': set()}
         for root in records.xml:
             for node in root.findall('.//EXTERNAL_ID'):
@@ -372,8 +372,7 @@ class SRASource:
                         records.linked.append({'provider': 'sra', 'kind': 'assembly', 'accession': item.get('assemblyaccession'), 'metadata': item})
                     else:
                         records.issues.append(f'assembly {uid}: missing summary')
-        from ..metadata.preparation_scope import source_publications_enabled
-        if source_publications_enabled():
+        if publications:
             self.linked_publications(records, ids)
             from .archive_publications import resolve_identifiers
             resolve_identifiers(records, self.http, 'sra')

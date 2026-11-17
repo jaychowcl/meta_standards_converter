@@ -7,6 +7,10 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Source-faithful term-source identity and ambiguous-reference round trips."""
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import csv
 import io
 from pathlib import Path
@@ -18,7 +22,7 @@ from meta_standards_converter.magetab.idf import IDFConstructor
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.magetab.writer import MAGETabWriter
 from meta_standards_converter.sources.magetab import MAGETabInput, TextResource
-from meta_standards_converter.converters import AE2JSONConverter
+
 from meta_standards_converter.miniml import MINiMLCodec
 
 
@@ -44,7 +48,7 @@ def triples(package):
 
 
 def render(package):
-    return AEConstructor(evidence_resolver=SimpleNamespace(sample_runs=lambda *args: {}, publications=lambda data: [])).miniml2magetab(package)
+    return AEConstructor().miniml2magetab(package)
 
 
 def table_triples(rows):
@@ -85,7 +89,7 @@ def test_conflicting_sources_preserved_with_unresolved_refs_and_roundtrip(declar
     sdrf = next(r[1] for r in rows if r[0] == 'SDRF File')
     assert sdrf[1][sdrf[0].index('Term Source REF')] == 'Ontology'
     path = MAGETabWriter().write(rows, str(tmp_path))
-    again = AE2JSONConverter().convert(path)[0]
+    again = MAGETabMetadataSource().load(path)[0]
     assert triples(again) == declarations
     assert [d['iid'] for d in again['database'] if d.get('name') == 'Ontology'] == ['Ontology__msc_1', 'Ontology__msc_2']
     assert len(again['sample']) == 1
@@ -109,7 +113,7 @@ def test_idf_does_not_overwrite_same_name_variants():
 
 def test_full_e_mtab_1_converts_and_retains_sample_and_assay_identities(tmp_path):
     source_dir = Path(__file__).parents[1] / 'fixtures/studies/E-MTAB-1/inputs'
-    package = AE2JSONConverter().convert(str(source_dir / 'E-MTAB-1.idf.txt'))[0]
+    package = converted(Converter(), str(source_dir / 'E-MTAB-1.idf.txt'), out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     original = list(csv.DictReader((source_dir / 'E-MTAB-1.sdrf.txt').open(), delimiter='\t'))
     assert len(original) == 176
     assert len(package['sample']) == len({row['Source Name'] for row in original}) == 45
@@ -117,7 +121,7 @@ def test_full_e_mtab_1_converts_and_retains_sample_and_assay_identities(tmp_path
     assert len(package['series']['assay_paths']) == 176
     assert len([d for d in package['database'] if d.get('name') == 'The MGED Ontology']) == 1
     path = MAGETabWriter().write(render(package), str(tmp_path))
-    again = AE2JSONConverter().convert(path)[0]
+    again = MAGETabMetadataSource().load(path)[0]
     assert {s['iid'] for s in again['sample']} == {s['iid'] for s in package['sample']}
     assert len(again['series']['assay_paths']) == 176
 

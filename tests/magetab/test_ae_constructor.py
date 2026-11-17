@@ -1450,11 +1450,12 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = idf
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
-        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
-            sdrf_constructor.create_handler.return_value,
-            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        sdrf_constructor.create_operation_handler.side_effect = lambda data, registry: (
+            sdrf_constructor.create_handler(data=data, protocol_registry=registry,
+                technology_type=AEConstructor()._detect_ae_technology(data)),
+            AEConstructor()._detect_ae_technology(data),
         )
-        sdrf_constructor.build.return_value = sdrf
+        sdrf_constructor.render.return_value = sdrf
 
         result = AEConstructor(
             idf_constructor=idf_constructor,
@@ -1468,7 +1469,7 @@ class TestAEConstructor(unittest.TestCase):
         )
         protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value,
             protocol_registry=protocol_registry,
             technology_type="generic",
         )
@@ -1496,11 +1497,12 @@ class TestAEConstructor(unittest.TestCase):
         ]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
-        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
-            sdrf_constructor.create_handler.return_value,
-            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        sdrf_constructor.create_operation_handler.side_effect = lambda data, registry: (
+            sdrf_constructor.create_handler(data=data, protocol_registry=registry,
+                technology_type=AEConstructor()._detect_ae_technology(data)),
+            AEConstructor()._detect_ae_technology(data),
         )
-        sdrf_constructor.build.return_value = sdrf
+        sdrf_constructor.render.return_value = sdrf
 
         result = AEConstructor(
             idf_constructor=idf_constructor,
@@ -1514,7 +1516,7 @@ class TestAEConstructor(unittest.TestCase):
         )
         protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value,
             protocol_registry=protocol_registry,
             technology_type="generic",
         )
@@ -1536,11 +1538,12 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
-        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
-            sdrf_constructor.create_handler.return_value,
-            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        sdrf_constructor.create_operation_handler.side_effect = lambda data, registry: (
+            sdrf_constructor.create_handler(data=data, protocol_registry=registry,
+                technology_type=AEConstructor()._detect_ae_technology(data)),
+            AEConstructor()._detect_ae_technology(data),
         )
-        sdrf_constructor.build.return_value = [["Source Name"], ["GSM1"]]
+        sdrf_constructor.render.return_value = [["Source Name"], ["GSM1"]]
 
         AEConstructor(
             idf_constructor=idf_constructor,
@@ -1554,7 +1557,7 @@ class TestAEConstructor(unittest.TestCase):
         )
         protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value,
             protocol_registry=protocol_registry,
             technology_type="bulk_sequencing",
         )
@@ -1567,11 +1570,12 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
-        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
-            sdrf_constructor.create_handler.return_value,
-            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        sdrf_constructor.create_operation_handler.side_effect = lambda data, registry: (
+            sdrf_constructor.create_handler(data=data, protocol_registry=registry,
+                technology_type=AEConstructor()._detect_ae_technology(data)),
+            AEConstructor()._detect_ae_technology(data),
         )
-        sdrf_constructor.build.return_value = [["Source Name"], ["GSM1"]]
+        sdrf_constructor.render.return_value = [["Source Name"], ["GSM1"]]
 
         AEConstructor(
             idf_constructor=idf_constructor,
@@ -1585,7 +1589,7 @@ class TestAEConstructor(unittest.TestCase):
         )
         protocol_registry = sdrf_constructor.create_handler.call_args.kwargs["protocol_registry"]
         idf_constructor.miniml2idf.assert_called_once_with(
-            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value, publication_details=[],
+            data=canonical, prefix_rows=idf_constructor.prefix_rows.return_value,
             protocol_registry=protocol_registry,
             technology_type="bulk_sequencing",
         )
@@ -1603,12 +1607,13 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["SDRF File"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
-        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
-            sdrf_constructor.create_handler.return_value,
-            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        sdrf_constructor.create_operation_handler.side_effect = lambda data, registry: (
+            sdrf_constructor.create_handler(data=data, protocol_registry=registry,
+                technology_type=AEConstructor()._detect_ae_technology(data)),
+            AEConstructor()._detect_ae_technology(data),
         )
         generated = [["Source Name"], ["generated"]]
-        sdrf_constructor.build.return_value = generated
+        sdrf_constructor.render.return_value = generated
 
         result = AEConstructor(
             idf_constructor=idf_constructor,
@@ -1742,11 +1747,12 @@ class TestAEConstructor(unittest.TestCase):
         idf_constructor.miniml2idf.return_value = [["Investigation Title", "Example"]]
         sdrf_constructor = Mock()
         sdrf_constructor.create_handler.return_value.ordered_samples.return_value = []
-        sdrf_constructor.create_operation_handler.side_effect = lambda *args: (
-            sdrf_constructor.create_handler.return_value,
-            sdrf_constructor.create_handler.call_args.kwargs['technology_type'],
+        sdrf_constructor.create_operation_handler.side_effect = lambda data, registry: (
+            sdrf_constructor.create_handler(data=data, protocol_registry=registry,
+                technology_type=AEConstructor()._detect_ae_technology(data)),
+            AEConstructor()._detect_ae_technology(data),
         )
-        sdrf_constructor.build.return_value = [["Source Name"], ["sample 1"]]
+        sdrf_constructor.render.return_value = [["Source Name"], ["sample 1"]]
 
         with self.assertRaisesRegex(ValueError, "IDF does not contain an SDRF File row"):
             AEConstructor(
@@ -2015,9 +2021,10 @@ class TestAEConstructor(unittest.TestCase):
             ],
         }
 
-        magetab = AEConstructor(
-            insdc_client=sra_fetcher
-        ).miniml2magetab(data=self.typed(data))
+        from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+        prepared = MINiMLEnricher(insdc_fetcher=sra_fetcher).enrich_selected(
+            self.typed(data), publications=False, run_metadata=True)
+        magetab = AEConstructor().miniml2magetab(data=prepared)
         sdrf = self.row(magetab, "SDRF File")[1]
         protocol_names = set(self.row(magetab, "Protocol Name")[1:])
         refs = self.non_empty_sdrf_protocol_refs(sdrf=sdrf)

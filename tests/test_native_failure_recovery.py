@@ -6,7 +6,9 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from meta_standards_converter.sources.metadata import NativeMetadataSource
 """Native failures must remain retryable through the public converter facade."""
+from meta_standards_converter.converters import PreparationPolicy
 from types import SimpleNamespace
 from unittest.mock import Mock
 import pytest
@@ -24,9 +26,8 @@ from tests.test_native_archive_sources import HTTP
     HostRequestCooldownDeferred('www.ebi.ac.uk/ena', 2000000000)])
 def test_no_native_package_retains_transient_error_and_cooldown(error):
     def fail(*args): raise error
-    service=ENA2JSONConverter(source=ENASource(http=HTTP(fail)))
-    result=Converter(services={'ena2json':service}).convert('ERP1',in_type='ena_accession',
-        out_type='json',enrichment='off',options={'expand_studies':False})
+    service=NativeMetadataSource("ena", source=ENASource(http=HTTP(fail)))
+    result=Converter(services={'ena_source': service}).convert('ERP1', in_type='ena_accession', out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.items[0].execution=='failed'
     assert result.items[0].error.retry_category.value=='retryable'
     if hasattr(error,'retry_at'):
@@ -36,8 +37,7 @@ def test_no_native_package_retains_transient_error_and_cooldown(error):
 def test_permanent_not_found_is_not_whole_job_retryable():
     error=requests.HTTPError('not found',response=Mock(status_code=404))
     def fail(*args):raise error
-    result=Converter(services={'ena2json':ENA2JSONConverter(source=ENASource(http=HTTP(fail)))}).convert(
-        'ERP1',in_type='ena_accession',out_type='json',enrichment='off',options={'expand_studies':False})
+    result=Converter(services={'ena_source': NativeMetadataSource('ena', source=ENASource(http=HTTP(fail)))}).convert('ERP1', in_type='ena_accession', out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.items[0].error.retry_category.value=='terminal'
 
 
@@ -49,10 +49,8 @@ def test_partial_native_package_retains_transient_failure_without_discarding_art
     records.failures.append(error)
     records.issues.append('sample XML unavailable')
     source=SimpleNamespace(resolve=lambda accession:Resolution([StudySeed('ERP1','PRJEB1')]),
-                           fetch=lambda seed:records)
-    result=Converter(services={'ena2json':ENA2JSONConverter(source=source)}).convert(
-        'ERP1',in_type='ena_accession',out_type='json',enrichment='off',
-        options={'expand_studies':False}, outdir=tmp_path)
+                           fetch=lambda seed, **options:records)
+    result=Converter(services={'ena_source': NativeMetadataSource('ena', source=source)}).convert('ERP1', in_type='ena_accession', out_type='json', outdir=tmp_path, preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     item=result.items[0]
     assert item.execution=='succeeded' and item.completeness=='partial'
     assert item.artifacts

@@ -39,7 +39,7 @@ EXPRESSION = frozenset(
 )
 OUTPUT = {
     "json": {"aggregate"},
-    "magetab": {"enrich", "platform_handler", "replacement_profile"},
+    "magetab": {"platform_handler", "replacement_profile"},
     "tsv": {"aggregate", "allow_invalid", "replacement_profile"},
     "csv": {"aggregate", "allow_invalid", "replacement_profile"},
     "h5ad": set(EXPRESSION),
@@ -48,9 +48,9 @@ OUTPUT = {
 INPUT = {
     "sra_records": set(),
     "ena_records": set(),
-    "geo_accession": {"enrich", "related_series", "remove_empty"},
-    "sra_accession": {"enrich_from_geo_ae", "include_peer", "evidence_dir"},
-    "ena_accession": {"enrich_from_geo_ae", "include_peer", "evidence_dir"},
+    "geo_accession": {"remove_empty"},
+    "sra_accession": {"evidence_dir"},
+    "ena_accession": {"evidence_dir"},
     "ae_accession": {"sdrf_sources"},
     "magetab": {"sdrf_sources"},
     "geo_xml": {"remove_empty"},
@@ -84,11 +84,7 @@ BOOLS = {
     "fail_fast",
     "recursive",
     "allow_processing",
-    "enrich",
-    "related_series",
     "remove_empty",
-    "enrich_from_geo_ae",
-    "include_peer",
     "aggregate",
     "allow_invalid",
     "force_reprocess",

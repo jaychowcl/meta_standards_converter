@@ -7,6 +7,11 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Recorded native metadata preserves scientific facts across presets and readers."""
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
+from meta_standards_converter.converters import PreparationPolicy
 from copy import deepcopy
 from types import SimpleNamespace
 import json
@@ -20,6 +25,7 @@ from meta_standards_converter.miniml.ena_parser import ENAParser
 from meta_standards_converter.converters.sra2json import SRA2JSONConverter
 from meta_standards_converter.converters.ena2json import ENA2JSONConverter
 from meta_standards_converter.sources.archive_support import Resolution
+from meta_standards_converter.sources.metadata import NativeMetadataSource
 from tests.test_native_archive_parsers import fixture_records
 
 
@@ -36,31 +42,31 @@ def test_native_provider_reader_preset_matrix(provider,preset,reader,target,tmp_
         def resolve(self,accession):
             calls.append('resolve')
             return Resolution(studies=[records.seed])
-        def fetch(self,seed):
+        def fetch(self,seed, **options):
             calls.append('fetch')
             return deepcopy(records)
     class Enricher:
-        def enrich_selected(self,data,*,publications,run_metadata):
+        def enrich_selected(self,data,*,publications,run_metadata,session):
             assert publications and not run_metadata
             calls.append('publications')
             return data
     class Linked:
-        def enrich(self,data):
+        def enrich_selected(self,data,**options):
             calls.append('linked')
             return data,[]
     class Peer:
-        def convert(self,accession,**kwargs):
+        def load(self,accession,**kwargs):
             assert accession==records.seed.study
             calls.append('peer')
             return ArchiveImportResult(accession,[StudyImportOutcome(records.seed.study,records.seed.primary,'complete',original)])
     cls=SRA2JSONConverter if provider=='sra' else ENA2JSONConverter
-    services={provider+'2json':cls(source=Source(),publication_enricher=Enricher()),
-              ('ena' if provider=='sra' else 'sra')+'2json':Peer(),
+    services={provider+'_source':NativeMetadataSource(provider,source=Source()),
+              ('ena' if provider=='sra' else 'sra')+'_source':Peer(),
               'enricher':Enricher(),'linked_enricher':Linked()}
     path=tmp_path/'source.json';path.write_text(json.dumps(original.to_mapping()))
     source={'accession':InputSpec(records.seed.study,in_type=provider+'_accession'),
             'records':InputSpec(records,in_type=provider+'_records'),'file':path,'object':original}[reader]
-    result=Converter(services=services).convert(source,out_type=target,enrichment=preset,options={'expand_studies':False})
+    result=Converter(services=services).convert(source, out_type=target, preparation=PreparationPolicy(enrichment=preset, expand_studies=False))
     item=result.items[0]
     assert item.execution=='succeeded',result.to_dict()
     assert not any(r['status'] in {'failed','partial'} for r in item.preparation),result.to_dict()
@@ -83,7 +89,7 @@ def test_native_provider_reader_preset_matrix(provider,preset,reader,target,tmp_
 @pytest.mark.parametrize('target',['json','magetab'])
 def test_biostudies_preset_reader_equivalence(preset,reader,target):
     from pathlib import Path
-    from meta_standards_converter.converters.ae2json import AE2JSONConverter
+
     from meta_standards_converter.sources.magetab import AEWebFetcher
     path=Path(__file__).parents[1]/'fixtures/studies/E-MTAB-6486/inputs/E-MTAB-6486.idf.txt'
     resolved=AEWebFetcher().resolve(str(path))
@@ -91,13 +97,12 @@ def test_biostudies_preset_reader_equivalence(preset,reader,target):
     class Fetcher:
         def resolve(self,*args,**kwargs):return resolved
     class Enricher:
-        def enrich_selected(self,data,*,publications,run_metadata):
+        def enrich_selected(self,data,*,publications,run_metadata,session):
             calls.append((publications,run_metadata));return data
-    ae=AE2JSONConverter(fetcher=Fetcher())
-    original=ae.convert('E-MTAB-6486')
+    ae = MAGETabMetadataSource(fetcher=Fetcher())
+    original=converted(Converter(services={'ae_source': MAGETabMetadataSource(fetcher=Fetcher())}), 'E-MTAB-6486', out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))
     source={'accession':'E-MTAB-6486','file':path,'object':original}[reader]
-    result=Converter(services={'ae2json':ae,'enricher':Enricher()}).convert(source,
-        out_type=target,enrichment=preset,options={'expand_studies':False})
+    result=Converter(services={'ae_source': ae, 'enricher': Enricher()}).convert(source, out_type=target, preparation=PreparationPolicy(enrichment=preset, expand_studies=False))
     assert result.status=='complete',result.to_dict()
     assert result.items[0].provider=='biostudies'
     assert calls==([] if preset=='off' else [(True,preset=='standard')])

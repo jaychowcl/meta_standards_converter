@@ -17,7 +17,6 @@ from meta_standards_converter.conversion_logging import emit, count, stage, labe
 
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.codec import MINiMLCompatibilityError
-from meta_standards_converter.metadata.preparation_scope import loading_source, convert_source
 from .contracts import Diagnostic
 
 
@@ -53,13 +52,21 @@ class MetadataPreparation:
         from meta_standards_converter.metadata.retrieval_budget import _active, _budget_stage, _coverage, _coverage_issues
         with _budget_stage('study_expansion'):
             loaded = self.families.expand(loaded)
+        from meta_standards_converter.metadata.geo_publications import _series_accessions
+        self.available = {}
+        for group in loaded.metadata.groups:
+            for package in group.packages:
+                if provider_of(package, loaded.provider) == "geo":
+                    data = package.to_mapping()
+                    self.available.update({key: data for key in _series_accessions(data.get("series", {}))})
+        available_key = hashlib.sha256(json.dumps({k: v["series"] for k, v in self.available.items()}, sort_keys=True).encode()).hexdigest()
         groups = []
         for group in loaded.metadata.groups:
             packages = []
             for package in group.packages:
                 provider = provider_of(package, loaded.provider)
                 key = (hashlib.sha256(json.dumps(package.to_mapping(), sort_keys=True).encode()).hexdigest(),
-                       provider, self.context.preparation_policy)
+                       provider, self.context.preparation_policy, available_key)
                 if key not in self.cache:
                     prepared_result = self._package(package, provider)
                     if not (_active.get() and _active.get().exhausted): self.cache[key] = prepared_result
@@ -107,8 +114,7 @@ class MetadataPreparation:
                     return
                 # A collaborator gets an isolated, valid candidate. Commit only
                 # after it passes the same policy used by strict consumers.
-                from meta_standards_converter.metadata.reconciliation import selection_policy
-                with selection_policy(policy.enrichment), _budget_stage(name):
+                with _budget_stage(name):
                     candidate, issues = fn(MINiMLCodec().decode(package, strict=True).package)
                 package = MINiMLCodec().decode(candidate, strict=True).package
                 record["status"] = "partial" if issues else "completed"
@@ -160,6 +166,7 @@ class MetadataPreparation:
                 links = {a for a in links if a.startswith("GSE")}
             return bool(links)
         run("linked_metadata", linked_applicable, lambda p: self._linked(p, provider, links))
+        run("parent_publications", provider == "geo", self._parent_publications)
         run("standard", True, lambda p: self._standard(p, provider))
         from meta_standards_converter.metadata.source_text import _text_issues
         diagnostics.extend(Diagnostic("source_partial", issue, "preparation", "warning") for issue in _text_issues(package))
@@ -168,57 +175,44 @@ class MetadataPreparation:
             emit("preparation_outcome", level="DEBUG", **record)
         return package, records, diagnostics
 
+    def _parent_publications(self, package):
+        from meta_standards_converter.metadata.geo_publications import GEOParentPublications
+        service = GEOParentPublications(self.context.geo_source(), self.context.session, self.available)
+        result, issues = service.inherit(packages=[package], remove_empty=self.context.input_options.get("remove_empty", True))
+        return result[0], issues
+
     def _peer(self, package, provider, accession):
-        from meta_standards_converter.converters.sra2json import SRA2JSONConverter
-        from meta_standards_converter.converters.ena2json import ENA2JSONConverter
+        from meta_standards_converter.sources.metadata import NativeMetadataSource
         from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
         peer = "ena" if provider == "sra" else "sra"
-        cls = ENA2JSONConverter if peer == "ena" else SRA2JSONConverter
-        primary = self.context.converter.services.get(provider + "2json")
-        converter = getattr(primary, "peer_converter", None) or self.context.service(
-            peer + "2json", lambda: cls(resource_profile=self.context.profile))
-        with loading_source(self.context.preparation_policy):
-            result = convert_source(converter, accession, include_peer=False, enrich_from_geo_ae=False,
-                                       evidence_dir=self.context.input_options.get("evidence_dir"))
+        source = self.context.service(peer + "_source", lambda: NativeMetadataSource(peer, resource_profile=self.context.profile))
+        result = self.context.session.load(source, accession,
+            publications=self.context.preparation_policy.allows("publications"),
+            evidence_dir=self.context.input_options.get("evidence_dir"))
         issues = [issue for outcome in result.studies for issue in outcome.issues]
         if not result.packages:
             issues.append("No peer metadata returned")
         for extra in result.packages:
             if extra == package:
-                continue  # An identical peer package adds no evidence or declarations.
-            package, found = merge_archive_metadata(package, extra, prefer=False)
+                continue
+            package, found = merge_archive_metadata(package, extra, prefer=False,
+                mode=self.context.preparation_policy.enrichment)
             issues.extend(found)
         return package, issues
 
     def _linked(self, package, provider, links):
         from meta_standards_converter.metadata.archive_enrichment import LinkedArchiveEnricher
-        primary = self.context.converter.services.get((provider or "") + "2json")
-        service = getattr(primary, "linked_enricher", None) or self.context.service(
-            "linked_enricher", lambda: LinkedArchiveEnricher(resource_profile=self.context.profile,
-                geo_converter=self.context.converter.services.get("geo2json"),
-                ae_converter=self.context.converter.services.get("ae2json")))
-        with loading_source(self.context.preparation_policy):
-            return service.enrich_selected(package, accessions=links) if hasattr(service, "enrich_selected") else service.enrich(package)
+        service = self.context.service("linked_enricher", lambda: LinkedArchiveEnricher(
+            resource_profile=self.context.profile, geo_source=self.context.geo_source(),
+            ae_source=self.context.ae_source()))
+        return service.enrich_selected(package, accessions=links, session=self.context.session,
+            mode=self.context.preparation_policy.enrichment)
 
     def _standard(self, package, provider):
         from meta_standards_converter.metadata.enrichment import MINiMLEnricher
-        service = self.context.converter.services.get("enricher")
-        if service is None:
-            primary = self.context.converter.services.get((provider or "") + "2json") or self.context._services.get((provider or "") + "2json")
-            if primary is None and provider == "geo":
-                primary = self.context.converter.services.get("geo2ae")
-            if primary is None and self.context.target == "magetab":
-                primary = self.context.converter.services.get("json2ae")
-            service = getattr(primary, "enricher", None) or getattr(primary, "publication_enricher", None)
-        service = service or self.context.service("enricher", lambda: MINiMLEnricher(resource_profile=self.context.profile))
+        service = self.context.service("enricher", lambda: MINiMLEnricher(resource_profile=self.context.profile))
         runs = self.context.preparation_policy.enrichment == "standard" and provider not in {"sra", "ena"}
-        if hasattr(service, "enrich_selected"):
-            result = service.enrich_selected(package, publications=True, run_metadata=runs)
-        elif self.context.preparation_policy.enrichment == "standard":
-            result = service.enrich(package)
-        else:
-            # A legacy injected enricher cannot promise selective retrieval.
-            raise ValueError("Injected enricher must support enrich_selected for curators")
+        result = service.enrich_selected(package, publications=True, run_metadata=runs, session=self.context.session)
         issues = list(getattr(service, "publication_issues", ()))
         if getattr(service, "_sra_failures", 0):
             issues.append("Run evidence retrieval was incomplete")

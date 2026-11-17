@@ -307,7 +307,7 @@ def _merge_entity(target, extra, prefer, protected=(), *, issues=None, selection
 
 
 @measured('merging')
-def merge_archive_metadata(package, other, *, prefer=False, linked_accession=None):
+def merge_archive_metadata(package, other, *, prefer=False, linked_accession=None, mode=None):
     """Merge an explicitly related package; peer additions require a shared read study."""
     from copy import deepcopy
     from ..miniml import MINiMLCodec
@@ -319,7 +319,7 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
                          'metadata':{k:deepcopy(v) for k,v in data.items() if k not in ('extensions','source','miniml_schema_version')}})
     issues = []
     from .reconciliation import SourceSelection
-    selection = SourceSelection(data, extra, issues)
+    selection = SourceSelection(data, extra, issues, mode=mode)
     for document in (data, extra):
         source = document.get('source', {}).get('format', '')
         database = {'MAGE-TAB': 'ArrayExpress', 'GEO MINiML': 'GEO'}.get(source, source)
@@ -490,14 +490,15 @@ def merge_archive_metadata(package, other, *, prefer=False, linked_accession=Non
 
 
 class LinkedArchiveEnricher:
-    def __init__(self, resource_profile='standard', geo_converter=None, ae_converter=None):
-        self.profile, self.geo, self.ae = resource_profile, geo_converter, ae_converter
+    def __init__(self, resource_profile='standard', geo_source=None, ae_source=None):
+        self.profile, self.geo, self.ae = resource_profile, geo_source, ae_source
 
-    def enrich(self, package):
-        return self.enrich_selected(package)
+    def enrich(self, package, *, session=None, mode=None):
+        return self.enrich_selected(package, session=session, mode=mode)
 
-    def enrich_selected(self, package, *, accessions=None):
-        from .preparation_scope import convert_source
+    def enrich_selected(self, package, *, accessions=None, session=None, mode=None):
+        from .session import PreparationSession
+        session = session if session is not None else PreparationSession()
         issues = []
         # Stable ascending priority: informative AE values are applied last.
         discovered = set(linked_accessions(package) if accessions is None else accessions)
@@ -510,14 +511,14 @@ class LinkedArchiveEnricher:
             try:
                 if accession.startswith('GSE'):
                     if self.geo is None:
-                        from ..converters.geo2json import GEO2JSONConverter
-                        self.geo = GEO2JSONConverter(resource_profile=self.profile)
-                    packages = convert_source(self.geo, accession, enrich=False, related_series=False)
+                        from ..sources.metadata import GEOMetadataSource
+                        self.geo = GEOMetadataSource(resource_profile=self.profile)
+                    packages = session.load(self.geo, accession, remove_empty=True)
                 else:
                     if self.ae is None:
-                        from ..converters.ae2json import AE2JSONConverter
-                        self.ae = AE2JSONConverter(resource_profile=self.profile)
-                    packages = convert_source(self.ae, accession)
+                        from ..sources.metadata import MAGETabMetadataSource
+                        self.ae = MAGETabMetadataSource(resource_profile=self.profile)
+                    packages = session.load(self.ae, accession)
                 candidates = [p for p in packages if accession in entity_ids(p.to_mapping()['series'])]
                 if len(candidates) != 1:
                     issues.append(f'{accession}: ambiguous or unavailable enrichment study')
@@ -529,7 +530,7 @@ class LinkedArchiveEnricher:
                         continue
                 from .archive_diagnostics import consistency_issues
                 issues.extend(f'{accession}: {issue}' for issue in consistency_issues(candidates[0].to_mapping()))
-                package, merge_issues = merge_archive_metadata(package, candidates[0], prefer=True, linked_accession=accession)
+                package, merge_issues = merge_archive_metadata(package, candidates[0], prefer=True, linked_accession=accession, mode=mode)
                 issues.extend(merge_issues)
             except Exception as error:
                 issues.append(f'{accession}: enrichment unavailable ({type(error).__name__})')

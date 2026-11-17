@@ -283,7 +283,13 @@ class GEOParser:
                 for status in self._as_list(child.get("status")):
                     if isinstance(status, dict) and status.get("database"):
                         refs.append(status["database"])
-        return self._items_for_refs(refs=refs, index=databases_by_iid)
+        databases = self._items_for_refs(refs=refs, index=databases_by_iid)
+        # GEO MINiML may omit its own registry entry while explicitly naming it
+        # on accessions. Resolve only this known repository; unknown references
+        # remain visible to strict validation.
+        if "GEO" in refs and "GEO" not in databases_by_iid:
+            databases.append({"iid": "GEO", "name": "Gene Expression Omnibus"})
+        return databases
 
     def _resolve_organizations(
         self,

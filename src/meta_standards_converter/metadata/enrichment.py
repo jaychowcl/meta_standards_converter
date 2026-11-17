@@ -19,7 +19,7 @@ from copy import deepcopy
 
 import requests
 
-from .preparation_scope import retrieve_once
+from .session import retrieve_once
 
 from meta_standards_converter.sources.insdc import INSDCWebfetcher
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
@@ -37,7 +37,9 @@ from typing import Protocol
 
 
 class MetadataEnrichment(Protocol):
-    def enrich(self, data: MINiMLPackage) -> MINiMLPackage: ...
+    """Prepare a candidate using explicit retrieval permissions and session."""
+    def enrich_selected(self, data: MINiMLPackage, *, publications: bool,
+                        run_metadata: bool, session) -> MINiMLPackage: ...
 
 
 class MINiMLEnricher:
@@ -68,12 +70,14 @@ class MINiMLEnricher:
         self.profile = profile
         self.publication_identifier_resolver = publication_identifier_resolver
 
-    def enrich(self, data: MINiMLPackage) -> MINiMLPackage:
-        return self.enrich_selected(data)
+    def enrich(self, data: MINiMLPackage, *, session=None) -> MINiMLPackage:
+        return self.enrich_selected(data, session=session)
 
     @measured("enrichment")
-    def enrich_selected(self, data: MINiMLPackage, *, publications=True, run_metadata=True) -> MINiMLPackage:
+    def enrich_selected(self, data: MINiMLPackage, *, publications=True, run_metadata=True, session=None) -> MINiMLPackage:
         """Use the legacy normalization and merge rules with explicit retrieval selection."""
+        from .session import PreparationSession
+        session = session if session is not None else PreparationSession()
         started = time.monotonic()
         codec = MINiMLCodec()
         package = codec.decode(data).package
@@ -90,24 +94,24 @@ class MINiMLEnricher:
             from meta_standards_converter.miniml.archive_entities import declare_ontologies
             from meta_standards_converter.miniml.archive_residuals import finalize, source_records
             if publications:
-                self.enrich_pubmed(data=mutable, fill_missing=True)
+                self.enrich_pubmed(data=mutable, fill_missing=True, session=session)
             for sample in mutable.get('sample', []):
                 for entity in [sample, *sample.get('sra_run', [])]:
                     if publications and (entity.get('pubmed_publication') or entity.get('pubmed_id')):
-                        self.enrich_pubmed({'series':entity}, fill_missing=True)
+                        self.enrich_pubmed({'series':entity}, fill_missing=True, session=session)
             owners = [mutable.get('series', {})]
             owners.extend(entity for sample in mutable.get('sample', []) for entity in [sample, *sample.get('sra_run', [])])
             for owner in owners:
                 for relation in owner.get('relation', []):
                     if publications and relation.get('publication'):
-                        self.enrich_pubmed({'series':{'pubmed_publication':[relation['publication']]}}, fill_missing=True)
+                        self.enrich_pubmed({'series':{'pubmed_publication':[relation['publication']]}}, fill_missing=True, session=session)
             del self._publication_cache
             declare_ontologies(mutable)
             return finalize(mutable, source_records(package) + invalid_records)
         if publications:
-            self.enrich_pubmed(data=mutable)
+            self.enrich_pubmed(data=mutable, session=session)
         if run_metadata:
-            self.enrich_sra(data=mutable)
+            self.enrich_sra(data=mutable, session=session)
         series = mutable.get("series") if isinstance(mutable.get("series"), dict) else {}
         pubmed_ids = self._dedupe(self._as_list(series.get("pubmed_id")))
         samples = [item for item in self._as_list(mutable.get("sample")) if isinstance(item, dict)]
@@ -125,7 +129,7 @@ class MINiMLEnricher:
         )
         return codec.decode(mutable).package
 
-    def enrich_pubmed(self, data: dict, *, fill_missing: bool = False) -> dict:
+    def enrich_pubmed(self, data: dict, *, fill_missing: bool = False, session=None) -> dict:
         series = data.get("series")
         if not isinstance(series, dict):
             return data
@@ -138,7 +142,7 @@ class MINiMLEnricher:
             supplied = [(kind, identifier) for kind in ('pmcid','doi')
                         if (identifier := citation_identifier(kind, publication.get(kind)).get(kind))]
             resolved = {pmid for kind, value in supplied
-                        if (pmid := self._resolve_publication_identifier(kind, value))}
+                        if (pmid := self._resolve_publication_identifier(kind, value, session=session))}
             if len(resolved) > 1:
                 message = f"Conflicting publication identifiers for {series.get('iid')}: {supplied} resolve to different PMIDs; retaining the source citation without hydration."
                 if message not in self.publication_issues:
@@ -151,7 +155,7 @@ class MINiMLEnricher:
             # Refresh a saved citation through the same conservative hydration
             # contract used by native imports, preserving legacy ID occurrences.
             declared = deepcopy(series.get('pubmed_id'))
-            self.enrich_pubmed(data, fill_missing=True)
+            self.enrich_pubmed(data, fill_missing=True, session=session)
             if declared is not None:
                 series['pubmed_id'] = declared
             return data
@@ -171,7 +175,7 @@ class MINiMLEnricher:
                     publications.extend(existing)
                 if all(all(p.get(k) for k in (*fields, *status_fields)) for p in existing):
                     continue
-                fetched = self._pubmed_publication(pubmed_id=pmid)
+                fetched = self._pubmed_publication(pubmed_id=pmid, session=session)
                 for publication in existing:
                     for field in fields:
                         if not publication.get(field) and fetched.get(field):
@@ -186,13 +190,13 @@ class MINiMLEnricher:
             return data
 
         series["pubmed_publication"] = [
-            self._pubmed_publication(pubmed_id=pubmed_id)
+            self._pubmed_publication(pubmed_id=pubmed_id, session=session)
             for pubmed_id in pubmed_ids
         ]
         return data
 
     @provider_boundary(provider='pubmed', operation='publication_retrieval')
-    def _resolve_publication_identifier(self, kind, value):
+    def _resolve_publication_identifier(self, kind, value, *, session=None):
         from ..sources.archive_publications import resolve_identifier, citation_identifier
         from ..sources.archive_support import ArchiveHTTP
         cache = getattr(self, '_identifier_cache', None)
@@ -203,12 +207,12 @@ class MINiMLEnricher:
             try:
                 if self.publication_identifier_resolver is not None:
                     resolved = retrieve_once(("citation", id(self.publication_identifier_resolver), kind, value),
-                        lambda: self.publication_identifier_resolver(kind, value))
+                        lambda: self.publication_identifier_resolver(kind, value), session=session)
                 else:
                     if getattr(self, '_identifier_http', None) is None:
                         self._identifier_http = ArchiveHTTP('ncbi_eutils', resource_profile=self.profile)
                     resolved = retrieve_once(("citation", id(self), kind, value),
-                        lambda: resolve_identifier(kind, value, self._identifier_http))
+                        lambda: resolve_identifier(kind, value, self._identifier_http), session=session)
                 cache[key] = citation_identifier('pubmed', resolved).get('pubmed_id')
                 if resolved and not cache[key]:
                     raise ValueError('invalid resolved PMID')
@@ -221,7 +225,7 @@ class MINiMLEnricher:
         return cache[key]
 
     @provider_boundary(provider='sra', operation='run_inventory')
-    def enrich_sra(self, data: dict) -> dict:
+    def enrich_sra(self, data: dict, *, session=None) -> dict:
         samples = self._as_list(data.get("sample"))
         for index, sample in enumerate(samples):
             progress(index, len(samples), "samples")
@@ -246,7 +250,7 @@ class MINiMLEnricher:
             for accession in accessions:
                 try:
                     fetched.extend(retrieve_once(("runs", id(self.insdc_fetcher), accession),
-                        lambda: self.insdc_fetcher.fetch_sra_runs(accession=accession)))
+                        lambda: self.insdc_fetcher.fetch_sra_runs(accession=accession), session=session))
                 except (requests.RequestException, ET.ParseError) as error:
                     record(error, provider="sra")
                     self._sra_failures = getattr(self, "_sra_failures", 0) + 1
@@ -324,7 +328,7 @@ class MINiMLEnricher:
             saved.append(deepcopy(file))
 
     @provider_boundary(provider='pubmed', operation='publication_retrieval')
-    def _pubmed_publication(self, pubmed_id: str) -> dict:
+    def _pubmed_publication(self, pubmed_id: str, *, session=None) -> dict:
         from ..miniml.publication_identifiers import valid_pubmed_ids
         if not valid_pubmed_ids([pubmed_id]):
             return {'pubmed_id': ''}
@@ -332,7 +336,7 @@ class MINiMLEnricher:
         if cache is not None and pubmed_id in cache: return dict(cache[pubmed_id])
         try:
             doi, authors, title, status, source_ref, accession = retrieve_once(("publication", id(self.pubmed_fetcher), pubmed_id),
-                lambda: self.pubmed_fetcher.pubmed_summary(pubmed_id=pubmed_id))
+                lambda: self.pubmed_fetcher.pubmed_summary(pubmed_id=pubmed_id), session=session)
             if not any((doi, authors, title, status)):
                 raise ValueError('PubMed response contains no citation metadata')
         except (requests.RequestException, ET.ParseError, ValueError) as error:
@@ -368,58 +372,3 @@ class MINiMLEnricher:
             if value and value not in deduped:
                 deduped.append(value)
         return deduped
-
-
-class MAGETabEvidenceResolver:
-    """Resolve only evidence requested by MAGE-TAB construction, per operation."""
-
-    def __init__(self, pubmed_client=None, insdc_client=None):
-        self.pubmed = pubmed_client if pubmed_client is not None else PubmedWebFetcher()
-        self.insdc = insdc_client if insdc_client is not None else INSDCWebfetcher()
-
-    def publications(self, data):
-        from .preparation_scope import exporter_retrieval_enabled
-        if not exporter_retrieval_enabled():
-            return []
-        if data.get("source", {}).get("format") in {"SRA", "ENA"}:
-            return []
-        from meta_standards_converter.helpers.json_helper import JSONHandler
-        handler = JSONHandler()
-        if any(isinstance(p, dict) for p in handler._from_path(data, "series.pubmed_publication.*")):
-            return []
-        from ..miniml.publication_identifiers import valid_pubmed_ids
-        return [self.pubmed.pubmed_summary(pubmed_id=value)
-                for value in valid_pubmed_ids(handler._from_path(data, "series.pubmed_id.*"))]
-
-    def sample_runs(self, handler, technology_type):
-        from .preparation_scope import exporter_retrieval_enabled
-        if not exporter_retrieval_enabled():
-            return {}
-        import requests
-        import xml.etree.ElementTree as ET
-        sequencing = technology_type not in {"array", "generic"}
-        if not sequencing:
-            return {}
-        cache, result = {}, {}
-        for sample in handler.ordered_samples():
-            if "sra_run" in sample:
-                continue
-            accessions = []
-            for relation in handler._as_list(sample.get("relation")):
-                if isinstance(relation, dict) and (relation.get("type") or "").lower() == "sra":
-                    accessions.extend(self.insdc.extract_sra_accessions(relation.get("target") or ""))
-            runs = []
-            for accession in dict.fromkeys(accessions):
-                if accession not in cache:
-                    cache[accession] = self.fetch_runs(accession)
-                runs.extend(cache[accession])
-            result[id(sample)] = runs
-        return result
-
-    def fetch_runs(self, accession):
-        import requests
-        import xml.etree.ElementTree as ET
-        try:
-            return self.insdc.fetch_sra_runs(accession=accession)
-        except (requests.RequestException, ET.ParseError):
-            return []

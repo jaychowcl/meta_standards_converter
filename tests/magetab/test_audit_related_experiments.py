@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Explicit archive relationships survive without expanding related studies."""
+from meta_standards_converter.converters import PreparationPolicy
 from pathlib import Path
 
 from meta_standards_converter.converters import Converter
@@ -15,7 +16,7 @@ from meta_standards_converter.magetab.idf import IDFConstructor
 
 def test_explicit_ae_relationships_survive_facade_roundtrip_without_expansion():
     path = Path(__file__).parents[1] / 'fixtures/fidelity/E-MTAB-14416.idf.txt'
-    result = Converter().convert(path, out_type='magetab', enrichment='off', options={'expand_studies': False})
+    result = Converter().convert(path, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == 'complete', result.to_dict()
     idf = result.items[0].payload[0]
     assert next(r[1:] for r in idf if r[0] == 'Comment[RelatedExperiment]') == [

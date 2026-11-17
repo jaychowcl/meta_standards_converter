@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Operation telemetry is independent of display and scientific payloads."""
+from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -112,14 +113,14 @@ def test_native_processing_exposes_separate_stage_timings(caplog,tmp_path):
     from meta_standards_converter.conversion_logging import operation
     from meta_standards_converter.miniml.sra_parser import SRAParser
     from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
-    from meta_standards_converter.metadata.preparation_scope import preparation_session,retrieve_once
+    from meta_standards_converter.metadata.session import PreparationSession
     from meta_standards_converter.converters import Converter
     from tests.test_native_archive_parsers import fixture_records
     with caplog.at_level(logging.DEBUG),operation('stages',heartbeat=False):
         package=SRAParser().parse(fixture_records('sra'))
         merged,_=merge_archive_metadata(package,package)
-        with preparation_session():retrieve_once('native',lambda:merged)
-        result=Converter().convert(merged,out_type='json',enrichment='off',outdir=tmp_path)
+        with PreparationSession() as session:session.retrieve('native',lambda:merged)
+        result=Converter().convert(merged, out_type='json', outdir=tmp_path, preparation=PreparationPolicy(enrichment='off'))
     assert result.items[0].execution=='succeeded'
     timings={e['stage']:e['duration_seconds'] for e in events(caplog) if e['event_type']=='stage_finished'}
     assert {'indexing','entity_construction','supplementary_projection','merging',
@@ -151,8 +152,7 @@ def test_unified_stage_order_and_final_item_counts(caplog, tmp_path):
     from meta_standards_converter.converters import Converter, InputSpec
     from tests.converters.test_json2tsv import package
     with caplog.at_level(logging.DEBUG):
-        result = Converter().convert([InputSpec(package(), id="good"), tmp_path / 'missing.json'],
-            out_type="json", enrichment="off", options={"expand_studies": False})
+        result = Converter().convert([InputSpec(package(), id='good'), tmp_path / 'missing.json'], out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "partial"
     recorded = events(caplog)
     stages = [e["stage"] for e in recorded if e["event_type"] == "stage_started"]
@@ -168,8 +168,7 @@ def test_optional_failure_is_warning_and_reports_retained_output(caplog):
     from meta_standards_converter.converters import Converter
     from tests.converters.test_converter_preparation import native, services
     with caplog.at_level(logging.DEBUG):
-        result = Converter(services=services([], failure=True)).convert(native(),
-            out_type="json", enrichment="curators", options={"expand_studies":False})
+        result = Converter(services=services([], failure=True)).convert(native(), out_type='json', preparation=PreparationPolicy(enrichment='curators', expand_studies=False))
     assert result.items[0].execution == "succeeded"
     assert result.status == "partial"
     recorded = events(caplog)
@@ -181,8 +180,7 @@ def test_fail_fast_finishes_every_input(caplog, tmp_path):
     from meta_standards_converter.converters import Converter, InputSpec
     from tests.converters.test_json2tsv import package
     with caplog.at_level(logging.DEBUG):
-        result = Converter().convert([tmp_path/'missing.json', InputSpec(package())],
-            out_type="json", options={"fail_fast":True})
+        result = Converter().convert([tmp_path / 'missing.json', InputSpec(package())], out_type='json', runtime=RuntimeOptions(fail_fast=True))
     assert [i.status for i in result.items] == ["failed", "skipped"]
     assert [e["status"] for e in events(caplog) if e["event_type"] == "item_finished"] == ["failed", "skipped"]
 
@@ -206,8 +204,7 @@ def test_publication_collision_reports_publication_not_conversion(caplog, tmp_pa
     output = tmp_path/'protected.json'
     output.write_text('original')
     with caplog.at_level(logging.DEBUG):
-        result = Converter().convert(package(), outfile=output, out_type='json',
-            enrichment='off', options={'expand_studies':False})
+        result = Converter().convert(package(), outfile=output, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == 'failed'
     assert output.read_text() == 'original'
     assert any(e['stage']=='publication' and e['level']=='ERROR' for e in events(caplog))
@@ -226,8 +223,7 @@ def test_failure_after_first_published_artifact_is_truthful(caplog, tmp_path, mo
         return original(*args, **kwargs)
     monkeypatch.setattr(archive_results, 'publish_json', fail_second)
     with caplog.at_level(logging.DEBUG):
-        result = Converter().convert([package(), package('GSE2','GSM2')], outdir=tmp_path,
-            out_type='json', enrichment='off', options={'expand_studies':False})
+        result = Converter().convert([package(), package('GSE2', 'GSM2')], outdir=tmp_path, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status=='failed'
     assert len(result.items[0].artifacts)==1
     assert (tmp_path/'GSE1.json').is_file()
@@ -240,7 +236,7 @@ def test_context_statistics_do_not_turn_missing_optional_data_into_errors(caplog
     from meta_standards_converter.converters import Converter
     from tests.converters.test_json2tsv import package
     with caplog.at_level(logging.DEBUG):
-        result=Converter().convert(package(), out_type='magetab', enrichment='off', options={'expand_studies':False})
+        result=Converter().convert(package(), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status=='complete'
     assert not [r for r in caplog.records if r.levelno>=logging.WARNING]
     assert any(e['attributes'].get('sdrf_rows')==1 for e in events(caplog))

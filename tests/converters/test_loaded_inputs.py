@@ -11,7 +11,7 @@ import copy
 import json
 
 from meta_standards_converter.sources.json import JSONPackageSource
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
+from meta_standards_converter.magetab.exporter import MAGETabExporter
 from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
 from tests.converters.test_json2tsv import package, atlas_v1_payload, atlas_v1_dataset
 
@@ -50,9 +50,9 @@ def test_loaded_magetab_retains_injected_collaborators(tmp_path):
         def miniml2magetab(self, data, **kwargs):
             calls.append((data, kwargs))
             return [['Investigation Title', data.series.title]]
-    converter = JSON2AEConverter(ae_constructor=Constructor())
+    converter = MAGETabExporter(constructor=Constructor())
     loaded = JSONPackageSource().decode(package())
-    result = converter.convert_loaded(loaded, enrich=False, platform_handler='generic')
+    result = converter.render(loaded, platform_handler='generic')
     assert result == [[['Investigation Title', loaded.groups[0].packages[0].series.title]]]
     assert calls[0][1] == {'platform_handler': 'generic'}
     assert not list(tmp_path.iterdir())

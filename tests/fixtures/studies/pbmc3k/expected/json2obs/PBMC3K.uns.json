@@ -3,7 +3,7 @@
   "values": {
     "meta_standards_converter": {
       "conflicts": "[]",
-      "converter_version": "8.0.0",
+      "converter_version": "9.0.0",
       "metadata_schema_version": "2.0",
       "modality": "unknown",
       "modality_detail": "unknown",

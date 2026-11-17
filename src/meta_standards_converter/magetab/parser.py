@@ -19,7 +19,7 @@ from urllib.parse import urlparse
 from meta_standards_converter.magetab.semantics import build_model, validate_model
 from meta_standards_converter.magetab.accession_rows import secondary_accession_pairs
 from meta_standards_converter.sources.magetab import MAGETabInput
-from meta_standards_converter.miniml import MINiMLV1Migrator
+from meta_standards_converter.miniml import MINiMLV1Migrator, MINiMLPackage
 
 
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ class AEParser:
     }
 
     @measured("parse")
-    def parse(self, source: MAGETabInput) -> dict:
+    def parse(self, source: MAGETabInput) -> MINiMLPackage:
         self.warnings = []
         self.file_catalogue = source.file_catalogue
         idf_rows = self._table(source.idf.text, source.idf.name, rectangular=False)

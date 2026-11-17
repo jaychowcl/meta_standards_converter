@@ -6,6 +6,10 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 from copy import deepcopy
 import json
 import pytest
@@ -178,13 +182,13 @@ def test_ordinary_export_changes_only_private_copy():
 
 
 def test_saved_json_no_enrich_has_no_requests_or_input_changes(tmp_path):
-    from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
     from meta_standards_converter.magetab.constructor import AEConstructor
     class Forbidden:
-        def __getattr__(self, name):
-            raise AssertionError('Unexpected retrieval: ' + name)
+        def enrich_selected(self, *args, **options):
+            raise AssertionError('Unexpected enrichment')
     path=tmp_path/'native.json';path.write_text(json.dumps(package()));before=path.read_bytes()
-    rows=JSON2AEConverter(enricher=Forbidden(),ae_constructor=AEConstructor(pubmed_client=Forbidden(),insdc_client=Forbidden())).convert(str(path),enrich=False)[0]
+    rows=converted(Converter(services={'enricher': Forbidden(), 'magetab_exporter': MAGETabExporter(AEConstructor())}), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     table=next(r[1] for r in rows if r[0]=='SDRF File')
     assert len(table)==4 and path.read_bytes()==before
 

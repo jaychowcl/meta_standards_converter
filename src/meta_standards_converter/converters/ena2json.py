@@ -69,8 +69,7 @@ class ENA2JSONConverter:
                         package, issues = _load_native(self.source, self.parser, seed, _outcome=outcome)
                     outcome.issues.extend(issues)
                     from meta_standards_converter.metadata.archive_enrichment import LinkedArchiveEnricher, merge_archive_metadata, linked_accessions
-                    from ..metadata.preparation_scope import converter_enrichment_enabled
-                    if include_peer and converter_enrichment_enabled():
+                    if include_peer:
                         try:
                             if self.peer_converter is None:
                                 from .sra2json import SRA2JSONConverter
@@ -87,7 +86,7 @@ class ENA2JSONConverter:
                         except Exception as error:
                             outcome.issues.append(f'peer enrichment unavailable: {type(error).__name__}')
                             outcome.error = native_failure([outcome.error, error])
-                    if enrich_from_geo_ae and converter_enrichment_enabled():
+                    if enrich_from_geo_ae:
                         try:
                             enricher = self.linked_enricher or LinkedArchiveEnricher(resource_profile=self.profile)
                             package, issues = enricher.enrich(package)
@@ -99,15 +98,14 @@ class ENA2JSONConverter:
                         links = linked_accessions(package)
                         if links:
                             logger.debug('%s: linked GEO/ArrayExpress metadata may be richer; use --enrich-from-geo-ae (%s)', seed.primary, ', '.join(links))
-                    if converter_enrichment_enabled():
-                        try:
-                            from meta_standards_converter.metadata.enrichment import MINiMLEnricher
-                            publication_enricher = self.publication_enricher or MINiMLEnricher(resource_profile=self.profile)
-                            package = publication_enricher.enrich(package)
-                            outcome.issues.extend(getattr(publication_enricher, 'publication_issues', []))
-                        except Exception as error:
-                            outcome.issues.append(f'publication enrichment unavailable: {type(error).__name__}')
-                            outcome.error = native_failure([outcome.error, error])
+                    try:
+                        from meta_standards_converter.metadata.enrichment import MINiMLEnricher
+                        publication_enricher = self.publication_enricher or MINiMLEnricher(resource_profile=self.profile)
+                        package = publication_enricher.enrich(package)
+                        outcome.issues.extend(getattr(publication_enricher, 'publication_issues', []))
+                    except Exception as error:
+                        outcome.issues.append(f'publication enrichment unavailable: {type(error).__name__}')
+                        outcome.error = native_failure([outcome.error, error])
                     from ..metadata.archive_diagnostics import consistency_issues
                     outcome.issues.extend(consistency_issues(package.to_mapping()))
                     if out is not None:

@@ -36,9 +36,9 @@ Protocol Description	Samples were cut by pathology assistants at MGH and BWH hos
 Protocol Hardware				
 Protocol Software				
 SDRF File	E-GEOD-900011.sdrf.txt
-Term Source Name	EFO
-Term Source File	http://www.ebi.ac.uk/efo/efo.owl
-Term Source Version	3.90.0
+Term Source Name	EFO	GEO
+Term Source File	http://www.ebi.ac.uk/efo/efo.owl	
+Term Source Version	3.90.0	
 Investigation Accession	GSE900011
 Comment[SecondaryAccession]	GSE900011
 Comment[SecondaryAccessionTermSourceRef]	GEO

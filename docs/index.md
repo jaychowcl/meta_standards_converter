@@ -32,7 +32,7 @@ Full flag and Python API details remain in the canonical routes below.
   title: Unified conversion command
   anchor: unified-cli
   purpose: Terminal entrypoint, complete flag reference, summaries, reports, exit codes and publication safeguards.
-  keywords: msc-convert, CLI, out-type, enrichment, related, report-json, reserved_paths, current directory
+  keywords: msc-convert, CLI, out-type, enrichment, expand-studies, report-json, reserved_paths, current directory
   link: [Open section](codebase.md#unified-cli)
 
 - id: unified-cli-guide
@@ -45,8 +45,8 @@ Full flag and Python API details remain in the canonical routes below.
 - id: unified-converter
   title: Unified converter API
   anchor: unified-converter
-  purpose: Common Python conversion API, explicit handler and route contracts, supported sources and destinations, and compatibility adapters.
-  keywords: Converter, InputSpec, ConversionBatchResult, in_type, force_in_type, options, loaded data, provider routing, superclass
+  purpose: Common Python conversion API, explicit handler and route contracts, supported sources and destinations, and explicit services and MSC 9 migration.
+  keywords: Converter, InputSpec, ConversionBatchResult, in_type, PreparationPolicy, RuntimeOptions, loaded data, provider routing, superclass
   link: [Open section](codebase.md#unified-converter)
 
 - id: unified-inputs
@@ -59,7 +59,7 @@ Full flag and Python API details remain in the canonical routes below.
 - id: unified-manifest
   title: Versioned input manifest
   anchor: unified-manifest
-  purpose: Version 1.0 schema, relative paths, ordered inputs, explicit bindings and option precedence.
+  purpose: Version 2.0 schema, preparation replacement, relative paths, ordered inputs, explicit bindings and option precedence.
   keywords: input_manifest, sources, companions, metadata, input_options, output_options, overrides
   link: [Open section](codebase.md#unified-manifest)
 
@@ -73,7 +73,7 @@ Full flag and Python API details remain in the canonical routes below.
 - id: unified-preparation
   title: Enrichment presets and study expansion
   anchor: unified-preparation
-  purpose: Simple options, standard/curators/off presets, independent family expansion, operation-scoped retrieval and legacy aliases.
+  purpose: Simple options, standard/curators/off presets, independent family expansion, explicit operation-scoped retrieval and MSC 9 controls.
   keywords: enrichment, standard, curators, off, expand_studies, SuperSeries, BioProject, read study, related experiment, deduplication, execution_profile
   link: [Open section](codebase.md#unified-preparation)
 
@@ -633,3 +633,5 @@ canonical guide together when an interface, workflow, or contract changes.
   link: [Open section](codebase.md#recorded-provider-audit)
 
 - [Depth-aware harmonization and review transport](codebase.md#harmonization-depth-contract): MINiML 3.1, patch 3.2, Atlas 1.1 review policy, legacy fingerprints, ancestor names, collision groups, exact compatibility fixtures.
+
+- [MSC 9 fidelity and performance review](codebase.md#msc9-validation): constructor retrieval regression, reviewed golden differences, three paired offline runs, timing, memory and validation scope.

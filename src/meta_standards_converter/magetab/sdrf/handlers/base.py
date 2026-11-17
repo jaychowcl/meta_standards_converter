@@ -61,11 +61,11 @@ class _BaseSDRFHandler(SDRFRenderer):
         return [value]
 
     def build(self) -> list:
-        paths = self._prepare_paths()
+        paths = self.prepare_paths()
         columns = self.plan_columns(paths=paths)
         return self.render_paths(columns=columns, paths=paths)
 
-    def _prepare_paths(self) -> list:
+    def prepare_paths(self) -> list:
         """Retain registration and diagnostic effects without materializing a table."""
         with phase("magetab_protocol_registration"):
             self.preregister_protocols()

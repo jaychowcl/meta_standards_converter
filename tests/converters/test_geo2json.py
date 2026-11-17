@@ -6,397 +6,123 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-import json
-import os
-import sys
-import tempfile
-import unittest
-from unittest.mock import call, patch
+"""GEO source loading and shared parent-publication preparation."""
+from copy import deepcopy
+from unittest.mock import Mock
 
-import requests
+import pytest
 
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
-
-from meta_standards_converter.converters.geo2json import GEO2JSONConverter  # noqa: E402
-from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
-from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
+from meta_standards_converter.converters import Converter, PreparationPolicy, RuntimeOptions
+from meta_standards_converter.miniml import MINiMLCodec
+from meta_standards_converter.sources.metadata import GEOMetadataSource
+from tests.converters.test_converter_expansion import geo
 
 
-def _package(series: dict) -> MINiMLPackage:
-    return MINiMLPackage.from_mapping({
-        "miniml_schema_version": "3.1",
-        "source": {"format": "test"},
-        "series": series,
-    })
+def family(*, child_ids=(), parents=('GSE2',), parent_ids=('12345',), reciprocal=True):
+    child = geo('GSE1')
+    child['series']['pubmed_id'] = list(child_ids)
+    child['series']['relation'] = [{'type': 'SubSeries of', 'target': p} for p in parents]
+    parent = geo('GSE2')
+    parent['series']['pubmed_id'] = list(parent_ids)
+    parent['series']['relation'] = [{'type': 'SuperSeries of', 'target': 'GSE1' if reciprocal else 'GSE99'}]
+    return child, parent
 
 
-class TestGeo2JSONConverter(unittest.TestCase):
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_typed_resource_profile_is_shared_by_default_network_collaborators(
-        self, fetcher_mock, parser_mock, enricher_mock
-    ):
-        profile = get_resource_profile(
-            "standard", overrides={"max_xml_bytes": 4096}
-        )
-
-        converter = GEO2JSONConverter(resource_profile=profile)
-
-        fetcher_mock.assert_called_once_with(
-            resource_profile=profile, resource_overrides=None
-        )
-        enricher_mock.assert_called_once_with(
-            resource_profile=profile, resource_overrides=None
-        )
-        parser_mock.assert_called_once_with(fetcher=converter.geo_fetcher, resource_profile=profile)
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_fetches_parses_and_enriches_by_default(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
-        primary_json = _package({"iid": "GSE1"})
-        related_json = _package({"iid": "GSE2"})
-        enriched_primary = primary_json
-        enriched_related = related_json
-        parser_mock.return_value.parse.return_value = [primary_json, related_json]
-        enricher_mock.return_value.enrich.side_effect = [enriched_primary, enriched_related]
-
-        result = GEO2JSONConverter().convert(
-            gse="GSE1",
-            related_series=True,
-            remove_empty=False,
-            out=None,
-        )
-
-        fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
-        parser_mock.return_value.parse.assert_called_once_with(
-            miniml="<MINiML />",
-            remove_empty=False,
-            related_series=True,
-        )
-        self.assertEqual(
-            [call(data=primary_json), call(data=related_json)],
-            enricher_mock.return_value.enrich.call_args_list,
-        )
-        self.assertEqual([enriched_primary, enriched_related], result)
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_can_skip_enrichment(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
-        parsed_json = _package({"iid": "GSE1"})
-        parser_mock.return_value.parse.return_value = [parsed_json]
-
-        result = GEO2JSONConverter().convert(gse="GSE1", enrich=False, out=None)
-
-        enricher_mock.return_value.enrich.assert_not_called()
-        self.assertEqual([parsed_json], result)
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_inherits_one_reciprocal_parent_pubmed_id_before_enrichment(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        child = _package(
-            {
-                "iid": "GSE1",
-                "relation": [{"type": "SubSeries of", "target": "GSE2"}],
-            }
-        )
-        parent = _package(
-            {
-                "iid": "GSE2",
-                "pubmed_id": ["12345"],
-                "relation": [{"type": "SuperSeries of", "target": "GSE1"}],
-            }
-        )
-        fetcher_mock.return_value.fetch_gse_miniml.side_effect = [
-            "<MINiML>child</MINiML>",
-            "<MINiML>parent</MINiML>",
-        ]
-        parser_mock.return_value.parse.side_effect = [[child], [parent]]
-        enricher_mock.return_value.enrich.side_effect = lambda data: data
-
-        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
-
-        self.assertEqual(1, len(result))
-        self.assertEqual(["12345"], result[0]["series"]["pubmed_id"])
-        self.assertEqual(
-            {
-                "relation_type": "SubSeries of",
-                "source_series": "GSE2",
-                "pubmed_ids": ["12345"],
-            },
-            result[0]["extensions"]["publication_inheritance"],
-        )
-        self.assertEqual(
-            [call(gse="GSE1"), call(gse="GSE2")],
-            fetcher_mock.return_value.fetch_gse_miniml.call_args_list,
-        )
-        self.assertEqual(
-            [
-                call(
-                    miniml="<MINiML>child</MINiML>",
-                    remove_empty=True,
-                    related_series=False,
-                ),
-                call(
-                    miniml="<MINiML>parent</MINiML>",
-                    remove_empty=True,
-                    related_series=False,
-                ),
-            ],
-            parser_mock.return_value.parse.call_args_list,
-        )
-        enriched_input = enricher_mock.return_value.enrich.call_args.kwargs["data"]
-        self.assertEqual(["12345"], enriched_input["series"]["pubmed_id"])
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_preserves_direct_publication_without_parent_fetch(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        child = _package(
-            {
-                "iid": "GSE1",
-                "pubmed_id": ["999"],
-                "relation": [{"type": "SubSeries of", "target": "GSE2"}],
-            }
-        )
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML>child</MINiML>"
-        parser_mock.return_value.parse.return_value = [child]
-        enricher_mock.return_value.enrich.side_effect = lambda data: data
-
-        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
-
-        self.assertEqual(["999"], result[0]["series"]["pubmed_id"])
-        self.assertNotIn("extensions", result[0]["series"])
-        fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_skips_parent_publication_lookup_when_enrichment_is_disabled(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        child = _package(
-            {
-                "iid": "GSE1",
-                "relation": [{"type": "SubSeries of", "target": "GSE2"}],
-            }
-        )
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML>child</MINiML>"
-        parser_mock.return_value.parse.return_value = [child]
-
-        result = GEO2JSONConverter().convert(gse="GSE1", enrich=False, out=None)
-
-        self.assertEqual([child], result)
-        fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
-        enricher_mock.return_value.enrich.assert_not_called()
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_leaves_publication_blank_when_parent_evidence_is_ambiguous(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        child = _package(
-            {
-                "iid": "GSE1",
-                "relation": [{"type": "SubSeries of", "target": "GSE2"}],
-            }
-        )
-        parent = _package(
-            {
-                "iid": "GSE2",
-                "pubmed_id": ["123", "456"],
-                "relation": [{"type": "SuperSeries of", "target": "GSE1"}],
-            }
-        )
-        fetcher_mock.return_value.fetch_gse_miniml.side_effect = ["child", "parent"]
-        parser_mock.return_value.parse.side_effect = [[child], [parent]]
-        enricher_mock.return_value.enrich.side_effect = lambda data: data
-
-        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
-
-        self.assertNotIn("pubmed_id", result[0]["series"])
-        self.assertNotIn("extensions", result[0]["series"])
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_leaves_publication_blank_for_multiple_direct_parents(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        child = _package(
-            {
-                "iid": "GSE1",
-                "relation": [
-                    {"type": "SubSeries of", "target": "GSE2"},
-                    {"type": "SubSeries of", "target": "GSE3"},
-                ],
-            }
-        )
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "child"
-        parser_mock.return_value.parse.return_value = [child]
-        enricher_mock.return_value.enrich.side_effect = lambda data: data
-
-        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
-
-        self.assertNotIn("pubmed_id", result[0]["series"])
-        fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_preserves_direct_publication_details_without_parent_fetch(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        child = _package(
-            {
-                "iid": "GSE1",
-                "relation": [{"type": "SubSeries of", "target": "GSE2"}],
-                "pubmed_publication": [
-                    {"pubmed_id": "999", "title": "Direct publication"}
-                ],
-            }
-        )
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "child"
-        parser_mock.return_value.parse.return_value = [child]
-        enricher_mock.return_value.enrich.side_effect = lambda data: data
-
-        result = GEO2JSONConverter().convert(gse="GSE1", out=None)
-
-        self.assertEqual(
-            "Direct publication",
-            result[0]["series"]["pubmed_publication"][0]["title"],
-        )
-        fetcher_mock.return_value.fetch_gse_miniml.assert_called_once_with(gse="GSE1")
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_leaves_publication_blank_for_nonreciprocal_or_failed_parent(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        child = _package(
-            {
-                "iid": "GSE1",
-                "relation": [{"type": "SubSeries of", "target": "GSE2"}],
-            }
-        )
-        nonreciprocal = _package({"iid": "GSE2", "pubmed_id": ["123"]})
-        enricher_mock.return_value.enrich.side_effect = lambda data: data
-
-        with self.subTest("nonreciprocal"):
-            fetcher_mock.return_value.fetch_gse_miniml.side_effect = ["child", "parent"]
-            parser_mock.return_value.parse.side_effect = [[child], [nonreciprocal]]
-            result = GEO2JSONConverter().convert(gse="GSE1", out=None)
-            self.assertNotIn("pubmed_id", result[0]["series"])
-
-        fetcher_mock.return_value.fetch_gse_miniml.reset_mock()
-        parser_mock.return_value.parse.reset_mock()
-        with self.subTest("fetch failure"):
-            fetcher_mock.return_value.fetch_gse_miniml.side_effect = [
-                "child",
-                requests.RequestException("parent unavailable"),
-            ]
-            parser_mock.return_value.parse.side_effect = [[child]]
-            with self.assertLogs(
-                "meta_standards_converter.converters.geo2json", level="WARNING"
-            ) as logs:
-                result = GEO2JSONConverter().convert(gse="GSE1", out=None)
-            self.assertNotIn("pubmed_id", result[0]["series"])
-            self.assertNotIn("parent unavailable", "\n".join(logs.output))
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_writes_json_list_file(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML />"
-        parsed_json = _package({"iid": "GSE1", "title": "Börsch"})
-        parser_mock.return_value.parse.return_value = [parsed_json]
-        enricher_mock.return_value.enrich.return_value = parsed_json
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            result = GEO2JSONConverter().convert(gse="GSE1", out=tmpdir)
-            with open(os.path.join(tmpdir, "GSE1.json"), encoding="utf-8") as handle:
-                written = json.load(handle)
-
-        self.assertEqual([parsed_json], result)
-        self.assertEqual([parsed_json.to_mapping()], written)
-
-    @patch("meta_standards_converter.converters.geo2json.MINiMLEnricher")
-    @patch("meta_standards_converter.converters.geo2json.GEOSource")
-    @patch("meta_standards_converter.converters.geo2json.GEOWebFetcher")
-    def test_convert_emits_stage_logs_without_payload_dump(
-        self,
-        fetcher_mock,
-        parser_mock,
-        enricher_mock,
-    ):
-        fetcher_mock.return_value.fetch_gse_miniml.return_value = "<MINiML><Series /></MINiML>"
-        parsed_json = _package({"iid": "GSE1"})
-        enriched_json = _package({"iid": "GSE1", "extensions": {"secret": "do-not-log"}})
-        parser_mock.return_value.parse.return_value = [parsed_json]
-        enricher_mock.return_value.enrich.return_value = enriched_json
-
-        with self.assertLogs("meta_standards_converter.converters.geo2json", level="DEBUG") as logs:
-            result = GEO2JSONConverter().convert(gse="GSE1", related_series=True, out=None)
-
-        log_output = "\n".join(logs.output)
-        self.assertEqual([enriched_json], result)
-        self.assertIn("DEBUG:meta_standards_converter.converters.geo2json:GSE1: fetching GEO MINiML", log_output)
-        self.assertIn("DEBUG:meta_standards_converter.converters.geo2json:GSE1: fetched GEO MINiML", log_output)
-        self.assertIn("DEBUG:meta_standards_converter.converters.geo2json:GSE1: parsing GEO MINiML", log_output)
-        self.assertIn("DEBUG:meta_standards_converter.converters.geo2json:GSE1: enriching parsed package 1", log_output)
-        self.assertNotIn("do-not-log", log_output)
+def convert_family(child, parent, *, enrichment='standard', expand=False, failure=None):
+    source, enricher = Mock(), Mock()
+    def load(accession, **options):
+        if accession == 'GSE2' and failure:
+            raise failure
+        return [MINiMLCodec().decode(child if accession == 'GSE1' else parent).package]
+    source.load.side_effect = load
+    seen = []
+    def enrich(data, **options):
+        seen.append(data.to_mapping())
+        return data
+    enricher.enrich_selected.side_effect = enrich
+    enricher.publication_issues = []
+    enricher._sra_failures = 0
+    batch = Converter(services={'geo_source': source, 'enricher': enricher}).convert(
+        'GSE1', out_type='json', preparation=PreparationPolicy(enrichment=enrichment, expand_studies=expand))
+    return batch, source, seen
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_source_fetches_and_parses_without_preparing():
+    fetcher, parser = Mock(), Mock()
+    fetcher.fetch_gse_miniml.return_value = '<MINiML />'
+    parser.parse.return_value = []
+    source = GEOMetadataSource(fetcher=fetcher, parser=parser)
+    assert source.load('GSE1', remove_empty=False) == []
+    fetcher.fetch_gse_miniml.assert_called_once_with(gse='GSE1')
+    parser.parse.assert_called_once_with('<MINiML />', remove_empty=False)
+
+
+@pytest.mark.parametrize('expand', [False, True])
+def test_reciprocal_parent_is_inherited_before_enrichment_without_extra_output(expand):
+    child, parent = family()
+    before = deepcopy((child, parent))
+    batch, source, seen = convert_family(child, parent, expand=expand)
+    assert batch.status == 'complete', batch.to_dict()
+    payload = batch.items[0].payload
+    assert [p.series.iid for p in payload] == (['GSE1', 'GSE2'] if expand else ['GSE1'])
+    assert payload[0]['series']['pubmed_id'] == ['12345']
+    assert payload[0]['extensions']['publication_inheritance'] == {
+        'relation_type': 'SubSeries of', 'source_series': 'GSE2', 'pubmed_ids': ['12345']}
+    assert seen[0]['series']['pubmed_id'] == ['12345']
+    assert [c.args[0] for c in source.load.call_args_list] == ['GSE1', 'GSE2']
+    assert (child, parent) == before
+
+
+@pytest.mark.parametrize('changes', [
+    {'parents': ('GSE2','GSE3')}, {'parent_ids': ()},
+    {'parent_ids': ('123','456')}, {'reciprocal': False},
+])
+def test_ambiguous_or_nonreciprocal_evidence_does_not_invent_publication(changes):
+    batch, source, seen = convert_family(*family(**changes))
+    assert batch.status == 'complete', batch.to_dict()
+    package = batch.items[0].payload[0]
+    assert not package['series'].get('pubmed_id')
+    assert 'publication_inheritance' not in package.get('extensions', {})
+
+
+@pytest.mark.parametrize('preset', ['standard','curators'])
+def test_direct_publication_prevents_parent_retrieval(preset):
+    batch, source, seen = convert_family(*family(child_ids=('999',)), enrichment=preset)
+    assert batch.status == 'complete', batch.to_dict()
+    assert batch.items[0].payload[0]['series']['pubmed_id'] == ['999']
+    assert source.load.call_count == 1
+
+
+def test_off_and_no_expansion_disable_parent_retrieval():
+    batch, source, seen = convert_family(*family(), enrichment='off')
+    assert batch.status == 'complete'
+    assert source.load.call_count == 1 and seen == []
+
+
+def test_failed_parent_retrieval_retains_valid_partial_metadata():
+    batch, source, seen = convert_family(*family(), failure=OSError('secret'))
+    item = batch.items[0]
+    assert item.execution == 'succeeded' and item.validation == 'valid'
+    assert item.completeness == 'partial'
+    assert item.dataset_ids == ('GSE1',)
+    assert any('parent GSE2 publication retrieval failed' in d.message for d in item.diagnostics)
+    assert 'secret' not in str(batch.to_dict())
+
+
+def test_geo_loader_declares_known_repository_when_xml_omits_database():
+    fetcher = Mock()
+    fetcher.fetch_gse_miniml.return_value = '''<MINiML><Series iid="GSE1">
+        <Accession database="GEO">GSE1</Accession><Sample-Ref ref="GSM1"/>
+        </Series><Sample iid="GSM1"><Accession database="GEO">GSM1</Accession></Sample></MINiML>'''
+    package = GEOMetadataSource(fetcher=fetcher).load('GSE1')[0]
+    MINiMLCodec().decode(package, strict=True)
+    assert package['database'] == [{'iid': 'GEO', 'name': 'Gene Expression Omnibus'}]
+
+
+def test_geo_loader_does_not_invent_unknown_database_declarations():
+    from meta_standards_converter.miniml.codec import MINiMLCompatibilityError
+    fetcher = Mock()
+    fetcher.fetch_gse_miniml.return_value = '<MINiML><Series iid="GSE1"><Accession database="unknown">GSE1</Accession></Series></MINiML>'
+    package = GEOMetadataSource(fetcher=fetcher).load("GSE1")[0]
+    with pytest.raises(MINiMLCompatibilityError):
+        MINiMLCodec().decode(package, strict=True)

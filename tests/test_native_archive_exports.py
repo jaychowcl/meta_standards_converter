@@ -6,13 +6,17 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import copy
 import json
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.sra_parser import SRAParser
 from meta_standards_converter.metadata.enrichment import MINiMLEnricher
 from meta_standards_converter.metadata.interpretation import MINiMLMetadataService
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
 from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
 from meta_standards_converter.magetab.constructor import AEConstructor
 from tests.test_native_archive_parsers import fixture_records
@@ -68,7 +72,7 @@ def test_native_json_downstream_exports_keep_biology_protocols_and_files(tmp_pat
     JSON2TSVConverter().convert_source(path, tsv)
     text = tsv.read_text()
     assert 'SRS011830' in text and 'Caenorhabditis elegans' in text
-    output = JSON2AEConverter().convert(str(path), enrich=False, platform_handler='generic')[0]
+    output = converted(Converter(), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'generic'})[0]
     sdrf = next(r[1] for r in output if r[0] == 'SDRF File'); header = sdrf[0]
     assert 'Characteristics[organism]' in header
     assert 'Protocol REF' in header

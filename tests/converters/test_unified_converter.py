@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Observable unified API contracts, including defensive negative routes."""
+from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
 
 import copy
 import json
@@ -63,10 +64,7 @@ def test_does_not_mutate_input_and_writes_exact_json(tmp_path):
     assert rejected.status == "failed"
     assert output.read_bytes() == before
     assert (
-        Converter()
-        .convert(
-            value, out_type="json", outfile=output, runtime_options={"overwrite": True}
-        )
+        Converter().convert(value, out_type='json', outfile=output, runtime=RuntimeOptions(**{'overwrite': True}))
         .status
         == "complete"
     )
@@ -100,7 +98,7 @@ def test_bad_request_settings_raise(kwargs):
     ],
 )
 def test_invalid_or_forced_mismatch_is_reported(value, forced):
-    result = Converter().convert(value, out_type="json", force_in_type=forced)
+    result = Converter().convert(value, out_type='json', in_type=forced)
     assert result.status == "failed"
     assert result.items[0].diagnostics
     json.dumps(result.to_dict())
@@ -110,7 +108,7 @@ def test_inline_json_requires_forcing():
     text = json.dumps(package())
     assert Converter().convert(text, out_type="json").status == "failed"
     assert (
-        Converter().convert(text, force_in_type="json", out_type="json").status
+        Converter().convert(text, in_type='json', out_type='json').status
         == "complete"
     )
 
@@ -120,9 +118,7 @@ def test_batch_continues_and_fail_fast_records_remaining(tmp_path):
     result = Converter().convert(inputs, out_type="json")
     assert result.status == "partial"
     assert [item.status for item in result.items] == ["failed", "complete"]
-    stopped = Converter().convert(
-        inputs, out_type="json", runtime_options={"fail_fast": True}
-    )
+    stopped = Converter().convert(inputs, out_type='json', runtime=RuntimeOptions(**{'fail_fast': True}))
     assert [item.status for item in stopped.items] == ["failed", "skipped"]
 
 
@@ -143,9 +139,7 @@ def test_directory_discovery_manifest_and_duplicates(tmp_path):
         ("GSE2",),
     ]
     assert any(i.status == "failed" for i in result.items)
-    recursive = converter.convert(
-        tmp_path, out_type="json", runtime_options={"recursive": True}
-    )
+    recursive = converter.convert(tmp_path, out_type='json', runtime=RuntimeOptions(**{'recursive': True}))
     assert ("GSE3",) in [i.dataset_ids for i in recursive.items]
     duplicate = converter.convert([a, a], out_type="json")
     assert [i.status for i in duplicate.items] == ["complete", "skipped"]
@@ -153,7 +147,7 @@ def test_directory_discovery_manifest_and_duplicates(tmp_path):
     manifest.write_text(
         json.dumps(
             {
-                "schema_version": "1.0",
+                "schema_version": "2.0",
                 "inputs": [
                     {"id": "chosen", "sources": ["b.json"], "in_type": "miniml"}
                 ],
@@ -237,13 +231,13 @@ def test_manifest_companions_are_not_discovered_twice(tmp_path):
     idf = next(tmp_path.glob("*.idf.txt"))
     sdrf = next(tmp_path.glob("*.sdrf.txt"))
     manifest = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
         "inputs": [
             {"id": "bound", "sources": [str(idf)], "companions": {"sdrf": str(sdrf)}}
         ],
     }
     # This fixture checks manifest ownership, not remote supplementary enrichment.
-    result = Converter().convert(tmp_path, out_type="json", input_manifest=manifest, enrichment="off")
+    result = Converter().convert(tmp_path, out_type='json', input_manifest=manifest, preparation=PreparationPolicy(enrichment='off'))
     assert len(result.items) == 1, result.to_dict()
     assert result.status in {"complete", "partial"}, result.to_dict()
 

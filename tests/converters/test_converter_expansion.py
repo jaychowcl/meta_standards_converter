@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Only verified hierarchy edges expand; enrichment remains independent."""
+from meta_standards_converter.converters import PreparationPolicy
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
@@ -29,8 +30,8 @@ def geo(accession, children=()):
 class Geo:
     def __init__(self, documents):
         self.documents, self.calls = documents, []
-    def convert(self, accession, *, enrich, related_series, **kwargs):
-        assert enrich is related_series is False
+    def load(self, accession, **kwargs):
+        assert not ({"enrich", "related_series"} & kwargs.keys())
         self.calls.append(accession)
         value = self.documents[accession]
         if isinstance(value, Exception):
@@ -47,8 +48,7 @@ def test_transitive_family_is_separate_deterministic_and_cycle_safe(preset):
     class Enricher:
         def enrich_selected(self, value, **kwargs):
             return value
-    result = Converter(services={'geo2json': source, 'enricher': Enricher()}).convert(
-        'GSE1', out_type='json', enrichment=preset)
+    result = Converter(services={'geo_source': source, 'enricher': Enricher()}).convert('GSE1', out_type='json', preparation=PreparationPolicy(enrichment=preset))
     assert result.status == 'complete', result.to_dict()
     assert source.calls == ['GSE1', 'GSE2', 'GSE3', 'GSE4']
     assert result.items[0].dataset_ids == ('GSE1', 'GSE2', 'GSE3', 'GSE4')
@@ -61,7 +61,7 @@ def test_saved_package_expansion_retains_input_and_partial_success():
     value = geo('GSE1', ['GSE2', 'GSE3'])
     before = deepcopy(value)
     source = Geo({'GSE2': geo('GSE2'), 'GSE3': OSError('unavailable')})
-    result = Converter(services={'geo2json': source}).convert(value, out_type='json', enrichment='off')
+    result = Converter(services={'geo_source': source}).convert(value, out_type='json', preparation=PreparationPolicy(enrichment='off'))
     assert result.status == 'partial', result.to_dict()
     assert result.items[0].execution == 'succeeded'
     assert result.items[0].dataset_ids == ('GSE1', 'GSE2')
@@ -72,17 +72,17 @@ def test_saved_package_expansion_retains_input_and_partial_success():
 def test_expansion_can_be_disabled_and_never_follows_free_text():
     value = geo('GSE1', ['GSE2'])
     source = Geo({})
-    converter = Converter(services={'geo2json': source})
-    assert converter.convert(value, out_type='json', enrichment='off', options={'expand_studies': False}).status == 'complete'
+    converter = Converter(services={'geo_source': source})
+    assert converter.convert(value, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False)).status == 'complete'
     value['series']['relation'] = [{'type': 'citation', 'target': 'GSE2', 'comment': 'SubSeries GSE2'}]
     value['series']['summary'] = ['superseries GSE3']
-    assert converter.convert(value, out_type='json', enrichment='off').status == 'complete'
+    assert converter.convert(value, out_type='json', preparation=PreparationPolicy(enrichment='off')).status == 'complete'
     assert not source.calls
 
 
 def test_expansion_rejects_wrong_retrieved_identity():
     source = Geo({'GSE2': geo('GSE999')})
-    result = Converter(services={'geo2json': source}).convert(geo('GSE1', ['GSE2']), out_type='json', enrichment='off')
+    result = Converter(services={'geo_source': source}).convert(geo('GSE1', ['GSE2']), out_type='json', preparation=PreparationPolicy(enrichment='off'))
     assert result.status == 'partial', result.to_dict()
     assert result.items[0].dataset_ids == ('GSE1',)
 
@@ -107,10 +107,10 @@ def test_native_project_edges_require_verified_owner_and_explicit_relation():
 def test_ae_accession_keeps_x2x_signature():
     calls = []
     class AE:
-        def convert(self, source, out=None, sdrf_sources=None):
+        def load(self, source, out=None, sdrf_sources=None):
             calls.append(source)
             return [MINiMLCodec().decode(package('E-MTAB-1', 'sample1')).package]
-    result = Converter(services={'ae2json': AE()}).convert('E-MTAB-1', out_type='json', enrichment='off')
+    result = Converter(services={'ae_source': AE()}).convert('E-MTAB-1', out_type='json', preparation=PreparationPolicy(enrichment='off'))
     assert result.status == 'complete', result.to_dict()
     assert calls == ['E-MTAB-1']
 
@@ -128,12 +128,12 @@ def test_native_project_expansion_keeps_multiple_studies_from_one_project():
         return MINiMLCodec().decode(value).package
     calls = []
     class ENA:
-        def convert(self, accession, **kwargs):
+        def load(self, accession, **kwargs):
             calls.append(accession)
             # An umbrella accession resolves to its descendants; it need not be
             # asserted as an equivalent identifier of each descendant study.
             return ArchiveImportResult(accession, [StudyImportOutcome(study, 'PRJEB3', 'complete', native(study, 'PRJEB3', ['PRJEB1'])) for study in ['ERP2', 'ERP3']])
-    result = Converter(services={'ena2json': ENA()}).convert(native('ERP1', 'PRJEB1', ['PRJEB2']), out_type='json', enrichment='off')
+    result = Converter(services={'ena_source': ENA()}).convert(native('ERP1', 'PRJEB1', ['PRJEB2']), out_type='json', preparation=PreparationPolicy(enrichment='off'))
     assert result.status == 'complete', result.to_dict()
     assert result.items[0].dataset_ids == ('ERP1', 'ERP2', 'ERP3')
     assert calls == ['PRJEB2']

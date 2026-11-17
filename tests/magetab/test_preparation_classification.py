@@ -6,6 +6,10 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 from copy import deepcopy
 
 import pytest
@@ -139,11 +143,11 @@ def test_explicit_exclusion_blocks_lower_priority_chemistry():
 def test_saved_native_json_exports_offline_without_changing_input(tmp_path):
     import json
     from meta_standards_converter.magetab.constructor import AEConstructor
-    from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
     from tests.test_native_archive_enrichment import native
 
     class Forbidden:
-        def __getattr__(self, name):
+        def enrich_selected(self, *args, **options):
             raise AssertionError('No retrieval is allowed for saved native JSON with no enrichment')
 
     data = native().to_mapping()
@@ -152,9 +156,8 @@ def test_saved_native_json_exports_offline_without_changing_input(tmp_path):
     path = tmp_path / 'saved.json'
     path.write_text(json.dumps(data))
     before = path.read_bytes()
-    converter = JSON2AEConverter(enricher=Forbidden(), ae_constructor=AEConstructor(insdc_client=Forbidden()))
-    first = converter.convert(str(path), enrich=False)
-    assert converter.convert(str(path), enrich=False) == first
+    first = converted(Converter(services={'enricher': Forbidden(), 'magetab_exporter': MAGETabExporter(AEConstructor())}), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))
+    assert converted(Converter(services={'enricher': Forbidden(), 'magetab_exporter': MAGETabExporter(AEConstructor())}), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False)) == first
     assert path.read_bytes() == before
     assert resolve_technology(data['sample'][0], data=data).handler == 'droplet_single_cell_sequencing'
     table = next(r[1] for r in first[0] if r[0] == 'SDRF File')

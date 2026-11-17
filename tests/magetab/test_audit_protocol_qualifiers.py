@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Protocol qualifiers belong to their individual application, not a comment."""
+from meta_standards_converter.converters import PreparationPolicy
 from meta_standards_converter.converters import Converter
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.model import ProtocolApplication
@@ -29,7 +30,7 @@ def test_protocol_qualifiers_survive_typed_and_archive_boundaries():
     assert protocols[0].term_accession_number == 'P-MTAB-1'
     assert protocols[0].parameter_values[0].term_source_ref == 'EFO'
     assert protocols[1].term_source_ref == 'ArrayExpress'
-    result = Converter().convert(package, out_type='magetab', enrichment='off', options={'expand_studies': False})
+    result = Converter().convert(package, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == 'complete', result.to_dict()
     idf = result.items[0].payload[0]
     table = next(r[1] for r in idf if r[0] == 'SDRF File')
@@ -66,8 +67,7 @@ def test_recorded_four_study_protocol_qualifier_occurrences_survive():
         root = Path(__file__).parents[1] / 'fixtures' / 'fidelity'
         with (root / (accession + '.sdrf.txt')).open() as stream:
             source = list(csv.reader(stream, delimiter='\t'))
-        result = Converter().convert(str(root / (accession + '.idf.txt')), out_type='magetab',
-                                     enrichment='off', options={'expand_studies': False})
+        result = Converter().convert(str(root / (accession + '.idf.txt')), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
         assert result.status == ('partial' if accession == 'E-GEOD-48035' else 'complete'), result.to_dict()
         assert result.items[0].validation == 'valid'
         assert all('source-text encoding' in d.message for d in result.items[0].diagnostics if d.code == 'source_partial')

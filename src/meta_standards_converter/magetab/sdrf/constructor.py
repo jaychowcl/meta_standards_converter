@@ -93,29 +93,54 @@ class SDRFConstructor():
             operation.children.append(child)
         return operation, summary
 
-    def build(self, handler):
-        sdrf = handler.build()
-        self.last_sdrf_audit = handler.audit
-        return sdrf
-
-    def _prepare_for_canonical_paths(self, handler):
-        """Prepare the default handler when semantic paths supply the final table."""
+    def prepare(self, handler, *, canonical_paths=None, preserve_order=False):
+        """Register protocols/audit once, then select the final graph before rendering."""
         from .renderer import SDRFRenderer
-        if (type(self) is not SDRFConstructor
-                or getattr(self.build, '__func__', None) is not SDRFConstructor.build
-                or getattr(handler.build, '__func__', None) is not _BaseSDRFHandler.build
-                or getattr(handler.plan_columns, '__func__', None) is not SDRFRenderer.plan_columns
-                or getattr(handler.render_paths, '__func__', None) is not SDRFRenderer.render_paths):
-            return False
-        handler._prepare_paths()
+        paths = handler.prepare_paths()
+        if canonical_paths:
+            from ..harmonized import bind_sample_groups
+            from ..semantics import plan_miniml_assay_documents
+            documents = plan_miniml_assay_documents(bind_sample_groups(handler.data, canonical_paths))
+        else:
+            documents = {"study.sdrf.txt": paths}
+        renderer = SDRFRenderer(preserve_order=preserve_order)
         self.last_sdrf_audit = handler.audit
-        return True
+        return SDRFExportPlan(tuple(SDRFDocumentPlan(name, values, renderer.plan_columns(values), preserve_order)
+                                   for name, values in documents.items()), handler.audit)
+
+    def render(self, plan):
+        from .renderer import SDRFRenderer
+        tables = [SDRFRenderer(preserve_order=document.preserve_order).render_paths(document.columns, document.paths)
+                  for document in plan.documents]
+        if not tables:
+            raise ValueError("SDRF plan contains no documents")
+        header = tables[0][0]
+        if any(table[0] != header for table in tables[1:]):
+            raise ValueError("Multiple SDRF documents with different graph layouts cannot be consolidated safely.")
+        return tables[0] if len(tables) == 1 else [header, *(row for table in tables for row in table[1:])]
+
+    def build(self, handler):
+        return self.render(self.prepare(handler))
 
     def _detect_sdrf_technology(self, data: dict) -> str:
         return detect_ae_technology(data)
 
     def _has_array_files(self, data: dict) -> bool:
         return has_array_files(data)
+
+
+@dataclass(frozen=True)
+class SDRFDocumentPlan:
+    name: str
+    paths: list
+    columns: list
+    preserve_order: bool = False
+
+
+@dataclass(frozen=True)
+class SDRFExportPlan:
+    documents: tuple[SDRFDocumentPlan, ...]
+    audit: object
 
 
 @dataclass(frozen=True)

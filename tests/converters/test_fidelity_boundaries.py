@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Public-boundary regressions from the source-fidelity audit."""
+from meta_standards_converter.converters import PreparationPolicy
 from copy import deepcopy
 
 import pytest
@@ -36,8 +37,7 @@ def ena_package():
 def test_ena_list_records_are_retained_and_do_not_break_off(target):
     value = ena_package()
     original = deepcopy(value)
-    result = Converter().convert(value, out_type=target, enrichment="off",
-                                 options={"expand_studies": False})
+    result = Converter().convert(value, out_type=target, preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "complete", result.to_dict()
     assert value == original
     if target == "json":
@@ -53,8 +53,7 @@ def test_disabled_preparation_does_not_inspect_related_records(monkeypatch):
     def unexpected(*args):
         pytest.fail("disabled linked enrichment inspected related records")
     monkeypatch.setattr("meta_standards_converter.converters.unified.families.recorded_neighbors", unexpected)
-    result = Converter().convert(ena_package(), out_type="json", enrichment="off",
-                                 options={"expand_studies": False})
+    result = Converter().convert(ena_package(), out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "complete", result.to_dict()
 
 
@@ -62,8 +61,7 @@ def test_disabled_preparation_does_not_inspect_related_records(monkeypatch):
 def test_invalid_references_fail_before_publication(target, tmp_path):
     value = package()
     value["series"]["sample_ref"] = [{"ref": "missing"}]
-    result = Converter().convert(value, out_type=target, outdir=tmp_path,
-                                 enrichment="off", options={"expand_studies": False})
+    result = Converter().convert(value, out_type=target, outdir=tmp_path, preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     item = result.items[0]
     assert item.status == "failed", result.to_dict()
     assert item.validation == "invalid"
@@ -79,9 +77,7 @@ def test_invalid_enrichment_is_rejected_with_diagnostic_and_valid_partial(tmp_pa
             value["sample"][0]["title"] = "should not survive"
             return value
     value = package()
-    result = Converter(services={"enricher": Enricher()}).convert(
-        value, out_type="json", outdir=tmp_path, enrichment="curators",
-        options={"expand_studies": False})
+    result = Converter(services={'enricher': Enricher()}).convert(value, out_type='json', outdir=tmp_path, preparation=PreparationPolicy(enrichment='curators', expand_studies=False))
     item = result.items[0]
     assert (item.status, item.execution, item.completeness, item.validation) == (
         "partial", "succeeded", "partial", "valid"), result.to_dict()
@@ -97,6 +93,5 @@ def test_strict_compatible_duplicate_titles_still_succeed():
     second = deepcopy(value["sample"][0])
     second["iid"] = "GSM2"
     value["sample"].append(second)
-    result = Converter().convert(value, out_type="json", enrichment="off",
-                                 options={"expand_studies": False})
+    result = Converter().convert(value, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "complete", result.to_dict()

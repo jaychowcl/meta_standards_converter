@@ -6,6 +6,10 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 import pytest
 import json
 import csv
@@ -18,7 +22,7 @@ from meta_standards_converter.metadata.harmonization_overrides import (
     resolve_harmonization_overrides,
 )
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
 from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
 from meta_standards_converter.converters.json2obs import JSON2OBSConverter
 from meta_standards_converter.sources.json import JSONPackageSource
@@ -332,9 +336,7 @@ def test_magetab_opt_in_replaces_destinations_and_keeps_hz_evidence_visible(tmp_
         "miniml_json": package()
     }), encoding="utf-8")
 
-    magetab = JSON2AEConverter().convert(
-        str(source), enrich=False, replacement_profile=PROFILE
-    )[0]
+    magetab = converted(Converter(), str(source), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'replacement_profile': PROFILE})[0]
     sdrf = next(row[1] for row in magetab if row and row[0] == "SDRF File")
     header, values = sdrf[0], sdrf[1]
 
@@ -346,10 +348,11 @@ def test_magetab_opt_in_replaces_destinations_and_keeps_hz_evidence_visible(tmp_
 
 
 def test_all_json_consumers_expose_explicit_opt_in():
-    assert "replacement_profile" in inspect.signature(JSON2AEConverter.convert).parameters
+    assert "replacement_profile" in inspect.signature(MAGETabExporter.render).parameters
     assert "replacement_profile" in inspect.signature(JSON2H5ADConverter.convert).parameters
     assert "replacement_profile" in inspect.signature(JSON2TSVConverter.convert_source).parameters
-    for cli in (json2ae_cli, json2h5ad_cli, json2obs_cli, json2tsv_cli):
+    from meta_standards_converter.cli import convert as convert_cli
+    for cli in (convert_cli, json2h5ad_cli, json2obs_cli, json2tsv_cli):
         assert any(
             action.dest == "replacement_profile"
             for action in cli._parser()._actions

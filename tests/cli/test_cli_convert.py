@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import pytest
 from meta_standards_converter.cli import convert
+from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
 from meta_standards_converter.converters.unified.contracts import ConversionBatchResult, ConversionItemResult
 from tests.converters.test_json2tsv import package
 
@@ -59,16 +60,16 @@ def test_omitted_defaults_are_not_forwarded(monkeypatch, tmp_path):
             return ConversionBatchResult([ConversionItemResult("GSE1", "GSE1", status="complete")])
     monkeypatch.setattr(convert, "Converter", Fake)
     assert convert.main(["GSE1", "--out-type", "json"]) == 0
-    assert calls == [((["GSE1"],), {"out_type": "json", "outdir": ".", "options": {}})]
+    assert calls == [((["GSE1"],), {"out_type": "json", "outdir": ".", "preparation": PreparationPolicy(), "runtime": RuntimeOptions(), "input_options": {}, "output_options": {}, "input_manifest": None, "outfile": None})]
 
 
 @pytest.mark.parametrize("flag,value,key,expected", [
     ("--platform-handler", "generic", "platform_handler", "generic"),
-    ("--related", None, "expand_studies", True),
+    ("--expand-studies", None, "expand_studies", True),
     ("--no-expand-studies", None, "expand_studies", False),
     ("--asset", "GSM1=counts.tsv", "asset_specs", ["GSM1=counts.tsv"]),
     ("--sdrf-source", "x.sdrf.txt", "sdrf_sources", ["x.sdrf.txt"]),
-    ("--allowed-host", "example.org", "allowed_hosts", ["example.org"]),
+    ("--allowed-host", "example.org", "allowed_hosts", ("example.org",)),
     ("--execution-profile", "docker", "profile", "docker"),
     ("--resource-override", "max_xml_bytes=1024", "resource_overrides", {"max_xml_bytes": 1024}),
     ("--no-remove-empty", None, "remove_empty", False),
@@ -85,7 +86,8 @@ def test_dedicated_flags_forward_typed_values(monkeypatch, flag, value, key, exp
     if value is not None:
         argv.append(value)
     assert convert.main(argv) == 1
-    assert calls[0]["options"][key] == expected
+    forwarded = calls[0]["input_options"] | calls[0]["output_options"] | calls[0]["runtime"].to_dict() | vars(calls[0]["preparation"])
+    assert forwarded[key] == expected
 
 
 def test_exact_file_and_overwrite(source):
@@ -129,8 +131,8 @@ def test_existing_report_requires_overwrite_before_conversion(source):
 
 
 def test_manifest_directory_and_current_output(source):
-    Path("manifest.json").write_text(json.dumps({"schema_version": "1.0", "inputs": [
-        {"id": "one", "sources": [source.name], "input_options": {"enrichment": "off"}}
+    Path("manifest.json").write_text(json.dumps({"schema_version": "2.0", "inputs": [
+        {"id": "one", "sources": [source.name], "preparation": {"enrichment": "off"}}
     ]}))
     assert convert.main(["--input-manifest", "manifest.json", "--out-type", "csv"]) == 0
     assert Path("GSE1.csv").exists()
@@ -172,7 +174,7 @@ def test_expression_values_survive_cli(source, target, capsys):
 def test_raw_processing_permission_from_cli(source, capsys):
     raw = Path("reads.fastq")
     raw.write_text("@r\nAC\n+\n!!\n")
-    Path("manifest.json").write_text(json.dumps({"schema_version": "1.0", "inputs": [
+    Path("manifest.json").write_text(json.dumps({"schema_version": "2.0", "inputs": [
         {"id": "reads", "sources": [str(raw)], "metadata": str(source)}]}))
     assert convert.main(["--input-manifest", "manifest.json", "--out-type", "h5ad", "--report-json", "-", "--enrichment", "off"]) == 1
     report = json.loads(capsys.readouterr().out)
@@ -189,7 +191,7 @@ def test_report_cannot_replace_explicit_asset(source):
 
 def test_report_cannot_replace_manifest_companion(source):
     Path("counts.tsv").write_text("gene\tc1\ng1\t1\n")
-    Path("manifest.json").write_text(json.dumps({"schema_version": "1.0", "inputs": [
+    Path("manifest.json").write_text(json.dumps({"schema_version": "2.0", "inputs": [
         {"id": "matrix", "sources": ["counts.tsv"], "metadata": str(source)}]}))
     with pytest.raises(SystemExit) as error:
         convert.main(["--input-manifest", "manifest.json", "--out-type", "json", "--report-json", str(source), "--overwrite"])
@@ -229,7 +231,7 @@ def test_log_cannot_overwrite_input(source):
 
 def test_raw_processing_still_requires_reference(source, capsys):
     Path('reads.fastq').write_text('@r\nAC\n+\n!!\n')
-    Path('manifest.json').write_text(json.dumps({'schema_version': '1.0', 'inputs': [
+    Path('manifest.json').write_text(json.dumps({'schema_version': "2.0", 'inputs': [
         {'id': 'reads', 'sources': ['reads.fastq'], 'metadata': str(source)}]}))
     assert convert.main(['--input-manifest', 'manifest.json', '--out-type', 'h5ad', '--allow-processing', '--report-json', '-', '--enrichment', 'off']) == 1
     report = json.loads(capsys.readouterr().out)

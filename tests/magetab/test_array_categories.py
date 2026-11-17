@@ -7,6 +7,11 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """GEO platform categories route arrays without interpreting sample prose."""
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.json import JSONPackageSource
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -15,7 +20,8 @@ from types import SimpleNamespace
 import pytest
 from meta_standards_converter.magetab.technology import _detect_base_technology, resolve_technology
 from meta_standards_converter.magetab.constructor import AEConstructor
-from meta_standards_converter.converters import GEO2AEConverter, JSON2AEConverter
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.json import JSONPackageSource
 from meta_standards_converter.miniml.geo_parser import GEOParser
 from tests.support.contracts import install_replay
 
@@ -70,16 +76,15 @@ def test_gse100_both_converters_match_forced_array(tmp_path, monkeypatch):
     source.write_text(json.dumps(package.to_mapping()))
     # Metadata only: source is real; external enrichment is deliberately disabled.
     def constructor():
-        return AEConstructor(evidence_resolver=SimpleNamespace(sample_runs=lambda *args: {}, publications=lambda data: []))
-    geo = GEO2AEConverter(enricher=SimpleNamespace(enrich=lambda data: data), ae_constructor=constructor())
-    js = JSON2AEConverter(ae_constructor=constructor())
-    outputs = [geo.convert('GSE100'), geo.convert('GSE100', platform_handler='array'),
-               js.convert(str(source), enrich=False), js.convert(str(source), enrich=False, platform_handler='array')]
+        return AEConstructor()
+    js = MAGETabExporter(constructor=constructor())
+    outputs = [converted(Converter(services={'enricher': SimpleNamespace(enrich_selected=lambda data, **options: data)}), 'GSE100', out_type='magetab', preparation=PreparationPolicy(enrichment='standard', expand_studies=False, linked_metadata=False, peer_provider=False)), converted(Converter(services={'enricher': SimpleNamespace(enrich_selected=lambda data, **options: data)}), 'GSE100', out_type='magetab', preparation=PreparationPolicy(enrichment='standard', expand_studies=False, linked_metadata=False, peer_provider=False), output_options={'platform_handler': 'array'}),
+               js.render(JSONPackageSource().load(source)), js.render(JSONPackageSource().load(source), platform_handler='array')]
     assert all(output == outputs[0] for output in outputs)
     rows = next(row[1] for row in outputs[0][0] if row[0] == 'SDRF File')
     assert len(rows) == 9
     assert len({row[0] for row in rows[1:]}) == 4
     assert 'Assay Name' in rows[0]
     assert {row[rows[0].index('Array Design REF')] for row in rows[1:]} == {'GPL221'}
-    generic = js.convert(str(source), enrich=False, platform_handler='generic')
+    generic = js.render(JSONPackageSource().load(source), platform_handler='generic')
     assert 'Array Design REF' not in next(row[1] for row in generic[0] if row[0] == 'SDRF File')[0]

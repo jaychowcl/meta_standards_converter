@@ -334,7 +334,7 @@ class ENASource:
                             records.issues.append(f'{acc}: mismatched indexed analysis identity or membership')
 
     @provider_boundary(provider='ena', operation='metadata_retrieval')
-    def fetch(self, seed, *, _on_core=None):
+    def fetch(self, seed, *, _on_core=None, publications=True):
         records = StudyRecords(seed)
         query = f'secondary_study_accession="{seed.study}"' if seed.study.startswith(('SRP', 'ERP', 'DRP')) else f'study_accession="{seed.primary}"'
         for accession in dict.fromkeys((seed.study, seed.primary)):
@@ -373,7 +373,7 @@ class ENASource:
         if _on_core is not None: _on_core(records)
         from ..metadata.retrieval_budget import _budget_stage
         with _budget_stage('native_supplementary'):
-            return self._supplement(records, inventory, query, extras=_on_core is not None)
+            return self._supplement(records, inventory, query, extras=_on_core is not None, publications=publications)
 
     @provider_boundary(provider='ena', operation=lambda self, kind, *args, **kwargs: {'sample': 'sample_inventory', 'read_run': 'run_inventory', 'read_experiment': 'experiment_inventory'}.get(kind, 'metadata_retrieval'))
     def _inventory(self, kind, records, query):
@@ -381,7 +381,7 @@ class ENASource:
         rows = attempt(records, f'{kind} inventory', lambda: self.search(kind, scoped))
         if rows is not None: records.indexed[kind] = rows
 
-    def _supplement(self, records, inventory, query, *, extras=False):
+    def _supplement(self, records, inventory, query, *, extras=False, publications=True):
         seed = records.seed
         if extras:
             for kind, field in [('analysis', 'analysis_accession'), ('assembly', 'assembly_accession')]:
@@ -419,8 +419,7 @@ class ENASource:
             obj = self.linked_json('https://www.ebi.ac.uk/ena/taxonomy/rest/tax-id/' + taxid, taxid, 'taxId', records)
             if obj is not None:
                 records.linked.append({'provider': 'ena', 'kind': 'taxonomy', 'accession': taxid, 'metadata': obj})
-        from ..metadata.preparation_scope import source_publications_enabled
-        if source_publications_enabled():
+        if publications:
             from .archive_publications import resolve_identifiers
             resolve_identifiers(records, self.http, 'ena')
             for batch in chunks(sorted(publication_ids(records))):

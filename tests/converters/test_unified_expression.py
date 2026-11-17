@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Expression routes are lazy, explicit about processing, and preserve caller data."""
+from meta_standards_converter.converters import RuntimeOptions
 
 import json
 from pathlib import Path
@@ -231,13 +232,7 @@ def test_explicit_processing_option_runs_injected_pipeline(tmp_path):
         available_memory=lambda: 10**12,
         memory_estimator=lambda *_: 100,
     )
-    result = Converter(services={"json2h5ad": h5ad}).convert(
-        InputSpec(reads, metadata=package()),
-        out_type="h5ad",
-        outdir=tmp_path / "out",
-        runtime_options={"allow_processing": True},
-        output_options={"genome": "GRCh38"},
-    )
+    result = Converter(services={'json2h5ad': h5ad}).convert(InputSpec(reads, metadata=package()), out_type='h5ad', outdir=tmp_path / 'out', runtime=RuntimeOptions(**{'allow_processing': True}), output_options={'genome': 'GRCh38'})
     assert result.status == "complete", result.to_dict()
     assert len(calls) == 1 and calls[0][1]["genome"] == "GRCh38"
 
@@ -277,12 +272,7 @@ def test_failed_component_dataset_does_not_erase_successful_sibling(tmp_path):
 def test_raw_handler_rejects_malformed_fastq_before_pipeline(tmp_path):
     reads = tmp_path / "bad.fastq"
     reads.write_text("not fastq\n")
-    result = Converter().convert(
-        InputSpec(reads, metadata=package()),
-        out_type="h5ad",
-        outdir=tmp_path / "out",
-        runtime_options={"allow_processing": True},
-    )
+    result = Converter().convert(InputSpec(reads, metadata=package()), out_type='h5ad', outdir=tmp_path / 'out', runtime=RuntimeOptions(**{'allow_processing': True}))
     assert result.status == "failed"
     assert any(d.code == "invalid_fastq" for d in result.items[0].diagnostics)
     assert not (tmp_path / "out").exists()
@@ -317,11 +307,7 @@ def test_compressed_h5ad_is_bounded_and_read_backed_for_obs(tmp_path):
         stream.write(path.read_bytes())
     result = Converter().convert(compressed, out_type="obs")
     assert result.status == "complete", result.to_dict()
-    rejected = Converter().convert(
-        compressed,
-        out_type="obs",
-        runtime_options={"resource_overrides": {"max_expanded_archive_bytes": 100}},
-    )
+    rejected = Converter().convert(compressed, out_type='obs', runtime=RuntimeOptions(**{'resource_overrides': {'max_expanded_archive_bytes': 100}}))
     assert rejected.status == "failed"
     assert any(d.code == "input_too_large" for d in rejected.items[0].diagnostics)
 

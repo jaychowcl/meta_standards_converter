@@ -331,9 +331,9 @@ def manifest_specs(value, limit):
     if (
         not isinstance(payload, Mapping)
         or set(payload) != {"schema_version", "inputs"}
-        or payload["schema_version"] != "1.0"
+        or payload["schema_version"] != "2.0"
     ):
-        raise ValueError("Input manifest requires schema_version 1.0 and inputs")
+        raise ValueError("Input manifest requires schema_version 2.0 and inputs; move enrichment and expansion to preparation")
     if not isinstance(payload["inputs"], list) or not payload["inputs"]:
         raise ValueError("Manifest inputs must be nonempty")
     result, seen = [], set()
@@ -364,6 +364,7 @@ def manifest_specs(value, limit):
             "metadata",
             "input_options",
             "output_options",
+            "preparation",
         }
         if (
             not isinstance(entry, Mapping)
@@ -403,6 +404,11 @@ def manifest_specs(value, limit):
             ):
                 if key in fields[group]:
                     fields[group][key] = resolve(fields[group][key])
+        if "preparation" in fields:
+            from .requests import PreparationPolicy
+            if not isinstance(fields["preparation"], Mapping):
+                raise TypeError("manifest preparation must be an object")
+            fields["preparation"] = PreparationPolicy(**fields["preparation"])
         result.append(InputSpec(**fields))
     return result
 

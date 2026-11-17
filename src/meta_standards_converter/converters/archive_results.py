@@ -92,7 +92,7 @@ def native_failure(errors):
     return error
 
 
-def _load_native(source, parser, seed, *, _outcome=None):
+def _load_native(source, parser, seed, *, _outcome=None, publications=None):
     """Retain a strictly valid core before optional provider discovery can stop."""
     from inspect import signature
     from ..metadata.retrieval_budget import _active, _phase, _budget_stage, _BudgetExhausted, _coverage
@@ -112,6 +112,8 @@ def _load_native(source, parser, seed, *, _outcome=None):
     try:
         with _budget_stage('native_core'):
             options = {'_on_core': core} if budget and '_on_core' in signature(source.fetch).parameters else {}
+            if publications is not None:
+                options["publications"] = publications
             records = source.fetch(seed, **options)
             captured = records
         if not records.xml and not any(records.indexed.values()):

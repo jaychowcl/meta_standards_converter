@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
 from meta_standards_converter.provider_issues import ProviderIssue
+from .requests import PreparationPolicy
 from meta_standards_converter.sources.contracts import RequestMetrics
 
 
@@ -26,6 +27,7 @@ class InputSpec:
     in_type: str | None = None
     companions: Mapping[str, Any] = field(default_factory=dict)
     metadata: Any = None
+    preparation: PreparationPolicy | None = None
     input_options: Mapping[str, Any] = field(default_factory=dict)
     output_options: Mapping[str, Any] = field(default_factory=dict)
 

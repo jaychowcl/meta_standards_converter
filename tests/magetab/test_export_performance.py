@@ -12,7 +12,7 @@ import logging
 import pytest
 
 from meta_standards_converter.conversion_logging import operation
-from meta_standards_converter.converters.json2ae import JSON2AEConverter
+from meta_standards_converter.magetab.exporter import MAGETabExporter
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.sources.json import DatasetPackageGroup, SourceLoadResult
@@ -27,12 +27,17 @@ from dataclasses import replace
 def test_export_stages_report_work_cpu_and_process_peak_without_changing_output(caplog, tmp_path):
     package = MINiMLCodec().decode(legacy()).package
     source = SourceLoadResult((DatasetPackageGroup("study", (package,)),))
-    converter = JSON2AEConverter(
-        ae_constructor=AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    converter = MAGETabExporter(
+        constructor=AEConstructor()
     )
-    expected = converter.convert_loaded(source, enrich=False)
+    expected = converter.render(source)
     with caplog.at_level(logging.DEBUG):
-        result = converter.convert_loaded(source, enrich=False, out=str(tmp_path))
+        from meta_standards_converter.converters import Converter, PreparationPolicy
+        batch = Converter(services={"magetab_exporter": converter}).convert(
+            package, out_type="magetab", outdir=tmp_path,
+            preparation=PreparationPolicy(enrichment="off", expand_studies=False))
+        assert batch.status == "complete", batch.to_dict()
+        result = batch.items[0].payload
     assert result == expected
     phases = [e for e in events(caplog)
               if e["event_type"] == "stage_finished" and
@@ -94,7 +99,7 @@ def count_package_construction(monkeypatch):
 def test_constructor_validates_once_and_owns_one_detached_export_view(monkeypatch):
     package = MINiMLCodec().decode(legacy()).package
     before = package.to_mapping()
-    constructor = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    constructor = AEConstructor()
     expected = constructor.miniml2magetab(package)
     calls = count_package_construction(monkeypatch)
     assert constructor.miniml2magetab(package) == expected
@@ -105,7 +110,7 @@ def test_constructor_validates_once_and_owns_one_detached_export_view(monkeypatc
 def test_default_resolution_validates_once_without_disabled_profile_roundtrip(monkeypatch):
     package = MINiMLCodec().decode(legacy()).package
     source = SourceLoadResult((DatasetPackageGroup("study", (package,)),))
-    converter = JSON2AEConverter()
+    converter = MAGETabExporter()
     calls = count_package_construction(monkeypatch)
     actual = converter._packages_from_loaded(source)
     assert actual == [package]
@@ -115,22 +120,22 @@ def test_default_resolution_validates_once_without_disabled_profile_roundtrip(mo
 
 def test_study_identity_lookup_does_not_materialize_the_whole_package(monkeypatch):
     package = MINiMLCodec().decode(legacy()).package
-    expected = JSON2AEConverter()._usable_study_accession(package)
+    expected = MAGETabExporter()._usable_study_accession(package)
 
     def forbidden(*args):
         raise AssertionError("Identity lookup traversed all samples and source evidence")
 
     monkeypatch.setattr(MINiMLPackage, "to_mapping", forbidden)
-    assert JSON2AEConverter()._usable_study_accession(package) == expected
+    assert MAGETabExporter()._usable_study_accession(package) == expected
 
 
 def test_changed_external_typed_input_is_not_trusted_by_export():
     package = MINiMLCodec().decode(legacy()).package
     malformed = replace(package, samples=package.samples + package.samples)
     with pytest.raises(ValueError, match="duplicate sample iid"):
-        AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns()).miniml2magetab(malformed)
+        AEConstructor().miniml2magetab(malformed)
     with pytest.raises(ValueError, match="duplicate sample iid"):
-        JSON2AEConverter()._packages_from_loaded(
+        MAGETabExporter()._packages_from_loaded(
             SourceLoadResult((DatasetPackageGroup("bad", (malformed,)),)))
 
 
@@ -149,8 +154,8 @@ def test_custom_group_resolution_and_injected_constructor_keep_their_contract():
             assert isinstance(data, MINiMLPackage)
             return data.series.title
 
-    result = JSON2AEConverter(ae_constructor=Constructor()).convert_loaded(
-        SourceLoadResult((CustomGroup("original", (package,)),)), enrich=False)
+    result = MAGETabExporter(constructor=Constructor()).render(
+        SourceLoadResult((CustomGroup("original", (package,)),)))
     assert result == ["injected resolution"]
     assert supplied == [None]
 
@@ -158,7 +163,7 @@ def test_custom_group_resolution_and_injected_constructor_keep_their_contract():
 def test_private_view_is_discarded_after_failure_and_next_export_is_clean(monkeypatch):
     package = MINiMLCodec().decode(legacy()).package
     before = deepcopy(package.to_mapping())
-    constructor = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    constructor = AEConstructor()
     expected = constructor.miniml2magetab(package)
     from meta_standards_converter.magetab import native_files
     original = native_files.project_native_files
@@ -184,13 +189,13 @@ def test_canonical_table_renders_once_and_retains_preparation_and_audit(monkeypa
     class InjectedConstructor(SDRFConstructor):
         builds = 0
 
-        def build(self, handler):
+        def prepare(self, handler, **options):
             self.builds += 1
-            return super().build(handler)
+            return super().prepare(handler, **options)
 
     package = MINiMLCodec().decode(legacy()).package
     injected = InjectedConstructor()
-    reference = AEConstructor(sdrf_constructor=injected, pubmed_client=PubMed(), insdc_client=NoRuns())
+    reference = AEConstructor(sdrf_constructor=injected)
     expected = reference.miniml2magetab(package, platform_handler=forced)
     assert injected.builds == 1
     calls = []
@@ -201,7 +206,7 @@ def test_canonical_table_renders_once_and_retains_preparation_and_audit(monkeypa
         return original(self, columns, paths)
 
     monkeypatch.setattr(SDRFRenderer, "render_paths", render)
-    candidate = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    candidate = AEConstructor()
     assert candidate.miniml2magetab(package, platform_handler=forced) == expected
     assert candidate.sdrf_constructor.last_sdrf_audit == injected.last_sdrf_audit
     assert len(calls) == 1
@@ -222,7 +227,7 @@ def test_inputs_without_canonical_paths_keep_fallback_rendering(monkeypatch):
         return original(self, columns, paths)
 
     monkeypatch.setattr(SDRFRenderer, "render_paths", render)
-    constructor = AEConstructor(pubmed_client=PubMed(), insdc_client=NoRuns())
+    constructor = AEConstructor()
     rows = constructor.miniml2magetab(package)
     table = next(r[1] for r in rows if r[0] == "SDRF File")
     assert table[0][0] == "Source Name" and len(table) == 2
@@ -278,32 +283,41 @@ def test_indexed_binding_preserves_pools_ambiguity_occurrences_and_channel_scope
     assert result[1:] == before[1:] and paths == before
 
 
-@pytest.mark.parametrize("collaborator", ["idf", "evidence"])
-def test_injected_collaborators_keep_eager_fallback_table(collaborator):
+def test_export_plan_is_stable_after_injected_idf_preparation_mutates_its_data():
     from meta_standards_converter.magetab.idf import IDFConstructor
-    from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
-    from meta_standards_converter.metadata.enrichment import MAGETabEvidenceResolver
-
-    class LegacyBuilder(SDRFConstructor):
-        pass
-
     class ChangingIDF(IDFConstructor):
         def prefix_rows(self, data):
             data["series"]["assay_paths"].clear()
             return super().prefix_rows(data)
-
-    class ChangingEvidence(MAGETabEvidenceResolver):
-        def publications(self, data):
-            data["series"]["assay_paths"].clear()
-            return super().publications(data)
-
-    def constructor(sdrf=None):
-        return AEConstructor(
-            sdrf_constructor=sdrf,
-            idf_constructor=ChangingIDF() if collaborator == "idf" else None,
-            evidence_resolver=ChangingEvidence(PubMed(), NoRuns()) if collaborator == "evidence" else None,
-            pubmed_client=PubMed(), insdc_client=NoRuns())
-
     package = MINiMLCodec().decode(legacy()).package
-    expected = constructor(LegacyBuilder()).miniml2magetab(package)
-    assert constructor().miniml2magetab(package) == expected
+    original = package.to_mapping()
+    constructor = AEConstructor(idf_constructor=ChangingIDF())
+    plan = constructor.prepare(package)
+    assert plan.sdrf.documents
+    assert len(next(row[1] for row in constructor.render(plan) if row[0] == "SDRF File")) > 1
+    assert package.to_mapping() == original
+
+
+def test_each_canonical_sdrf_document_is_rendered_once(monkeypatch):
+    from meta_standards_converter.magetab.sdrf.renderer import SDRFRenderer
+    data = legacy()
+    first = deepcopy(data["series"]["assay_paths"][0])
+    second = deepcopy(first)
+    first["document"], second["document"] = "first.sdrf.txt", "second.sdrf.txt"
+    data["series"]["assay_paths"] = [first, second]
+    calls = []
+    original = SDRFRenderer.render_paths
+
+    def render(self, columns, paths):
+        calls.append(len(paths))
+        return original(self, columns, paths)
+
+    monkeypatch.setattr(SDRFRenderer, "render_paths", render)
+    constructor = AEConstructor()
+    plan = constructor.prepare(MINiMLCodec().decode(data, strict=True).package)
+    assert calls == []
+    assert [document.name for document in plan.sdrf.documents] == ["first.sdrf.txt", "second.sdrf.txt"]
+    rows = constructor.render(plan)
+    table = next(row[1] for row in rows if row[0] == "SDRF File")
+    assert calls == [1, 1]
+    assert len(table) == 3 and table[1] == table[2]

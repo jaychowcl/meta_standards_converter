@@ -16,7 +16,6 @@ from meta_standards_converter.conversion_logging import count, emit, progress
 from urllib.parse import parse_qs, urlsplit
 
 from .contracts import Diagnostic, InputSpec
-from meta_standards_converter.metadata.preparation_scope import loading_source
 
 PROJECT = re.compile(r'PRJ(?:NA|EB|DB|DA)\d+')
 
@@ -81,7 +80,7 @@ class StudyFamilies:
         found = set(recorded_neighbors(package, provider))
         if provider != 'sra':
             return sorted(found), []
-        from meta_standards_converter.converters.sra2json import SRA2JSONConverter
+        from meta_standards_converter.sources.metadata import NativeMetadataSource
         from meta_standards_converter.sources.archive_support import Resolution
         issues = []
         for root in project_records(package, provider):
@@ -95,7 +94,7 @@ class StudyFamilies:
                 if accession not in self.projects:
                     result, linked = Resolution(), set()
                     try:
-                        source = self.context.service('sra2json', lambda: SRA2JSONConverter(resource_profile=self.context.profile)).source
+                        source = self.context.service('sra_source', lambda: NativeMetadataSource('sra', resource_profile=self.context.profile)).source
                         for direction in ('u2d', 'd2u'):
                             name = 'bioproject_bioproject_' + direction
                             ids = source.publication_links('bioproject', 'bioproject', [uid], name)[uid]
@@ -152,8 +151,7 @@ class StudyFamilies:
                         if key not in self.cache:
                             # Same provider throughout a family, including curators/off.
                             handler = context.converter.handlers[provider + '_accession']
-                            with loading_source(context.preparation_policy):
-                                candidate = handler.load(InputSpec(accession), context)
+                            candidate = handler.load(InputSpec(accession), context)
                             if provider == "geo" and not any(accession in study_ids(p) for g in candidate.metadata.groups for p in g.packages):
                                 raise ValueError('Retrieved family member does not match the requested identity')
                             from .validation import validate_metadata

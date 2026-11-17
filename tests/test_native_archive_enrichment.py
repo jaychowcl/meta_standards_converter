@@ -74,14 +74,14 @@ def test_ae_over_geo_and_unavailable_enrichment():
     package['series']['relation'] = [{'type': 'GEO', 'target': 'GSE1'}, {'type': 'ArrayExpress', 'target': 'E-MTAB-1'}]
     package = MINiMLCodec().decode(package).package
     class Converter:
-        def convert(self, accession, **kwargs):
+        def load(self, accession, **kwargs):
             return [linked(package, accession, 'AE' if accession.startswith('E-') else 'GEO')]
-    enriched, issues = LinkedArchiveEnricher(geo_converter=Converter(), ae_converter=Converter()).enrich(package)
+    enriched, issues = LinkedArchiveEnricher(geo_source=Converter(), ae_source=Converter()).enrich(package)
     assert enriched.series.title == 'AE'
     class Broken:
-        def convert(self, *args, **kwargs):
+        def load(self, *args, **kwargs):
             raise OSError('private detail')
-    enriched, issues = LinkedArchiveEnricher(geo_converter=Broken(), ae_converter=Broken()).enrich(package)
+    enriched, issues = LinkedArchiveEnricher(geo_source=Broken(), ae_source=Broken()).enrich(package)
     assert enriched.series.iid == package.series.iid
     assert issues and 'private detail' not in str(issues)
 
@@ -173,10 +173,10 @@ def test_geo_link_discovers_verified_egeod_and_applies_ae_last():
     package=MINiMLCodec().decode(package).package
     calls=[]
     class Converter:
-        def convert(self, accession, **kwargs):
+        def load(self, accession, **kwargs):
             calls.append(accession)
             return [linked(package,accession,'AE' if accession.startswith('E-') else 'GEO')]
-    result,issues=LinkedArchiveEnricher(geo_converter=Converter(),ae_converter=Converter()).enrich(package)
+    result,issues=LinkedArchiveEnricher(geo_source=Converter(),ae_source=Converter()).enrich(package)
     assert not issues
     assert calls==['GSE1','E-GEOD-1']
     assert result.series.title=='AE'
@@ -187,14 +187,14 @@ def test_unrelated_egeod_candidate_cannot_redefine_native_study():
     package=native().to_mapping();package['series']['relation']=[{'type':'GEO','target':'GSE1'}]
     package=MINiMLCodec().decode(package).package
     class Geo:
-        def convert(self, accession, **kwargs):return [linked(package,accession,'GEO')]
+        def load(self, accession, **kwargs):return [linked(package,accession,'GEO')]
     class AE:
-        def convert(self, accession, **kwargs):
+        def load(self, accession, **kwargs):
             other=linked(package,accession,'wrong').to_mapping()
             other['series']['accession']=[{'value':accession,'database':'ArrayExpress'},{'value':'SRP999999','database':'SRA'}]
             other['series']['relation']=[]
             return [MINiMLCodec().decode(other).package]
-    result,issues=LinkedArchiveEnricher(geo_converter=Geo(),ae_converter=AE()).enrich(package)
+    result,issues=LinkedArchiveEnricher(geo_source=Geo(),ae_source=AE()).enrich(package)
     assert result.series.title=='GEO'
     assert any('identity' in i for i in issues)
 
@@ -203,15 +203,15 @@ def test_egeod_probe_cannot_join_sibling_read_study_by_project_alone():
     package=native().to_mapping();package['series']['relation']=[{'type':'GEO','target':'GSE1'}]
     package=MINiMLCodec().decode(package).package
     class Geo:
-        def convert(self,*a,**k):return []
+        def load(self,*a,**k):return []
     class AE:
-        def convert(self,accession):
+        def load(self,accession):
             other=linked(package,accession,'wrong sibling').to_mapping()
             project=[a for a in package.to_mapping()['series']['accession'] if a['database']=='BioProject']
             other['series']['accession']=[*project,{'value':accession,'database':'ArrayExpress'},{'value':'SRP999999','database':'SRA'}]
             other['series']['relation']=[]
             return [MINiMLCodec().decode(other).package]
-    result,issues=LinkedArchiveEnricher(geo_converter=Geo(),ae_converter=AE()).enrich(package)
+    result,issues=LinkedArchiveEnricher(geo_source=Geo(),ae_source=AE()).enrich(package)
     assert result.series.title==package.series.title
     assert any('identity' in i for i in issues)
 

@@ -115,14 +115,38 @@ def normalize_runtime_date(payload, expected, declaration):
     return normalized(payload, date.today().isoformat()), normalized(expected, declaration["recorded_submission_date"])
 
 
+def recorded_request(saved):
+    """Translate frozen MSC 8 audit settings without rewriting historical evidence.
+
+    This adapter belongs to the versioned audit reader, not the public MSC API.
+    New application callers use PreparationPolicy and RuntimeOptions directly.
+    """
+    from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
+    from meta_standards_converter.converters.unified.options import RUNTIME_DEFAULTS
+    request = dict(saved)
+    flat = dict(request.pop("options", {}))
+    inputs = dict(request.pop("input_options", {}))
+    outputs = dict(request.pop("output_options", {}))
+    policy = {"enrichment": request.pop("enrichment", "standard")}
+    for key, target in (("expand_studies", "expand_studies"), ("include_peer", "peer_provider"),
+                        ("enrich_from_geo_ae", "linked_metadata")):
+        if key in flat: policy[target] = flat.pop(key)
+        if key in inputs: policy[target] = inputs.pop(key)
+    runtime = {key: flat.pop(key) for key in RUNTIME_DEFAULTS if key in flat}
+    outputs.update(flat)
+    return dict(request, preparation=PreparationPolicy(**policy), runtime=RuntimeOptions(**runtime),
+                input_options=inputs, output_options=outputs)
+
+
 def build_services(replay, declarations):
     """Explicit parser/merge adapters; these never claim SRA HTTP discovery."""
     services = {}
     for name, spec in declarations.items():
-        if name == "sra2json" and spec["kind"] == "frozen-source":
+        name = {"sra2json": "sra_source", "ae2json": "ae_source"}.get(name, name)
+        if name == "sra_source" and spec["kind"] == "frozen-source":
             if replay.manifest["evidence_kind"] != "parser-merge-replay":
                 raise HarnessError("FrozenSource must be labelled parser-merge-replay")
-            from meta_standards_converter.converters.sra2json import SRA2JSONConverter
+            from meta_standards_converter.sources.metadata import NativeMetadataSource
             from meta_standards_converter.sources.archive_support import Resolution, StudySeed, StudyRecords
             from meta_standards_converter.xml_safety import parse_xml
             def snapshot(file_id, records=False):
@@ -142,20 +166,20 @@ def build_services(replay, declarations):
                     if accession not in self.declaration["requested_accessions"]:
                         replay.fail(f"unmanifested frozen resolution accession: {accession}")
                     return snapshot(self.declaration["resolution"])
-                def fetch(self, seed):
+                def fetch(self, seed, *, publications=True):
                     if seed.study not in self.declaration["records"]: replay.fail(f"unmanifested frozen study: {seed.study}")
                     record = snapshot(self.declaration["records"][seed.study], records=True)
                     resolution = snapshot(self.declaration["resolution"])
                     if record.seed != seed or seed not in resolution.studies:
                         replay.fail("frozen record seed identity differs from requested/resolved seed")
                     return record
-            services[name] = SRA2JSONConverter(source=FrozenSource(spec))
-        elif name == "ae2json" and spec["kind"] == "local-ae":
-            from meta_standards_converter.converters.ae2json import AE2JSONConverter
+            services[name] = NativeMetadataSource("sra", source=FrozenSource(spec))
+        elif name == "ae_source" and spec["kind"] == "local-ae":
+            from meta_standards_converter.sources.metadata import MAGETabMetadataSource
             from meta_standards_converter.sources.magetab import MAGETabInput, TextResource
             class LocalAE:
                 def __init__(self, declaration): self.declaration = declaration
-                def convert(self, accession, **kwargs):
+                def load(self, accession, **kwargs):
                     try: entry = self.declaration["files"][accession]
                     except KeyError: replay.fail(f"unexpected local AE accession: {accession}")
                     idf_id = entry["idf"]
@@ -167,7 +191,7 @@ def build_services(replay, declarations):
                     resolved = MAGETabInput(idf, tuple(resource(file_id) for file_id in entry["sdrfs"]), idf.origin, "path")
                     class Fetcher:
                         def resolve(self, source, **kwargs): return resolved
-                    return AE2JSONConverter(fetcher=Fetcher()).convert(idf.origin)
+                    return MAGETabMetadataSource(fetcher=Fetcher()).load(idf.origin)
             services[name] = LocalAE(spec)
         elif name == "enricher" and spec["kind"] == "no-publication":
             class NoPublication:
@@ -199,7 +223,7 @@ def verify_local_companions(replay, idf_id, expected_ids=None):
 
 def validate_route_intent(scenario):
     intent = scenario["route_intent"]
-    services = scenario["services"]
+    services = {{"ae_source": "ae2json", "sra_source": "sra2json"}.get(k, k): v for k,v in scenario["services"].items()}
     preset = scenario["options"].get("enrichment", "standard")
     if intent == "linked-only":
         if services.get("enricher", {}).get("kind") != "no-publication" or services.get("ae2json", {}).get("kind") != "local-ae":
@@ -354,7 +378,7 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
                         wanted = scenario["expected"][fmt]
                         try:
                             result = Converter(services=services if packages is None else {}).convert(source if packages is None else packages, out_type=fmt,
-                                **(scenario["options"] if packages is None else {"enrichment": "off", "options": {"expand_studies": False}}))
+                                **recorded_request(scenario["options"] if packages is None else {"enrichment": "off", "options": {"expand_studies": False}}))
                         except ReplayBudgetExceeded:
                             replay.assert_no_errors()
                             if scenario["classification"] != "expected-failure" or wanted.get("exception") != "budget-exhausted":

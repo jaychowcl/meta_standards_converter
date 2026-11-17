@@ -13,7 +13,7 @@ from meta_standards_converter.conversion_logging import measured
 
 import json
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -35,6 +35,12 @@ class DatasetPackageGroup:
         from meta_standards_converter.metadata.harmonization_overrides import resolve_harmonization_overrides
 
         codec = MINiMLCodec()
+        if replacement_profile is None:
+            # Immutable packages can be validated without a mapping round trip.
+            # Keep this behavior in the group interface so injected groups own
+            # their resolution behavior too.
+            return replace(self, packages=codec.decode_many(self.packages).packages,
+                           source_packages=self.packages)
         resolution = resolve_harmonization_overrides(
             tuple(codec.encode(package) for package in self.packages),
             replacement_profile,

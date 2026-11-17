@@ -6,6 +6,10 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
+from tests.support.conversion import converted
+from meta_standards_converter.converters import Converter, PreparationPolicy
+from meta_standards_converter.magetab.exporter import MAGETabExporter
+from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 from copy import deepcopy
 import xml.etree.ElementTree as ET
 import pytest
@@ -113,14 +117,13 @@ def test_empty_pubmed_response_is_reported_as_unavailable():
 
 def test_json2ae_native_publications_and_no_enrich_are_separate(tmp_path):
     import json
-    from meta_standards_converter.converters.json2ae import JSON2AEConverter
+
     from meta_standards_converter.magetab.constructor import AEConstructor
     path=tmp_path/'native.json';path.write_text(json.dumps(package().to_mapping()));original=path.read_bytes()
     client=PubMed();service=MINiMLEnricher(pubmed_fetcher=client,insdc_fetcher=NoRuns())
-    converter=JSON2AEConverter(enricher=service,ae_constructor=AEConstructor(pubmed_client=client,insdc_client=NoRuns()))
-    rows=converter.convert(str(path),enrich=False)[0]
+    rows=converted(Converter(services={'enricher': service, 'magetab_exporter': MAGETabExporter(AEConstructor())}), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     assert client.calls==[] and path.read_bytes()==original
-    rows=converter.convert(str(path))[0]
+    rows=converted(Converter(services={'enricher': service, 'magetab_exporter': MAGETabExporter(AEConstructor())}), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='standard', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     assert client.calls==['123','456'] and path.read_bytes()==original
     assert next(r for r in rows if r[0]=='Publication DOI')[1:]==['10.1/fetched','10.1/fetched']
     assert next(r for r in rows if r[0]=='Publication Title')[1:]==['Native title','Second title']

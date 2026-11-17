@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Occurrence-aware audit: distinct repository file evidence is not deduplicated."""
+from meta_standards_converter.converters import PreparationPolicy
 from collections import Counter
 from copy import deepcopy
 import json
@@ -176,8 +177,7 @@ def test_delimited_projection_materializes_each_typed_package_once(target, monke
     monkeypatch.setattr(MINiMLPackage, 'to_mapping', counted)
     monkeypatch.setattr(JSON2DelimitedConverter, 'project_loaded', in_projection)
     with replay.offline():
-        result = Converter().convert(data, out_type=target, enrichment='off',
-                                     options={'expand_studies': False})
+        result = Converter().convert(data, out_type=target, preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     replay.assert_complete()
     assert result.status == 'complete', result.to_dict()
     # Strict preparation reconstructs candidates; each distinct typed package

@@ -7,6 +7,7 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Regression evidence from the expanded scientific audit."""
+from meta_standards_converter.converters import PreparationPolicy
 from pathlib import Path
 from copy import deepcopy
 
@@ -16,7 +17,7 @@ from meta_standards_converter.magetab.sdrf.handlers.base import _BaseSDRFHandler
 
 def test_geo_rna_descriptions_are_not_anatomical_parts():
     source = Path(__file__).parents[1] / 'fixtures/studies/GSE100/inputs/geo.xml'
-    result = Converter().convert(source, out_type='magetab', enrichment='off', options={'expand_studies': False})
+    result = Converter().convert(source, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == 'complete', result.to_dict()
     rows = next(r[1] for r in result.items[0].payload[0] if r[0] == 'SDRF File')
     header = rows[0]
