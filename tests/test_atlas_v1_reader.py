@@ -36,6 +36,35 @@ def test_reader_accepts_atlas_11_publication_policy_and_keeps_10_readable():
         AtlasV1Reader().from_mapping(payload)
 
 
+def test_reader_accepts_atlas_12_failed_review_and_rejects_stale_decision():
+    payload = json.loads(FIXTURE.read_text())
+    payload['schema_version'] = '1.2'
+    status = {'contract_version': '2.0', 'execution': 'failed', 'completeness': 'empty',
+              'evidence_confidence': 'not_assessed', 'validation': 'invalid',
+              'publication': 'review_required', 'terminal_reason': 'review_failed', 'errors': []}
+    payload['publications'][0]['review'] = {
+        'judgement': None, 'confidence': None, 'criteria': [], 'evidence': [],
+        'status': status, 'reasoning': None, 'criteria_definitions': [], 'accession_assessments': []}
+    payload['datasets'][0].update(accession_repository='geo', metadata_status=None)
+    assert AtlasV1Reader().from_mapping(payload).datasets
+    payload['publications'][0]['review']['judgement'] = 'relevant'
+    with pytest.raises(AtlasV1Error, match='unsuccessful review'):
+        AtlasV1Reader().from_mapping(payload)
+
+
+def test_native_assessment_requires_complete_criteria_and_actual_evidence():
+    from meta_standards_converter.atlas_v1.review import validate_review_details
+    review = {'judgement': 'relevant', 'criteria_definitions': [{'id': 'human', 'description': 'Human samples.'}],
+              'accession_assessments': [{'accession': 'GSE1', 'decision': 'qualifies',
+                  'exclusion_basis': 'none', 'confidence': 'high', 'reason': 'Source support.',
+                  'criteria': []}]}
+    with pytest.raises(ValueError, match='every criterion'):
+        validate_review_details(review)
+    review['accession_assessments'][0]['criteria'] = [{'criterion_id': 'human', 'status': 'meets', 'evidence': None}]
+    with pytest.raises(ValueError, match='requires evidence'):
+        validate_review_details(review)
+
+
 def test_owner_contract_fixture_yields_only_harmonized_dataset_metadata():
     result = AtlasV1Reader().load(FIXTURE)
 

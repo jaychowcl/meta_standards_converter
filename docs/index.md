@@ -642,3 +642,5 @@ canonical guide together when an interface, workflow, or contract changes.
 - [Depth-aware harmonization and review transport](codebase.md#harmonization-depth-contract): MINiML 3.1, patch 3.2, Atlas 1.1 review policy, legacy fingerprints, ancestor names, collision groups, exact compatibility fixtures.
 
 - [MSC 9 fidelity and performance review](codebase.md#msc9-validation): constructor retrieval regression, reviewed golden differences, three paired offline runs, timing, memory and validation scope.
+
+- [Atlas 1.2 evidence compatibility](codebase.md#atlas12-evidence): independent statuses, nullable failed reviews, full assessments, occurrence provenance, legacy reads.

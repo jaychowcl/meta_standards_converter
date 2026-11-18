@@ -38,6 +38,8 @@ _DATASET_FIELDS = {
     "review",
     "harmonization",
     "diagnostics",
+    "accession_repository",
+    "metadata_status",
 }
 _DATASET_STATUSES = {
     "discovered",
@@ -119,8 +121,13 @@ def _review(value: Any, name: str) -> None:
     if value is None:
         return
     review = _mapping(value, name)
-    _only(review, {"judgement", "confidence", "policy", "criteria", "evidence"}, name)
-    if review.get("judgement") not in _JUDGEMENTS:
+    from .review import REVIEW_DETAIL_FIELDS, validate_review_details
+    _only(review, {"judgement", "confidence", "policy", "criteria", "evidence"} | REVIEW_DETAIL_FIELDS, name)
+    try:
+        validate_review_details(review, name)
+    except (ValueError, TypeError, KeyError) as error:
+        raise AtlasV1Error(str(error)) from error
+    if review.get("judgement") is not None and review.get("judgement") not in _JUDGEMENTS:
         raise AtlasV1Error(f"{name}.judgement is not a supported value")
     confidence = review.get("confidence")
     if confidence is not None and confidence not in {"low", "medium", "high"}:
@@ -179,11 +186,12 @@ def _harmonization(value: Any, name: str) -> None:
         target = _mapping(raw, f"{name}.targets[{index}]")
         _only(
             target,
-            {"raw_value", "path", "match"},
+            {"raw_value", "path", "match", "provenance"},
             f"{name}.targets[{index}]",
         )
         _nonblank(target.get("raw_value"), f"{name}.targets[{index}].raw_value")
         _nonblank(target.get("path"), f"{name}.targets[{index}].path")
+        _mapping(target.get('provenance', {}), f'{name}.targets[{index}].provenance')
         if target.get("match") is not None:
             match = _mapping(target["match"], f"{name}.targets[{index}].match")
             _only(
@@ -223,7 +231,7 @@ class AtlasV1Reader:
             )
         _only(data, _TOP_LEVEL_FIELDS, "AtlasDocument")
         version = str(data.get("schema_version", ""))
-        if version not in {"1.0", "1.1"}:
+        if version not in {"1.0", "1.1", "1.2"}:
             raise AtlasV1Error(f"unsupported Atlas schema version: {version!r}")
 
         atlas = _mapping(data.get("atlas"), "atlas")
@@ -288,6 +296,12 @@ class AtlasV1Reader:
                 dataset.get("dataset_id"), f"datasets[{index}].dataset_id"
             )
             dataset_ids.append(dataset_id)
+            _optional_string(dataset.get('accession_repository'), f'datasets[{index}].accession_repository')
+            if dataset.get('metadata_status') is not None:
+                try:
+                    OperationStatusV2.from_dict(dataset['metadata_status'])
+                except (ValueError, TypeError, KeyError) as error:
+                    raise AtlasV1Error(f'datasets[{index}].metadata_status is invalid: {error}') from error
             repository = _nonblank(
                 dataset.get("source_repository"),
                 f"datasets[{index}].source_repository",
