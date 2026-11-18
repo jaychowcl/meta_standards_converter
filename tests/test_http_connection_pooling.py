@@ -143,3 +143,55 @@ def test_terminal_throttle_closes_response():
     with pytest.raises(requests.HTTPError):
         requester.get('https://example.org/')
     response.close.assert_called_once()
+
+
+def test_pool_acquisition_is_bounded_by_connection_timeout(endpoint):
+    from threading import Timer
+    import time
+    server, url = endpoint
+    with transport_scope():
+        first = client().get(url, stream=True)
+        # Always release even on the buggy implementation; this reproducer cannot hang.
+        rescue = Timer(.35, first.close)
+        rescue.start()
+        started = time.monotonic()
+        try:
+            with pytest.raises(requests.exceptions.ConnectionError):
+                RateLimitedRequester("bounded-pool", RequestSettings(max_retries=0, request_delay=0),
+                    host_gate=Mock(wait=Mock(return_value=0))).get(url, timeout=(.05, 2), stream=True)
+            assert time.monotonic() - started < .3
+        finally:
+            first.close()
+            rescue.cancel()
+            rescue.join()
+
+
+def test_pool_acquisition_honors_metadata_deadline_without_dispatch():
+    from meta_standards_converter.helpers.http_transport import _HTTPPool
+    from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _BudgetExhausted
+    pool = _HTTPPool('localhost', maxsize=1, block=True)
+    pool.pool.get_nowait()
+    with _budget_scope(timeout_seconds=.02) as budget:
+        with pytest.raises(_BudgetExhausted):
+            pool.urlopen("GET", "/")
+        assert budget.requests == 0
+    pool.close()
+
+
+def test_pool_acquisition_honors_cancellation():
+    from threading import Event, Timer
+    from meta_standards_converter.helpers.http_transport import _HTTPPool
+    from meta_standards_converter.metadata.retrieval_budget import _cancelled, _RetrievalCancelled
+    pool = _HTTPPool('localhost', maxsize=1, block=True)
+    pool.pool.get_nowait()
+    event = Event()
+    token = _cancelled.set(event)
+    trigger = Timer(.02, event.set)
+    trigger.start()
+    try:
+        with pytest.raises(_RetrievalCancelled):
+            pool.urlopen("GET", "/", pool_timeout=.5)
+    finally:
+        trigger.join()
+        _cancelled.reset(token)
+        pool.close()

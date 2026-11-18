@@ -6801,3 +6801,21 @@ record validate. Existing source validation remains authoritative.
 Validation: `pytest tests/test_atlas_v1_reader.py`; producer/consumer round trips
 also run in TA's `test_atlas_reliability.py`. Historical 1.0/1.1 fixtures remain
 unchanged; new 1.2 fixtures make intentional transport changes reviewable.
+
+
+<a id="bounded-pool-acquisition"></a>
+## Bounded connection-pool acquisition
+
+Conversion-owned HTTP sessions keep their original one-connection worker pools,
+stateless cookies, redirects and outer retry ownership. Acquisition now waits at
+most the configured connection timeout (standard profile fallback when absent),
+shortened by any metadata deadline, and checks cancellation at 100 ms intervals.
+The urllib3 boundary receives an empty-pool exception before restoring the actual
+cancellation/budget/connection-timeout error; this prevents returning a phantom
+slot for a connection that was never acquired. No extra requests or retries are
+created by polling. NCBI identity, pacing and cooldowns remain in RequestSettings
+and RateLimitedRequester. Stream cleanup remains covered.
+
+Validation: `pytest tests/test_http_connection_pooling.py tests/test_metadata_budget.py
+ tests/test_metadata_stream_recovery.py`; loopback tests require local sockets,
+while external network access remains forbidden by their fixtures.

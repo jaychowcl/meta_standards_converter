@@ -644,3 +644,5 @@ canonical guide together when an interface, workflow, or contract changes.
 - [MSC 9 fidelity and performance review](codebase.md#msc9-validation): constructor retrieval regression, reviewed golden differences, three paired offline runs, timing, memory and validation scope.
 
 - [Atlas 1.2 evidence compatibility](codebase.md#atlas12-evidence): independent statuses, nullable failed reviews, full assessments, occurrence provenance, legacy reads.
+
+- [Bounded connection-pool acquisition](codebase.md#bounded-pool-acquisition): cancellation, deadlines, connection timeout, slot cleanup and unchanged retry ownership.
