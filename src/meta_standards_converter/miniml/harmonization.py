@@ -311,38 +311,30 @@ def rewrite_harmonized_names(document: Any, *, schema_version: str = "3.1") -> A
     """
     def rename_map(flat):
         iter_harmonized_values(flat)  # Validate companions before rewriting.
-        by_wire = {}
+        groups, parsed = {}, {}
         for key in flat:
             if not is_harmonized_key(key):
                 continue
             field, role, index, depth = parse_harmonized_key_details(key)
-            if role != "value":
-                continue
-            group = {}
-            for companion, item in flat.items():
-                if is_harmonized_key(companion):
-                    cf, _, ci, cd = parse_harmonized_key_details(companion)
-                    if (cf, ci, cd) == (field, index, depth):
-                        group[companion] = item
-            by_wire[key] = iter_harmonized_values(group)[0]
+            identity = (field, index, depth)
+            parsed[key] = (identity, role)
+            groups.setdefault(identity, {})[key] = flat[key]
         replacements, used = {}, set()
         for key in flat:
-            if key not in by_wire:
+            if key not in parsed or parsed[key][1] != "value":
                 continue
-            value = by_wire[key]
+            identity, _ = parsed[key]
+            group = groups[identity]
+            value = iter_harmonized_values(group)[0]
             ordinal = value.index if not value.hierarchy_depth or "__ancestor_depth_" in key else 0
             while (value.prefix, ordinal) in used:
                 ordinal += 1
             used.add((value.prefix, ordinal))
             rendered = replace(value, index=ordinal)
-            field, _, index, encoded = parse_harmonized_key_details(key)
-            for companion in flat:
-                if not is_harmonized_key(companion):
-                    continue
-                cf, role, ci, cd = parse_harmonized_key_details(companion)
-                if (cf, ci, cd) == (field, index, encoded):
-                    qualifier = {"value": "", "id": "_id", "onto": "_onto", "hierarchy_depth": "_hierarchy_depth"}[role]
-                    replacements[companion] = f"{rendered.prefix}{qualifier}{rendered.suffix}"
+            for companion in group:
+                _, role = parsed[companion]
+                qualifier = {"value": "", "id": "_id", "onto": "_onto", "hierarchy_depth": "_hierarchy_depth"}[role]
+                replacements[companion] = f"{rendered.prefix}{qualifier}{rendered.suffix}"
         return replacements
 
     def visit(value):

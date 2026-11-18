@@ -646,3 +646,5 @@ canonical guide together when an interface, workflow, or contract changes.
 - [Atlas 1.2 evidence compatibility](codebase.md#atlas12-evidence): independent statuses, nullable failed reviews, full assessments, occurrence provenance, legacy reads.
 
 - [Bounded connection-pool acquisition](codebase.md#bounded-pool-acquisition): cancellation, deadlines, connection timeout, slot cleanup and unchanged retry ownership.
+
+- [Harmonized serialization cost](codebase.md#harmonized-serialization-cost): measured companion scans, unchanged values, grouping and deterministic complexity regression.

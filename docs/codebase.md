@@ -6819,3 +6819,15 @@ and RateLimitedRequester. Stream cleanup remains covered.
 Validation: `pytest tests/test_http_connection_pooling.py tests/test_metadata_budget.py
  tests/test_metadata_stream_recovery.py`; loopback tests require local sockets,
 while external network access remains forbidden by their fixtures.
+
+<a id="harmonized-serialization-cost"></a>
+## Harmonized serialization cost
+
+`miniml.harmonization.rewrite_harmonized_names` groups companion keys once before
+renaming them. Validation, collision ordering, raw values and opaque extensions
+remain unchanged. The myositis frozen-fragment profile identified repeated key
+parsing: 3,801 parses and 44 ms became 252 parses and 9 ms in one instrumented
+sample, with identical output bytes. This is a local fragment measurement, not an
+end-to-end throughput claim. `test_harmonization_rewrite_complexity.py` bounds
+parsing work without wall-clock assertions; depth, codec and patch golden tests
+cover output fidelity. Broad storage and checkpoint redesign remain deferred.
