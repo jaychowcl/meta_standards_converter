@@ -101,7 +101,9 @@ def build(root, *, candidate=False, cohort=None):
         reference_sdrf = table(root / 'references' / f'{reference}.sdrf.txt') if reference else []
         entry = {key: acquisition.get(key) for key in ('provider', 'accession', 'reference', 'physical_requests', 'elapsed_seconds')}
         entry['modes'] = {}
-        for mode, phase in acquisition['phases'].items():
+        phases = {mode: acquisition['phases'].get(mode, {'limitation': 'Capture phase unavailable within input budget'})
+                  for mode in ('off', 'curators', 'standard')} if cohort else acquisition['phases']
+        for mode, phase in phases.items():
             output = case / mode
             detail = {'acquisition_status': phase.get('result', {}).get('status'),
                       'acquisition_limitation': phase.get('limitation'),

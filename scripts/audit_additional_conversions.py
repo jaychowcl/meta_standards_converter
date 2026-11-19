@@ -268,7 +268,9 @@ def main():
     write_json(root / 'actions' / (utc().replace(':', '-') + '.json'), {'action': args.action, 'case': args.case, 'tested_revision': revision})
     if args.action == 'references': reference_inputs(root, cohort, revision)
     elif args.action == 'deposited': deposited_inputs(root, cohort)
-    elif args.action == 'report': build(root, cohort=cohort)
+    elif args.action == 'report':
+        from scripts.audit_additional_review import review
+        review(root, cohort)
     else:
         for spec in selected:
             if args.action == 'capture' and spec['evidence'] == 'live':

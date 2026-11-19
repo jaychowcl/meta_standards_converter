@@ -129,3 +129,23 @@ def test_geo_contributor_scope_uses_source_relationships_not_generated_presence(
     assert len(contacts) == 1
     assert contacts[0]['scope'] == 'contact/owned'
     assert contacts[0]['classification'] == LOSS
+
+
+@pytest.mark.parametrize('value,removed', [('  ', True), ('EFO', False), ('0', False), (' EFO ', False)])
+def test_deposited_empty_qualifier_projection_never_removes_populated_values(value, removed):
+    from scripts.audit_additional_review import blank_projection
+    source = [['Source Name', 'Protocol REF', 'Term Source REF'], ['s', 'p', value]]
+    projected, changes = blank_projection(source, 'E-GEOD-31356')
+    assert (len(projected[0]) == 2) is removed
+    assert bool(changes) is removed
+    if not removed: assert projected[1][-1] == value
+    assert source[1][-1] == value
+
+
+def test_blank_characteristic_projection_keeps_populated_owned_comments():
+    from scripts.audit_additional_review import blank_projection
+    source = [['Source Name', 'Characteristics [site]', 'Comment [Sample_characteristics]'], ['s', '  ', 'supplied text']]
+    projected, changes = blank_projection(source, 'E-GEOD-13398')
+    assert projected[1] == ['s', '', 'supplied text']
+    assert len(changes) == 1
+    assert blank_projection(source, 'unrelated')[0] == source
