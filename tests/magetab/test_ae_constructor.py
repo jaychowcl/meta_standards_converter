@@ -1544,6 +1544,11 @@ class TestAEConstructor(unittest.TestCase):
             sdrf_constructor=sdrf_constructor,
         ).miniml2magetab(data=typed_data)
 
+        prepared = sdrf_constructor.create_handler.call_args.kwargs['data']
+        self.assertEqual(canonical['sample'], prepared['sample'])
+        self.assertEqual(canonical['source'], prepared['source'])
+        self.assertTrue(prepared['series']['assay_paths'])
+        canonical = prepared  # Both injected renderers receive the canonical graph.
         sdrf_constructor.create_handler.assert_called_once_with(
             data=canonical,
             protocol_registry=ANY,
@@ -1576,6 +1581,11 @@ class TestAEConstructor(unittest.TestCase):
             sdrf_constructor=sdrf_constructor,
         ).miniml2magetab(data=typed_data, platform_handler="bulk_sequencing")
 
+        prepared = sdrf_constructor.create_handler.call_args.kwargs['data']
+        self.assertEqual(canonical['sample'], prepared['sample'])
+        self.assertEqual(canonical['source'], prepared['source'])
+        self.assertTrue(prepared['series']['assay_paths'])
+        canonical = prepared  # Both injected renderers receive the canonical graph.
         sdrf_constructor.create_handler.assert_called_once_with(
             data=canonical,
             protocol_registry=ANY,

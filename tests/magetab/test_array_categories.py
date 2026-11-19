@@ -83,7 +83,8 @@ def test_gse100_both_converters_match_forced_array(tmp_path, monkeypatch):
     assert all(output == outputs[0] for output in outputs)
     rows = next(row[1] for row in outputs[0][0] if row[0] == 'SDRF File')
     assert len(rows) == 9
-    assert len({row[0] for row in rows[1:]}) == 4
+    assert len({row[0] for row in rows[1:]}) == 8  # Four assays, two distinct materials each.
+    assert len({row[rows[0].index('Assay Name')] for row in rows[1:]}) == 4
     assert 'Assay Name' in rows[0]
     assert {row[rows[0].index('Array Design REF')] for row in rows[1:]} == {'GPL221'}
     generic = js.render(JSONPackageSource().load(source), platform_handler='generic')

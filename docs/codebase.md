@@ -6870,6 +6870,85 @@ exports do not generate `Comment[ArrayExpressSubmissionDate]`; supplied dates ar
 source data. The deposited-source oracle applies the explicit derived-file
 projection before comparing every remaining row, value and qualifier.
 
+<a id="metadata-integrity"></a>
+### Metadata integrity preparation and repair validation
+
+The metadata preparation boundary and legacy JSON export share
+`meta_standards_converter.metadata.workflows.prepare_workflows`
+([source](../src/meta_standards_converter/metadata/workflows.py)). It validates the
+input, owns a detached mapping, completes explicit native workflow facts and
+constructs missing paths with provider/technology adapters. The adapters' field
+trees are decoded directly into `AssayPath`, `AssayNode` and
+`ProtocolApplication`; no TSV roundtrip or retrieval occurs. Existing paths
+retain their ordered applications and qualifiers. Rendering projects this graph
+and performs documented file/protocol presentation transformations. Models have
+no retrieval or rendering side effects. New JSON carries the prepared graph;
+older JSON without paths uses exactly the same preparation on export.
+
+Generated two-channel materials use sample plus channel occurrence, with
+`msc_sample` and `msc_channel` ownership comments for re-import. Labels and
+matching reference descriptions cannot merge materials; assays remain shared.
+GEO's generated growth stage precedes treatment. Authored orders are never
+globally sorted by protocol type, and generated chronology remains advisory
+where the source only supplies unordered method fields.
+
+The internal [file resolver](../src/meta_standards_converter/metadata/file_resolution.py)
+keeps source occurrences separate from resolved download assets:
+`meta_standards_converter.metadata.file_resolution.structural_uri`,
+`meta_standards_converter.metadata.file_resolution.extension`,
+`meta_standards_converter.metadata.file_resolution.format_name`,
+`meta_standards_converter.metadata.file_resolution.field_value`,
+`meta_standards_converter.metadata.file_resolution.classify`,
+`meta_standards_converter.metadata.file_resolution.origin`,
+`meta_standards_converter.metadata.file_resolution.ena_read_role`,
+`meta_standards_converter.metadata.file_resolution.checksums`,
+`meta_standards_converter.metadata.file_resolution.combine`,
+`meta_standards_converter.metadata.file_resolution.FileAsset` and
+`meta_standards_converter.metadata.file_resolution.download_assets`.
+URI framing whitespace is interpreted without rewriting the supplied text.
+Explicit role/format precedes extension fallback; unknown files remain owned,
+visible links. Exact URI or compatible checksums establish asset identity;
+an exact bare descriptor may be completed only within the caller's verified
+sample/run scope. Different locations with only similar filenames cannot merge,
+and conflicting digests block consolidation. Native original-file inventories
+survive ENA download selection. Only exact ENA generated names plus paired
+library evidence identify paired mates or unsuffixed unpaired reads. A file's
+position, an R2 suffix, or generic single-cell classification is insufficient to
+assign a barcode role.
+
+[Semantic checks](../src/meta_standards_converter/metadata/integrity.py) use
+`meta_standards_converter.metadata.integrity.qualifier_ownership`,
+`meta_standards_converter.metadata.integrity.assess_integrity` and
+`meta_standards_converter.metadata.integrity.entity_counts`.
+Demonstrable channel collisions and changes to supplied qualifier ownership use
+`integrity_*` error diagnostics and invalidate the result independently of
+execution/completeness. Source conflicts, uncertain file roles, generated
+chronology and barcode ambiguity are curation advisories. Counts distinguish
+sample records, channel materials, assays, runs and files; biological-unit
+counts remain unknown without independently reviewed evidence.
+
+Regression entry points are `tests/magetab/test_metadata_integrity.py`,
+`tests/magetab/test_additional_audit_regressions.py`,
+`tests/metadata/test_file_resolution.py`,
+`tests/metadata/test_workflow_preparation.py` and
+`tests/metadata/test_integrity.py`. Frozen raw excerpts and pre-repair failures
+are documented in the metadata-integrity validation bundle. Additional candidate
+replay is explicit:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python scripts/audit_additional_conversions.py candidate \
+  --source-bundle /path/to/sealed/additional-conversions \
+  --revision <clean-tested-commit> --bundle /path/to/fresh/candidate-results
+```
+
+Both historical baseline guards remain in place. Candidate replay rejects dirty
+or mismatched revisions, wrong imported-code origins, overlapping/existing output
+directories and altered source seals. It generates fresh JSON before saved-JSON
+export, records legacy exports separately and keeps unavailable routes unavailable.
+The reviewed scientific derivatives use existing model fields with explicit
+before/after evidence records, never unrestricted harmonization patches or
+accession-specific production rules. Historical reports/fixtures remain unchanged.
+
 <a id="authorship-curated-audit"></a>
 ### Publication authors and complete curated metadata audit
 
@@ -7068,7 +7147,7 @@ The completed follow-up records 54 executed and valid source routes out of 63,
 with nine unavailable at the live input time ceilings. Direct and fresh-JSON
 exports agree for all 18 available input/preset pairs. Five deposited inputs
 preserve all 299 populated IDF source cells; four preserve the complete eligible
-SDRF. `MSC-EXTRA-001` loses 48 populated comments attached to blank characteristics
+SDRF. At the historical baseline, `MSC-EXTRA-001` lost 48 populated comments attached to blank characteristics
 in E-GEOD-13398. The reduced original-byte fixture and six strict expected failures
 are in `tests/magetab/test_additional_audit_regressions.py`; `--runxfail` exposes
 the assertions. The proposed repair is to preserve the empty attribute owner and
@@ -7213,13 +7292,13 @@ end-to-end throughput claim. `test_harmonization_rewrite_complexity.py` bounds
 parsing work without wall-clock assertions; depth, codec and patch golden tests
 cover output fidelity. Broad storage and checkpoint redesign remain deferred.
 
-Confirmed follow-up defect `MSC-EXTRA-001` (unfixed): E-GEOD-13398 has populated
+Repaired follow-up defect `MSC-EXTRA-001` ([implementation](#metadata-integrity)): E-GEOD-13398 has populated
 sample-description, free-text characteristic and source-name comments following
-a blank `Characteristics [site]` cell on its Cy3 rows. The MINiML migration clears
+a blank `Characteristics [site]` cell on its Cy3 rows. The historical MINiML migration cleared
 the comment owner for that blank attribute; comments survive as unbound extension
-annotations but disappear from MAGE-TAB output. Six strict expected-failure cases
-(three comments × direct/saved-JSON export) reproduce this from a two-row source
-slice. A populated-characteristic control passes both routes. Proposed repair:
+annotations but disappear from MAGE-TAB output. Six original expected-failure cases
+(three comments × direct/saved-JSON export) reproduced this from a two-row source
+slice and now pass without expected-failure markers. A populated-characteristic control passes both routes. Implemented repair:
 retain an explicit empty named-value owner when it has populated companions and
 export them at their original row/channel, without inventing a characteristic
 value or attaching them to a neighboring field. Reproduce with

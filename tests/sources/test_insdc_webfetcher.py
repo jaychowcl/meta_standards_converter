@@ -185,20 +185,24 @@ class TestINSDCWebfetcher(unittest.TestCase):
                 "instrument_model": "NovaSeq 6000",
                 "fastq_files": [
                     {
-                        "filename": "ena-r1.fastq.gz",
+                        "filename": "ena-r1.fastq.gz", "role": "GENERATED_FILE", "format": "fastq",
                         "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR1/001/SRR1/ena-r1.fastq.gz",
                         "md5": "ena-md5-r1",
                         "bytes": "123",
                     },
                     {
-                        "filename": "ena-r2.fastq.gz",
+                        "filename": "ena-r2.fastq.gz", "role": "GENERATED_FILE", "format": "fastq",
                         "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR1/001/SRR1/ena-r2.fastq.gz",
                         "md5": "ena-md5-r2",
                         "bytes": "456",
                     },
                 ],
-                "submitted_file_name": "ena-r1.fastq.gz",
-                "md5": "ena-md5-r1",
+                "submitted_file_name": None,
+                "md5": None,
+                "files": [
+                    {"filename": "r1.fastq.gz", "uri": "ftp://example/r1.fastq.gz", "format": "fastq", "md5": "md5-r1", "bytes": None, "role": "", "url": "ftp://example/r1.fastq.gz"},
+                    {"filename": "r2.fastq.gz", "uri": "ftp://example/r2.fastq.gz", "format": "fastq", "md5": "md5-r2", "bytes": None, "role": "", "url": "ftp://example/r2.fastq.gz"},
+                ],
                 "read_lengths": ["151"],
             },
             runs[0],
@@ -211,13 +215,13 @@ class TestINSDCWebfetcher(unittest.TestCase):
         self.assertEqual(
             [
                 {
-                    "filename": "SRR1_1.fastq.gz",
+                    "filename": "SRR1_1.fastq.gz", "role": "GENERATED_FILE", "format": "fastq",
                     "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR1/001/SRR1/SRR1_1.fastq.gz",
                     "md5": "md5-r1",
                     "bytes": "123",
                 },
                 {
-                    "filename": "SRR1_2.fastq.gz",
+                    "filename": "SRR1_2.fastq.gz", "role": "GENERATED_FILE", "format": "fastq",
                     "uri": "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR1/001/SRR1/SRR1_2.fastq.gz",
                     "md5": "md5-r2",
                     "bytes": None,

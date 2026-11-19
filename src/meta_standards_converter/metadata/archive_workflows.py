@@ -165,7 +165,8 @@ def file_node(file, kind='array_data_file'):
         node['link'].update({k: deepcopy(file[k]) for k in ('repository', 'source_accession', 'companion_files') if k in file})
     node['comments'] = [{'name': label, 'value': str(file[key])} for key, label in
                         [('md5', 'MD5'), ('bytes', 'File size'), ('format', 'File format'),
-                         ('checksum', 'Checksum'), ('checksum_method', 'Checksum method')]
+                         ('checksum', 'Checksum'), ('checksum_method', 'Checksum method'),
+                         ('read_role', 'READ_ROLE'), ('read_index', 'READ_INDEX')]
                         if file.get(key)]
     return node
 
@@ -441,6 +442,16 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
             channels = source_samples.get(target, {}).get('channel', [])
             for step in prepared['steps']:
                 if step['kind'] in ('source', 'sample') and len(channels) == 1:
+                    peer = _biological_node({'iid': target, 'channel': channels})
+                    # Only an exact generated peer projection can be refreshed.
+                    # Authored aliquot annotations and alternative source facts
+                    # remain intact; source selection already retained conflicts.
+                    if (extra.get('source', {}).get('format') in {'SRA', 'ENA', 'DRA'}
+                            and not path.get('document')
+                            and step.get('characteristics', []) == peer.get('characteristics', [])
+                            and len(samples[target].get('channel', [])) == 1):
+                        step['characteristics'] = _biological_node(samples[target]).get('characteristics', [])
+                        continue
                     step['characteristics'] = _biological_characteristics(
                         step.get('characteristics', []), channels[0].get('characteristics', []))
             if prefer:

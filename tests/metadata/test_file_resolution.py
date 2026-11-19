@@ -77,3 +77,15 @@ def test_unknown_sample_link_retains_owner_in_export():
     _, sdrf = tables(MINiMLCodec().decode(data).package)
     assert sdrf[1][sdrf[0].index('Comment[Unclassified File]')] == uri
     assert sdrf[1][sdrf[0].index('Source Name')] == data['sample'][0]['iid']
+
+
+def test_file_occurrence_is_not_a_read_role():
+    from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
+    from tests.magetab.test_metadata_integrity import SOURCE, geo
+    data = geo('GSE52778').to_mapping()
+    handler = SDRFConstructor().create_handler(data, technology_type='sequencing')
+    supplied = SOURCE['fastq']
+    attrs = handler.sequencing_file_attrs(data['sample'][0], {'fastq_files': [
+        {'filename': supplied['NAME'], 'uri': supplied['URI'], 'md5': supplied['MD5']}]})
+    assert not any(a.label == 'Comment[read1 file]' for a in attrs)
+    assert any(a.value == supplied['NAME'] for a in attrs)

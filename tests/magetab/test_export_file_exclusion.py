@@ -14,7 +14,11 @@ from tests.support.geo import geo_package, rows, row
 
 @pytest.mark.parametrize('handler', ['sequencing', 'bulk_sequencing', 'array', 'generic'])
 def test_fallback_derived_files_are_excluded_and_json_is_unchanged(handler):
-    data = geo_package(); before = deepcopy(data)
+    data = geo_package()
+    for sample in data['sample']:
+        for record in sample.get('supplementary_data', []):
+            record['role'] = 'processed'
+    before = deepcopy(data)
     output = rows(data, handler)
     assert data == before
     assert 'processed1.txt' not in str(output)

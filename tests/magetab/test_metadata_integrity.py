@@ -30,7 +30,6 @@ def tables(package):
     return idf, next(r[1] for r in idf if r[0] == 'SDRF File')
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC integrity: channel material identity collapses')
 @pytest.mark.parametrize('column', ['Source Name', 'Extract Name'])
 def test_two_channel_materials_have_distinct_identities(column):
     package = geo('GSE13398')
@@ -52,7 +51,6 @@ def test_whitespace_bearing_cel_link_is_exported_as_raw_array_file():
     assert package.samples[0].supplementary_data[0].value == source.text
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC integrity: GEO treatment precedes growth')
 def test_geo_growth_precedes_drug_exposure_without_reordering_authored_paths():
     package = geo('GSE52778')
     source = ET.fromstring(SOURCE['geo']['GSE52778']).find('Sample/Channel')
@@ -96,7 +94,6 @@ def test_conflicting_file_checksums_do_not_merge():
     assert len(primary) == 2
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC integrity: peer paths retain unselected taxonomy')
 def test_peer_generated_taxonomy_uses_selected_sample_facts():
     from meta_standards_converter.metadata.archive_workflows import merge_workflows, _biological_node
     def sample(taxid, name):
@@ -116,7 +113,6 @@ def test_peer_generated_taxonomy_uses_selected_sample_facts():
     assert extra == original
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC integrity: channel identity depends on label')
 @pytest.mark.parametrize('labels', [('Cy3', 'Cy3'), ('', '')])
 def test_channel_occurrence_identity_does_not_depend_on_label(labels):
     from meta_standards_converter.miniml import MINiMLCodec

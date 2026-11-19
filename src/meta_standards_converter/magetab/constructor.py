@@ -75,7 +75,8 @@ class AEConstructor:
             # Decode validates external/changed typed inputs as well as mappings.
             # Its canonical package needs one detached view, not another complete
             # encode/decode/validation cycle before private export mutations.
-            data = MINiMLCodec().decode(data).package.to_mapping()
+            from ..metadata.workflows import prepare_workflows
+            data = prepare_workflows(data, platform_handler=platform_handler).to_mapping()
         with phase("magetab_normalization"):
             from ..miniml.publication_identifiers import clean_publication_identifiers
             clean_publication_identifiers(data)
@@ -96,10 +97,8 @@ class AEConstructor:
             declarations = repository_databases(data)
             if declarations:
                 data.setdefault('extensions', {}).setdefault('insdc', {'version': '2.0', 'records': []})['records'].extend(declarations)
-            from ..miniml.archive_paths import complete_native_paths
             from ..miniml.archive_libraries import synchronize_library_facts
             synchronize_library_facts(data)
-            complete_native_paths(data)
             from meta_standards_converter.miniml.archive_results import normalize_result_bundles
             normalize_result_bundles(data)
         from meta_standards_converter.magetab.protocol_export import prepare_protocols
@@ -119,6 +118,7 @@ class AEConstructor:
         sdrf = self.sdrf_constructor.prepare(handler,
             canonical_paths=data.get("series", {}).get("assay_paths", []),
             preserve_order=data.get("source", {}).get("format") in {"ENA", "SRA"})
+        handler.audit.warnings.extend(data.get('extensions', {}).get('msc_workflow_preparation', {}).get('warnings', []))
         prefix_rows = self.idf_constructor.prefix_rows(data)
         return MAGETabExportPlan(data, protocol_registry, technology_type, prefix_rows, sdrf)
 

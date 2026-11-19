@@ -117,7 +117,7 @@ class _BaseSDRFHandler(SDRFRenderer):
 
     def source_node(self, sample: dict, channel: dict) -> SDRFNode:
         accession = self.sample_accession(sample=sample)
-        value = accession
+        value = self.material_identity(sample, channel)
         attrs = []
         attrs.extend(SDRFAttr(label="Comment[BioSD_SAMPLE]", value=x) for x in self.biosample_accessions(sample=sample))
         attrs.extend(self.sample_comment_attrs(sample=sample, channel=channel))
@@ -125,10 +125,11 @@ class _BaseSDRFHandler(SDRFRenderer):
         from meta_standards_converter.magetab.harmonized import channel_columns, sdrf_attrs
         attrs.extend(sdrf_attrs(channel_columns(channel)))
         channels = self._channel_records(sample)
-        if len(channels) > 1 and any(channel_columns(item) for item in channels):
+        if len(channels) > 1:
             ordinal = next(index for index, item in enumerate(channels) if item is channel)
             marker = channel.get("extensions", {}).get("msc_channel", str(ordinal))
             attrs.append(SDRFAttr("Comment[msc_channel]", marker))
+            attrs.append(SDRFAttr("Comment[msc_sample]", sample['iid']))
         provider = self.provider(channel=channel)
         if provider:
             attrs.append(SDRFAttr(label="Provider", value=provider))
@@ -136,15 +137,16 @@ class _BaseSDRFHandler(SDRFRenderer):
         # Legacy greedy GEO fallback:
         # attrs.extend(_GEOFallbackComments(self).geo_fallback_attrs(sample=sample, channel=channel))
         attrs.extend(self.extra_source_attrs(sample=sample, channel=channel))
-        if self.data.get('source', {}).get('format') in ('ENA', 'SRA'):
-            from ...native_files import _record, _comments
-            from urllib.parse import unquote, urlsplit
-            for link in sample.get('supplementary_data', []):
-                if link.get('type') == 'assembly report' and link.get('value'):
-                    node = {'kind': 'derived_array_data_file', 'name': unquote(urlsplit(link['value']).path.rsplit('/', 1)[-1]), 'link': link}
-                    attrs.extend(SDRFAttr(label=f"Comment[{c['name']}]", value=c['value']) for c in
-                                 _comments(_record(node), 'SAMPLE_FILE_', fixed=True))
-        return SDRFNode(kind="Source Name", key=f"source:{accession}", value=value, attrs=attrs)
+        return SDRFNode(kind="Source Name", key=f"source:{value}", value=value, attrs=attrs)
+
+    def material_identity(self, sample: dict, channel: dict) -> str:
+        """A channel occurrence is a material identity, never its dye or prose."""
+        accession = self.sample_accession(sample=sample)
+        channels = self._channel_records(sample)
+        if len(channels) <= 1:
+            return accession
+        ordinal = next(index for index, item in enumerate(channels) if item is channel)
+        return f'{accession}:channel{ordinal + 1}'
 
     def sample_comment_attrs(self, sample: dict, channel: dict) -> list[SDRFAttr]:
         attrs = []
@@ -293,10 +295,8 @@ class _BaseSDRFHandler(SDRFRenderer):
 
     def extraction_edges(self, sample: dict, channel: dict) -> list[SDRFEdge]:
         edges = []
-        for kind, text in (
-            ("treatment", channel.get("treatment_protocol")),
-            ("growth", channel.get("growth_protocol")),
-        ):
+        for kind in (('growth', 'treatment') if self.geo_source else ('treatment', 'growth')):
+            text = channel.get(kind + '_protocol')
             ref = self.protocol_registry.get_ref(kind=kind, text=text)
             if ref:
                 edges.append(SDRFEdge(protocol_ref=ref))

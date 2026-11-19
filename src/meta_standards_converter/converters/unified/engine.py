@@ -329,7 +329,8 @@ class Converter:
                         for d in item.diagnostics
                     )
                     invalid = any(
-                        d.code == "projection_invalid" for d in item.diagnostics
+                        d.code == "projection_invalid" or
+                        (d.code.startswith("integrity_") and d.severity == "error") for d in item.diagnostics
                     )
                     item.completeness = "partial" if incomplete else "complete"
                     item.validation = "invalid" if invalid else "valid"

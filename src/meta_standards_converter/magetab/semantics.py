@@ -301,8 +301,13 @@ def overlay_miniml_semantics(package: dict, core_rows: list) -> list:
         labels = {label for label, _ in fields}
         position = next((i for i, row in enumerate(rows) if row and row[0] in labels), len(rows))
         rows[:] = [row for row in rows if not row or row[0] not in labels]
+        generated = bool(series.get('assay_paths')) and all(
+            any(c.get('name') == 'msc_workflow_origin' for c in path.get('comments', []))
+            for path in series['assay_paths'])
         rows[position:position] = [[label, *[accessor(item) or "" for item in protocols]]
-                                   for label, accessor in fields]
+                                   for label, accessor in fields
+                                   if not (generated and label in {'Protocol Parameters', 'Protocol Contact', 'Protocol Performer'}
+                                           and not any(accessor(item) for item in protocols))]
     for field, labels in (
         ("quality_controls", DECLARATION_FIELDS["quality_control"]),
         ("replicate_types", DECLARATION_FIELDS["replicate"]),

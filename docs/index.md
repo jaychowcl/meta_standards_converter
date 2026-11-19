@@ -653,6 +653,13 @@ canonical guide together when an interface, workflow, or contract changes.
   keywords: audit_recorded_provider, panel, 18 studies, 74 routes, 222 calls, manifest, evidence-root, artifacts-dir, replay, fixture miss, expected failure, parser-merge, native HTTP, repeated headers, row multiplicity, source hashes, comment ownership, terminal factors
   link: [Open section](codebase.md#recorded-provider-audit)
 
+- id: metadata-integrity
+  title: Canonical workflows, file identity and semantic integrity
+  anchor: metadata-integrity
+  purpose: Shared network-free typed workflow preparation, channel identity, file provenance and role resolution, semantic errors versus scientific review, sealed candidate replay.
+  keywords: prepare_workflows, AssayPath, ProtocolApplication, channel occurrence, msc_sample, blank owner, CEL, FASTQ, checksums, submitted files, unpaired reads, taxonomy, qualifier ownership, biological units, candidate replay, metadata-integrity-validation
+  link: [Open section](codebase.md#metadata-integrity)
+
 - id: authorship-curated-audit
   title: Publication authors and complete curated metadata audit
   anchor: authorship-curated-audit

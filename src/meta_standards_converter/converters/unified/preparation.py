@@ -185,6 +185,13 @@ class MetadataPreparation:
         run("linked_metadata", linked_applicable, lambda p: self._linked(p, provider, links))
         run("parent_publications", provider == "geo", self._parent_publications)
         run("standard", True, lambda p: self._standard(p, provider, records, identity))
+        from meta_standards_converter.metadata.workflows import prepare_workflows
+        from meta_standards_converter.metadata.integrity import assess_integrity, qualifier_ownership
+        prepared = prepare_workflows(package, platform_handler=context.output_options.get("platform_handler"))
+        if package.series.assay_paths:
+            diagnostics.extend(qualifier_ownership(package, prepared))
+        package = prepared
+        diagnostics.extend(assess_integrity(package))
         from meta_standards_converter.metadata.source_text import _text_issues
         diagnostics.extend(Diagnostic("source_partial", issue, "preparation", "warning") for issue in _text_issues(package))
         for record in records:

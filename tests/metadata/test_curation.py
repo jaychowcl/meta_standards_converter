@@ -120,7 +120,11 @@ def test_converter_retains_advisories_without_changing_success_or_input(target):
     assert 'publication.citation' in fields(advisories)
     assert all(d.to_dict()['curation']['dataset_id'] == 'GSE1' for d in advisories)
     if target == 'json':
-        assert item.payload[0].to_mapping() == MINiMLCodec().decode(data).package.to_mapping()
+        original = MINiMLCodec().decode(data).package.to_mapping()
+        prepared = item.payload[0].to_mapping()
+        assert prepared['sample'] == original['sample']
+        assert prepared['series']['assay_paths']
+        assert all(prepared['series'][key] == value for key, value in original['series'].items())
 
 
 @pytest.mark.parametrize('response,status,lookup', [

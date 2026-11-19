@@ -66,7 +66,7 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
         return paths
 
     def extract_node(self, sample: dict, channel: dict, run: dict | None) -> SDRFNode:
-        accession = self.sample_accession(sample=sample)
+        accession = self.material_identity(sample, channel)
         attrs = [SDRFAttr(label="Material Type", value=self.material_type(channel=channel, extracted=True), required=self.geo_source)]
         attrs.extend(self.library_attrs(sample=sample, run=run))
         attrs.extend(self.extra_library_attrs(sample=sample, channel=channel, run=run))
@@ -180,33 +180,32 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
         )
 
     def sequencing_file_attrs(self, sample: dict, run: dict | None) -> list[SDRFAttr]:
+        from ....metadata.file_resolution import structural_uri
         attrs = []
         fastqs = run.get("fastq_files", []) if run else []
-        for index, fastq in enumerate(fastqs, start=1):
-            filename = self.clean(fastq.get("filename") or fastq.get("uri"))
-            for label, value in (
-                (f"Comment[read{index} file]", fastq.get("filename")),
-                ("Comment[FASTQ_URI]", fastq.get("uri")),
+        for fastq in fastqs:
+            # Occurrence order does not establish paired mate or barcode role.
+            read_index = str(fastq.get('read_index', ''))
+            label = (f"Comment[read{read_index} file]"
+                     if fastq.get('read_role') == 'paired' and read_index in {'1', '2'}
+                     else "Comment[FASTQ_FILE]")
+            for field, value in (
+                (label, fastq.get('filename') or structural_uri(fastq.get('uri'))),
+                ("Comment[FASTQ_URI]", structural_uri(fastq.get("uri"))),
                 ("Comment[MD5]", fastq.get("md5")),
+                ("Comment[FASTQ_BYTES]", fastq.get("bytes")),
+                ("Comment[READ_ROLE]", fastq.get("read_role")),
+                ("Comment[READ_INDEX]", fastq.get("read_index")),
             ):
                 value = self.clean(value)
                 if value:
-                    attrs.append(SDRFAttr(label=label, value=value))
-            # Legacy greedy SRA FASTQ fallback:
-            # attrs.extend(_SRAFallbackComments(self).sra_fastq_fallback_attrs(fastq=fastq))
-            if filename and not any(attr.label == f"Comment[read{index} file]" for attr in attrs):
-                attrs.append(SDRFAttr(label=f"Comment[read{index} file]", value=filename))
-
-        if len(fastqs) > 2:
-            self.audit.warnings.append(f"Sample {self.sample_accession(sample=sample)} has {len(fastqs)} FASTQ files; emitted {len(fastqs)} read file comments.")
-
+                    attrs.append(SDRFAttr(label=field, value=value))
         if not fastqs:
-            for index, data_file in enumerate(self.raw_files(sample=sample), start=1):
+            for data_file in self.raw_files(sample=sample):
                 if classify_file(data_file) == "sequencing_raw":
-                    attrs.append(SDRFAttr(label=f"Comment[read{index} file]", value=data_file))
+                    attrs.append(SDRFAttr(label="Comment[FASTQ_FILE]", value=data_file))
                     if self.arrayexpress_ftp(data_file):
                         attrs.append(SDRFAttr(label="Comment[FASTQ_URI]", value=data_file))
-
         for data_file in self.derived_files(sample=sample):
             attrs.append(SDRFAttr(label="Derived Array Data File", value=data_file))
         return attrs

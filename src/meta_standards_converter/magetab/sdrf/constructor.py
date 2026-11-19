@@ -101,18 +101,21 @@ class SDRFConstructor():
     def prepare(self, handler, *, canonical_paths=None, preserve_order=False):
         """Register protocols/audit once, then select the final graph before rendering."""
         from .renderer import SDRFRenderer
-        paths = handler.prepare_paths()
         if canonical_paths:
+            handler.preregister_protocols()
             from ..required_protocols import complete_canonical_protocols
             complete_canonical_protocols(handler, canonical_paths)
             from ..harmonized import bind_sample_groups
             from ..semantics import plan_miniml_assay_documents
-            documents = plan_miniml_assay_documents(bind_sample_groups(handler.data, canonical_paths))
+            from .._performance import phase
+            with phase("magetab_path_construction"):
+                documents = plan_miniml_assay_documents(bind_sample_groups(handler.data, canonical_paths))
             # Added references can occupy different boundaries on different
             # rows. Anchor their columns to nodes, including on re-import, so
             # occurrence numbers cannot move a method across a material/assay.
             preserve_order = True
         else:
+            paths = handler.prepare_paths()
             if canonical_paths is not None and handler.data.get('series', {}).get('protocols'):
                 from ..required_protocols import reconcile_generated_protocols
                 reconcile_generated_protocols(handler, paths)

@@ -326,10 +326,10 @@ class MINiMLV1Migrator:
             # A blank attribute can still own populated qualifiers/comments.
             # Keep that exact occurrence, rather than dropping its ownership or
             # moving its annotations onto the previous populated attribute.
-            owns_annotations = kind == 'attribute' and any(has_cell_value(step.get(key)) for key in (
+            owns_annotations = kind == 'attribute' and (step.get('_required') or any(has_cell_value(step.get(key)) for key in (
                 'unit', 'term_source_ref', 'term_accession_number',
                 'unit_term_source_ref', 'unit_term_accession_number',
-            ))
+            )))
             if kind == 'attribute' and not owns_annotations and not has_cell_value(step.get('value')):
                 for index in range(position + 1, len(entries)):
                     following = entries[index]
@@ -413,7 +413,7 @@ class MINiMLV1Migrator:
                 target = comment_owner
                 if comment_unit_column is not None and step.get('column_index',-1)>comment_unit_column:
                     target = comment_unit
-                if comment['name'] == 'msc_channel' and active_node is not None:
+                if comment['name'] in {'msc_channel', 'msc_sample'} and active_node is not None:
                     target = active_node
                 if target is None:
                     if unbound is not None:

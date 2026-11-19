@@ -596,6 +596,11 @@ class AEParser:
         return {"sample": sample, "channels": {}, "runs": {}}
 
     def _row_identity(self, header, row):
+        # Explicit MSC ownership survives distinct material names. Neither a
+        # shared label nor a description is sufficient to reconstruct a sample.
+        marker = self._cell(header, row, "Comment[msc_sample]")
+        if marker and self._cell(header, row, "Comment[msc_channel]"):
+            return marker
         for label in ("Sample Name", "Source Name", "Assay Name"):
             values = self._cells(header, row, label)
             for value in reversed(values):
@@ -861,7 +866,7 @@ class AEParser:
             )
 
     def _known_sdrf_header(self, label):
-        if label == "Comment[msc_channel]" or re.fullmatch(r"Comment\[hz_[^]]+\]", label):
+        if label in {"Comment[msc_channel]", "Comment[msc_sample]"} or re.fullmatch(r"Comment\[hz_[^]]+\]", label):
             return True
         normalized = normalized_label(label)
         if normalized in self.EXACT_SDRF_HEADERS:

@@ -54,7 +54,7 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
         return paths
 
     def array_extract_node(self, sample: dict, channel: dict) -> SDRFNode:
-        accession = self.sample_accession(sample=sample)
+        accession = self.material_identity(sample, channel)
         return SDRFNode(
             kind="Extract Name",
             key=f"extract:{accession}",
@@ -63,7 +63,7 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
         )
 
     def labeled_extract_node(self, sample: dict, channel: dict) -> SDRFNode:
-        accession = self.sample_accession(sample=sample)
+        accession = self.material_identity(sample, channel)
         label = self.clean(channel.get("label"))
         return SDRFNode(
             kind="Labeled Extract Name",
