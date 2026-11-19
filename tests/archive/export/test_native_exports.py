@@ -98,13 +98,18 @@ def test_custom_factor_original_name_is_preserved():
     assert next(r[1] for r in rendered if r[0] == 'Experimental Factor Name') == 'custom exposure'
 
 
-def test_native_export_does_not_invent_protocols_from_library_fields():
+def test_native_export_adds_only_blank_required_protocols_without_method_evidence():
     typed = SRAParser().parse(fixture_records('sra', 'SRX017289'))
     assert not typed.series.protocols
     rows = AEConstructor().miniml2magetab(typed)
-    assert not any(next(r[1:] for r in rows if r[0] == 'Protocol Name'))
+    values = {r[0]: r[1:] for r in rows}
+    assert values['Protocol Type'] == ['sample collection protocol', 'nucleic acid sequencing protocol']
+    for field in ('Protocol Description', 'Protocol Hardware', 'Protocol Software', 'Protocol Parameters', 'Protocol Contact'):
+        assert not any(values[field])
     table = next(r[1] for r in rows if r[0] == 'SDRF File')
-    assert 'Protocol REF' not in table[0]
+    assert table[0].count('Protocol REF') == 2
+    assert all([v for h, v in zip(table[0], row) if h == 'Protocol REF'] == values['Protocol Name'] for row in table[1:])
+    assert not typed.series.protocols
 
 
 def test_native_date_comments_preserve_provider_and_partial_precision():

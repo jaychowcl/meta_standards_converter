@@ -131,11 +131,13 @@ def test_saved_native_json_export_upgrades_only_in_memory(tmp_path, monkeypatch)
     path.write_text(original)
     output = converted(Converter(), str(path), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]
     rows = {r[0]: r[1:] for r in output}
-    assert rows['Protocol Description'] == ['Hi-C - Arima v2\n\n' + METHOD]
+    assert rows['Protocol Description'] == ['Hi-C - Arima v2\n\n' + METHOD, '', '']
+    assert rows['Protocol Type'][1:] == ['sample collection protocol', 'nucleic acid sequencing protocol']
     assert not any(rows['Protocol Hardware'])
     sdrf = rows['SDRF File'][0]
     header = sdrf[0]
-    assert all(r[header.index('Protocol REF')] == rows['Protocol Name'][0] for r in sdrf[1:])
+    assert all([v for h, v in zip(header, r) if h == 'Protocol REF' and v] ==
+               [rows['Protocol Name'][1], rows['Protocol Name'][0], rows['Protocol Name'][2]] for r in sdrf[1:])
     description_column = header.index('Description', header.index('Assay Name'))
     assert all(r[description_column] == CONTEXT + METHOD for r in sdrf[1:])
     assert all(r[header.index('Comment[INSTRUMENT_MODEL]')] for r in sdrf[1:])

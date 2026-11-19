@@ -18,9 +18,13 @@ publication links, canonical JSON and IDF/SDRF output from serial commit `893e27
 Its synthetic PubMed identifiers test experiment, project and sample ownership.
 It was generated without network access before the concurrency implementation;
 `test_sra_publication_concurrency.py` checks exact serial/concurrent equivalence.
-The consolidated 3.1 fixture changes only `miniml_schema_version` from 3.0 to 3.1;
-all scientific values and IDF/SDRF cells remain unchanged. The generated IDF date
-is frozen at 2026-10-20 so the comparison is independent of the test date.
+The consolidated 3.1 fixture changed only `miniml_schema_version` from 3.0 to 3.1.
+Required-protocol completion adds one blank sample collection definition
+(`P-SRP250911-2`, `EFO_0005518`), its EFO declaration and one reference after each
+source. The test's forced generic handler adds no sequencing protocol. Removing
+these additions reproduces the previous fixture exactly; source JSON, publication
+links and all original IDF/SDRF cells are unchanged. The generated IDF date is
+frozen at 2026-10-20 so the comparison is independent of the test date.
 
 | Case | Origin and reduction | Workflows |
 | --- | --- | --- |

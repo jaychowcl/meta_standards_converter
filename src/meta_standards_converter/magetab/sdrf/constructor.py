@@ -55,6 +55,8 @@ class SDRFConstructor():
         }.get(tech_type, _GenericSDRFHandler)
 
         handler = handler_class(parent=self, data=data, protocol_registry=protocol_registry)
+        handler.technology_type = tech_type
+        handler.technology_scopes = ()
         return handler
 
     def create_operation_handler(self, data, protocol_registry=None, run_evidence=None):
@@ -84,6 +86,7 @@ class SDRFConstructor():
             handler = self.create_handler(data, operation.protocol_registry, summary)
             handler.run_evidence = operation.run_evidence
             handler.audit = operation.audit
+            handler.technology_scopes = tuple(scopes)
             return handler, summary
         for scope, decision in scopes:
             child = self.create_handler(data, operation.protocol_registry, decision.handler)
@@ -91,6 +94,8 @@ class SDRFConstructor():
             child.run_evidence = operation.run_evidence
             child.audit = operation.audit
             operation.children.append(child)
+        operation.technology_type = summary
+        operation.technology_scopes = tuple(scopes)
         return operation, summary
 
     def prepare(self, handler, *, canonical_paths=None, preserve_order=False):
@@ -98,10 +103,19 @@ class SDRFConstructor():
         from .renderer import SDRFRenderer
         paths = handler.prepare_paths()
         if canonical_paths:
+            from ..required_protocols import complete_canonical_protocols
+            complete_canonical_protocols(handler, canonical_paths)
             from ..harmonized import bind_sample_groups
             from ..semantics import plan_miniml_assay_documents
             documents = plan_miniml_assay_documents(bind_sample_groups(handler.data, canonical_paths))
+            # Added references can occupy different boundaries on different
+            # rows. Anchor their columns to nodes, including on re-import, so
+            # occurrence numbers cannot move a method across a material/assay.
+            preserve_order = True
         else:
+            if canonical_paths is not None and handler.data.get('series', {}).get('protocols'):
+                from ..required_protocols import reconcile_generated_protocols
+                reconcile_generated_protocols(handler, paths)
             documents = {"study.sdrf.txt": paths}
         from ..export_files import exclude_derived_paths
         documents = {name: exclude_derived_paths(values) for name, values in documents.items()}

@@ -102,7 +102,7 @@ class TestMAGETabMetadataSource(unittest.TestCase):
         ))
         reparsed_step = next(
             item for item in reparsed["series"]["assay_paths"][0]["steps"]
-            if item.get("kind") == "protocol_application"
+            if item.get("protocol_ref") == "P-extract"
         )["parameter_values"][0]
         self.assertEqual("30", reparsed_step["value"])
         self.assertEqual("minutes", reparsed_step["unit"]["value"])

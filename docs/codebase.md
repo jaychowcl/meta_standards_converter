@@ -3013,7 +3013,8 @@ prepared SourceLoadResult
   → MAGETabExporter.render → group.resolved(profile)
   → AEConstructor.prepare
       validate + detach data → normalize → protocols/files → technology handler
-      → SDRFConstructor.prepare → canonical/fallback paths → columns + audit
+      → SDRFConstructor.prepare → canonical/fallback paths
+          → required protocol completion → columns + audit
       → MAGETabExportPlan
   → AEConstructor.render
       SDRFConstructor.render → render_paths once per document
@@ -3024,6 +3025,60 @@ prepared SourceLoadResult
 Preparation and rendering interfaces are documented at
 [network-free construction](#core-magetab-construction). Providers are used only
 by source loading and metadata preparation, before the constructor boundary.
+
+<a id="required-protocol-completion"></a>
+### Required protocol completion
+
+All shared MAGE-TAB exports, including `json2ae` and `geo2ae`, complete missing
+`sample collection protocol` applications and, for sequencing workflows,
+`nucleic acid sequencing protocol` applications before SDRF column planning.
+This also applies to explicit `series.protocols` and `series.assay_paths`.
+The generated IDF definitions contain a unique `P-<study>-<n>` identifier and
+the existing EFO mappings (`EFO_0005518` and `EFO_0004170`). Description,
+hardware, software, parameters, contacts and performers remain blank.
+
+Coverage is per workflow. An existing application of the required type is kept,
+including its text, blank description and occurrence-local qualifiers. Type
+matching accepts canonical labels and EFO identifiers in colon, underscore or
+URI form. Uncovered workflows share a wholly blank definition; an authored
+procedure used by another sample is never assigned to them. Existing blank
+definitions are reused, and allocation reserves supplied and generated names.
+For generated workflows with an explicit protocol list, the emitted registry
+references are reconciled with that list so the final semantic overlay retains
+their definitions. Unused supplied definitions are retained too.
+
+Collection is inserted after the source node, or the sample node when there is
+no source. Sequencing is inserted before the scan/raw-data node, falling back
+to the last assay/extract boundary. Existing steps and their attached metadata
+retain their order. If there is no usable boundary, the blank definition remains
+in the IDF and `SDRFAudit.warnings` records the omitted reference. Sequencing
+eligibility reuses existing sample/channel/run routing decisions and forced
+handler selection; mixed studies do not acquire sequencing references on
+array/generic workflows. Unresolved mixed-workflow identity is audited rather
+than assigned a neighbour's technology. Sample scope lookup is indexed once
+per export, and a unanimous sequencing/non-sequencing decision needs no joins.
+
+The constructor owns a detached export copy: source JSON and typed inputs are
+unchanged. Repeated export and MAGE-TAB re-import reuse completed definitions
+and references. This is automatic export behavior, with no new CLI option or
+public MINiML schema. It supplies structural entries for curation, not evidence
+of a described laboratory procedure.
+
+**Implementation:** [completion](../src/meta_standards_converter/magetab/required_protocols.py),
+[planning caller](../src/meta_standards_converter/magetab/sdrf/constructor.py),
+[final protocol rendering](../src/meta_standards_converter/magetab/semantics.py).
+`meta_standards_converter.magetab.required_protocols.complete_canonical_protocols`
+completes explicit paths on the detached copy;
+`meta_standards_converter.magetab.required_protocols.reconcile_generated_protocols`
+keeps handler-generated references declared when explicit definitions exist.
+Explicit-path column planning uses the existing node-anchored ordering so
+references on different rows remain at their own material/assay boundary.
+**Validation:** `python -m pytest tests/magetab/test_required_protocols.py`
+covers missing types, authored and blank definitions, identity collisions,
+sample/channel/run routing, forced handlers, sparse boundaries, multiple SDRFs,
+source immutability and actual JSON conversion/re-import. The full offline
+suite (`python -m pytest --full`) retains source text and qualifier checks;
+expected output additions are limited to blank required definitions/references.
 
 <a id="sdrf-handlers"></a>
 <a id="sdrf-dataclasses"></a>
@@ -4717,7 +4772,12 @@ consolidation is:
 | `test_recorded_four_study_protocol_qualifier_occurrences_survive` | `assert_protocol_occurrence_counts`, status/diagnostics checks and the independent 946-cell census |
 
 The original strict deposited comparator and all synthetic corruption tests
-remain. Small golden round trips and local-loopback transport regressions stay
+remain. The deposited scenario first verifies and removes only the new blank
+definitions' bare reference columns described in [required protocol completion](#required-protocol-completion),
+then compares all original graph steps, qualifiers and cells. Corruption tests
+reject described methods, incorrect types/terms, decorated references and moved
+or mixed authored references in this bounded projection.
+Small golden round trips and local-loopback transport regressions stay
 in the quick suite. Loopback tests require local socket permission, not a live
 provider opt-in; the external-network guard remains enabled.
 
