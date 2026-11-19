@@ -1,0 +1,750 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<MINiML
+   xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.ncbi.nlm.nih.gov/geo/info/MINiML http://www.ncbi.nlm.nih.gov/geo/info/MINiML.xsd"
+   version="0.5.0" >
+
+  <Contributor iid="contrib1">
+    <Person><First>Cole</First><Last>Trapnell</Last></Person>
+    <Email>cole@broadinstitute.org</Email>
+    <Laboratory>John Rinn</Laboratory>
+    <Department>Stem Cell and Regenerative Biology</Department>
+    <Organization>Harvard University</Organization>
+    <Address>
+      <Line>7 Divinity Ave</Line>
+      <City>Cambridge</City>
+      <State>MA</State>
+      <Zip-Code>02138</Zip-Code>
+      <Country>USA</Country>
+    </Address>
+  </Contributor>
+
+  <Contributor iid="contrib2">
+    <Organization>GEO</Organization>
+    <Address>
+      <City></City>
+      <Country>USA</Country>
+    </Address>
+  </Contributor>
+
+  <Contributor iid="contrib3">
+    <Person><First>David</First><Last>Hendrickson</Last></Person>
+  </Contributor>
+
+  <Contributor iid="contrib4">
+    <Person><First>Martin</First><Last>Sauvageau</Last></Person>
+  </Contributor>
+
+  <Contributor iid="contrib5">
+    <Person><First>John</First><Last>Rinn</Last></Person>
+  </Contributor>
+
+  <Contributor iid="contrib6">
+    <Person><First>Lior</First><Last>Pachter</Last></Person>
+  </Contributor>
+
+  <Database iid="GEO">
+    <Name>Gene Expression Omnibus (GEO)</Name>
+    <Public-ID>GEO</Public-ID>
+    <Organization>NCBI NLM NIH</Organization>
+    <Web-Link>http://www.ncbi.nlm.nih.gov/geo</Web-Link>
+    <Email>geo@ncbi.nlm.nih.gov</Email>
+  </Database>
+
+  <Platform iid="GPL11154">
+    <Status database="GEO">
+      <Submission-Date>2010-11-02</Submission-Date>
+      <Release-Date>2010-11-02</Release-Date>
+      <Last-Update-Date>2019-03-27</Last-Update-Date>
+    </Status>
+    <Title>Illumina HiSeq 2000 (Homo sapiens)</Title>
+    <Accession database="GEO">GPL11154</Accession>
+    <Technology>high-throughput sequencing</Technology>
+    <Distribution>virtual</Distribution>
+    <Organism taxid="9606">Homo sapiens</Organism>
+    <Manufacturer></Manufacturer>
+    <Manufacture-Protocol>
+    </Manufacture-Protocol>
+    <Contact-Ref ref="contrib2" />
+  </Platform>
+
+  <Platform iid="GPL15520">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-05-02</Release-Date>
+      <Last-Update-Date>2019-01-25</Last-Update-Date>
+    </Status>
+    <Title>Illumina MiSeq (Homo sapiens)</Title>
+    <Accession database="GEO">GPL15520</Accession>
+    <Technology>high-throughput sequencing</Technology>
+    <Distribution>virtual</Distribution>
+    <Organism taxid="9606">Homo sapiens</Organism>
+    <Manufacturer></Manufacturer>
+    <Manufacture-Protocol>
+    </Manufacture-Protocol>
+    <Contact-Ref ref="contrib2" />
+  </Platform>
+
+  <Sample iid="GSM925762">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_scramble_hiseq_repA</Title>
+    <Accession database="GEO">GSM925762</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_scramble_hiseq_repA</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+Scramble siRNA
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL11154" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145662" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990704" />
+  </Sample>
+
+  <Sample iid="GSM925763">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_scramble_hiseq_repB</Title>
+    <Accession database="GEO">GSM925763</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_scramble_hiseq_repB</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+Scramble siRNA
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL11154" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145663" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990705" />
+  </Sample>
+
+  <Sample iid="GSM925764">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_scramble_hiseq_repC</Title>
+    <Accession database="GEO">GSM925764</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_scramble_hiseq_repC</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+Scramble siRNA
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL11154" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145664" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990706" />
+  </Sample>
+
+  <Sample iid="GSM925765">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_HOXA1KD_hiseq_repA</Title>
+    <Accession database="GEO">GSM925765</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_HOXA1KD_hiseq_repA</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+HOXA1 knockdown
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL11154" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145665" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990707" />
+  </Sample>
+
+  <Sample iid="GSM925766">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_HOXA1KD_hiseq_repB</Title>
+    <Accession database="GEO">GSM925766</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_HOXA1KD_hiseq_repB</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+HOXA1 knockdown
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL11154" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145666" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990708" />
+  </Sample>
+
+  <Sample iid="GSM925767">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_HOXA1KD_hiseq_repC</Title>
+    <Accession database="GEO">GSM925767</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_HOXA1KD_hiseq_repC</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+HOXA1 knockdown
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL11154" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina HiSeq 2000</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145667" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990709" />
+  </Sample>
+
+  <Sample iid="GSM925768">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_scramble_miseq_repA</Title>
+    <Accession database="GEO">GSM925768</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_scramble_miseq_repA</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+Scramble siRNA
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL15520" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina MiSeq</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145668" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990710" />
+  </Sample>
+
+  <Sample iid="GSM925769">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_scramble_miseq_repB</Title>
+    <Accession database="GEO">GSM925769</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_scramble_miseq_repB</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+Scramble siRNA
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL15520" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina MiSeq</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145669" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990711" />
+  </Sample>
+
+  <Sample iid="GSM925770">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_scramble_miseq_repC</Title>
+    <Accession database="GEO">GSM925770</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_scramble_miseq_repC</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+Scramble siRNA
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL15520" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina MiSeq</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145670" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990712" />
+  </Sample>
+
+  <Sample iid="GSM925771">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_HOXA1KD_miseq_repA</Title>
+    <Accession database="GEO">GSM925771</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_HOXA1KD_miseq_repA</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+HOXA1 knockdown
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL15520" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina MiSeq</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145671" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990713" />
+  </Sample>
+
+  <Sample iid="GSM925772">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_HOXA1KD_miseq_repB</Title>
+    <Accession database="GEO">GSM925772</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_HOXA1KD_miseq_repB</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+HOXA1 knockdown
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL15520" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina MiSeq</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145672" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990714" />
+  </Sample>
+
+  <Sample iid="GSM925773">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>LFB_HOXA1KD_miseq_repC</Title>
+    <Accession database="GEO">GSM925773</Accession>
+    <Type>SRA</Type>
+    <Channel-Count>1</Channel-Count>
+    <Channel position="1">
+      <Source>LFB_HOXA1KD_miseq_repC</Source>
+      <Organism taxid="9606">Homo sapiens</Organism>
+      <Characteristics tag="tissue">
+lung fibroblasts
+      </Characteristics>
+      <Characteristics tag="transfection">
+HOXA1 knockdown
+      </Characteristics>
+      <Molecule>total RNA</Molecule>
+      <Extract-Protocol>
+Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer.  RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions.  Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp.
+TruSeq RNA-Seq kit v1
+      </Extract-Protocol>
+    </Channel>
+    <Data-Processing>
+All reads aligned with TopHat version 1.4.0 using the following options:  &quot;-a 5&quot; against hg19 and annotated UCSC coding transcripts.
+Aligments were processed with Cuffdiff version 2.0.0 using default options.
+Genome_build: hg19
+Supplementary_files_format_and_content: Cuffdiff expression tracking
+    </Data-Processing>
+    <Platform-Ref ref="GPL15520" />
+    <Library-Strategy>RNA-Seq</Library-Strategy>
+    <Library-Source>transcriptomic</Library-Source>
+    <Library-Selection>cDNA</Library-Selection>
+    <Instrument-Model>
+      <Predefined>Illumina MiSeq</Predefined>
+    </Instrument-Model>
+    <Contact-Ref ref="contrib1" />
+    <Supplementary-Data type="unknown">
+NONE
+    </Supplementary-Data>
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRX145673" />
+    <Relation type="BioSample" target="https://www.ncbi.nlm.nih.gov/biosample/SAMN00990715" />
+  </Sample>
+
+  <Series iid="GSE37703">
+    <Status database="GEO">
+      <Submission-Date>2012-05-02</Submission-Date>
+      <Release-Date>2012-12-11</Release-Date>
+      <Last-Update-Date>2019-05-15</Last-Update-Date>
+    </Status>
+    <Title>Differential analysis of HOXA1 in adult cells at isoform resolution by RNA-Seq [Illumina]</Title>
+    <Accession database="GEO">GSE37703</Accession>
+    <Pubmed-ID>23222703</Pubmed-ID>
+    <Summary>
+High-throughput RNA sequencing (RNA-Seq) has enabled accurate gene discovery and expression estimation, but robust differential analysis of gene and transcript abundances has proven difficult. We present a new algorithm, implemented in the freely available tool Cuffdiff, which integrates transcript-level expression estimation with a method to control for variability across replicate samples. Cuffdiff robustly identifies differentially regulated isoforms and genes and reveals differential splicing or promoter-preference changes. We demonstrate the accuracy of our approach through differential analysis of lung fibroblasts in response to loss of the developmental transcription factor HOXA1 and uncover a critical role for this gene in the maintenance of adult cells. We show that HOXA1 is required for lung fibroblast and HeLa cell cycle progression, and loss of HOXA1 results in significant expression level changes in thousands of individual transcripts, along with isoform switching events in key regulators of the cell cycle.
+    </Summary>
+    <Overall-Design>
+Lung Fibroblasts were transfected with either a HOXA1 directed siRNA pool or a scramble non-targeting siRNA control. RNA was collected 48 hours after transfection and changes in gene expression were assayed for using Agilent microarrays.
+    </Overall-Design>
+    <Type>Expression profiling by high throughput sequencing</Type>
+    <Contributor-Ref ref="contrib1" position="1" />
+    <Contributor-Ref ref="contrib3" position="2" />
+    <Contributor-Ref ref="contrib4" position="3" />
+    <Contributor-Ref ref="contrib5" position="4" />
+    <Contributor-Ref ref="contrib6" position="5" />
+    <Contact-Ref ref="contrib1" />
+    <Sample-Ref ref="GSM925762" />
+    <Sample-Ref ref="GSM925763" />
+    <Sample-Ref ref="GSM925764" />
+    <Sample-Ref ref="GSM925765" />
+    <Sample-Ref ref="GSM925766" />
+    <Sample-Ref ref="GSM925767" />
+    <Sample-Ref ref="GSM925768" />
+    <Sample-Ref ref="GSM925769" />
+    <Sample-Ref ref="GSM925770" />
+    <Sample-Ref ref="GSM925771" />
+    <Sample-Ref ref="GSM925772" />
+    <Sample-Ref ref="GSM925773" />
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_cds.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_cds.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_cds_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_gene_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_genes.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_isoform_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_isoforms.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_promoters.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_splicing.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_tss_group_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_hiseq_cuffdiff_tss_groups.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_cds.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_cds.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_cds_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_gene_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_genes.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_isoform_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_isoforms.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_promoters.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_splicing.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="DIFF">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_tss_group_exp.diff.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="FPKM_TRACKING">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_miseq_cuffdiff_tss_groups.fpkm_tracking.gz
+    </Supplementary-Data>
+    <Supplementary-Data type="TXT">
+ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/suppl/GSE37703_readme.txt.gz
+    </Supplementary-Data>
+    <Relation type="SubSeries of" target="GSE37704" />
+    <Relation type="BioProject" target="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA162905" />
+    <Relation type="SRA" target="https://www.ncbi.nlm.nih.gov/sra?term=SRP012607" />
+  </Series>
+
+</MINiML>

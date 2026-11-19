@@ -1,0 +1,50 @@
+Comment[ArrayExpressAccession]	E-GEOD-37703
+MAGE-TAB Version	1.1					
+Public Release Date	2012-12-11
+Investigation Title	Differential analysis of HOXA1 in adult cells at isoform resolution by RNA-Seq [Illumina]					
+Comment[Submitted Name]	Differential analysis of HOXA1 in adult cells at isoform resolution by RNA-Seq [Illumina]
+Experiment Description	High-throughput RNA sequencing (RNA-Seq) has enabled accurate gene discovery and expression estimation, but robust differential analysis of gene and transcript abundances has proven difficult. We present a new algorithm, implemented in the freely available tool Cuffdiff, which integrates transcript-level expression estimation with a method to control for variability across replicate samples. Cuffdiff robustly identifies differentially regulated isoforms and genes and reveals differential splicing or promoter-preference changes. We demonstrate the accuracy of our approach through differential analysis of lung fibroblasts in response to loss of the developmental transcription factor HOXA1 and uncover a critical role for this gene in the maintenance of adult cells. We show that HOXA1 is required for lung fibroblast and HeLa cell cycle progression, and loss of HOXA1 results in significant expression level changes in thousands of individual transcripts, along with isoform switching events in key regulators of the cell cycle. Lung Fibroblasts were transfected with either a HOXA1 directed siRNA pool or a scramble non-targeting siRNA control. RNA was collected 48 hours after transfection and changes in gene expression were assayed for using Agilent microarrays.					
+Term Source Name	ArrayExpress	EFO
+Term Source File	http://www.ebi.ac.uk/arrayexpress/	http://www.ebi.ac.uk/efo/efo.owl				
+Person Last Name	Trapnell	Trapnell	Hendrickson	Sauvageau	Rinn	Pachter
+Person First Name	Cole	Cole	David	Martin	John	Lior
+Person Email	cole@broadinstitute.org					
+Person Affiliation	Harvard University					
+Person Address	Stem Cell and Regenerative Biology, Harvard University, 7 Divinity Ave, Cambridge, MA, USA					
+Person Roles	submitter					
+Protocol Name	P-GSE37703-1	P-GSE37703-2				
+Protocol Description	Total RNA from human cell lines or human fat was extracted with Trizol (Invitrogen) and purified via the RNeasy mini kit (Qiagen) according to the manufacturers’ instructions. RNA quality was assessed using an Aglient Bioanalyzer. RNA-Seq libraries were prepared with the TruSeq mRNA-Seq kit (v1) according to manufacturer's instructions. Sequenced insert length for all libraries was approximately 180bp with a standard deviation of 50bp. TruSeq RNA-Seq kit v1	All reads aligned with TopHat version 1.4.0 using the following options: -a 5 against hg19 and annotated UCSC coding transcripts. Aligments were processed with Cuffdiff version 2.0.0 using default options. Genome_build: hg19 Supplementary_files_format_and_content: Cuffdiff expression tracking				
+Protocol Type	nucleic acid library construction protocol	feature_extraction				
+Experimental Factor Name	TRANSFECTION					
+Experimental Factor Type	transfection					
+Comment[SecondaryAccession]	GSE37703					
+Comment[GEOReleaseDate]	2012-12-11					
+Comment[ArrayExpressSubmissionDate]	2012-05-02					
+Comment[GEOLastUpdateDate]	2012-12-11					
+Comment[AEExperimentType]	RNA-seq of coding RNA					
+Comment[AdditionalFile:Data1]	GSE37703_hiseq_cuffdiff_cds.diff					
+Comment[AdditionalFile:Data2]	GSE37703_hiseq_cuffdiff_cds.fpkm_tracking					
+Comment[AdditionalFile:Data3]	GSE37703_hiseq_cuffdiff_cds_exp.diff					
+Comment[AdditionalFile:Data4]	GSE37703_hiseq_cuffdiff_gene_exp.diff					
+Comment[AdditionalFile:Data5]	GSE37703_hiseq_cuffdiff_genes.fpkm_tracking					
+Comment[AdditionalFile:Data6]	GSE37703_hiseq_cuffdiff_isoform_exp.diff					
+Comment[AdditionalFile:Data7]	GSE37703_hiseq_cuffdiff_isoforms.fpkm_tracking					
+Comment[AdditionalFile:Data8]	GSE37703_hiseq_cuffdiff_promoters.diff					
+Comment[AdditionalFile:Data9]	GSE37703_hiseq_cuffdiff_splicing.diff					
+Comment[AdditionalFile:Data10]	GSE37703_hiseq_cuffdiff_tss_group_exp.diff					
+Comment[AdditionalFile:Data11]	GSE37703_hiseq_cuffdiff_tss_groups.fpkm_tracking					
+Comment[AdditionalFile:Data12]	GSE37703_miseq_cuffdiff_cds.diff					
+Comment[AdditionalFile:Data13]	GSE37703_miseq_cuffdiff_cds.fpkm_tracking					
+Comment[AdditionalFile:Data14]	GSE37703_miseq_cuffdiff_cds_exp.diff					
+Comment[AdditionalFile:Data15]	GSE37703_miseq_cuffdiff_gene_exp.diff					
+Comment[AdditionalFile:Data16]	GSE37703_miseq_cuffdiff_genes.fpkm_tracking					
+Comment[AdditionalFile:Data17]	GSE37703_miseq_cuffdiff_isoform_exp.diff					
+Comment[AdditionalFile:Data18]	GSE37703_miseq_cuffdiff_isoforms.fpkm_tracking					
+Comment[AdditionalFile:Data19]	GSE37703_miseq_cuffdiff_promoters.diff					
+Comment[AdditionalFile:Data20]	GSE37703_miseq_cuffdiff_splicing.diff					
+Comment[AdditionalFile:Data21]	GSE37703_miseq_cuffdiff_tss_group_exp.diff					
+Comment[AdditionalFile:Data22]	GSE37703_miseq_cuffdiff_tss_groups.fpkm_tracking					
+Comment[AdditionalFile:Data23]	GSE37703_readme.txt					
+Comment[SecondaryAccession]	SRP012607					
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/SRR493366-SRR493377					
+SDRF File	E-GEOD-37703.sdrf.txt

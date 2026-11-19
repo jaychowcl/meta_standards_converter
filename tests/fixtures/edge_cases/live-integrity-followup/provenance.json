@@ -1,0 +1,25 @@
+{
+  "captured_at": "2026-11-19T21:48:11.380223+00:00",
+  "source_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE37nnn/GSE37703/miniml/GSE37703_family.xml.tgz",
+  "source_sha256": "f2684bf4fb0d299ea1f05913aef9278250b671fe6eaf9a8103a46426e6cd1850",
+  "member": "GSE37703_family.xml",
+  "member_sha256": "8f52a11fd589244ceaab5f592cf9f3baf175415767b6aa527f852f5a50443527",
+  "selection": "Complete original XML member; original bytes retained, no generated expectations.",
+  "production_revision": "2368e51f0367a8eccf490e1c633e2638b63ed6ff",
+  "deposited_files": [
+    {
+      "name": "E-GEOD-37703.idf.txt",
+      "source_url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/703/E-GEOD-37703/Files/E-GEOD-37703.idf.txt",
+      "sha256": "bce31ee2154f486e0aa96aa4345fb09c1849d56b96effed78e1a5d12ff44b4c0",
+      "captured_at": "2026-11-19T21:51:56.276389+00:00",
+      "selection": "Complete original reference bytes; no modifications."
+    },
+    {
+      "name": "E-GEOD-37703.sdrf.txt",
+      "source_url": "https://ftp.ebi.ac.uk/biostudies/fire/E-GEOD-/703/E-GEOD-37703/Files/E-GEOD-37703.sdrf.txt",
+      "sha256": "8788cb4a7e5291a9747659517da28e8a9d7e9c632db44ae96595892f353dfa55",
+      "captured_at": "2026-11-19T21:51:56.276389+00:00",
+      "selection": "Complete original reference bytes; no modifications."
+    }
+  ]
+}
