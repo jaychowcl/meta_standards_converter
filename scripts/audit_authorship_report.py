@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Assemble the frozen audit without network access or changes to references."""
 from collections import Counter, defaultdict
 import csv
@@ -42,10 +50,17 @@ def source_link_evidence(docs, accession, reference_idf):
 
 
 def reference_assistance(case, mode, reference):
-    trace = read(case / 'http/trace.json')['events']
-    consumed = [event for event in trace if event['phase'] == mode and '/biostudies/' in event['identity']['url']]
-    hashes = {event.get('attempt', {}).get('response') for event in consumed}
-    return {'reference_requests': [event['identity']['url'] for event in consumed],
+    replay_trace = case / mode / 'trace-json.json'
+    if replay_trace.exists():
+        trace = read(replay_trace)['events']
+        consumed = [event for event in trace if '/biostudies/' in event['identity']['url']]
+        hashes = {event.get('response') for event in consumed}
+    else:
+        trace = read(case / 'http/trace.json')['events']
+        consumed = [event for event in trace if event['phase'] == mode and '/biostudies/' in event['identity']['url']]
+        hashes = {event.get('attempt', {}).get('response') for event in consumed}
+    return {'trace': str(replay_trace.relative_to(case)) if replay_trace.exists() else 'http/trace.json (acquisition)',
+            'reference_requests': [event['identity']['url'] for event in consumed],
             'reference_assisted': bool(consumed),
             'same_comparison_reference_accession_consumed': bool(reference and any(reference in event['identity']['url'] for event in consumed)),
             'same_frozen_reference_bytes_consumed': [] if not reference else [kind for kind in ('idf', 'sdrf')
@@ -74,7 +89,7 @@ def annotate_literal_support(rows, facts):
                 row['reason'] = 'Reference annotation has a literal source candidate; curation-only origin is not established.'
 
 
-def build(root):
+def build(root, *, candidate=False):
     root = Path(root)
     cases, field_rows = [], []
     for case in sorted((root / 'cases').iterdir()):
@@ -110,7 +125,11 @@ def build(root):
             detail['population'] = {'samples': len(package.get('sample', [])), 'sdrf_rows': len(sdrf) - 1,
                 'idf_populated_cells': len(idf_cells(document)), 'sdrf_populated_cells': len(scoped_sdrf_cells(sdrf, reference or acquisition['accession'])[1]),
                 'series_publications': len(package.get('series', {}).get('pubmed_publication') or [])}
-            detail['replayed_json_equals_capture'] = read(package_path) == read(output / 'replayed-json/payload-0.json')
+            if candidate:
+                detail['candidate_json_equals_baseline_capture'] = read(package_path) == read(output / 'baseline-source-json/payload-0.json')
+                detail['saved_json_origin'] = 'fresh candidate source-to-JSON conversion'
+            else:
+                detail['replayed_json_equals_capture'] = read(package_path) == read(output / 'replayed-json/payload-0.json')
             saved = read(output / 'saved-0-magetab/payload-0.json')[0]
             route_diff = idf_comparison(document, saved)
             detail['direct_vs_saved_json'] = {'idf_discrepancies': [r for r in route_diff if r['source'] != r['generated']]}
@@ -241,7 +260,8 @@ def build(root):
     write_json(root / 'summary.json', summary)
     with (root / 'field-discrepancies.jsonl').open('w') as stream:
         for row in field_rows: stream.write(json.dumps(row, ensure_ascii=False) + '\n')
-    write_report(root, summary)
+    if not candidate:
+        write_report(root, summary)
     return summary
 
 

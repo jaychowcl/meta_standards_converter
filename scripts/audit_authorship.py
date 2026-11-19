@@ -1,3 +1,11 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
 """Reproducible MSC author/contact and complete MAGE-TAB audit at a fixed SHA.
 
 Capture is opt-in, bounded to 300 seconds/200 physical requests per input across
@@ -96,7 +104,7 @@ def capture_case(root, provider, accession, reference):
                                  for key, value in outcomes['phases'].items()}}), flush=True)
 
 
-def replay_case(dest):
+def replay_case(dest, *, fresh_json=False):
     from meta_standards_converter.converters import Converter
     acquisition = json.loads((dest / 'acquisition.json').read_text())
     outcomes = {}
@@ -112,6 +120,8 @@ def replay_case(dest):
                         in_type='ae_accession' if acquisition['provider'] == 'ae' else acquisition['provider'], preparation=policy(mode), runtime=runtime())
                 result_info[output] = save_result(result, stage / ('replayed-' + output))
                 replay.assert_complete()
+                if fresh_json and output == 'json':
+                    save_result(result, stage / 'source-json')
             except BaseException as exc:
                 if isinstance(exc, (KeyboardInterrupt, SystemExit)): raise
                 result_info[output + '_limitation'] = type(exc).__name__ + ': ' + str(exc)
@@ -140,21 +150,25 @@ def replay_case(dest):
     print('Replayed ' + dest.name, flush=True)
 
 
-def deposited(root, selected=None):
+def deposited(root, selected=None, *, sealed_references=None, revision=BASELINE):
     from meta_standards_converter.converters import Converter
-    from tests.support.deposited_fidelity import DEPOSITED_PANEL, load_deposited_reference, without_derived_files, assert_deposited_sdrf
+    from tests.support.deposited_fidelity import DEPOSITED_PANEL, load_deposited_reference, without_derived_files, without_added_protocol_placeholders, assert_deposited_sdrf
     from tests.support.authorship_fidelity import idf_comparison, table, scoped_sdrf_cells
     references = root / 'references'
     references.mkdir(exist_ok=True)
     original = REPO / 'tests/fixtures/fidelity'
-    shutil.copyfile(original / 'provenance.json', references / 'original-provenance.json')
+    if sealed_references is None:
+        shutil.copyfile(original / 'provenance.json', references / 'original-provenance.json')
     manifest = root / 'empty.manifest.json'
-    write_json(manifest, {'schema_version': '1.0', 'cohort': 'deposited', 'source_revision': BASELINE,
+    write_json(manifest, {'schema_version': '1.0', 'cohort': 'deposited', 'source_revision': revision,
                          'captured_at': utc(), 'evidence_kind': 'recorded-http', 'files': {}, 'requests': []})
     reports = json.loads((root / 'deposited-results.json').read_text()) if selected and (root / 'deposited-results.json').exists() else []
     for accession in [*DEPOSITED_PANEL, 'E-MTAB-6486']:
         if selected and accession not in selected: continue
-        if accession in DEPOSITED_PANEL:
+        if sealed_references is not None:
+            directory = sealed_references
+            reference = {kind: table(directory / f'{accession}.{kind}.txt') for kind in ('idf', 'sdrf')}
+        elif accession in DEPOSITED_PANEL:
             reference = load_deposited_reference(original, accession)
             directory = original
         else:
@@ -182,7 +196,7 @@ def deposited(root, selected=None):
                           'validation': outcome.items[0].validation, 'completeness': outcome.items[0].completeness}
                 if outcome.items[0].payload:
                     document = primitive(outcome.items[0].payload[0])
-                    sdrf = next(row[1] for row in document if row[0] == 'SDRF File')
+                    sdrf = without_added_protocol_placeholders(reference['idf'], document)
                     detail['idf'] = idf_comparison(reference['idf'], document, documented=True, source_sdrf=reference['sdrf'])
                     projected = without_derived_files(reference['sdrf'])
                     try:
@@ -200,7 +214,7 @@ def deposited(root, selected=None):
     write_json(root / 'deposited-results.json', reports)
 
 
-def frozen_unicode(root):
+def frozen_unicode(root, *, sealed=False):
     from pytest import MonkeyPatch
     from meta_standards_converter.converters import Converter
     from tests.support.contracts import GEO, install_replay
@@ -209,7 +223,7 @@ def frozen_unicode(root):
     dest = root / 'frozen-GSE328265'
     for directory in ('inputs', 'provider_responses'):
         shutil.copytree(GEO / directory, dest / directory, dirs_exist_ok=True)
-    shutil.copyfile(GEO / 'provenance.json', dest / 'original-provenance.json')
+    shutil.copyfile(GEO / ('original-provenance.json' if sealed else 'provenance.json'), dest / 'original-provenance.json')
     raw = GEO / 'provider_responses/pubmed.xml'
     doc = {'kind': 'xml', 'xml': ET.fromstring(raw.read_bytes()), 'url': 'frozen esummary 42129775',
            'sha256': hashlib.sha256(raw.read_bytes()).hexdigest(), 'body': 'provider_responses/pubmed.xml',
@@ -246,10 +260,20 @@ def frozen_unicode(root):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['capture', 'replay', 'deposited', 'frozen', 'report'])
+    parser.add_argument('action', choices=['capture', 'replay', 'deposited', 'frozen', 'report', 'candidate'])
     parser.add_argument('--bundle', type=Path, required=True)
+    parser.add_argument('--source-bundle', type=Path, help='Sealed baseline input; required for candidate')
+    parser.add_argument('--candidate-revision', help='Expected committed HEAD; required for candidate')
     parser.add_argument('--case', action='append', help='provider-accession; omit for the declared cohort')
     args = parser.parse_args()
+    if args.action == 'candidate':
+        if not args.source_bundle or not args.candidate_revision or args.case:
+            parser.error('candidate requires --source-bundle and --candidate-revision and always replays the full cohort')
+        from scripts.audit_authorship_candidate import run
+        run(args.source_bundle, args.bundle, args.candidate_revision)
+        return
+    if args.source_bundle or args.candidate_revision:
+        parser.error('candidate options are not allowed for baseline actions')
     # A test-only audit commit may advance HEAD; production source must still
     # match the declared baseline before any evidence can be labelled with it.
     changed = subprocess.run(['git', 'diff', '--quiet', BASELINE, '--', 'src', 'pyproject.toml'], cwd=REPO).returncode

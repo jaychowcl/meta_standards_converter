@@ -656,8 +656,8 @@ canonical guide together when an interface, workflow, or contract changes.
 - id: authorship-curated-audit
   title: Publication authors and complete curated metadata audit
   anchor: authorship-curated-audit
-  purpose: Bounded frozen source/reference audit, full IDF/SDRF preservation, independent author/contact checks and strict defect reproductions without production fixes.
-  keywords: audit_authorship, 942ef67, authors, initials, suffix, consortium, Unicode, RelatedExperiment, untagged characteristics, source preservation, curator-only, reference-assisted, 18 studies, E-MTAB-6486, GSE328265, DRP000001, runxfail
+  purpose: Frozen source/reference audit and repaired author, characteristic, relationship and contact preservation with sealed candidate replay and independent full IDF/SDRF checks.
+  keywords: audit_authorship, 942ef67, authors, initials, suffix, consortium, Unicode, RelatedExperiment, untagged characteristics, source preservation, curator-only, reference-assisted, 18 studies, E-MTAB-6486, GSE328265, DRP000001, runxfail, candidate-revision, sealed bundle, contact consolidation, structured address, persistent identifiers, 19 studies, DOI derivative, curator review
   link: [Open section](codebase.md#authorship-curated-audit)
 
 - [Depth-aware harmonization and review transport](codebase.md#harmonization-depth-contract): MINiML 3.1, patch 3.2, Atlas 1.1 review policy, legacy fingerprints, ancestor names, collision groups, exact compatibility fixtures.

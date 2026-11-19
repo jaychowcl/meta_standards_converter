@@ -129,3 +129,16 @@ fields and protocol/ontology qualifiers; deposited evidence is never rewritten.
 The SRA publication-concurrency output golden removes only the generated
 `Comment[ArrayExpressSubmissionDate]` row. Its JSON, publication links and issues
 are identical; both serial and concurrent retrieval retain the same expected output.
+
+
+## Contact consolidation source excerpt (2026-11-19)
+
+`edge_cases/contact-consolidation/` retains five actual Smyth contributor records,
+their organization definitions and matching sample references from the sealed
+SRP045534 standard capture at `942ef67`. The provenance records both the original
+saved-JSON hash and the reduced fixture hash. One representative BioSample contact
+from each provider replaces repeated sample occurrences; no selected source field
+is rewritten. Tests expect three IDF contacts: the shared-email GEO/ArrayExpress
+pair consolidates, while BioSample and name-only ArrayExpress entries stay
+separate. Constructed conflict mutations are made only in tests. Original source
+JSON, sealed IDF/SDRF references and historic golden artifacts remain unchanged.
