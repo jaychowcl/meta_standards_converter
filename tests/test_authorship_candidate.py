@@ -7,7 +7,6 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 """Candidate replay cannot overwrite history, mislabel revisions or reuse stale JSON."""
-import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,7 +14,8 @@ from types import SimpleNamespace
 import pytest
 
 from scripts.audit_authorship import BASELINE, replay_case
-from scripts.audit_authorship_candidate import candidate_preflight, verify_seal
+from scripts.audit_authorship_candidate import candidate_preflight, verify_seal, seal_result, legacy_idf_comparison
+from tests.support.authorship_fidelity import LOSS
 from scripts.audit_authorship_report import reference_assistance
 from tests.support.authorship_capture import write_json
 
@@ -24,8 +24,9 @@ def sealed(tmp_path):
     root = tmp_path / 'sealed'
     root.mkdir()
     write_json(root / 'environment.json', {'baseline': BASELINE})
-    digest = hashlib.sha256((root / 'environment.json').read_bytes()).hexdigest()
-    (root / 'SHA256SUMS').write_text(digest + '  environment.json\n')
+    seal_result(root)
+    with pytest.raises(FileExistsError):
+        seal_result(root)
     return root
 
 
@@ -100,3 +101,28 @@ def test_reference_assistance_uses_actual_replay_not_original_capture(tmp_path):
     evidence = reference_assistance(tmp_path, 'off', None)
     assert evidence['reference_assisted'] is False
     assert evidence['trace'] == 'off/trace-json.json'
+
+
+@pytest.mark.parametrize('mutation', [None, 'role', 'phone', 'name', 'address', 'other-contact'])
+def test_legacy_review_only_accepts_the_exact_source_supported_contact_completion(mutation):
+    full = {'Person First Name': 'Gordon', 'Person Mid Initials': 'K', 'Person Last Name': 'Smyth',
+        'Person Email': 'smyth@wehi.edu.au', 'Person Phone': 'supplied phone', 'Person Roles': None,
+        'Person Affiliation': 'Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research',
+        'Person Address': 'Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, 3052, Australia'}
+    short = {**full, 'Person Roles': 'submitter',
+        'Person Affiliation': 'Bioinformatics, Walter and Eliza Hall Institute of Medical Research',
+        'Person Address': 'Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, Australia'}
+    other = {'Person First Name': 'Another', 'Person Last Name': 'Contact'}
+    new = [{**full, 'Person Roles': 'submitter'}, other.copy()]
+    if mutation == 'role': new[0]['Person Roles'] = None
+    elif mutation == 'phone': new[0]['Person Phone'] = 'wrong phone'
+    elif mutation == 'name': new[0]['Person First Name'] = 'Another'
+    elif mutation == 'address': new[0]['Person Address'] = full['Person Address'].replace('3052', '9999')
+    elif mutation == 'other-contact': new.pop()
+    def rows(people): return [[field, *(p.get(field) for p in people)] for field in full]
+    comparisons = legacy_idf_comparison(rows([full, short, other]), rows(new), 'sra-SRP045534', 'standard')
+    losses = [r for r in comparisons if r['classification'] == LOSS]
+    assert bool(losses) == bool(mutation)
+    if not mutation:
+        assert any(r.get('generated_identity') for r in comparisons)
+        assert any(r['classification'] == LOSS for r in legacy_idf_comparison(rows([full, short]), rows(new), 'sra-SRP002056', 'standard'))

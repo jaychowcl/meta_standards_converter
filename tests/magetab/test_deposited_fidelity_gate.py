@@ -161,6 +161,21 @@ def test_reference_loader_rejects_bytes_not_matching_recorded_source(tmp_path):
 
 
 
+@pytest.mark.parametrize('downstream_populated', [False, True])
+def test_placeholder_placement_uses_populated_nodes_on_each_sparse_row(downstream_populated):
+    table = [['Source Name', 'Scan Name', 'Protocol REF'],
+             ['sample', 'run' if downstream_populated else '', 'blank']]
+    idf = [['Protocol Name', 'blank'], ['Protocol Type', 'sample collection protocol'],
+           ['Protocol Term Source REF', 'EFO'], ['Protocol Term Accession Number', 'EFO_0005518'],
+           ['Protocol Description', ''], ['SDRF File', table]]
+    if downstream_populated:
+        with pytest.raises(AssertionError):
+            without_added_protocol_placeholders([['Protocol Name']], idf)
+    else:
+        assert without_added_protocol_placeholders([['Protocol Name']], idf) == [
+            ['Source Name', 'Scan Name'], ['sample', '']]
+
+
 @pytest.mark.parametrize('mutation', [None, 'description', 'type', 'accession', 'mixed-reference', 'qualifier', 'position'])
 def test_deposited_projection_only_accepts_bare_blank_required_additions(mutation):
     source = [['Source Name', 'Protocol REF', 'Extract Name'], ['s', 'original', 'e']]

@@ -6935,7 +6935,12 @@ Execution and evidence flow:
    exports older saved JSON with an empty request manifest. `ReplayTransport`
    blocks network/process escape and requires exact request consumption. The
    tested revision and acquisition revision are recorded separately, with a
-   before/after seal check. Actual replay traces establish reference assistance.
+   before/after seal check. Completed outputs receive their own SHA256SUMS seal.
+   Actual replay traces establish reference assistance. `candidate-review` can
+   reassess sealed outputs with improved comparison code, recording the original
+   conversion revision and the current analysis revision separately; it neither
+   reconverts nor overwrites those outputs. Older-JSON checks preserve every
+   existing field, explicitly classifying the verified SRP045534 contact join.
 4. `tests/support/authorship_sources.py` derives expected values independently
    from raw XML/JSON: publication names/identifiers, GEO study/sample/channel/contact
    fields and protocols, scoped BioSample contacts and study-listed sample/run
@@ -6948,6 +6953,9 @@ Execution and evidence flow:
    Newly added main-branch blank collection/sequencing columns are projected only
    by `without_added_protocol_placeholders`, after strict type, ontology, position,
    blank-description and qualifier checks. Existing source protocols never vanish.
+   Placement follows populated nodes on each row, so blank intervening columns
+   do not invent a downstream entity; a genuinely populated downstream node
+   still causes an invalid collection placement to fail.
 6. Reports separate source checks, curated-reference agreement, curated-input
    preservation and export exclusions. Reference-only annotation does not prove
    human curation and does not inflate converter-failure counts. Standard native
@@ -6975,6 +6983,8 @@ results and do not silently upgrade the shared environment.
 MSC_AUDIT_PY=/home/chow/projects/embl/runs/gsk_ThematicAtlases_adapter/.venv/bin/python
 # Run in a clean committed candidate worktree; the destination must not exist.
 PYTHONDONTWRITEBYTECODE=1 "$MSC_AUDIT_PY" scripts/audit_authorship.py candidate --source-bundle ../msc-authorship-audit/run-20261119 --candidate-revision HEAD --bundle ../msc-authorship-audit/fix-validation/new-replay
+# Optional analysis-only review: use the conversion SHA recorded in that bundle.
+PYTHONDONTWRITEBYTECODE=1 "$MSC_AUDIT_PY" scripts/audit_authorship.py candidate-review --source-bundle ../msc-authorship-audit/run-20261119 --candidate-bundle /path/to/sealed-candidate --candidate-revision CONVERSION_SHA --bundle /path/to/new-review
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" "$MSC_AUDIT_PY" -m pytest --full -q -p no:cacheprovider
 # On the original read-only audit branch this exposes 12 failures and 2 passes.
 # On the repaired branch all original reproductions and added boundaries pass.

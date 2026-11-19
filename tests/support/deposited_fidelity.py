@@ -120,13 +120,16 @@ def without_added_protocol_placeholders(source_idf, exported_idf):
             continue
         assert values <= additions  # Never hide a deposited application.
         assert i + 1 == len(header) or header[i + 1] in NODE_HEADERS or header[i + 1].startswith('Factor Value[')
-        before = next((h for h in reversed(header[:i]) if h in NODE_HEADERS), None)
-        after = next((h for h in header[i + 1:] if h in NODE_HEADERS), None)
-        for value in values:
+        for row in table[1:]:
+            value = row[i]
+            if not value:
+                continue
+            before = next((h for h, v in zip(reversed(header[:i]), reversed(row[:i])) if h in NODE_HEADERS and v), None)
+            after = next((h for h, v in zip(header[i + 1:], row[i + 1:]) if h in NODE_HEADERS and v), None)
             if kinds[value] == 'sample collection protocol':
-                assert before in {'Source Name', 'Sample Name'}
+                assert before in {'Source Name', 'Sample Name'}, 'Collection must follow an active source/sample node'
             else:
-                assert after in {'Scan Name', 'Array Data File', 'Array Data Matrix File'} or before in {'Assay Name', 'Extract Name'}
+                assert after in {'Scan Name', 'Array Data File', 'Array Data Matrix File'} or before in {'Assay Name', 'Extract Name'}, 'Sequencing must border an active assay/read node'
         removed.add(i)
         referenced.update(values)
     assert referenced == additions

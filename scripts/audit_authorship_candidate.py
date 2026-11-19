@@ -27,6 +27,15 @@ def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def seal_result(root):
+    """Seal only a newly completed result directory; never refresh an existing seal."""
+    manifest = Path(root) / 'SHA256SUMS'
+    files = [p for p in sorted(Path(root).rglob('*')) if p.is_file()]
+    with manifest.open('x') as stream:
+        for path in files:
+            stream.write(sha256(path) + '  ' + str(path.relative_to(root)) + '\n')
+
+
 def verify_seal(root):
     """Check every declared byte and reject paths escaping the sealed root."""
     root = Path(root).resolve()
@@ -69,6 +78,41 @@ def candidate_preflight(source, output, expected_revision):
         'settings': 'Frozen request manifests; candidate JSON generated before JSON-to-MAGE-TAB; legacy JSON exported separately.'}
 
 
+def legacy_idf_comparison(previous, current, case, mode):
+    """Keep every old field, with the one independently verified contact join explicit."""
+    rows = idf_comparison(previous, current, documented=True)
+    if (case, mode) != ('sra-SRP045534', 'standard'):
+        return rows
+    def matched(document):
+        fields = [r for r in document if r[0].startswith('Person ')]
+        people = [dict(zip([r[0] for r in fields], values)) for values in zip(*(r[1:] for r in fields))]
+        return [p for p in people if p.get('Person Email') == 'smyth@wehi.edu.au']
+    old, new = matched(previous), matched(current)
+    full = 'Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, 3052, Australia'
+    short = 'Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, Australia'
+    if len(old) != 2 or len(new) != 1 or [p.get('Person Address') for p in old] != [full, short]:
+        return rows
+    if old[0].get('Person Affiliation') != 'Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research' \
+            or old[1].get('Person Affiliation') != 'Bioinformatics, Walter and Eliza Hall Institute of Medical Research':
+        return rows
+    expected = {k: v or old[1].get(k) for k, v in old[0].items()}
+    if new[0] != expected:
+        return rows  # Never excuse missing roles, identifiers or other contact facts.
+    identity = ['Gordon', 'K', 'Smyth', 'smyth@wehi.edu.au']
+    for row in rows:
+        scope, bound, occurrence = row['identity']
+        if scope != 'contact' or json.loads(bound) != identity:
+            continue
+        field = row['field']
+        if occurrence == 2 and row['generated'] is None and row['source'] == old[1].get(field):
+            row.update(classification=EQUIVALENT, generated=expected.get(field), generated_identity=[scope, bound, 1],
+                reason='Verified GEO/AE shared-email contact consolidation: exact fuller source address/affiliation and every supplied remaining field retained on the surviving contact.')
+        elif occurrence == 1 and row['source'] is None and row['generated'] == old[1].get(field):
+            row.update(classification=EQUIVALENT,
+                reason='Supplied field completed from the second email-matched contact; original contributors retained in JSON.')
+    return rows
+
+
 def legacy_exports(source, root):
     """Compare older JSON exports to their frozen outputs, retaining every difference.
 
@@ -93,7 +137,7 @@ def legacy_exports(source, root):
             assert sha256(saved) == before == sha256(original / 'saved-0.json')
             previous = read(original / 'saved-0-magetab/payload-0.json')[0]
             current = read(dest / 'legacy-saved-0-magetab/payload-0.json')[0]
-            differences = idf_comparison(previous, current, documented=True)
+            differences = legacy_idf_comparison(previous, current, name, mode)
             old_sdrf = next(r[1] for r in previous if r[0] == 'SDRF File')
             try:
                 new_sdrf = without_added_protocol_placeholders(previous, current)
@@ -188,9 +232,52 @@ def validate(summary, legacy, frozen):
             for c in summary['cases'] for m in c['modes'].values()),
         '27_older_json_exports': len(legacy) == 27 and all(r['input_unchanged'] and r['result']['items'][0]['execution'] == 'succeeded'
             and r['result']['items'][0]['validation'] == 'valid' for r in legacy),
+        '27_older_json_metadata_preserved': len(legacy) == 27 and all(r['sdrf']['verdict'] == 'preserved'
+            and not any(f['classification'] == LOSS for f in r['idf']) for r in legacy),
         'frozen_unicode': all(v['author_identity_order_unicode'] is True for k, v in frozen['modes'].items() if k != 'off'),
     }
     return checks
+
+
+def review(source, candidate, output, expected_revision):
+    """Reassess sealed outputs without reconversion; record the analysis revision separately."""
+    source, candidate, output = (Path(p).resolve() for p in (source, candidate, output))
+    if any(output == p or output.is_relative_to(p) or p.is_relative_to(output) for p in (source, candidate)):
+        raise ValueError('Review output must be separate from both sealed evidence bundles')
+    if output.exists():
+        raise FileExistsError('Use a fresh review directory')
+    environment = read(candidate / 'candidate-environment.json')
+    expected = subprocess.check_output(['git', 'rev-parse', '--verify', expected_revision + '^{commit}'], cwd=REPO, text=True).strip()
+    if expected != environment['tested_revision']:
+        raise ValueError('Review revision does not match the recorded conversion revision')
+    if subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], cwd=REPO, text=True):
+        raise ValueError('Commit the analysis code before reviewing sealed outputs')
+    record = {'conversion_revision': expected,
+        'analysis_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip(),
+        'source_bundle': str(source), 'candidate_bundle': str(candidate),
+        'source_seal': verify_seal(source), 'candidate_seal': verify_seal(candidate),
+        'reviewed_at': utc(), 'conversion_rerun': False, 'results': []}
+    assert record['source_seal'] == environment['source_seal_before'], 'Review must use the exact original acquisition bundle'
+    for saved in read(candidate / 'legacy-results.json'):
+        name, mode = saved['case'], saved['mode']
+        relative = Path('cases') / name / mode
+        previous_path = source / relative / 'saved-0-magetab/payload-0.json'
+        current_path = candidate / relative / 'legacy-saved-0-magetab/payload-0.json'
+        previous, current = read(previous_path)[0], read(current_path)[0]
+        original_sdrf = next(r[1] for r in previous if r[0] == 'SDRF File')
+        reference = next(ref or accession for provider, accession, ref in CASES if provider + '-' + accession == name)
+        sdrf = assert_deposited_sdrf(original_sdrf, without_added_protocol_placeholders(previous, current), accession=reference)
+        fields = legacy_idf_comparison(previous, current, name, mode)
+        assert not any(r['classification'] == LOSS for r in fields), (name, mode)
+        record['results'].append({'case': name, 'mode': mode, 'input_unchanged': saved['input_unchanged'],
+            'baseline_output_sha256': sha256(previous_path), 'candidate_output_sha256': sha256(current_path),
+            'sdrf': {'verdict': 'preserved', **sdrf}, 'idf': fields})
+    assert len(record['results']) == 27
+    assert verify_seal(source) == record['source_seal'] and verify_seal(candidate) == record['candidate_seal']
+    output.mkdir(parents=True)
+    write_json(output / 'legacy-metadata-review.json', record)
+    seal_result(output)
+    return record
 
 
 def write_report(root, summary, environment, checks, legacy):
@@ -259,5 +346,6 @@ def run(source, output, expected_revision):
     write_json(root / 'candidate-environment.json', environment)
     write_json(root / 'candidate-checks.json', checks)
     write_report(root, summary, environment, checks, legacy)
+    seal_result(root)
     if not all(checks.values()):
         raise AssertionError('Candidate validation failed: ' + ', '.join(k for k, v in checks.items() if not v))

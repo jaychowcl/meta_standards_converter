@@ -260,19 +260,27 @@ def frozen_unicode(root, *, sealed=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['capture', 'replay', 'deposited', 'frozen', 'report', 'candidate'])
+    parser.add_argument('action', choices=['capture', 'replay', 'deposited', 'frozen', 'report', 'candidate', 'candidate-review'])
     parser.add_argument('--bundle', type=Path, required=True)
     parser.add_argument('--source-bundle', type=Path, help='Sealed baseline input; required for candidate')
-    parser.add_argument('--candidate-revision', help='Expected committed HEAD; required for candidate')
+    parser.add_argument('--candidate-revision', help='Expected conversion revision; must equal HEAD for a new candidate run')
+    parser.add_argument('--candidate-bundle', type=Path, help='Sealed conversion outputs for analysis-only candidate-review')
     parser.add_argument('--case', action='append', help='provider-accession; omit for the declared cohort')
     args = parser.parse_args()
-    if args.action == 'candidate':
+    if args.action in {'candidate', 'candidate-review'}:
         if not args.source_bundle or not args.candidate_revision or args.case:
             parser.error('candidate requires --source-bundle and --candidate-revision and always replays the full cohort')
-        from scripts.audit_authorship_candidate import run
-        run(args.source_bundle, args.bundle, args.candidate_revision)
+        from scripts.audit_authorship_candidate import run, review
+        if args.action == 'candidate-review':
+            if not args.candidate_bundle:
+                parser.error('candidate-review requires --candidate-bundle')
+            review(args.source_bundle, args.candidate_bundle, args.bundle, args.candidate_revision)
+        else:
+            if args.candidate_bundle:
+                parser.error('--candidate-bundle is only valid for candidate-review')
+            run(args.source_bundle, args.bundle, args.candidate_revision)
         return
-    if args.source_bundle or args.candidate_revision:
+    if args.source_bundle or args.candidate_revision or args.candidate_bundle:
         parser.error('candidate options are not allowed for baseline actions')
     # A test-only audit commit may advance HEAD; production source must still
     # match the declared baseline before any evidence can be labelled with it.
