@@ -6,7 +6,7 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-"""Source-derived unresolved audit defects; production fixes are out of scope."""
+"""Source-derived regressions for blank characteristic annotation ownership."""
 import csv
 import json
 from pathlib import Path
@@ -46,7 +46,6 @@ def cell(rows, field, source_name):
     return row[column]
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC-EXTRA-001: populated comments on a blank characteristic are dropped during MAGE-TAB export')
 @pytest.mark.parametrize('route', ['direct', 'via-json'])
 @pytest.mark.parametrize('field', FIELDS)
 def test_blank_characteristic_does_not_drop_supplied_channel_comments(tmp_path, route, field):
@@ -62,3 +61,19 @@ def test_populated_characteristic_retains_the_same_comment_qualifiers(tmp_path, 
     source, actual = convert(tmp_path, route, populated=True)
     name = source[1][source[0].index('Source Name')]
     for field in FIELDS: assert cell(actual, field, name) == cell(source, field, name)
+
+
+def test_blank_owner_keeps_qualifiers_and_does_not_steal_adjacent_comments():
+    from tests.support.magetab import parse, render, import_tables
+    package = parse(
+        ['Source Name', 'Characteristics[site]', 'Term Source REF', 'Term Accession Number',
+         'Comment[note]', 'Characteristics[site]', 'Comment[note]', 'Assay Name'],
+        [['S1', '', 'EFO', 'EFO:1', 'blank owner', 'lung', 'populated owner', 'A1']])
+    for value in (package, import_tables(render(package))[0]):
+        node = value.to_mapping()['series']['assay_paths'][0]['steps'][0]
+        attributes = [c for c in node['characteristics'] if c['name'] == 'site']
+        assert len(attributes) == 2
+        assert attributes[0]['value'] == ''
+        assert attributes[0]['term_accession_number'] == 'EFO:1'
+        assert attributes[0]['comments'] == [{'name': 'note', 'value': 'blank owner'}]
+        assert attributes[1]['comments'] == [{'name': 'note', 'value': 'populated owner'}]

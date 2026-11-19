@@ -277,7 +277,8 @@ class MINiMLV1Migrator:
             "array data matrix file": "array_data_matrix_file",
             "derived array data matrix file": "derived_array_data_matrix_file", "image file": "image_file",
         }
-        for step in values if isinstance(values, list) else []:
+        entries = values if isinstance(values, list) else []
+        for position, step in enumerate(entries):
             if not isinstance(step, Mapping):
                 continue
             kind = step.get("kind")
@@ -322,7 +323,22 @@ class MINiMLV1Migrator:
                 continue
             ontology_field = kind == 'field' and str(step.get('header','')).casefold() in {
                 'material type', 'technology type', 'label'}
-            if not has_cell_value(step.get('value')) and kind != 'harmonized' and not ontology_field:
+            # A blank attribute can still own populated qualifiers/comments.
+            # Keep that exact occurrence, rather than dropping its ownership or
+            # moving its annotations onto the previous populated attribute.
+            owns_annotations = kind == 'attribute' and any(has_cell_value(step.get(key)) for key in (
+                'unit', 'term_source_ref', 'term_accession_number',
+                'unit_term_source_ref', 'unit_term_accession_number',
+            ))
+            if kind == 'attribute' and not owns_annotations and not has_cell_value(step.get('value')):
+                for index in range(position + 1, len(entries)):
+                    following = entries[index]
+                    if not isinstance(following, Mapping) or following.get('kind') not in {'comment', 'harmonized'}:
+                        break
+                    if has_cell_value(following.get('value')) or following.get('harmonized'):
+                        owns_annotations = True
+                        break
+            if not has_cell_value(step.get('value')) and kind != 'harmonized' and not ontology_field and not owns_annotations:
                 if kind == 'attribute':
                     last_named = last_ontology = None
                     comment_owner = comment_unit_column = comment_unit = None
