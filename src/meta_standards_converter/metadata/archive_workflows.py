@@ -195,7 +195,8 @@ def _file_projection_facts(node):
         if key == 'md5':
             facts.setdefault('checksum method', set()).add('md5')
             key = 'checksum'
-        text = str(value)
+        from .file_resolution import field_value
+        text = str(field_value(key.replace(' ', '_').upper() if key != 'type' else 'FORMAT', value))
         if key == 'checksum method':
             text = text.lower()
         facts.setdefault(key, set()).add(text)

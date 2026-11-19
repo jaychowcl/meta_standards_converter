@@ -365,8 +365,8 @@ class TestSDRFGraphHandlers(unittest.TestCase):
             "channel": [{"source": "source 1", "extract_protocol": "extract"}],
             "supplementary_data": [
                 {"value": "raw.CEL"},
-                {"value": "counts.tsv.gz"},
-                {"value": "archive.zip"},
+                {"value": "counts.tsv.gz", "role": "processed"},
+                {"value": "archive.zip", "role": "processed"},
             ],
         }
 
@@ -453,7 +453,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
             "library_source": "transcriptomic",
             "library_selection": "cDNA",
             "supplementary_data": [
-                {"value": "counts1.tsv.gz"},
+                {"value": "counts1.tsv.gz", "role": "processed"},
                 {"value": "counts2.mtx.gz"},
                 {"value": "other.h5ad"},
             ],
@@ -537,7 +537,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
             "library_source": "transcriptomic",
             "library_selection": "cDNA",
             "supplementary_data": [
-                {"value": "counts1.tsv.gz"},
+                {"value": "counts1.tsv.gz", "role": "processed"},
                 {"value": "counts2.mtx.gz"},
             ],
         }
@@ -646,7 +646,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
             "channel": [{"source": "source 1", "extract_protocol": "extract"}],
             "library_strategy": "RNA-Seq",
             "raw_data": [{"value": "ftp://example/read1.fastq.gz"}],
-            "supplementary_data": [{"value": "counts.tsv.gz"}],
+            "supplementary_data": [{"value": "counts.tsv.gz", "role": "processed"}],
         }
 
         for tech_type in (
@@ -733,7 +733,7 @@ class TestSDRFGraphHandlers(unittest.TestCase):
             "iid": "GSM1",
             "channel": [{"source": "source", "extract_protocol": "extract"}],
             "library_strategy": "RNA-Seq",
-            "supplementary_data": [{"value": "counts.h5ad"}, {"value": "matrix.tsv"}],
+            "supplementary_data": [{"value": "counts.h5ad"}, {"value": "matrix.tsv", "role": "processed"}],
         }
 
         sdrf = Parent()._miniml2sdrf(base_data(sample))

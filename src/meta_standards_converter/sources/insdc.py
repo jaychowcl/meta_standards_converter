@@ -123,6 +123,14 @@ class INSDCWebfetcher():
             for run in package.findall(".//RUN_SET/RUN"):
                 run_accession = self._element_accession(node=run)
                 fastq_files = ena_fastqs_by_run.get(run_accession) or self._parse_sra_fastqs(run=run)
+                from ..miniml.insdc_support import files_from_sra
+                from ..metadata.file_resolution import origin, ena_read_role
+                files = files_from_sra(run)
+                originals = {(f.get('filename'), f.get('md5'), f.get('bytes')): f
+                             for f in files if origin(f) == 'submitted' and f.get('filename')}
+                sole_original = next(iter(originals.values())) if len(originals) == 1 else {}
+                for file in fastq_files:
+                    file.update(ena_read_role(file, run_accession, library.get('library_layout')))
                 records.append({
                     **sample_ids,
                     **library,
@@ -132,8 +140,9 @@ class INSDCWebfetcher():
                     "scan_name": run.get("alias") or run_accession,
                     "instrument_model": instrument_model,
                     "fastq_files": fastq_files,
-                    "submitted_file_name": fastq_files[0].get("filename") if fastq_files else None,
-                    "md5": fastq_files[0].get("md5") if fastq_files else None,
+                    "files": files,
+                    "submitted_file_name": sole_original.get('filename'),
+                    "md5": sole_original.get('md5'),
                     "read_lengths": [
                         read.get("average")
                         for read in run.findall("./Statistics/Read")
@@ -200,6 +209,8 @@ class INSDCWebfetcher():
         for index, uri in enumerate(uris):
             normalized_uri = self._normalize_ena_ftp_uri(uri)
             fastqs.append({
+                "role": "GENERATED_FILE",
+                "format": "fastq",
                 "filename": self._filename_from_uri(normalized_uri),
                 "uri": normalized_uri,
                 "md5": md5s[index] if index < len(md5s) else None,
@@ -258,6 +269,8 @@ class INSDCWebfetcher():
             if not uri and alternative is not None:
                 uri = alternative.get("url")
             fastqs.append({
+                "role": sra_file.get('supertype', ''),
+                "format": "fastq",
                 "filename": filename,
                 "uri": self._clean_sdrf_text(uri),
                 "md5": self._clean_sdrf_text(sra_file.get("md5")),

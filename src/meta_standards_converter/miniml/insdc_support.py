@@ -155,6 +155,7 @@ def library(experiment):
 
 
 def files_from_ena(row):
+    from ..metadata.file_resolution import structural_uri, ena_read_role
     files = []
     for family in ('fastq', 'submitted', 'sra', 'bam'):
         columns = {key: str(row.get(family + '_' + key) or '').split(';')
@@ -163,19 +164,22 @@ def files_from_ena(row):
             continue
         for i in range(max(map(len, columns.values()))):
             value = lambda key: columns[key][i] if i < len(columns[key]) else ''
-            path = value('ftp')
+            path = structural_uri(value('ftp'))
             # Portal FTP locations are paths: a literal # is not a URI fragment.
             uri = (path if '://' in path else 'ftp://' + path) if path else None
             if uri:
                 scheme, location = uri.split('://', 1)
                 host, separator, file_path = location.partition('/')
                 uri = scheme + '://' + host + separator + quote(unquote(file_path), safe='/')
-            item = {'uri': uri, 'format': value('format') or family, 'role': value('file_role')}
+            item = {'uri': uri, 'format': value('format') or family,
+                    'role': value('file_role') or ('GENERATED_FILE' if family == 'fastq' else 'SUBMISSION_FILE' if family == 'submitted' else '')}
             if uri:
                 item['filename'] = PurePosixPath(unquote(urlsplit(uri).path)).name
             for key in ('md5', 'bytes', 'aspera', 'galaxy'):
                 if value(key):
                     item[key] = value(key)
+            if family == 'fastq':
+                item.update(ena_read_role(dict(item, role='GENERATED_FILE'), row.get('run_accession'), row.get('library_layout')))
             files.append(item)
     return files
 

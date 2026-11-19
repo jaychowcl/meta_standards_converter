@@ -68,7 +68,8 @@ def _record(step):
     if set(link) - interpreted:
         result['_link'] = {k: v for k, v in link.items() if k not in interpreted}
     from ..miniml.insdc_support import _filename_uri
-    result['URI'] = _filename_uri(result.get('URI', ''), result.get('NAME'))
+    from ..metadata.file_resolution import structural_uri
+    result['URI'] = structural_uri(_filename_uri(result.get('URI', ''), result.get('NAME')))
     return result
 
 
@@ -92,64 +93,14 @@ def file_metadata_columns(step):
 
 
 def _checksums(record):
-    if any(str(c.get('name', '')).upper() in {'MD5','CHECKSUM','CHECKSUM_METHOD'} for c in record.get('_extra', [])):
-        return {}
-    values = {}
-    pairs = [('MD5', record.get('MD5'))]
-    if record.get('CHECKSUM'):
-        pairs.append((record.get('CHECKSUM_METHOD', ''), record['CHECKSUM']))
-    for algorithm, value in pairs:
-        if not value:
-            continue
-        algorithm = str(algorithm).upper().replace('-', '')
-        length = {'MD5': 32, 'SHA1': 40, 'SHA256': 64, 'SHA512': 128}.get(algorithm)
-        if not length or not re.fullmatch(r'[0-9a-fA-F]{%d}' % length, str(value)):
-            return {}
-        value = str(value).lower()
-        if algorithm in values and values[algorithm] != value:
-            return {}
-        values[algorithm] = value
-    return values
+    from ..metadata.file_resolution import checksums
+    return checksums(record)
 
 
 def _combine(records, candidate, *, preserve_primary=False):
-    """Complete explicit identities or checksum-verified, compatible mirrors."""
-    for record in records:
-        locations = {r.get('URI') for r in [record, *record.get('_alternatives', [])]} - {None, ''}
-        identity = bool(candidate.get('URI') and candidate['URI'] in locations)
-        same_repository = not (candidate.get('_repository') and record.get('_repository')
-                               and candidate['_repository'] != record['_repository'])
-        identity = identity or (same_repository and candidate.get('NAME') and candidate.get('NAME') == record.get('NAME')
-                                and (not candidate.get('URI') or not record.get('URI')))
-        left, right = _checksums(record), _checksums(candidate)
-        common = left.keys() & right.keys()
-        mirror = (_fastq(record) and _fastq(candidate) and bool(common) and all(left[k] == right[k] for k in common)
-                  and candidate.get('NAME') and candidate['NAME'] == record.get('NAME'))
-        ignored = {'URI', '_alternatives', '_repository', '_source'}
-        if mirror:
-            ignored |= {'MD5', 'CHECKSUM', 'CHECKSUM_METHOD'}
-        compatible = all(k in ignored or not record.get(k) or not v or record[k] == v
-                         for k, v in candidate.items())
-        if (identity or mirror) and compatible:
-            from .native_file_selection import _set
-            if not preserve_primary and _set(candidate) < _set(record) and candidate.get('URI'):
-                previous = deepcopy(record)
-                record.clear()
-                record.update(deepcopy(candidate))
-                for k, v in previous.items():
-                    if k != '_alternatives' and v and not record.get(k): record[k] = v
-                alternatives = previous.pop('_alternatives', [])
-                if previous.get('URI') != record.get('URI'):
-                    alternatives.insert(0, previous)
-                if alternatives:
-                    record.setdefault('_alternatives', []).extend(alternatives)
-                return
-            if candidate.get('URI') and locations and candidate['URI'] not in locations:
-                record.setdefault('_alternatives', []).append(deepcopy(candidate))
-            record.update({k: v for k, v in candidate.items()
-                           if k != '_alternatives' and v and not record.get(k)})
-            return
-    records.append(deepcopy(candidate))
+    from ..metadata.file_resolution import combine
+    from .native_file_selection import _set
+    return combine(records, candidate, preserve_primary=preserve_primary, rank=_set)
 
 
 def _fastq(record):

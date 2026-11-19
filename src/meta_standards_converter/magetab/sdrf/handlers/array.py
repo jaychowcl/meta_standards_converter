@@ -95,11 +95,13 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
 
     def array_file_nodes(self, sample: dict) -> list[SDRFNode]:
         nodes = []
-        files = self.supplementary_files(sample=sample)
+        files = self.supplementary_records(sample=sample)
         raw_count = 0
         derived_count = 0
-        for data_file in files:
-            file_class = classify_file(data_file)
+        from ....metadata.file_resolution import structural_uri
+        for record in files:
+            data_file = structural_uri(record['value'])
+            file_class = classify_file(record)
             if file_class == "array_raw":
                 raw_count += 1
                 kind = "Image File" if normalized_extension(data_file) in {".tif", ".tiff"} else "Array Data File"
@@ -109,9 +111,8 @@ class _ArraySDRFHandler(_BaseSDRFHandler):
                 nodes.append(self.file_node(kind="Derived Array Data Matrix File", value=data_file))
             elif file_class == "sequencing_raw":
                 nodes.append(self.file_node(kind="Array Data File", value=data_file))
-            else:
-                derived_count += 1
-                nodes.append(self.file_node(kind="Derived Array Data File", value=data_file))
+            # Unknown roles are retained as owned source comments, not asserted
+            # to be derived files and then silently excluded from the export.
 
         if raw_count > 1:
             self.audit.warnings.append(f"Sample {self.sample_accession(sample=sample)} has {raw_count} raw files; emitted {raw_count} array raw file columns.")

@@ -47,11 +47,21 @@ def prepare_export_files(data):
     """
     from .sdrf.handlers.base import classify_file
     series = data.get('series', {})
-    for entity in [series, *data.get('sample', []), *data.get('platform', [])]:
+    from ..metadata.file_resolution import structural_uri
+    samples = data.get('sample', [])
+    sample_objects = {id(sample) for sample in samples}
+    for entity in [series, *samples, *data.get('platform', [])]:
         if 'supplementary_data' in entity:
             entity['supplementary_data'] = [link for link in entity['supplementary_data']
                 if link.get('type') != 'assembly report'
-                and classify_file(link.get('value', '')) in {'sequencing_raw', 'array_raw'}]
+                and classify_file(link) != 'matrix_or_derived']
+        if id(entity) not in sample_objects:
+            for link in entity.get('supplementary_data', []):
+                if classify_file(link) == 'supplementary':
+                    comment = {'name': 'Unclassified File' + (f" [{entity['iid']}]" if entity is not series and entity.get('iid') else ''),
+                               'value': structural_uri(link.get('value'))}
+                    if comment not in series.setdefault('comments', []):
+                        series['comments'].append(comment)
     # Native projection may represent source-only results as file comment
     # bundles. Strip those alongside nodes, without changing row occurrences.
     for path in series.get('assay_paths', []):

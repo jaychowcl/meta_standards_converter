@@ -18,13 +18,8 @@ from meta_standards_converter.helpers.json_helper import JSONHandler
 
 
 def normalized_extension(path: str) -> str:
-    parsed = urlparse(str(path))
-    basename = os.path.basename(parsed.path or str(path)).lower()
-    for suffix in (".gz", ".zip", ".bz2", ".xz"):
-        if basename.endswith(suffix):
-            basename = basename[: -len(suffix)]
-            break
-    return os.path.splitext(basename)[1]
+    from ..metadata.file_resolution import extension
+    return extension(path)
 
 def has_array_files(data: dict) -> bool:
     handler = JSONHandler()

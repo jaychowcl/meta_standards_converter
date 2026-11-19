@@ -135,6 +135,19 @@ class _SequencingSDRFHandler(_BaseSDRFHandler):
             value = self.clean(value)
             if value:
                 attrs.append(SDRFAttr(label=label, value=value))
+        from ....metadata.file_resolution import origin, structural_uri
+        originals = set()
+        for file in (run or {}).get('files', []):
+            if origin(file) != 'submitted' or not file.get('filename'):
+                continue
+            identity = tuple(file.get(k) for k in ('filename', 'md5', 'bytes', 'format'))
+            if identity in originals or file['filename'] == (run or {}).get('submitted_file_name'):
+                continue
+            originals.add(identity)
+            for field, label in (('filename', 'NAME'), ('md5', 'MD5'), ('bytes', 'BYTES'), ('format', 'FORMAT'), ('uri', 'URI')):
+                if file.get(field):
+                    attrs.append(SDRFAttr(f'Comment[SUBMITTED_FILE_{label}]',
+                        structural_uri(file[field]) if field == 'uri' else str(file[field])))
         attrs.extend(self.extra_assay_attrs(sample=sample, run=run))
         # Legacy greedy SRA run fallback:
         # attrs.extend(_SRAFallbackComments(self).sra_assay_fallback_attrs(sample=sample, run=run))
@@ -240,7 +253,11 @@ class _BulkSequencingSDRFHandler(_SequencingSDRFHandler):
     def bulk_fastq_files(self, sample: dict, run: dict | None) -> list:
         fastqs = run.get("fastq_files", []) if run else []
         if fastqs:
-            return fastqs
+            from ....metadata.file_resolution import download_assets
+            assets = download_assets(fastqs)
+            covered = {index for asset in assets for index in asset.occurrences}
+            selected = {asset.occurrences[0] for asset in assets} | (set(range(len(fastqs))) - covered)
+            return [f for i, f in enumerate(fastqs) if i in selected]
 
         return [
             {
@@ -265,11 +282,14 @@ class _BulkSequencingSDRFHandler(_SequencingSDRFHandler):
         attrs = []
         if fastq:
             fastq_uri = self.clean(fastq.get("uri") or fastq.get("filename"))
-            md5 = self.clean(fastq.get("md5") or (run.get("md5") if run else None))
+            md5 = self.clean(fastq.get("md5"))
             if fastq_uri:
                 attrs.append(SDRFAttr(label="Comment[FASTQ_URI]", value=fastq_uri))
             if md5:
                 attrs.append(SDRFAttr(label="Comment[MD5]", value=md5))
+            for field, label in (('bytes', 'FASTQ_BYTES'), ('read_role', 'READ_ROLE'), ('read_index', 'READ_INDEX')):
+                if fastq.get(field):
+                    attrs.append(SDRFAttr(f'Comment[{label}]', str(fastq[field])))
 
         for data_file in self.derived_files(sample=sample):
             attrs.append(SDRFAttr(label="Derived Array Data File", value=data_file))

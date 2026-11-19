@@ -41,7 +41,6 @@ def test_two_channel_materials_have_distinct_identities(column):
     assert len({r[sdrf[0].index('Assay Name')] for r in sdrf[1:]}) == 1
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC integrity: whitespace-bearing CEL link omitted')
 def test_whitespace_bearing_cel_link_is_exported_as_raw_array_file():
     package = geo('GSE31356')
     source = ET.fromstring(SOURCE['geo']['GSE31356']).find('Sample/Supplementary-Data')
@@ -66,7 +65,6 @@ def test_geo_growth_precedes_drug_exposure_without_reordering_authored_paths():
     assert ordered.index(' '.join(growth.split())) < ordered.index(' '.join(treatment.split()))
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC integrity: generated file called submitted')
 def test_generated_fastq_is_not_presented_as_submitted_file(monkeypatch):
     fetcher = INSDCWebfetcher()
     source = ET.fromstring(SOURCE['sra'])
@@ -80,7 +78,6 @@ def test_generated_fastq_is_not_presented_as_submitted_file(monkeypatch):
     assert record['fastq_files'][0]['filename'] not in originals
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason='MSC integrity: format case blocks checksum completion')
 def test_equivalent_file_formats_complete_primary_checksum_and_size():
     from meta_standards_converter.magetab.native_files import _combine
     source = SOURCE['fastq']

@@ -19,14 +19,8 @@ from meta_standards_converter.magetab.sdrf.model import SDRFPath
 from meta_standards_converter.magetab.sdrf.model import SDRFAudit
 
 def classify_file(path: str) -> str:
-    ext = normalized_extension(path)
-    if ext in {".fastq", ".fq", ".bam", ".sam", ".cram"}:
-        return "sequencing_raw"
-    if ext in {".cel", ".gpr", ".idat", ".exp", ".rpt", ".cab", ".tif", ".tiff"}:
-        return "array_raw"
-    if ext in {".txt", ".tsv", ".csv", ".mtx", ".h5", ".h5ad"}:
-        return "matrix_or_derived"
-    return "supplementary"
+    from ....metadata.file_resolution import classify
+    return classify(path)
 
 
 class _BaseSDRFHandler(SDRFRenderer):
@@ -154,6 +148,14 @@ class _BaseSDRFHandler(SDRFRenderer):
 
     def sample_comment_attrs(self, sample: dict, channel: dict) -> list[SDRFAttr]:
         attrs = []
+        from ....metadata.file_resolution import structural_uri
+        for field in ('raw_data', 'supplementary_data'):
+            for link in sample.get(field, []) or []:
+                if isinstance(link, dict) and link.get('value') and classify_file(link) == 'supplementary':
+                    attrs.append(SDRFAttr('Comment[Unclassified File]', structural_uri(link['value'])))
+                    message = f"Sample {self.sample_accession(sample)} file role unresolved: {structural_uri(link['value'])}"
+                    if message not in self.audit.warnings:
+                        self.audit.warnings.append(message)
         for label, value in (
             ("Comment[Sample_description]", sample.get("description")),
             ("Comment[Sample_source_name]", channel.get("source")),
@@ -389,45 +391,29 @@ class _BaseSDRFHandler(SDRFRenderer):
             return self.clean(instrument_model.get("predefined") or instrument_model.get("other"))
         return self.clean(instrument_model)
 
-    def supplementary_files(self, sample: dict) -> list:
-        files = []
-        for key in ("supplementary_data", "raw_data"):
-            files.extend(
-                data_file.get("value")
-                for data_file in sample.get(key, []) or []
-                if isinstance(data_file, dict) and data_file.get("value")
-                and not (self.data.get('source', {}).get('format') in ('ENA', 'SRA') and data_file.get('type') == 'assembly report')
-            )
+    def supplementary_records(self, sample: dict) -> list:
+        records = []
+        for entity, keys in [(sample, ('supplementary_data', 'raw_data')),
+                             (self.platform(sample=sample), ('supplementary_data',)),
+                             *[(series, ('supplementary_data',)) for series in self._as_list(self.data.get('series')) if isinstance(series, dict)]]:
+            for key in keys:
+                records.extend(item for item in entity.get(key, []) or []
+                               if isinstance(item, dict) and item.get('value') and item.get('type') != 'assembly report')
+        return records
 
-        platform = self.platform(sample=sample)
-        files.extend(
-            data_file.get("value")
-            for data_file in platform.get("supplementary_data", []) or []
-            if isinstance(data_file, dict) and data_file.get("value")
-        )
-        for series in self._as_list(self.data.get("series")):
-            if not isinstance(series, dict):
-                continue
-            files.extend(
-                data_file.get("value")
-                for data_file in series.get("supplementary_data", []) or []
-                if isinstance(data_file, dict) and data_file.get("value")
-            )
-        return [self.clean(x) for x in files if self.clean(x)]
+    def supplementary_files(self, sample: dict) -> list:
+        from ....metadata.file_resolution import structural_uri
+        return [structural_uri(item['value']) for item in self.supplementary_records(sample)]
 
     def raw_files(self, sample: dict) -> list:
-        return [
-            data_file
-            for data_file in self.supplementary_files(sample=sample)
-            if classify_file(data_file) in {"sequencing_raw", "array_raw"}
-        ]
+        from ....metadata.file_resolution import structural_uri
+        return [structural_uri(item['value']) for item in self.supplementary_records(sample)
+                if classify_file(item) in {'sequencing_raw', 'array_raw'}]
 
     def derived_files(self, sample: dict) -> list:
-        return [
-            data_file
-            for data_file in self.supplementary_files(sample=sample)
-            if classify_file(data_file) not in {"sequencing_raw", "array_raw"}
-        ]
+        from ....metadata.file_resolution import structural_uri
+        return [structural_uri(item['value']) for item in self.supplementary_records(sample)
+                if classify_file(item) == 'matrix_or_derived']
 
     def arrayexpress_ftp(self, value):
         value = self.clean(value)
