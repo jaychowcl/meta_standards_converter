@@ -4864,8 +4864,8 @@ retain their existing scientific contracts.
 | Console | Behavior |
 | --- | --- |
 | default | Automatic interactive progress; one compact summary per input, then command totals |
-| `-v` | INFO stage progress, statistics and every diagnostic group |
-| `-vv` | DEBUG decisions, requests and nested stage detail |
+| `-v` | INFO progress/statistics and every diagnostic group; curation counts and up to three example locations |
+| `-vv` | DEBUG decisions, requests, nested stage detail and every curation location |
 | `--quiet` | ERROR only; no progress or human summary; machine-readable output remains |
 
 `--log-file run.log` captures DEBUG independently of console verbosity. Use
@@ -4881,6 +4881,10 @@ combine only when code, provider, operation, stage, location and message agree.
 Default summaries retain the five most important groups (errors first), count
 additional groups, and show usable output paths and recovery actions. `-v` shows
 all groups; file events and structured reports retain individual occurrences.
+Curation advisories use study/field/reason grouping instead of cause grouping;
+counts distinguish affected entities from multiple locations on one entity.
+They are suppressed on the ordinary console and under `--quiet`, while requested
+logs and result reports retain them. See [curation assessment](#curation-assessment).
 A verified ENA fallback groups the original BioStudies denial and ENA consequence,
 while optional failures from other providers remain separate. The human summary
 states partial output written, failure with retained artifacts, or no output
@@ -4903,7 +4907,8 @@ refresh is capped at four times per second; a 30-second semantic heartbeat repor
 long-running stages without extra network requests. Bars clear around logs and on exit.
 
 DEBUG describes routes, optional absence, skips, retries and cache reuse; INFO describes
-normal lifecycle/statistics; WARNING describes recoverable degradation; ERROR describes
+normal lifecycle/statistics; WARNING describes recoverable degradation or advisory
+curation findings; ERROR describes
 failed requested work. Intentional disabled enrichment is not a warning. Publication
 preflight and committed output remain distinguishable from serialization/staging.
 Counters distinguish samples, archive runs, SDRF rows, expression dimensions, provider
@@ -4916,7 +4921,6 @@ and restores logger state on exit. CLI invocations in the same process serialize
 logging configuration; library conversions retain independent concurrent contexts. `context_callable()` captures operation context for
 worker dispatch. Repeated and concurrent operation tests verify identity isolation;
 progress and file formatting are tested with fake clocks and terminal streams.
-
 
 Internal telemetry helper inventory (converter API signatures are unchanged):
 
@@ -4948,6 +4952,58 @@ Internal telemetry helper inventory (converter API signatures are unchanged):
 | `meta_standards_converter.cli.logging_output.human_summary` | Compact stderr result rendering. |
 | `meta_standards_converter.cli.logging_output.cli_entrypoint` | Release CLI-owned sinks even when argparse, conversion or output fails. |
 
+<a id="curation-assessment"></a>
+### Final metadata curation assessment
+
+`Converter._prepare` validates the prepared packages, then calls
+`meta_standards_converter.metadata.curation.assess_curation` once per package before destination rendering.
+The deterministic, network-free assessment reads a detached canonical mapping;
+it never enriches, changes source values, or creates protocol/file placeholders.
+It applies to all unified routes with canonical metadata, including local JSON
+and MAGE-TAB. No metadata means no metadata assessment.
+
+The explicit [curator checklist](curators-guide.md#curation-warnings) defines field
+coverage and missing/unknown semantics. `series_identity`, `publication_identity`,
+biological aliases, bound protocol evidence, `resolve_technology`, `resolve_chemistry`
+and file classification supply existing domain rules. Explicit native assay
+declarations retain their scope when several assays share a sample. Semantic
+paths carry exact JSON pointers; evidence is never borrowed from another sample
+or run, and unrelated assay types do not acquire sequencing requirements.
+
+`meta_standards_converter.metadata.curation.missing_reason` distinguishes blank,
+unknown and legitimate supplied values without rewriting annotations.
+
+`Diagnostic.curation` optionally contains a frozen
+`meta_standards_converter.converters.unified.contracts.CurationContext` with dataset,
+package ordinal, entity, canonical field and finding reason. `location` and
+`action` keep their existing roles. `Diagnostic.to_dict` adds `curation` only for
+these findings; existing diagnostics retain their wire shape. New `curation_*`
+codes are deliberately outside the engine's partial-completeness codes. The
+scientific payload, output validation and artifact serialization are unchanged.
+
+`MINiMLEnricher.publication_outcomes` and `run_outcomes` retain structured results
+of already requested lookups, including identifier, status and available provider
+correlation. `MetadataPreparation` adds these to package-scoped preparation records
+and preserves existing `source_partial` consequences for failed/empty citation
+retrievals and failed run retrievals. Successful no-match/incomplete responses
+produce advisories. No lookup is requested by the assessment; a field carries
+lookup context only through explicit identifiers. Policy-disabled enrichment is
+distinct from failed retrieval. Provider failures continue to use `ProviderIssue`
+and `SafeErrorEnvelope`; neither retries nor console strings drive classification.
+
+`cli.summaries._Groups` groups advisories by study, canonical field and reason,
+deduplicates the same occurrence, and counts affected entities. `-v` shows all
+groups and the first three locations; `-vv` expands every location. The console
+handler alone suppresses new advisories at default/quiet levels. Python results,
+JSON reports and requested text/JSONL logs retain complete diagnostic evidence
+independently of console verbosity. File-level filters still apply.
+
+Validation lives in `tests/metadata/test_curation.py`,
+`tests/cli/test_curation_warnings.py` and the existing converter/logging/fidelity
+suites: source absence, partial citations, lookup outcomes and shared failures,
+scoped protocol/assay/factor evidence, unknown and legitimate negative values,
+all console levels, full report locations, advisory-only success and payload purity.
+
 <a id="operational-events-v1"></a>
 ## Operational events v1
 
@@ -4977,7 +5033,7 @@ Unexpected exceptions use `conversion_failed` and bounded DEBUG stack locations
 lines, local variables and response bodies are excluded.
 
 `Diagnostic` retains its original arguments and adds optional `action`, `provider`,
-`operation`, `location` and `correlation_id`; absent additions are omitted from
+`operation`, `location`, `correlation_id` and optional [curation context](#curation-assessment); absent additions are omitted from
 reports. `ProviderIssue` and `SafeErrorEnvelope` remain the recovery authority.
 A cause keeps its correlation ID through wrapping and cached retrieval. Provider
 issue records are emitted once at their owning recovery boundary.
@@ -6660,7 +6716,10 @@ Offline execution blocks undeclared DNS, network and subprocess access. Independ
 post-call checks reject fixture misses even when conversion code catches the
 exception and returns valid partial output. Expected scientific conflicts and
 recorded provider failures must have their declared execution, completeness,
-validation and diagnostic causes. Missing evidence is a harness error, not a
+validation and diagnostic causes. Advisory curation findings are retained in the
+complete report but excluded from historical operational-cause comparisons;
+scientific payload and cause goldens remain unchanged. The curation regression
+suite verifies the new checklist separately. Missing evidence is a harness error, not a
 provider outage or successful audit. Unexpected errors produce exit status 2.
 The runner rejects optimized Python, which could disable its acceptance assertions.
 It records every attempted format, including failed comparisons, and observes the

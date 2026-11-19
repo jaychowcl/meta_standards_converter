@@ -131,6 +131,64 @@ Verified related-study expansion is enabled by default, independently of enrichm
 Use `--no-expand-studies` to disable it. The guide's curator audience does not change
 the default `standard` enrichment preset.
 
+<a id="curation-warnings"></a>
+## Finding metadata that needs curation
+
+Use `-v` (or `--verbose`) to review every category of missing metadata after
+enrichment. Each category gives the study, number of affected records, up to three
+example locations and a suggested curator action. Use `-vv` for every location,
+or `--report-json report.json` for the full structured findings:
+
+Add `-v --report-json report.json` to one of the conversion commands above.
+
+For a completely local assessment of supplied metadata, add
+`--enrichment off --no-expand-studies`. Assessment itself never makes a lookup.
+The same checklist runs for JSON, imported MAGE-TAB and other conversion routes
+that have canonical metadata, regardless of output format or verbosity.
+
+For example, a grouped warning for 18 samples looks like:
+
+    WARNING [curation_missing] GSE123: organism part missing in 18 samples.
+      Examples: GSM1 (package 0 /sample/0/channel/0/characteristics); GSM2 (package 0 /sample/1/channel/0/characteristics); GSM3 (package 0 /sample/2/channel/0/characteristics)
+      Action: Supply verified organism part metadata or confirm it is not applicable.
+      Use -vv or --report-json for all affected locations.
+
+| Area | Checklist |
+| --- | --- |
+| Study | Title, description/summary, overall design, experimental type, contributors and contacts. A reference to a person without supplied information does not satisfy the check. |
+| Publications | Citation presence; a usable PMID, DOI or PMCID; title, authors, DOI and status; completeness of supplied status ontology references. An absent citation produces one finding instead of a warning for every citation field. Sample, run and relation citations keep their own scope. |
+| Samples | Title, source, organism, organism part (including the tissue alias), developmental stage, disease, genotype and molecular material; empty declared characteristics and factor values. Explicit sample-scoped factor declarations apply only to those samples. |
+| Protocols | Descriptions and types of declared protocols; applicable collection, extraction, library preparation, sequencing, hybridization, scan and labeling procedures. Processed data also requires a processing description. Descriptions must be bound to the relevant sample or assay. |
+| Assays and runs | Applicable library strategy/source/selection/layout, instrument, array design, run identifiers and raw file references. Explicit MAGE-TAB assay declarations and existing technology/chemistry resolution determine expectations; array assays do not require sequencing library fields. |
+| Lookups | Existing retrieval failures plus successful lookups with no match or incomplete returned metadata. PubMed and run-enrichment outcomes retain provider and requested identifier. A missing field is linked to a lookup only when explicit identity evidence connects them. |
+
+Absent values, `null`, whitespace-only text and empty collections count as
+missing. Explicit values such as `unknown` and `not provided` are reported
+separately as `curation_reported_unknown`. Zero, `false`, `none`, `N/A` and
+`not applicable` remain legitimate supplied values. MSC does not infer a negative
+biological annotation from missing data. Ontology/unit companions are checked
+when a group is supplied; free text does not require ontology annotation.
+
+**Curation findings are advisory.** `curation_*` warnings do not change execution,
+completeness, validation or the exit code. A successful conversion with only these
+findings still exits 0. Existing failed lookups, invalid metadata and conversion
+errors retain their partial/failure behavior and exit codes. Successful lookups
+with no match are distinguishable from failed requests; disabled enrichment is
+recorded as policy, not a failed request. A field can still need curation even
+when a request completed successfully. Scientific JSON, IDF and SDRF content is
+unchanged by the assessment.
+
+The ordinary console and `--quiet` suppress new advisories. Existing warning/error
+visibility is unchanged. `--log-file run.log` or
+`--log-file run.jsonl --log-format jsonl` retains findings independently of console
+verbosity (subject to any explicit file-level filter). Reports and Python
+`result.items[].diagnostics` always retain all findings. Each advisory includes
+`curation.dataset_id`, `package_index`, `entity_type`, `entity_id`, `field` and
+`reason`; `location` is a JSON pointer within the prepared package and `action`
+describes the curator step. For an absent field, the pointer identifies its
+expected field or containing metadata group. Available lookup context is additive.
+`--report-json -` keeps stdout JSON-only; human output stays on stderr.
+
 ## Forcing a platform
 
 List available handlers:

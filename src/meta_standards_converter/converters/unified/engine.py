@@ -544,6 +544,11 @@ class Converter:
         if loaded.metadata is not None:
             item.dataset_ids = tuple(g.dataset_id for g in loaded.metadata.groups)
             validate_metadata(loaded.metadata)
+            from meta_standards_converter.metadata.curation import assess_curation
+            for group in loaded.metadata.groups:
+                for index, package in enumerate(group.packages):
+                    item.diagnostics.extend(assess_curation(package, dataset_id=group.dataset_id,
+                        provider=loaded.provider, package_index=index, preparation=item.preparation))
         return loaded
 
     @measured("conversion")

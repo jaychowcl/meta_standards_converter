@@ -205,9 +205,12 @@ class ConsoleHandler(logging.Handler):
         kind, attrs, run_id = event['event_type'], event['attributes'], event['run_id']
         key = (run_id, attrs.get('item_id'))
         if kind == 'diagnostic':
+            if attrs.get('curation') and self.threshold > logging.INFO:
+                return
             if record.levelno < self.threshold:
                 return
-            self.pending.setdefault(key, _Groups(verbose=self.threshold <= logging.INFO)).add(
+            self.pending.setdefault(key, _Groups(verbose=self.threshold <= logging.INFO,
+                detailed=self.threshold <= logging.DEBUG)).add(
                 attrs | {'stage': event['stage'], 'severity': event['level'].lower()})
             return
         if kind == 'item_finished' or (kind == 'conversion_finished' and run_id not in self.runs_with_items):
@@ -217,7 +220,8 @@ class ConsoleHandler(logging.Handler):
             if attrs.get('diagnostic'):
                 d = attrs['diagnostic']
                 if getattr(logging, d.get('severity', 'error').upper()) >= self.threshold:
-                    self.pending.setdefault(key, _Groups(verbose=self.threshold <= logging.INFO)).add(d)
+                    self.pending.setdefault(key, _Groups(verbose=self.threshold <= logging.INFO,
+                        detailed=self.threshold <= logging.DEBUG)).add(d)
             group = self.pending.pop(key, None)
             if not self.progress.quiet:
                 for line in _item_lines(attrs.get('source'), attrs.get('item_id'), event['status'], attrs.get('artifact_paths') or {}):

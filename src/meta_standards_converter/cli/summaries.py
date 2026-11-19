@@ -20,14 +20,24 @@ def _priority(diagnostic):
 
 
 class _Groups:
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, detailed=False):
         self.verbose = verbose
+        self.detailed = detailed
         self.seen = set()
         self.groups = OrderedDict()
         self.counts = {}
+        self.curation = OrderedDict()
 
     def add(self, diagnostic):
         d = dict(diagnostic)
+        if d.get('curation'):
+            if self.verbose:
+                c = d['curation']
+                key = (c['dataset_id'], c['field'], c['reason'])
+                locations = self.curation.setdefault(key, OrderedDict())
+                occurrence = (c.get('package_index', 0), c['entity_id'], d.get('location'))
+                locations.setdefault(occurrence, d)
+            return
         # A shared cause may have several consequences. Uncorrelated diagnostics
         # are grouped only when all their affected context and text agree.
         key = d.get('correlation_id') or tuple(d.get(k) for k in (
@@ -68,6 +78,31 @@ class _Groups:
         extra = len(self.seen) - len(self.groups)
         if extra:
             yield f'  {extra} additional diagnostic groups; use -v or a DEBUG log for details.'
+        for (dataset, field, reason), locations in self.curation.items():
+            values = list(locations.values())
+            first = values[0]
+            types = {d['curation']['entity_type'] for d in values}
+            kind = next(iter(types)) if len(types) == 1 else 'record'
+            entities = {(d['curation'].get('package_index', 0), d['curation']['entity_id']) for d in values}
+            count = len(entities)
+            noun = {'study': 'studies'}.get(kind, kind + 's') if count != 1 else kind
+            label = field.split('.', 1)[-1].replace('_', ' ')
+            condition = {'missing': 'missing', 'reported_unknown': 'reported as unknown',
+                         'lookup_no_match': 'not resolved by lookup',
+                         'lookup_incomplete': 'incomplete in the lookup response'}.get(reason, reason.replace('_', ' '))
+            yield f"  WARNING [{first['code']}] {dataset}: {label} {condition} in {count} {noun}."
+            lookup_states = sorted({(d['curation'].get('lookup_provider') or '', d['curation']['lookup_status'])
+                                    for d in values if d['curation'].get('lookup_status')})
+            if lookup_states:
+                yield '    Lookup: ' + '; '.join(f'{provider} {status}'.strip().replace('_', ' ')
+                                                for provider, status in lookup_states) + '.'
+            chosen = values if self.detailed else values[:3]
+            heading = 'Locations' if self.detailed else 'Examples'
+            examples = [f"{d['curation']['entity_id']} (package {d['curation'].get('package_index', 0)} {d['location']})" for d in chosen]
+            yield f'    {heading}: ' + '; '.join(examples)
+            yield f"    Action: {first['action']}"
+            if not self.detailed and len(values) > 3:
+                yield '    Use -vv or --report-json for all affected locations.'
 
 
 def _item_lines(source, identity, status, artifacts):

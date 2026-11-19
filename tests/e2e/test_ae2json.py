@@ -18,7 +18,11 @@ from tests.support.contracts import AE, prepare, assert_expected
 def test_ae2json_local_resources_to_complete_miniml(workspace, caplog):
     prepare(AE, workspace)
     converted(Converter(), 'E-MTAB-6486.idf.txt', out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False), outdir='out')
-    assert [r.getMessage() for r in caplog.records if r.levelname == "WARNING"] == json.loads((AE / "diagnostics.json").read_text())
+    # Preserve the source-parser warning golden; advisory curation is additive.
+    assert [r.getMessage() for r in caplog.records if r.levelname == "WARNING"
+            and not getattr(r, 'msc_event', {}).get('attributes', {}).get('curation')
+            ] == json.loads((AE / "diagnostics.json").read_text())
+    assert any(getattr(r, 'msc_event', {}).get('attributes', {}).get('curation') for r in caplog.records)
     assert_expected(AE, "ae2json", workspace / "out", workspace)
 
 
