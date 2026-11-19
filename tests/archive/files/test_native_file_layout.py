@@ -325,8 +325,8 @@ def test_native_sdrf_columns_preserve_each_acquisition_and_result_path(sparse_fi
     descriptions=dict(zip(rows['Protocol Name'],rows['Protocol Description']))
     for row in table[1:]:
         methods=[descriptions[v] for k,v in zip(header,row) if k=='Protocol REF' and v]
-        if row[header.index('Assay Name')]:assert methods==['Prepare explicit material','Process explicit result']
-        else:assert methods==['Process explicit result']
+        if row[header.index('Assay Name')]:assert methods==['','Prepare explicit material','','Process explicit result']
+        else:assert methods==['','Process explicit result']  # No sequencing placement boundary in this sparse path.
 
 
 def test_ordered_native_renderer_keeps_protocol_blocks_repeated_materials_and_end():

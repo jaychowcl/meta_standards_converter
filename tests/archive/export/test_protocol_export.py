@@ -21,7 +21,9 @@ def test_protocol_export_keeps_unused_deduplicates_and_binds_references():
     data['series']['assay_paths'][0]['steps'].insert(1, {'kind':'protocol_application','protocol_ref':'ERX2:library'})
     before=deepcopy(data);rows=render(data);values={r[0]:r[1:] for r in rows}
     names=values['Protocol Name']
-    assert len(names)==4 and len(set(names))==4
+    assert len(names)==6 and len(set(names))==6
+    assert values['Protocol Type'][-2:] == ['sample collection protocol', 'nucleic acid sequencing protocol']
+    assert values['Protocol Description'][-2:] == ['', '']
     assert {'P-MTAB-9','P-MTAB-10'} <= set(names)
     generated='P-'+data['series']['iid']+'-2'
     assert generated in names

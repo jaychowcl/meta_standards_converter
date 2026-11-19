@@ -45,8 +45,13 @@ def test_saved_compound_projection_is_repaired_on_export_copy():
         p['steps'][1:1]=[{'kind':'protocol_application','protocol_ref':generated},
                         {'kind':'extract','name':sid+':extract','sample_ref':sid,'material_type':{'value':'polyA RNA'}}]
     before=deepcopy(data);idf=render(data);sdrf=next(r[1] for r in idf if r[0]=='SDRF File')
+    rows={r[0]:r[1:] for r in idf}
+    types=dict(zip(rows['Protocol Name'],rows['Protocol Type']))
+    descriptions=dict(zip(rows['Protocol Name'],rows['Protocol Description']))
     for row in sdrf[1:]:
-        assert sum(bool(row[i]) for i,h in enumerate(sdrf[0]) if h=='Protocol REF')==1
+        refs=[v for h,v in zip(sdrf[0],row) if h=='Protocol REF' and v]
+        assert [types[v] for v in refs]==['sample collection protocol','library construction protocol','nucleic acid sequencing protocol']
+        assert [descriptions[v] for v in refs]==['',TEXT,'']
     assert data==before and idf==render(data)
 
 

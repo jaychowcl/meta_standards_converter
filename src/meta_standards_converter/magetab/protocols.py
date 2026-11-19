@@ -10,6 +10,14 @@ from __future__ import annotations
 from meta_standards_converter.metadata.ontology_mappings import Harmonizer
 
 
+SEQUENCING_TECHNOLOGIES = frozenset({
+    'sequencing', 'bulk_sequencing', 'plate_single_cell_sequencing',
+    'single_cell_sequencing', 'droplet_single_cell_sequencing',
+    'tenx_v2_droplet_single_cell_sequencing', 'tenx_v3_droplet_single_cell_sequencing',
+    'spatial_sequencing',
+})
+
+
 class ProtocolRegistry:
     """Allocate stable protocol references shared by IDF and SDRF construction."""
 

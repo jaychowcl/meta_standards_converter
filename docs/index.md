@@ -215,8 +215,15 @@ Full flag and Python API details remain in the canonical routes below.
   title: json2ae: MINiML/Atlas v1 JSON to MAGE-TAB
   anchor: workflow-json2ae
   purpose: Traces native MINiML or canonical Atlas v1 loading, filtering, validation, enrichment, typed semantic MAGE-TAB reconstruction, and writing.
-  keywords: json2ae, JSON, Atlas v1, harmonized, warning, MAGE-TAB, canonical IDF labels, publication status, protocol ontology, round trip, overlay, IDF, SDRF
+  keywords: json2ae, JSON, Atlas v1, harmonized, warning, MAGE-TAB, canonical IDF labels, publication status, protocol ontology, required protocol completion, blank protocols, round trip, overlay, IDF, SDRF
   link: [Open section](codebase.md#workflow-json2ae)
+
+- id: required-protocol-completion
+  title: Required blank protocol definitions and workflow references
+  anchor: required-protocol-completion
+  purpose: Defines automatic per-workflow collection/sequencing completion, preserved authored procedures, blank placeholders, identity allocation, routing and placement audits.
+  keywords: sample collection protocol, nucleic acid sequencing protocol, required, missing, blank, IDF, SDRF, Protocol REF, explicit protocols, assay paths, EFO_0005518, EFO_0004170, json2ae, geo2ae
+  link: [Open section](codebase.md#required-protocol-completion)
 
 - id: workflow-ae2json
   title: ae2json: MAGE-TAB to parsed JSON

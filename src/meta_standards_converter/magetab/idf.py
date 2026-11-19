@@ -687,16 +687,8 @@ class IDFConstructor():
         raise ValueError(f"IDF protocol rows missing {label}")
 
     def _is_sequencing_technology(self, technology_type=None) -> bool:
-        return technology_type in {
-            "sequencing",
-            "bulk_sequencing",
-            "plate_single_cell_sequencing",
-            "single_cell_sequencing",
-            "droplet_single_cell_sequencing",
-            "tenx_v2_droplet_single_cell_sequencing",
-            "tenx_v3_droplet_single_cell_sequencing",
-            "spatial_sequencing",
-        }
+        from .protocols import SEQUENCING_TECHNOLOGIES
+        return technology_type in SEQUENCING_TECHNOLOGIES
 
     def _idf_term_source(self, magetab: list, data: dict | None = None) -> list:
         '''

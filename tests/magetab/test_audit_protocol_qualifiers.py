@@ -34,7 +34,11 @@ def test_protocol_qualifiers_survive_typed_and_archive_boundaries():
     assert result.status == 'complete', result.to_dict()
     idf = result.items[0].payload[0]
     table = next(r[1] for r in idf if r[0] == 'SDRF File')
-    assert table == [header, row]
+    names = next(r[1:] for r in idf if r[0] == 'Protocol Name')
+    types = next(r[1:] for r in idf if r[0] == 'Protocol Type')
+    collection = names[types.index('sample collection protocol')]
+    # Only the new structural collection reference precedes the authored groups.
+    assert table == [[header[0], 'Protocol REF', *header[1:]], [row[0], collection, *row[1:]]]
     assert 'ArrayExpress' in next(r[1:] for r in idf if r[0] == 'Term Source Name')
 
 

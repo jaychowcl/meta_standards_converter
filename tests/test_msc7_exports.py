@@ -278,7 +278,8 @@ def test_indexed_parameter_and_unit_groups_keep_original_indexes():
         {'kind':'assay','name':'A'}]}]
     rendered=AEConstructor().miniml2magetab(MINiMLCodec().decode(p).package,platform_handler='generic')
     parsed=reparse(rendered)
-    v=next(s for s in parsed.series.assay_paths[0].steps if s.kind=='protocol_application').parameter_values[0]
+    method, = [s for s in parsed.series.assay_paths[0].steps if s.kind=='protocol_application' and s.parameter_values]
+    v, = method.parameter_values
     assert [(a.index,a.hierarchy_depth) for a in iter_harmonized_values(v.to_mapping())]==[(3,0)]
     assert [(a.index,a.hierarchy_depth) for a in iter_harmonized_values(v.unit.to_mapping())]==[(2,0)]
 

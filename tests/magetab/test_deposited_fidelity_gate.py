@@ -160,6 +160,74 @@ def test_reference_loader_rejects_bytes_not_matching_recorded_source(tmp_path):
     with pytest.raises(ValueError, match='hash'): load_deposited_reference(tmp_path,'E-MTAB-16847')
 
 
+def without_added_protocol_placeholders(source_idf, exported_idf):
+    """Verify the bounded export additions before the unchanged source oracle.
+
+    Only new, wholly blank collection/sequencing definitions and their bare
+    reference columns may be removed. Deposited definitions/references, even
+    blank ones, remain in the strict graph, qualifier and cell comparison.
+    """
+    original = {v for v in next(r[1:] for r in source_idf if r[0] == 'Protocol Name') if v}
+    rows = {r[0]: r[1:] for r in exported_idf}
+    additions = set(rows['Protocol Name']) - set(original)
+    assert set(original) <= set(rows['Protocol Name'])
+    kinds = {}
+    for name in additions:
+        i = rows['Protocol Name'].index(name)
+        kind = rows['Protocol Type'][i]
+        assert kind in {'sample collection protocol', 'nucleic acid sequencing protocol'}
+        assert rows['Protocol Term Source REF'][i] == 'EFO'
+        assert rows['Protocol Term Accession Number'][i] == {
+            'sample collection protocol': 'EFO_0005518',
+            'nucleic acid sequencing protocol': 'EFO_0004170'}[kind]
+        assert all(values[i] == '' for label, values in rows.items() if label.startswith('Protocol ') and
+                   label not in {'Protocol Name', 'Protocol Type', 'Protocol Term Source REF', 'Protocol Term Accession Number'})
+        kinds[name] = kind
+    from tests.support.deposited_fidelity import NODE_HEADERS
+    table = rows['SDRF File'][0]
+    header = table[0]
+    removed, referenced = set(), set()
+    for i, label in enumerate(header):
+        values = {r[i] for r in table[1:]} - {''}
+        if label != 'Protocol REF' or not values & additions:
+            continue
+        assert values <= additions  # Never hide a deposited application.
+        assert i + 1 == len(header) or header[i + 1] in NODE_HEADERS or header[i + 1].startswith('Factor Value[')
+        before = next((h for h in reversed(header[:i]) if h in NODE_HEADERS), None)
+        after = next((h for h in header[i + 1:] if h in NODE_HEADERS), None)
+        for value in values:
+            if kinds[value] == 'sample collection protocol':
+                assert before in {'Source Name', 'Sample Name'}
+            else:
+                assert after in {'Scan Name', 'Array Data File', 'Array Data Matrix File'} or before in {'Assay Name', 'Extract Name'}
+        removed.add(i)
+        referenced.update(values)
+    assert referenced == additions
+    return [[v for i, v in enumerate(row) if i not in removed] for row in table]
+
+
+@pytest.mark.parametrize('mutation', [None, 'description', 'type', 'accession', 'mixed-reference', 'qualifier', 'position'])
+def test_deposited_projection_only_accepts_bare_blank_required_additions(mutation):
+    source = [['Source Name', 'Protocol REF', 'Extract Name'], ['s', 'original', 'e']]
+    table = [['Source Name', 'Protocol REF', 'Protocol REF', 'Extract Name'], ['s', 'blank', 'original', 'e']]
+    idf = [['Protocol Name', 'original', 'blank'], ['Protocol Type', 'treatment protocol', 'sample collection protocol'],
+           ['Protocol Term Source REF', '', 'EFO'], ['Protocol Term Accession Number', '', 'EFO_0005518'],
+           ['Protocol Description', 'Existing method', ''], ['SDRF File', table]]
+    if mutation == 'description': idf[4][2] = 'Invented method'
+    elif mutation == 'type': idf[1][2] = 'treatment protocol'
+    elif mutation == 'accession': idf[3][2] = 'EFO_0004170'
+    elif mutation == 'mixed-reference': table.append(['s2', 'original', 'original', 'e2'])
+    elif mutation == 'qualifier':
+        table[0].insert(2, 'Comment[method]'); table[1].insert(2, 'Unexpected metadata')
+    elif mutation == 'position':
+        for row in table: row[0], row[1] = row[1], row[0]
+    if mutation is None:
+        assert without_added_protocol_placeholders([['Protocol Name', 'original']], idf) == source
+    else:
+        with pytest.raises(AssertionError):
+            without_added_protocol_placeholders([['Protocol Name', 'original']], idf)
+
+
 @pytest.mark.acceptance
 @pytest.mark.parametrize('accession', DEPOSITED_PANEL)
 def test_full_deposited_panel_preserves_scoped_source_occurrences(accession):
@@ -174,7 +242,12 @@ def test_full_deposited_panel_preserves_scoped_source_occurrences(accession):
     item = result.items[0]
     assert item.execution == 'succeeded' and item.validation == 'valid', result.to_dict()
     assert item.completeness == ('partial' if accession=='E-GEOD-48035' else 'complete'), result.to_dict()
-    assert all('source-text encoding' in d.message for d in item.diagnostics if d.severity in {'warning','error'})
+    # Curation advisories are additive; keep the source-warning contract strict.
+    advisories = [d for d in item.diagnostics if d.curation is not None]
+    assert all(d.severity == 'warning' and d.stage == 'curation' and d.code.startswith('curation_')
+               for d in advisories)
+    assert all('source-text encoding' in d.message for d in item.diagnostics
+               if d.severity in {'warning','error'} and d.curation is None)
     assert len(item.payload) == 1
     tables = item.payload[0]
     outputs = [row[1] for row in tables if row[0]=='SDRF File']
@@ -183,17 +256,18 @@ def test_full_deposited_panel_preserves_scoped_source_occurrences(accession):
     header = outputs[0][0]
     last_node = max(i for i,value in enumerate(header) if value in NODE_HEADERS)
     assert all(i > last_node for i,value in enumerate(header) if value.startswith('Factor Value['))
+    deposited_output = without_added_protocol_placeholders(reference['idf'], tables)
     expected = PROTOCOL_QUALIFIER_COUNTS
     if accession in expected:
-        report=assert_deposited_protocol_qualifiers(reference['sdrf'],outputs[0],accession=accession)
+        report=assert_deposited_protocol_qualifiers(reference['sdrf'],deposited_output,accession=accession)
         assert report['protocol_qualifier_cells'] == expected[accession]
         assert result.status == ('partial' if accession == 'E-GEOD-48035' else 'complete'), result.to_dict()
         assert all('source-text encoding' in d.message for d in item.diagnostics if d.code == 'source_partial')
-        assert_protocol_occurrence_counts(reference['sdrf'], outputs[0], expected[accession])
+        assert_protocol_occurrence_counts(reference['sdrf'], deposited_output, expected[accession])
     if accession in ORDERED_FIELD_PANEL:
         assert result.status == 'complete', result.to_dict()
-        assert_ordered_archive_fields(reference['sdrf'], outputs[0])
-    assert_deposited_sdrf(reference['sdrf'], outputs[0], accession=accession)
+        assert_ordered_archive_fields(reference['sdrf'], deposited_output)
+    assert_deposited_sdrf(reference['sdrf'], deposited_output, accession=accession)
 
 
 @pytest.mark.parametrize('index', [5,9])

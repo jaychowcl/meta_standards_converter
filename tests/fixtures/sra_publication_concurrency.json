@@ -2405,34 +2405,44 @@
       null
     ],
     [
-      "Protocol Name"
+      "Protocol Name",
+      "P-SRP250911-2"
     ],
     [
-      "Protocol Type"
+      "Protocol Type",
+      "sample collection protocol"
     ],
     [
-      "Protocol Term Source REF"
+      "Protocol Term Source REF",
+      "EFO"
     ],
     [
-      "Protocol Term Accession Number"
+      "Protocol Term Accession Number",
+      "EFO_0005518"
     ],
     [
-      "Protocol Description"
+      "Protocol Description",
+      ""
     ],
     [
-      "Protocol Hardware"
+      "Protocol Hardware",
+      ""
     ],
     [
-      "Protocol Software"
+      "Protocol Software",
+      ""
     ],
     [
-      "Protocol Parameters"
+      "Protocol Parameters",
+      ""
     ],
     [
-      "Protocol Contact"
+      "Protocol Contact",
+      ""
     ],
     [
-      "Protocol Performer"
+      "Protocol Performer",
+      ""
     ],
     [
       "SDRF File",
@@ -2452,6 +2462,7 @@
           "Term Source REF",
           "Term Accession Number",
           "Description",
+          "Protocol REF",
           "Assay Name",
           "Comment[LIBRARY_STRATEGY]",
           "Comment[LIBRARY_SOURCE]",
@@ -2512,6 +2523,7 @@
           "NCBITaxon",
           "408170",
           "PC_50_Rectal_fecal_matter",
+          "P-SRP250911-2",
           "SRX7812918",
           "AMPLICON",
           "GENOMIC",
@@ -2572,6 +2584,7 @@
           "NCBITaxon",
           "408170",
           "PC_50_Rectal_fecal_matter",
+          "P-SRP250911-2",
           "SRX7812918",
           "AMPLICON",
           "GENOMIC",
@@ -2621,14 +2634,17 @@
     ],
     [
       "Term Source Name",
+      "EFO",
       "NCBITaxon"
     ],
     [
       "Term Source File",
+      "http://www.ebi.ac.uk/efo/efo.owl",
       null
     ],
     [
       "Term Source Version",
+      "3.90.0",
       null
     ],
     [
