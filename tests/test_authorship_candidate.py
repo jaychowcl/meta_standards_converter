@@ -103,19 +103,20 @@ def test_reference_assistance_uses_actual_replay_not_original_capture(tmp_path):
     assert evidence['trace'] == 'off/trace-json.json'
 
 
-@pytest.mark.parametrize('mutation', [None, 'role', 'phone', 'name', 'address', 'other-contact'])
+@pytest.mark.parametrize('mutation', [None, 'role', 'phone', 'source-phone', 'name', 'address', 'other-contact'])
 def test_legacy_review_only_accepts_the_exact_source_supported_contact_completion(mutation):
     full = {'Person First Name': 'Gordon', 'Person Mid Initials': 'K', 'Person Last Name': 'Smyth',
         'Person Email': 'smyth@wehi.edu.au', 'Person Phone': 'supplied phone', 'Person Roles': None,
         'Person Affiliation': 'Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research',
         'Person Address': 'Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, 3052, Australia'}
     short = {**full, 'Person Roles': 'submitter',
-        'Person Affiliation': 'Bioinformatics, Walter and Eliza Hall Institute of Medical Research',
+        'Person Affiliation': 'Walter and Eliza Hall Institute of Medical Research',
         'Person Address': 'Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, Australia'}
     other = {'Person First Name': 'Another', 'Person Last Name': 'Contact'}
     new = [{**full, 'Person Roles': 'submitter'}, other.copy()]
     if mutation == 'role': new[0]['Person Roles'] = None
     elif mutation == 'phone': new[0]['Person Phone'] = 'wrong phone'
+    elif mutation == 'source-phone': short['Person Phone'] = 'conflicting source phone'
     elif mutation == 'name': new[0]['Person First Name'] = 'Another'
     elif mutation == 'address': new[0]['Person Address'] = full['Person Address'].replace('3052', '9999')
     elif mutation == 'other-contact': new.pop()

@@ -93,8 +93,14 @@ def legacy_idf_comparison(previous, current, case, mode):
     if len(old) != 2 or len(new) != 1 or [p.get('Person Address') for p in old] != [full, short]:
         return rows
     if old[0].get('Person Affiliation') != 'Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research' \
-            or old[1].get('Person Affiliation') != 'Bioinformatics, Walter and Eliza Hall Institute of Medical Research':
+            or old[1].get('Person Affiliation') != 'Walter and Eliza Hall Institute of Medical Research':
         return rows
+    for field in old[0].keys() | old[1].keys():
+        if field in {'Person Address', 'Person Affiliation'}:
+            continue
+        left, right = old[0].get(field), old[1].get(field)
+        if left and right and ' '.join(str(left).split()).casefold() != ' '.join(str(right).split()).casefold():
+            return rows
     expected = {k: v or old[1].get(k) for k, v in old[0].items()}
     if new[0] != expected:
         return rows  # Never excuse missing roles, identifiers or other contact facts.
