@@ -466,9 +466,16 @@ Full flag and Python API details remain in the canonical routes below.
 - id: conversion-logging
   title: Conversion logging and progress
   anchor: conversion-logging
-  purpose: Explain cause grouping, compact summaries, safe DEBUG frames, logging failures, levels, progress and stdout/stderr contracts.
-  keywords: logging, progress, auto, plain, off, DEBUG, INFO, WARNING, ERROR, log-file-level, log-format, JSONL, heartbeat, run_id, correlation_id, reporting_failed, partial output
+  purpose: Explain provider cause grouping, curation counts/examples, safe DEBUG frames, logging failures, levels, progress and stdout/stderr contracts.
+  keywords: logging, progress, auto, plain, off, DEBUG, INFO, WARNING, ERROR, verbose, quiet, curation, log-file-level, log-format, JSONL, heartbeat, run_id, correlation_id, reporting_failed, partial output
   link: [Open section](codebase.md#conversion-logging)
+
+- id: curation-assessment
+  title: Final metadata curation assessment
+  anchor: curation-assessment
+  purpose: Network-free final-package checklist, additive advisory diagnostics and lookup evidence without changing scientific output or conversion status.
+  keywords: curator warnings, missing metadata, reported_unknown, publication, PubMed, contacts, characteristics, factors, protocols, assays, run identifiers, lookup_no_match, CurationContext, report-json, verbose
+  link: [Implementation](codebase.md#curation-assessment); [Checklist and CLI examples](curators-guide.md#curation-warnings)
 
 - id: operational-events-v1
   title: Operational events v1

@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Mapping
 from meta_standards_converter.runtime_contracts import SafeErrorEnvelope
 from meta_standards_converter.provider_issues import ProviderIssue
@@ -33,6 +33,22 @@ class InputSpec:
 
 
 @dataclass(frozen=True)
+class CurationContext:
+    """Structured advisory identity; locations stay in Diagnostic.location."""
+
+    dataset_id: str
+    entity_type: str
+    entity_id: str
+    field: str
+    reason: str
+    package_index: int = 0
+    lookup_status: str | None = None
+    lookup_provider: str | None = None
+    lookup_identifier: str | None = None
+    lookup_identifier_kind: str | None = None
+
+
+@dataclass(frozen=True)
 class Diagnostic:
     code: str
     message: str
@@ -44,13 +60,16 @@ class Diagnostic:
     operation: str | None = None
     location: str | None = None
     correlation_id: str | None = None
+    curation: CurationContext | None = None
 
     def to_dict(self):
         from meta_standards_converter.diagnostics import enrich
         value = {key: value for key, value in vars(enrich(self)).items()
-                 if key != 'provider_issue' and value is not None}
+                 if key not in {'provider_issue', 'curation'} and value is not None}
         if self.provider_issue is not None:
             value['provider_issue'] = self.provider_issue.to_dict()
+        if self.curation is not None:
+            value['curation'] = asdict(self.curation)
         return value
 
 

@@ -397,7 +397,10 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
                             for axis in ("execution", "validation", "completeness"):
                                 assert getattr(item, axis) == wanted[axis], f"{fmt}/{axis}: {getattr(item, axis)} != {wanted[axis]}"
                             causes = [{"code": d.code, "stage": d.stage, "severity": d.severity, "message": d.message}
-                                      for d in item.diagnostics if d.severity in {"warning", "error"}]
+                                      for d in item.diagnostics if d.severity in {"warning", "error"} and d.curation is None]
+                            # Frozen cause goldens predate the advisory checklist.
+                            # Full curation diagnostics remain in call['result'];
+                            # scientific payload and operational causes stay exact.
                             assert_occurrences(wanted["causes"], causes)
                             if wanted["execution"] == "succeeded":
                                 assert item.payload is not None, f"{fmt}: required in-memory artifact missing"

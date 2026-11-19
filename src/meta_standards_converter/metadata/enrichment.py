@@ -68,8 +68,26 @@ class MINiMLEnricher:
             resource_profile=profile
         )
         self.publication_issues = []
+        self._publication_outcomes = {}
+        self._run_outcomes = {}
         self.profile = profile
         self.publication_identifier_resolver = publication_identifier_resolver
+
+    @property
+    def publication_outcomes(self):
+        """Detached lookup evidence for the current enrichment call, not payload data."""
+        return tuple(dict(v) for _, v in sorted(self._publication_outcomes.items()))
+
+    @property
+    def run_outcomes(self):
+        return tuple(dict(v) for _, v in sorted(self._run_outcomes.items()))
+
+    def _publication_outcome(self, kind, identifier, status, error=None, message=None):
+        issue = getattr(error, '_msc_provider_issue', None)
+        self._publication_outcomes[(kind, str(identifier))] = {
+            'identifier_kind': kind, 'identifier': str(identifier), 'status': status,
+            'message': message, 'correlation_id': issue.error.correlation_id if issue else None,
+        }
 
     def enrich(self, data: MINiMLPackage, *, session=None) -> MINiMLPackage:
         return self.enrich_selected(data, session=session)
@@ -86,6 +104,8 @@ class MINiMLEnricher:
         self._pubmed_failures = 0
         self._sra_failures = 0
         self.publication_issues = []
+        self._publication_outcomes = {}
+        self._run_outcomes = {}
         self._identifier_cache = {}
         self._identifier_http = None
         from ..miniml.publication_identifiers import clean_publication_identifiers
@@ -217,11 +237,13 @@ class MINiMLEnricher:
                 cache[key] = citation_identifier('pubmed', resolved).get('pubmed_id')
                 if resolved and not cache[key]:
                     raise ValueError('invalid resolved PMID')
+                self._publication_outcome(kind, value, 'complete' if cache[key] else 'not_found')
             except (requests.RequestException, ET.ParseError, ValueError, KeyError) as error:
                 record(error, provider="pubmed")
                 cache[key] = None
                 issue = f'{kind} {value}: {type(error).__name__}'
                 self.publication_issues.append(issue)
+                self._publication_outcome(kind, value, 'failed', error, issue)
                 _retained_warning(logger, '%s', issue)
         return cache[key]
 
@@ -249,14 +271,29 @@ class MINiMLEnricher:
             runs = deepcopy(self._as_list(sample.get('sra_run')))
             fetched = []
             for accession in accessions:
+                outcome = {'identifier_kind': 'accession', 'identifier': accession,
+                           'entity_id': sample.get('iid') or str(index),
+                           'location': f'/sample/{index}/sra_accession',
+                           'message': None, 'correlation_id': None}
                 try:
-                    fetched.extend(retrieve_once(("runs", id(self.insdc_fetcher), accession),
-                        lambda: self.insdc_fetcher.fetch_sra_runs(accession=accession), session=session))
+                    returned = retrieve_once(("runs", id(self.insdc_fetcher), accession),
+                        lambda: self.insdc_fetcher.fetch_sra_runs(accession=accession), session=session)
+                    fetched.extend(returned)
+                    complete = all(all(run.get(k) for k in ('run', 'library_strategy', 'library_source',
+                        'library_selection', 'library_layout', 'instrument_model', 'fastq_files')) for run in returned)
+                    outcome['status'] = 'not_found' if not returned else 'complete' if complete else 'incomplete'
                 except (requests.RequestException, ET.ParseError) as error:
                     record(error, provider="sra")
                     self._sra_failures = getattr(self, "_sra_failures", 0) + 1
+                    cause = getattr(error, '_msc_provider_issue', None)
+                    outcome.update(status='failed',
+                        message=f'SRA refresh {accession} failed ({type(error).__name__}); retaining saved metadata',
+                        correlation_id=cause.error.correlation_id if cause else None)
                     _retained_warning(logger, 'SRA refresh %s failed (%s); retaining saved metadata', accession, type(error).__name__)
                     continue
+                finally:
+                    if 'status' in outcome:
+                        self._run_outcomes[index, accession] = outcome
             self._merge_saved_runs(runs, fetched)
             sample["sra_run"] = runs
             ena_accessions = self._dedupe(
@@ -335,16 +372,25 @@ class MINiMLEnricher:
             return {'pubmed_id': ''}
         cache = getattr(self, '_publication_cache', None)
         if cache is not None and pubmed_id in cache: return dict(cache[pubmed_id])
+        empty = False
         try:
             doi, authors, title, status, source_ref, accession = retrieve_once(("publication", id(self.pubmed_fetcher), pubmed_id),
                 lambda: self.pubmed_fetcher.pubmed_summary(pubmed_id=pubmed_id), session=session)
             if not any((doi, authors, title, status)):
+                empty = True
                 raise ValueError('PubMed response contains no citation metadata')
+            present = lambda value: value is not None and (not isinstance(value, str) or bool(value.strip()))
+            references = (source_ref, accession)
+            complete = all(present(v) for v in (doi, authors, title, status)) and (
+                not any(v is not None for v in references) or all(present(v) for v in references))
+            self._publication_outcome('pubmed_id', pubmed_id,
+                'complete' if complete else 'incomplete')
         except (requests.RequestException, ET.ParseError, ValueError) as error:
             record(error, provider="pubmed")
             self._pubmed_failures = getattr(self, "_pubmed_failures", 0) + 1
             issue = f'PubMed {pubmed_id}: {type(error).__name__}'
             self.publication_issues.append(issue)
+            self._publication_outcome('pubmed_id', pubmed_id, 'empty' if empty else 'failed', error, issue)
             _retained_warning(logger, '%s', issue)
             doi, authors, title, status, source_ref, accession = (None, None, None, None, None, None)
 

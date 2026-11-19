@@ -63,7 +63,7 @@ class MetadataPreparation:
         groups = []
         for group in loaded.metadata.groups:
             packages = []
-            for package in group.packages:
+            for package_index, package in enumerate(group.packages):
                 provider = provider_of(package, loaded.provider)
                 key = (hashlib.sha256(json.dumps(package.to_mapping(), sort_keys=True).encode()).hexdigest(),
                        provider, self.context.preparation_policy, available_key)
@@ -77,7 +77,8 @@ class MetadataPreparation:
                 prepared, records, diagnostics = prepared_result
                 prepared = _coverage(prepared, _active.get())
                 packages.append(prepared)
-                loaded.preparation.extend(deepcopy(records))
+                loaded.preparation.extend(dict(record, package_index=package_index, dataset_id=group.dataset_id)
+                                          for record in deepcopy(records))
                 loaded.diagnostics.extend(diagnostics)
                 loaded.diagnostics.extend(Diagnostic('source_partial', issue, 'preparation', 'warning') for issue in _coverage_issues(prepared))
             groups.append(replace(group, packages=tuple(packages)))
@@ -129,7 +130,7 @@ class MetadataPreparation:
                 record["status"] = "partial" if issues else "completed"
                 causes = [issue for issue, recovered in snapshot().values() if not recovered and issue.operation == name]
                 cause = causes[0] if len(causes) == 1 else None
-                diagnostics.extend(Diagnostic("source_partial", f"{identity}: {name}: {issue}", "preparation", "warning",
+                diagnostics.extend(issue if isinstance(issue, Diagnostic) else Diagnostic("source_partial", f"{identity}: {name}: {issue}", "preparation", "warning",
                     provider=cause.error.provider if cause else None, operation=name,
                     correlation_id=cause.error.correlation_id if cause else None) for issue in issues)
                 diagnostics.append(Diagnostic("enrichment_completed", f"{identity}: {name} {record['status']}", "preparation", "info"))
@@ -183,7 +184,7 @@ class MetadataPreparation:
             return bool(links)
         run("linked_metadata", linked_applicable, lambda p: self._linked(p, provider, links))
         run("parent_publications", provider == "geo", self._parent_publications)
-        run("standard", True, lambda p: self._standard(p, provider))
+        run("standard", True, lambda p: self._standard(p, provider, records, identity))
         from meta_standards_converter.metadata.source_text import _text_issues
         diagnostics.extend(Diagnostic("source_partial", issue, "preparation", "warning") for issue in _text_issues(package))
         for record in records:
@@ -224,12 +225,34 @@ class MetadataPreparation:
         return service.enrich_selected(package, accessions=links, session=self.context.session,
             mode=self.context.preparation_policy.enrichment)
 
-    def _standard(self, package, provider):
+    def _standard(self, package, provider, records, identity):
         from meta_standards_converter.metadata.enrichment import MINiMLEnricher
         service = self.context.service("enricher", lambda: MINiMLEnricher(resource_profile=self.context.profile))
         runs = self.context.preparation_policy.enrichment == "standard" and provider not in {"sra", "ena"}
+        if not runs:
+            records.append(dict(operation='run_metadata', dataset=identity, provider='sra', status='skipped',
+                                reason='disabled' if self.context.preparation_policy.enrichment != 'standard' else 'not_applicable'))
         result = service.enrich_selected(package, publications=True, run_metadata=runs, session=self.context.session)
         issues = list(getattr(service, "publication_issues", ()))
-        if getattr(service, "_sra_failures", 0):
+        outcomes = getattr(service, 'publication_outcomes', ())
+        if isinstance(outcomes, (list, tuple)):
+            for outcome in outcomes:
+                records.append(dict(outcome, operation='publication_lookup', dataset=identity, provider='pubmed'))
+                if outcome['status'] in {'failed', 'empty'}:
+                    message = outcome['message']
+                    issues = [issue for issue in issues if issue != message]
+                    issues.append(Diagnostic('source_partial', message, 'preparation', 'warning',
+                        provider='pubmed', operation='publication_retrieval',
+                        location=f"{outcome['identifier_kind']}:{outcome['identifier']}",
+                        correlation_id=outcome['correlation_id']))
+        run_outcomes = getattr(service, 'run_outcomes', ())
+        if isinstance(run_outcomes, (list, tuple)):
+            for outcome in run_outcomes:
+                records.append(dict(outcome, operation='run_lookup', dataset=identity, provider='sra'))
+                if outcome['status'] == 'failed':
+                    issues.append(Diagnostic('source_partial', outcome['message'], 'preparation', 'warning',
+                        provider='sra', operation='run_inventory', location=outcome['identifier'],
+                        correlation_id=outcome['correlation_id']))
+        if getattr(service, "_sra_failures", 0) and not (isinstance(run_outcomes, (list, tuple)) and run_outcomes):
             issues.append("Run evidence retrieval was incomplete")
         return result, issues

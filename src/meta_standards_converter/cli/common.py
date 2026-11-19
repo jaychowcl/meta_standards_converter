@@ -96,7 +96,7 @@ def add_logging_arguments(parser: argparse.ArgumentParser) -> None:
         "--verbose",
         action="count",
         default=0,
-        help="Increase logging verbosity. Use -v for INFO and -vv for DEBUG.",
+        help="Use -v for INFO and grouped curator warnings (counts and three examples); -vv adds DEBUG and every affected metadata location. Curation advisories do not change exit status.",
     )
     verbosity_group.add_argument(
         "-q",

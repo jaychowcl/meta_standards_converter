@@ -234,7 +234,9 @@ def test_context_statistics_do_not_turn_missing_optional_data_into_errors(caplog
     with caplog.at_level(logging.DEBUG):
         result=Converter().convert(package(), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status=='complete'
-    assert not [r for r in caplog.records if r.levelno>=logging.WARNING]
+    warnings = [e for e in events(caplog) if e['level'] in {'WARNING', 'ERROR'}]
+    assert warnings and all(e['event_type'] == 'diagnostic' and e['attributes'].get('curation') for e in warnings)
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
     assert any(e['attributes'].get('sdrf_rows')==1 for e in events(caplog))
 
 
