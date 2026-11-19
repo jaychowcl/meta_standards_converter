@@ -30,7 +30,8 @@ def project_publications(records, series, samples):
         for article in root.iter('PubmedArticle'):
             pmid = text(article,'MedlineCitation/PMID')
             if not pmid: continue
-            authors = [text(a,'CollectiveName') or ' '.join(filter(None,[text(a,'ForeName'),text(a,'LastName')]))
+            authors = [text(a,'CollectiveName') or ' '.join(filter(None,[
+                           text(a,'ForeName') or text(a,'Initials'), text(a,'LastName'), text(a,'Suffix')]))
                        for a in article.findall('MedlineCitation/Article/AuthorList/Author')]
             value = {'pubmed_id':pmid, 'title':text(article,'MedlineCitation/Article/ArticleTitle'), 'author_list':', '.join(authors)}
             value.update(zip(('status','status_term_source_ref','status_term_accession_number'),

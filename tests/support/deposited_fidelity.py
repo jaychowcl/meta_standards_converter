@@ -87,6 +87,53 @@ def without_derived_files(table):
     return [[row[i] for i in indices] for row in table]
 
 
+
+def without_added_protocol_placeholders(source_idf, exported_idf):
+    """Verify the bounded export additions before the unchanged source oracle.
+
+    Only new, wholly blank collection/sequencing definitions and their bare
+    reference columns may be removed. Deposited definitions/references, even
+    blank ones, remain in the strict graph, qualifier and cell comparison.
+    """
+    original = {v for v in next((r[1:] for r in source_idf if r and r[0] == 'Protocol Name'), []) if v}
+    rows = {r[0]: r[1:] for r in exported_idf if r}
+    additions = set(rows['Protocol Name']) - set(original)
+    assert set(original) <= set(rows['Protocol Name'])
+    kinds = {}
+    for name in additions:
+        i = rows['Protocol Name'].index(name)
+        kind = rows['Protocol Type'][i]
+        assert kind in {'sample collection protocol', 'nucleic acid sequencing protocol'}
+        assert rows['Protocol Term Source REF'][i] == 'EFO'
+        assert rows['Protocol Term Accession Number'][i] == {
+            'sample collection protocol': 'EFO_0005518',
+            'nucleic acid sequencing protocol': 'EFO_0004170'}[kind]
+        assert all(values[i] == '' for label, values in rows.items() if label.startswith('Protocol ') and
+                   label not in {'Protocol Name', 'Protocol Type', 'Protocol Term Source REF', 'Protocol Term Accession Number'})
+        kinds[name] = kind
+    table = rows['SDRF File'][0]
+    header = table[0]
+    removed, referenced = set(), set()
+    for i, label in enumerate(header):
+        values = {r[i] for r in table[1:]} - {''}
+        if label != 'Protocol REF' or not values & additions:
+            continue
+        assert values <= additions  # Never hide a deposited application.
+        assert i + 1 == len(header) or header[i + 1] in NODE_HEADERS or header[i + 1].startswith('Factor Value[')
+        before = next((h for h in reversed(header[:i]) if h in NODE_HEADERS), None)
+        after = next((h for h in header[i + 1:] if h in NODE_HEADERS), None)
+        for value in values:
+            if kinds[value] == 'sample collection protocol':
+                assert before in {'Source Name', 'Sample Name'}
+            else:
+                assert after in {'Scan Name', 'Array Data File', 'Array Data Matrix File'} or before in {'Assay Name', 'Extract Name'}
+        removed.add(i)
+        referenced.update(values)
+    assert referenced == additions
+    return [[v for i, v in enumerate(row) if i not in removed] for row in table]
+
+
+
 def load_deposited_reference(root, accession):
     """Read one source IDF/SDRF pair only after its recorded hashes match."""
     root = Path(root)

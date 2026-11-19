@@ -1,4 +1,12 @@
-"""Source-derived reproductions; no production repair is part of this audit."""
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+"""Source-derived regressions for the defects reproduced by the authorship audit."""
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -24,21 +32,21 @@ ARTICLE = """<PubmedArticleSet><PubmedArticle><MedlineCitation>
 </PubmedData></PubmedArticle></PubmedArticleSet>"""
 
 
-def source_package(provider):
+def source_package(provider, article=ARTICLE, pmids=('123456',)):
     records = fixture_records(provider)
     study = next(node for root in records.xml for node in root.iter('STUDY'))
     links = ET.SubElement(study, 'STUDY_LINKS')
-    link = ET.SubElement(ET.SubElement(links, 'STUDY_LINK'), 'XREF_LINK')
-    ET.SubElement(link, 'DB').text = 'PubMed'
-    ET.SubElement(link, 'ID').text = '123456'
-    records.xml.append(ET.fromstring(ARTICLE))
+    for pmid in pmids:
+        link = ET.SubElement(ET.SubElement(links, 'STUDY_LINK'), 'XREF_LINK')
+        ET.SubElement(link, 'DB').text = 'PubMed'
+        ET.SubElement(link, 'ID').text = pmid
+    records.xml.append(ET.fromstring(article))
     return (SRAParser if provider == 'sra' else ENAParser)().parse(records)
 
 
 @pytest.mark.parametrize('provider', ['sra', 'ena'])
 @pytest.mark.parametrize('stage', ['json', 'magetab'])
 @pytest.mark.parametrize('component,expected', [('initials', 'AB Smith'), ('suffix', 'Alice Jones Jr')])
-@pytest.mark.xfail(strict=True, reason='MSC-AUTH-001: native PubMed projection drops Initials-only names and Suffix; audit excludes fixes')
 def test_native_publication_retains_supplied_author_components(provider, stage, component, expected):
     package = source_package(provider)
     if stage == 'json':
@@ -59,7 +67,6 @@ def test_native_publication_retains_group_unicode_order_and_identifier_alignment
 
 
 @pytest.mark.parametrize('stage', ['json', 'magetab'])
-@pytest.mark.xfail(strict=True, reason='MSC-AUTH-002: GEO scalar characteristics disappear during v3 migration; audit excludes fixes')
 def test_geo_retains_untagged_characteristic_on_its_channel(stage):
     from meta_standards_converter.miniml.geo_parser import GEOParser
     xml = '''<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML">
@@ -86,7 +93,6 @@ def test_geo_retains_untagged_characteristic_on_its_channel(stage):
 
 
 @pytest.mark.parametrize('stage', ['json', 'magetab'])
-@pytest.mark.xfail(strict=True, reason='MSC-AUTH-003: repeated recognized IDF RelatedExperiment rows retain only the first row; audit excludes fixes')
 def test_all_repeated_related_experiment_rows_survive_import_and_export(stage, tmp_path):
     source = tmp_path / 'E-MTAB-1.idf.txt'
     source.write_text('Investigation Accession\tE-MTAB-1\nInvestigation Title\tRepeated relationship audit\n'
@@ -102,3 +108,67 @@ def test_all_repeated_related_experiment_rows_survive_import_and_export(stage, t
     else:
         actual = [value for row in result.items[0].payload[0] if row[0] == 'Comment[RelatedExperiment]' for value in row[1:]]
     assert actual == ['E-MTAB-2', 'E-MTAB-3', 'E-MTAB-4']
+
+
+@pytest.mark.parametrize('provider', ['sra', 'ena'])
+@pytest.mark.parametrize('author,expected', [
+    ('<Author><ForeName>Alice Quinn</ForeName><Initials>AQ</Initials><LastName>Jones</LastName><Suffix>III</Suffix></Author>', 'Alice Quinn Jones III'),
+    ('<Author><ForeName> </ForeName><Initials>AJ</Initials><LastName>Börsch</LastName></Author>', 'AJ Börsch'),
+    ('<Author><CollectiveName>Étude Consortium</CollectiveName><LastName>Unused</LastName></Author>', 'Étude Consortium'),
+])
+def test_author_projection_prefers_supplied_full_or_collective_name(provider, author, expected):
+    root = ET.fromstring(ARTICLE)
+    authors = root.find('.//AuthorList')
+    authors.clear()
+    authors.append(ET.fromstring(author))
+    pub = source_package(provider, ET.tostring(root, encoding='unicode')).to_mapping()['series']['pubmed_publication'][0]
+    assert pub['author_list'] == expected
+
+
+@pytest.mark.parametrize('provider', ['sra', 'ena'])
+def test_multiple_publications_keep_authors_on_their_paper_and_allow_blank_list(provider):
+    root = ET.fromstring(ARTICLE)
+    second = ET.fromstring(ARTICLE.replace('123456', '654321').replace('10.1234/audit', '10.1234/second'))[0]
+    second.find('.//AuthorList').clear()
+    root.append(second)
+    data = source_package(provider, ET.tostring(root, encoding='unicode'), ('123456', '654321')).to_mapping()
+    pubs = {p['pubmed_id']: p for p in data['series']['pubmed_publication']}
+    assert pubs['123456']['author_list'] == 'AB Smith, Alice Jones Jr, Example Consortium, Anna Börsch'
+    assert not pubs['654321'].get('author_list')
+    assert [pubs[p]['doi'] for p in ('123456', '654321')] == ['10.1234/audit', '10.1234/second']
+
+
+def test_mixed_scalar_characteristics_keep_occurrences_and_qualifiers():
+    from meta_standards_converter.miniml.migration import MINiMLV1Migrator
+    from copy import deepcopy
+    tagged = {'name': 'duration', 'value': '6', 'unit': {'value': 'hour', 'term_accession_number': 'UO:0000032'},
+              'term_source_ref': 'EFO', 'comments': [{'name': 'evidence', 'value': 'source'}]}
+    data = {'source': {'format': 'GEO'}, 'series': {'iid': 'GSE1'}, 'sample': [{'iid': 'GSM1', 'channel': [
+        {'characteristics': ['none', tagged, 'none', 0, None]}, {'characteristics': ['untreated reference']}]}]}
+    before = deepcopy(data)
+    migrated = MINiMLV1Migrator().migrate(data).package.to_mapping()
+    assert data == before
+    channels = migrated['sample'][0]['channel']
+    assert channels[0]['characteristics'] == [{'name': 'unspecified', 'value': 'none'}, tagged,
+        {'name': 'unspecified', 'value': 'none'}, {'name': 'unspecified', 'value': '0'}]
+    assert channels[1]['characteristics'] == [{'name': 'unspecified', 'value': 'untreated reference'}]
+
+
+def test_related_rows_keep_json_occurrences_and_export_unique_targets(tmp_path):
+    source = tmp_path / 'E-MTAB-1.idf.txt'
+    source.write_text('Investigation Accession\tE-MTAB-1\nInvestigation Title\tRepeated links\n'
+        'Comment [RelatedExperiment]\tE-MTAB-2\t\tE-MTAB-3\n'
+        'Comment[RelatedExperiment]\t E-MTAB-2 \tE-MTAB-4\n'
+        'PubMed ID\t123\t456\nPublication DOI\t10.1234/first\t10.1234/second\n'
+        'Publication Author List\tFirst Author\tSecond Author\nSDRF File\tE-MTAB-1.sdrf.txt\n')
+    source.with_name('E-MTAB-1.sdrf.txt').write_text('Source Name\nSample 1\n')
+    policy = PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False)
+    imported = Converter().convert(source, out_type='json', preparation=policy).items[0].payload[0]
+    series = imported.to_mapping()['series']
+    assert [r['target'] for r in series['relation'] if r['type'] == 'related experiment'] == [
+        'E-MTAB-2', 'E-MTAB-3', 'E-MTAB-2', 'E-MTAB-4']
+    assert [(p['pubmed_id'], p['doi'], p['author_list']) for p in series['pubmed_publication']] == [
+        ('123', '10.1234/first', 'First Author'), ('456', '10.1234/second', 'Second Author')]
+    exported = Converter().convert(imported, out_type='magetab', preparation=policy).items[0].payload[0]
+    assert next(r[1:] for r in exported if r[0] == 'Comment[RelatedExperiment]') == [
+        'E-MTAB-2', 'E-MTAB-3', 'E-MTAB-4']

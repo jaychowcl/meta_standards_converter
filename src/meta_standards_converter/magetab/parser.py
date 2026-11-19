@@ -356,7 +356,9 @@ class AEParser:
         experiment_date = self._first(idf, "Date of Experiment")
         if experiment_date:
             series["experiment_date"] = experiment_date
-        related = self._nonblank(idf, "Comment[RelatedExperiment]")
+        # Independent links may span rows; positional IDF groups still use _values.
+        related = [value.strip() for row in idf.get(normalized_label("Comment[RelatedExperiment]"), [])
+                   for value in row if value.strip()]
         if related:
             series["relation"] = [
                 {"type": "related experiment", "target": value} for value in related

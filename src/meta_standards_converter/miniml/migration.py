@@ -148,7 +148,7 @@ class MINiMLV1Migrator:
     def _fold_harmonization(cls, channel: dict[str, Any]) -> None:
         """Keep named hz rows and fold private legacy values directly into v3."""
         rows = [cls._named_value(item) for item in cls._items(channel.get("characteristics"))
-                if isinstance(item, Mapping)]
+                if item is not None]
         # Validate complete indexed groups together; retain authored row order.
         iter_harmonized_values(rows)
         groups: dict[tuple[str, int], dict[str, Any]] = {}
