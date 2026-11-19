@@ -6981,6 +6981,26 @@ sample/run/URI. Its control tests reject wrong owners, conflicting digests and
 authored protocol renames. The complete source-ledger copies and field-level
 results live in `.dev/msc-authorship-audit/metadata-integrity-validation/` in the
 adapter workspace; earlier sealed reports are historical evidence.
+
+Validated converter revision `cf1673f` passed the original 81-route matrix and
+54 available additional routes, all 45 direct/fresh-JSON pairs, the 19-study and
+five-study deposited preservation panels, and 304 concrete repair assertions.
+Nine additional routes remain unavailable; six executed results retain captured
+partial-completeness conditions. The full offline suite passed 3,015 tests plus
+57 subtests, with five live skips; five later review/file-policy controls also
+passed. Existing pytest 8.4.2 is below the declared 9.1.1 minimum. Review/timing
+tooling revision `1d4153e` has the same production source tree. The five reviewed
+scientific copies have 128 fully reconstructable ledger changes; ambiguous
+barcode, DMSO-unit, contact and DOI assertions remain review records.
+
+Three paired warmed measurements per input found median baseline/candidate wall
+times of 0.086/0.156 s (GSE31356), 0.669/0.875 s (ERP148790), and 0.379/0.405 s
+(E-GEOD-48034). The repeatable increase comes mainly from graph preparation/model
+reconstruction and semantic checks; profiling confirms preparation at both the
+unified and standalone-export boundaries. No fidelity checks were weakened.
+The validation bundle's REPORT.md distinguishes source fidelity, reference
+agreement, preservation exclusions, curation needs, actual revisions and this
+runtime cost. Main integration, pin updates and remote publication are excluded.
 The reviewed scientific derivatives use existing model fields with explicit
 before/after evidence records, never unrestricted harmonization patches or
 accession-specific production rules. Historical reports/fixtures remain unchanged.
