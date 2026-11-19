@@ -7058,13 +7058,16 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python -m pytest -q --runxfail \
 The 2026-11-19 follow-up completed all 45 cells and all 15 direct/saved-JSON
 equivalence checks. All three deposited references retain their 204 populated
 IDF values and 966 meaningful SDRF values under the documented exclusions.
-Two unresolved production defects have strict expected-failure reproductions:
+Three unresolved production defects have strict expected-failure reproductions:
 `MSC-LIVE-001` loses supplied GEO sample experiment identifiers from SDRF with
 off/curators enrichment; `MSC-LIVE-002` maps computational `feature_extraction`
 to the channel's wet-lab extraction field, which also creates misleading
-definitions during native standard enrichment. Proposed repairs are explicit
-relation projection during preparation and a shared exact protocol-type mapping
-that respects graph scope. Neither repair is implemented by this audit.
+definitions during native standard enrichment; `MSC-LIVE-003` drops supplied
+GEO taxonomy identifiers from the organism's SDRF qualifiers while retaining
+them in JSON. Proposed repairs are explicit relation projection during
+preparation, a shared exact protocol-type mapping that respects graph scope,
+and owned NCBITaxon projection of supplied taxids with conflict handling.
+These repairs are not implemented by this audit.
 
 Evidence, measured ranges, source contradictions and per-field dispositions
 are in the adapter workspace's

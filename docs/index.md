@@ -664,7 +664,7 @@ canonical guide together when an interface, workflow, or contract changes.
   title: New live conversions and runtime review
   anchor: live-integrity-followup
   purpose: Bounded fresh three-study acquisition, controlled 45-cell offline replay, scientific review, complete metadata inventory and separate runtime/fidelity evidence without production changes.
-  keywords: audit_live_integrity, audit_live_integrity_review, GSE11817, GSE26884, GSE37703, SRP012607, 2368e51, MSC-LIVE-001, MSC-LIVE-002, experiment relations, feature_extraction, sparse protocol columns, source conflicts, live runtimes, CPU, peak RSS, response reuse, 300 seconds, 200 requests
+  keywords: audit_live_integrity, audit_live_integrity_review, GSE11817, GSE26884, GSE37703, SRP012607, 2368e51, MSC-LIVE-001, MSC-LIVE-002, MSC-LIVE-003, experiment relations, feature_extraction, taxid, sparse protocol columns, source conflicts, live runtimes, CPU, peak RSS, response reuse, 300 seconds, 200 requests
   link: [Open section](codebase.md#live-integrity-followup)
 
 - id: authorship-curated-audit

@@ -8,7 +8,7 @@
 # =============================================================================
 """Timing labels must not turn reused responses or failures into successful live runs."""
 from scripts.audit_live_integrity import request_counts, summary, COHORT
-from tests.support.live_integrity_semantics import compare_rows
+from tests.support.live_integrity_semantics import compare_rows, organism_taxids
 from scripts.audit_live_integrity_review import exported_files
 
 
@@ -80,3 +80,12 @@ def test_fastq_uri_retains_basename_and_its_owned_checksum_only():
     assert result == {'URI':'ftp://example.org/read1.fastq.gz','MD5':'right','BYTES':'100','NAME':'read1.fastq.gz'}
     table[0].pop(5); table[1].pop(5)
     assert 'MD5' not in exported_files(table)['SRR1','ftp://example.org/read1.fastq.gz'][0]
+
+
+def test_taxonomy_identifier_cannot_be_borrowed_from_another_characteristic():
+    headers=['Source Name','Characteristics[organism]','Characteristics[cell line]',
+             'Term Source REF','Term Accession Number']
+    row=['S','Homo sapiens','cells','NCBITaxon','9606']
+    assert not organism_taxids(headers,row)
+    headers.pop(2);row.pop(2)
+    assert organism_taxids(headers,row)=={'9606'}

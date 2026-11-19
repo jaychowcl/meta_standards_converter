@@ -21,7 +21,7 @@ from tests.support.authorship_capture import write_json
 from tests.support.authorship_sources import documents, provenance
 from tests.support.authorship_fidelity import table
 from tests.support.deposited_fidelity import without_derived_files, without_added_protocol_placeholders, NODE_HEADERS
-from tests.support.live_integrity_semantics import normalize, compare_rows, row_graph, nonempty
+from tests.support.live_integrity_semantics import normalize, compare_rows, row_graph, nonempty, organism_taxids
 from scripts.audit_additional_conversions import clean_revision
 from scripts.audit_authorship_candidate import verify_seal
 from scripts.audit_live_integrity import PRODUCTION
@@ -172,6 +172,16 @@ def source_checks(root, output):
                         record(case_name,mode,'JSON',sid,kind+' material count',len(channels),len(values),provenance(source,f'Sample[{sid}]/Channel'))
                     source_index=sdrf[0].index('Source Name')
                     owned_rows=[row for row in sdrf[1:] if row[source_index] in {sid,*[f'{sid}:channel{i+1}' for i in range(len(channels))]}]
+                    for i, channel in enumerate(channels):
+                        material = sid if len(channels)==1 else f'{sid}:channel{i+1}'
+                        channel_rows = [r for r in owned_rows if r[source_index] == material]
+                        for organism in channel.findall('Organism'):
+                            taxid = organism.get('taxid')
+                            if not taxid: continue
+                            preserved = bool(channel_rows) and all(taxid in organism_taxids(sdrf[0],r) for r in channel_rows)
+                            record(case_name,mode,'SDRF',[sid,i],'owned organism taxid',taxid,
+                                taxid if preserved else None,
+                                provenance(source,f'Sample[{sid}]/Channel[{i+1}]/Organism/@taxid'),'MSC-LIVE-003')
                     for rel in sample.findall('Relation'):
                         if rel.get('type')!='SRA':continue
                         target=rel.get('target'); accession=target.rsplit('=',1)[-1]

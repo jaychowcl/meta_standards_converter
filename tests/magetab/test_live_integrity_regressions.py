@@ -19,6 +19,7 @@ from meta_standards_converter.metadata.workflows import prepare_workflows
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.magetab.parser import AEParser
 from meta_standards_converter.sources.magetab import MAGETabInput, TextResource
+from tests.support.live_integrity_semantics import organism_taxids
 
 SOURCE = Path(__file__).parents[1] / 'fixtures/edge_cases/live-integrity-followup/GSE37703_family.xml'
 
@@ -91,3 +92,18 @@ def test_feature_extraction_is_not_nucleic_acid_extraction():
     wrong = [s['iid'] for s in package['sample'] for c in s.get('channel', [])
              if c.get('extract_protocol') == computational]
     assert not wrong, f'Computational processing misclassified as wet-lab extraction: {wrong}'
+
+
+@pytest.mark.xfail(strict=True, reason='MSC-LIVE-003: supplied GEO taxid needs an owned SDRF taxonomy identifier')
+@pytest.mark.parametrize('route', ['direct', 'prepared', 'saved-json'])
+def test_geo_taxid_reaches_the_organism_characteristic(route):
+    package = GEOParser().parse(SOURCE.read_text())[0]
+    expected = {s['iid']: s['channel'][0]['organism'][0]['taxid'] for s in package.to_mapping()['sample']}
+    assert len(expected) == 12 and set(expected.values()) == {'9606'}
+    if route != 'direct': package = prepare_workflows(package)
+    if route == 'saved-json': package = json.loads(json.dumps(package.to_mapping()))
+    document = AEConstructor().miniml2magetab(package)
+    sdrf = next(row[1] for row in document if row[0] == 'SDRF File')
+    missing = [(row[sdrf[0].index('Source Name')], organism_taxids(sdrf[0],row))
+               for row in sdrf[1:] if expected[row[sdrf[0].index('Source Name')]] not in organism_taxids(sdrf[0],row)]
+    assert not missing, f'Taxonomy identifiers lost from their organism occurrences: {missing}'

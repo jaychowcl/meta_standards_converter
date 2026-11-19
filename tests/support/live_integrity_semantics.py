@@ -41,6 +41,27 @@ def normalize(table):
     return [[header(v) for v in table[0]], *[list(row) for row in table[1:]]]
 
 
+def organism_taxids(headers, row):
+    """Read only identifiers attached to an organism characteristic occurrence."""
+    result = set()
+    for i, label in enumerate(headers):
+        if header(label).casefold() != 'characteristics[organism]': continue
+        qualifiers = []
+        for h, value in zip(headers[i+1:], row[i+1:]):
+            h = header(h)
+            if h not in QUALIFIER_HEADERS and not h.startswith('Comment['): break
+            qualifiers.append((h.casefold(), value))
+        for h, value in qualifiers:
+            if h == 'term accession number':
+                match = re.search(r'NCBITaxon[:_/#](\d+)$', str(value), re.I)
+                if match: result.add(match[1])
+                elif str(value).isdigit() and ('term source ref','NCBITaxon') in qualifiers:
+                    result.add(str(value))
+            elif h in ('comment[taxid]', 'comment[ncbi taxon id]') and str(value).isdigit():
+                result.add(str(value))
+    return result
+
+
 def row_graph(headers, row):
     assert len(headers) == len(row)
     graph, factors = [], []
