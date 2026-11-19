@@ -1,0 +1,550 @@
+[
+  {
+    "miniml_schema_version": "3.1",
+    "source": {
+      "format": "GEO MINiML",
+      "version": "0.5.0",
+      "schema_location": "http://www.ncbi.nlm.nih.gov/geo/info/MINiML http://www.ncbi.nlm.nih.gov/geo/info/MINiML.xsd"
+    },
+    "database": [
+      {
+        "iid": "GEO",
+        "name": "Gene Expression Omnibus (GEO)",
+        "public_id": "GEO",
+        "organization": "NCBI NLM NIH",
+        "web_link": "http://www.ncbi.nlm.nih.gov/geo",
+        "email": "geo@ncbi.nlm.nih.gov"
+      }
+    ],
+    "organization": [],
+    "contributor": [
+      {
+        "iid": "contrib1",
+        "person": {
+          "first": "Anna-Lena",
+          "last": "Börsch"
+        },
+        "organization": "University Hospital Münster",
+        "email": "a_boer11@uni-muenster.de",
+        "address": {
+          "line": [
+            "Domagkstraße 24"
+          ],
+          "city": "Münster",
+          "zip_code": "48149",
+          "country": "Germany"
+        }
+      },
+      {
+        "iid": "contrib2",
+        "organization": "GEO",
+        "address": {
+          "country": "USA"
+        }
+      }
+    ],
+    "platform": [
+      {
+        "iid": "GPL30173",
+        "accession": [
+          {
+            "value": "GPL30173",
+            "database": "GEO"
+          }
+        ],
+        "status": [
+          {
+            "submission_date": "2021-05-20",
+            "release_date": "2021-05-20",
+            "last_update_date": "2021-05-20",
+            "database": "GEO"
+          }
+        ],
+        "title": "NextSeq 2000 (Homo sapiens)",
+        "technology": "high-throughput sequencing",
+        "distribution": "virtual",
+        "organism": [
+          {
+            "value": "Homo sapiens",
+            "taxid": "9606"
+          }
+        ],
+        "contact_ref": [
+          {
+            "ref": "contrib2"
+          }
+        ]
+      }
+    ],
+    "sample": [
+      {
+        "iid": "GSM9651991",
+        "accession": [
+          {
+            "value": "GSM9651991",
+            "database": "GEO"
+          }
+        ],
+        "status": [
+          {
+            "submission_date": "2026-04-07",
+            "release_date": "2026-05-17",
+            "last_update_date": "2026-05-18",
+            "database": "GEO"
+          }
+        ],
+        "title": "human_CSF_Ctrl_1",
+        "type": "SRA",
+        "channel_count": "1",
+        "channel": [
+          {
+            "source": {
+              "value": "CSF"
+            },
+            "organism": [
+              {
+                "value": "Homo sapiens",
+                "taxid": "9606"
+              }
+            ],
+            "characteristics": [
+              {
+                "name": "tissue",
+                "value": "\nCSF\n      "
+              }
+            ],
+            "molecule": {
+              "value": "total RNA"
+            },
+            "extract_protocol": "\nFrozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.\nChromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics\n      "
+          }
+        ],
+        "description": "\nLibrary name: Ctrl_1\n    ",
+        "data_processing": "\nSeurat v5.1.0 in R v4.5.1\nAssembly: GRCh38\nSupplementary files format and content: h5 files for each sample\n    ",
+        "platform_ref": {
+          "ref": "GPL30173"
+        },
+        "library_strategy": "RNA-Seq",
+        "library_source": "transcriptomic",
+        "library_selection": "cDNA",
+        "instrument_model": {
+          "predefined": "NextSeq 2000"
+        },
+        "contact_ref": [
+          {
+            "ref": "contrib1"
+          }
+        ],
+        "supplementary_data": [
+          {
+            "value": "\nftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5\n    ",
+            "type": "H5"
+          }
+        ],
+        "relation": [
+          {
+            "type": "BioSample",
+            "target": "https://www.ncbi.nlm.nih.gov/biosample/SAMN57140712"
+          },
+          {
+            "type": "SRA",
+            "target": "https://www.ncbi.nlm.nih.gov/sra?term=SRX32831930"
+          }
+        ],
+        "sra_accession": [
+          "SRX32831930"
+        ],
+        "ena_accession": [
+          "SRP689887"
+        ],
+        "sra_run": [
+          {
+            "files": [
+              {
+                "filename": "PMS_Ctrl_1.bam",
+                "bytes": "1040535998",
+                "md5": "029bb086fd443a526d3b6505fedd26c3",
+                "format": "10X Genomics bam file",
+                "role": "Original",
+                "url": "https://sra-pub-src-1.s3.amazonaws.com/SRR37976431/PMS_Ctrl_1.bam.1",
+                "uri": "https://sra-pub-src-1.s3.amazonaws.com/SRR37976431/PMS_Ctrl_1.bam.1"
+              },
+              {
+                "filename": "PMS_Ctrl_1.bam",
+                "bytes": "1040535998",
+                "md5": "029bb086fd443a526d3b6505fedd26c3",
+                "format": "10X Genomics bam file",
+                "role": "Original",
+                "url": "https://sra-pub-src-1.s3.amazonaws.com/SRR37976431/PMS_Ctrl_1.bam.1",
+                "free_egress": "worldwide",
+                "access_type": "anonymous",
+                "org": "AWS",
+                "uri": "https://sra-pub-src-1.s3.amazonaws.com/SRR37976431/PMS_Ctrl_1.bam.1"
+              },
+              {
+                "filename": "SRR37976431",
+                "bytes": "403361705",
+                "md5": "68133e0bb02ddce754617ffa5446fd3e",
+                "format": "SRA Normalized",
+                "role": "Primary ETL",
+                "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR37976431/SRR37976431",
+                "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR37976431/SRR37976431"
+              },
+              {
+                "filename": "SRR37976431",
+                "bytes": "403361705",
+                "md5": "68133e0bb02ddce754617ffa5446fd3e",
+                "format": "SRA Normalized",
+                "role": "Primary ETL",
+                "url": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR37976431/SRR37976431",
+                "free_egress": "worldwide",
+                "access_type": "anonymous",
+                "org": "AWS",
+                "uri": "https://sra-pub-run-odp.s3.amazonaws.com/sra/SRR37976431/SRR37976431"
+              },
+              {
+                "filename": "SRR37976431.lite",
+                "bytes": "315436029",
+                "md5": "865e4d839f3b2775f1e381c91ba0a434",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos10/sra-pub-zq-1002/SRR037/37976/SRR37976431/SRR37976431.lite.1",
+                "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos10/sra-pub-zq-1002/SRR037/37976/SRR37976431/SRR37976431.lite.1"
+              },
+              {
+                "filename": "SRR37976431.lite",
+                "bytes": "315436029",
+                "md5": "865e4d839f3b2775f1e381c91ba0a434",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos10/sra-pub-zq-1002/SRR037/37976/SRR37976431/SRR37976431.lite.1",
+                "free_egress": "worldwide",
+                "access_type": "anonymous",
+                "org": "NCBI",
+                "uri": "https://sra-downloadb.be-md.ncbi.nlm.nih.gov/sos10/sra-pub-zq-1002/SRR037/37976/SRR37976431/SRR37976431.lite.1"
+              },
+              {
+                "filename": "SRR37976431.lite",
+                "bytes": "315436029",
+                "md5": "865e4d839f3b2775f1e381c91ba0a434",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "s3://sra-pub-zq-2/SRR37976431/SRR37976431.lite.1",
+                "free_egress": "s3.us-east-1",
+                "access_type": "aws identity",
+                "org": "AWS",
+                "uri": "s3://sra-pub-zq-2/SRR37976431/SRR37976431.lite.1"
+              },
+              {
+                "filename": "SRR37976431.lite",
+                "bytes": "315436029",
+                "md5": "865e4d839f3b2775f1e381c91ba0a434",
+                "format": "SRA Lite",
+                "role": "Primary ETL",
+                "url": "gs://sra-pub-zq-105/SRR37976431/SRR37976431.lite.1",
+                "free_egress": "gs.us-east1",
+                "access_type": "gcp identity",
+                "org": "GCP",
+                "uri": "gs://sra-pub-zq-105/SRR37976431/SRR37976431.lite.1"
+              }
+            ],
+            "run": "SRR37976431",
+            "study": "SRP689887",
+            "experiment": "SRX32831930",
+            "sample": "SRS28687296",
+            "biosample": "SAMN57140712",
+            "geo_sample": "GSM9651991",
+            "library_layout": "PAIRED",
+            "library_selection": "cDNA",
+            "library_source": "TRANSCRIPTOMIC",
+            "library_strategy": "RNA-Seq",
+            "scan_name": "GSM9651991_r1",
+            "instrument_model": "NextSeq 2000",
+            "submitted_file_name": "PMS_Ctrl_1.bam",
+            "md5": "029bb086fd443a526d3b6505fedd26c3",
+            "read_lengths": [
+              "90"
+            ]
+          }
+        ]
+      }
+    ],
+    "series": {
+      "iid": "GSE328265",
+      "accession": [
+        {
+          "value": "GSE328265",
+          "database": "GEO"
+        }
+      ],
+      "status": [
+        {
+          "submission_date": "2026-04-16",
+          "release_date": "2026-05-17",
+          "last_update_date": "2026-05-18",
+          "database": "GEO"
+        }
+      ],
+      "title": "A CSF Disease-Associated Macrophage Signature defines Progressive Multiple Sclerosis",
+      "pubmed_id": [
+        "42129775"
+      ],
+      "web_link": [
+        "https://link.springer.com/article/10.1186/s12974-026-03861-9#"
+      ],
+      "summary": "\nThis SuperSeries is composed of the SubSeries listed below.\n    ",
+      "overall_design": "\nRefer to individual Series\n    ",
+      "type": [
+        {
+          "value": "Expression profiling by high throughput sequencing"
+        }
+      ],
+      "contact_ref": [
+        {
+          "ref": "contrib1"
+        }
+      ],
+      "sample_ref": [
+        {
+          "ref": "GSM9651991"
+        }
+      ],
+      "supplementary_data": [
+        {
+          "value": "\nftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE328nnn/GSE328265/suppl/GSE328265_RAW.tar\n    ",
+          "type": "TAR"
+        }
+      ],
+      "relation": [
+        {
+          "type": "SuperSeries of",
+          "target": "GSE327243"
+        },
+        {
+          "type": "SuperSeries of",
+          "target": "GSE328264"
+        },
+        {
+          "type": "BioProject",
+          "target": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1454431"
+        }
+      ],
+      "pubmed_publication": [
+        {
+          "pubmed_id": "42129775",
+          "doi": "10.1186/s12974-026-03861-9",
+          "author_list": "Börsch AL, Riethues F, Schulte-Mecklenbeck A, Wang X, Heming M, Lu IN, Müller-Miny L, Wiendl H, Gross CC, Bernard-Valnet R, Meyer Zu Hörste G",
+          "title": "A CSF disease-associated macrophage signature defines progressive multiple sclerosis.",
+          "status": "published",
+          "status_term_source_ref": "EFO",
+          "status_term_accession_number": "EFO_0001796"
+        }
+      ],
+      "protocols": [
+        {
+          "name": "P-GSE328265-1",
+          "type": {
+            "value": "normalization data transformation protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0003816"
+          },
+          "description": "\nSeurat v5.1.0 in R v4.5.1\nAssembly: GRCh38\nSupplementary files format and content: h5 files for each sample\n    "
+        },
+        {
+          "name": "P-GSE328265-2",
+          "type": {
+            "value": "nucleic acid extraction protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0002944"
+          },
+          "description": "\nFrozen CSF was thawed at 37°C in complete growth medium (10% FBS in RPMI), washed, and then processed as described in 23, with the modification that cells were not sorted due to high cell loss observed during this step; fresh CSF was processed directly. To generate single-cell libraries, cell suspensions were loaded onto the Chromium Single Cell Controller with the Chromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics) in adherence to the manufacturer's guidelines.\nChromium Single Cell 5′ Library & Gel Bead Kit v.1.1/v2 (both from 10X Genomics\n      "
+        },
+        {
+          "name": "P-GSE328265-3",
+          "type": {
+            "value": "nucleic acid library construction protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0004184"
+          },
+          "description": ""
+        },
+        {
+          "name": "P-GSE328265-4",
+          "type": {
+            "value": "sample collection protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0005518"
+          },
+          "description": ""
+        },
+        {
+          "name": "P-GSE328265-5",
+          "type": {
+            "value": "nucleic acid sequencing protocol",
+            "term_source_ref": "EFO",
+            "term_accession_number": "EFO_0004170"
+          },
+          "description": ""
+        }
+      ],
+      "assay_paths": [
+        {
+          "steps": [
+            {
+              "kind": "source",
+              "name": "GSM9651991",
+              "sample_ref": "GSM9651991",
+              "characteristics": [
+                {
+                  "name": "organism",
+                  "value": "Homo sapiens"
+                },
+                {
+                  "name": "organism part",
+                  "value": ""
+                },
+                {
+                  "name": "developmental stage",
+                  "value": ""
+                },
+                {
+                  "name": "disease",
+                  "value": ""
+                },
+                {
+                  "name": "genotype",
+                  "value": ""
+                },
+                {
+                  "name": "tissue",
+                  "value": "\nCSF\n      "
+                }
+              ],
+              "material_type": {
+                "value": ""
+              },
+              "comments": [
+                {
+                  "name": "BioSD_SAMPLE",
+                  "value": "SAMN57140712"
+                },
+                {
+                  "name": "Unclassified File",
+                  "value": "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5"
+                },
+                {
+                  "name": "Sample_description",
+                  "value": "\nLibrary name: Ctrl_1\n    "
+                },
+                {
+                  "name": "Sample_source_name",
+                  "value": "CSF"
+                },
+                {
+                  "name": "Sample_title",
+                  "value": "human_CSF_Ctrl_1"
+                }
+              ]
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-GSE328265-4"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-GSE328265-2"
+            },
+            {
+              "kind": "extract",
+              "name": "GSM9651991",
+              "material_type": {
+                "value": "total RNA",
+                "comments": [
+                  {
+                    "name": "LIBRARY_LAYOUT",
+                    "value": "PAIRED"
+                  },
+                  {
+                    "name": "LIBRARY_SELECTION",
+                    "value": "cDNA"
+                  },
+                  {
+                    "name": "LIBRARY_SOURCE",
+                    "value": "transcriptomic"
+                  },
+                  {
+                    "name": "LIBRARY_STRATEGY",
+                    "value": "RNA-Seq"
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-GSE328265-3"
+            },
+            {
+              "kind": "assay",
+              "name": "GSM9651991",
+              "technology_type": {
+                "value": "sequencing assay",
+                "comments": [
+                  {
+                    "name": "ENA_SAMPLE",
+                    "value": "SRS28687296"
+                  },
+                  {
+                    "name": "ENA_EXPERIMENT",
+                    "value": "SRX32831930"
+                  },
+                  {
+                    "name": "ENA_RUN",
+                    "value": "SRR37976431"
+                  },
+                  {
+                    "name": "SUBMITTED_FILE_NAME",
+                    "value": "PMS_Ctrl_1.bam"
+                  },
+                  {
+                    "name": "MD5",
+                    "value": "029bb086fd443a526d3b6505fedd26c3"
+                  },
+                  {
+                    "name": "INSTRUMENT_MODEL",
+                    "value": "NextSeq 2000"
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-GSE328265-5"
+            },
+            {
+              "kind": "scan",
+              "name": "GSM9651991_r1"
+            },
+            {
+              "kind": "protocol_application",
+              "protocol_ref": "P-GSE328265-1"
+            }
+          ],
+          "comments": [
+            {
+              "name": "msc_workflow_origin",
+              "value": "generated:GEO MINiML"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {
+      "msc_workflow_preparation": {
+        "warnings": [
+          "Sample GSM9651991 file role unresolved: ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5",
+          "Sample GSM9651991 GEO library_source differs from SRA library_source; using GEO value."
+        ]
+      }
+    }
+  }
+]

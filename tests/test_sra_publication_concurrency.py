@@ -146,7 +146,7 @@ def test_outputs_match_frozen_serial_json_and_magetab_golden(workers, monkeypatc
     def hook(url, params):
         if workers == 2 and 'elink' in url and params['db'] == 'pubmed':
             time.sleep(.01)
-    expected = json.loads((Path(__file__).parent / 'fixtures/sra_publication_concurrency.json').read_text())
+    expected = json.loads((Path(__file__).parent / 'fixtures/edge_cases/metadata-integrity/reviewed/sra_publication_concurrency.json').read_text())
     actual = json.loads(json.dumps(fixture_output(workers, hook)))
     assert actual == expected
 

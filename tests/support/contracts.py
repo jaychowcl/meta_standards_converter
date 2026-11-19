@@ -150,6 +150,8 @@ def artifacts(out, workspace):
 
 def assert_expected(case, converter, out, workspace):
     expected_root = case / "expected" / converter
+    if case == GEO and converter in {"geo2json", "geo2ae", "json2ae"}:
+        expected_root = FIXTURES / "edge_cases/metadata-integrity/reviewed/GSE328265" / converter
     assert expected_root.is_dir(), f"Missing reviewed expectation: {expected_root}"
     expected = {}
     for path in sorted(expected_root.iterdir()):

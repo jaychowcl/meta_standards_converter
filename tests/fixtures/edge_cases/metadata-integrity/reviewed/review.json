@@ -1,0 +1,63 @@
+{
+  "production_revision": "8b37fcd029c2120094d8c211aa66c0accc410db5",
+  "historical_fixtures_unchanged": true,
+  "files": [
+    {
+      "original": "tests/fixtures/studies/GSE328265/expected/geo2json/GSE328265.json",
+      "original_sha256": "16e1e3cbdb96849baeb16ddc2512402387b969ef3a4b4dea854afa37be7b0dbc",
+      "derivative": "GSE328265/geo2json/GSE328265.json",
+      "sha256": "795879f1b5f5072b6c986d3e80ec40289e5216ade5f664348118db811e75546f",
+      "reason": "Canonical graph and source-file provenance; unknown file links retained; explicit read roles only."
+    },
+    {
+      "original": "tests/fixtures/studies/GSE328265/expected/geo2ae/E-GEOD-328265.idf.txt",
+      "original_sha256": "90488414b04c0158c7020a79191541d4919fad7d69f47c679c230a3b1f6cb811",
+      "derivative": "GSE328265/geo2ae/E-GEOD-328265.idf.txt",
+      "sha256": "e5fd5c6e6ae88ab799827519455e40de9b9ef8af09f716f4c902829d4f7f6a02",
+      "reason": "Canonical graph and source-file provenance; unknown file links retained; explicit read roles only."
+    },
+    {
+      "original": "tests/fixtures/studies/GSE328265/expected/geo2ae/E-GEOD-328265.sdrf.txt",
+      "original_sha256": "2e449183220ab1d666d4d6f4a2d957c0e1d63d4f02c446c079c38a82020a1788",
+      "derivative": "GSE328265/geo2ae/E-GEOD-328265.sdrf.txt",
+      "sha256": "3d39d1719dedc5cb7af9702287ba3de93396bdc7c2bf16f3e06760b826c593ed",
+      "reason": "Canonical graph and source-file provenance; unknown file links retained; explicit read roles only."
+    },
+    {
+      "original": "tests/fixtures/studies/GSE328265/expected/json2ae/E-GEOD-328265.idf.txt",
+      "original_sha256": "7bc281af10ff68eb6afbafdd7528fe6502d12d9d431f439d96952cd13106f683",
+      "derivative": "GSE328265/json2ae/E-GEOD-328265.idf.txt",
+      "sha256": "ed37927e888264ba165d27dc39cf14c79097deb1573a628d6437599d53a2b4cf",
+      "reason": "Canonical graph and source-file provenance; unknown file links retained; explicit read roles only."
+    },
+    {
+      "original": "tests/fixtures/studies/GSE328265/expected/json2ae/E-GEOD-328265.sdrf.txt",
+      "original_sha256": "6410cf500d6f94ae3f294e8821200ff4da0fbdc6ffb8a0f0141f29000ab8ea70",
+      "derivative": "GSE328265/json2ae/E-GEOD-328265.sdrf.txt",
+      "sha256": "2605515965da60083971afcda64c408ab9239752044688e3aa555ec18adb2d4f",
+      "reason": "Canonical graph and source-file provenance; unknown file links retained; explicit read roles only."
+    },
+    {
+      "original": "tests/fixtures/chemistry/routing/GSM9254695.sdrf.txt",
+      "original_sha256": "591712b2c444199ab638caf0fa881ae483efd750a17c599e84654642b0efb168",
+      "derivative": "GSM9254695.sdrf.txt",
+      "sha256": "1a83bdde2b24952c5098496ebcbbda1c22d9ed1b5c66d112d174e178fa9629c7",
+      "reason": "GEO-generated growth precedes treatment; explicit definitions and all other fields unchanged."
+    },
+    {
+      "original": "tests/fixtures/sra_publication_concurrency.json",
+      "original_sha256": "ac746ac46b9f929dbf6f3c15f18b748a544b1fd2292a838d23ab4ffa6ea1571c",
+      "derivative": "sra_publication_concurrency.json",
+      "sha256": "71f8d10e3c99c2af11a84c5c7911f8e359581a1bf1ff2346084748bc1706d1f9",
+      "reason": "One blank protocol reference and two applications consistently renamed after redundant graph construction was removed."
+    }
+  ],
+  "review_requirement": "Reviewed against frozen GEO/SRA source fields and pre-repair regressions; protocol-key changes affect one definition and its two applications only. Historical goldens remain regression evidence, not independent scientific truth.",
+  "reviewed_changes": [
+    "Canonical graph/protocol definitions added to new JSON without changing pre-existing source values",
+    "GSE328265 Original SRA BAM filename/checksum copied from SRAFile supertype=Original; older JSON lacks these and does not gain them",
+    "Unknown H5 and TAR links retained at sample/study scope",
+    "GSM9254695 growth before treatment",
+    "SRP250911 blank protocol identity consistently renamed"
+  ]
+}
