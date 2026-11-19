@@ -6791,7 +6791,7 @@ Internal interfaces at this boundary:
 `AtlasV1Reader` accepts native Atlas 1.0, 1.1 and 1.2. The name describes the
 major wire family. Atlas 1.2 adds independent metadata/review `OperationStatusV2`
 axes, accession repository identity, full accession assessments and occurrence
-provenance. `atlas_v1.review.validate_review_details` validates the shared AC
+provenance. `meta_standards_converter.atlas_v1.review.validate_review_details` validates the shared AC
 assessment shape without importing TA or claiming source grounding. A failed or
 not-run review cannot retain a judgement, confidence or accepted assessment.
 Missing historical states remain unknown. The reader never fills missing source
