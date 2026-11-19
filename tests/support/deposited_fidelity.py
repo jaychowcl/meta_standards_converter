@@ -88,7 +88,7 @@ def without_derived_files(table):
 
 
 
-def without_added_protocol_placeholders(source_idf, exported_idf):
+def without_added_protocol_placeholders(source_idf, exported_idf, *, allow_mixed_rows=False):
     """Verify the bounded export additions before the unchanged source oracle.
 
     Only new, wholly blank collection/sequencing definitions and their bare
@@ -111,18 +111,18 @@ def without_added_protocol_placeholders(source_idf, exported_idf):
         assert all(values[i] == '' for label, values in rows.items() if label.startswith('Protocol ') and
                    label not in {'Protocol Name', 'Protocol Type', 'Protocol Term Source REF', 'Protocol Term Accession Number'})
         kinds[name] = kind
-    table = rows['SDRF File'][0]
+    table = [row[:] for row in rows['SDRF File'][0]]
     header = table[0]
     removed, referenced = set(), set()
     for i, label in enumerate(header):
         values = {r[i] for r in table[1:]} - {''}
         if label != 'Protocol REF' or not values & additions:
             continue
-        assert values <= additions  # Never hide a deposited application.
+        assert allow_mixed_rows or values <= additions  # Never hide a deposited application.
         assert i + 1 == len(header) or header[i + 1] in NODE_HEADERS or header[i + 1].startswith('Factor Value[')
         for row in table[1:]:
             value = row[i]
-            if not value:
+            if value not in additions:
                 continue
             before = next((h for h, v in zip(reversed(header[:i]), reversed(row[:i])) if h in NODE_HEADERS and v), None)
             after = next((h for h, v in zip(header[i + 1:], row[i + 1:]) if h in NODE_HEADERS and v), None)
@@ -130,8 +130,15 @@ def without_added_protocol_placeholders(source_idf, exported_idf):
                 assert before in {'Source Name', 'Sample Name'}, 'Collection must follow an active source/sample node'
             else:
                 assert after in {'Scan Name', 'Array Data File', 'Array Data Matrix File'} or before in {'Assay Name', 'Extract Name'}, 'Sequencing must border an active assay/read node'
-        removed.add(i)
-        referenced.update(values)
+        if values <= additions:
+            removed.add(i)
+        else:
+            # Sparse legacy graphs may align new and authored applications in
+            # one column. Clear only validated additions; retain every old cell.
+            for row in table[1:]:
+                if row[i] in additions:
+                    row[i] = ''
+        referenced.update(values & additions)
     assert referenced == additions
     return [[v for i, v in enumerate(row) if i not in removed] for row in table]
 

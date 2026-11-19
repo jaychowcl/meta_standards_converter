@@ -6956,6 +6956,9 @@ Execution and evidence flow:
    Placement follows populated nodes on each row, so blank intervening columns
    do not invent a downstream entity; a genuinely populated downstream node
    still causes an invalid collection placement to fail.
+   The older-JSON review can clear validated additions in a column shared with
+   original protocol applications, while retaining that column and every
+   original reference; the unchanged strict row/cell oracle then compares it.
 6. Reports separate source checks, curated-reference agreement, curated-input
    preservation and export exclusions. Reference-only annotation does not prove
    human curation and does not inflate converter-failure counts. Standard native

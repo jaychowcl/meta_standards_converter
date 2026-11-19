@@ -176,6 +176,17 @@ def test_placeholder_placement_uses_populated_nodes_on_each_sparse_row(downstrea
             ['Source Name', 'Scan Name'], ['sample', '']]
 
 
+def test_legacy_projection_retains_original_applications_in_mixed_columns():
+    table = [['Source Name', 'Protocol REF', 'Extract Name'], ['s1', 'blank', 'e1'], ['s2', 'original', 'e2']]
+    before = deepcopy(table)
+    idf = [['Protocol Name', 'original', 'blank'], ['Protocol Type', 'treatment protocol', 'sample collection protocol'],
+           ['Protocol Term Source REF', '', 'EFO'], ['Protocol Term Accession Number', '', 'EFO_0005518'],
+           ['Protocol Description', 'Supplied procedure', ''], ['SDRF File', table]]
+    projected = without_added_protocol_placeholders([['Protocol Name', 'original']], idf, allow_mixed_rows=True)
+    assert projected == [table[0], ['s1', '', 'e1'], ['s2', 'original', 'e2']]
+    assert table == before
+
+
 @pytest.mark.parametrize('mutation', [None, 'description', 'type', 'accession', 'mixed-reference', 'qualifier', 'position'])
 def test_deposited_projection_only_accepts_bare_blank_required_additions(mutation):
     source = [['Source Name', 'Protocol REF', 'Extract Name'], ['s', 'original', 'e']]

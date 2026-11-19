@@ -146,7 +146,7 @@ def legacy_exports(source, root):
             differences = legacy_idf_comparison(previous, current, name, mode)
             old_sdrf = next(r[1] for r in previous if r[0] == 'SDRF File')
             try:
-                new_sdrf = without_added_protocol_placeholders(previous, current)
+                new_sdrf = without_added_protocol_placeholders(previous, current, allow_mixed_rows=True)
                 sdrf = {'verdict': 'preserved', **assert_deposited_sdrf(old_sdrf, new_sdrf, accession=reference or accession)}
             except (AssertionError, KeyError, StopIteration) as exc:
                 sdrf = {'verdict': 'discrepancy', 'reason': str(exc)}
@@ -272,7 +272,7 @@ def review(source, candidate, output, expected_revision):
         previous, current = read(previous_path)[0], read(current_path)[0]
         original_sdrf = next(r[1] for r in previous if r[0] == 'SDRF File')
         reference = next(ref or accession for provider, accession, ref in CASES if provider + '-' + accession == name)
-        sdrf = assert_deposited_sdrf(original_sdrf, without_added_protocol_placeholders(previous, current), accession=reference)
+        sdrf = assert_deposited_sdrf(original_sdrf, without_added_protocol_placeholders(previous, current, allow_mixed_rows=True), accession=reference)
         fields = legacy_idf_comparison(previous, current, name, mode)
         assert not any(r['classification'] == LOSS for r in fields), (name, mode)
         record['results'].append({'case': name, 'mode': mode, 'input_unchanged': saved['input_unchanged'],
