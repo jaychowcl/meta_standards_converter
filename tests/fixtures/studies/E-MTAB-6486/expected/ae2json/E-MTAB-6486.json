@@ -520,6 +520,14 @@
         {
           "type": "related experiment",
           "target": "E-MTAB-6485"
+        },
+        {
+          "type": "related experiment",
+          "target": "E-MTAB-6483"
+        },
+        {
+          "type": "related experiment",
+          "target": "E-MTAB-6432"
         }
       ],
       "pubmed_publication": [

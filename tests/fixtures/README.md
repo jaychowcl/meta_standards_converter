@@ -142,3 +142,9 @@ is rewritten. Tests expect three IDF contacts: the shared-email GEO/ArrayExpress
 pair consolidates, while BioSample and name-only ArrayExpress entries stay
 separate. Constructed conflict mutations are made only in tests. Original source
 JSON, sealed IDF/SDRF references and historic golden artifacts remain unchanged.
+
+The E-MTAB-6486 `expected/ae2json` output now includes all three supplied
+RelatedExperiment rows, adding E-MTAB-6483 and E-MTAB-6432 after E-MTAB-6485.
+Only this reviewed generated expectation and its checksum change; the original
+IDF/SDRF and supplied DOI placeholder remain unchanged. The fixture-evidence
+test derives relationship order directly from those original IDF rows.

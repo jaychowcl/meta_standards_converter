@@ -109,6 +109,11 @@ def test_public_magetab_expectation_preserves_sample_grouping_and_fastqs():
     with (AE / "inputs/E-MTAB-6486.sdrf.txt").open() as handle:
         rows = list(csv.DictReader(handle, delimiter="\t"))
     package = json.loads((AE / "expected/ae2json/E-MTAB-6486.json").read_text())[0]
+    with (AE / "inputs/E-MTAB-6486.idf.txt").open() as handle:
+        related = [value for row in csv.reader(handle, delimiter="\t")
+                   if row and row[0].replace(" ", "") == "Comment[RelatedExperiment]"
+                   for value in row[1:] if value]
+    assert package["series"]["relation"] == [{"type": "related experiment", "target": value} for value in related]
     assert len(rows) == 12
     assert [s["iid"] for s in package["sample"]] == list(dict.fromkeys(r["Source Name"] for r in rows))
     assert len(package["sample"]) == 6
