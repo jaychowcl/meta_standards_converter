@@ -172,8 +172,10 @@ def geo_checks(docs, package):
             target = (actual.get('channel', []) + [{}] * (index + 1))[index]
             for tag, field in [('Source', 'source'), ('Molecule', 'molecule'), ('Label', 'label')]:
                 raw = channel.findtext(tag)
+                value = target.get(field)
+                if isinstance(value, dict): value = value.get('value')
                 if raw and raw.strip(): checks.append(comparison(f'{iid}/channel/{index + 1}', field, raw,
-                    (target.get(field) or {}).get('value'), provenance(doc, f'{iid}/Channel[{index + 1}]/{tag}')))
+                    value, provenance(doc, f'{iid}/Channel[{index + 1}]/{tag}')))
             for tag, field in [('Growth-Protocol', 'growth_protocol'), ('Treatment-Protocol', 'treatment_protocol'),
                                ('Extract-Protocol', 'extract_protocol'), ('Label-Protocol', 'label_protocol')]:
                 raw = channel.findtext(tag)
@@ -192,9 +194,19 @@ def geo_checks(docs, package):
                                 for value in target.get(field, [])]
                     checks.append(comparison(f'{iid}/channel/{index + 1}', field, expected, observed,
                                              provenance(doc, f'{iid}/Channel[{index + 1}]/{tag}')))
+    # GEO family XML can contain unreferenced global contributor records. The
+    # package is the series closure, so derive ownership from source refs.
+    series_nodes = [n for n in root.findall('Series') if n.get('iid') == package['series']['iid']]
+    sample_refs = {n.get('ref') for owner in series_nodes for n in owner.iter('Sample-Ref')}
+    sample_nodes = [n for n in root.findall('Sample') if n.get('iid') in sample_refs]
+    platform_refs = {n.get('ref') for owner in sample_nodes for n in owner.iter('Platform-Ref')}
+    platform_nodes = [n for n in root.findall('Platform') if n.get('iid') in platform_refs]
+    contributor_refs = {n.get('ref') for owner in [*series_nodes, *sample_nodes, *platform_nodes]
+                        for n in owner.iter() if n.tag in {'Contributor-Ref', 'Contact-Ref'}}
     contributors = {c['iid']: c for c in package.get('contributor', []) if 'iid' in c}
     for node in root.findall('Contributor'):
         iid = node.get('iid')
+        if iid not in contributor_refs: continue
         actual = contributors.get(iid, {})
         for tag, field in [('First', 'first'), ('Middle', 'middle'), ('Last', 'last')]:
             raw = node.findtext('Person/' + tag)

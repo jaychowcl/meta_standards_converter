@@ -164,8 +164,11 @@ def replay_input(root, spec):
     for mode in MODES:
         stage = case / mode; phase = {}; results[mode] = phase
         manifest = case / 'http' / (mode + '.manifest.json')
-        if not manifest.exists():
-            phase['json_limitation'] = 'Capture phase unavailable within input budget'
+        unavailable = acquisition['phases'].get(mode, {}).get('limitation')
+        if not manifest.exists() or unavailable:
+            for route in ('json', 'magetab', 'saved-0'):
+                phase[route + '_limitation'] = 'Acquisition unavailable: ' + (unavailable or 'phase outside input budget')
+            write_json(case / 'replay.json', results)
             continue
         for output in ('json', 'magetab'):
             try:

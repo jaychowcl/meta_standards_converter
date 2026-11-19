@@ -30,6 +30,15 @@ DEPOSITED_PANEL = (
 
 # Enumerated deposited spellings; no generic whitespace/case normalization.
 HEADER_ALIASES = {
+    # Exact spellings in the additional GSE13398/31356/52778 deposited inputs.
+    'Characteristics [site]': 'Characteristics[site]',
+    'Characteristics [cell line]': 'Characteristics[cell line]',
+    'Comment [Sample_characteristics]': 'Comment[Sample_characteristics]',
+    'Comment [ArrayExpress FTP file]': 'Comment[ArrayExpress FTP file]',
+    'Comment [ercc_mix]': 'Comment[ercc_mix]',
+    'Factor Value [SITE]': 'Factor Value[SITE]',
+    'FactorValue [TISSUE ORIGIN]': 'Factor Value[TISSUE ORIGIN]',
+    'FactorValue [treatment]': 'Factor Value[treatment]',
     **{f'Comment [{name}]': f'Comment[{name}]' for name in (
         'ENA_SAMPLE', 'Sample_description', 'Sample_source_name', 'Sample_title',
         'INSTRUMENT_MODEL', 'LIBRARY_LAYOUT', 'LIBRARY_SELECTION', 'LIBRARY_SOURCE',

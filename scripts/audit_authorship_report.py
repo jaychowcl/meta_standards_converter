@@ -128,6 +128,10 @@ def build(root, *, candidate=False, cohort=None):
             if candidate:
                 detail['candidate_json_equals_baseline_capture'] = read(package_path) == read(output / 'baseline-source-json/payload-0.json')
                 detail['saved_json_origin'] = 'fresh candidate source-to-JSON conversion'
+            elif cohort:
+                detail['saved_json_origin'] = 'fresh source-to-JSON conversion'
+                captured = output / 'captured-json/payload-0.json'
+                detail['replayed_json_equals_capture'] = read(package_path) == read(captured) if captured.exists() else None
             else:
                 detail['replayed_json_equals_capture'] = read(package_path) == read(output / 'replayed-json/payload-0.json')
             saved_path = output / 'saved-0-magetab/payload-0.json'

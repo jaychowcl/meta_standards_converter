@@ -79,3 +79,53 @@ def test_selected_evidence_excludes_unused_reference_and_preserves_native_snapsh
     assert coverage['source_samples'] == ['ERS1']
     (tmp_path / 'snapshot.json').write_text('{}')
     with pytest.raises(AssertionError, match='corrupt native snapshot'): documents(tmp_path, 'curators')
+
+
+@pytest.mark.parametrize('swap', [False, True])
+def test_geo_channel_scalar_labels_keep_channel_ownership(swap):
+    from tests.test_authorship_sources import document
+    from tests.support.authorship_sources import geo_checks
+    from tests.support.authorship_fidelity import EQUIVALENT, LOSS
+    docs = [document('<MINiML><Sample iid="GSM1"><Channel><Label>Cy3</Label></Channel>'
+                     '<Channel><Label>Cy5</Label></Channel></Sample></MINiML>')]
+    labels = ['Cy5', 'Cy3'] if swap else ['Cy3', 'Cy5']
+    package = {'series': {'iid': 'GSE1'}, 'sample': [{'iid': 'GSM1', 'channel': [{'label': v} for v in labels]}]}
+    checks = geo_checks(docs, package)
+    assert len(checks) == 2
+    assert {r['classification'] for r in checks} == {LOSS if swap else EQUIVALENT}
+
+
+@pytest.mark.parametrize('original,canonical', [
+    ('Characteristics [site]', 'Characteristics[site]'),
+    ('Characteristics [cell line]', 'Characteristics[cell line]'),
+    ('Comment [Sample_characteristics]', 'Comment[Sample_characteristics]'),
+    ('Comment [ArrayExpress FTP file]', 'Comment[ArrayExpress FTP file]'),
+    ('Comment [ercc_mix]', 'Comment[ercc_mix]'),
+    ('Factor Value [SITE]', 'Factor Value[SITE]'),
+    ('FactorValue [TISSUE ORIGIN]', 'Factor Value[TISSUE ORIGIN]'),
+    ('FactorValue [treatment]', 'Factor Value[treatment]'),
+])
+def test_observed_deposited_header_spellings_preserve_values_and_qualifiers(original, canonical):
+    from tests.support.deposited_fidelity import assert_deposited_sdrf
+    source = [['Source Name', original, 'Term Source REF'], ['sample', 'original', 'EFO']]
+    target = [['Source Name', canonical, 'Term Source REF'], ['sample', 'original', 'EFO']]
+    assert_deposited_sdrf(source, target, accession='audit')
+    target[1][1] = 'different'
+    with pytest.raises(AssertionError): assert_deposited_sdrf(source, target, accession='audit')
+    target[1][1] = 'original'; target[1][2] = 'wrong vocabulary'
+    with pytest.raises(AssertionError): assert_deposited_sdrf(source, target, accession='audit')
+
+
+def test_geo_contributor_scope_uses_source_relationships_not_generated_presence():
+    from tests.test_authorship_sources import document
+    from tests.support.authorship_sources import geo_checks
+    from tests.support.authorship_fidelity import LOSS
+    docs = [document('<MINiML><Series iid="GSE1"><Sample-Ref ref="GSM1"/></Series>'
+        '<Sample iid="GSM1"><Contact-Ref ref="owned"/></Sample>'
+        '<Contributor iid="owned"><Email>owned@example.org</Email></Contributor>'
+        '<Contributor iid="orphan"><Email>platform@example.org</Email></Contributor></MINiML>')]
+    checks = geo_checks(docs, {'series': {'iid': 'GSE1'}, 'sample': [{'iid': 'GSM1'}], 'contributor': []})
+    contacts = [c for c in checks if c['scope'].startswith('contact/')]
+    assert len(contacts) == 1
+    assert contacts[0]['scope'] == 'contact/owned'
+    assert contacts[0]['classification'] == LOSS
