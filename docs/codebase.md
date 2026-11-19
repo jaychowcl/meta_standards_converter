@@ -6870,6 +6870,102 @@ exports do not generate `Comment[ArrayExpressSubmissionDate]`; supplied dates ar
 source data. The deposited-source oracle applies the explicit derived-file
 projection before comparing every remaining row, value and qualifier.
 
+<a id="authorship-curated-audit"></a>
+### Publication authors and complete curated metadata audit
+
+The audit at baseline `942ef678e9625ed61b93438c02fd65b58079f466` separates three
+questions: preservation of supplied source evidence, agreement with an existing
+deposited conversion, and preservation when that deposited conversion itself is
+the input. Passing execution/schema validation does not establish any of these
+scientific fidelity claims. Production repairs and integration-pin changes are
+outside this audit's scope.
+
+`scripts/audit_authorship.py` provides `capture`, `replay`, `deposited`, `frozen`
+and `report`. It refuses to label evidence with the baseline when production
+source differs from that revision. Its declared cohort is GSE100/60450/52564, E-MTAB-6486, SRA
+SRP045534, ENA ERP000263, SRP002056 through both SRA and ENA, and DRP000001
+through ENA. The comparison references are the matching explicit E-GEOD links,
+E-MTAB-6486 and E-MTAB-308. DRP000001 has no verified curated counterpart.
+The existing 18-study deposited panel and GSE328265 Unicode fixture run offline.
+The complete `studies/E-MTAB-6486/inputs` resources are used; the similarly named
+`arrayexpress` parser unit fixture is a reduced synthetic sample and is not a
+full deposited reference.
+
+Execution and evidence flow:
+
+1. Fresh capture runs `off`, `curators`, then `standard` with expansion disabled.
+   Linked-reference/peer retrieval is disabled for the first two modes. A single
+   per-input 300-second/200-physical-request ceiling spans all modes, alongside
+   MSC's own runtime budget, normal provider pacing and one network worker.
+2. `tests/support/authorship_capture.py` records HTTP adapter responses without
+   changing the converter. Original decoded application-body bytes are retained
+   by SHA-256, with request identity, timestamps and phase provenance. Successful
+   earlier-phase bodies are reused explicitly; an incomplete body cannot become
+   a replayable success. Existing captures fail closed instead of being refreshed.
+3. The existing `ReplayTransport` disables network/process escape and replays
+   source-to-JSON and direct-to-MAGE-TAB conversions. Saved JSON is separately
+   exported with enrichment off and an empty request manifest. The runner saves
+   result axes, actual JSON and serialized IDF/SDRF, and compares route outputs.
+4. `tests/support/authorship_sources.py` independently reads raw XML/JSON:
+   PubMed identities/order/name components, GEO study/sample/channel/contact
+   fields and protocols, scoped BioSample contacts, and native study-listed
+   sample/run coverage. Additional linked assembly/analysis runs do not expand
+   the read-study denominator. No production parser provides the expected values.
+5. `tests/support/authorship_fidelity.py` extends the independent deposited oracle
+   with full IDF groups and conservative paired-source joins. It retains repeated
+   publications/contacts/protocols and qualifier ownership. Whole publication
+   columns may reorder; swapping DOI ownership between PMIDs fails. All populated
+   cells are inventoried. Unresolved row/graph correspondence and unscoped literal
+   source candidates remain verification limitations, never automatic passes.
+6. `scripts/audit_authorship_report.py` writes `REPORT.md`, `summary.json`,
+   per-case assessments, per-field source/generated/reference JSONL and explicit
+   derived-file exclusions. Same-reference accession and byte consumption are
+   reported separately so `standard` agreement is not mistaken for independent
+   conversion fidelity. Reference-only annotation does not prove human curation.
+
+The local evidence bundle is
+`/home/chow/projects/embl/runs/gsk_ThematicAtlases_adapter/.dev/msc-authorship-audit/run-20261119/`.
+Use its recorded environment and isolated source worktree. The reused environment's
+editable installation still points at the primary checkout, so tests require an
+explicit audit `PYTHONPATH`; the standalone runner prepends its own source tree.
+No dependency installation is required. Pytest 8.4.2 was used despite the source's
+newer test-extra minimum; dependency checking and actual test results are recorded
+separately. These are focused audit checks, not a full-package release gate.
+
+```sh
+MSC_AUDIT_PY=/home/chow/projects/embl/runs/gsk_ThematicAtlases_adapter/.venv/bin/python
+# Run from the isolated audit MSC worktree.
+"$MSC_AUDIT_PY" scripts/audit_authorship.py replay --bundle ../run-20261119
+"$MSC_AUDIT_PY" scripts/audit_authorship.py deposited --bundle ../run-20261119
+"$MSC_AUDIT_PY" scripts/audit_authorship.py frozen --bundle ../run-20261119
+"$MSC_AUDIT_PY" scripts/audit_authorship.py report --bundle ../run-20261119
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" "$MSC_AUDIT_PY" -m pytest --full -q -p no:cacheprovider tests/magetab/test_deposited_fidelity_gate.py tests/magetab/test_authorship_deposited_idf.py tests/magetab/test_authorship_audit_comparators.py tests/test_authorship_capture.py tests/test_authorship_sources.py tests/archive/citations/test_authorship_audit_regressions.py
+# Deliberately expose the unresolved defects: expected exit 1, 12 failed/2 passed.
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" "$MSC_AUDIT_PY" -m pytest -q -p no:cacheprovider --runxfail tests/archive/citations/test_authorship_audit_regressions.py
+```
+
+Confirmed, unfixed defects are `MSC-AUTH-001` (native PubMed Initials-only and
+Suffix loss in `miniml/archive_publications.py`), `MSC-AUTH-002` (untagged GEO
+characteristics dropped by the mapping-only migration fold), and `MSC-AUTH-003`
+(recognized repeated IDF rows read only from the first row by `AEParser._values`).
+The strict expected failures cover the affected JSON and MAGE-TAB stages.
+The real E-MTAB-6486 acceptance check permits only its two exact known lost
+RelatedExperiment values while continuing to gate all other supplied metadata.
+The complete 18-study panel preserves supplied IDF annotations and all eligible
+SDRF cells; E-MTAB-6486 preserves SDRF but fails those two IDF relationships.
+
+Narrow documented comparison rules retain their scope: enumerated bracket-spacing
+aliases, trailing empty IDF padding, importer boundary whitespace in contacts and
+study descriptions, consolidation of identical ontology declarations, and the
+existing derived-file exclusion. E-MTAB-6486 additionally has two-space blank
+`Factor Value[dose]` and eight-space blank `Unit[dose unit]` control cells. No
+global whitespace normalization or scientific-value erasure is permitted.
+Negative controls verify identity swaps, qualifier/owner swaps, repeated
+occurrences, two-channel joins, run subsets, ambiguous joins and curation-only
+classification. See [MAGE-TAB 1.1](https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf)
+and the [NLM Author model](https://dtd.nlm.nih.gov/ncbi/pubmed/doc/out/250101/el-Author.html)
+for the independent representation basis.
+
 ### Fidelity service symbols
 
 | Symbol | Responsibility |

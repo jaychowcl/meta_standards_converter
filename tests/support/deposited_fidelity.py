@@ -56,6 +56,10 @@ BLANK_LITERALS = {
     'E-GEOD-52564': {'Term Source REF': ('  ',), 'Term Accession Number': ('  ', '        ')},
     'E-GEOD-60450': {'Term Source REF': ('  ',), 'Term Accession Number': ('  ',)},
     'E-MTAB-308': {'Characteristics[Age]': ('  ',), 'Unit[TimeUnit]': ('  ',), 'Factor Value[AGE]': ('  ',)},
+    # Full, unmodified 2026-09-10 study fixture: six control rows have these
+    # blank dose/unit cells after Factor Value[compound]. No other literal
+    # or scientific value is normalized by this accession-specific rule.
+    'E-MTAB-6486': {'Factor Value[dose]': ('  ',), 'Unit[dose unit]': ('        ',)},
 }
 OPTIONAL_EMPTY_COLUMNS = {'E-MTAB-16192': frozenset({'Derived Array Data File'})}
 NODE_HEADERS = frozenset({'Source Name', 'Sample Name', 'Extract Name', 'Labeled Extract Name',
