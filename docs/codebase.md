@@ -6952,6 +6952,26 @@ Both historical baseline guards remain in place. Candidate replay rejects dirty
 or mismatched revisions, wrong imported-code origins, overlapping/existing output
 directories and altered source seals. It generates fresh JSON before saved-JSON
 export, records legacy exports separately and keeps unavailable routes unavailable.
+
+The original matrix also checks the final clean revision. Its older-JSON review
+uses an independent oracle: distinct channel identities must bind to original
+channel occurrences, added file metadata must match the original sample/run/file,
+and only empty unqualified protocol columns or the evidenced generated GEO
+growth/treatment adjacency can transform. Qualified or repeated supplied
+applications are never excused. Every accepted transformation is recorded.
+
+Additional outcome checks and scientific copies are reproducible with
+`scripts/audit_integrity_acceptance.py` and
+`scripts/audit_integrity_scientific.py`. Both read hash-sealed inputs and require
+fresh outputs. Scientific copies retain before/after values, exact entities,
+source evidence and rationale in a separate change ledger. They use existing
+characteristics, comments and protocol parameters, not unrestricted harmonization
+patches. Barcode assignments, the DMSO concentration conflict and unsupported
+contact identity joins remain review records. Earlier DOI derivatives are copied
+with both hashes. Timing worker `scripts/audit_integrity_timing.py` verifies clean
+revision/import origin, warms once and records wall/CPU time, process peak RSS,
+stage events, output counts and hashes under network isolation. Run workers in
+alternating baseline/candidate order without competing heavy validation jobs.
 The reviewed scientific derivatives use existing model fields with explicit
 before/after evidence records, never unrestricted harmonization patches or
 accession-specific production rules. Historical reports/fixtures remain unchanged.

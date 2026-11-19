@@ -151,7 +151,12 @@ def legacy_exports(source, root):
             old_sdrf = next(r[1] for r in previous if r[0] == 'SDRF File')
             try:
                 new_sdrf = without_added_protocol_placeholders(previous, current, allow_mixed_rows=True)
+                from tests.support.integrity_legacy import reviewed_legacy_tables
+                definitions = dict(zip(next(r[1:] for r in previous if r[0] == 'Protocol Name'),
+                                       next(r[1:] for r in previous if r[0] == 'Protocol Description')))
+                old_sdrf, new_sdrf, reviewed = reviewed_legacy_tables(read(saved), old_sdrf, new_sdrf, definitions)
                 sdrf = {'verdict': 'preserved', **assert_deposited_sdrf(old_sdrf, new_sdrf, accession=reference or accession)}
+                sdrf['reviewed_transformations'] = reviewed
             except (AssertionError, KeyError, StopIteration) as exc:
                 sdrf = {'verdict': 'discrepancy', 'reason': str(exc)}
             record = {'case': name, 'mode': mode, 'input_sha256': before, 'input_unchanged': True,
@@ -351,6 +356,8 @@ def run(source, output, expected_revision):
     summary = build(root, candidate=True)
     checks = validate(summary, legacy, read(root / 'frozen-GSE328265/assessment.json'))
     checks['SRP045534_contacts_four_to_three'] = contact_acceptance(source, root)
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip() == environment['tested_revision'], 'Candidate HEAD changed during replay'
+    assert not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], cwd=REPO, text=True), 'Candidate checkout changed during replay'
     environment.update(source_seal_after=verify_seal(source), finished_at=utc())
     assert environment['source_seal_after'] == environment['source_seal_before']
     write_json(root / 'candidate-environment.json', environment)

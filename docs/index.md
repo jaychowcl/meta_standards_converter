@@ -657,7 +657,7 @@ canonical guide together when an interface, workflow, or contract changes.
   title: Canonical workflows, file identity and semantic integrity
   anchor: metadata-integrity
   purpose: Shared network-free typed workflow preparation, channel identity, file provenance and role resolution, semantic errors versus scientific review, sealed candidate replay.
-  keywords: prepare_workflows, AssayPath, ProtocolApplication, channel occurrence, msc_sample, blank owner, CEL, FASTQ, checksums, submitted files, unpaired reads, taxonomy, qualifier ownership, biological units, candidate replay, metadata-integrity-validation
+  keywords: prepare_workflows, AssayPath, ProtocolApplication, channel occurrence, msc_sample, blank owner, CEL, FASTQ, checksums, submitted files, unpaired reads, taxonomy, qualifier ownership, biological units, candidate replay, reviewed derivatives, legacy transformations, audit_integrity_acceptance, audit_integrity_scientific, audit_integrity_timing, metadata-integrity-validation
   link: [Open section](codebase.md#metadata-integrity)
 
 - id: authorship-curated-audit
