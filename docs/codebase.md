@@ -6972,6 +6972,15 @@ with both hashes. Timing worker `scripts/audit_integrity_timing.py` verifies cle
 revision/import origin, warms once and records wall/CPU time, process peak RSS,
 stage events, output counts and hashes under network isolation. Run workers in
 alternating baseline/candidate order without competing heavy validation jobs.
+
+`scripts/audit_integrity_legacy.py` separately reviews the additional cohort's
+older JSON. It accepts renamed generated blank required-protocol placeholders
+only when every definition fact agrees and the original name was not authored;
+recovered CEL links and completed file facts must belong to the exact source
+sample/run/URI. Its control tests reject wrong owners, conflicting digests and
+authored protocol renames. The complete source-ledger copies and field-level
+results live in `.dev/msc-authorship-audit/metadata-integrity-validation/` in the
+adapter workspace; earlier sealed reports are historical evidence.
 The reviewed scientific derivatives use existing model fields with explicit
 before/after evidence records, never unrestricted harmonization patches or
 accession-specific production rules. Historical reports/fixtures remain unchanged.

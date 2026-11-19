@@ -9,6 +9,7 @@
 """One isolated, warmed, network-free baseline or candidate measurement."""
 import argparse
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import resource
@@ -18,15 +19,17 @@ import time
 
 def measure(source, output, manifest):
     from tests.support.recorded_replay import ReplayTransport
+    expected_origin = Path(importlib.util.find_spec('meta_standards_converter').origin).resolve()
+    root = expected_origin.parents[2]
+    revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+    assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=root, text=True)
     replay = ReplayTransport(manifest)
     with replay.offline():
         import meta_standards_converter
         from meta_standards_converter.converters import Converter, PreparationPolicy
         from meta_standards_converter.conversion_logging import operation
         origin = Path(meta_standards_converter.__file__).resolve()
-        root = origin.parents[2]
-        revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
-        assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=root, text=True)
+        assert origin == expected_origin
         policy = PreparationPolicy(enrichment='off', expand_studies=False)
         before = hashlib.sha256(source.read_bytes()).hexdigest()
         class Emitter:
