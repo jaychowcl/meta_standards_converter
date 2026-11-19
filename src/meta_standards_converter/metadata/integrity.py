@@ -18,6 +18,21 @@ def _data(package):
     return package.to_mapping() if hasattr(package, 'to_mapping') else package
 
 
+def _comment_groups(value):
+    if isinstance(value, dict):
+        if value.get('comments'):
+            group = defaultdict(list)
+            for comment in value['comments']:
+                group[comment['name'].casefold()].append(str(comment.get('value', '')).casefold())
+            yield group
+        for key, child in value.items():
+            if key != 'comments':
+                yield from _comment_groups(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _comment_groups(child)
+
+
 def qualifier_ownership(before, after):
     """Compare supplied annotation owners, retaining repeated occurrences.
 
@@ -63,6 +78,17 @@ def assess_integrity(package):
                                      dataset, 'workflow', dataset, code, 'supplied_evidence_requires_review')))
     for pi, path in enumerate(data.get('series', {}).get('assay_paths', [])):
         generated = any(c.get('name') == 'msc_workflow_origin' for c in path.get('comments', []))
+        groups = list(_comment_groups(path))
+        assignments = {role: {value for group in groups for value in group.get(role.replace('_', ' ') + ' read', []) if value}
+                       for role in ('cell_barcode', 'sample_barcode', 'umi_barcode')}
+        for group in groups:
+            for prefix in ('', 'fastq_'):
+                for role, index in zip(group.get(prefix + 'read_type', []), group.get(prefix + 'read_index', [])):
+                    expected = assignments.get(role, set())
+                    if len(expected) == 1 and index and index not in expected:
+                        issue('barcode_assignment',
+                              'File read role/index contradicts the supplied library barcode assignment; review the applicable chemistry without inferring a swap.',
+                              f'/series/assay_paths/{pi}')
         for si, step in enumerate(path.get('steps', [])):
             location = f'/series/assay_paths/{pi}/steps/{si}'
             comments = defaultdict(list)
@@ -83,9 +109,10 @@ def assess_integrity(package):
             sample = samples.get(step.get('sample_ref'))
             if sample and step['kind'] in {'source', 'sample'} and len(sample.get('channel', [])) == 1:
                 expected = {str(o.get('taxid')) for o in sample['channel'][0].get('organism', []) if o.get('taxid')}
-                supplied = {str(v.get('term_accession_number')).rsplit('/', 1)[-1].replace('taxon:', '')
+                supplied = {re.sub(r'^(?:NCBITaxon[:_]|taxon:)', '', str(v.get('term_accession_number')).rsplit('/', 1)[-1], flags=re.I)
                             for v in step.get('characteristics', [])
                             if v.get('name', '').casefold() == 'organism' and v.get('term_accession_number')}
+                supplied = {value for value in supplied if value.isdigit()}
                 if expected and supplied and expected != supplied:
                     issue('taxonomy_assertions', 'Workflow and selected sample taxonomy differ; retain alternative assertions and review their scope.',
                           location, error=generated)

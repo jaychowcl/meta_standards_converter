@@ -57,3 +57,28 @@ def test_advisory_findings_do_not_make_conversion_partial():
         preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == 'complete'
     assert any(d.code == 'curation_protocol_chronology' for d in result.items[0].diagnostics)
+
+
+def test_deposited_barcode_contradiction_is_reported_without_guessing_a_swap():
+    from tests.magetab.test_metadata_integrity import SOURCE
+    from tests.support.magetab import parse
+    source = SOURCE['reference_fastq']
+    assert source['Comment[sample barcode read]'] != source['Comment[READ_INDEX]']
+    package = parse(list(source), [list(source.values())])
+    before = package.to_mapping()
+    issues = assess_integrity(package)
+    assert any(d.code == 'curation_barcode_assignment' for d in issues)
+    assert all(d.severity != 'error' for d in issues)
+    assert package.to_mapping() == before
+
+
+def test_taxonomy_identifier_spellings_and_authored_alternatives():
+    data = {'sample': [{'iid': 'S1', 'channel': [{'organism': [{'value': 'H37Rv', 'taxid': '83332'}]}]}],
+            'series': {'assay_paths': [{'comments': [{'name': 'msc_workflow_origin', 'value': 'generated:SRA'}],
+                'steps': [{'kind': 'source', 'name': 'S1', 'sample_ref': 'S1', 'characteristics': [
+                    {'name': 'organism', 'value': 'H37Rv', 'term_accession_number': 'http://purl.obolibrary.org/obo/NCBITaxon_83332'}]}]}]}}
+    assert not assess_integrity(data)
+    data['series']['assay_paths'][0]['steps'][0]['characteristics'][0]['term_accession_number'] = 'taxon:1773'
+    assert any(d.code == 'integrity_taxonomy_assertions' for d in assess_integrity(data))
+    data['series']['assay_paths'][0]['comments'] = []
+    assert all(d.severity == 'warning' for d in assess_integrity(data))
