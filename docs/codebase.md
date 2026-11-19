@@ -7005,6 +7005,71 @@ The reviewed scientific derivatives use existing model fields with explicit
 before/after evidence records, never unrestricted harmonization patches or
 accession-specific production rules. Historical reports/fixtures remain unchanged.
 
+<a id="live-integrity-followup"></a>
+### New live conversion review and runtime evidence
+
+The audit-only `scripts/audit_live_integrity.py` freezes production revision
+`2368e51` and explicitly declares GSE11817, GSE26884 and GSE37703 plus
+SRP012607 through SRA and ENA. It reuses the established environment and pacing,
+limits each provider input to 300 seconds and 200 physical requests across all
+three enrichment presets, and records prior-phase response reuse. The `init`,
+`capture`, `references`, `measure` and `collect` actions require a clean actual
+revision, verify the imported code origin and reject altered production code.
+Existing outputs and sealed bundles cannot be overwritten. Historical guards
+remain unchanged.
+
+Each of the 45 measurement cells runs in its own process, warms once, then
+measures three conversions under strict recorded HTTP replay with no network
+fallback. `json` and `magetab` read the same newly captured provider responses;
+`saved-0` exports freshly generated JSON with enrichment off and an empty
+request manifest. Only offline pacing waits are suppressed. Conversion wall/CPU
+time, process peak RSS, inclusive stage events, hashes and failure durations
+are retained. Artifact writing is timed separately; imports, manifest setup
+and output writing are outside the repeated conversion-call wall time. Live
+acquisition includes capture I/O and pacing, so reused-response times must never
+be reported as cold live performance.
+
+`scripts/audit_live_integrity_review.py` reads the captured evidence and writes
+independent source/file checks, full JSON scalar inventories, protocol projection
+findings and semantic deposited-row comparisons. The independent
+`tests/support/live_integrity_semantics.py` compares meaningful ordered row
+graphs, retaining repeated applications, rows, blank qualified owners and
+qualifier ownership. It accepts empty protocol slots and known header syntax
+aliases; controls reject missing repeated protocols and qualifier swaps.
+Documented derived-file export exclusions remain explicit. A supplied protocol
+can survive the graph comparison while its legacy scalar projection is wrong,
+so those are separate assessments.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python scripts/audit_live_integrity.py measure \
+  --bundle /path/to/unsealed-new-capture --revision <clean-audit-commit> \
+  --case geo-GSE11817 --mode off --route json
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python scripts/audit_live_integrity_review.py \
+  --bundle /path/to/sealed-live-bundle --revision <clean-audit-commit> \
+  --output /path/to/fresh-separate-review
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python -m pytest -q --runxfail \
+  tests/magetab/test_live_integrity_regressions.py
+```
+
+The 2026-11-19 follow-up completed all 45 cells and all 15 direct/saved-JSON
+equivalence checks. All three deposited references retain their 204 populated
+IDF values and 966 meaningful SDRF values under the documented exclusions.
+Two unresolved production defects have strict expected-failure reproductions:
+`MSC-LIVE-001` loses supplied GEO sample experiment identifiers from SDRF with
+off/curators enrichment; `MSC-LIVE-002` maps computational `feature_extraction`
+to the channel's wet-lab extraction field, which also creates misleading
+definitions during native standard enrichment. Proposed repairs are explicit
+relation projection during preparation and a shared exact protocol-type mapping
+that respects graph scope. Neither repair is implemented by this audit.
+
+Evidence, measured ranges, source contradictions and per-field dispositions
+are in the adapter workspace's
+`.dev/msc-authorship-audit/live-integrity-followup-20261119T214314Z/REPORT.md`.
+Source dye, platform and chronology conflicts require review rather than silent
+correction. This small cohort does not exercise every earlier barcode,
+blank-owner or species/strain boundary. All production code, integration pins,
+historical seals, main and remote refs are preserved.
+
 <a id="authorship-curated-audit"></a>
 ### Publication authors and complete curated metadata audit
 
