@@ -7064,6 +7064,32 @@ immutable initialization, selected request attempts and independent snapshot
 provenance. Detailed scientific assessments and final denominators belong in the
 fresh additional-conversions bundle, not in this architecture description.
 
+The completed follow-up records 54 executed and valid source routes out of 63,
+with nine unavailable at the live input time ceilings. Direct and fresh-JSON
+exports agree for all 18 available input/preset pairs. Five deposited inputs
+preserve all 299 populated IDF source cells; four preserve the complete eligible
+SDRF. `MSC-EXTRA-001` loses 48 populated comments attached to blank characteristics
+in E-GEOD-13398. The reduced original-byte fixture and six strict expected failures
+are in `tests/magetab/test_additional_audit_regressions.py`; `--runxfail` exposes
+the assertions. The proposed repair is to preserve the empty attribute owner and
+its populated companions through migration and export. Production is unchanged.
+
+`scripts/audit_additional_review.py` records JSON contributor counts separately
+from IDF contacts and verifies exact native file URI/run ownership, independently
+of the comparison reference. The request report resolves opaque response IDs
+through the consumed manifest before comparing byte hashes. ERP148790 standard
+uses the exact reference IDF/SDRF; ERP185509 standard retrieves its reference IDF
+but records an HTTP 403 for the SDRF and remains partial. Repeated Himes names lack
+shared identity evidence and remain separate under the conservative contact
+policy. Factors, assay interpretation and older-reference publication updates
+remain explicit curator assessments, not converter-failure counts.
+
+Local evidence root:
+`/home/chow/projects/embl/runs/gsk_ThematicAtlases_adapter/.dev/msc-authorship-audit/additional-conversions/`.
+Read `REPORT.md` for results and `REPRODUCE.md` for offline commands.
+These ignored workspace artifacts retain the full per-field comparison,
+acquisition bounds, source hashes, actual tested revisions and limitations.
+
 
 <a id="geo-source-fidelity"></a>
 ## GEO source fidelity and MAGE-TAB file projection
