@@ -68,13 +68,23 @@ class SDRFRenderer:
         # MAGE-TAB 1.1 section 2.3.3: factors follow all graph elements.
         # Project existing keys without changing the plan, trees or row values.
         ordinary, factors = [], []
-        def project(column, *, factor=False):
+        def project(column, *, factor=False, companions=None):
             factor = factor or column.main_label.startswith("Factor Value[")
             (factors if factor else ordinary).append((column.main_key, column.main_label))
-            for companion in column.companions:
+            for companion in column.companions if companions is None else companions:
                 project(companion, factor=factor)
         for column in columns:
-            project(column)
+            companions = column.companions
+            if column.main_label in {"Source Name", "Sample Name", "Extract Name", "Labeled Extract Name"}:
+                # Apply MSC's layout preference after merging sparse rows. Move
+                # whole fields, retaining their keys, qualifiers and ownership.
+                first_material = next((i for i, field in enumerate(companions)
+                                       if field.main_label == "Material Type"), len(companions))
+                trailing = companions[first_material:]
+                companions = (companions[:first_material]
+                              + [field for field in trailing if field.main_label == "Description"]
+                              + [field for field in trailing if field.main_label != "Description"])
+            project(column, companions=companions)
         projected = ordinary + factors
         header = [label for _, label in projected]
 

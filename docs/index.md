@@ -85,10 +85,10 @@ Full flag and Python API details remain in the canonical routes below.
   link: [Open section](codebase.md#unified-preparation)
 
 - id: magetab-row-factors
-  title: Row factors and optional files
+  title: SDRF column ordering, row factors and optional files
   anchor: magetab-row-factors
-  purpose: Retain experimental factor values across blank optional nodes without inventing biological or assay identities.
-  keywords: Factor Value, optional file, row variables, round trip, Visium, GeoMx, ChIP-seq
+  purpose: Order Description before Material Type within its owning block, retain terminal factors and preserve values across blank optional nodes.
+  keywords: Description, Material Type, SDRFRenderer, column order, sparse rows, field ownership, Factor Value, optional file, row variables, round trip, Visium, GeoMx, ChIP-seq
   link: [Open section](codebase.md#magetab-row-factors)
 
 - id: unified-results

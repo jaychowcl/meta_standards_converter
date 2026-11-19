@@ -6372,7 +6372,28 @@ implementation; development outputs stay outside version control.
 
 
 <a id="magetab-row-factors"></a>
-## MAGE-TAB row factors and optional files
+## MAGE-TAB column ordering, row factors and optional files
+
+Every x2ae route uses `SDRFRenderer.render_paths()` for final column projection.
+After `plan_columns()` has merged fields from all rows, the renderer places each
+literal `Description` field before the first `Material Type` in its own source,
+sample, extract or labeled-extract block. This is MSC's default layout preference;
+MAGE-TAB 1.1 section 2.3.3 defines field ownership without requiring this relative
+order. Only descriptions following that block's first material type move. Complete
+field groups move together, retaining attached comments and ontology references;
+other columns and rows keep their relative order and values. A block missing either
+field remains unchanged. `Comment[Sample_description]` remains a separate field,
+and MSC does not create a literal description when none exists.
+
+This projection applies in both renderer ordering modes and leaves the merged
+column plan and input objects unchanged. The cases in
+`tests/magetab/test_description_order.py` cover multiple material blocks, sparse
+rows, repeated descriptions, attached metadata, re-import ownership and the
+plate-handler fallback. Run `python -m pytest tests/magetab --full
+tests/test_magetab_blank_nodes.py tests/e2e/test_geo2ae.py tests/e2e/test_json2ae.py`
+to include the deposited-source fidelity checks and GEO/JSON export contracts.
+Deposited source fixtures remain unchanged; the E-MTAB-5481 export retains all
+112 descriptions with `Description` in column 9 and `Material Type` in column 10.
 
 Factor Value columns describe experimental variables for an SDRF row, as defined
 by the [MAGE-TAB 1.1 specification](https://www.ebi.ac.uk/biostudies/misc/MAGE-TABv1.1_2011_07_28.pdf).
