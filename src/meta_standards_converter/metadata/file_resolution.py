@@ -186,3 +186,93 @@ def download_assets(records):
             identity = (uri, checksum, facts)
             grouped.setdefault(identity, []).append(index)
     return tuple(FileAsset(uri, checksum, tuple(indices)) for (uri, checksum, _), indices in grouped.items())
+
+
+def complete_path_files(data):
+    """Complete exact sample/run/URI matches without replacing source occurrences.
+
+    Supplied file annotations keep their order and ownership. All matching
+    records must agree on populated facts; neither filename resemblance nor a
+    sparse record may bridge conflicting identities. This works for older JSON
+    when its original run inventory still contains the missing information.
+    """
+    from collections import defaultdict
+    aliases = {'FILE FORMAT': 'FORMAT', 'FILE SIZE': 'BYTES', 'FASTQ_MD5': 'MD5',
+               'FASTQ_BYTES': 'BYTES', 'FILE URI': 'URI', 'FASTQ_URI': 'URI',
+               'FASTQ_FILE_NAME': 'NAME', 'CHECKSUM METHOD': 'CHECKSUM_METHOD'}
+    fields = {'md5': 'MD5', 'bytes': 'BYTES', 'format': 'FORMAT',
+              'read_role': 'READ_ROLE', 'read_index': 'READ_INDEX',
+              'checksum': 'CHECKSUM', 'checksum_method': 'CHECKSUM_METHOD'}
+    samples = {s['iid']: s for s in data.get('sample', [])}
+    inventory = defaultdict(list)
+    for sid, sample in samples.items():
+        for run in sample.get('sra_run', []):
+            for record in [*run.get('files', []), *run.get('fastq_files', [])]:
+                uri = structural_uri(record.get('uri') or record.get('url'))
+                if not uri:
+                    continue
+                facts = {target: record[key] for key, target in fields.items() if record.get(key)}
+                facts['NAME'] = record.get('filename')
+                inventory[sid, run.get('run'), uri].append(facts)
+    for path in data.get('series', {}).get('assay_paths', []):
+        refs = {s['sample_ref'] for s in path['steps'] if s.get('sample_ref')}
+        if len(refs) != 1:
+            continue
+        sid = next(iter(refs))
+        runs = {s.get('name') for s in path['steps'] if s['kind'] == 'scan'}
+        runs.update(c['value'] for s in path['steps'] for c in s.get('comments', [])
+                    if c['name'].upper() in {'ENA_RUN', 'SRA_RUN'})
+        known = {r.get('run') for r in samples.get(sid, {}).get('sra_run', [])}
+        runs &= known
+        if len(runs) != 1:
+            continue
+        run = next(iter(runs))
+        for node in path['steps']:
+            if not node['kind'].endswith('_file'):
+                continue
+            link = node.get('link', {})
+            uri = structural_uri(link.get('value'))
+            matched = inventory.get((sid, run, uri), [])
+            if not matched:
+                continue
+            current = defaultdict(set)
+            def add(key, value):
+                if value not in (None, ''):
+                    current[key].add(str(field_value(key, value)))
+            add('NAME', node.get('name'))
+            add('FORMAT', link.get('type'))
+            for key, target in fields.items():
+                if key not in ('format', 'checksum'):
+                    add(target, link.get(key))
+            add('MD5', link.get('checksum'))
+            for comment in node.get('comments', []):
+                key = str(comment.get('name', '')).upper()
+                add(aliases.get(key, key), comment.get('value'))
+            combined = {k: set(v) for k, v in current.items()}
+            for record in matched:
+                for key, value in record.items():
+                    if value not in (None, ''):
+                        combined.setdefault(key, set()).add(str(field_value(key, value)))
+            # Compare MD5 aliases as one assertion before considering completion.
+            for facts in [current, combined]:
+                if facts.get('CHECKSUM_METHOD') == {'MD5'}:
+                    facts.setdefault('MD5', set()).update(facts.get('CHECKSUM', set()))
+            if any(len(combined.get(key, set())) > 1 for key in ('NAME', *fields.values())):
+                continue
+            for key in ('MD5', 'BYTES', 'READ_ROLE', 'READ_INDEX'):
+                values = combined.get(key, set())
+                if current.get(key) or len(values) != 1:
+                    continue
+                value = next(iter(values))
+                if key == 'MD5' and not re.fullmatch(r'[a-f0-9]{32}', value):
+                    continue
+                if key == 'BYTES' and not value.isdecimal():
+                    continue
+                if key in {'READ_ROLE', 'READ_INDEX'} and current.get('READ_TYPE'):
+                    continue
+                empty = next((c for c in node.get('comments', []) if not c.get('value')
+                              and aliases.get(c['name'].upper(), c['name'].upper()) == key), None)
+                if empty is not None:
+                    empty['value'] = value
+                else:
+                    node.setdefault('comments', []).append({'name': key, 'value': value})

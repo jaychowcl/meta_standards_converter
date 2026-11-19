@@ -31,6 +31,8 @@ def prepare_workflows(package, *, platform_handler=None):
     data = package.to_mapping()
     from ..miniml.archive_paths import complete_native_paths
     complete_native_paths(data)
+    from .file_resolution import complete_path_files
+    complete_path_files(data)
     if data.get('series', {}).get('assay_paths') or not data.get('sample'):
         return _prepared(package, data)
 

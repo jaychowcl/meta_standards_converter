@@ -279,7 +279,7 @@ def assay_paths(sample, run, experiment, files, protocol):
             node = {'kind': 'array_data_file', 'name': file.get('filename') or file['uri'], 'comments': []}
             if file.get('uri'):
                 node['link'] = {'value': file['uri'], 'type': file.get('format') or 'raw'}
-            for key in ('md5', 'bytes', 'format', 'role', 'checksum_method', 'checksum'):
+            for key in ('md5', 'bytes', 'format', 'role', 'checksum_method', 'checksum', 'read_role', 'read_index'):
                 if file.get(key):
                     node['comments'].append({'name': key.upper(), 'value': str(file[key])})
             steps.append(node)

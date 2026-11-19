@@ -6903,7 +6903,8 @@ keeps source occurrences separate from resolved download assets:
 `meta_standards_converter.metadata.file_resolution.ena_read_role`,
 `meta_standards_converter.metadata.file_resolution.checksums`,
 `meta_standards_converter.metadata.file_resolution.combine`,
-`meta_standards_converter.metadata.file_resolution.FileAsset` and
+`meta_standards_converter.metadata.file_resolution.FileAsset`,
+`meta_standards_converter.metadata.file_resolution.complete_path_files` and
 `meta_standards_converter.metadata.file_resolution.download_assets`.
 URI framing whitespace is interpreted without rewriting the supplied text.
 Explicit role/format precedes extension fallback; unknown files remain owned,
@@ -6915,6 +6916,12 @@ survive ENA download selection. Only exact ENA generated names plus paired
 library evidence identify paired mates or unsuffixed unpaired reads. A file's
 position, an R2 suffix, or generic single-cell classification is insufficient to
 assign a barcode role.
+
+Preparation completes missing checksum, size and explicit read-role annotations
+on exact sample/run/URI matches. All matching records must agree on populated
+identity and file facts; conflicting checksums, sizes or ambiguous versions
+block completion. Authored comments retain ownership and order. Native parser
+paths carry supplied per-file read roles, independently of library layout.
 
 [Semantic checks](../src/meta_standards_converter/metadata/integrity.py) use
 `meta_standards_converter.metadata.integrity.qualifier_ownership`,
