@@ -7039,6 +7039,10 @@ aliases; controls reject missing repeated protocols and qualifier swaps.
 Documented derived-file export exclusions remain explicit. A supplied protocol
 can survive the graph comparison while its legacy scalar projection is wrong,
 so those are separate assessments.
+Cross-provider agreement uses raw SRA sample aliases and GEO channel occurrences
+to group reference rows, retaining file-expanded rows and requiring compatible
+run identities. Unmatched fields remain review requirements; their count is not
+a converter-loss rate or proof of human curation.
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python scripts/audit_live_integrity.py measure \

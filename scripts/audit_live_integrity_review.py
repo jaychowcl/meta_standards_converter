@@ -262,6 +262,86 @@ def json_inventory(root, output):
     write_json(output/'json-field-counts.json',dict(counts))
 
 
+def paired_reference_review(root, output):
+    """Review every supplied reference cell after source-backed entity grouping.
+
+    File-expanded rows remain separate. This is agreement, not a source-loss
+    oracle: unmatched annotations stay review requirements, never inferred loss.
+    """
+    aliases, evidence = {}, []
+    for doc in documents(root/'cases/sra-SRP012607', 'off'):
+        if doc['kind'] != 'xml': continue
+        for sample in doc['xml'].findall('.//SAMPLE'):
+            geo = sample.find("IDENTIFIERS/EXTERNAL_ID[@namespace='GEO']")
+            if geo is None or not re.fullmatch(r'GSM\d+',geo.text or ''): continue
+            for value in [sample.get('accession'), *(n.text for n in sample.findall('IDENTIFIERS/*'))]:
+                if value:
+                    assert value not in aliases or aliases[value] == geo.text
+                    aliases[value] = geo.text
+            evidence.append(provenance(doc,f"SAMPLE[{sample.get('accession')}]/IDENTIFIERS"))
+    channel_evidence = {}
+    for case in sorted((root/'cases').glob('geo-*')):
+        source = next(d for d in documents(case,'off') if d['kind']=='xml' and d['xml'].tag=='MINiML')
+        for sample in source['xml'].findall('Sample'):
+            aliases[sample.get('iid')] = sample.get('iid')
+            channel_evidence[sample.get('iid')] = {'count':len(sample.findall('Channel')),
+                'evidence':provenance(source,f"Sample[{sample.get('iid')}]/Channel")}
+    def identity(headers, row):
+        name = row[headers.index('Source Name')]
+        match = re.fullmatch(r'(GSM\d+)(?::channel|\s+)(\d+)',name)
+        sample, channel = (match[1],int(match[2])) if match else (aliases.get(name,name),1)
+        runs = {v for h,v in zip(headers,row) if h in ('Scan Name','Comment[ENA_RUN]') and re.fullmatch(r'[SED]RR\d+',v)}
+        return sample, channel, runs
+    def fields(headers,row):
+        graph=row_graph(headers,row)
+        result=defaultdict(list)
+        def add(item, owner):
+            kind=item['kind'].casefold()
+            if nonempty(item['value']): result[owner+(kind,)].append(item['value'])
+            for child in item.get('attributes',[]): add(child,owner+(kind,))
+            for child in item.get('qualifiers',[]): add(child,owner+(kind,))
+        for node in graph['graph']:add(node,())
+        for factor in graph['factors']:add(factor,('row-factor',))
+        return result
+    records, groups=[],[]
+    for spec in read(root/'cohort.json')['inputs']:
+        case=spec['provider']+'-'+spec['accession']
+        reference=normalize(table(root/'references'/(spec['reference']+'.sdrf.txt')))
+        assessment=read(root/'cases'/case/'assessment.json')
+        for mode in ('off','curators','standard'):
+            document=read(root/'cases'/case/mode/'replayed-magetab/payload-0.json')[0]
+            actual=normalize(next(r[1] for r in document if r[0]=='SDRF File'))
+            actual_ids=[identity(actual[0],row) for row in actual[1:]]
+            actual_fields=[fields(actual[0],row) for row in actual[1:]]
+            for ri,row in enumerate(reference[1:],1):
+                sid,channel,runs=identity(reference[0],row)
+                assert sid in channel_evidence and channel <= channel_evidence[sid]['count']
+                matches=[i for i,(gs,gc,gr) in enumerate(actual_ids,1)
+                    if gs==sid and gc==channel and (not runs or not gr or bool(runs & gr))]
+                group={'case':case,'mode':mode,'reference':spec['reference'],'reference_row':ri,
+                    'sample':sid,'channel':channel,'runs':sorted(runs),'generated_rows':matches,
+                    'reference_assisted':assessment['modes'][mode]['assistance']['reference_assisted'],
+                    'identity_evidence':channel_evidence[sid],
+                    'grouping':'Explicit source sample aliases and channel occurrence; run must agree when both supplied. File-expanded rows remain separate.'}
+                groups.append(group)
+                for field,expected in fields(reference[0],row).items():
+                    generated=[{'row':i,'values':actual_fields[i-1].get(field,[])} for i in matches]
+                    clean=lambda values:[' '.join(str(v).split()) for v in values]
+                    equivalent=bool(generated) and all(clean(g['values'])==clean(expected) for g in generated)
+                    classification='equivalent-or-documented-transformation' if equivalent else (
+                        'reference-only-annotation-requiring-assessment' if generated and all(not g['values'] for g in generated)
+                        else 'source-version-reference-defect-or-unresolved')
+                    records.append({**group,'owner_and_field':list(field),'source':None,'reference_values':expected,
+                        'generated':generated,'classification':classification,
+                        'reason':'Agreement compares exact owned occurrences after whitespace normalization; other differences require source/curation review, not an automatic converter-failure verdict.'})
+    write_json(output/'paired-reference-groups.json',{'native_aliases':aliases,'native_alias_evidence':evidence,'groups':groups})
+    with (output/'paired-reference-fields.jsonl').open('w') as stream:
+        for record in records:stream.write(json.dumps(record,ensure_ascii=False)+'\n')
+    return {'groups':len(groups),'matched_groups':sum(bool(g['generated_rows']) for g in groups),
+        'field_groups':len(records),'classifications':dict(Counter(r['classification'] for r in records)),
+        'source_fidelity_warning':'Agreement/inventory denominator, not converter-loss counts.'}
+
+
 def timings(root, output):
     result=[]
     for path in sorted((root/'cases').glob('*/*/timing-*.json')):
@@ -332,12 +412,14 @@ def main():
     references=reference_review(root,output)
     checks=source_checks(root,output); timings(root,output); json_inventory(root,output)
     protocols = protocol_projection_review(root,output)
+    paired = paired_reference_review(root,output)
     if sealed: assert verify_seal(root) == before
     write_json(output/'summary.json',{'repair_target_checks':len(checks),
         'review_revision':revision,'sealed_input':before,
         'classifications':dict(Counter(c['classification'] for c in checks)),
         'issues':dict(Counter(c['issue'] or 'unadjudicated' for c in checks if c['source']!=c['generated'])),
         'unsupported_protocol_scalar_projections':len(protocols),
+        'paired_reference_review':paired,
         'references_preserved':sum(r['routes']['via-json']['equivalent'] for r in references),
         'meaningful_reference_cells':sum(r['routes']['via-json']['meaningful_source_cells'] for r in references),
         'whitespace_only_reference_cells':sum(r['routes']['via-json']['whitespace_only_source_cells'] for r in references),
