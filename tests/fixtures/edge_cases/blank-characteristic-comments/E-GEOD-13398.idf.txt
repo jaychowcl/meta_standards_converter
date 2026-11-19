@@ -1,0 +1,49 @@
+Investigation Title	HNSCC samples vs. normal tonsil samples: reference design	
+Comment[Submitted Name]	HNSCC samples vs. normal tonsil samples: reference design	
+Experimental Design	transcription profiling by array	
+Experimental Design Term Source REF	EFO	
+Comment[SecondaryAccession]	GSE13398	
+Comment[ArrayExpressReleaseDate]	2010-05-06	
+Comment[AEMIAMESCORE]	3	
+Comment[ArrayExpressAccession]	E-GEOD-13398	
+Comment[MAGETAB TimeStamp_Version]	2010-07-30 10:34:55 Last Changed Rev: 13058	
+Experimental Factor Name	SITE	
+Experimental Factor Type	site	
+Experimental Factor Term Source REF	
+Person Last Name	Hayes	Qi	
+Person First Name	D	Yuan	
+Person Mid Initials	N	
+Person Email		yuan_qi@med.unc.edu	
+Person Phone		919-843-6010	
+Person Fax		(919) 966-1587	
+Person Address		Lineberger Comprehensive Cancer Center, University of North Carolina at Chapel Hill, 450 West Drive, Chapel Hill, NC, USA	
+Person Affiliation		University of North Carolina at Chapel Hill	
+Person Roles		submitter	
+Person Roles Term Source REF		The MGED Ontology	
+Quality Control Type	
+Quality Control Term Source REF	
+Replicate Type	
+Replicate Term Source REF	
+Normalization Type	
+Normalization Term Source REF	
+Date of Experiment	
+Public Release Date	2010-05-06	
+PubMed ID	
+Publication DOI	
+Publication Author List	
+Publication Title	
+Publication Status	
+Publication Status Term Source REF	
+Experiment Description	transcription profiling of human head and neck squamous cell carcinoma (HNSCC) samples vs. normal tonsil samples using a two-color reference design experimental setting. Used to identify differentially expressed genes in tumor/normal samples, and compare the result to that of the same samples using the self-self hybridization experimental setting.  Keywords: tumor/normal comparison 8 HNSCC tumor samples and 8 normal tonsil samples. One sample per array. Two-color reference design with a common reference sample (a modified version of the Stratagene Human Universal Reference) on each array.	
+Protocol Name	P-GSE13398-2	P-GSE13398-3	P-GSE13398-4	P-GSE13398-5	P-GSE13398-6	P-GSE13398-1	
+Protocol Type	nucleic_acid_extraction	labeling	hybridization	image_aquisition	feature_extraction	bioassay_data_transformation	
+Protocol Description	total RNA was extracted using RNeasy kit from Qiagen following manufacturer's instructions. These total RNA samples were run on an Agilent Bioanalyzer 2100 (Agilent Technologies, Inc) to ensure RNA quality.	The total RNA labeling and hybridization protocol used is described in the Agilent low RNA input linear amplification kit (http://www.chem.agilent.com/Scripts/PDS.asp?lPage=10003 ), with the following two changes: 1) a Qiagen PCR purification kit was used to clean up the cRNA instead of the LiCl precipitation, and 2) all regents volumes were reduced by one half.	Microarray hybridizations were carried out using Agilent Human custom 4x44K oligonucleotide microarrays in an Robbins Scientific hybridization oven with 850ng of labeled Cy3 Reference and 850ng of Cy5 experimental samples using the Agilent hybridization kit as described by the manufacturer. The arrays were incubated overnight and then washed once for 10 minutes in 2X SSC and 0.0005% triton X-102, twice for 5 minutes in 0.1XSSC, and then immersed into Agilent Stabilization and Drying solution for 20 seconds.	Scanned on an Agilent microarray scanner.  Images were quantified using Agilent Feature Extraction Software (version 9.1).	The LogRatio data (transformed from log10 to log2) in the Agilent Feature extraction output file was used, which contained LOWESS normalized, background subtracted data obtained from log-transformation of processed Red signal/processed Green signal. Agilent software was used. Probes with more than 70% flagged arrays were filtered out. Other flagged probes were KNN imputed.	ID_REF = <br>VALUE = normalized log2 ratio (Cy5/Cy3) representing test/reference	
+Protocol Parameters	
+Protocol Hardware	
+Protocol Software	
+Protocol Contact	
+Protocol Term Source REF					The MGED Ontology	The MGED Ontology	
+SDRF File	E-GEOD-13398.sdrf.txt	
+Term Source Name	The MGED Ontology	ArrayExpress	EFO	The MGED Ontology	
+Term Source File	http://mged.sourceforge.net/ontologies/MGEDontology.php	http://www.ebi.ac.uk/arrayexpress	http://www.ebi.ac.uk/efo/	http://mged.sourceforge.net/ontologies/MGEDontology.php	
+Term Source Version					

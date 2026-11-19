@@ -31,6 +31,7 @@ frozen at 2026-10-20 so the comparison is independent of the test date.
 | `studies/GSE328265` | Existing public GEO XML reduced to GSM9651991 and its sample reference; other study/platform evidence retained. PubMed, SRA and ENA responses captured on 2026-09-10. | GEO2JSON, GEO2AE, JSON2AE, JSON2TSV |
 | `studies/E-MTAB-6486` | Unmodified public IDF/SDRF captured on 2026-09-10: twelve rows, six samples, paired FASTQs. | AE2JSON |
 | `studies/pbmc3k` | Public PBMC3k raw counts: first four cells and first six source-order genes expressed in those cells. No numerical transformation; transpose to a readable TSV. Constructed MINiML wrapper, clearly separate from the GEO study. | JSON2H5AD, JSON2OBS |
+| `edge_cases/blank-characteristic-comments` | E-GEOD-13398 IDF unchanged; first two SDRF rows retain both channels of GSM338317, with original hashes. | MSC-EXTRA-001 direct and JSON-route export regressions |
 | `edge_cases/magetab-normalization` | Existing constructed one-row material-type contract, not an original E-MTAB-6486 download. | MAGE-TAB semantic regression |
 | `edge_cases/geo-relations` | Constructed reciprocal GSE1/GSE2 relationship; reuses a PubMed response solely as test evidence. | Traversal, inheritance, absent evidence, provider failure |
 | `edge_cases/atlas-groups` | Existing synthetic Atlas envelope with explicit native MINiML 3.0 metadata. | Grouped CSV output and failed-dataset diagnostics |

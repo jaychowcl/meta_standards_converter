@@ -1,0 +1,14 @@
+{
+  "source_accession": "E-GEOD-13398",
+  "source_url": "https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-GEOD-13398",
+  "capture_bundle": "msc-authorship-audit/additional-conversions/reference-acquisition/E-GEOD-13398",
+  "original_idf_sha256": "402da18f20623a57dc25b0a25ba437e5e4b711a7b94118aadbd53b49b6980da8",
+  "original_sdrf_sha256": "e36e04ef2573bfee26447950f526c36171db46ec1a218b604ba1a14be1c255c6",
+  "derivation": "Unmodified IDF plus SDRF header and first two original rows (both channels of GSM338317); no expected values taken from converter output.",
+  "original_rows": 32,
+  "retained_rows": 2,
+  "fixture_sha256": {
+    "E-GEOD-13398.sdrf.txt": "247855c1ed2798561a665d3b5bc709daf8cdac909d4cf8fddc25cc853bc4b61c",
+    "E-GEOD-13398.idf.txt": "402da18f20623a57dc25b0a25ba437e5e4b711a7b94118aadbd53b49b6980da8"
+  }
+}

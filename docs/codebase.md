@@ -7186,3 +7186,15 @@ sample, with identical output bytes. This is a local fragment measurement, not a
 end-to-end throughput claim. `test_harmonization_rewrite_complexity.py` bounds
 parsing work without wall-clock assertions; depth, codec and patch golden tests
 cover output fidelity. Broad storage and checkpoint redesign remain deferred.
+
+Confirmed follow-up defect `MSC-EXTRA-001` (unfixed): E-GEOD-13398 has populated
+sample-description, free-text characteristic and source-name comments following
+a blank `Characteristics [site]` cell on its Cy3 rows. The MINiML migration clears
+the comment owner for that blank attribute; comments survive as unbound extension
+annotations but disappear from MAGE-TAB output. Six strict expected-failure cases
+(three comments × direct/saved-JSON export) reproduce this from a two-row source
+slice. A populated-characteristic control passes both routes. Proposed repair:
+retain an explicit empty named-value owner when it has populated companions and
+export them at their original row/channel, without inventing a characteristic
+value or attaching them to a neighboring field. Reproduce with
+`pytest --full --runxfail tests/magetab/test_additional_audit_regressions.py`.
