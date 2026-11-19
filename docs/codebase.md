@@ -7038,6 +7038,33 @@ computes nonnegative increments;
 `meta_standards_converter.converters.unified.outcomes.add` totals those increments.
 
 
+Additional five-study follow-up (audit tooling implemented; execution results are
+recorded separately in the output bundle): `scripts/audit_additional_conversions.py`
+reads `tests/fixtures/recorded_provider/additional/cohort.json`. It checks a clean
+explicit `--revision` and production equality with `9f59023`, without weakening
+the original baseline guard. Seven inputs cover GSE13398, GSE31356, GSE52778,
+SRP033351 through SRA/ENA, and frozen ERP148790/ERP185509 native records. The two
+native snapshots are parser/merge evidence, not live source acquisition. Original
+manifest hashes are checked while rebasing archived evidence into a new bundle.
+An offline request-selection probe creates a route-specific manifest, then a
+second strict replay verifies exact consumption and equal outputs. Source checks
+read only the consumed manifest, preventing unused linked references from
+contaminating independent evidence. JSON exports always use newly generated JSON.
+
+Run with the existing Python environment and an empty, separate `--bundle`:
+`init`, `capture`, `references`, `frozen --archive-root <legacy-archive>`, `replay`,
+`deposited`, then `report`; every action also requires `--revision <actual-HEAD>`.
+Capture retains the 300-second/200-request aggregate input limit and existing
+pacing. Reference acquisition has its own explicitly reported bound. Offline
+replay has no live fallback. Findings are source-backed losses, unsupported
+additions, documented transformations, reference-only annotations or unresolved
+differences; no production fixes or historical golden regeneration are performed.
+`tests/test_additional_conversion_audit.py` checks cohort/revision guards,
+immutable initialization, selected request attempts and independent snapshot
+provenance. Detailed scientific assessments and final denominators belong in the
+fresh additional-conversions bundle, not in this architecture description.
+
+
 <a id="geo-source-fidelity"></a>
 ## GEO source fidelity and MAGE-TAB file projection
 

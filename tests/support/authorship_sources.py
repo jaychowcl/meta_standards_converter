@@ -27,7 +27,8 @@ from tests.support.authorship_fidelity import EQUIVALENT, LOSS, UNRESOLVED, row_
 def documents(case, mode):
     """Hash-check recorded bodies and retain XML member identity and source URL."""
     case = Path(case)
-    manifest = json.loads((case / 'http' / (mode + '.manifest.json')).read_text())
+    selected = case / 'http' / (mode + '-json-selected.manifest.json')
+    manifest = json.loads((selected if selected.exists() else case / 'http' / (mode + '.manifest.json')).read_text())
     seen, result = set(), []
     for request in manifest['requests']:
         for attempt in request['attempts']:
@@ -40,7 +41,7 @@ def documents(case, mode):
             item = manifest['files'][file_id]
             raw = (case / 'http' / item['path']).read_bytes()
             assert hashlib.sha256(raw).hexdigest() == item['sha256'], 'corrupt frozen body'
-            evidence = {'url': identity[0], 'sha256': file_id, 'body': 'http/' + item['path'],
+            evidence = {'url': identity[0], 'sha256': item['sha256'], 'body': 'http/' + item['path'],
                         'reference_assisted': '/biostudies/' in identity[0] or '/arrayexpress/' in identity[0]}
             blobs = [(None, raw)]
             if raw.startswith(b'\x1f\x8b'):
@@ -57,6 +58,17 @@ def documents(case, mode):
                     try: entry.update(kind='json', data=json.loads(content))
                     except (ValueError, UnicodeDecodeError): entry.update(kind='text', text=content.decode('utf-8', errors='replace'))
                 result.append(entry)
+    snapshots = case / 'source-snapshots.json'
+    if snapshots.exists():
+        for item in json.loads(snapshots.read_text()):
+            raw = (case / item['body']).read_bytes()
+            assert hashlib.sha256(raw).hexdigest() == item['sha256'], 'corrupt native snapshot'
+            snapshot = json.loads(raw)
+            for index, content in enumerate(snapshot['xml']):
+                xml = ET.fromstring(content)
+                for node in xml.iter(): node.tag = node.tag.rsplit('}', 1)[-1]
+                result.append(dict(item, kind='xml', xml=xml, member=f'xml/{index}',
+                                   reference_assisted=False))
     return result
 
 

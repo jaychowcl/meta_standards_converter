@@ -67,13 +67,13 @@ def save_result(result, directory):
     return result.to_dict()
 
 
-def capture_case(root, provider, accession, reference):
+def capture_case(root, provider, accession, reference, *, revision=BASELINE):
     from meta_standards_converter.converters import Converter
     dest = root / 'cases' / (provider + '-' + accession)
     if (dest / 'acquisition.json').exists():
         raise FileExistsError(f'Frozen capture already exists: {dest}')
-    cap = Capture(dest / 'http', accession, BASELINE)
-    outcomes = {'provider': provider, 'accession': accession, 'reference': reference,
+    cap = Capture(dest / 'http', accession, revision)
+    outcomes = {'provider': provider, 'accession': accession, 'reference': reference, 'tested_revision': revision,
                 'started_at': utc(), 'limits': {'seconds': 300, 'physical_requests': 200},
                 'effective_settings': SETTINGS, 'phases': {}}
     with cap.active():

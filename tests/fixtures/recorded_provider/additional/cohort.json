@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "production_revision": "9f59023839f68e02c403a9a13d3afcb8107e5eeb",
+  "mirror_accession": "SRP033351",
+  "inputs": [
+    {"provider": "geo", "accession": "GSE13398", "reference": "E-GEOD-13398", "evidence": "live"},
+    {"provider": "geo", "accession": "GSE31356", "reference": "E-GEOD-31356", "evidence": "live"},
+    {"provider": "geo", "accession": "GSE52778", "reference": "E-GEOD-52778", "evidence": "live"},
+    {"provider": "sra", "accession": "SRP033351", "reference": "E-GEOD-52778", "evidence": "live"},
+    {"provider": "ena", "accession": "SRP033351", "reference": "E-GEOD-52778", "evidence": "live"},
+    {"provider": "sra", "accession": "ERP148790", "reference": "E-MTAB-13131", "evidence": "parser-merge-replay"},
+    {"provider": "sra", "accession": "ERP185509", "reference": "E-MTAB-16253", "evidence": "parser-merge-replay"}
+  ]
+}

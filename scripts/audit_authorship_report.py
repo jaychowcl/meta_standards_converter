@@ -89,7 +89,7 @@ def annotate_literal_support(rows, facts):
                 row['reason'] = 'Reference annotation has a literal source candidate; curation-only origin is not established.'
 
 
-def build(root, *, candidate=False):
+def build(root, *, candidate=False, cohort=None):
     root = Path(root)
     cases, field_rows = [], []
     for case in sorted((root / 'cases').iterdir()):
@@ -130,7 +130,12 @@ def build(root, *, candidate=False):
                 detail['saved_json_origin'] = 'fresh candidate source-to-JSON conversion'
             else:
                 detail['replayed_json_equals_capture'] = read(package_path) == read(output / 'replayed-json/payload-0.json')
-            saved = read(output / 'saved-0-magetab/payload-0.json')[0]
+            saved_path = output / 'saved-0-magetab/payload-0.json'
+            if not saved_path.exists() or not read(saved_path):
+                detail['verification_limitation'] = 'No usable freshly saved JSON export.'
+                entry['modes'][mode] = detail
+                continue
+            saved = read(saved_path)[0]
             route_diff = idf_comparison(document, saved)
             detail['direct_vs_saved_json'] = {'idf_discrepancies': [r for r in route_diff if r['source'] != r['generated']]}
             saved_sdrf = next(row[1] for row in saved if row[0] == 'SDRF File')
@@ -196,6 +201,9 @@ def build(root, *, candidate=False):
                 else:
                     ref_rows = idf_comparison([], document, reference_idf, same_input=False)
                 ref_rows.extend(pair['comparisons'])
+                if not link['verified_study_link']:
+                    for row in ref_rows:
+                        row.update(classification=UNRESOLVED, reason='Study link unverified; no reference-agreement verdict.')
                 annotate_literal_support(ref_rows, facts)
                 detail['reference_comparison_counts'] = dict(Counter(row['classification'] for row in ref_rows))
                 write_json(output / 'reference-comparison.json', {'pairing': link, 'sdrf': pair, 'fields': ref_rows})
@@ -244,23 +252,24 @@ def build(root, *, candidate=False):
         'curated_input_sdrf_excluded_cells': sum(d['routes']['via-json']['sdrf']['source_populated_cells'] - d['routes']['via-json']['sdrf']['projected_populated_cells'] for d in deposited),
         'field_report_records': len(field_rows)}
     routes = [route for case in cases for mode in case['modes'].values() for route in mode.get('routes', {}).values()]
-    summary['live_routes'] = {'expected': 81, 'observed': len(routes),
+    summary['live_routes'] = {'expected': len(cohort['inputs']) * 9 if cohort else 81, 'observed': len(routes),
         'execution': dict(Counter(item['execution'] for route in routes for item in route.get('items', []))),
         'validation': dict(Counter(item['validation'] for route in routes for item in route.get('items', []))),
         'status': dict(Counter(route['status'] for route in routes))}
     # Mirrored provider comparison: compare biological/run identity without
     # demanding provider-specific names, files or graph encodings be identical.
     mirror = {}
+    mirror_accession = cohort.get('mirror_accession', 'SRP002056') if cohort else 'SRP002056'
     for mode in ('off', 'curators', 'standard'):
-        pair = [next((c['modes'].get(mode, {}).get('native_coverage') for c in cases if c['provider'] == provider and c['accession'] == 'SRP002056'), None)
+        pair = [next((c['modes'].get(mode, {}).get('native_coverage') for c in cases if c['provider'] == provider and c['accession'] == mirror_accession), None)
                 for provider in ('sra', 'ena')]
         mirror[mode] = {'sra': pair[0], 'ena': pair[1], 'same_runs': bool(all(pair) and pair[0]['generated_runs'] == pair[1]['generated_runs']),
                         'same_samples': bool(all(pair) and pair[0]['generated_samples'] == pair[1]['generated_samples'])}
-    summary['SRP002056_provider_comparison'] = mirror
+    summary[mirror_accession + '_provider_comparison'] = mirror
     write_json(root / 'summary.json', summary)
     with (root / 'field-discrepancies.jsonl').open('w') as stream:
         for row in field_rows: stream.write(json.dumps(row, ensure_ascii=False) + '\n')
-    if not candidate:
+    if not candidate and cohort is None:
         write_report(root, summary)
     return summary
 
