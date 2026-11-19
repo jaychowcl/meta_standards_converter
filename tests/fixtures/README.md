@@ -149,3 +149,7 @@ RelatedExperiment rows, adding E-MTAB-6483 and E-MTAB-6432 after E-MTAB-6485.
 Only this reviewed generated expectation and its checksum change; the original
 IDF/SDRF and supplied DOI placeholder remain unchanged. The fixture-evidence
 test derives relationship order directly from those original IDF rows.
+
+## Metadata integrity source excerpts (2026-11-19)
+
+`edge_cases/metadata-integrity/source-cases.json` contains reduced raw GEO and SRA XML, an ENA file-report row and native file facts from the sealed five-study audit. Embedded provenance identifies original response hashes, member paths and selection boundaries. Expectations come from these source records; historical generated output is not the oracle. The fixture covers channel identities, CEL URI whitespace, growth/treatment order, original versus archive-generated files and equivalent file-format spellings. Unrelated samples and platform data tables are omitted; retained source text is unchanged.
