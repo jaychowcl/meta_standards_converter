@@ -8,6 +8,7 @@
 # =============================================================================
 """Select scoped IDF contacts and consolidate presentation facts, not identities."""
 from copy import deepcopy
+from itertools import product
 import re
 import json
 
@@ -46,6 +47,94 @@ def _normal(value):
     return ' '.join(str(value or '').split()).casefold()
 
 
+def contact_facts(contributor, organization):
+    """Keep source components on the private export copy until consolidation."""
+    return deepcopy({
+        'organization': contributor.get('organization') or organization.get('name'),
+        **{key: contributor.get(key) for key in ('laboratory', 'department', 'company')},
+        'address': contributor.get('address') or organization.get('address'),
+    })
+
+
+def render_contact(facts):
+    from ..helpers.json_helper import JSONHandler
+    affiliation = ', '.join(dict.fromkeys(str(facts[key]) for key in (
+        'laboratory', 'department', 'organization', 'company') if facts.get(key))) or None
+    address = facts.get('address')
+    parts = JSONHandler()._flatten_values(address) if address else []
+    if address and not isinstance(address, str):
+        parts = [affiliation, *parts]
+    return {'Affiliation': affiliation, 'Address': ', '.join(str(x) for x in parts if x) or None}
+
+
+def _structured_compatible(a, b):
+    if not a or not b:
+        return True
+    if isinstance(a, dict) and isinstance(b, dict):
+        return all(_structured_compatible(a.get(k), b.get(k)) for k in a.keys() | b.keys())
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        return len(a) == len(b) and all(_structured_compatible(x, y) for x, y in zip(a, b))
+    return type(a) is type(b) and _normal(a) == _normal(b)
+
+
+def _opaque_address_matches(opaque, structured):
+    """Exact render variants only: retain every street/locality/country component."""
+    address = structured['address']
+    if not isinstance(opaque, str) or not address.get('line') or set(address) - {
+            'line', 'city', 'state', 'province', 'zip_code', 'postal_code', 'country'}:
+        return False
+    prefixes = [key for key in ('laboratory', 'department', 'organization', 'company') if structured.get(key)]
+    postcodes = [key for key in ('zip_code', 'postal_code') if address.get(key)]
+    optional = [(False, key) for key in prefixes] + [(True, key) for key in postcodes]
+    for omissions in product((False, True), repeat=len(optional)):
+        candidate = deepcopy(structured)
+        for omit, (postal, key) in zip(omissions, optional):
+            if omit:
+                (candidate['address'] if postal else candidate).pop(key)
+        if _normal(opaque) == _normal(render_contact(candidate)['Address']):
+            return True
+    return False
+
+
+def _contacts_compatible(a, b):
+    if not all(_structured_compatible(a.get(k), b.get(k)) for k in (
+            'organization', 'laboratory', 'department', 'company')):
+        return False
+    left, right = a.get('address'), b.get('address')
+    if not left or not right or _structured_compatible(left, right):
+        return True
+    if isinstance(left, dict) and isinstance(right, str):
+        return _opaque_address_matches(right, a)
+    if isinstance(right, dict) and isinstance(left, str):
+        return _opaque_address_matches(left, b)
+    return False
+
+
+def _complete(a, b):
+    result = deepcopy(a)
+    for key, value in b.items():
+        if not result.get(key):
+            result[key] = deepcopy(value)
+        elif isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _complete(result[key], value)
+    return result
+
+
+def _complete_contact(a, b):
+    result = _complete(a, b)
+    if isinstance(b.get('address'), dict) and not isinstance(a.get('address'), dict):
+        result['address'] = deepcopy(b['address'])
+    return result
+
+
+def _persistent_ids(values):
+    result = {}
+    for token in values.get('_identity', ()):
+        if len(token) == 3 and token[0] == 'accession':
+            result.setdefault(_normal(token[1]), set()).add(_normal(token[2]))
+    return result
+
+
 def identity_evidence(contributor):
     tokens = set()
     if contributor.get('iid'):
@@ -68,8 +157,16 @@ def _facts_compatible(a, b):
 
 
 def _compatible(a, b):
+    left, right = _persistent_ids(a), _persistent_ids(b)
+    if any(len(ids) > 1 for ids in [*left.values(), *right.values()]):
+        return False
+    if any(left[key] != right[key] for key in left.keys() & right.keys()):
+        return False
+    structured = '_contact' in a and '_contact' in b
+    if structured and not _contacts_compatible(a['_contact'], b['_contact']):
+        return False
     for key in a.keys() | b.keys():
-        if key == '_identity':
+        if key in {'_identity', '_contact'} or (structured and key in {'Affiliation', 'Address'}):
             continue
         if key == '_facts':
             if not _facts_compatible(json.loads(a.get(key) or '{}'), json.loads(b.get(key) or '{}')):
@@ -113,15 +210,22 @@ def unique_people(columns):
             continue
         target = unique[indices[0]]
         for i in indices[1:]:
-            target.update({k:v for k,v in unique[i].items() if v and not target.get(k)})
+            incoming = unique[i]
+            if '_contact' in target and '_contact' in incoming:
+                target['_contact'] = _complete_contact(target['_contact'], incoming['_contact'])
+                target.update(render_contact(target['_contact']))
+            target.update({k:v for k,v in incoming.items() if v and not target.get(k)})
+            target['_identity'] = set(target.get('_identity', ())) | set(incoming.get('_identity', ()))
             removed.add(i)
-    result, seen = [], set()
+    result, seen = [], {}
     for i, values in enumerate(unique):
         if i in removed:
             continue
-        key = tuple(sorted((k, v if k == '_facts' else _normal(v))
-                           for k, v in values.items() if k != '_identity'))
-        if key not in seen:
-            seen.add(key)
+        persistent = tuple(sorted((kind, tuple(sorted(ids))) for kind, ids in _persistent_ids(values).items()))
+        key = (persistent, tuple(sorted((k, v if k == '_facts' else _normal(v))
+                           for k, v in values.items() if k not in {'_identity', '_contact'})))
+        previous = seen.setdefault(key, [])
+        if not previous or not all(_compatible(other, values) for other in previous):
             result.append(values)
+        previous.append(values)
     return result

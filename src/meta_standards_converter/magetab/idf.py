@@ -359,21 +359,16 @@ class IDFConstructor():
         """
         Extracts person information from MINiML JSON using JSONHandler.
         """
-        from .people import contributors, unique_people, identity_evidence
+        from .people import contributors, unique_people, identity_evidence, contact_facts, render_contact
         organizations = {o['iid']: o for o in data.get('organization', [])}
         rows = {key: [] for key in ("Last Name", "First Name", "Mid Initials", "Email", "Phone", "Fax", "Address", "Affiliation", "Roles", "Roles Term Source Ref", "Roles Term Accession Number")}
         columns = []
         for c in contributors(data):
             org = organizations.get(c.get('organization_ref', {}).get('ref'), {})
-            affiliation = c.get('organization') or org.get('name')
-            affiliation = ', '.join(dict.fromkeys(str(v) for v in (
-                c.get('laboratory'), c.get('department'), affiliation, c.get('company')) if v)) or None
-            address = c.get('address') or org.get('address')
-            parts = JSONHandler()._flatten_values(address) if address else []
-            if address and not isinstance(address, str): parts = [affiliation, *parts]
+            facts = contact_facts(c, org)
             values = {'Last Name': c.get('person', {}).get('last'), 'First Name': c.get('person', {}).get('first'),
-                      'Mid Initials': c.get('person', {}).get('middle'), 'Affiliation': affiliation,
-                      'Address': ', '.join(str(x) for x in parts if x) or None}
+                      'Mid Initials': c.get('person', {}).get('middle'), '_contact': facts,
+                      **render_contact(facts)}
             for field in ('Email', 'Phone', 'Fax'): values[field] = c.get(field.lower())
             secondary = c.get('extensions', {}).get('secondary_email')
             if secondary:

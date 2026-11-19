@@ -1,0 +1,8 @@
+{
+  "source_bundle": "msc-authorship-audit/run-20261119",
+  "source_file": "cases/sra-SRP045534/standard/saved-0.json",
+  "source_sha256": "be99ce7f54b966ef8459a4fed1fefb4b15c85e6b64643825f14142225cb91a9b",
+  "fixture_sha256": "99ccf99a7a43a09e8f9235be9a68d2d4c208adf4737f095caf259fea22c690f4",
+  "selection": "Five supplied Smyth contacts: one representative BioSample occurrence through each archive, the GEO contact and both AE contacts; their organization definitions and matching sample contact refs. No source field values changed.",
+  "source_revision": "942ef678e9625ed61b93438c02fd65b58079f466"
+}

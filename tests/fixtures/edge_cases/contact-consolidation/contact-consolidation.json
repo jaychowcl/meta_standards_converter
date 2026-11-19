@@ -1,0 +1,198 @@
+{
+  "source": {
+    "format": "SRA"
+  },
+  "series": {
+    "iid": "SRP045534"
+  },
+  "contributor": [
+    {
+      "iid": "sra:BioSample:SAMN02991541:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "sra:BioSample:SAMN02991541:organization-2"
+      }
+    },
+    {
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2:contact-0",
+      "person": {
+        "first": "Gordon",
+        "last": "Smyth"
+      },
+      "organization_ref": {
+        "ref": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2"
+      }
+    },
+    {
+      "iid": "GSE60450:contrib1",
+      "person": {
+        "first": "Gordon",
+        "middle": "K",
+        "last": "Smyth"
+      },
+      "organization": "Walter and Eliza Hall Institute of Medical Research",
+      "email": "smyth@wehi.edu.au",
+      "phone": " (+61 3) 9345 2326",
+      "fax": " (+61 3) 9347 0852",
+      "laboratory": "Smyth",
+      "department": "Bioinformatics",
+      "address": {
+        "line": [
+          "1G Royal Pde"
+        ],
+        "city": "Parkville",
+        "state": "Vic",
+        "postal_code": "3052",
+        "country": "Australia"
+      },
+      "web_link": "http://www.wehi.edu.au"
+    },
+    {
+      "iid": "E-GEOD-60450:contributor-1",
+      "person": {
+        "first": "Gordon",
+        "middle": "K",
+        "last": "Smyth"
+      },
+      "organization": "Walter and Eliza Hall Institute of Medical Research",
+      "email": "smyth@wehi.edu.au",
+      "phone": "(+61 3) 9345 2326",
+      "fax": "(+61 3) 9347 0852",
+      "address": "Bioinformatics, Walter and Eliza Hall Institute of Medical Research, 1G Royal Pde, Parkville, Vic, Australia",
+      "roles": [
+        {
+          "value": "submitter"
+        }
+      ]
+    },
+    {
+      "iid": "E-GEOD-60450:contributor-4",
+      "person": {
+        "first": "Gordon",
+        "middle": "K",
+        "last": "Smyth"
+      }
+    }
+  ],
+  "organization": [
+    {
+      "sample_accession": "SAMN02991541",
+      "role": "owner",
+      "iid": "sra:BioSample:SAMN02991541:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    },
+    {
+      "sample_accession": "SAMN02991541",
+      "role": "owner",
+      "iid": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2",
+      "name": "Smyth, Bioinformatics, Walter and Eliza Hall Institute of Medical Research"
+    }
+  ],
+  "sample": [
+    {
+      "iid": "SRS685550",
+      "contact_ref": [
+        {
+          "ref": "sra:BioSample:SAMN02991541:organization-2:contact-0"
+        },
+        {
+          "ref": "PRJNA258286:ena:BioSample:SAMN02991541:organization-2:contact-0"
+        },
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685549",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685547",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685548",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685546",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685545",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685544",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685543",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685542",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685541",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685539",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    },
+    {
+      "iid": "SRS685538",
+      "contact_ref": [
+        {
+          "ref": "GSE60450:contrib1"
+        }
+      ]
+    }
+  ]
+}
