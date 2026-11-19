@@ -162,49 +162,48 @@ def measure(root, spec, mode, route, revision):
         value = stage / 'saved-0.json'; write_json(value, read(source)[0])
         input_type, output_type, selected = 'json', 'magetab', policy('off')
         manifest = root / 'empty.manifest.json'
-    with ReplayTransport(root / 'empty.manifest.json').offline():
-        from meta_standards_converter.converters import Converter
-        from meta_standards_converter.conversion_logging import operation
-        from meta_standards_converter.helpers.request_helper import HostRequestGate
-        records, first = [], None
-        for number in range(4):
-            replay = ReplayTransport(manifest); emitter = Events()
-            wall_start, cpu_start = time.perf_counter(), time.process_time()
-            error, result = None, None
-            try:
-                with replay.offline(), patch.object(HostRequestGate, 'wait', return_value=0.0):
-                    with operation('live_integrity_replay', heartbeat=False, emitter=emitter):
-                        result = Converter().convert(value, in_type=input_type, out_type=output_type,
-                            preparation=selected, runtime=runtime())
-                wall, cpu = time.perf_counter()-wall_start, time.process_time()-cpu_start
-                replay.assert_complete()
-            except BaseException as exc:
-                if isinstance(exc, (KeyboardInterrupt, SystemExit)):
-                    raise
-                wall, cpu = time.perf_counter()-wall_start, time.process_time()-cpu_start
-                error = type(exc).__name__ + ': ' + str(exc)
-            record = {'iteration': number, 'warmup': number == 0, 'wall_seconds': wall,
-                'cpu_seconds': cpu, 'peak_rss_bytes': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,
-                'rss_scope': 'process lifetime including imports and warm-up', 'error': error,
-                'status': result.status if result else None,
-                'items': [{k: getattr(i, k) for k in ('execution', 'completeness', 'validation')} for i in result.items] if result else [],
-                'payload_sha256': payload_hash([i.payload for i in result.items]) if result else None,
-                'events': emitter.events, 'request_trace': replay.events, 'replay_errors': replay.errors}
-            records.append(record)
-            if number == 1 and result is not None and error is None:
-                directory = stage / ({'json': 'source-json', 'magetab': 'replayed-magetab', 'saved-0': 'saved-0-magetab'}[route])
-                write_start = time.perf_counter(); first = save_result(result, directory)
-                record['artifact_write_seconds'] = time.perf_counter()-write_start
-                if route in ('json', 'magetab'):
-                    write_json(stage / ('trace-' + route + '.json'), {'events': replay.events, 'errors': replay.errors})
-        detail = {'case': identity(spec), 'mode': mode, 'route': route, 'revision': revision,
-            'live_requests': 0, 'network': 'strict replay; no live fallback',
-            'pacing': 'transport gate suppressed for offline compute measurement only',
-            'timed_scope': 'Converter call including event collection, excluding artifact writes and manifest setup',
-            'manifest_sha256': sha256(manifest), 'records': records,
-            'summary': summary(records[1:]), 'result': first}
-        write_json(target, detail)
-        print(identity(spec) + '/' + mode + '/' + route + ': ' + json.dumps(detail['summary']), flush=True)
+    from meta_standards_converter.converters import Converter
+    from meta_standards_converter.conversion_logging import operation
+    from meta_standards_converter.helpers.request_helper import HostRequestGate
+    records, first = [], None
+    for number in range(4):
+        replay = ReplayTransport(manifest); emitter = Events()
+        wall_start, cpu_start = time.perf_counter(), time.process_time()
+        error, result = None, None
+        try:
+            with replay.offline(), patch.object(HostRequestGate, 'wait', return_value=0.0):
+                with operation('live_integrity_replay', heartbeat=False, emitter=emitter):
+                    result = Converter().convert(value, in_type=input_type, out_type=output_type,
+                        preparation=selected, runtime=runtime())
+            wall, cpu = time.perf_counter()-wall_start, time.process_time()-cpu_start
+            replay.assert_complete()
+        except BaseException as exc:
+            if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+                raise
+            wall, cpu = time.perf_counter()-wall_start, time.process_time()-cpu_start
+            error = type(exc).__name__ + ': ' + str(exc)
+        record = {'iteration': number, 'warmup': number == 0, 'wall_seconds': wall,
+            'cpu_seconds': cpu, 'peak_rss_bytes': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,
+            'rss_scope': 'process lifetime including imports and warm-up', 'error': error,
+            'status': result.status if result else None,
+            'items': [{k: getattr(i, k) for k in ('execution', 'completeness', 'validation')} for i in result.items] if result else [],
+            'payload_sha256': payload_hash([i.payload for i in result.items]) if result else None,
+            'events': emitter.events, 'request_trace': replay.events, 'replay_errors': replay.errors}
+        records.append(record)
+        if number == 1 and result is not None and error is None:
+            directory = stage / ({'json': 'source-json', 'magetab': 'replayed-magetab', 'saved-0': 'saved-0-magetab'}[route])
+            write_start = time.perf_counter(); first = save_result(result, directory)
+            record['artifact_write_seconds'] = time.perf_counter()-write_start
+            if route in ('json', 'magetab'):
+                write_json(stage / ('trace-' + route + '.json'), {'events': replay.events, 'errors': replay.errors})
+    detail = {'case': identity(spec), 'mode': mode, 'route': route, 'revision': revision,
+        'live_requests': 0, 'network': 'strict replay; no live fallback',
+        'pacing': 'transport gate suppressed for offline compute measurement only',
+        'timed_scope': 'Converter call including event collection, excluding artifact writes and manifest setup',
+        'manifest_sha256': sha256(manifest), 'records': records,
+        'summary': summary(records[1:]), 'result': first}
+    write_json(target, detail)
+    print(identity(spec) + '/' + mode + '/' + route + ': ' + json.dumps(detail['summary']), flush=True)
 
 
 def initialize_bundle(root, revision):
