@@ -69,12 +69,16 @@ def candidate_preflight(source, output, expected_revision):
     dirty = subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], cwd=REPO, text=True)
     if dirty:
         raise ValueError('Commit the candidate source, tests and runner before replay')
+    import meta_standards_converter
+    origin = Path(meta_standards_converter.__file__).resolve()
+    if not origin.is_relative_to((REPO / 'src').resolve()):
+        raise ValueError('Imported MSC code is outside the candidate checkout')
     seal = verify_seal(source)
     if read(source / 'environment.json')['baseline'] != BASELINE:
         raise ValueError('Expected the original 942ef67 acquisition baseline')
     return source, output, {'tested_revision': revision, 'acquisition_revision': BASELINE,
         'source_bundle': str(source), 'source_seal_before': seal, 'started_at': utc(),
-        'python': sys.executable, 'python_version': sys.version, 'live_requests': 0,
+        'python': sys.executable, 'python_version': sys.version, 'msc_origin': str(origin), 'live_requests': 0,
         'settings': 'Frozen request manifests; candidate JSON generated before JSON-to-MAGE-TAB; legacy JSON exported separately.'}
 
 

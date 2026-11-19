@@ -27,7 +27,7 @@ from unittest.mock import patch
 REPO = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(REPO), str(REPO / 'src')]
 from scripts.audit_authorship import capture_case, policy, runtime, save_result
-from scripts.audit_authorship_candidate import sha256, seal_result
+from scripts.audit_authorship_candidate import sha256, seal_result, verify_seal
 from scripts.audit_authorship_report import build, read
 from scripts.audit_recorded_provider import build_services, primitive
 from tests.support.authorship_capture import Capture, utc, write_json
@@ -249,15 +249,94 @@ def deposited_inputs(root, cohort):
         print('Deposited ' + accession, flush=True)
 
 
+def candidate_preflight(source, output, expected):
+    """A separate opt-in path; the historical clean_revision guard is unchanged."""
+    source, output = Path(source).resolve(), Path(output).resolve()
+    if source == output or source.is_relative_to(output) or output.is_relative_to(source):
+        raise ValueError('Candidate output overlaps sealed input')
+    if output.exists():
+        raise FileExistsError('Use a fresh candidate output directory')
+    def git(*args):
+        return subprocess.check_output(['git', *args], cwd=REPO, text=True).strip()
+    revision = git('rev-parse', 'HEAD')
+    if revision != git('rev-parse', '--verify', expected + '^{commit}'):
+        raise ValueError('Candidate revision differs from tested HEAD')
+    if git('status', '--porcelain', '--untracked-files=all'):
+        raise ValueError('Commit the candidate and audit tooling before replay')
+    import meta_standards_converter
+    origin = Path(meta_standards_converter.__file__).resolve()
+    if not origin.is_relative_to((REPO / 'src').resolve()):
+        raise ValueError('Imported MSC code is outside the candidate checkout')
+    seal = verify_seal(source)
+    cohort = validate_cohort(read(source / 'cohort.json'))
+    historical = read(source / 'environment.json')
+    baseline = '9f59023839f68e02c403a9a13d3afcb8107e5eeb'
+    if cohort['production_revision'] != baseline or historical['production_revision'] != baseline:
+        raise ValueError('Expected the original additional-cohort production baseline')
+    return source, output, cohort, {'tested_revision': revision, 'msc_origin': str(origin),
+        'acquisition_revision': historical['tested_revision'], 'production_baseline': baseline,
+        'source_bundle': str(source), 'source_seal_before': seal, 'started_at': utc(),
+        'python': sys.executable, 'live_requests': 0}
+
+
+def candidate(source, output, expected):
+    source, root, cohort, environment = candidate_preflight(source, output, expected)
+    initialize(root, cohort, environment['tested_revision'])
+    write_json(root / 'candidate-environment.json', environment)
+    shutil.copytree(source / 'references', root / 'references')
+    legacy = []
+    from meta_standards_converter.converters import Converter
+    for spec in cohort['inputs']:
+        name = spec['provider'] + '-' + spec['accession']
+        original, dest = source / 'cases' / name, root / 'cases' / name
+        shutil.copytree(original / 'http', dest / 'http')
+        for filename in ('acquisition.json', 'source-snapshots.json'):
+            if (original / filename).exists():
+                shutil.copyfile(original / filename, dest / filename)
+        replay_input(root, spec)
+        for mode in MODES:
+            saved = original / mode / 'saved-0.json'
+            if not saved.exists():
+                continue
+            target = dest / mode / 'legacy-saved-0.json'
+            shutil.copyfile(saved, target)
+            isolation = ReplayTransport(root / 'empty.manifest.json')
+            with isolation.offline():
+                result = Converter().convert(target, out_type='magetab', preparation=policy('off'))
+            isolation.assert_complete()
+            legacy.append({'case': name, 'mode': mode, 'sha256': sha256(saved),
+                'unchanged': sha256(saved) == sha256(target),
+                'outcome': save_result(result, dest / mode / 'legacy-saved-0-magetab')})
+    write_json(root / 'legacy-results.json', legacy)
+    deposited_inputs(root, cohort)
+    from scripts.audit_additional_review import review
+    review(root, cohort)
+    environment.update(source_seal_after=verify_seal(source), finished_at=utc())
+    assert environment['source_seal_before'] == environment['source_seal_after']
+    # A revision switch or code edit during a long replay invalidates its label.
+    actual = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip()
+    assert actual == environment['tested_revision']
+    assert not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], cwd=REPO, text=True).strip()
+    write_json(root / 'candidate-environment.json', environment)
+    seal_result(root)
+    return root
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['init', 'capture', 'references', 'frozen', 'replay', 'deposited', 'report'])
+    parser.add_argument('action', choices=['init', 'capture', 'references', 'frozen', 'replay', 'deposited', 'report', 'candidate'])
     parser.add_argument('--bundle', type=Path, required=True)
     parser.add_argument('--revision', required=True)
     parser.add_argument('--cohort', type=Path, default=COHORT)
     parser.add_argument('--archive-root', type=Path)
     parser.add_argument('--case')
+    parser.add_argument('--source-bundle', type=Path)
     args = parser.parse_args()
+    if args.action == 'candidate':
+        if not args.source_bundle:
+            raise ValueError('Candidate replay requires a sealed source bundle')
+        candidate(args.source_bundle, args.bundle, args.revision)
+        return
     cohort = validate_cohort(read(args.cohort)); revision = clean_revision(args.revision, cohort['production_revision'])
     root = args.bundle.resolve()
     if (root / 'SHA256SUMS').exists(): raise ValueError('Sealed output is immutable')
