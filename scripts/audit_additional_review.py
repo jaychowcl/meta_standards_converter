@@ -15,6 +15,50 @@ from scripts.audit_authorship_report import read, build
 from tests.support.authorship_capture import write_json
 from tests.support.authorship_fidelity import EQUIVALENT, LOSS, UNRESOLVED, idf_cells, idf_comparison, pair_sdrf, scoped_sdrf_cells, table
 from tests.support.deposited_fidelity import HEADER_ALIASES, without_derived_files, without_added_protocol_placeholders, assert_deposited_sdrf
+from tests.support.authorship_sources import documents, provenance
+
+
+def native_file_facts(docs):
+    """Independent run/URI facts from native XML and ENA read-run records."""
+    facts = defaultdict(list)
+    for doc in docs:
+        if doc['reference_assisted']: continue
+        if doc['kind'] == 'xml':
+            for run in doc['xml'].iter('RUN'):
+                accession = run.get('accession')
+                for node in run.iter():
+                    uri = node.get('url')
+                    if accession and uri:
+                        facts[(accession, uri)].append(provenance(doc, f'RUN[@accession={accession}]/{node.tag}/@url'))
+        elif doc['kind'] == 'json' and isinstance(doc['data'], list) and 'filereport' in doc['url']:
+            for record in doc['data']:
+                if not isinstance(record, dict) or not record.get('run_accession'): continue
+                for field in ('fastq_ftp', 'submitted_ftp'):
+                    for uri in (record.get(field) or '').split(';'):
+                        if uri:
+                            uri = uri if '://' in uri else 'ftp://' + uri
+                            facts[(record['run_accession'], uri)].append(provenance(doc, f"read_run[run_accession={record['run_accession']}]/{field}"))
+    return facts
+
+
+def native_file_checks(docs, rows):
+    facts = native_file_facts(docs)
+    headers = [HEADER_ALIASES.get(h, h) for h in rows[0]]
+    if 'Comment[FASTQ_URI]' not in headers or 'Comment[ENA_RUN]' not in headers: return []
+    run_index, file_index = headers.index('Comment[ENA_RUN]'), headers.index('Comment[FASTQ_URI]')
+    checks = []
+    for index, row in enumerate(rows[1:], 1):
+        run, uri = row[run_index], row[file_index]
+        if not uri: continue
+        evidence = facts.get((run, uri), [])
+        other = [r for r, u in facts if u == uri and r != run]
+        checks.append({'scope': 'SDRF', 'identity': {'generated_row': index, 'run': run},
+            'field': 'Comment[FASTQ_URI]', 'source': uri if evidence else None,
+            'generated': uri, 'reference': None, 'evidence': evidence,
+            'classification': EQUIVALENT if evidence else LOSS if other else UNRESOLVED,
+            'reason': 'Exact native URI and run ownership.' if evidence else
+                f'URI belongs to source runs {other}.' if other else 'No exact native run/URI evidence established.'})
+    return checks
 
 
 def blank_projection(rows, accession):
@@ -114,11 +158,25 @@ def review(root, cohort):
                     'status': value['status'] if value else 'unavailable',
                     'limitation': replay.get(mode, {}).get(route + '_limitation') if not value else None})
     contact_review(root, summary['cases'])
+    write_json(root / 'curated-input-sdrf-fields.json', fields)
+    file_checks = []
+    for case in summary['cases']:
+        name = case['provider'] + '-' + case['accession']
+        for mode in case['modes']:
+            directory = root / 'cases' / name / mode / 'replayed-magetab'
+            if not (directory / 'payload-0.json').exists(): continue
+            document = read(directory / 'payload-0.json')[0]
+            rows = next(r[1] for r in document if r[0] == 'SDRF File')
+            for row in native_file_checks(documents(root / 'cases' / name, mode), rows):
+                row.update(case=name, mode=mode, assessment='native-file-ownership', reference_assisted=False)
+                file_checks.append(row)
+    summary['native_file_ownership_counts'] = dict(Counter(r['classification'] for r in file_checks))
+    fields.extend(file_checks)
+    write_json(root / 'native-file-ownership.json', file_checks)
     # The generic report keeps source fidelity, reference agreement, and input
     # preservation separate. Add cell-level deposited evidence, not only a gate.
     with (root / 'field-discrepancies.jsonl').open('a') as stream:
         for row in fields: stream.write(json.dumps(row, ensure_ascii=False) + '\n')
     summary['field_report_records'] += len(fields)
     write_json(root / 'summary.json', summary)
-    write_json(root / 'curated-input-sdrf-fields.json', fields)
     return summary

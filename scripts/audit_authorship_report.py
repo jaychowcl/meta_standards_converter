@@ -59,6 +59,12 @@ def reference_assistance(case, mode, reference):
         trace = read(case / 'http/trace.json')['events']
         consumed = [event for event in trace if event['phase'] == mode and '/biostudies/' in event['identity']['url']]
         hashes = {event.get('attempt', {}).get('response') for event in consumed}
+    # Response IDs are opaque in archived manifests. Only consumed IDs count;
+    # unused reference bodies in the same manifest cannot establish assistance.
+    manifest = case / 'http' / f'{mode}-json-selected.manifest.json'
+    if not manifest.exists(): manifest = case / 'http' / f'{mode}.manifest.json'
+    files = read(manifest).get('files', {}) if manifest.exists() else {}
+    hashes = {files.get(response_id, {}).get('sha256', response_id) for response_id in hashes}
     return {'trace': str(replay_trace.relative_to(case)) if replay_trace.exists() else 'http/trace.json (acquisition)',
             'reference_requests': [event['identity']['url'] for event in consumed],
             'reference_assisted': bool(consumed),

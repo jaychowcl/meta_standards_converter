@@ -149,3 +149,45 @@ def test_blank_characteristic_projection_keeps_populated_owned_comments():
     assert projected[1] == ['s', '', 'supplied text']
     assert len(changes) == 1
     assert blank_projection(source, 'unrelated')[0] == source
+
+
+@pytest.mark.parametrize('response_id', ['opaque-response', 'http-not-a-body-hash'])
+def test_reference_assistance_resolves_consumed_response_bytes(tmp_path, response_id):
+    from scripts.audit_authorship_report import reference_assistance
+    case = tmp_path / 'cases/sra-ERP1'
+    reference = tmp_path / 'references/E-MTAB-1.idf.txt'
+    reference.parent.mkdir()
+    reference.write_text('original reference bytes')
+    digest = hashlib.sha256(reference.read_bytes()).hexdigest()
+    write_json(case / 'http/standard-json-selected.manifest.json', {'files': {
+        response_id: {'sha256': digest}, 'unused-sdrf': {'sha256': 'unused'}}, 'requests': []})
+    write_json(case / 'standard/trace-json.json', {'events': [{'identity': {
+        'url': 'https://www.ebi.ac.uk/biostudies/files/E-MTAB-1.idf.txt'}, 'response': response_id}]})
+    result = reference_assistance(case, 'standard', 'E-MTAB-1')
+    assert result['same_frozen_reference_bytes_consumed'] == ['idf']
+    assert result['reference_assisted'] is True
+    reference.write_text('different reference version')
+    assert reference_assistance(case, 'standard', 'E-MTAB-1')['same_frozen_reference_bytes_consumed'] == []
+
+
+@pytest.mark.parametrize('run,expected', [('ERR1', 'equivalent-or-documented-transformation'),
+    ('ERR2', 'source-supported-loss-alteration-or-misassociation')])
+def test_native_file_review_requires_source_run_ownership(run, expected):
+    from scripts.audit_additional_review import native_file_checks
+    from tests.test_authorship_sources import document
+    doc = document('<ROOT><RUN accession="ERR1"><SRAFile><Alternatives url="s3://bucket/a.fastq"/></SRAFile></RUN></ROOT>')
+    rows = [['Source Name', 'Comment[ENA_RUN]', 'Comment[FASTQ_URI]'], ['sample', run, 's3://bucket/a.fastq']]
+    assert native_file_checks([doc], rows)[0]['classification'] == expected
+    doc['reference_assisted'] = True
+    assert native_file_checks([doc], rows)[0]['classification'] == 'source-version-reference-defect-or-unresolved'
+
+
+def test_native_file_review_matches_ena_ftp_literal_and_excludes_reference():
+    from scripts.audit_additional_review import native_file_checks
+    doc = {'kind': 'json', 'url': 'https://www.ebi.ac.uk/ena/portal/api/filereport',
+        'sha256': 'test', 'body': 'body', 'member': None, 'reference_assisted': False,
+        'data': [{'run_accession': 'ERR1', 'fastq_ftp': 'ftp.sra.ebi.ac.uk/a.fastq;ftp.sra.ebi.ac.uk/b.fastq'}]}
+    rows = [['Source Name', 'Comment[ENA_RUN]', 'Comment[FASTQ_URI]'], ['s', 'ERR1', 'ftp://ftp.sra.ebi.ac.uk/b.fastq']]
+    assert native_file_checks([doc], rows)[0]['source'] == rows[1][2]
+    rows[1][2] = 'ftp://ftp.sra.ebi.ac.uk/unknown.fastq'
+    assert native_file_checks([doc], rows)[0]['source'] is None
