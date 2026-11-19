@@ -11,7 +11,7 @@ import pytest
 from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.archive_residuals import finalize
-from tests.test_archive_fidelity_enrichment import workflow, enriched_native
+from tests.support.archive import workflow, enriched_native
 
 
 def aliased():

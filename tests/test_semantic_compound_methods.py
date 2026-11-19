@@ -8,8 +8,8 @@
 # =============================================================================
 from copy import deepcopy
 import pytest
-from tests.test_native_archive_enrichment import native
-from tests.test_protocol_export import render
+from tests.support.archive import native
+from tests.support.magetab import render
 from meta_standards_converter.miniml.archive_paths import complete_native_paths
 
 

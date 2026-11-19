@@ -9,8 +9,8 @@
 from copy import deepcopy
 import pytest
 
-from tests.test_native_file_layout import package, file, projected, comments
-from tests.test_protocol_export import render
+from tests.support.magetab import package, file, projected, comments
+from tests.support.magetab import render
 
 
 def with_origin(uri, repository, **fields):
@@ -170,7 +170,7 @@ def test_only_globally_empty_optional_archive_columns_removed():
 def test_enrichment_marks_record_origin_only_after_valid_identity_join():
     from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
     from meta_standards_converter.miniml import MINiMLCodec
-    from tests.test_archive_fidelity_enrichment import enriched_native, workflow
+    from tests.support.archive import enriched_native, workflow
     extra = workflow().to_mapping()
     scan = next(s for s in extra['series']['assay_paths'][0]['steps'] if s['kind']=='scan')
     scan.setdefault('comments',[]).append({'name':'FASTQ_URI','value':'https://ae/reads.fastq'})

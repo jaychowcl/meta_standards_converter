@@ -54,6 +54,12 @@ changes](docs/codebase.md#geo-source-fidelity) for the text, date and file contr
 
 ## Docs
 
+Run `python -m pytest` for ordinary offline tests and `python -m pytest --full`
+for all offline tests before integration. The default deselects expensive
+`acceptance` cases. `--full` never enables live providers; their existing
+`RUN_LIVE_API_TESTS=1` opt-in is unchanged. See the
+[suite layout and coverage decisions](docs/codebase.md#test-plan).
+
 - [Curator guide](docs/curators-guide.md): installation, repository examples,
   main options and platform selection.
 - [Full CLI options](docs/codebase.md#unified-cli): all flags, summaries,

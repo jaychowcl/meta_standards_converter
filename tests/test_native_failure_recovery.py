@@ -18,7 +18,7 @@ from meta_standards_converter.converters import Converter
 from meta_standards_converter.converters.ena2json import ENA2JSONConverter
 from meta_standards_converter.helpers.request_helper import HostRequestCooldownDeferred
 from meta_standards_converter.sources.ena import ENASource
-from tests.test_native_archive_sources import HTTP
+from tests.support.transport import HTTP
 
 
 @pytest.mark.parametrize('error', [requests.HTTPError('server unavailable', response=Mock(status_code=500)),
@@ -42,7 +42,7 @@ def test_permanent_not_found_is_not_whole_job_retryable():
 
 
 def test_partial_native_package_retains_transient_failure_without_discarding_artifacts(tmp_path):
-    from tests.test_ena_missing_record_recovery import missing_sample_records
+    from tests.support.archive import missing_sample_records
     from meta_standards_converter.sources.archive_support import Resolution, StudySeed
     records=missing_sample_records()
     error=HostRequestCooldownDeferred('www.ebi.ac.uk/ena', 2000000000)

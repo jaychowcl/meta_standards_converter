@@ -11,8 +11,8 @@ from meta_standards_converter.converters import PreparationPolicy
 from meta_standards_converter.converters import Converter
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
-from tests.converters.test_audit_source_precedence import package
-from tests.metadata.test_portable_conflicts import import_tables
+from tests.support.archive import package
+from tests.support.magetab import import_tables
 
 CLEAN = 'Manufacturer’s instructions for Müller cells'
 BROKEN = CLEAN.encode('utf-8').decode('cp1252')

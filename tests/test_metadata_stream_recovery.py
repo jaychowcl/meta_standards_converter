@@ -18,26 +18,13 @@ import time
 import pytest
 import requests
 
-from meta_standards_converter.helpers.request_helper import RateLimitedRequester, RequestSettings
 from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _BudgetExhausted, _cancelled, _RetrievalCancelled
 from meta_standards_converter.runtime_contracts import get_resource_profile
 from meta_standards_converter.sources.archive_support import ArchiveHTTP
 
+from tests.support.transport import client, response
+
 _connect = socket.socket.connect
-
-
-def response(chunks):
-    def stream(**kwargs):
-        for item in chunks:
-            if isinstance(item, BaseException):
-                raise item
-            yield item
-    return Mock(status_code=200, headers={}, iter_content=stream)
-
-
-def client(get, retries=3):
-    return RateLimitedRequester('ena_portal', RequestSettings(request_delay=0, max_retries=retries),
-        get=get, host_gate=Mock(wait=Mock(return_value=0)), random_value=lambda: 0)
 
 
 @pytest.mark.parametrize('error',[requests.exceptions.ChunkedEncodingError,requests.exceptions.ContentDecodingError])
@@ -99,7 +86,7 @@ def test_metadata_response_deadline_defaults():
 def test_body_transfer_is_timed_inside_a_real_conversion_operation(caplog):
     import logging
     from meta_standards_converter.conversion_logging import operation
-    from tests.test_conversion_logging import events
+    from tests.support.conversion import events
     with caplog.at_level(logging.DEBUG),operation('stream',heartbeat=False):
         value=ArchiveHTTP('ena',requester=client(Mock(return_value=response([b'<SET/>'])))).get('https://example.org')
     assert value.tag=='SET'

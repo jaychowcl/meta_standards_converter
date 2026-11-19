@@ -14,7 +14,7 @@ import pytest
 
 from meta_standards_converter.magetab.technology import resolve_technology
 from meta_standards_converter.magetab.chemistry import resolve_chemistry
-from tests.magetab.test_scoped_routing import sample
+from tests.support.magetab import sample
 
 
 @pytest.mark.parametrize('identity', ['sci-RNA-seq', 'single cell transcriptional profiling by combinatorial indexing'])

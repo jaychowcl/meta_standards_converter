@@ -17,7 +17,7 @@ import pytest
 from meta_standards_converter.magetab.chemistry import resolve_chemistry
 from meta_standards_converter.magetab.technology import resolve_technology
 from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
-from tests.magetab.test_scoped_routing import sample
+from tests.support.magetab import sample
 
 
 CITE_PROTOCOL = ('Cord blood mononuclear cells (CBMCs) were isolated from cord blood as described in Breton et al. 2015. '
@@ -144,7 +144,7 @@ def test_saved_native_json_exports_offline_without_changing_input(tmp_path):
     import json
     from meta_standards_converter.magetab.constructor import AEConstructor
 
-    from tests.test_native_archive_enrichment import native
+    from tests.support.archive import native
 
     class Forbidden:
         def enrich_selected(self, *args, **options):

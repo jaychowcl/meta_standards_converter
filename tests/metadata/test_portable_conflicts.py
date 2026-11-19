@@ -8,14 +8,14 @@
 # =============================================================================
 """Conflict provenance survives artifacts, scopes and repeated imports."""
 from meta_standards_converter.converters import PreparationPolicy
-import csv,io,json
+import json
 from copy import deepcopy
 import pytest
 from meta_standards_converter.converters import Converter
-from meta_standards_converter.magetab.parser import AEParser
-from meta_standards_converter.sources.magetab import MAGETabInput,TextResource
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.converters.test_audit_source_precedence import package
+from tests.support.archive import package
+
+from tests.support.magetab import import_tables, records
 
 
 def record(path='/sample/SRS1/sra_run/SRR1/library_layout'):
@@ -28,22 +28,6 @@ def record(path='/sample/SRS1/sra_run/SRR1/library_layout'):
 def conflicted():
     data=package();data['extensions']={'insdc':{'version':'1.0','records':[record(),record()]}}
     return data
-
-
-def import_tables(tables):
-    idf=[];sdrf=next(r[1] for r in tables if r[0]=='SDRF File')
-    def text(rows):
-        out=io.StringIO();csv.writer(out,delimiter='\t').writerows(rows);return out.getvalue()
-    for row in tables:idf.append(['SDRF File','study.sdrf.txt'] if row[0]=='SDRF File' else row)
-    source=MAGETabInput(TextResource('study.idf.txt',text(idf),'recorded'),
-        (TextResource('study.sdrf.txt',text(sdrf),'recorded'),),'recorded','local')
-    parser=AEParser();value=parser.parse(source)
-    return value,parser.warnings
-
-
-def records(data):
-    if hasattr(data,'to_mapping'):data=data.to_mapping()
-    return [r for r in data.get('extensions',{}).get('insdc',{}).get('records',[]) if r.get('kind')=='source_conflict']
 
 
 def test_facade_roundtrip_keeps_conflicts_without_refetch_or_reselection():

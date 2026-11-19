@@ -12,7 +12,7 @@ import pytest
 
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.magetab.parser import AEParser
-from tests.converters.test_ae2json import resolved_input
+from tests.support.ae import resolved_input
 
 
 VALUE = 'Comment[SecondaryAccession]'

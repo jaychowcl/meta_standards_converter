@@ -8,8 +8,8 @@
 # =============================================================================
 from copy import deepcopy
 import pytest
-from tests.test_native_file_layout import package
-from tests.test_protocol_export import render
+from tests.support.magetab import package
+from tests.support.magetab import render
 
 
 def mex():

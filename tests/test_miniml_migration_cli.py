@@ -14,7 +14,7 @@ from pathlib import Path
 from meta_standards_converter.cli.miniml_migrate import main
 import meta_standards_converter.miniml as miniml
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.test_msc_miniml_v3 import package_v3
+from tests.support.miniml_packages import package_v3
 
 
 def legacy_package() -> dict:

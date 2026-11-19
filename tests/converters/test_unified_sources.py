@@ -22,7 +22,7 @@ from meta_standards_converter.converters.archive_results import (
     StudyImportOutcome,
 )
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
 ROOT = Path(__file__).parents[2]
 

@@ -17,30 +17,9 @@ from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.magetab.writer import MAGETabWriter
 from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
-from tests.converters.test_audit_source_precedence import package as archive_package
+from tests.support.archive import package as archive_package
 
-
-def geo_package():
-    samples = ''.join(f'''<Sample iid="GSM{i}"><Title>Sample  {i}</Title>
-      <Library-Strategy>RNA-Seq</Library-Strategy><Library-Source>transcriptomic</Library-Source>
-      <Channel><Source>  whole  embryo </Source><Organism>Drosophila melanogaster</Organism>
-      <Molecule>total RNA</Molecule><Characteristics tag="tissue">whole  embryo</Characteristics>
-      <Characteristics tag="developmental stage">stage {i}</Characteristics>
-      <Extract-Protocol>10x Chromium Single Cell 3' v3.1.  Author's method.</Extract-Protocol>
-      </Channel><Supplementary-Data type="TXT">https://example.test/processed{i}.txt</Supplementary-Data>
-      </Sample>''' for i in (1, 2))
-    return GEOParser().parse(f'''<MINiML version="0.5.4">{samples}
-      <Series iid="GSE1"><Title>Study</Title><Summary>Summary.</Summary><Overall-Design>Design.</Overall-Design>
-      <Status><Submission-Date>May 01 2023</Submission-Date><Release-Date>May 02 2023</Release-Date></Status>
-      <Sample-Ref ref="GSM1"/><Sample-Ref ref="GSM2"/></Series></MINiML>''')[0].to_mapping()
-
-
-def rows(data, handler='single_cell_sequencing'):
-    return AEConstructor().miniml2magetab(MINiMLCodec().decode(data).package, platform_handler=handler)
-
-
-def row(table, label):
-    return next(r for r in table if r[0] == label)
+from tests.support.geo import geo_package, row, rows
 
 
 def test_geo_xml_preserves_decoded_text_and_ignores_indentation():

@@ -8,7 +8,6 @@
 # =============================================================================
 """Recover exact ENA identities without confusing membership with field coverage."""
 from copy import deepcopy
-from types import SimpleNamespace
 from unittest.mock import Mock
 import xml.etree.ElementTree as ET
 
@@ -19,11 +18,9 @@ from meta_standards_converter.helpers.request_helper import RateLimitedRequester
 from meta_standards_converter.sources.archive_support import StudyRecords, StudySeed, ArchiveHTTP
 from meta_standards_converter.sources.ena import ENASource
 from meta_standards_converter.miniml.ena_parser import ENAParser
-from tests.test_native_archive_sources import HTTP
+from tests.support.transport import HTTP
 
-
-def records():
-    return StudyRecords(StudySeed('ERP1', 'PRJEB1'))
+from tests.support.archive import missing_sample_records, records
 
 
 def xml_samples(ids):
@@ -134,7 +131,7 @@ def test_physical_batch_limit_includes_connection_retries_and_redirects():
 
 def test_unchanged_small_batch_does_not_multiply_transport_retries():
     from collections import Counter
-    from tests.test_metadata_stream_recovery import response,client
+    from tests.support.transport import response,client
     calls=[]
     def get(url,**kwargs):
         calls.append(url)
@@ -147,7 +144,7 @@ def test_unchanged_small_batch_does_not_multiply_transport_retries():
 
 
 def test_pre_header_timeout_does_not_fan_out_batches():
-    from tests.test_metadata_stream_recovery import client
+    from tests.support.transport import client
     get=Mock(side_effect=requests.ConnectTimeout('connection unavailable'))
     source=ENASource(http=ArchiveHTTP('ena_portal',requester=client(get)))
     source.verified_xml([f'SAMEA{i}' for i in range(100)],records(),'sample')
@@ -156,7 +153,7 @@ def test_pre_header_timeout_does_not_fan_out_batches():
 
 
 def test_large_header_stall_splits_only_after_verified_single_record_succeeds():
-    from tests.test_metadata_stream_recovery import response, client
+    from tests.support.transport import response, client
     calls=[]
     def get(url, **kwargs):
         ids=url.rsplit('/',1)[-1].split(',');calls.append(ids)
@@ -171,7 +168,7 @@ def test_large_header_stall_splits_only_after_verified_single_record_succeeds():
 
 
 def test_unavailable_single_record_prevents_header_stall_batch_fanout():
-    from tests.test_metadata_stream_recovery import client
+    from tests.support.transport import client
     calls=[]
     def get(url,**kwargs):
         calls.append(url.rsplit('/',1)[-1].split(','))
@@ -184,7 +181,7 @@ def test_unavailable_single_record_prevents_header_stall_batch_fanout():
 
 
 def test_wrong_entity_probe_cannot_authorize_header_stall_recovery():
-    from tests.test_metadata_stream_recovery import response, client
+    from tests.support.transport import response, client
     calls=[]
     def get(url,**kwargs):
         ids=url.rsplit('/',1)[-1].split(',');calls.append(ids)
@@ -197,7 +194,7 @@ def test_wrong_entity_probe_cannot_authorize_header_stall_recovery():
 
 
 def test_malformed_xml_and_transport_failures_share_unchanged_request_cap():
-    from tests.test_metadata_stream_recovery import response, client
+    from tests.support.transport import response, client
     calls=[]
     def get(url, **kwargs):
         calls.append(url)
@@ -208,24 +205,6 @@ def test_malformed_xml_and_transport_failures_share_unchanged_request_cap():
     source=ENASource(http=ArchiveHTTP('ena_portal',requester=client(get)))
     assert source.verified_xml(['SAMEA1'],target,'sample') is None
     assert len(calls)==4
-
-
-def missing_sample_records():
-    value = records()
-    value.xml = [ET.fromstring('''<STUDY_SET><STUDY accession="ERP1"><DESCRIPTOR><STUDY_TITLE>Recovery fixture</STUDY_TITLE></DESCRIPTOR></STUDY></STUDY_SET>'''),
-        ET.fromstring('''<EXPERIMENT_SET><EXPERIMENT accession="ERX1"><STUDY_REF accession="ERP1"/><DESIGN><SAMPLE_DESCRIPTOR accession="ERS1"/><LIBRARY_DESCRIPTOR><LIBRARY_STRATEGY>RNA-Seq</LIBRARY_STRATEGY><LIBRARY_SOURCE>TRANSCRIPTOMIC</LIBRARY_SOURCE><LIBRARY_SELECTION>cDNA</LIBRARY_SELECTION><LIBRARY_LAYOUT><SINGLE/></LIBRARY_LAYOUT></LIBRARY_DESCRIPTOR></DESIGN><PLATFORM><ILLUMINA><INSTRUMENT_MODEL>Illumina HiSeq 2000</INSTRUMENT_MODEL></ILLUMINA></PLATFORM></EXPERIMENT></EXPERIMENT_SET>'''),
-        ET.fromstring('<RUN_SET><RUN accession="ERR1"><EXPERIMENT_REF accession="ERX1"/></RUN></RUN_SET>')]
-    row = {'study_accession': 'PRJEB1', 'secondary_study_accession': 'ERP1',
-        'run_accession': 'ERR1', 'experiment_accession': 'ERX1', 'sample_accession': 'SAMEA1',
-        'secondary_sample_accession': 'ERS1', 'sample_title': 'sample one',
-        'scientific_name': 'Homo sapiens', 'tax_id': '9606',
-        'fastq_ftp': 'ftp.sra.ebi.ac.uk/one.fastq.gz', 'fastq_md5': 'a'*32, 'fastq_bytes': '42'}
-    value.indexed = {'read_run': [row], 'read_experiment': [deepcopy(row)]}
-    value.linked = [{'provider': 'biosamples', 'kind': 'sample', 'accession': 'SAMEA1',
-        'metadata': {'accession': 'SAMEA1', 'characteristics': {'tissue': [{'text': 'pancreas'}]}}},
-        {'provider': 'biosamples', 'kind': 'sample', 'accession': 'SAMEA999',
-        'metadata': {'accession': 'SAMEA999', 'characteristics': {'tissue': [{'text': 'unrelated'}]}}}]
-    return value
 
 
 def test_run_bound_fallback_restores_sample_and_files_with_partial_field_coverage():

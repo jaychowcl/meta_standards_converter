@@ -11,8 +11,8 @@ from copy import deepcopy
 import xml.etree.ElementTree as ET
 from meta_standards_converter.sources.ena import ENASource
 from meta_standards_converter.miniml.ena_parser import ENAParser
-from tests.test_native_archive_parsers import fixture_records
-from tests.test_native_archive_sources import HTTP
+from tests.support.archive import fixture_records
+from tests.support.transport import HTTP
 
 
 def test_linked_biosample_contact_has_sample_scope_and_pruned_residual():

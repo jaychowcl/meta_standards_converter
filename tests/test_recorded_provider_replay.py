@@ -229,7 +229,7 @@ def test_reduced_scientific_success_all_formats(tmp_path):
 def test_reduced_conflict_is_partial_valid_in_all_formats_and_reimports():
     from scripts.audit_recorded_provider import audit
     from meta_standards_converter.converters import Converter
-    from tests.metadata.test_portable_conflicts import import_tables, records
+    from tests.support.magetab import import_tables, records
     root = Path(__file__).parent / "fixtures/recorded_provider"
     report = audit(root / "conflict.manifest.json")
     assert report["classification"] == "complete-captured-coverage", report

@@ -13,39 +13,13 @@ import pytest
 import requests
 
 from meta_standards_converter.converters.unified.contracts import ConversionItemResult
-from meta_standards_converter.helpers.request_helper import HostRequestGate, RateLimitedRequester, RequestSettings
 from meta_standards_converter.provider_issues import collect_provider_issues
-from meta_standards_converter.retrieval import RetrievalPolicy
-from meta_standards_converter.sources.magetab import AEWebFetcher
+
+from tests.support.ae import ACCESSION, INFO, fetcher, response
 
 
-ACCESSION = "E-MTAB-16245"
-BASE = "https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/245/" + ACCESSION
-INFO = {"httpLink": BASE, "isPublic": True}
 IDF = {"Name": ACCESSION + ".idf.txt", "Type": "IDF File"}
 SDRF = {"Name": ACCESSION + ".sdrf.txt", "Type": "SDRF File"}
-
-
-def response(payload, status=200):
-    result = requests.Response()
-    result.status_code = status
-    result._content = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
-    result._content_consumed = True
-    result.headers["Content-Length"] = str(len(result.content))
-    return result
-
-
-def fetcher(tmp_path, reply, *, retries=1):
-    calls = []
-    def get(url, **kwargs):
-        calls.append((url, kwargs))
-        return reply(url, kwargs)
-    requester = RateLimitedRequester("biostudies", get=get,
-        settings=RequestSettings(max_retries=retries, request_delay=0,
-                                 backoff_base=0, backoff_max=0),
-        host_gate=HostRequestGate(tmp_path))
-    policy = RetrievalPolicy(resolver=lambda *a, **k: [(None, None, None, None, ("93.184.216.34", 443))])
-    return AEWebFetcher(requester=requester, retrieval_policy=policy), calls
 
 
 def test_explicit_denial_checks_access_first_and_never_retries(tmp_path):

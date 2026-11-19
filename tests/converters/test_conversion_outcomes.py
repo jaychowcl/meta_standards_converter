@@ -18,27 +18,7 @@ from meta_standards_converter.helpers.request_helper import HostRequestCooldownD
 from meta_standards_converter.runtime_contracts import RetryCategory
 from meta_standards_converter.sources.contracts import RequestMetrics
 
-
-class FailingSource:
-    kind = "geo_accession"
-
-    def __init__(self, error):
-        self.error = error
-        self.calls = 0
-
-    def probe(self, source, context):
-        return str(source).startswith("GSE")
-
-    def validate(self, spec, context):
-        pass
-
-    def load(self, spec, context):
-        context.service("counted", lambda: self)
-        self.calls += 1
-        raise self.error
-
-    def metrics(self):
-        return RequestMetrics(self.calls, self.calls, self.calls * 0.25)
+from tests.support.conversion import FailingSource
 
 
 def http_error(status):

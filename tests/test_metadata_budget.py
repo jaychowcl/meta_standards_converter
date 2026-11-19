@@ -14,7 +14,7 @@ import pytest
 import requests
 from meta_standards_converter.converters import Converter, InputSpec
 from meta_standards_converter.helpers.request_helper import RateLimitedRequester, RequestSettings, HostRequestGate
-from tests.converters.test_audit_source_precedence import package, NoPublication
+from tests.support.archive import package, NoPublication
 
 
 @pytest.fixture
@@ -118,7 +118,7 @@ def test_batch_input_budget_isolation(requester):
 def test_cached_metadata_consumes_no_requests_and_redirects_do(tmp_path):
     from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _BudgetExhausted
     from meta_standards_converter.retrieval import RetrievalService
-    from tests.test_retrieval import _policy, _Session, _Response
+    from tests.support.transport import _policy, _Session, _Response
     session = _Session([_Response(status_code=302, headers={'Location':'/final'}), _Response()])
     service = RetrievalService(tmp_path, policy=_policy(), session=session)
     with _budget_scope(max_requests=2) as budget:
@@ -145,7 +145,7 @@ def test_budget_partial_memo_does_not_poison_a_later_input(requester):
 def test_deadline_during_body_cannot_cache_partial_bytes(tmp_path):
     from meta_standards_converter.metadata.retrieval_budget import _budget_scope, _BudgetExhausted
     from meta_standards_converter.retrieval import RetrievalService
-    from tests.test_retrieval import _policy, _Session, _Response
+    from tests.support.transport import _policy, _Session, _Response
     now = [0.0]
     class Slow(_Response):
         def iter_content(self, **kwargs):
@@ -171,7 +171,7 @@ def test_ena_partial_xref_is_not_cached_as_complete():
 
 
 def test_unbounded_options_keep_existing_fetch_signature():
-    from tests.test_native_archive_converters import Source as RecordedSource
+    from tests.support.transport import Source as RecordedSource
     class Source(RecordedSource):
         def fetch(self, seed, *, publications=True):
             assert publications is False
@@ -186,7 +186,7 @@ def test_native_sources_offer_core_before_supplementary_discovery():
     from meta_standards_converter.sources.ena import ENASource
     from meta_standards_converter.sources.sra import SRASource
     from meta_standards_converter.sources.archive_support import StudySeed
-    from tests.test_native_archive_sources import HTTP
+    from tests.support.transport import HTTP
     class CoreSeen(Exception): pass
     def ena_http(url, params, fmt):
         assert params.get('result') not in {'analysis','assembly'}

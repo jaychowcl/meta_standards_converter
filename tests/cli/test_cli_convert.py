@@ -13,7 +13,7 @@ import pytest
 from meta_standards_converter.cli import convert
 from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
 from meta_standards_converter.converters.unified.contracts import ConversionBatchResult, ConversionItemResult
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
 
 @pytest.fixture

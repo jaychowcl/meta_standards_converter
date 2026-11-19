@@ -16,70 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from meta_standards_converter.retrieval import (
-    CacheIntegrityError,
-    RetrievalPolicy,
-    RetrievalSecurityError,
-    RetrievalService,
-    RetrievalSizeError,
-)
-from meta_standards_converter.runtime_contracts import get_resource_profile
+from meta_standards_converter.retrieval import CacheIntegrityError, RetrievalSecurityError, RetrievalService, RetrievalSizeError
 
-
-class _Response:
-    def __init__(
-        self,
-        *,
-        status_code: int = 200,
-        headers: dict[str, str] | None = None,
-        chunks: tuple[bytes, ...] = (b"abc",),
-    ) -> None:
-        self.status_code = status_code
-        self.headers = headers or {"Content-Length": str(sum(map(len, chunks)))}
-        self._chunks = chunks
-        self.closed = False
-
-    def iter_content(self, chunk_size: int):
-        yield from self._chunks
-
-    def raise_for_status(self) -> None:
-        if self.status_code >= 400:
-            raise RuntimeError(f"HTTP {self.status_code}")
-
-    def close(self) -> None:
-        self.closed = True
-
-
-class _Session:
-    def __init__(self, responses: list[_Response]) -> None:
-        self.responses = list(responses)
-        self.calls: list[tuple[str, dict]] = []
-
-    def get(self, url: str, **kwargs):
-        self.calls.append((url, kwargs))
-        return self.responses.pop(0)
-
-
-def _resolver(host: str, port: int, *args, **kwargs):
-    return [(2, 1, 6, "", ("93.184.216.34", port))]
-
-
-def _policy(**overrides) -> RetrievalPolicy:
-    values = {
-        "resource_profile": get_resource_profile(
-            "standard",
-            overrides={
-                "max_matrix_bytes": 8,
-                "max_aggregate_download_bytes": 12,
-                "max_cache_bytes": 32,
-            },
-        ),
-        "allowed_hosts": frozenset({"data.example.org"}),
-        "resolver": _resolver,
-        "disk_preflight": lambda path, required_bytes, headroom_fraction: None,
-    }
-    values.update(overrides)
-    return RetrievalPolicy(**values)
+from tests.support.transport import _Response, _Session, _policy
 
 
 def test_retrieval_rejects_file_urls_and_unapproved_hosts(tmp_path) -> None:

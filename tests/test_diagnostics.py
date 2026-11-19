@@ -19,7 +19,7 @@ from meta_standards_converter.converters.unified.contracts import Diagnostic
 from meta_standards_converter.conversion_logging import operation, labels
 from meta_standards_converter.provider_issues import collect_provider_issues, record
 from meta_standards_converter.sources.errors import MetadataSourceError
-from tests.converters.test_conversion_outcomes import FailingSource
+from tests.support.conversion import FailingSource
 
 
 def test_diagnostic_additions_preserve_legacy_shape():

@@ -439,7 +439,7 @@ Full flag and Python API details remain in the canonical routes below.
   title: Test Plan
   anchor: test-plan
   purpose: Choose current offline validation commands and find the tests protecting each subsystem.
-  keywords: pytest, offline, e2e, CLI, documentation, import, source, projection, integration
+  keywords: pytest, quick, --full, acceptance, archive tests, shared builders, coverage consolidation, offline, e2e, CLI, documentation, import, source, projection, integration
   link: [Open section](codebase.md#test-plan)
 
 - id: live-api-provider-contracts

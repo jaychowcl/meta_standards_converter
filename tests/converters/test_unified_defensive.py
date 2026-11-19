@@ -16,7 +16,7 @@ import platform
 import pytest
 
 from meta_standards_converter.converters import Converter, InputSpec
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
 
 def test_explicit_missing_path_named_like_accession_is_not_retrieved(

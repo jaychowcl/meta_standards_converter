@@ -14,7 +14,7 @@ import pytest
 
 from meta_standards_converter.sources.archive_support import StudyRecords, StudySeed
 from meta_standards_converter.sources.ena import ENASource
-from tests.test_native_archive_sources import HTTP
+from tests.support.transport import HTTP
 
 
 def range_records(literals=('ERR001-ERR003',), database='ENA-RUN', evidence=''):

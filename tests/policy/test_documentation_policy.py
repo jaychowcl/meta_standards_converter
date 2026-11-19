@@ -408,7 +408,6 @@ class DocsIndexTests(unittest.TestCase):
         report_text = report.read_text(encoding="utf-8")
         self.assertIn("Atlas document schema 1.0", codebase_text)
         self.assertIn("H5AD metadata schema 2.0", codebase_text)
-        self.assertNotIn("587 passed, 3 skipped", readme_text)
         self.assertIn("docs/rootless-acceptance-2026-07-31.md", codebase_text)
         self.assertIn('<a id="h5ad-metadata-schema-v1"></a>', codebase_text)
         self.assertIn('<a id="h5ad-metadata-schema-v3"></a>', codebase_text)

@@ -58,7 +58,7 @@ def test_typed_factor_comments_after_units_do_not_take_node_comments():
         ['s1','a1','assay','f1','file','0','factor','hour','UO'],
     ]
     assert paths == before
-    from tests.test_magetab_blank_nodes import parse
+    from tests.support.magetab import parse
     parsed = parse(table[0],table[1:]).to_mapping()['series']['assay_paths'][0]['steps']
     factor = next(v for step in parsed for v in step.get('factor_values', []))
     assert factor['comments'] == [{'name':'detail','value':'factor'}]

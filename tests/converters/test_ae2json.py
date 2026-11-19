@@ -7,7 +7,6 @@
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
 import json
-import copy
 import os
 import sys
 import tempfile
@@ -21,94 +20,13 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.magetab.constructor import AEConstructor  # noqa: E402
-from meta_standards_converter.magetab.idf import IDFConstructor  # noqa: E402
-from meta_standards_converter.magetab.semantics import (  # noqa: E402
-    MAGETabModelError,
-    overlay_core,
-    render_model,
-    validate_model,
-)
+from meta_standards_converter.magetab.semantics import MAGETabModelError, overlay_core, validate_model
 from meta_standards_converter.magetab.parser import AEParser  # noqa: E402
-from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
-from meta_standards_converter.sources.magetab import (  # noqa: E402
-    MAGETabInput,
-    TextResource,
-)
 from meta_standards_converter.sources.metadata import MAGETabMetadataSource  # noqa: E402
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: E402
 from meta_standards_converter.runtime_contracts import get_resource_profile  # noqa: E402
 
-
-IDF = """MAGE-TAB Version\t1.1
-Investigation Title\tExample study
-Investigation Accession\tE-MTAB-1
-Comment[SecondaryAccession]\tGSE123
-Comment[SecondaryAccessionTermSourceRef]\tGEO
-Experimental Design\tRNA-seq
-Experimental Factor Name\tdisease
-Experimental Factor Type\tdisease
-Person Last Name\tDoe
-Person First Name\tJane
-Person Email\tjane@example.org
-Person Affiliation\tExample Institute
-Public Release Date\t2025-01-02
-PubMed ID\t12345
-Publication DOI\t10.1/example
-Publication Author List\tDoe J
-Publication Title\tExample paper
-Publication Status\tpublished
-Status Term Source Ref\tEFO
-Status Term Accession Number\tEFO:0000001
-Protocol Name\tP-collect\tP-extract
-Protocol Type\tsample collection protocol\tnucleic acid extraction protocol
-Protocol Description\tCollect samples\tExtract material
-Protocol Type Term Source REF\tEFO\tEFO
-Protocol Type Term Accession Number\tEFO:0005518\tEFO:0002944
-SDRF File\tstudy.sdrf.txt
-Term Source Name\tEFO
-Term Source File\thttps://www.ebi.ac.uk/efo/
-Mystery Row\tkeep me
-"""
-
-SDRF_HEADER = [
-    "Source Name",
-    "Comment[Sample_title]",
-    "Characteristics[organism]",
-    "Term Source REF",
-    "Characteristics[disease]",
-    "Factor Value[disease]",
-    "Protocol REF",
-    "Extract Name",
-    "Material Type",
-    "Array Design REF",
-    "Technology Type",
-    "Comment[LIBRARY_SOURCE]",
-    "Comment[LIBRARY_STRATEGY]",
-    "Comment[ENA_RUN]",
-    "Comment[FASTQ_URI]",
-    "Comment[MD5]",
-    "Mystery Column",
-]
-
-
-def sdrf(rows=None):
-    rows = rows or [
-        ["GSM1", "Sample one", "Homo sapiens", "EFO", "case", "case", "P-extract", "GSM1", "RNA", "A-TEST-1", "sequencing assay", "TRANSCRIPTOMIC", "RNA-SEQ", "ERR1", "https://example/1.fastq.gz", "aaa", "x"],
-        ["GSM1", "Sample one", "Homo sapiens", "EFO", "case", "case", "P-extract", "GSM1", "RNA", "A-TEST-1", "sequencing assay", "TRANSCRIPTOMIC", "RNA-SEQ", "ERR1", "https://example/2.fastq.gz", "bbb", "y"],
-    ]
-    return "\n".join("\t".join(row) for row in [SDRF_HEADER, *rows]) + "\n"
-
-
-def resolved_input(idf=IDF, sdrfs=None):
-    return MAGETabInput(
-        idf=TextResource("study.idf.txt", idf, "memory:idf"),
-        sdrfs=tuple(
-            TextResource(f"study{index}.sdrf.txt", text, f"memory:sdrf:{index}")
-            for index, text in enumerate(sdrfs or [sdrf()], start=1)
-        ),
-        source="E-MTAB-1",
-        source_kind="accession",
-    )
+from tests.support.ae import IDF, SDRF_HEADER, resolved_input, sdrf
 
 
 class TestMAGETabMetadataSource(unittest.TestCase):

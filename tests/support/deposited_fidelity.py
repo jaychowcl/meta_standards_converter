@@ -225,3 +225,55 @@ def assert_deposited_protocol_qualifiers(expected, actual, *, accession):
     wanted, observed = occurrences(expected), occurrences(actual)
     assert wanted==observed, f'{accession}: protocol qualifier/graph row occurrences differ'
     return {'accession':accession,'protocol_qualifier_cells':wanted[3]}
+
+
+ORDERED_FIELD_PANEL = ["E-MTAB-13662", "E-MTAB-14560", "E-MTAB-14566", "E-MTAB-16192",
+         "E-MTAB-16253", "E-MTAB-13131", "E-MTAB-16856", "E-MTAB-14416",
+         "E-MTAB-16847", "E-MTAB-14960"]
+
+PROTOCOL_QUALIFIER_COUNTS = {
+    'E-GEOD-48034': 20, 'E-GEOD-48035': 844,
+    'E-GEOD-52564': 34, 'E-GEOD-60450': 48,
+}
+
+
+def assert_ordered_archive_fields(expected, actual):
+    """Preserve repeated columns, normalized row multiplicity and graph order."""
+    normalize = lambda row: tuple("" if v is None else str(v).strip() for v in row)
+    def columns(headers):
+        counts = Counter()
+        keys = []
+        for h in headers:
+            counts[h] += 1
+            keys.append((h, counts[h]))
+        return keys
+    akeys, ekeys = columns(actual[0]), columns(expected[0])
+    assert set(akeys) == set(ekeys)
+    positions = [akeys.index(key) for key in ekeys]
+    assert Counter(normalize([r[i] for i in positions]) for r in actual[1:]) == Counter(map(normalize, expected[1:]))
+    # Attribute ordering within a node may normalize; graph node/edge order may not.
+    graph = lambda headers: [h for h in headers if h.endswith(" Name") or h.endswith(" File") or h == "Protocol REF"]
+    assert graph(actual[0]) == graph(expected[0])
+
+
+def protocol_occurrences(table):
+    headers = table[0]
+    columns, owner, occurrence = [], None, 0
+    for i, header in enumerate(headers):
+        if header == 'Protocol REF':
+            occurrence += 1
+            owner = ('protocol', occurrence, i)
+        elif header not in {'Term Source REF', 'Term Accession Number'}:
+            owner = None
+        if owner and header in {'Term Source REF', 'Term Accession Number'}:
+            columns.append((owner, header, i))
+    return Counter((owner[1], header, row[owner[2]], row[i])
+                   for row in table[1:] for owner, header, i in columns if row[i])
+
+
+def assert_protocol_occurrence_counts(source, output, expected):
+    """Keep the independent application-occurrence census alongside row identity."""
+    original = protocol_occurrences(source)
+    assert sum(original.values()) == expected
+    assert protocol_occurrences(output) == original
+    assert len(output) == len(source)

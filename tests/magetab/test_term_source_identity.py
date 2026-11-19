@@ -111,6 +111,7 @@ def test_idf_does_not_overwrite_same_name_variants():
     assert table_triples(rows) == [('Ontology', 'a', None), ('Ontology', 'b', None)]
 
 
+@pytest.mark.acceptance
 def test_full_e_mtab_1_converts_and_retains_sample_and_assay_identities(tmp_path):
     source_dir = Path(__file__).parents[1] / 'fixtures/studies/E-MTAB-1/inputs'
     package = converted(Converter(), str(source_dir / 'E-MTAB-1.idf.txt'), out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False, linked_metadata=False, peer_provider=False))[0]

@@ -14,7 +14,7 @@ import pytest
 from meta_standards_converter.miniml.model import OntologyValue, NamedComment, MINiMLModelError
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.magetab.semantics import render_miniml_assay_documents
-from tests.test_magetab_blank_nodes import parse
+from tests.support.magetab import parse
 from tests.support.deposited_fidelity import assert_deposited_sdrf
 
 

@@ -14,7 +14,7 @@ import pytest
 from meta_standards_converter.metadata.archive_workflows import merge_declarations
 from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.test_native_archive_enrichment import native
+from tests.support.archive import native
 
 
 def platform(iid):

@@ -11,8 +11,8 @@ import pytest
 
 from meta_standards_converter.magetab.idf import IDFConstructor
 from meta_standards_converter.magetab.protocol_export import prepare_protocols
-from tests.test_native_file_layout import package
-from tests.test_protocol_export import definition
+from tests.support.magetab import package
+from tests.support.magetab import definition
 
 
 def people(data):

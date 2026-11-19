@@ -12,7 +12,7 @@ import json
 import pytest
 
 from meta_standards_converter.converters import Converter, InputSpec, PreparationPolicy, RuntimeOptions
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
 
 def test_typed_interface_and_exact_output(tmp_path):

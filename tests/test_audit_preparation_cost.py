@@ -12,7 +12,7 @@ from meta_standards_converter.metadata.modality import resolve_modality
 from meta_standards_converter.metadata.preparation import preparation_operation
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.model import MINiMLPackage
-from tests.test_native_archive_enrichment import native
+from tests.support.archive import native
 
 
 def test_one_package_materialization_per_outer_operation(monkeypatch):

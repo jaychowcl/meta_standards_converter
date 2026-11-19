@@ -14,15 +14,11 @@ from unittest.mock import Mock
 import pytest
 
 from meta_standards_converter.converters import Converter, PreparationPolicy, RuntimeOptions
-from meta_standards_converter.converters.unified.contracts import ConversionBatchResult, ConversionItemResult
 from meta_standards_converter.sources.metadata import GEOMetadataSource
 
+from tests.support.conversion import complete
+
 COMMANDS = [('geo2json', 'json'), ('ae2json', 'json'), ('json2ae', 'magetab'), ('geo2ae', 'magetab')]
-
-
-def complete():
-    return ConversionBatchResult([ConversionItemResult('one', 'source', status='complete',
-        execution='succeeded', completeness='complete', validation='valid')])
 
 
 @pytest.mark.parametrize('command,target', COMMANDS)

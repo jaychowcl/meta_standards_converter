@@ -14,7 +14,7 @@ import pytest
 from meta_standards_converter.metadata.interpretation import MINiMLMetadataService
 from meta_standards_converter.magetab.idf import IDFConstructor
 from meta_standards_converter.magetab.parser import AEParser
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
 
 @pytest.mark.parametrize("names", [("OrganismPart", "DevelopmentalStage"),

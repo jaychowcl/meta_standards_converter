@@ -9,8 +9,6 @@
 from __future__ import annotations
 from tests.support.conversion import converted
 from meta_standards_converter.converters import Converter, PreparationPolicy
-from meta_standards_converter.magetab.exporter import MAGETabExporter
-from meta_standards_converter.sources.metadata import GEOMetadataSource, MAGETabMetadataSource
 
 import csv
 import json
@@ -22,62 +20,8 @@ from scipy import sparse
 
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
-from meta_standards_converter.miniml import (
-    MINiMLHarmonizationPatch,
-    apply_miniml_harmonization_patch,
-    miniml_source_fingerprint,
-)
 
-
-def _applied_package() -> dict:
-    package = {
-        "miniml_schema_version": "3.0",
-        "source": {"format": "test"},
-        "database": [],
-        "organization": [],
-        "contributor": [],
-        "platform": [],
-        "series": {"iid": "GSE1"},
-        "sample": [
-            {
-                "iid": "GSM1",
-                "channel": [
-                    {
-                        "source": {"value": "blood"},
-                        "characteristics": [
-                            {"name": "disease", "value": "raw case"}
-                        ],
-                    }
-                ],
-            }
-        ],
-    }
-    path = "/sample/0/channel/0/characteristics/0"
-    patch = MINiMLHarmonizationPatch(
-        base_sha256=miniml_source_fingerprint(package),
-        adds=(
-            {
-                "path": path,
-                "harmonized_value": {
-                    "field": "sample_disease_name",
-                    "value": "disease",
-                    "term_source_ref": "DOID",
-                    "term_accession_number": "DOID:4",
-                    "hierarchy_depth": 0,
-                },
-                "source_evidence": {
-                    "target_id": "target-1",
-                    "source_field": "disease",
-                    "source_label": "raw case",
-                    "source_field_path": f"{path}/name",
-                    "source_value_path": f"{path}/value",
-                    "derivation": "direct",
-                    "match_kind": "exact_value",
-                },
-            },
-        ),
-    )
-    return apply_miniml_harmonization_patch(package, patch)
+from tests.support.conversion import _applied_package
 
 
 def test_tsv_exposes_deterministic_patch_provenance_without_overrides(tmp_path) -> None:

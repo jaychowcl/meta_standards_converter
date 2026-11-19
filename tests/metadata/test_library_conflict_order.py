@@ -72,7 +72,7 @@ from copy import deepcopy
 import json, socket
 from meta_standards_converter.metadata.reconciliation import inspect_recorded_conflicts
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.converters.test_audit_source_precedence import package
+from tests.support.archive import package
 def no_network(*args,**kwargs): raise AssertionError('network access forbidden')
 socket.socket.connect=socket.create_connection=no_network
 data=package();extra=package('MAGE-TAB')

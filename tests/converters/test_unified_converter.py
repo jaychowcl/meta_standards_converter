@@ -21,7 +21,7 @@ from meta_standards_converter.converters import (
     ConversionBatchResult,
 )
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.converters.test_json2tsv import package, atlas_v1_payload, atlas_v1_dataset
+from tests.support.conversion import package, atlas_v1_payload, atlas_v1_dataset
 
 
 @pytest.mark.parametrize(

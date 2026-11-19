@@ -13,21 +13,7 @@ from meta_standards_converter.converters import Converter
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.metadata.archive_enrichment import LinkedArchiveEnricher
 
-
-def package(provider='SRA', layout='SINGLE'):
-    accession = {'SRA': 'SRP1', 'GEO': 'GSE1', 'MAGE-TAB': 'E-MTAB-1'}[provider]
-    data = {'miniml_schema_version': '3.0', 'source': {'format': provider},
-        'database': [{'iid': p, 'name': p} for p in ['SRA','GEO','ArrayExpress']],
-        'series': {'iid': accession, 'title': provider, 'accession': [{'value': accession}],
-                   'sample_ref': [{'ref': 'SRS1'}], 'relation': [{'type': 'SRA', 'target': 'SRP1'}],
-                   'assay_paths': [{'steps': [{'kind': 'source', 'name': 'SRS1', 'sample_ref': 'SRS1'},
-                       {'kind': 'assay', 'name': 'SRX1'}, {'kind': 'scan', 'name': 'SRR1',
-                        'comments': [{'name': 'LIBRARY_LAYOUT', 'value': layout}]}]}]},
-        'sample': [{'iid': 'SRS1', 'accession': [{'value': 'SRS1', 'database': 'SRA'}],
-                    'channel': [{'organism': [{'value': 'Homo sapiens', 'taxid': '9606'}]}],
-                    'sra_run': [{'run': 'SRR1', 'experiment': 'SRX1', 'sample': 'SRS1',
-                                 'library_strategy': 'RNA-Seq', 'library_layout': layout}]}]}
-    return data
+from tests.support.archive import NoPublication, package
 
 
 class Frozen:
@@ -35,11 +21,6 @@ class Frozen:
     def load(self, accession, **kwargs):
         self.calls.append(accession)
         return [MINiMLCodec().decode(self.data, strict=True).package]
-
-
-class NoPublication:
-    publication_issues = []
-    def enrich_selected(self, package, **kwargs): return package
 
 
 def convert(data, incoming, *, mode='standard'):

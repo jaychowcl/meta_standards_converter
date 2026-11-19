@@ -13,13 +13,7 @@ from meta_standards_converter.magetab.chemistry import resolve_chemistry
 from meta_standards_converter.magetab.technology import detect_ae_technology
 from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 
-
-def sample(title='', protocol='', code=None, iid='GSM1'):
-    channel={'source': 'source', 'extract_protocol': protocol}
-    if code is not None:
-        channel['characteristics']=[{'name':'singlecell_type','value':code}]
-    return {'iid':iid,'title':title,'type':'SRA','library_strategy':'RNA-Seq',
-            'accession':[{'database':'GEO','value':iid}], 'channel':[channel]}
+from tests.support.magetab import sample
 
 
 @pytest.mark.parametrize('code,family,versions', [

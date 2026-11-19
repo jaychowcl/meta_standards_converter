@@ -20,8 +20,6 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from meta_standards_converter.magetab.constructor import AEConstructor  # noqa: E402
-from meta_standards_converter.magetab.idf import IDFConstructor  # noqa: E402
-from meta_standards_converter.magetab.sdrf.constructor import SDRFConstructor
 from meta_standards_converter.magetab.exporter import MAGETabExporter
 from meta_standards_converter.sources.json import JSONPackageSource  # noqa: E402
 from meta_standards_converter.sources.json import (  # noqa: E402
@@ -31,18 +29,7 @@ from meta_standards_converter.sources.json import (  # noqa: E402
 from meta_standards_converter.miniml.geo_parser import GEOParser  # noqa: E402
 from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage  # noqa: E402
 
-
-def package(accession="GSE1"):
-    return {
-        "miniml_schema_version": "3.1",
-        "source": {"format": "test"},
-        "series": {
-            "accession": [{"value": accession, "database": "GEO"}],
-            "title": f"Study {accession}",
-        },
-        "sample": [{"iid": f"GSM-{accession}"}],
-        "platform": [],
-    }
+from tests.support.json2ae import package
 
 
 def typed(payload):

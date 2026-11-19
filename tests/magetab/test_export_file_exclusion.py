@@ -9,7 +9,7 @@
 """Processed-file exclusion is a projection, never a JSON mutation."""
 from copy import deepcopy
 import pytest
-from tests.test_geo_source_fidelity import geo_package, rows, row
+from tests.support.geo import geo_package, rows, row
 
 
 @pytest.mark.parametrize('handler', ['sequencing', 'bulk_sequencing', 'array', 'generic'])

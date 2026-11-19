@@ -26,7 +26,7 @@ from meta_standards_converter.converters.sra2json import SRA2JSONConverter
 from meta_standards_converter.converters.ena2json import ENA2JSONConverter
 from meta_standards_converter.sources.archive_support import Resolution
 from meta_standards_converter.sources.metadata import NativeMetadataSource
-from tests.test_native_archive_parsers import fixture_records
+from tests.support.archive import fixture_records
 
 
 @pytest.mark.parametrize('provider', ['sra','ena'])

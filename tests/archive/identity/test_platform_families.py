@@ -1,0 +1,199 @@
+# =============================================================================
+# Authors
+#
+# Created by jaychowcl @ Saez-Rodriguez Group & EMBL-EBI Functional Genomics Team on May 2026
+# https://github.com/jaychowcl
+# https://saezlab.org
+# https://www.ebi.ac.uk/about/teams/functional-genomics/
+# =============================================================================
+from copy import deepcopy
+import json
+
+import pytest
+
+from meta_standards_converter.miniml.archive_entities import local_platforms
+from meta_standards_converter.miniml.ena_parser import ENAParser
+from meta_standards_converter.miniml.sra_parser import SRAParser
+from tests.support.archive import fixture_records
+
+
+from meta_standards_converter.miniml import MINiMLCodec
+
+from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
+
+
+from tests.support.archive import enriched_native, workflow
+
+from tests.support.archive import native
+
+from tests.support.magetab import render
+
+from meta_standards_converter.miniml.archive_residuals import finalize
+
+
+@pytest.mark.parametrize('provider,parser', [('ena', ENAParser), ('sra', SRAParser)])
+@pytest.mark.parametrize('family,model', [('ILLUMINA', 'HiSeq X Ten'), ('PACBIO_SMRT', 'Sequel II')])
+def test_xml_platform_family_is_mapped_with_model_and_references(provider, parser, family, model):
+    records = fixture_records(provider)
+    experiment = next(e for root in records.xml for e in root.iter('EXPERIMENT'))
+    platform = experiment.find('PLATFORM')[0]
+    platform.tag = family
+    platform.find('INSTRUMENT_MODEL').text = model
+    data = parser().parse(records).to_mapping()
+    run = data['sample'][0]['sra_run'][0]
+    assert run['instrument_platform'] == family
+    assert run['instrument_model'] == model
+    p = next(p for p in data['platform'] if p['iid'] == run['platform_ref']['ref'])
+    assert p['instrument_platform'] == family
+    assert p['instrument_model'] == model
+    assert data['sample'][0]['platform_ref'] == run['platform_ref']
+
+
+def test_ena_indexed_family_fills_missing_xml_evidence_without_indexed_wrapper():
+    records = fixture_records('ena')
+    records.xml = [root for root in records.xml if root.tag != 'EXPERIMENT_SET']
+    records.indexed['read_experiment'] = [{'experiment_accession': 'SRX7812918',
+        'study_accession': 'SRP250911', 'sample_accession': 'SAMN14218700',
+        'instrument_model': 'Illumina MiSeq', 'instrument_platform': 'ILLUMINA'}]
+    data = ENAParser().parse(records).to_mapping()
+    assert data['sample'][0]['sra_run'][0]['instrument_platform'] == 'ILLUMINA'
+    assert all(p.get('instrument_platform') != 'INDEXED' for p in data['platform'])
+    residual = [r for r in data['extensions']['insdc']['records'] if r['kind'] == 'read_experiment']
+    assert all('instrument_platform' not in r['metadata'] for r in residual)
+
+
+def test_conflicting_indexed_family_remains_residual_not_overwriting_xml():
+    records = fixture_records('ena')
+    records.indexed['read_run'][0]['instrument_platform'] = 'PACBIO_SMRT'
+    data = ENAParser().parse(records).to_mapping()
+    assert data['sample'][0]['sra_run'][0]['instrument_platform'] == 'ILLUMINA'
+    assert any(r['metadata'].get('instrument_platform') == 'PACBIO_SMRT'
+               for r in data['extensions']['insdc']['records'] if r['kind'] == 'read_run')
+
+
+def test_compatible_existing_local_platform_is_completed_without_new_id():
+    data = {'source': {'format': 'SRA'}, 'platform': [{'iid': 'sra:platform:existing',
+        'instrument_model': 'Model', 'title': 'Model', 'technology': 'high-throughput sequencing'}],
+        'sample': [{'iid': 'SRS1', 'sra_run': [{'run': 'SRR1', 'experiment': 'SRX1',
+            'instrument_model': 'Model', 'instrument_platform': 'ILLUMINA',
+            'platform_ref': {'ref': 'sra:platform:existing'}}]}]}
+    local_platforms(data)
+    assert len(data['platform']) == 1
+    assert data['platform'][0]['instrument_platform'] == 'ILLUMINA'
+    assert data['sample'][0]['platform_ref']['ref'] == 'sra:platform:existing'
+    before = deepcopy(data)
+    local_platforms(data)
+    assert data == before
+
+
+def test_family_only_and_conflicting_platforms_keep_mixed_scope_and_gpl():
+    data = {'source': {'format': 'ENA'}, 'platform': [{'iid': 'GPL1', 'title': 'Registered'}],
+        'sample': [{'iid': 'SAM1', 'platform_ref': {'ref': 'GPL1'}, 'sra_run': [
+            {'run': 'ERR1', 'experiment': 'ERX1', 'instrument_platform': 'ILLUMINA'},
+            {'run': 'ERR2', 'experiment': 'ERX2', 'instrument_platform': 'PACBIO_SMRT'}]}]}
+    local_platforms(data)
+    assert len(data['platform']) == 3
+    assert not any(p.get('instrument_model') for p in data['platform'])
+    assert data['sample'][0]['platform_ref']['ref'] == 'GPL1'
+    assert len({r['platform_ref']['ref'] for r in data['sample'][0]['sra_run']}) == 2
+    data['sample'][0].pop('platform_ref')
+    local_platforms(data)
+    assert not data['sample'][0].get('platform_ref')
+
+
+def test_unmapped_xml_family_survives_when_model_is_mapped():
+    records = fixture_records('sra')
+    package = SRAParser().parse(records)
+    data = package.to_mapping()
+    from meta_standards_converter.miniml.archive_residuals import finalize, source_records
+    for sample in data['sample']:
+        for run in sample['sra_run']:
+            run['instrument_platform'] = 'OTHER'
+    result = finalize(data, source_records(package)).to_mapping()
+    records = [r for r in result['extensions']['insdc']['records'] if r['kind'] == 'EXPERIMENT']
+    assert any('ILLUMINA' in json.dumps(r['metadata']) for r in records)
+
+
+def test_saved_residual_family_is_recovered_only_for_explicit_experiment():
+    data = {'source': {'format': 'ENA'}, 'sample': [{'iid': 'SAM1', 'sra_run': [
+        {'run': 'ERR1', 'experiment': 'ERX1', 'instrument_model': 'Model'},
+        {'run': 'ERR2', 'experiment': 'ERX2', 'instrument_model': 'Model'}]}],
+        'extensions': {'insdc': {'version': '2.0', 'records': [
+            {'provider': 'ena', 'kind': 'read_experiment', 'accession': 'ERX1',
+             'metadata': {'instrument_platform': 'ILLUMINA'}}]}}}
+    local_platforms(data)
+    one, two = data['sample'][0]['sra_run']
+    assert one['instrument_platform'] == 'ILLUMINA'
+    assert not two.get('instrument_platform')
+    assert one['platform_ref'] != two['platform_ref']
+
+
+def test_two_explicit_families_cannot_mutate_one_existing_model_declaration():
+    data = {'source': {'format': 'SRA'}, 'platform': [{'iid': 'sra:platform:old',
+        'title': 'Model', 'instrument_model': 'Model'}], 'sample': [{'iid': 'SRS1', 'sra_run': [
+            {'run': 'SRR1', 'instrument_model': 'Model', 'instrument_platform': 'ILLUMINA', 'platform_ref': {'ref': 'sra:platform:old'}},
+            {'run': 'SRR2', 'instrument_model': 'Model', 'instrument_platform': 'OTHER', 'platform_ref': {'ref': 'sra:platform:old'}}]}]}
+    local_platforms(data)
+    assert not data['platform'][0].get('instrument_platform')
+    assert len({r['platform_ref']['ref'] for r in data['sample'][0]['sra_run']}) == 2
+    before = deepcopy(data)
+    local_platforms(data)
+    assert data == before
+
+
+def test_completing_one_run_family_cannot_assign_it_to_unknown_runs():
+    data = {'source': {'format': 'SRA'}, 'platform': [{'iid': 'sra:platform:old', 'title': 'Model', 'instrument_model': 'Model'}],
+        'sample': [{'iid': 'SRS1', 'sra_run': [
+            {'run': 'SRR1', 'instrument_model': 'Model', 'instrument_platform': 'ILLUMINA', 'platform_ref': {'ref': 'sra:platform:old'}},
+            {'run': 'SRR2', 'instrument_model': 'Model', 'platform_ref': {'ref': 'sra:platform:old'}}]}]}
+    local_platforms(data)
+    assert not data['platform'][0].get('instrument_platform')
+    assert data['sample'][0]['sra_run'][1]['platform_ref']['ref'] == 'sra:platform:old'
+    assert data['sample'][0]['sra_run'][0]['platform_ref']['ref'] != 'sra:platform:old'
+    assert not data['sample'][0].get('platform_ref')
+
+
+def test_platform_declarations_and_all_sample_references_are_imported():
+    extra = workflow().to_mapping()
+    extra['platform'] = [{'iid': 'GPL13112', 'accession': [{'value': 'GPL13112', 'database': 'GEO'}], 'title': 'Illumina', 'technology': 'high-throughput sequencing', 'contact_ref': [{'ref': extra['contributor'][0]['iid']}]}]
+    extra['database'].append({'iid': 'GEO', 'name': 'GEO'})
+    extra['sample'][0]['platform_ref'] = {'ref': 'GPL13112'}
+    data, issues = merge_archive_metadata(enriched_native(), MINiMLCodec().decode(extra).package, prefer=True)
+    data = data.to_mapping()
+    assert not issues
+    platform = next(p for p in data['platform'] if p['iid'].endswith(':GPL13112'))
+    assert data['sample'][0]['platform_ref'] == {'ref': platform['iid']}
+    assert platform['accession'][0]['value'] == 'GPL13112'
+    assert platform['contact_ref'][0]['ref'] in {c['iid'] for c in data['contributor']}
+
+
+def test_native_platforms_follow_explicit_instruments_and_mixed_scope():
+    data=native().to_mapping();sample=data['sample'][0]
+    assert data['platform']
+    platform={p['iid']:p for p in data['platform']}[sample['platform_ref']['ref']]
+    assert platform['title']==sample['sra_run'][0]['instrument_model']
+    assert not platform.get('accession')
+    run=deepcopy(sample['sra_run'][0]);run.update(run='SRR99',experiment='SRX99',instrument_model='Sequel II')
+    sample['sra_run'].append(run)
+    data=finalize(data,[]).to_mapping();sample=data['sample'][0]
+    assert len(data['platform'])==2
+    assert not sample.get('platform_ref')
+    assert len({r['platform_ref']['ref'] for r in sample['sra_run']})==2
+
+
+def test_missing_instrument_markers_do_not_create_platforms():
+    from meta_standards_converter.miniml.archive_entities import local_platforms
+    for literal in ('not provided', 'unspecified', 'missing: not reported'):
+        data={'source':{'format':'ENA'},'sample':[{'iid':'SAM1','sra_run':[{'run':'ERR1','instrument_model':literal}]}]}
+        local_platforms(data)
+        assert not data['platform']
+        assert not data['sample'][0].get('platform_ref')
+        assert data['sample'][0]['sra_run'][0]['instrument_model']==literal
+
+
+def test_native_non_rna_single_cell_libraries_do_not_assert_coding_rna_type():
+    data=native().to_mapping();data['sample'][0]['title']='single-cell RNA sequencing and ADT libraries'
+    data['sample'][0]['library_strategy']='OTHER'
+    for run in data['sample'][0]['sra_run']:run['library_strategy']='OTHER'
+    rows={r[0]:r[1:] for r in render(data)}
+    assert not rows.get('Comment[AEExperimentType]')

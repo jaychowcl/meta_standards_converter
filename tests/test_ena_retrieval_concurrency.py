@@ -53,7 +53,7 @@ def test_two_lanes_overlap_and_merge_in_source_order():
 
 
 def test_serial_and_parallel_records_and_exports_equal():
-    from tests.test_native_archive_parsers import fixture_records
+    from tests.support.archive import fixture_records
     from meta_standards_converter.miniml.ena_parser import ENAParser
     from meta_standards_converter.magetab.constructor import AEConstructor
     outputs = []

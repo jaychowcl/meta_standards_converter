@@ -12,9 +12,7 @@ from unittest.mock import Mock
 import pytest
 from meta_standards_converter.sources.ena import ENASource
 
-
-MAPPINGS = [("E-MTAB-16245", "ERP185477", "PRJEB104172"),
-            ("E-MTAB-13162", "ERP149729", "PRJEB64550")]
+from tests.support.ae import MAPPINGS
 
 
 def project(ae, study, primary, *, link=True, public=True):

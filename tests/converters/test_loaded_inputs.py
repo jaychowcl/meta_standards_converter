@@ -13,7 +13,7 @@ import json
 from meta_standards_converter.sources.json import JSONPackageSource
 from meta_standards_converter.magetab.exporter import MAGETabExporter
 from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
-from tests.converters.test_json2tsv import package, atlas_v1_payload, atlas_v1_dataset
+from tests.support.conversion import package, atlas_v1_payload, atlas_v1_dataset
 
 
 def test_decode_accepts_packages_and_envelopes_without_mutating(tmp_path):

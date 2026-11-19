@@ -17,7 +17,7 @@ from meta_standards_converter.miniml import insdc_support as support
 from meta_standards_converter.miniml.ena_parser import ENAParser
 from meta_standards_converter.miniml.sra_parser import SRAParser
 from meta_standards_converter.magetab.constructor import AEConstructor
-from tests.test_native_archive_parsers import fixture_records
+from tests.support.archive import fixture_records
 
 
 @pytest.mark.parametrize('provider,parser_type',[('ena',ENAParser),('sra',SRAParser)])

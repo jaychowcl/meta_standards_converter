@@ -4672,11 +4672,65 @@ and
 <a id="test-plan"></a>
 ## Test Plan
 
+Run from the repository root with its installed environment:
+
+```bash
+python -m pytest                 # ordinary offline tests
+python -m pytest --full          # all offline tests; required before integration
+python -m pytest --full -m acceptance  # only the expensive acceptance scenarios
+```
+
+Default collection deselects `acceptance`, even when a file or `-m acceptance`
+is explicitly selected. `--full` includes those cases; it does not enable
+external services. Existing provider tests still require both their `live_api`
+marker and `RUN_LIVE_API_TESTS=1`. Keep that variable unset for offline runs.
+`tests/test_suite_selection.py` checks real pytest collection for quick/full,
+marker filtering, and the live-provider boundary where supported.
+
+Use feature tests for rules, boundaries and failures; workflow tests for small
+scenarios with real components and faked external services; acceptance tests
+for full frozen studies/corpora; and repository checks for packaging,
+dependency provenance, documentation links, supported APIs and attribution.
+Shared builders live in `tests/support/`; immutable source/expected fixtures
+retain their existing locations and bytes. Historical pass counts and prose
+are evidence, not assertions about current behavior. Test each public boundary
+even when another repository validates similar inputs.
+
+Archive tests are organized under `tests/archive/identity`, `citations`,
+`annotations`, `files` and `export`. The former `remaining_entities`,
+`final_entities` and `remaining_scope` modules were split among administration,
+platforms, vocabularies, dates, explicit factors, reference targets and result
+files. Test names and assertions remain stable. Shared parser inputs, native
+packages, converter results and transport doubles now live in `tests/support/`;
+tests no longer import another test module for setup.
+
+Acceptance includes the complete deposited panel, the protocol census, the
+recorded-modality panel and full E-MTAB-1 identity round trip. Each deposited
+accession converts once in
+`test_full_deposited_panel_preserves_scoped_source_occurrences`. The coverage
+consolidation is:
+
+| Former check | Surviving assertions |
+| --- | --- |
+| `test_recorded_archive_panel_preserves_ordered_fields_and_rows` (10 studies) | `assert_ordered_archive_fields`: repeated columns, normalized row multiset and graph order, in the full deposited scenario |
+| `test_actual_exports_retain_946_protocol_qualifiers_with_graph_row_identity` (4 studies) | Existing `assert_deposited_protocol_qualifiers`, exact per-study counts and one item/payload/SDRF checks in that same scenario |
+| `test_recorded_four_study_protocol_qualifier_occurrences_survive` | `assert_protocol_occurrence_counts`, status/diagnostics checks and the independent 946-cell census |
+
+The original strict deposited comparator and all synthetic corruption tests
+remain. Small golden round trips and local-loopback transport regressions stay
+in the quick suite. Loopback tests require local socket permission, not a live
+provider opt-in; the external-network guard remains enabled.
+
+Validation environment caveat: this workspace's existing Python 3.12 environment
+has pytest 8.4.2, while MSC's declared `test` extra requires pytest >=9.1.1,<10.
+Results from that environment are compatibility evidence, not verification of
+the declared pytest 9 runtime. The shared environment was not modified.
+
 Run the full suite:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 MPLCONFIGDIR=/tmp/matplotlib-meta-standards \
-  pytest -p no:cacheprovider -q
+  python -m pytest --full -p no:cacheprovider -q
 ```
 
 Install `.[test]` first. Pytest is canonical because unittest discovery skips
@@ -5116,7 +5170,7 @@ data and has no provider clients. See [the call graph](#idf-and-mage-tab-constru
 
 `tests/e2e/` independently exercises all seven converters and their CLI entrypoints against stored inputs and complete reviewed outputs. The corpus uses reduced public GEO evidence, an unmodified public MAGE-TAB study, and a four-cell six-gene public PBMC count slice, plus explicitly synthetic edge cases. [Fixture provenance and review](../tests/fixtures/README.md) explains exact comparisons, source checks, permitted execution normalization, offline boundaries and the resolved 5-prime/3-prime discrepancy (passing regression MSC-TEST-001).
 
-Run `.venv/bin/python -m pytest tests/e2e -q`; run `.venv/bin/python -m pytest -q` for the complete offline suite. Tests compare full artifacts, exercise injected collaborators, verify old checkpoint bytes survive a version change, and deliberately corrupt outputs to prove scientific drift is rejected. The project-local installed MSC version must match the checkout. No production code or consumer APIs are changed by the test audit.
+Run `.venv/bin/python -m pytest tests/e2e -q`; run `.venv/bin/python -m pytest --full -q` for the complete offline suite. Tests compare full artifacts, exercise injected collaborators, verify old checkpoint bytes survive a version change, and deliberately corrupt outputs to prove scientific drift is rejected. The project-local installed MSC version must match the checkout. No production code or consumer APIs are changed by the test audit.
 
 [Test audit and dispositions](../tests/AUDIT.md) records retained, strengthened, consolidated, relocated and removed checks. Documentation policy lives under `tests/policy/`, separately from workflow correctness. `tests/test_documented_imports.py` verifies executable MSC imports in Python examples.
 
@@ -5292,8 +5346,8 @@ identity, repeated characteristics, library scope, file alternatives and full
 assay paths. Shared modules provide transport/result containers and mapping
 primitives, not a shared discovery orchestrator.
 
-Offline contracts: `tests/test_native_archive_sources.py` and
-`tests/test_native_archive_parsers.py`; provider fixtures come from the vendored
+Offline contracts: `tests/archive/identity/test_native_sources.py` and
+`tests/archive/identity/test_native_parsers.py`; provider fixtures come from the vendored
 SRA/ENA reference material.
 
 The independent `SRA2JSONConverter.convert` and `ENA2JSONConverter.convert`
@@ -5314,8 +5368,8 @@ text becomes a scoped protocol with coupled priority updates. Retained structure
 records preserve native values displaced in the core projection.
 
 Converter/publication contracts are covered by
-`tests/test_native_archive_converters.py`; precedence, ambiguous joins and missing
-values by `tests/test_native_archive_enrichment.py`.
+`tests/archive/export/test_native_converters.py`; precedence, ambiguous joins and missing
+values by `tests/archive/identity/test_native_enrichment.py`.
 
 Native `source.format` (`SRA`/`ENA`) disables automatic sequencing replacement
 and constructor publication fallback at export, and characteristic-to-factor
@@ -5429,7 +5483,7 @@ is unchanged. Registered P-MTAB identifiers win over local names; distinct regis
 accessions and conflicting metadata remain separate. Local names use
 `P-<series.iid>-<number>` with reserved-name collision avoidance. Every path reference
 is remapped with its definition. The semantic overlay emits one contiguous complete
-protocol block. `tests/test_protocol_export.py` covers these export-only contracts.
+protocol block. `tests/archive/export/test_protocol_export.py` covers these export-only contracts.
 
 `native_files.project_native_files` consolidates only native ENA/SRA explicit
 raw-file paths on that same export copy. It groups by the complete experimental
@@ -5450,7 +5504,7 @@ processing/result suffixes are suppressed only when an existing longer path for
 the same bound sample completely represents them. Compatible file details complete
 every matching branch; ambiguous filename-only locations and conflicting metadata
 remain separate. The projector creates no raw/processed cross-products. Stored MINiML file occurrences and GEO/AE layouts
-are unchanged. `tests/test_native_file_layout.py` covers these contracts.
+are unchanged. `tests/archive/files/test_native_file_layout.py` covers these contracts.
 
 Native explicit SDRFs opt into `SDRFRenderer(preserve_order=True)`. Protocol
 column identities follow their destination node occurrence and position within an
@@ -5502,8 +5556,8 @@ through import and export. Supplied labels take priority; prefix classification 
 a fallback only when the source label is missing.
 These corrections cover all routes through the constructor,
 without changing `json2ae` orchestration or saved input files. Publication and
-export acceptance tests live in `tests/test_archive_publications.py` and
-`tests/test_archive_export_cleanup.py` and `tests/magetab/test_accession_rows.py`.
+export acceptance tests live in `tests/archive/citations/test_publications.py` and
+`tests/archive/annotations/test_dates.py` and `tests/magetab/test_accession_rows.py`.
 
 The pure `meta_standards_converter.magetab.accession_rows.secondary_accession_pairs`
 reads physical row groups;
@@ -5556,9 +5610,9 @@ are namespaced together. Source vocabulary names,
 URLs and versions remain residual declarations; IDF lists only term sources actually
 referenced by emitted metadata. INSDC administrative statuses keep their scope without
 becoming a repository declaration. These operations also run on private export copies.
-`tests/test_archive_final_entities.py` covers platform ambiguity, missing instruments,
+`tests/archive/annotations/test_administration.py, tests/archive/annotations/test_vocabularies.py, tests/archive/files/test_result_files.py, tests/archive/identity/test_platform_families.py` covers platform ambiguity, missing instruments,
 organization scope and repository/vocabulary separation;
-`tests/test_archive_platform_families.py` covers explicit families and saved references.
+`tests/archive/identity/test_platform_families.py` covers explicit families and saved references.
 
 Identity joins use repository identifier relations; organization links and derived-from
 relationships do not establish sample equivalence. An E-GEOD lookup probe requires
@@ -6298,13 +6352,13 @@ libraries, repeated attributes and file alternatives, positional file gaps,
 non-MD5 checksums, analysis associations, exact enrichment joins, missing-value
 priority, peer-only records, duplicate batch references and protected outputs.
 JSON-to-TSV and JSON-to-MAGE-TAB tests assert sample IDs, organisms, protocols,
-factors and files. `tests/test_archive_fidelity_*.py` additionally covers exact
+factors and files. `tests/archive/` additionally covers exact
 BioProject UIDs, rejected records, legacy identifiers, assembly versions, reserved
 filenames, two extract stages, units, contributors, local database conflicts,
 taxonomy compatibility and bounded harmonization decoding. Live provider contracts are separately opt-in:
 
 ```bash
-python -m pytest tests/test_native_archive_sources.py tests/test_native_archive_parsers.py tests/test_native_archive_converters.py tests/test_native_archive_enrichment.py tests/test_native_archive_exports.py -q
+python -m pytest tests/archive/identity/test_native_sources.py tests/archive/identity/test_native_parsers.py tests/archive/export/test_native_converters.py tests/archive/identity/test_native_enrichment.py tests/archive/export/test_native_exports.py -q
 RUN_LIVE_API_TESTS=1 python -m pytest tests/live_api/test_native_archive_contracts.py -q
 ```
 

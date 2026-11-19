@@ -8,8 +8,6 @@
 # =============================================================================
 """MAGE-TAB field meaning survives the typed MINiML boundary."""
 from meta_standards_converter.converters import PreparationPolicy
-from copy import deepcopy
-from collections import Counter
 import csv
 import json
 from pathlib import Path
@@ -102,37 +100,6 @@ def test_writer_rejects_invalid_bundle_before_creating_files(tmp_path):
     with pytest.raises(ValueError, match="protocol"):
         MAGETabWriter().write(rows, str(tmp_path / "out"))
     assert not (tmp_path / "out").exists()
-
-
-PANEL = ["E-MTAB-13662", "E-MTAB-14560", "E-MTAB-14566", "E-MTAB-16192",
-         "E-MTAB-16253", "E-MTAB-13131", "E-MTAB-16856", "E-MTAB-14416",
-         "E-MTAB-16847", "E-MTAB-14960"]
-
-
-@pytest.mark.parametrize("accession", PANEL)
-def test_recorded_archive_panel_preserves_ordered_fields_and_rows(accession):
-    path = FIXTURES / "fidelity" / (accession + ".idf.txt")
-    result = Converter().convert(path, out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
-    assert result.status == "complete", result.to_dict()
-    actual = next(r[1] for r in result.items[0].payload[0] if r[0] == "SDRF File")
-    expected = table(path.with_name(accession + ".sdrf.txt"))
-    from tests.support.deposited_fidelity import without_derived_files
-    expected = without_derived_files(expected)
-    normalize = lambda row: tuple("" if v is None else str(v).strip() for v in row)
-    def columns(headers):
-        counts = Counter()
-        keys = []
-        for h in headers:
-            counts[h] += 1
-            keys.append((h, counts[h]))
-        return keys
-    akeys, ekeys = columns(actual[0]), columns(expected[0])
-    assert set(akeys) == set(ekeys)
-    positions = [akeys.index(key) for key in ekeys]
-    assert Counter(normalize([r[i] for i in positions]) for r in actual[1:]) == Counter(map(normalize, expected[1:]))
-    # Attribute ordering within a node may normalize; graph node/edge order may not.
-    graph = lambda headers: [h for h in headers if h.endswith(" Name") or h.endswith(" File") or h == "Protocol REF"]
-    assert graph(actual[0]) == graph(expected[0])
 
 
 @pytest.mark.parametrize("target", ["json", "magetab", "tsv", "csv"])

@@ -8,18 +8,14 @@
 # =============================================================================
 """Operation telemetry is independent of display and scientific payloads."""
 from meta_standards_converter.converters import PreparationPolicy, RuntimeOptions
-import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from io import StringIO
 
 import pytest
 
 from meta_standards_converter.operational_events import OperationalEventEmitter
 
-
-def events(caplog):
-    return [r.msc_event for r in caplog.records if hasattr(r, "msc_event")]
+from tests.support.conversion import events
 
 
 def test_event_payload_is_attached_and_credentials_are_redacted(caplog):
@@ -115,7 +111,7 @@ def test_native_processing_exposes_separate_stage_timings(caplog,tmp_path):
     from meta_standards_converter.metadata.archive_enrichment import merge_archive_metadata
     from meta_standards_converter.metadata.session import PreparationSession
     from meta_standards_converter.converters import Converter
-    from tests.test_native_archive_parsers import fixture_records
+    from tests.support.archive import fixture_records
     with caplog.at_level(logging.DEBUG),operation('stages',heartbeat=False):
         package=SRAParser().parse(fixture_records('sra'))
         merged,_=merge_archive_metadata(package,package)
@@ -150,7 +146,7 @@ def test_interruption_cleans_up_context(exception, caplog):
 
 def test_unified_stage_order_and_final_item_counts(caplog, tmp_path):
     from meta_standards_converter.converters import Converter, InputSpec
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     with caplog.at_level(logging.DEBUG):
         result = Converter().convert([InputSpec(package(), id='good'), tmp_path / 'missing.json'], out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status == "partial"
@@ -166,7 +162,7 @@ def test_unified_stage_order_and_final_item_counts(caplog, tmp_path):
 
 def test_optional_failure_is_warning_and_reports_retained_output(caplog):
     from meta_standards_converter.converters import Converter
-    from tests.converters.test_converter_preparation import native, services
+    from tests.support.conversion import native, services
     with caplog.at_level(logging.DEBUG):
         result = Converter(services=services([], failure=True)).convert(native(), out_type='json', preparation=PreparationPolicy(enrichment='curators', expand_studies=False))
     assert result.items[0].execution == "succeeded"
@@ -178,7 +174,7 @@ def test_optional_failure_is_warning_and_reports_retained_output(caplog):
 
 def test_fail_fast_finishes_every_input(caplog, tmp_path):
     from meta_standards_converter.converters import Converter, InputSpec
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     with caplog.at_level(logging.DEBUG):
         result = Converter().convert([tmp_path / 'missing.json', InputSpec(package())], out_type='json', runtime=RuntimeOptions(fail_fast=True))
     assert [i.status for i in result.items] == ["failed", "skipped"]
@@ -187,7 +183,7 @@ def test_fail_fast_finishes_every_input(caplog, tmp_path):
 
 @pytest.mark.parametrize('provider', ['sra', 'ena'])
 def test_native_partial_results_log_failed_study(provider, caplog):
-    from tests.test_native_archive_converters import Source, SRA2JSONConverter, ENA2JSONConverter
+    from tests.support.transport import Source, SRA2JSONConverter, ENA2JSONConverter
     cls = SRA2JSONConverter if provider == 'sra' else ENA2JSONConverter
     with caplog.at_level(logging.DEBUG):
         result = cls(source=Source(provider)).convert('SRR11192680')
@@ -200,7 +196,7 @@ def test_native_partial_results_log_failed_study(provider, caplog):
 
 def test_publication_collision_reports_publication_not_conversion(caplog, tmp_path):
     from meta_standards_converter.converters import Converter
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     output = tmp_path/'protected.json'
     output.write_text('original')
     with caplog.at_level(logging.DEBUG):
@@ -213,7 +209,7 @@ def test_publication_collision_reports_publication_not_conversion(caplog, tmp_pa
 def test_failure_after_first_published_artifact_is_truthful(caplog, tmp_path, monkeypatch):
     from meta_standards_converter.converters import Converter
     from meta_standards_converter.converters import archive_results
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     original = archive_results.publish_json
     calls = []
     def fail_second(*args, **kwargs):
@@ -234,7 +230,7 @@ def test_failure_after_first_published_artifact_is_truthful(caplog, tmp_path, mo
 
 def test_context_statistics_do_not_turn_missing_optional_data_into_errors(caplog):
     from meta_standards_converter.converters import Converter
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     with caplog.at_level(logging.DEBUG):
         result=Converter().convert(package(), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status=='complete'

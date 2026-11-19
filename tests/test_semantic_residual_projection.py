@@ -8,7 +8,7 @@
 # =============================================================================
 from copy import deepcopy
 import pytest
-from tests.test_native_file_layout import package
+from tests.support.magetab import package
 from meta_standards_converter.miniml.archive_dates import normalize_archive_dates
 from meta_standards_converter.miniml.archive_residuals import finalize
 
@@ -95,7 +95,7 @@ def test_residual_containment_never_erases_changed_procedure_order(same_referenc
 
 def test_linked_biosamples_does_not_recopied_exact_underscore_fields():
     import xml.etree.ElementTree as E
-    from tests.test_native_archive_parsers import fixture_records
+    from tests.support.archive import fixture_records
     from meta_standards_converter.miniml.ena_parser import ENAParser
     records=fixture_records('ena');sample=records.xml[1].find('SAMPLE')
     attrs=sample.find('SAMPLE_ATTRIBUTES')

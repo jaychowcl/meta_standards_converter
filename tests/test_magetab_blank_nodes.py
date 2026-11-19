@@ -6,16 +6,8 @@
 # https://saezlab.org
 # https://www.ebi.ac.uk/about/teams/functional-genomics/
 # =============================================================================
-from meta_standards_converter.magetab.parser import AEParser
-from meta_standards_converter.sources.magetab import MAGETabInput, TextResource
 
-
-def parse(header, rows, **kwargs):
-    return AEParser().parse(MAGETabInput(
-        TextResource('x.idf.txt', 'Investigation Accession\tE-GEOD-1\nInvestigation Title\tExample\nSDRF File\tx.sdrf.txt\n', 'memory:idf'),
-        (TextResource('x.sdrf.txt', '\n'.join('\t'.join(r) for r in [header, *rows]), 'memory:sdrf'),),
-        'E-GEOD-1', 'accession', **kwargs,
-    ))
+from tests.support.magetab import parse
 
 
 def test_blank_node_clears_attachment_context_and_preserves_unbound_occurrences():

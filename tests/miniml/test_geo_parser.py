@@ -24,13 +24,7 @@ from meta_standards_converter.miniml.geo_parser import (  # noqa: E402
 from meta_standards_converter.sources.geo import GEOSource, RelatedSeriesParseResult
 from meta_standards_converter.miniml import MINiMLPackage  # noqa: E402
 
-
-def miniml_body(body: str) -> str:
-    return f"""<?xml version="1.0" encoding="UTF-8"?>
-<MINiML xmlns="http://www.ncbi.nlm.nih.gov/geo/info/MINiML" version="0.5.4">
-{body}
-</MINiML>
-"""
+from tests.support.geo import miniml_body
 
 
 class TestGEOParser(unittest.TestCase):

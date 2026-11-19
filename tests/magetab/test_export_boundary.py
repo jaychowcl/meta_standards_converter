@@ -30,7 +30,7 @@ def test_constructor_does_not_retrieve_missing_publication(monkeypatch):
 
 def test_preparation_and_rendering_do_not_construct_provider_clients(monkeypatch):
     from meta_standards_converter.sources.insdc import INSDCWebfetcher
-    from tests.test_archive_export_cleanup import legacy
+    from tests.support.archive import legacy
 
     def forbidden(*args, **kwargs):
         raise AssertionError("provider client created inside export boundary")

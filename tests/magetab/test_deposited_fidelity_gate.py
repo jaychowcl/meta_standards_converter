@@ -14,7 +14,9 @@ from pathlib import Path
 import pytest
 
 from tests.support.deposited_fidelity import (
-    DEPOSITED_PANEL, assert_deposited_sdrf, assert_deposited_protocol_qualifiers,
+    DEPOSITED_PANEL, ORDERED_FIELD_PANEL, PROTOCOL_QUALIFIER_COUNTS,
+    assert_deposited_sdrf, assert_deposited_protocol_qualifiers,
+    assert_ordered_archive_fields, assert_protocol_occurrence_counts,
     load_deposited_reference, without_derived_files,
 )
 from tests.support.recorded_replay import ReplayTransport
@@ -129,7 +131,6 @@ def test_known_blank_compatibility_is_accession_header_and_literal_scoped():
     with pytest.raises(AssertionError): assert_deposited_sdrf(source, actual, accession='E-GEOD-48035')
 
 
-
 def test_blank_exceptions_cannot_introduce_whitespace_into_another_source_row():
     source = [['Source Name','Characteristics [reference rna 2]'],['s1','  '],['s2','']]
     actual = [['Source Name','Characteristics[reference rna 2]'],['s1',''],['s2','  ']]
@@ -159,6 +160,7 @@ def test_reference_loader_rejects_bytes_not_matching_recorded_source(tmp_path):
     with pytest.raises(ValueError, match='hash'): load_deposited_reference(tmp_path,'E-MTAB-16847')
 
 
+@pytest.mark.acceptance
 @pytest.mark.parametrize('accession', DEPOSITED_PANEL)
 def test_full_deposited_panel_preserves_scoped_source_occurrences(accession):
     reference = load_deposited_reference(FIXTURES, accession)
@@ -181,10 +183,16 @@ def test_full_deposited_panel_preserves_scoped_source_occurrences(accession):
     header = outputs[0][0]
     last_node = max(i for i,value in enumerate(header) if value in NODE_HEADERS)
     assert all(i > last_node for i,value in enumerate(header) if value.startswith('Factor Value['))
-    expected = {'E-GEOD-48034':20,'E-GEOD-48035':844,'E-GEOD-52564':34,'E-GEOD-60450':48}
+    expected = PROTOCOL_QUALIFIER_COUNTS
     if accession in expected:
         report=assert_deposited_protocol_qualifiers(reference['sdrf'],outputs[0],accession=accession)
         assert report['protocol_qualifier_cells'] == expected[accession]
+        assert result.status == ('partial' if accession == 'E-GEOD-48035' else 'complete'), result.to_dict()
+        assert all('source-text encoding' in d.message for d in item.diagnostics if d.code == 'source_partial')
+        assert_protocol_occurrence_counts(reference['sdrf'], outputs[0], expected[accession])
+    if accession in ORDERED_FIELD_PANEL:
+        assert result.status == 'complete', result.to_dict()
+        assert_ordered_archive_fields(reference['sdrf'], outputs[0])
     assert_deposited_sdrf(reference['sdrf'], outputs[0], accession=accession)
 
 
@@ -197,31 +205,18 @@ def test_protocol_only_gate_retains_row_and_application_scope(index):
         assert_deposited_protocol_qualifiers(source,actual,accession='synthetic')
 
 
-@pytest.mark.parametrize('accession,count', [('E-GEOD-48034',20),('E-GEOD-48035',844),
-                                           ('E-GEOD-52564',34),('E-GEOD-60450',48)])
-def test_actual_exports_retain_946_protocol_qualifiers_with_graph_row_identity(accession,count):
-    reference=load_deposited_reference(FIXTURES,accession)
-    reference['sdrf'] = without_derived_files(reference['sdrf'])
-    isolation=ReplayTransport(Path(__file__).parents[1]/'fixtures/recorded_provider/success.manifest.json')
-    with isolation.offline():
-        from meta_standards_converter.converters import Converter
-        result=Converter().convert(FIXTURES / (accession + '.idf.txt'), out_type='magetab', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
-    isolation.assert_complete()
-    assert len(result.items)==1 and len(result.items[0].payload)==1
-    tables=[row[1] for row in result.items[0].payload[0] if row[0]=='SDRF File']
-    assert len(tables)==1
-    report=assert_deposited_protocol_qualifiers(reference['sdrf'],tables[0],accession=accession)
-    assert report['protocol_qualifier_cells']==count
-
-
 def test_factor_comment_cannot_become_unit_comment():
     source=[['Source Name','Factor Value[dose]','Comment[note]','Unit[time]'],['s1','0','factor note','hour']]
     actual=[[row[i] for i in (0,1,3,2)] for row in source]
     with pytest.raises(AssertionError): assert_deposited_sdrf(source,actual,accession='synthetic')
 
 
+@pytest.mark.acceptance
 def test_deposited_cohort_and_protocol_totals_are_explicit():
     assert len(DEPOSITED_PANEL) == len(set(DEPOSITED_PANEL)) == 18
+    assert set(ORDERED_FIELD_PANEL) <= set(DEPOSITED_PANEL)
+    assert set(PROTOCOL_QUALIFIER_COUNTS) <= set(DEPOSITED_PANEL)
+    assert sum(PROTOCOL_QUALIFIER_COUNTS.values()) == 946
     reports = []
     for accession in ('E-GEOD-48034','E-GEOD-48035','E-GEOD-52564','E-GEOD-60450'):
         source = load_deposited_reference(FIXTURES,accession)['sdrf']

@@ -20,8 +20,6 @@ def test_geo_parser_is_network_free_and_preserves_fixture_packages():
     assert all(package.miniml_schema_version == '3.1' for package in packages)
 
 
-
-
 def test_insdc_client_interception_preserves_empty_response_and_call_order():
     from meta_standards_converter.sources.insdc import INSDCWebfetcher
     from xml.etree.ElementTree import fromstring
@@ -36,8 +34,6 @@ def test_insdc_client_interception_preserves_empty_response_and_call_order():
     service = INSDCWebfetcher(client=Client())
     assert service.fetch_sra_runs('SRP1') == []
     assert calls == [('sra', 'SRP1'), ('ena', 'SRP1')]
-
-
 
 
 def test_injected_asset_reader_is_used_for_catalogue(tmp_path):
@@ -56,14 +52,10 @@ def test_injected_asset_reader_is_used_for_catalogue(tmp_path):
     assert list(result.sample_h5ads) == ['GSM1']
 
 
-
-
-
-
 def test_preparation_owns_provider_calls_before_network_free_export():
     from meta_standards_converter.magetab.constructor import AEConstructor
     from meta_standards_converter.metadata.enrichment import MINiMLEnricher
-    from tests.converters.test_json2ae import package
+    from tests.support.json2ae import package
     from copy import deepcopy
     from unittest.mock import Mock
     value = package()
@@ -88,7 +80,7 @@ def test_preparation_owns_provider_calls_before_network_free_export():
 def test_rendering_retained_evidence_never_constructs_provider_clients(monkeypatch):
     from meta_standards_converter.magetab.constructor import AEConstructor
     from meta_standards_converter.sources import pubmed, insdc
-    from tests.converters.test_json2ae import package
+    from tests.support.json2ae import package
     from unittest.mock import Mock
     from copy import deepcopy
     forbidden = Mock(side_effect=AssertionError('rendering must not construct a client'))

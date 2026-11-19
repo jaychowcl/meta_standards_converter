@@ -29,7 +29,7 @@ from meta_standards_converter.metadata.retrieval_budget import (
 from meta_standards_converter.runtime_contracts import get_resource_profile
 from meta_standards_converter.sources.archive_support import ArchiveHTTP, StudyRecords, StudySeed
 from meta_standards_converter.sources.sra import SRASource
-from tests.test_native_archive_parsers import fixture_records
+from tests.support.archive import fixture_records
 
 
 def link_response(params, *, citations=True):

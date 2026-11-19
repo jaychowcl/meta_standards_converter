@@ -21,7 +21,7 @@ import pytest
 from meta_standards_converter.converters import Converter, InputSpec
 from meta_standards_converter.converters.json2h5ad import JSON2H5ADConverter
 from meta_standards_converter.sources.json import JSONPackageSource
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
 
 def adata():

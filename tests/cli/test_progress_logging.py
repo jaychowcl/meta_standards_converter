@@ -92,7 +92,7 @@ def test_file_keeps_debug_when_console_is_quiet(tmp_path, fmt):
 
 def test_cli_quiet_keeps_json_and_no_progress(tmp_path, capsys):
     from meta_standards_converter.cli.convert import main
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     path=tmp_path/'source.json'; path.write_text(json.dumps(package()))
     assert main([str(path),'--out-type','json','--outdir',str(tmp_path/'out'),
                  '--enrichment','off','--no-expand-studies','--quiet','--progress','plain','--report-json','-'])==0
@@ -154,7 +154,7 @@ def test_explicit_off_and_quiet_override_live_terminal(mode, quiet):
 def test_legacy_human_summary_is_stderr(tmp_path, capsys, monkeypatch):
     from meta_standards_converter.cli.geo2json import main
     from meta_standards_converter.converters import Converter
-    from tests.cli.test_named_metadata_commands import complete
+    from tests.support.conversion import complete
     monkeypatch.setattr(Converter, 'convert', lambda *a, **kw: complete())
     assert main(['GSE1', '--out', str(tmp_path)]) == 0
     captured = capsys.readouterr()
@@ -165,7 +165,7 @@ def test_legacy_human_summary_is_stderr(tmp_path, capsys, monkeypatch):
 @pytest.mark.parametrize('provider', ['sra', 'ena'])
 def test_native_cli_correlates_discovery_and_study_outcomes(provider, tmp_path, capsys, monkeypatch):
     import importlib
-    from tests.test_native_archive_converters import Source
+    from tests.support.transport import Source
     from meta_standards_converter.conversion_logging import emit
     module=importlib.import_module('meta_standards_converter.cli.'+provider+'2json')
     converter_class=getattr(module, provider.upper()+'2JSONConverter')
@@ -188,7 +188,7 @@ def test_native_cli_correlates_discovery_and_study_outcomes(provider, tmp_path, 
 
 def test_all_display_settings_preserve_artifacts_and_detailed_events(tmp_path, capsys):
     from meta_standards_converter.cli.convert import main
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     source=tmp_path/'source.json'; source.write_text(json.dumps(package()))
     contents=[]; milestones=[]
     for verbosity in ([], ['-v'], ['-vv'], ['-q']):

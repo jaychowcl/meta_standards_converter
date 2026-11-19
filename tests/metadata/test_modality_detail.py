@@ -49,6 +49,7 @@ def test_mixed_requires_different_established_libraries_not_conflicting_claims()
     assert resolve_modality(sample).value == 'unknown'
 
 
+@pytest.mark.acceptance
 @pytest.mark.parametrize('accession,expected', [
     ('E-MTAB-14560', {'single_nucleus': 4, 'spatial': 16}),
     ('E-MTAB-14566', {'spatial': 2}), ('E-MTAB-14960', {'spatial': 4}),
@@ -75,7 +76,7 @@ def test_tabular_and_anndata_share_modality_detail_without_changing_legacy_servi
     from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
     from meta_standards_converter.sources.json import JSONPackageSource
     from meta_standards_converter.expression.assets import Asset
-    from tests.converters.test_json2tsv import package
+    from tests.support.conversion import package
     value = package()
     sample = value['sample'][0]
     sample['title'] = 'single-nucleus ATAC-seq'

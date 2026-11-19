@@ -9,44 +9,14 @@
 """Presets govern supplementary retrieval independently of the destination."""
 from meta_standards_converter.converters import PreparationPolicy
 from copy import deepcopy
-from types import SimpleNamespace
 import json
 
 import pytest
 
 from meta_standards_converter.converters import Converter
-from meta_standards_converter.converters.archive_results import ArchiveImportResult, StudyImportOutcome
-from meta_standards_converter.miniml import MINiMLCodec
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
-
-def native(provider="SRA"):
-    value = package("SRP1", "SRS1")
-    value["source"]["format"] = provider
-    value["series"]["iid"] = "SRP1"
-    value["database"][0]["iid"] = "GEO"
-    value["series"]["relation"] = [{"type": "GEO", "target": "GSE2"}]
-    return value
-
-
-def services(calls, *, failure=False):
-    class Enricher:
-        publication_issues = []
-        def enrich_selected(self, data, *, publications, run_metadata, session):
-            calls.append(("standard", publications, run_metadata))
-            if failure:
-                raise OSError("unavailable")
-            return data
-    class Linked:
-        def enrich_selected(self, data, **options):
-            calls.append(("linked",))
-            return data, []
-    class Peer:
-        def load(self, accession, **options):
-            calls.append(("peer", accession))
-            p = MINiMLCodec().decode(native("ENA")).package
-            return ArchiveImportResult(accession, [StudyImportOutcome("SRP1", "SRP1", "complete", p)])
-    return {"enricher": Enricher(), "linked_enricher": Linked(), "ena_source": Peer()}
+from tests.support.conversion import native, services
 
 
 @pytest.mark.parametrize("preset,expected", [
@@ -130,7 +100,6 @@ def test_publication_retrieval_is_deduplicated_per_convert_only(caplog):
                    if hasattr(record, "msc_event") and record.msc_event["event_type"] == "conversion_finished"]
     assert len({event["run_id"] for event in completions}) == 2
     assert all(event["attributes"]["preparation_cache_hits"] >= 1 for event in completions)
-
 
 
 def test_injected_services_are_used_in_stage_order():

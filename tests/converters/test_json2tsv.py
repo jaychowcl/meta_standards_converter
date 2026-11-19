@@ -15,63 +15,7 @@ from meta_standards_converter.metadata.projection.tabular import TabularMetadata
 from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
 from meta_standards_converter.metadata.projection.tabular import TabularProjectionError
 
-
-def package(study: str = "GSE1", sample: str = "GSM1") -> dict:
-    return {
-        "miniml_schema_version": "3.0",
-        "source": {"format": "test"},
-        "database": [{"public_id": "GEO", "name": "Gene Expression Omnibus"}],
-        "series": {"accession": [{"value": study}]},
-        "sample": [
-            {
-                "iid": sample,
-                "title": "sample title",
-                "channel": [
-                    {
-                        "organism": [{"value": "Mus musculus", "taxid": "10090"}],
-                        "characteristics": [
-                            {"name": "tissue", "value": "brain"},
-                        ],
-                    }
-                ],
-            }
-        ],
-    }
-
-
-def atlas_v1_dataset(dataset_id: str, metadata: dict) -> dict:
-    return {
-        "dataset_id": dataset_id,
-        "source_repository": "geo",
-        "source_ordinal": 0,
-        "status": "harmonized",
-        "metadata": metadata,
-        "publication_ids": [],
-        "review": None,
-        "harmonization": None,
-        "diagnostics": [],
-    }
-
-
-def atlas_v1_payload(datasets: list[dict]) -> dict:
-    return {
-        "schema_version": "1.0",
-        "atlas": {"atlas_id": "atlas-test", "title": "Test", "theme": "test"},
-        "run": {
-            "run_id": "run-test",
-            "created_at": "2026-07-31T00:00:00Z",
-            "config": {"queries": [], "metadata_repositories": [], "options": {}},
-            "status": "complete",
-        },
-        "datasets": datasets,
-        "publications": [],
-        "summary": {
-            "dataset_count": len(datasets),
-            "publication_count": 0,
-            "completed_dataset_count": len(datasets),
-            "failed_dataset_count": 0,
-        },
-    }
+from tests.support.conversion import atlas_v1_dataset, atlas_v1_payload, package
 
 
 def read_rows(path, delimiter):

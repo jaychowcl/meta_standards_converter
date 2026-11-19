@@ -16,15 +16,9 @@ import pytest
 from meta_standards_converter.converters import Converter
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.miniml.insdc_support import tree
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
-
-def geo(accession, children=()):
-    value = package(accession, 'GSM' + accession[3:])
-    value['series']['iid'] = accession
-    value['source']['format'] = 'GEO MINiML'
-    value['series']['relation'] = [{'type': 'SubSeries', 'target': a} for a in children]
-    return value
+from tests.support.conversion import geo
 
 
 class Geo:

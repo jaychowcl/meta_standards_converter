@@ -15,7 +15,7 @@ import pytest
 from meta_standards_converter.converters import Converter
 from meta_standards_converter.converters.unified.families import recorded_neighbors
 from meta_standards_converter.miniml import MINiMLCodec
-from tests.converters.test_json2tsv import package
+from tests.support.conversion import package
 
 
 def ena_package():

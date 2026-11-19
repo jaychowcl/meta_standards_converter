@@ -23,11 +23,28 @@ _LIVE_DIR = (Path(__file__).parent / "live_api").resolve()
 _LIVE_HOSTS = {"eutils.ncbi.nlm.nih.gov", "ftp.ebi.ac.uk", "www.ebi.ac.uk", "www.ncbi.nlm.nih.gov"}
 
 
+pytest_plugins = ["pytester"]
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--full", action="store_true", default=False,
+        help="Include offline acceptance tests; live-provider opt-in is unchanged.",
+    )
+
+
 def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "acceptance: complete frozen-corpus or deposited-study reproduction (requires --full)",
+    )
     config.addinivalue_line("markers", "live_api: opt-in public provider contract")
 
 
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption("--full"):
+        acceptance = [item for item in items if item.get_closest_marker("acceptance")]
+        items[:] = [item for item in items if not item.get_closest_marker("acceptance")]
+        config.hook.pytest_deselected(items=acceptance)
     enabled = os.environ.get(_LIVE_ENV) == "1"
     for item in items:
         if item.get_closest_marker("live_api") is None:

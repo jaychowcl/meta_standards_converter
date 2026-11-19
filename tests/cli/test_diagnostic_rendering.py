@@ -15,8 +15,8 @@ from types import SimpleNamespace
 
 from meta_standards_converter.cli import convert
 from meta_standards_converter.converters import Converter
-from tests.converters.test_ae_fallback import services, MAPPINGS
-from tests.converters.test_json2tsv import package
+from tests.support.ae import services, MAPPINGS
+from tests.support.conversion import package
 
 
 def test_fallback_console_groups_one_cause(monkeypatch, capsys, tmp_path):
@@ -150,7 +150,7 @@ def test_report_initialization_failure_precedes_conversion(tmp_path, monkeypatch
 
 
 def test_interrupted_item_is_not_reported_as_a_provider_failure(tmp_path, monkeypatch, capsys):
-    from tests.converters.test_conversion_outcomes import FailingSource
+    from tests.support.conversion import FailingSource
     monkeypatch.setattr(convert, 'Converter', lambda: Converter(handlers=[FailingSource(KeyboardInterrupt())]))
     with pytest.raises(KeyboardInterrupt):
         convert.main(['GSE1', '--out-type', 'json', '--out', str(tmp_path)])

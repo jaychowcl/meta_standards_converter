@@ -16,9 +16,9 @@ from meta_standards_converter.magetab.exporter import MAGETabExporter
 from meta_standards_converter.magetab.constructor import AEConstructor
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.sources.json import DatasetPackageGroup, SourceLoadResult
-from tests.test_archive_export_cleanup import legacy
-from tests.test_archive_publications import NoRuns, PubMed
-from tests.test_conversion_logging import events
+from tests.support.archive import legacy
+from tests.support.archive import NoRuns, PubMed
+from tests.support.conversion import events
 from meta_standards_converter.miniml import MINiMLPackage
 from copy import deepcopy
 from dataclasses import replace

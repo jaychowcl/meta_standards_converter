@@ -8,41 +8,12 @@
 # =============================================================================
 """Fallback is accession loading, independent of optional preparation policy."""
 import json
-from types import SimpleNamespace
-from unittest.mock import Mock
 import pytest
 from meta_standards_converter.converters import Converter, PreparationPolicy, RuntimeOptions
-from meta_standards_converter.converters.archive_results import ArchiveImportResult, StudyImportOutcome
-from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.sources.errors import MetadataSourceError
-from meta_standards_converter.provider_issues import record
-from tests.converters.test_json2tsv import package
-from tests.sources.test_ae_ena_mapping import MAPPINGS
+from tests.support.ae import MAPPINGS
 
-
-def services(ae, study, primary, *, failure='source_inaccessible', optional_failure=False):
-    original = MetadataSourceError(failure, ae, http_status=403 if failure == 'source_inaccessible' else None)
-    def deny(*args, **kwargs):
-        record(original, 'biostudies')
-        raise original
-    ae_source = SimpleNamespace(load=Mock(side_effect=deny))
-    data = package(study, 'SAMEA1')
-    data['source']['format'] = 'ENA'
-    data['database'] = [{'iid': db, 'name': db} for db in ['ENA', 'ArrayExpress', 'BioProject']]
-    data['series']['iid'] = ae
-    data['series']['accession'] = [{'value': ae}, {'value': study}, {'value': primary}]
-    data['series']['relation'] = [{'type': 'ArrayExpress', 'target': ae}]
-    def load(*args, **kwargs):
-        if optional_failure:
-            import requests
-            response = requests.Response(); response.status_code = 500
-            record(requests.HTTPError(response=response), 'biosamples')
-        return ArchiveImportResult(study, [StudyImportOutcome(study, primary, 'complete', MINiMLCodec().decode(data).package)])
-    ena = SimpleNamespace(load=Mock(side_effect=load), resolve_arrayexpress=Mock(return_value=SimpleNamespace(
-        study=study, project=primary, evidence=(f'https://www.ebi.ac.uk/biostudies/arrayexpress/studies/{ae}',))))
-    class Enricher:
-        def enrich_selected(self, data, **kwargs): return data
-    return {'ae_source': ae_source, 'ena_source': ena, 'sra_source': ena, 'enricher': Enricher()}, data
+from tests.support.ae import MAPPINGS, services
 
 
 @pytest.mark.parametrize('mapping', MAPPINGS)
@@ -143,7 +114,7 @@ def test_access_denial_cache_survives_default_option_spelling():
 
 
 def test_fallback_uses_shared_http_budget_and_resource_profile(tmp_path):
-    from tests.sources.test_ae_source_failures import fetcher, response, INFO
+    from tests.support.ae import fetcher, response, INFO
     from meta_standards_converter.sources.metadata import MAGETabMetadataSource, NativeMetadataSource
     from meta_standards_converter.sources.ena import ENASource
     from meta_standards_converter.sources.archive_support import ArchiveHTTP
@@ -166,7 +137,7 @@ def test_parsing_errors_never_fall_back(error):
 
 @pytest.mark.parametrize('provider', ['ena', 'sra'])
 def test_native_fallback_and_peer_activity_reaches_consumer_metrics(tmp_path, provider):
-    from tests.sources.test_ae_source_failures import fetcher, response
+    from tests.support.ae import fetcher, response
     from meta_standards_converter.sources.metadata import NativeMetadataSource
     from meta_standards_converter.sources.archive_support import ArchiveHTTP
     source, _ = fetcher(tmp_path, lambda *args: response([]))

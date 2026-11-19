@@ -15,7 +15,7 @@ import pytest
 from meta_standards_converter.converters import Converter, PreparationPolicy, RuntimeOptions
 from meta_standards_converter.miniml import MINiMLCodec
 from meta_standards_converter.sources.metadata import GEOMetadataSource
-from tests.converters.test_converter_expansion import geo
+from tests.support.conversion import geo
 
 
 def family(*, child_ids=(), parents=('GSE2',), parent_ids=('12345',), reciprocal=True):
