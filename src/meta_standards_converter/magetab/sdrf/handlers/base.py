@@ -177,20 +177,19 @@ class _BaseSDRFHandler(SDRFRenderer):
         )
         extra_attrs = []
 
-        organism_values = []
+        from ....metadata.source_fidelity import organism_annotations
+        organisms = []
         for organism in self._as_list(channel.get("organism")):
-            organism_value = self.organism_value(organism=organism)
-            if organism_value:
-                organism_values.append(organism_value)
-        if organism_values:
-            required_attrs["organism"].value = organism_values[0]
-            first_organism = next(
-                (item for item in self._as_list(channel.get("organism")) if isinstance(item, dict)),
-                {},
-            )
-            required_attrs["organism"].attrs = self.ontology_companions(first_organism)
-            for organism_value in organism_values[1:]:
-                extra_attrs.append(SDRFAttr(label="Characteristics[organism]", value=organism_value))
+            value = self.organism_value(organism=organism)
+            if value:
+                organisms.extend(organism_annotations({**(organism if isinstance(organism, dict) else {}), "value": value}, self.audit.warnings))
+        for index, organism in enumerate(organisms):
+            attr = SDRFAttr(label="Characteristics[organism]", value=organism['value'],
+                            attrs=self.ontology_companions(organism))
+            if index == 0:
+                required_attrs['organism'] = attr
+            else:
+                extra_attrs.append(attr)
 
         anatomy = self.organism_part_attrs(channel)
         if anatomy:

@@ -83,7 +83,16 @@ from .patches import (
     miniml_source_fingerprint,
 )
 
+from .selection import (
+    MINiMLSampleSelection, SAMPLE_SELECTION_EXTENSION_KEY,
+    SAMPLE_SELECTION_CONTRACT_VERSION, select_miniml_samples, sample_role,
+    selection_content_fingerprint,
+)
+
 __all__ = [
+    "MINiMLSampleSelection", "SAMPLE_SELECTION_EXTENSION_KEY",
+    "SAMPLE_SELECTION_CONTRACT_VERSION", "select_miniml_samples", "sample_role",
+    "selection_content_fingerprint",
     "MINIML_SCHEMA_VERSION",
     "MINIML_STRICT_COMPATIBILITY_POLICY_VERSION",
     "AssayNode",

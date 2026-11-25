@@ -1619,6 +1619,9 @@ class MINiMLPackage(Mapping[str, Any]):
             extensions=_FrozenJSONMapping(root_extensions),
         )
         package._raise_structural_errors()
+        if "msc_sample_selection" in root_extensions:
+            from .selection import validate_sample_selection
+            validate_sample_selection(package.to_mapping())
         return package
 
     @classmethod

@@ -7073,7 +7073,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src:. python -m pytest -q --runxfail \
 The 2026-11-19 follow-up completed all 45 cells and all 15 direct/saved-JSON
 equivalence checks. All three deposited references retain their 204 populated
 IDF values and 966 meaningful SDRF values under the documented exclusions.
-Three unresolved production defects have strict expected-failure reproductions:
+At that historical audit snapshot, three unresolved production defects had strict expected-failure reproductions:
 `MSC-LIVE-001` loses supplied GEO sample experiment identifiers from SDRF with
 off/curators enrichment; `MSC-LIVE-002` maps computational `feature_extraction`
 to the channel's wet-lab extraction field, which also creates misleading
@@ -7082,7 +7082,7 @@ GEO taxonomy identifiers from the organism's SDRF qualifiers while retaining
 them in JSON. Proposed repairs are explicit relation projection during
 preparation, a shared exact protocol-type mapping that respects graph scope,
 and owned NCBITaxon projection of supplied taxids with conflict handling.
-These repairs are not implemented by this audit.
+That audit did not implement these repairs. The later [sample-selection and fidelity repair](#sample-selection-and-fidelity) implements them and converts the seven expected failures to ordinary regressions.
 
 Evidence, measured ranges, source contradictions and per-field dispositions
 are in the adapter workspace's
@@ -7446,3 +7446,65 @@ retain an explicit empty named-value owner when it has populated companions and
 export them at their original row/channel, without inventing a characteristic
 value or attaching them to a neighboring field. Reproduce with
 `pytest --full --runxfail tests/magetab/test_additional_audit_regressions.py`.
+
+<a id="sample-selection-and-fidelity"></a>
+### Sample selection and supplied-source fidelity
+
+**Implemented:** [miniml/selection.py](../src/meta_standards_converter/miniml/selection.py)
+owns pure graph selection; consumers own scientific eligibility. The package-level
+`msc_sample_selection` extension contract 1.0 preserves analysis/context/excluded
+identities through JSON, checkpoint and native Atlas transport. No Atlas schema
+change is needed. Unmarked legacy packages retain analysis semantics.
+
+| Export | Signature and behavior |
+| --- | --- |
+| `meta_standards_converter.miniml.MINiMLSampleSelection` | Frozen result: typed `package`, tuples `analysis_ids`, `context_ids`, `excluded_ids`, `diagnostics`, read-only `selected_to_source` scalar-pointer map. |
+| `meta_standards_converter.miniml.SAMPLE_SELECTION_EXTENSION_KEY` | `"msc_sample_selection"`; reserved role/provenance extension interpreted by selection-aware consumers. |
+| `meta_standards_converter.miniml.SAMPLE_SELECTION_CONTRACT_VERSION` | `"1.0"`; consumers must not reinterpret unsupported versions. |
+| `meta_standards_converter.miniml.select_miniml_samples` | `(package: MINiMLPackage | Mapping, analysis_ids: Iterable[str]) -> MINiMLSampleSelection`; strict validation before/after; no I/O or source mutation. |
+| `meta_standards_converter.miniml.sample_role` | `(package, sample_id) -> str`; `analysis` or `context`; unknown marked identities/invalid marker raise `MINiMLModelError`. |
+| `meta_standards_converter.miniml.selection_content_fingerprint` | `(package) -> str`; canonical SHA-256 excluding selection evidence and retained patches, avoiding self-reference. |
+
+Selection requires explicit sample IIDs, rejects unknown requested IDs and invalid
+references even in excluded paths, and closes to a fixed point over complete paths
+and all their sample references. It preserves path steps/applications and all
+declarations, keeps unbound study paths, restricts series/variable/repeat membership,
+and removes subsets made empty. Extra retained samples are context, not newly
+eligible analysis. Lists retain source order. Provenance maps retained scalar
+positions to the canonical source positions. The selected fingerprint describes
+selection time, not later annotations. Marked selections may be reused only for
+the same analysis set; reselect from frozen source for a different set. Extension
+validation checks shape and exact role coverage; historical fingerprint truth
+requires the independently frozen source.
+
+[metadata/source_fidelity.py](../src/meta_standards_converter/metadata/source_fidelity.py)
+is called from every workflow-preparation return, before direct/prepared/saved-JSON
+exports diverge. It projects supplied SRA experiment relations through explicit
+sample ownership, retains ambiguous/conflicting relations as sample evidence,
+and never invents run/file joins or duplicates files. Each supplied organism taxid
+has its own qualifier and NCBITaxon declaration. Conflicting authored identifiers
+remain visible and produce preparation warnings. Multichannel native ownership
+is not guessed. Original sample fields, protocols and source text survive.
+
+[metadata/protocol_types.py](../src/meta_standards_converter/metadata/protocol_types.py)
+provides one exact normalized family classifier for AE parsing and preparation.
+`feature_extraction` is computational processing; unknown types remain in the
+authored graph. Convenience assignments require supported type and graph ownership;
+conflicting scalar descriptions do not pick an arbitrary winner.
+
+These changes repair historical `MSC-LIVE-001/002/003`; the seven expected failures
+in [the fidelity regressions](../tests/magetab/test_live_integrity_regressions.py)
+are ordinary passing regressions now. Historical audit outcomes above are unchanged.
+[Selection regressions](../tests/test_miniml_selection.py) cover closure, subset
+membership, empty inputs, strict rejection, source immutability and role transport.
+
+Definition-level contracts for the shared routines above:
+
+- `meta_standards_converter.miniml.selection.MINiMLSampleSelection`: [selection.py](../src/meta_standards_converter/miniml/selection.py), as specified above.
+- `meta_standards_converter.miniml.selection.select_miniml_samples`: [selection.py](../src/meta_standards_converter/miniml/selection.py), as specified above.
+- `meta_standards_converter.miniml.selection.sample_role`: [selection.py](../src/meta_standards_converter/miniml/selection.py), as specified above.
+- `meta_standards_converter.miniml.selection.selection_content_fingerprint`: [selection.py](../src/meta_standards_converter/miniml/selection.py), as specified above.
+- `meta_standards_converter.miniml.selection.validate_sample_selection`: implemented in [selection.py](../src/meta_standards_converter/miniml/selection.py); follows the selection, validation or evidence-projection contract above. `validate_sample_selection(package)` returns the valid marker or `None`, and raises `MINiMLModelError` for invalid roles; projection routines mutate only the preparation-owned copy, with no I/O.
+- `meta_standards_converter.metadata.source_fidelity.organism_annotations`: [source_fidelity.py](../src/meta_standards_converter/metadata/source_fidelity.py), as specified above.
+- `meta_standards_converter.metadata.source_fidelity.project_supplied_identifiers`: [source_fidelity.py](../src/meta_standards_converter/metadata/source_fidelity.py), as specified above.
+- `meta_standards_converter.metadata.protocol_types.protocol_type_family`: [protocol_types.py](../src/meta_standards_converter/metadata/protocol_types.py), as specified above.

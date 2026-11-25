@@ -14,13 +14,16 @@ serialization or MAGE-TAB projection. It neither renders a table nor retrieves
 metadata. Supplied paths retain their order, applications and annotation owners.
 """
 from ..miniml import MINiMLCodec
-from ..miniml.model import Series
+from ..miniml.model import Series, Database
 from dataclasses import replace
 
 
 def _prepared(package, data):
     """Rebuild only changed graph records; reuse validated immutable entities."""
+    from .source_fidelity import project_supplied_identifiers
+    project_supplied_identifiers(data)
     result = replace(package, series=Series.from_mapping(data['series']),
+                     databases=tuple(Database.from_mapping(d) for d in data.get("database", [])),
                      extensions=data.get('extensions', {}))
     result._raise_structural_errors()
     return result

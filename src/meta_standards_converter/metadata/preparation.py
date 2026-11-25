@@ -110,7 +110,8 @@ def _bound_protocol_index(series):
     for protocol in series.get('protocols', []):
         kind = protocol.get('type', '')
         kind = kind.get('value', '') if isinstance(kind, dict) else kind
-        if protocol.get('description') and re.search(r'library|extract', str(kind), re.I):
+        from .protocol_types import protocol_type_family
+        if protocol.get('description') and protocol_type_family(kind) in {'library', 'extraction'}:
             definitions.setdefault(protocol.get('name'), []).append(
                 (f"series.protocols[{protocol['name']}].description", protocol['description']))
     index = {}

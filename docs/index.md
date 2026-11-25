@@ -683,3 +683,10 @@ canonical guide together when an interface, workflow, or contract changes.
 - [Bounded connection-pool acquisition](codebase.md#bounded-pool-acquisition): cancellation, deadlines, connection timeout, slot cleanup and unchanged retry ownership.
 
 - [Harmonized serialization cost](codebase.md#harmonized-serialization-cost): measured companion scans, unchanged values, grouping and deterministic complexity regression.
+
+- id: sample-selection-and-fidelity
+  title: Sample selection and supplied-source fidelity
+  anchor: sample-selection-and-fidelity
+  purpose: Pure experiment-preserving selection, versioned analysis/context roles, scalar provenance and repaired source experiment/protocol/taxonomy projection.
+  keywords: MINiMLSampleSelection, select_miniml_samples, sample_role, selection_content_fingerprint, msc_sample_selection, context, closure, taxid, feature_extraction, MSC-LIVE-001, MSC-LIVE-002, MSC-LIVE-003
+  link: [Open section](codebase.md#sample-selection-and-fidelity)

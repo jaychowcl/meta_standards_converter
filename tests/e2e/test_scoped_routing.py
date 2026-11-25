@@ -42,8 +42,8 @@ def test_real_routing_regressions(case,workspace,monkeypatch):
         geo=next((workspace/'geo').glob('*.'+suffix)).read_text()
         assert geo==next((workspace/'json_ae').glob('*.'+suffix)).read_text()
         expected=ROOT/(case['id']+'.'+suffix)
-        if case['id'] == 'GSM9254695' and suffix == 'sdrf.txt':
-            expected=ROOT.parents[1]/'edge_cases/metadata-integrity/reviewed/GSM9254695.sdrf.txt'
+        if case['id'] in {'GSM5388031', 'GSM9254695'}:
+            expected=ROOT.parents[1]/'edge_cases/metadata-integrity/reviewed-source-fidelity'/f"{case['id']}.{suffix}"
         assert geo==expected.read_text()
     rows=list(csv.reader(next((workspace/'geo').glob('*.sdrf.txt')).open(),delimiter='\t'))
     values=dict(zip(rows[0],rows[1]))

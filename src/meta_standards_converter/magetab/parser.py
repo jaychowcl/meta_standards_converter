@@ -116,6 +116,7 @@ class AEParser:
     @measured("parse")
     def parse(self, source: MAGETabInput) -> MINiMLPackage:
         self.warnings = []
+        self._protocol_projection_conflicts = set()
         self.file_catalogue = source.file_catalogue
         idf_rows = self._table(source.idf.text, source.idf.name, rectangular=False)
         if not idf_rows:
@@ -742,25 +743,38 @@ class AEParser:
                 existing.add(key)
 
     def _map_protocols(self, header, row, sample, channel, protocols):
+        from ..metadata.protocol_types import protocol_type_family
+        # Convenience fields cannot represent several independently owned materials.
+        sources = {v.strip() for v in self._cells(header, row, "Source Name") if v.strip()}
+        samples = {v.strip() for v in self._cells(header, row, "Sample Name") if v.strip()}
+        if len(sources) > 1 or len(samples) > 1 or not (sources or samples):
+            return
+        fields = {
+            'treatment': (channel, 'treatment_protocol'),
+            'growth': (channel, 'growth_protocol'),
+            'label': (channel, 'label_protocol'),
+            'hybridization': (sample, 'hybridization_protocol'),
+            'scan': (sample, 'scan_protocol'),
+            'processing': (sample, 'data_processing'),
+            'extraction': (channel, 'extract_protocol'),
+        }
         for reference in self._cells(header, row, "Protocol REF"):
             protocol = protocols.get(reference.strip())
             if not protocol or not protocol["description"]:
                 continue
-            ptype = normalized_label(protocol["type"])
-            if "treatment" in ptype:
-                channel.setdefault("treatment_protocol", protocol["description"])
-            elif "growth" in ptype:
-                channel.setdefault("growth_protocol", protocol["description"])
-            elif "label" in ptype:
-                channel.setdefault("label_protocol", protocol["description"])
-            elif "hybrid" in ptype:
-                sample.setdefault("hybridization_protocol", protocol["description"])
-            elif "scan" in ptype:
-                sample.setdefault("scan_protocol", protocol["description"])
-            elif "processing" in ptype or "normalization" in ptype:
-                sample.setdefault("data_processing", protocol["description"])
-            elif "extract" in ptype:
-                channel.setdefault("extract_protocol", protocol["description"])
+            target = fields.get(protocol_type_family(protocol['type']))
+            if target:
+                owner, field = target
+                key = (id(owner), field)
+                if key in self._protocol_projection_conflicts:
+                    continue
+                if field in owner and owner[field] != protocol['description']:
+                    # The full graph retains both applications; no scalar winner.
+                    self._warn(f"Conflicting {field} definitions retained in assay graph.")
+                    owner.pop(field, None)
+                    self._protocol_projection_conflicts.add(key)
+                else:
+                    owner.setdefault(field, protocol['description'])
 
     def _map_platform(self, header, row, sample, platforms):
         reference = (
