@@ -287,3 +287,38 @@ def test_fingerprint_ignores_only_retained_harmonization_fragments() -> None:
         without_fragment
     )
     assert miniml_source_fingerprint(with_fragment) != baseline
+
+
+@pytest.mark.parametrize('package_count', [1, 2])
+def test_patch_result_maps_duplicate_rows_and_existing_annotations(package_count):
+    from meta_standards_converter.miniml import apply_miniml_harmonization_patch_with_provenance
+
+    source = [_package(f'GSE{i}') for i in range(package_count)]
+    for package in source:
+        package['sample'][0]['channel'][0]['characteristics'] = [
+            {'name': 'disease', 'value': 'ADPKD'},
+            {'name': 'tissue', 'value': 'kidney'},
+            {'name': 'tissue', 'value': 'kidney'},
+        ]
+    source = MINiMLCodec().encode_many(MINiMLCodec().decode_many(source).packages)
+    path = '/0/sample/0/channel/0/characteristics/0'
+    first = MINiMLHarmonizationPatch(base_sha256=miniml_source_fingerprint(source), adds=(_operation(path=path),))
+    source = apply_miniml_harmonization_patch(source, first)
+    # Existing annotations are source too; additional fields insert ahead of them.
+    operation = _operation(path=path)
+    operation['harmonized_value']['field'] = 'another_disease_name'
+    second = MINiMLHarmonizationPatch(base_sha256=miniml_source_fingerprint(source), adds=(operation,))
+    result = apply_miniml_harmonization_patch_with_provenance(source, second)
+    assert result.document == apply_miniml_harmonization_patch(source, second)
+    assert result.source_sha256 == miniml_source_fingerprint(source)
+    def at(document, pointer):
+        for token in pointer.lstrip('/').split('/'):
+            if pointer:
+                document = document[int(token)] if isinstance(document, list) else document[token.replace('~1', '/').replace('~0', '~')]
+        return document
+    for pointer, value in result.source_values.items():
+        assert at(source, pointer) == value
+        assert at(result.document, result.source_pointer_map[pointer]) == value
+    duplicate_paths = [p for p, v in result.source_values.items() if v == 'kidney']
+    assert len({result.source_pointer_map[p] for p in duplicate_paths}) == 2 * package_count
+    assert any(p != result.source_pointer_map[p] for p in duplicate_paths)

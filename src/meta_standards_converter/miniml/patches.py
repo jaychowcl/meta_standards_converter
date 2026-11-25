@@ -473,6 +473,86 @@ def apply_miniml_harmonization_patch(
     return canonical_miniml_document(result)
 
 
+@dataclass(frozen=True)
+class MINiMLPatchApplication:
+    """A patch result with verified positions in the final canonical encoding.
+
+    Pointers address the canonical input, including its existing annotations.
+    Raw named rows retain occurrence order; annotation rows have unique names.
+    No association is inferred by searching for a matching scalar value.
+    """
+
+    document: dict[str, Any] | list[dict[str, Any]]
+    source_pointer_map: Mapping[str, str]
+    source_values: Mapping[str, Any]
+    source_sha256: str
+    result_sha256: str
+
+    def provenance(self) -> dict[str, Any]:
+        return {
+            "source_pointer_map": dict(self.source_pointer_map),
+            "source_values": dict(self.source_values),
+            "source_sha256": self.source_sha256,
+            "result_sha256": self.result_sha256,
+        }
+
+
+def apply_miniml_harmonization_patch_with_provenance(
+    document: MINiMLPackage | Mapping[str, Any] | Iterable[Mapping[str, Any]],
+    patch: MINiMLHarmonizationPatch | Mapping[str, Any],
+) -> MINiMLPatchApplication:
+    """Additive patch API; the original apply function still returns a document."""
+    source = canonical_miniml_document(document)
+    result = apply_miniml_harmonization_patch(source, patch)
+    pointers: dict[str, str] = {}
+    values: dict[str, Any] = {}
+
+    def token(key: Any) -> str:
+        return str(key).replace("~", "~0").replace("/", "~1")
+
+    def annotation(row: Any) -> str | None:
+        if isinstance(row, dict):
+            key = row.get("name", row.get("tag"))
+            if isinstance(key, str) and key.startswith("hz_"):
+                return key
+        return None
+
+    def walk(before: Any, after: Any, old: str = "", new: str = "") -> None:
+        pointers[old] = new
+        if isinstance(before, dict):
+            if not isinstance(after, dict):
+                raise MINiMLModelError(f"patch changed source structure at {old}")
+            for key, value in before.items():
+                if key not in after:
+                    raise MINiMLModelError(f"patch removed source member at {old}/{key}")
+                walk(value, after[key], old + "/" + token(key), new + "/" + token(key))
+        elif isinstance(before, list):
+            if not isinstance(after, list):
+                raise MINiMLModelError(f"patch changed source list at {old}")
+            raw_after = [i for i, row in enumerate(after) if annotation(row) is None]
+            raw_before = [row for row in before if annotation(row) is None]
+            # Retained patch fragments append; ordinary source lists do not grow.
+            retained = old.endswith("/extensions/msc_harmonization/patches")
+            if len(raw_after) != len(raw_before) and not retained:
+                raise MINiMLModelError(f"patch changed source occurrence count at {old}")
+            annotated = {annotation(row): i for i, row in enumerate(after) if annotation(row)}
+            cursor = iter(raw_after)
+            for i, row in enumerate(before):
+                name = annotation(row)
+                j = annotated.get(name) if name else next(cursor, None)
+                if j is None:
+                    raise MINiMLModelError(f"patch lost source occurrence at {old}/{i}")
+                walk(row, after[j], old + f"/{i}", new + f"/{j}")
+        else:
+            if type(before) is not type(after) or before != after:
+                raise MINiMLModelError(f"patch changed source value at {old}")
+            values[old] = deepcopy(before)
+
+    walk(source, result)
+    return MINiMLPatchApplication(result, MappingProxyType(pointers), MappingProxyType(values),
+                                 miniml_source_fingerprint(source), miniml_source_fingerprint(result))
+
+
 def validate_harmonization_extension_mapping(value: Any) -> None:
     if not isinstance(value, Mapping) or set(value) != {"schema_version", "patches"}:
         raise MINiMLModelError(

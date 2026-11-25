@@ -213,6 +213,19 @@ remain optional. MSC validates transport without importing AC, synthesizing poli
 actions, or deciding the producer's current filtering behavior.
 
 Public helper additions:
+- `meta_standards_converter.miniml.apply_miniml_harmonization_patch_with_provenance`
+  returns `meta_standards_converter.miniml.MINiMLPatchApplication`: the final
+  document, a verified canonical original-pointer to output-pointer map, original
+  scalar values, and source/result fingerprints. Its `provenance()` method emits
+  a JSON-serializable checkpoint envelope. The original apply API still returns
+  only the document. Row associations use source occurrence order and unique
+  annotation names, never scalar-value searches; every original scalar is checked
+  against the mapped output. Repeated equal values, existing annotations, split
+  targets and multiple packages therefore retain their distinct source identity.
+  Unprovable structure or changed source values raise `MINiMLModelError`.
+  Historical input must be frozen and its patch replay verified; no files are
+  migrated in place. `tests/test_miniml_harmonization_patches.py` covers this
+  additive contract and the unchanged original return shape.
 - `meta_standards_converter.miniml.harmonization.wire_schema`: context-local,
   exception-safe legacy rendering, never a process-global toggle.
 - `meta_standards_converter.miniml.harmonization.parse_harmonized_key_details`:
@@ -3880,6 +3893,8 @@ reconstruction. The retired `ae_roundtrip` module is not a public interface.
 | `MINiMLHarmonizationPatch.matches` [source](../src/meta_standards_converter/miniml/patches.py#L258) | `matches(document: Any) -> bool` | See source; follows the owning type contract. |
 | `MINiMLHarmonizationPatch.to_mapping` [source](../src/meta_standards_converter/miniml/patches.py#L261) | `to_mapping() -> dict[str, Any]` | See source; follows the owning type contract. |
 | `meta_standards_converter.miniml.patches.apply_miniml_harmonization_patch` [source](../src/meta_standards_converter/miniml/patches.py#L413) | `apply_miniml_harmonization_patch(document: MINiMLPackage \| Mapping[str, Any] \| Iterable[Mapping[str, Any]], patch: MINiMLHarmonizationPatch \| Mapping[str, Any]) -> dict[str, Any] \| list[dict[str, Any]]` | Apply and retain one immutable patch without replacing raw metadata. |
+| `meta_standards_converter.miniml.patches.apply_miniml_harmonization_patch_with_provenance` [source](../src/meta_standards_converter/miniml/patches.py) | `(document, patch) -> MINiMLPatchApplication` | Apply and verify every original scalar's final pointer; raise on unprovable associations. |
+| `meta_standards_converter.miniml.patches.MINiMLPatchApplication` [source](../src/meta_standards_converter/miniml/patches.py) | `(document, source_pointer_map, source_values, source_sha256, result_sha256)` | Additive result; `provenance() -> dict[str, Any]` supplies checkpoint serialization. |
 | `meta_standards_converter.miniml.patches.validate_harmonization_extension_mapping` [source](../src/meta_standards_converter/miniml/patches.py#L470) | `validate_harmonization_extension_mapping(value: Any) -> None` | See defining source and workflow contracts. |
 | `meta_standards_converter.miniml.patches.iter_harmonization_patches` [source](../src/meta_standards_converter/miniml/patches.py#L522) | `iter_harmonization_patches(package: MINiMLPackage \| Mapping[str, Any]) -> tuple[dict[str, Any], ...]` | See defining source and workflow contracts. |
 | `meta_standards_converter.miniml.patches.iter_harmonization_operations` [source](../src/meta_standards_converter/miniml/patches.py#L540) | `iter_harmonization_operations(package: MINiMLPackage \| Mapping[str, Any], *, sample: str \| int \| None=None, field: str \| None=None) -> tuple[dict[str, Any], ...]` | See defining source and workflow contracts. |
