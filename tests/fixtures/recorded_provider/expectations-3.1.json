@@ -90,7 +90,7 @@
             "completeness": "complete",
             "validation": "valid"
           },
-          "payload_sha256": "45801c079897841008004077c18c7c4ffd3a218f07d2197e750f6c4aebde0b7a",
+          "payload_sha256": "5de94e89eae72f399f0fda329a0dd73dc925bc40ef0341b5fd365ed8abd8cf04",
           "payload_count": 1,
           "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
           "scientific_disposition": "archive_ownership_verified_other_fields_limited"
@@ -129,7 +129,7 @@
             "completeness": "complete",
             "validation": "valid"
           },
-          "payload_sha256": "c42b43fc3eab6b740298c3ee3ceafbed13cf8d649d6c4609c0c24a1a3c64831a",
+          "payload_sha256": "7c3baad6815facb3c20890a1c9ae25b56142b01faf896ca0e6319db09ee7303a",
           "payload_count": 1,
           "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
           "scientific_disposition": "archive_ownership_verified_other_fields_limited"
@@ -285,7 +285,7 @@
             "completeness": "partial",
             "validation": "valid"
           },
-          "payload_sha256": "2fa9130b8801efe5f15d0b11be573f3e5ecd813d703f3272762ebf03567076f7",
+          "payload_sha256": "3181d351b72ac038f64f02ecae7e979f2639a7f0564a9cd23075dbed986b47da",
           "payload_count": 1,
           "cause_sha256": "e5b35356e23898c228af28e5d45b2089eb65347246a70c267f63d38ac231ce6a",
           "scientific_disposition": "archive_ownership_verified_other_fields_limited"
@@ -332,7 +332,7 @@
             },
             "payload_count": 1,
             "cause_sha256": "04260e5b427c41ac43ed61300249191fd83db243c8b52a039edce9598ce67a65",
-            "payload_sha256": "c3aa3e61503b8658e34a3d8773421eb3729a4e22120d0784d491408740014995",
+            "payload_sha256": "b96ed1c911e576cd9d1c2970542820ec111479578f8c94eb3f80e7f378bce346",
             "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
           },
           "magetab": {
@@ -604,7 +604,7 @@
             "completeness": "complete",
             "validation": "valid"
           },
-          "payload_sha256": "c3e0d8e11c576d21326c20698ce7132178178e66081fc5a7100e81f3ec7d9af2",
+          "payload_sha256": "f8d8fb2f9c6984a85925e1b5d6d1639f1c95516f32eee807e2f054a68ae7996b",
           "payload_count": 1,
           "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
           "scientific_disposition": "archive_ownership_verified_other_fields_limited"
@@ -626,7 +626,7 @@
             "completeness": "complete",
             "validation": "valid"
           },
-          "payload_sha256": "9df71c657a1bf2df9ee84976a30c1e71ee88cd87a60b4b47466be5e7aa3e7f40",
+          "payload_sha256": "e3d141dd341c1b76698df7543afd5169f8bcbd13c48016a3ffb3b97710fd70ed",
           "payload_count": 1,
           "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
           "scientific_disposition": "archive_ownership_verified_other_fields_limited"
@@ -643,7 +643,7 @@
             "completeness": "complete",
             "validation": "valid"
           },
-          "payload_sha256": "5856c7872ccaeec3c80e39c95e10b96fb5d1c7dc845d2cd078e023cbe5019953",
+          "payload_sha256": "1eedfdba27438b29f4fe912ad1b3fbfe78389da1fd1bbbed2dfee93384188dcf",
           "payload_count": 1,
           "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
           "scientific_disposition": "archive_ownership_verified_other_fields_limited"
@@ -665,7 +665,7 @@
             "completeness": "complete",
             "validation": "valid"
           },
-          "payload_sha256": "c3f9dd69429b255f8763afc851043437431be37442e9d6ebb07b810d1f06e016",
+          "payload_sha256": "d255e472acc3fc5b95a250ff41edb62459bbeab8e73b36840c012c8b3ec0b384",
           "payload_count": 1,
           "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
           "scientific_disposition": "archive_ownership_verified_other_fields_limited"

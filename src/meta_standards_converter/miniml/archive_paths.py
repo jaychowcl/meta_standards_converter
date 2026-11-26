@@ -59,6 +59,11 @@ def _authored_method(steps, by_name, field, description, base):
     return False
 
 
+def _generated_method_name(name, base):
+    prefix, _, ordinal = name.rpartition(':')
+    return name == base or (prefix == base and ordinal.isdecimal())
+
+
 def _compound_application(steps, sample, methods, description):
     """Recognize duplicate scalar projection at an unambiguous native boundary."""
     assays = [s for s in steps if s['kind'] == 'assay']
@@ -130,7 +135,10 @@ def complete_native_paths(data):
                 for path in series.get('assay_paths', []):
                     path['steps'][:] = [s for s in path['steps'] if s.get('protocol_ref') not in obsolete]
                 continue
-            old = next((p for p in definitions if p['name'].startswith(base) and p.get('description') == description), None)
+            normalized = ' '.join(description.split())
+            old = next((method for method in definitions
+                        if _generated_method_name(method['name'], base)
+                        and ' '.join(str(method.get('description') or '').split()) == normalized), None)
             if old is None:
                 name = base
                 count = 1

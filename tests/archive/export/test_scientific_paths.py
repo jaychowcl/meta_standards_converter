@@ -174,3 +174,29 @@ def test_native_paths_export_all_explicit_biosample_aliases_without_changing_ide
     values={r[i] for r in rows[1:] for i,h in enumerate(rows[0]) if h=='Comment[BioSD_SAMPLE]'}
     assert {'SAMN123','SAMEA456'}<=values
     assert data==before
+
+
+def test_reprepared_archive_keeps_original_protocol_text_and_distinct_methods():
+    from meta_standards_converter.miniml.archive_paths import complete_native_paths
+
+    data = native().to_mapping()
+    sample = data['sample'][0]
+    original = '\nMeasure   the specimen.\nRecord the result.\n'
+    sample['data_processing'] = original
+    complete_native_paths(data)
+    base = f"{data['series']['iid']}:{sample['iid']}:data_processing"
+    definitions = data['series']['protocols']
+    assert next(p for p in definitions if p['name'] == base)['description'] == original
+    sample['data_processing'] = 'Measure the specimen. Record the result.'
+    complete_native_paths(data)
+    assert [(p['name'], p['description']) for p in definitions if p['name'].startswith(base)] == [(base, original)]
+
+    sample['data_processing'] = 'Measure a separate specimen.'
+    complete_native_paths(data)
+    generated = [p for p in definitions if p['name'].startswith(base)]
+    assert [(p['name'], p['description']) for p in generated] == [
+        (base, original), (base + ':2', 'Measure a separate specimen.')]
+    authored = {'name': 'deposited-second-method', 'description': original, 'type': generated[0]['type']}
+    definitions.append(deepcopy(authored))
+    complete_native_paths(data)
+    assert authored in definitions
