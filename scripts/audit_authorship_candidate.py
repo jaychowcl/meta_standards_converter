@@ -56,6 +56,14 @@ def verify_seal(root):
     return {'files': len(seen), 'sha256_manifest': sha256(manifest)}
 
 
+def _pytest_version():
+    from importlib.metadata import PackageNotFoundError, version
+    try:
+        return version('pytest')
+    except PackageNotFoundError:
+        return 'unavailable'
+
+
 def candidate_preflight(source, output, expected_revision):
     source, output = Path(source).resolve(), Path(output).resolve()
     if source == output or source.is_relative_to(output) or output.is_relative_to(source):
@@ -78,7 +86,7 @@ def candidate_preflight(source, output, expected_revision):
         raise ValueError('Expected the original 942ef67 acquisition baseline')
     return source, output, {'tested_revision': revision, 'acquisition_revision': BASELINE,
         'source_bundle': str(source), 'source_seal_before': seal, 'started_at': utc(),
-        'python': sys.executable, 'python_version': sys.version, 'msc_origin': str(origin), 'live_requests': 0,
+        'python': sys.executable, 'python_version': sys.version, 'pytest_version': _pytest_version(), 'msc_origin': str(origin), 'live_requests': 0,
         'settings': 'Frozen request manifests; candidate JSON generated before JSON-to-MAGE-TAB; legacy JSON exported separately.'}
 
 
@@ -322,7 +330,7 @@ def write_report(root, summary, environment, checks, legacy):
         'legacy-results.json compares all older-JSON exports with their frozen output and records intentional changes separately. Previously discarded source information cannot be recovered by exporting older JSON.', '',
         f"Candidate JSON differs from baseline capture in {sum(m.get('candidate_json_equals_baseline_capture') is False for m in modes)}/27 cases/presets; this is not a replay mismatch.",
         f"Older-JSON SDRF comparisons: {dict(Counter(r['sdrf']['verdict'] for r in legacy))}.",
-        'Existing Python/environment reused; pytest 8.4.2 remains below the declared 9.1.1 minimum. Full-suite and regression logs are in the parent validation directory. '
+        f"Validation interpreter `{environment['python']}`, Python {environment['python_version']}, installed pytest {environment['pytest_version']}. "
         'No integration pins, original fixtures, main integration or remote publication are part of this candidate.', '',
         '## Reproduce', '', '```sh',
         f'PYTHONDONTWRITEBYTECODE=1 {sys.executable} scripts/audit_authorship.py candidate \\',

@@ -67,6 +67,7 @@ def test_candidate_requires_the_actual_clean_revision(tmp_path, monkeypatch, pro
         _, output, evidence = candidate_preflight(source, tmp_path / 'new', 'candidate')
         assert evidence['tested_revision'] == 'candidate'
         assert evidence['acquisition_revision'] == BASELINE
+        assert evidence['pytest_version'] == pytest.__version__
         assert not output.exists()
 
 
