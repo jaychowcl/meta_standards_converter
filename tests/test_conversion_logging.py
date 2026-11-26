@@ -208,16 +208,16 @@ def test_publication_collision_reports_publication_not_conversion(caplog, tmp_pa
 
 def test_failure_after_first_published_artifact_is_truthful(caplog, tmp_path, monkeypatch):
     from meta_standards_converter.converters import Converter
-    from meta_standards_converter.converters import archive_results
+    from meta_standards_converter.sources import receipts
     from tests.support.conversion import package
-    original = archive_results.publish_json
+    original = receipts.publish_with_receipt
     calls = []
     def fail_second(*args, **kwargs):
         calls.append(args[0])
         if len(calls) == 2:
             raise OSError('private storage detail')
         return original(*args, **kwargs)
-    monkeypatch.setattr(archive_results, 'publish_json', fail_second)
+    monkeypatch.setattr(receipts, 'publish_with_receipt', fail_second)
     with caplog.at_level(logging.DEBUG):
         result = Converter().convert([package(), package('GSE2', 'GSM2')], outdir=tmp_path, out_type='json', preparation=PreparationPolicy(enrichment='off', expand_studies=False))
     assert result.status=='failed'

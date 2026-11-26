@@ -489,6 +489,8 @@ def expand(value, runtime, excluded=(), *, output_directory=None):
                 except (OSError, ValueError, UnicodeError):
                     pass
         for path in paths:
+            if path.name.endswith((".msc-receipt", ".msc-receipt.lock")):
+                continue
             if path.resolve() in consumed or path.name in CACHE_NAMES:
                 continue
             if any(

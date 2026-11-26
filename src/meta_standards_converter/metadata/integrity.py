@@ -54,11 +54,50 @@ def qualifier_ownership(before, after):
                         fields[name] += 1
                         found[pi, identity, occurrences[identity], field, name, fields[name]] = item
         return found
+    data = _data(before)
+    taxa = {}
+    for sample in data.get('sample', []):
+        channels = sample.get('channel', [])
+        if len(channels) == 1:
+            for organism in channels[0].get('organism', []):
+                if isinstance(organism, dict) and organism.get('taxid'):
+                    taxa.setdefault((sample.get('iid'), organism.get('value')), set()).add(str(organism['taxid']))
+
+    def taxon_number(identifier):
+        match = re.fullmatch(r'(?:(?:https?://purl\.obolibrary\.org/obo/NCBITaxon_)|NCBITaxon:)?([0-9]+)',
+                             str(identifier))
+        return match.group(1) if match else None
+
+    def retained(key, original, candidate):
+        if candidate == original:
+            return True
+        if candidate is None or any(candidate.get(k) != v or k not in candidate for k, v in original.items()):
+            return False
+        _, (kind, _, owner), _, field, (name, label), _ = key
+        return (kind in {'sample', 'source'} and field == 'characteristics'
+                and str(name).casefold() == 'organism'
+                and candidate.keys() - original.keys() <= {'term_source_ref', 'term_accession_number'}
+                and candidate.get('term_source_ref') == 'NCBITaxon'
+                and taxa.get((owner, label)) == {taxon_number(candidate.get('term_accession_number'))})
+
     original, generated = owners(before), owners(after)
+    # Dict iteration preserves input order. Compare each original occurrence's
+    # ordinal among its surviving siblings while allowing genuinely new rows.
+    last_ordinal = {}
+    reordered = set()
+    ordinal = {key: i for i, key in enumerate(original)}
+    for key in generated:
+        if key not in original:
+            continue
+        owner = key[:4]
+        if ordinal[key] < last_ordinal.get(owner, -1):
+            reordered.add(key)
+        last_ordinal[owner] = max(last_ordinal.get(owner, -1), ordinal[key])
+
     return [Diagnostic('integrity_qualifier_ownership',
         'A supplied named-value occurrence or its qualifiers changed owner or value.',
         'preparation', 'error', location='/series/assay_paths/' + str(key[0]))
-        for key, value in original.items() if generated.get(key) != value]
+        for key, value in original.items() if key in reordered or not retained(key, value, generated.get(key))]
 
 
 def assess_integrity(package):

@@ -23,6 +23,7 @@
     "msc.archive.sra_accession",
     "msc.archive.ena_accession",
     "msc.archive.biosample_accession",
+    "msc.archive.biosample_conflict",
     "msc.archive.sra_run_accessions",
     "msc.library.strategy",
     "msc.library.source",
@@ -30,6 +31,7 @@
     "msc.library.layout",
     "msc.instrument.model",
     "msc.protocol.types",
+    "msc.protocol.evidence",
     "msc.protocol.term_source_refs",
     "msc.protocol.term_accession_numbers",
     "msc.database.identifier",
@@ -38,11 +40,23 @@
     "msc.expression.modality",
     "msc.expression.modality_detail",
     "msc.provenance.conflicts",
-    "msc.characteristics.tissue"
+    "msc.characteristics.tissue",
+    "msc.source.completeness",
+    "msc.source.execution",
+    "msc.source.publication",
+    "msc.source.validation"
   ],
   "dataset_ids": [
     "GSE328265"
   ],
+  "dataset_outcomes": {
+    "GSE328265": {
+      "completeness": "unknown",
+      "execution": "unknown",
+      "publication": "unknown",
+      "validation": "unknown"
+    }
+  },
   "errors": [],
   "operation": "manifest",
   "row_count": 1,

@@ -85,15 +85,16 @@ def publish_jsons(groups, context, item):
             )
             for g in groups
         ]
-    reserve([p for p, _ in paths], context)
+    from meta_standards_converter.sources.receipts import publish_with_receipt, receipt_path
+    reserve([dest for path, _ in paths for dest in (path, receipt_path(path))], context)
     progress(0, len(paths), "artifacts")
     for index, (path, values) in enumerate(paths, 1):
-        from meta_standards_converter.converters.archive_results import publish_json
-
-        publish_json(
-            path, MINiMLCodec().encode_many(values), context.runtime["overwrite"]
-        )
-        item.artifacts[str(path.name)] = str(path)
+        records = (list(item.dataset_outcomes.values()) if aggregate else
+                   [item.dataset_outcomes[groups[index - 1].dataset_id]])
+        publish_with_receipt(path, MINiMLCodec().encode_many(values), records,
+                             overwrite=context.runtime["overwrite"])
+        item.artifacts[path.name] = str(path)
+        item.companions.setdefault("receipts", {})[path.name] = str(receipt_path(path))
         progress(index, len(paths), "artifacts")
 
 

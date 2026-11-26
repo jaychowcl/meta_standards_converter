@@ -33,6 +33,9 @@ from meta_standards_converter.metadata.interpretation import MINiMLMetadataProvi
 
 
 from meta_standards_converter.metadata.projection.tabular import (ProjectedTable, TabularMetadataContext, TabularMetadataProjection, TabularMetadataProjector, TabularConversionResult, TabularProjectionError, MSCMetadataProjector)
+from ..sources.receipts import status_axes
+
+
 class JSON2DelimitedConverter:
     """Host one or more injected sample projectors and write one table."""
 
@@ -77,6 +80,7 @@ class JSON2DelimitedConverter:
         errors: list[str] = []
         for original_group in loaded.groups:
             group = original_group.resolved(replacement_profile=replacement_profile)
+            source_axes = status_axes(group.source_history)
             resolution = group.harmonization_resolution
             warnings.extend(getattr(resolution, "warnings", ()))
             for package in group.packages:
@@ -97,6 +101,7 @@ class JSON2DelimitedConverter:
                     warnings.extend(f"{d.code}: {', '.join(d.paths)}" for d in detail.diagnostics)
                     base = {
                         **base,
+                        "source_axes": source_axes,
                         "modality": self.metadata_service.sample_modality(sample),
                         "modality_detail": detail.value,
                         "harmonization": [
@@ -180,6 +185,7 @@ class JSON2DelimitedConverter:
             row_count=len(records),
             columns=columns,
             dataset_ids=tuple(group.dataset_id for group in loaded.groups),
+            dataset_outcomes=tuple((g.dataset_id, status_axes(g.source_history)) for g in loaded.groups),
             warnings=tuple(dict.fromkeys(warnings)),
             errors=tuple(dict.fromkeys(errors)),
             output_path=str(output),

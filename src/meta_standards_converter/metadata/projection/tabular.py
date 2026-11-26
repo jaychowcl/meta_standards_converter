@@ -53,10 +53,12 @@ class TabularConversionResult:
     manifest_path: str | None = None
     bundle_pointer_path: str | None = None
     diagnostics: tuple = ()
+    dataset_outcomes: tuple = ()
 
     @property
     def partial(self) -> bool:
-        return bool(self.errors)
+        return bool(self.errors) or any(axes["completeness"] in {"empty", "partial"}
+            or axes["validation"] == "invalid" for _, axes in self.dataset_outcomes)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -66,6 +68,7 @@ class TabularConversionResult:
             "row_count": self.row_count,
             "columns": list(self.columns),
             "dataset_ids": list(self.dataset_ids),
+            "dataset_outcomes": dict(self.dataset_outcomes),
             "warnings": list(self.warnings),
             "errors": list(self.errors),
             "artifacts": {
@@ -111,6 +114,7 @@ class MSCMetadataProjector:
         "msc.archive.sra_accession",
         "msc.archive.ena_accession",
         "msc.archive.biosample_accession",
+        "msc.archive.biosample_conflict",
         "msc.archive.sra_run_accessions",
         "msc.library.strategy",
         "msc.library.source",
@@ -118,6 +122,7 @@ class MSCMetadataProjector:
         "msc.library.layout",
         "msc.instrument.model",
         "msc.protocol.types",
+        "msc.protocol.evidence",
         "msc.protocol.term_source_refs",
         "msc.protocol.term_accession_numbers",
         "msc.database.identifier",
@@ -151,6 +156,8 @@ class MSCMetadataProjector:
         "msc.library.selection": "library_selection",
         "msc.library.layout": "library_layout",
         "msc.instrument.model": "instrument_model",
+        "msc.protocol.evidence": "protocol_evidence",
+        "msc.archive.biosample_conflict": "biosample_conflict",
         "msc.protocol.types": "protocol_types",
         "msc.protocol.term_source_refs": "protocol_term_source_refs",
         "msc.protocol.term_accession_numbers": "protocol_term_accession_numbers",
@@ -164,6 +171,7 @@ class MSCMetadataProjector:
     ) -> TabularMetadataProjection:
         values = {
             "msc.sample.accession": context.sample_accession,
+            **{"msc.source." + key: value for key, value in context.base_metadata.get("source_axes", {}).items()},
             "msc.series.accession": context.study_accession,
             **{
                 column: context.base_metadata.get(key)

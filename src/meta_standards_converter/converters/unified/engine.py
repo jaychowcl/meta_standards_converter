@@ -313,6 +313,15 @@ class Converter:
                     emit("route_selected", level="DEBUG", provider=loaded.provider, route=list(item.route), **statistics(loaded.metadata))
                     item.diagnostics.extend(loaded.diagnostics)
                     loaded = self._prepare(loaded, context, item)
+                    if loaded.metadata is not None:
+                        from meta_standards_converter.sources.receipts import conversion_records, status_axes
+                        item.dataset_outcomes = conversion_records(loaded.metadata.groups, item)
+                        source = status_axes([stage for group in loaded.metadata.groups for stage in group.source_history])
+                        publication = status_axes([stage for record in item.dataset_outcomes.values()
+                                                   for stage in record["history"]])["publication"]
+                        item.publication = source["publication"] if publication == "not_requested" else publication
+                    else:
+                        source = {}
                     context.stage = "conversion"
                     with _without_budget():
                         self._export(loaded, context, item, route)
@@ -332,9 +341,11 @@ class Converter:
                         d.code == "projection_invalid" or
                         (d.code.startswith("integrity_") and d.severity == "error") for d in item.diagnostics
                     )
+                    incomplete = incomplete or source.get("completeness") in {"partial", "empty"}
+                    invalid = invalid or source.get("validation") == "invalid"
                     item.completeness = "partial" if incomplete else "complete"
                     item.validation = "invalid" if invalid else "valid"
-                    item.status = "partial" if incomplete or invalid else "complete"
+                    item.status = "partial" if incomplete or invalid or item.publication in {"blocked", "review_required"} else "complete"
                 except Exception as exc:
                     item.diagnostics.extend(getattr(exc, '_msc_source_diagnostics', ()))
                     item.error, item.retry_at = outcomes.failure(

@@ -61,6 +61,7 @@ class Diagnostic:
     location: str | None = None
     correlation_id: str | None = None
     curation: CurationContext | None = None
+    dataset_id: str | None = None
 
     def to_dict(self):
         from meta_standards_converter.diagnostics import enrich
@@ -113,6 +114,8 @@ class ConversionItemResult:
     execution: str = "failed"
     completeness: str = "unknown"
     validation: str = "unknown"
+    publication: str = "unknown"
+    dataset_outcomes: dict = field(default_factory=dict)
     payload: Any = None
     artifacts: dict[str, str] = field(default_factory=dict)
     diagnostics: list[Diagnostic] = field(default_factory=list)
@@ -120,6 +123,16 @@ class ConversionItemResult:
     error: SafeErrorEnvelope | None = None
     retry_at: float | None = None
     metrics: RequestMetrics = field(default_factory=RequestMetrics)
+
+    def save_json(self, path, *, overwrite=False):
+        """Save this converted MINiML payload with its per-dataset scientific receipt."""
+        from meta_standards_converter.miniml import MINiMLCodec, MINiMLPackage
+        from meta_standards_converter.sources.receipts import publish_with_receipt
+        if not self.dataset_outcomes or not isinstance(self.payload, (list, tuple)) or not all(
+                isinstance(p, MINiMLPackage) for p in self.payload):
+            raise ValueError("save_json requires a completed MINiML conversion payload")
+        publish_with_receipt(path, MINiMLCodec().encode_many(self.payload),
+                             list(self.dataset_outcomes.values()), overwrite=overwrite)
 
     def to_dict(self):
         """Serialize a summary without embedding large or scientific payloads."""
@@ -140,6 +153,8 @@ class ConversionItemResult:
                 "execution",
                 "completeness",
                 "validation",
+                "publication",
+                "dataset_outcomes",
                 "artifacts",
                 "preparation",
             )

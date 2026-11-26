@@ -137,6 +137,13 @@ def artifacts(out, workspace):
         relative = path.relative_to(out)
         if not path.is_file() or any(p.startswith(".") for p in relative.parts):
             continue
+        if path.name.endswith(".msc-receipt"):
+            from hashlib import sha256
+            receipt = json.loads(path.read_bytes())
+            payload = path.with_name(path.name.removesuffix(".msc-receipt")).read_bytes()
+            assert receipt["sha256"] == sha256(payload).hexdigest()
+            assert sum(r["package_count"] for r in receipt["datasets"]) == len(json.loads(payload))
+            continue
         if path.suffix == ".h5ad":
             content = h5ad_content(path)
         elif path.suffix == ".json":

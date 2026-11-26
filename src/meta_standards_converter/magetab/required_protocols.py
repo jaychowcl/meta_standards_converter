@@ -38,6 +38,7 @@ def _blank(protocol):
 
 class _Definitions:
     def __init__(self, handler):
+        self.data = handler.data
         self.registry = handler.protocol_registry
         self.protocols = handler.data['series'].setdefault('protocols', [])
         self.used = {p['name'] for p in self.protocols} | {p['ref'] for p in self.registry.records()}
@@ -48,7 +49,7 @@ class _Definitions:
                 self.blanks.setdefault(_type(protocol), protocol['name'])
         self.next_index = 1
 
-    def add(self, protocol):
+    def add(self, protocol, *, origin):
         while f'P-{self.registry.series_accession}-{self.next_index}' in self.used:
             self.next_index += 1
         name = f'P-{self.registry.series_accession}-{self.next_index}'
@@ -56,13 +57,15 @@ class _Definitions:
         self.used.add(name)
         self.by_name[name] = protocol
         self.protocols.append(protocol)
+        self.data.setdefault("extensions", {}).setdefault("msc_protocol_origins", {})[name] = origin
         return name
 
     def placeholder(self, kind):
         if kind not in self.blanks:
             label, source, accession = Harmonizer().geoprotocols2efo(_LABELS[kind])
             self.blanks[kind] = self.add({'type': {'value': label, 'term_source_ref': source,
-                                                  'term_accession_number': accession}, 'description': ''})
+                                                  'term_accession_number': accession}, 'description': ''},
+                origin='structural_placeholder' if kind == _COLLECTION else 'technology_inferred')
         return self.blanks[kind]
 
 
@@ -173,6 +176,6 @@ def reconcile_generated_protocols(handler, paths):
                     reference = matches[0] if len(matches) == 1 else definitions.add({
                         'type': {k: v for k, v in {'value': label, 'term_source_ref': source,
                                                    'term_accession_number': accession}.items() if v},
-                        'description': record['text']})
+                        'description': record['text']}, origin='source_description' if record['text'] else 'technology_inferred')
                 bindings[old] = reference
             edge.protocol_ref = bindings[old]

@@ -1161,6 +1161,10 @@ See [network-free construction](#core-magetab-construction).
 <a id="unified-results"></a>
 ### Outcomes and publication
 
+The native atlas reader retains each dataset's stage history. The base sample table exposes its execution, completeness, validation and publication. Reading bare MINiML without a receipt yields unknown source history. `ConversionItemResult.save_json` and the unified JSON publisher write bare MINiML plus an adjacent `.msc-receipt` file. The receipt binds the SHA-256 of the published bytes, ordered package counts, dataset identifiers, independent statuses and diagnostics. Reopening validates those bindings. Concurrent writers share a lock and replace the receipt last. A digest mismatch fails the load. An interrupted overwrite can leave a payload with unknown history.
+
+The implementation uses `meta_standards_converter.sources.receipts.atlas_history` for native input, `meta_standards_converter.sources.receipts.conversion_records` for prepared packages and `meta_standards_converter.sources.receipts.status_axes` for the table. `meta_standards_converter.sources.receipts.receipt_path`, `meta_standards_converter.sources.receipts.publish_with_receipt` and `meta_standards_converter.sources.receipts.read_records` implement file readback. `meta_standards_converter.metadata.projection.assay.assay_path_owners` resolves biological ownership for protocol and parameter projection. Shared paths retain their owners in the parameter inventory. Each sample-owned parameter retains its protocol, value and unit in the occurrences column.
+
 Diagnostics optionally include `provider_issue`: a stable `reason`, `operation`,
 existing safe `error` envelope and optional `retry_at`. Remote invalid JSON/XML,
 exhausted transport failures and HTTP failures use `provider_response_invalid`,

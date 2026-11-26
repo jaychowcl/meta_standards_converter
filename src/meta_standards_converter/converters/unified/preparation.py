@@ -79,8 +79,8 @@ class MetadataPreparation:
                 packages.append(prepared)
                 loaded.preparation.extend(dict(record, package_index=package_index, dataset_id=group.dataset_id)
                                           for record in deepcopy(records))
-                loaded.diagnostics.extend(diagnostics)
-                loaded.diagnostics.extend(Diagnostic('source_partial', issue, 'preparation', 'warning') for issue in _coverage_issues(prepared))
+                loaded.diagnostics.extend(replace(d, dataset_id=group.dataset_id) for d in diagnostics)
+                loaded.diagnostics.extend(Diagnostic('source_partial', issue, 'preparation', 'warning', dataset_id=group.dataset_id) for issue in _coverage_issues(prepared))
             groups.append(replace(group, packages=tuple(packages)))
         loaded.metadata = replace(loaded.metadata, groups=tuple(groups))
         loaded.enrichment_applied = True

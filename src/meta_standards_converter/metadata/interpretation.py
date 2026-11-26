@@ -15,6 +15,8 @@ import re
 from typing import Any, Mapping, Protocol, Sequence
 
 from meta_standards_converter.metadata.projection.assay import (
+    assay_path_owners,
+    _sample_identities,
     _material_types_for_sample,
     _protocols_for_sample,
 )
@@ -269,7 +271,6 @@ class MINiMLMetadataService:
             or tuple(characteristic_material_types)
             or tuple(legacy_material_types)
             or tuple(self.values(material_types))
-            or metadata["organism_part"]
         )
 
         runs = [
@@ -283,8 +284,13 @@ class MINiMLMetadataService:
         metadata["ena_accession"] = tuple(
             self.values(sample.get("ena_accession"))
         )
-        metadata["biosample_accession"] = tuple(
-            self.values(run.get("biosample") for run in runs)
+        biosamples = self._biosample_sources(package, sample, runs)
+        metadata["biosample_accession"] = tuple(dict.fromkeys(v for values in biosamples.values() for v in values))
+        supported = [set(values) for values in biosamples.values() if values]
+        metadata["biosample_conflict"] = (
+            (json.dumps(biosamples, ensure_ascii=False, sort_keys=True),)
+            if any(a.isdisjoint(b) for i, a in enumerate(supported) for b in supported[i + 1:])
+            else ()
         )
         metadata["sra_run_accessions"] = tuple(
             self.values(run.get("run") for run in runs)
@@ -331,10 +337,23 @@ class MINiMLMetadataService:
         protocol_types: list[str] = []
         protocol_sources: list[str] = []
         protocol_accessions: list[str] = []
+        evidence = []
+        origins = package.get("extensions", {}).get("msc_protocol_origins", {})
         typed_protocols = _protocols_for_sample(package, sample)
         if typed_protocols:
             for protocol in typed_protocols:
                 protocol_type = protocol.get("type")
+                reference = protocol.get("name")
+                origin = origins.get(reference)
+                if origin is None:
+                    from .projection.assay import _bound_assay_paths
+                    generated = any(
+                        any(c.get("name") == "msc_workflow_origin" for c in path.get("comments", ()))
+                        and any(step.get("protocol_ref") == reference for step in path.get("steps", ()))
+                        for path in _bound_assay_paths(package.get("series", {}), sample)
+                    )
+                    origin = "historical_origin_unknown" if generated else "supplied_definition"
+                evidence.append({"protocol": reference, "type": self._value(protocol_type), "origin": origin})
                 if isinstance(protocol_type, Mapping):
                     protocol_types.extend(self.values(protocol_type.get("value")))
                     protocol_sources.extend(
@@ -355,9 +374,11 @@ class MINiMLMetadataService:
                 protocol_type, source_ref, accession = Harmonizer().geoprotocols2efo(
                     label
                 )
+                evidence.append({"protocol": field, "type": protocol_type, "origin": "source_description"})
                 protocol_types.append(protocol_type)
                 protocol_sources.append(source_ref)
                 protocol_accessions.append(accession)
+        metadata["protocol_evidence"] = (json.dumps(evidence, ensure_ascii=False),) if evidence else ()
         metadata["protocol_types"] = tuple(self.values(protocol_types))
         metadata["protocol_term_source_refs"] = tuple(
             self.values(protocol_sources)
@@ -395,6 +416,32 @@ class MINiMLMetadataService:
                 else self.join_values(value)
             )
             for key, value in values.items()
+        }
+
+    @staticmethod
+    def _biosample_sources(package, sample, runs):
+        """Keep BioSample evidence at its source node, including in pooled paths."""
+        pattern = r"(?<![A-Z0-9])(?:SAMN|SAMD|SAMEA|SAMEG)\d+(?![A-Z0-9])"
+
+        def identifiers(values):
+            return list(dict.fromkeys(match.upper() for value in values
+                                      for match in re.findall(pattern, str(value or ""), re.I)))
+
+        ids = _sample_identities(sample)
+        comments = list(sample.get("comments", ()))
+        for path in package.get("series", {}).get("assay_paths", ()):
+            owners = assay_path_owners(path)
+            for step in path.get("steps", ()):
+                explicit = step.get("sample_ref")
+                if explicit in ids or (not explicit and owners and owners <= ids):
+                    comments.extend(step.get("comments", ()))
+        return {
+            "sample": identifiers(sorted(ids)),
+            "relation": identifiers(r.get("target") for r in sample.get("relation", ())
+                                    if str(r.get("type")).casefold() == "biosample"),
+            "sdrf": identifiers(c.get("value") for c in comments
+                                if str(c.get("name")).casefold() in {"biosd_sample", "biosample"}),
+            "run": identifiers(r.get("biosample") for r in runs),
         }
 
     def sample_modality(self, sample: Mapping[str, Any]) -> str:

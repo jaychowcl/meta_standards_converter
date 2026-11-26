@@ -82,15 +82,19 @@ def load_json(kind, spec, context):
             payload = json.loads(source)
         else:
             path = context.localize(source)
-            payload = json.loads(read_text(path, context.profile.max_xml_bytes))
+            with Path(path).open("rb") as stream:
+                raw = stream.read(context.profile.max_xml_bytes + 1)
+            if len(raw) > context.profile.max_xml_bytes:
+                raise InputError("input_too_large", "JSON exceeds input byte limit")
+            payload = json.loads(raw)
     found = metadata_kind(payload)
     if kind != "json" and found != kind:
         raise InputError(
             "type_mismatch", f"Input does not satisfy the {kind} format"
         )
-    loaded = context.service("package_source", JSONPackageSource).decode(
-        payload, fallback=Path(path).stem if path else "input"
-    )
+    service = context.service("package_source", JSONPackageSource)
+    loaded = (service.decode_file(path, raw) if path and hasattr(service, "decode_file") else
+              service.decode(payload, fallback=Path(path).stem if path else "input"))
     return LoadedInput(
         metadata=loaded,
         source_path=path,

@@ -8,6 +8,7 @@
 # =============================================================================
 """Project native MSC MINiML assay parameters without replacing raw values."""
 from __future__ import annotations
+import json
 import re
 from typing import Any, Mapping
 from meta_standards_converter.miniml import harmonized_value_mappings
@@ -25,10 +26,12 @@ def _parameter_summary(
 ) -> dict[str, tuple[Any, ...]]:
     """Return deterministic per-parameter values for one bound sample."""
     result: dict[str, list[Any]] = {}
+    occurrences = {}
     for row in _parameter_rows(package, sample=sample):
         slug = _slug(row["name"])
         if not slug:
             continue
+        occurrences.setdefault(slug, []).append(row)
         for field in PARAMETER_FIELDS:
             value = row.get(field)
             if value in (None, ""):
@@ -37,13 +40,15 @@ def _parameter_summary(
             values = result.setdefault(key, [])
             if value not in values:
                 values.append(value)
+    for slug, rows in occurrences.items():
+        result[f"msc.assay.parameter.{slug}.occurrences"] = [json.dumps(rows, ensure_ascii=False)]
     return {key: tuple(values) for key, values in result.items()}
 
 
 def _protocols_for_sample(
     package: Mapping[str, Any], sample: Mapping[str, Any]
 ) -> list[Mapping[str, Any]]:
-    """Return declared protocols in sample-path order, or study order if unbound."""
+    """Return declared protocols in sample-path order, when uniquely bound."""
     series = package.get("series")
     if not isinstance(series, Mapping):
         return []
@@ -56,7 +61,7 @@ def _protocols_for_sample(
         return []
     paths = _bound_assay_paths(series, sample)
     if not paths:
-        return protocols
+        return []
     by_name = {str(item["name"]): item for item in protocols}
     selected: list[Mapping[str, Any]] = []
     seen: set[str] = set()
@@ -90,26 +95,21 @@ def _material_types_for_sample(
     return values
 
 
+def assay_path_owners(path: Mapping[str, Any]) -> frozenset[str]:
+    """Explicit sample references identify owners even on source or assay nodes."""
+    return frozenset(str(ref) for step in _as_list(path.get("steps"))
+                     if isinstance(step, Mapping)
+                     if (ref := step.get("sample_ref") or
+                         (step.get("name") if step.get("kind") == "sample" else None)))
+
+
 def _bound_assay_paths(
     series: Mapping[str, Any], sample: Mapping[str, Any]
 ) -> list[Mapping[str, Any]]:
     identities = _sample_identities(sample)
-    if not identities:
-        return []
-    result = []
-    for path in _as_list(series.get("assay_paths")):
-        if not isinstance(path, Mapping):
-            continue
-        bound = {
-            str(step.get("sample_ref") or step.get("name"))
-            for step in _as_list(path.get("steps"))
-            if isinstance(step, Mapping)
-            and step.get("kind") == "sample"
-            and (step.get("sample_ref") or step.get("name")) not in (None, "")
-        }
-        if identities.intersection(bound):
-            result.append(path)
-    return result
+    return [path for path in _as_list(series.get("assay_paths"))
+            if isinstance(path, Mapping) and (owners := assay_path_owners(path))
+            and owners <= identities]
 
 
 def _parameter_rows(
@@ -125,14 +125,10 @@ def _parameter_rows(
         if not isinstance(assay, Mapping):
             continue
         steps = [step for step in _as_list(assay.get("steps")) if isinstance(step, Mapping)]
-        bound = {
-            str(step.get("sample_ref") or step.get("name"))
-            for step in steps
-            if step.get("kind") == "sample"
-            and (step.get("sample_ref") or step.get("name")) not in (None, "")
-        }
-        if identities and not identities.intersection(bound):
+        bound = assay_path_owners(assay)
+        if sample is not None and (not bound or not bound <= identities):
             continue
+        ownership = "unassigned" if not bound else "unique" if len(bound) == 1 else "pooled"
         for step_index, step in enumerate(steps):
             if step.get("kind") != "protocol_application":
                 continue
@@ -144,7 +140,9 @@ def _parameter_rows(
                 value_annotation = _first_annotation(parameter)
                 unit_annotation = _first_annotation(unit, field="unit")
                 rows.append({
-                    "sample_accession": next(iter(sorted(identities or bound)), ""),
+                    "sample_accession": next(iter(bound)) if len(bound) == 1 else "",
+                    "owners": sorted(bound),
+                    "ownership": ownership,
                     "document": assay.get("document", ""),
                     "path_index": path_index,
                     "step_index": step_index,

@@ -65,6 +65,7 @@ class AtlasV1Dataset:
     source_repository: str
     source_ordinal: int
     metadata: Mapping[str, Any]
+    source_history: tuple[Mapping[str, Any], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -261,6 +262,7 @@ class AtlasV1Reader:
 
         publications = _list(data.get("publications"), "publications")
         publication_ids: list[str] = []
+        publication_reviews = {}
         for index, raw in enumerate(publications):
             publication = _mapping(raw, f"publications[{index}]")
             _only(
@@ -273,6 +275,7 @@ class AtlasV1Reader:
                 f"publications[{index}].publication_id",
             )
             publication_ids.append(publication_id)
+            publication_reviews[publication_id] = publication.get("review")
             _optional_string(
                 publication.get("title"), f"publications[{index}].title"
             )
@@ -366,6 +369,7 @@ class AtlasV1Reader:
                 diagnostic_messages.append(f"{code}: {message}")
 
             if status == "harmonized":
+                from meta_standards_converter.sources.receipts import atlas_history
                 harmonized_count += 1
                 converted.append(
                     AtlasV1Dataset(
@@ -373,6 +377,7 @@ class AtlasV1Reader:
                         source_repository=repository,
                         source_ordinal=ordinal,
                         metadata=deepcopy(dict(metadata)),
+                        source_history=atlas_history(dataset, publication_reviews),
                     )
                 )
             else:

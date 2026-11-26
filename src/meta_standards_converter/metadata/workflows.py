@@ -61,8 +61,11 @@ def prepare_workflows(package, *, platform_handler=None):
         reconcile_generated_protocols(handler, paths)
     else:
         definitions = []
+        origins = data.setdefault('extensions', {}).setdefault('msc_protocol_origins', {})
         for record in registry.records():
             label, source, accession = Harmonizer().geoprotocols2efo(record['label'])
+            origins[record['ref']] = ('source_description' if record['text'] else
+                'structural_placeholder' if label == 'sample collection protocol' else 'technology_inferred')
             definitions.append({'name': record['ref'], 'description': record['text'],
                 'type': {k: v for k, v in {'value': label, 'term_source_ref': source,
                     'term_accession_number': accession}.items() if v is not None}})

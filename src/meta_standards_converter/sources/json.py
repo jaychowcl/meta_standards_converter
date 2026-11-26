@@ -30,6 +30,7 @@ class DatasetPackageGroup:
     source_accession: str | None = None
     source_packages: tuple[MINiMLPackage, ...] | None = None
     harmonization_resolution: Any | None = None
+    source_history: tuple[Mapping[str, Any], ...] = ()
 
     def resolved(self, *, replacement_profile: Mapping[str, Any] | None = None) -> "DatasetPackageGroup":
         from meta_standards_converter.metadata.harmonization_overrides import resolve_harmonization_overrides
@@ -46,10 +47,8 @@ class DatasetPackageGroup:
             replacement_profile,
             enabled=replacement_profile is not None,
         )
-        return DatasetPackageGroup(
-            self.dataset_id,
-            codec.decode_many(resolution.packages).packages,
-            source_accession=self.source_accession,
+        return replace(
+            self, packages=codec.decode_many(resolution.packages).packages,
             source_packages=self.packages,
             harmonization_resolution=resolution,
         )
@@ -74,8 +73,27 @@ class JSONPackageSource:
     @measured("load")
     def load(self, path: str | Path) -> SourceLoadResult:
         source = Path(path)
-        payload = json.loads(source.read_text(encoding="utf-8"))
-        return self.decode(payload, fallback=source.stem)
+        return self.decode_file(source, source.read_bytes())
+
+    def decode_file(self, source, raw):
+        from .receipts import read_records
+        payload = json.loads(raw)
+        records = read_records(source, raw, payload)
+        if records is None:
+            loaded = self.decode(payload, fallback=Path(source).stem)
+            if isinstance(payload, list) or isinstance(payload, dict) and "miniml_schema_version" in payload:
+                groups = tuple(replace(group, source_history=({"stage": "msc.prior_status_unknown"},))
+                               for group in loaded.groups)
+                return replace(loaded, groups=groups)
+            return loaded
+        groups = []
+        offset = 0
+        for record in records:
+            end = offset + record["package_count"]
+            groups.append(DatasetPackageGroup(record["dataset_id"], self._codec.decode_many(payload[offset:end]).packages,
+                                              source_history=tuple(record["history"])))
+            offset = end
+        return self._validate_result(self._source_result(tuple(groups)))
 
     def decode(self, payload: Any, *, fallback: str = "input") -> SourceLoadResult:
         """Decode supplied metadata using the same boundary as file loading."""
@@ -138,6 +156,7 @@ class JSONPackageSource:
                     self._atlas_packages(dataset.dataset_id, dataset.metadata)
                 ),
                 source_accession=dataset.dataset_id,
+                source_history=dataset.source_history,
             )
             for dataset in result.datasets
         )

@@ -556,6 +556,13 @@
           "Sample GSM9651991 file role unresolved: ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9651nnn/GSM9651991/suppl/GSM9651991_PMS_Ctrl_1_filtered_feature_bc_matrix.h5",
           "Sample GSM9651991 GEO library_source differs from SRA library_source; using GEO value."
         ]
+      },
+      "msc_protocol_origins": {
+        "P-GSE328265-1": "source_description",
+        "P-GSE328265-2": "source_description",
+        "P-GSE328265-3": "technology_inferred",
+        "P-GSE328265-4": "structural_placeholder",
+        "P-GSE328265-5": "technology_inferred"
       }
     }
   }

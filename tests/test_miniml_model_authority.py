@@ -68,7 +68,7 @@ def test_typed_protocol_projection_is_sample_bound_and_preserves_declared_ontolo
     assert second_values["protocol_term_accession_numbers"] == ("OBI:0000257",)
 
 
-def test_typed_protocol_projection_falls_back_to_all_declared_without_sample_binding() -> None:
+def test_unbound_protocols_remain_available_in_study_inventory() -> None:
     package = {
         "series": {
             "protocols": [
@@ -81,8 +81,8 @@ def test_typed_protocol_projection_falls_back_to_all_declared_without_sample_bin
 
     values = MINiMLMetadataService().sample_metadata_values(_sample("S1"), package)
 
-    assert values["protocol_types"] == ("collection", "extraction")
-    assert values["protocol_term_accession_numbers"] == ("SRC:1", "SRC:2")
+    assert values["protocol_types"] == ()
+    assert values["protocol_term_accession_numbers"] == ()
 
 
 def test_legacy_protocol_inference_is_used_only_without_typed_protocols() -> None:

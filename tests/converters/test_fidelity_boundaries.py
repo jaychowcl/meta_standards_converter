@@ -41,7 +41,9 @@ def test_ena_list_records_are_retained_and_do_not_break_off(target):
     assert result.status == "complete", result.to_dict()
     assert value == original
     if target == "json":
-        assert result.items[0].payload[0].to_mapping()["extensions"] == value["extensions"]
+        assert result.items[0].payload[0].to_mapping()["extensions"] == {
+            **value["extensions"], "msc_protocol_origins": {"P-ERP000263-1": "structural_placeholder"}
+        }
 
 
 def test_family_traversal_uses_project_records_only():
