@@ -44,7 +44,7 @@ def canonical_identity(loaded):
 
 
 def metadata_input(packages, provider=None, diagnostics=(), *, enriched=False):
-    metadata = JSONPackageSource().decode(packages)
+    metadata = JSONPackageSource().decode(packages, newly_parsed=True)
     return LoadedInput(
         metadata=metadata,
         provider=provider,

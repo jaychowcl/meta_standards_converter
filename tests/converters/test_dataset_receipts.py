@@ -139,3 +139,16 @@ def test_untagged_bare_object_cannot_clear_its_unknown_prior_status(tmp_path):
         first.save_json(path)
         again = Converter().convert(path, out_type="tsv", **OPTS).items[0]
         assert next(iter(again.payload.values())).rows[0]["msc.source.publication"] == "unknown"
+
+
+def test_new_geo_acquisition_preserves_its_own_disposition_after_save(tmp_path):
+    fixture = Path(__file__).resolve().parents[1] / "fixtures/studies/GSE100/inputs/geo.xml"
+    item = Converter().convert(fixture, out_type="json", **OPTS).items[0]
+    saved = tmp_path / "geo.json"
+    item.save_json(saved)
+    restored = Converter().convert(saved, out_type="tsv", **OPTS).items[0]
+    assert {row["msc.source.publication"] for tab in restored.payload.values() for row in tab.rows} == {item.publication}
+    assert item.publication == "not_requested"
+    direct = Converter().convert(fixture, out_type="tsv", **OPTS).items[0]
+    assert {row["msc.source.publication"] for tab in direct.payload.values() for row in tab.rows} == {item.publication}
+    assert all(stage["stage"] != "msc.prior_status_unknown" for record in item.dataset_outcomes.values() for stage in record["history"])

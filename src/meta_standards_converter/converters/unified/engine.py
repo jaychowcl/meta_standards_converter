@@ -15,6 +15,7 @@ from meta_standards_converter.conversion_logging import stage, item_scope, emit,
 import tempfile
 from collections.abc import Mapping
 from contextlib import ExitStack
+from dataclasses import replace
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -319,7 +320,7 @@ class Converter:
                         source = status_axes([stage for group in loaded.metadata.groups for stage in group.source_history])
                         publication = status_axes([stage for record in item.dataset_outcomes.values()
                                                    for stage in record["history"]])["publication"]
-                        item.publication = source["publication"] if publication == "not_requested" else publication
+                        item.publication = publication
                     else:
                         source = {}
                     context.stage = "conversion"
@@ -594,9 +595,17 @@ class Converter:
         from meta_standards_converter.converters.json2tsv import JSON2TSVConverter
 
         converter = context.service("json2tsv", JSON2TSVConverter)
+        # A freshly parsed deposit has no earlier MSC event. Its first recorded
+        # conversion supplies the same sample status before and after save.
+        groups = tuple(
+            group if group.source_history else replace(
+                group, source_history=tuple(item.dataset_outcomes[group.dataset_id]["history"])
+            )
+            for group in groups
+        )
         aggregate = options.get("aggregate", False)
         selection = (
-            [(item.id, loaded.metadata)]
+            [(item.id, replace(loaded.metadata, groups=groups))]
             if aggregate
             else [
                 (

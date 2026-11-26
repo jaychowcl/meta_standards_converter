@@ -90,8 +90,8 @@ class JSONPackageSource:
             offset = end
         return self._validate_result(self._source_result(tuple(groups)))
 
-    def decode(self, payload: Any, *, fallback: str = "input") -> SourceLoadResult:
-        """Decode supplied metadata using the same boundary as file loading."""
+    def decode(self, payload: Any, *, fallback: str = "input", newly_parsed: bool = False) -> SourceLoadResult:
+        """Decode metadata, distinguishing fresh provider parses from unreceipted packages."""
         if isinstance(payload, MINiMLPackage):
             payload = payload.to_mapping()
         elif isinstance(payload, (list, tuple)):
@@ -113,7 +113,7 @@ class JSONPackageSource:
                     f"Parsed MINiML package {index} must be a JSON object."
                 )
         return self._validate_result(
-            self._source_result(self._group_packages(packages, fallback))
+            self._source_result(self._group_packages(packages, fallback, newly_parsed=newly_parsed))
         )
 
     def _agentic_envelope(
@@ -175,7 +175,7 @@ class JSONPackageSource:
         return packages
 
     def _group_packages(
-        self, packages: list[Mapping[str, Any]], fallback: str
+        self, packages: list[Mapping[str, Any]], fallback: str, *, newly_parsed: bool = False
     ) -> tuple[DatasetPackageGroup, ...]:
         grouped: dict[str, list[Mapping[str, Any]]] = {}
         for package in packages:
@@ -183,7 +183,7 @@ class JSONPackageSource:
             grouped.setdefault(dataset_id, []).append(package)
         return tuple(
             DatasetPackageGroup(dataset_id, self._dedupe_samples(values),
-                                source_history=({"stage": "msc.prior_status_unknown"},))
+                                source_history=() if newly_parsed else ({"stage": "msc.prior_status_unknown"},))
             for dataset_id, values in grouped.items()
         )
 
