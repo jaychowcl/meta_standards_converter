@@ -62,6 +62,8 @@ def atlas_history(dataset, publications):
         add("atlas.publication." + pid, review.get("status"), review.get("policy"))
     if dataset.get("diagnostics"):
         stages.append({"stage": "atlas.diagnostics", "diagnostics": deepcopy(dataset["diagnostics"])})
+    if not any(stage.get("status") for stage in stages):
+        stages.append({"stage": "msc.prior_status_unknown"})
     return tuple(stages)
 
 

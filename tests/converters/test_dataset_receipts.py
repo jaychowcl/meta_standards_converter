@@ -130,3 +130,12 @@ def test_resaving_a_bare_file_cannot_establish_its_prior_publication(tmp_path):
     conversion.save_json(output)
     item = Converter().convert(output, out_type="tsv", **OPTS).items[0]
     assert next(iter(item.payload.values())).rows[0]["msc.source.publication"] == "unknown"
+
+def test_untagged_bare_object_cannot_clear_its_unknown_prior_status(tmp_path):
+    source = atlas()["datasets"][0]["metadata"]
+    for name, value in (("object", source), ("envelope", {"miniml_json": source})):
+        first = Converter().convert(value, out_type="json", **OPTS).items[0]
+        path = tmp_path / (name + ".json")
+        first.save_json(path)
+        again = Converter().convert(path, out_type="tsv", **OPTS).items[0]
+        assert next(iter(again.payload.values())).rows[0]["msc.source.publication"] == "unknown"

@@ -80,12 +80,7 @@ class JSONPackageSource:
         payload = json.loads(raw)
         records = read_records(source, raw, payload)
         if records is None:
-            loaded = self.decode(payload, fallback=Path(source).stem)
-            if isinstance(payload, list) or isinstance(payload, dict) and "miniml_schema_version" in payload:
-                groups = tuple(replace(group, source_history=({"stage": "msc.prior_status_unknown"},))
-                               for group in loaded.groups)
-                return replace(loaded, groups=groups)
-            return loaded
+            return self.decode(payload, fallback=Path(source).stem)
         groups = []
         offset = 0
         for record in records:
@@ -187,7 +182,8 @@ class JSONPackageSource:
             dataset_id = self._dataset_id(package) or fallback
             grouped.setdefault(dataset_id, []).append(package)
         return tuple(
-            DatasetPackageGroup(dataset_id, self._dedupe_samples(values))
+            DatasetPackageGroup(dataset_id, self._dedupe_samples(values),
+                                source_history=({"stage": "msc.prior_status_unknown"},))
             for dataset_id, values in grouped.items()
         )
 
