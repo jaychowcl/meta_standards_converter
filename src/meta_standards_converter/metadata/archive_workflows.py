@@ -388,21 +388,8 @@ def _bind_peer_sample_names(prepared, candidates, sample, provider):
             step['name'] = name
 
 
-def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None, selection=None):
-    """Bind complete ordered branches and acquisition prefixes by explicit identity."""
-    paths = data['series'].setdefault('assay_paths', [])
-    generated = {id(p) for p in paths if data.get('source', {}).get('format') in {'SRA', 'ENA', 'DRA'}
-                 and not p.get('document') and not any(s.get('link', {}).get('repository')
-                     for s in p['steps'] if is_file(s))}
-    samples = {s['iid']: s for s in data['sample']}
-    source_samples = {matched[s['iid']]: s for s in extra.get('sample', []) if s['iid'] in matched}
-    source_groups = {}
-    for sample in extra.get('sample', []):
-        if sample['iid'] in matched:
-            source_groups.setdefault(matched[sample['iid']], []).append(sample)
-    # Refresh native biological projections before accepting authored workflows.
-    # The actual incoming channel has priority; a scoped path can retain its own
-    # compatible annotations when that channel supplies only a plain literal.
+def _refresh_biological_nodes(paths, samples, original_channels, source_samples, prefer, selection):
+    """Refresh generated sample characteristics before attaching archive workflow branches."""
     from .archive_enrichment import _merge_entity
     for path in paths:
         for step in path['steps']:
@@ -422,9 +409,11 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
                 channels = source_samples.get(target, {}).get('channel', [])
                 if len(channels) == 1:
                     _merge_entity(step, {'characteristics': channels[0].get('characteristics', [])}, prefer, selection=selection, path=f'/sample/{target}/channel/0')
-    originals = deepcopy(paths)
-    original_index = _PathScopeIndex(originals)
-    templates, incoming, explicit = {}, [], set()
+
+
+def _match_workflow_templates(extra, matched, samples, source_samples, proto_names, prefer, issues, original_index, paths):
+    """Join incoming paths to a unique biological owner and compatible acquisition."""
+    templates, incoming = {}, []
     for path in extra['series'].get('assay_paths', []):
         refs = {s['sample_ref'] for s in path['steps'] if s.get('sample_ref')}
         scope = path_ids(path)
@@ -487,106 +476,146 @@ def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, origin
             if prefix not in templates.setdefault(identity, []):
                 templates[identity].append(prefix)
             incoming.append((identity, prepared))
+    return templates, incoming
+
+
+def _select_library_facts(templates, samples, source_groups, issues, selection):
+    """Resolve per-run library facts from the incoming records and acquisition paths."""
+    from ..miniml.archive_libraries import path_facts, resolve_library_facts, apply_library_facts, _shared_facts
+    selections, workflow_priority = {}, {}
+    for (target, key), choices in templates.items():
+        if len(choices) != 1:
+            continue
+        workflow_priority[(target, key)] = selection is None or selection.prefer_workflow(target, key)
+        selected_runs = []
+        for run in samples[target].get('sra_run', []):
+            if not compatible(set(key), {run.get('run'), run.get('experiment')}):
+                continue
+            supplied = path_facts(choices[0])
+            for source in source_groups.get(target, []):
+                supplied.extend(r for r in source.get('sra_run', []) if r.get('run') == run['run']
+                                and (not r.get('experiment') or r['experiment'] == run.get('experiment')))
+            facts = resolve_library_facts(run, supplied, issues, run['run'], selection=selection, path=f"/sample/{target}/sra_run/{run['run']}")
+            selected_runs.append(facts)
+            apply_library_facts(run, [], facts)
+        selections[(target, key)] = _shared_facts(selected_runs, issues, f'{target} {list(key)}')
+    return selections, workflow_priority
+
+
+def _merge_acquisition_prefixes(paths, templates, selections, workflow_priority, issues, incoming, original_index):
+    """Preserve each native run and attach ordered file continuations from the matching acquisition."""
+    from ..miniml.archive_libraries import apply_library_facts
+    explicit = set()
+    for path in paths:
+        target = next((s.get('sample_ref') for s in path['steps'] if s.get('sample_ref')), None)
+        choices = templates.get((target, tuple(sorted(path_ids(path)))), [])
+        if len(choices) > 1:
+            message = f'{target}: ambiguous enrichment workflows retained outside core'
+            if message not in issues:
+                issues.append(message)
+            continue
+        if not choices:
+            continue
+        key = (target, tuple(sorted(path_ids(path))))
+        prefix = (_bind_native(deepcopy(choices[0]), target, path['steps'])
+                  if workflow_priority.get(key, True) else _acquisition(path['steps']))
+        facts = selections.get(key)
+        if facts is not None:
+            apply_library_facts({}, prefix, facts)
+        # An experiment-level workflow does not delete the native run.
+        for kind in ('assay', 'scan'):
+            if not any(s['kind'] == kind for s in prefix):
+                native = next((s for s in path['steps'] if s['kind'] == kind), None)
+                if native:
+                    position = next((i for i, s in enumerate(prefix) if s['kind'] == 'scan'), len(prefix)) if kind == 'assay' else len(prefix)
+                    prefix.insert(position, deepcopy(native))
+        if any(s['kind'] in ('extract', 'labeled_extract') for s in prefix):
+            explicit.add((target, tuple(sorted(path_ids(path)))))
+        # Preserve the complete original branch after raw acquisition.
+        end = next((i for i, s in enumerate(path['steps']) if is_file(s)), len(path['steps']))
+        path['steps'] = prefix + deepcopy(path['steps'][end:])
+    for (target, key), prepared in incoming:
+        if len(templates[(target, key)]) != 1 or not any(is_file(s) for s in prepared['steps']):
+            continue
+        candidates = [p for p in original_index.find(target, set(key))
+                      if tuple(sorted(original_index.scopes[id(p)])) == key]
+        # All candidates have the same verified sample/run identity.
+        steps = _bind_native(deepcopy(prepared['steps']), target, candidates[0]['steps'])
+        if not workflow_priority.get((target, key), True):
+            boundary = next((i for i, step in enumerate(steps) if is_file(step)), len(steps))
+            steps = _acquisition(candidates[0]['steps']) + steps[boundary:]
+        facts = selections.get((target, key))
+        if facts is not None:
+            apply_library_facts({}, steps, facts)
+        paths.append({**deepcopy(prepared), 'steps': steps})
+    return explicit
+
+
+def _merge_source_files(paths, extra, matched, samples):
+    """Bind deposited file records to a unique sample and acquisition before combining projections."""
+    current_index = _PathScopeIndex(paths)
+    for source in extra.get('sample', []):
+        target = matched.get(source['iid'])
+        if target is None:
+            continue
+        for run in source.get('sra_run', []):
+            scope = {run[k] for k in ('run', 'experiment') if run.get(k)}
+            candidates = current_index.find(target, scope)
+            prefixes = []
+            for path in candidates:
+                prefix = _acquisition(path['steps'])
+                if prefix not in prefixes:
+                    prefixes.append(prefix)
+            if scope and len(prefixes) == 1:
+                for file in run.get('files') or run.get('fastq_files', []):
+                    if file.get('uri') or file.get('filename'):
+                        added = {'steps': deepcopy(prefixes[0]) + [file_node(file)]}
+                        paths.append(added)
+                        current_index.add(added)
+        for field, kind in [('raw_data', 'array_data_file'), ('supplementary_data', 'derived_array_data_file')]:
+            for link in source.get(field, []):
+                if link.get('value'):
+                    node = file_node(link, kind)
+                    matches = [s for p in current_index.find(target, set()) if {n.get('sample_ref') for n in p['steps'] if n.get('sample_ref')} == {target}
+                               for s in p['steps'] if s['kind'] == kind and (
+                                   s.get('link', {}).get('value') == _file_uri(link['value'])
+                                   or (s.get('name') == node['name'] == link['value']
+                                       and not s.get('link', {}).get('value')))]
+                    compatible_files = matches and all(_compatible_file_projection(s, node) for s in matches)
+                    if compatible_files:
+                        for s in matches:
+                            s.setdefault('link', {}).update(node.get('link', {}))
+                            for comment in node.get('comments', []):
+                                if comment not in s.setdefault('comments', []): s['comments'].append(deepcopy(comment))
+                    else:
+                        added = {'steps': [_biological_node(samples[target]), node]}
+                        paths.append(added)
+                        current_index.add(added)
+
+
+def merge_workflows(data, extra, matched, proto_names, prefer, issues, *, original_channels=None, selection=None):
+    """Bind complete ordered branches and acquisition prefixes by explicit identity."""
+    paths = data['series'].setdefault('assay_paths', [])
+    generated = {id(p) for p in paths if data.get('source', {}).get('format') in {'SRA', 'ENA', 'DRA'}
+                 and not p.get('document') and not any(s.get('link', {}).get('repository')
+                     for s in p['steps'] if is_file(s))}
+    samples = {s['iid']: s for s in data['sample']}
+    source_samples = {matched[s['iid']]: s for s in extra.get('sample', []) if s['iid'] in matched}
+    source_groups = {}
+    for sample in extra.get('sample', []):
+        if sample['iid'] in matched:
+            source_groups.setdefault(matched[sample['iid']], []).append(sample)
+    _refresh_biological_nodes(paths, samples, original_channels, source_samples, prefer, selection)
+    original_index = _PathScopeIndex(deepcopy(paths))
+    templates, incoming = _match_workflow_templates(
+        extra, matched, samples, source_samples, proto_names, prefer, issues, original_index, paths)
+    explicit = set()
     if prefer:
-        from ..miniml.archive_libraries import path_facts, resolve_library_facts, apply_library_facts, _shared_facts
-        selections, workflow_priority = {}, {}
-        for (target, key), choices in templates.items():
-            if len(choices) != 1:
-                continue
-            workflow_priority[(target, key)] = selection is None or selection.prefer_workflow(target, key)
-            selected_runs = []
-            for run in samples[target].get('sra_run', []):
-                if not compatible(set(key), {run.get('run'), run.get('experiment')}):
-                    continue
-                supplied = path_facts(choices[0])
-                for source in source_groups.get(target, []):
-                    supplied.extend(r for r in source.get('sra_run', []) if r.get('run') == run['run']
-                                    and (not r.get('experiment') or r['experiment'] == run.get('experiment')))
-                facts = resolve_library_facts(run, supplied, issues, run['run'], selection=selection, path=f"/sample/{target}/sra_run/{run['run']}")
-                selected_runs.append(facts)
-                apply_library_facts(run, [], facts)
-            selections[(target, key)] = _shared_facts(selected_runs, issues, f'{target} {list(key)}')
-        for path in paths:
-            target = next((s.get('sample_ref') for s in path['steps'] if s.get('sample_ref')), None)
-            choices = templates.get((target, tuple(sorted(path_ids(path)))), [])
-            if len(choices) > 1:
-                message = f'{target}: ambiguous enrichment workflows retained outside core'
-                if message not in issues:
-                    issues.append(message)
-                continue
-            if not choices:
-                continue
-            key = (target, tuple(sorted(path_ids(path))))
-            prefix = (_bind_native(deepcopy(choices[0]), target, path['steps'])
-                      if workflow_priority.get(key, True) else _acquisition(path['steps']))
-            facts = selections.get(key)
-            if facts is not None:
-                apply_library_facts({}, prefix, facts)
-            # An experiment-level workflow does not delete the native run.
-            for kind in ('assay', 'scan'):
-                if not any(s['kind'] == kind for s in prefix):
-                    native = next((s for s in path['steps'] if s['kind'] == kind), None)
-                    if native:
-                        position = next((i for i, s in enumerate(prefix) if s['kind'] == 'scan'), len(prefix)) if kind == 'assay' else len(prefix)
-                        prefix.insert(position, deepcopy(native))
-            if any(s['kind'] in ('extract', 'labeled_extract') for s in prefix):
-                explicit.add((target, tuple(sorted(path_ids(path)))))
-            # Preserve the complete original branch after raw acquisition.
-            end = next((i for i, s in enumerate(path['steps']) if is_file(s)), len(path['steps']))
-            path['steps'] = prefix + deepcopy(path['steps'][end:])
-        for (target, key), prepared in incoming:
-            if len(templates[(target, key)]) != 1 or not any(is_file(s) for s in prepared['steps']):
-                continue
-            candidates = [p for p in original_index.find(target, set(key))
-                          if tuple(sorted(original_index.scopes[id(p)])) == key]
-            # All candidates have the same verified sample/run identity.
-            steps = _bind_native(deepcopy(prepared['steps']), target, candidates[0]['steps'])
-            if not workflow_priority.get((target, key), True):
-                boundary = next((i for i, step in enumerate(steps) if is_file(step)), len(steps))
-                steps = _acquisition(candidates[0]['steps']) + steps[boundary:]
-            facts = selections.get((target, key))
-            if facts is not None:
-                apply_library_facts({}, steps, facts)
-            paths.append({**deepcopy(prepared), 'steps': steps})
-        current_index = _PathScopeIndex(paths)
-        for source in extra.get('sample', []):
-            target = matched.get(source['iid'])
-            if target is None:
-                continue
-            for run in source.get('sra_run', []):
-                scope = {run[k] for k in ('run', 'experiment') if run.get(k)}
-                candidates = current_index.find(target, scope)
-                prefixes = []
-                for path in candidates:
-                    prefix = _acquisition(path['steps'])
-                    if prefix not in prefixes:
-                        prefixes.append(prefix)
-                if scope and len(prefixes) == 1:
-                    for file in run.get('files') or run.get('fastq_files', []):
-                        if file.get('uri') or file.get('filename'):
-                            added = {'steps': deepcopy(prefixes[0]) + [file_node(file)]}
-                            paths.append(added)
-                            current_index.add(added)
-            for field, kind in [('raw_data', 'array_data_file'), ('supplementary_data', 'derived_array_data_file')]:
-                for link in source.get(field, []):
-                    if link.get('value'):
-                        node = file_node(link, kind)
-                        matches = [s for p in current_index.find(target, set()) if {n.get('sample_ref') for n in p['steps'] if n.get('sample_ref')} == {target}
-                                   for s in p['steps'] if s['kind'] == kind and (
-                                       s.get('link', {}).get('value') == _file_uri(link['value'])
-                                       or (s.get('name') == node['name'] == link['value']
-                                           and not s.get('link', {}).get('value')))]
-                        compatible_files = matches and all(_compatible_file_projection(s, node) for s in matches)
-                        if compatible_files:
-                            for s in matches:
-                                s.setdefault('link', {}).update(node.get('link', {}))
-                                for comment in node.get('comments', []):
-                                    if comment not in s.setdefault('comments', []): s['comments'].append(deepcopy(comment))
-                        else:
-                            added = {'steps': [_biological_node(samples[target]), node]}
-                            paths.append(added)
-                            current_index.add(added)
-    if prefer:
+        selections, workflow_priority = _select_library_facts(
+            templates, samples, source_groups, issues, selection)
+        explicit = _merge_acquisition_prefixes(
+            paths, templates, selections, workflow_priority, issues, incoming, original_index)
+        _merge_source_files(paths, extra, matched, samples)
         from .workflow_continuations import _reconcile_continuations
         _reconcile_continuations(paths, generated, issues)
     # Complete channel fallbacks only after binding scoped workflow evidence.

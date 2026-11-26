@@ -416,25 +416,11 @@ class Projection:
         if any(value == r.get(k) for r in runs for k in ('run','study','sample','biosample','experiment','geo_sample')): return True
         return False
 
-    def xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None, citation=None):
-        tag = node['tag']; attrs=node.get('attributes', {})
-        text=str(node.get('text') or '').strip()
-        entity = self.entity(kind, acc)
-        if owner is None: owner=(kind, attrs.get('uid') or acc)
-        node_acc=accession(node) or (attrs.get('uid') if tag=='DocumentSummary' else None)
-        if tag=='EXPERIMENT_PACKAGE': node_acc=accession(next(iter(children(node,'EXPERIMENT')),{})) or acc
-        if node_acc: owner, path=(tag,node_acc), ()
-        actor_id = f'{provider}:{owner[0]}:{owner[1]}:organization-' + '-'.join(map(str,path))
-        if tag=='Organization' or (tag=='Owner' and owner[0]=='BioSample'): actor=self.actors.get(actor_id, {})
-        if tag=='Contact' and actor is not None:
-            # Contacts are numbered within their organization's Contact list.
-            actor=self.actors.get(actor.get('iid','') + ':contact-' + str(getattr(self,'contact_index',0)), {})
-        runs = self.experiments.get(acc, []) if kind=='EXPERIMENT' else [entity] if kind in ('RUN','read_run') else []
-        if tag=='RUN' and entity.get('scan_name')==attrs.get('alias'): mapped_alias=True
-        else: mapped_alias=False
-        if tag=='PubmedArticle': self.publication=self.publications.get(child_text(node,'MedlineCitation/PMID'),{})
-        if tag=='Statistics' and any(r.get('statistics') == node for r in runs): return None
-        mapped_text=False; mapped_attrs={'alias'} if mapped_alias else set(); drop=False
+    def _publication_xml(self, node, kind, acc, owner, citation, mapped_attrs):
+        """Remove only citation and PubMed facts present in the owning publication."""
+        tag, attrs = node['tag'], node.get('attributes', {})
+        text = str(node.get('text') or '').strip()
+        mapped_text = False
         from ..sources.archive_publications import citation_identifier
         if tag=='Publication':
             wanted = citation_identifier(child_text(node,'DbType'),attrs.get('id'))
@@ -458,7 +444,7 @@ class Projection:
                         ('status', 'status_term_source_ref', 'status_term_accession_number'), expected)):
                     mapped_text = True
             if tag=='PMID' and pub.get('pubmed_id')==text:mapped_text=True;mapped_attrs.update(('Version',))
-            if tag=='ArticleTitle' and pub.get('title')==all_text(node).strip():return None
+            if tag=='ArticleTitle' and pub.get('title')==all_text(node).strip():return None, citation, True
             if tag=='ArticleId' and attrs.get('IdType')=='doi' and pub.get('doi')==text:mapped_text=True;mapped_attrs.add('IdType')
             if tag=='AuthorList':
                 names=[]
@@ -468,12 +454,13 @@ class Projection:
                     node=deepcopy(node)
                     for author in node.get('children',[]):
                         author['children']=[c for c in author.get('children',[]) if c['tag'] not in ('ForeName','LastName','CollectiveName')]
-        if kind=='TaxaSet' and tag=='Taxon':
-            taxid=child_text(node,'TaxId');name=child_text(node,'ScientificName')
-            if any(o.get('taxid')==taxid and o.get('value')==name for o in self.organisms()):
-                node=deepcopy(node);node['children']=[c for c in node.get('children',[]) if c['tag']!='ScientificName']
-        center = self.actors.get(f'{provider}:{tag}:{node_acc}:center_name', {})
-        if attrs.get('center_name') and center.get('name')==attrs['center_name']:mapped_attrs.add('center_name')
+        return node, citation, mapped_text
+
+    def _attribute_xml(self, node, entity, owner, acc, mapped_attrs):
+        """Retain unmatched attribute occurrences, units, factors and archive link targets."""
+        tag, attrs = node['tag'], node.get('attributes', {})
+        text = str(node.get('text') or '').strip()
+        mapped_text = drop = False
         if tag in ('SAMPLE_ATTRIBUTE','Attribute'):
             name = child_text(node,'TAG') if tag=='SAMPLE_ATTRIBUTE' else attrs.get('attribute_name') or attrs.get('display_name')
             value = child_text(node,'VALUE') if tag=='SAMPLE_ATTRIBUTE' else text
@@ -535,12 +522,12 @@ class Projection:
                     kept.append(child)
                 node['children'] = kept
                 drop = not kept and not attrs
-        if tag in ('PRIMARY_ID','SECONDARY_ID','EXTERNAL_ID') and self.reference(text,kind,acc): mapped_text=True;mapped_attrs.update(('namespace','label'))
-        field={'STUDY_TITLE':'title','STUDY_ABSTRACT':'summary','STUDY_DESCRIPTION':'summary','TITLE':'title','DESCRIPTION':'description'}.get(tag)
-        if kind in ('PROJECT','STUDY','DocumentSummary','study') and tag in ('DESCRIPTION','Description'): field='summary'
-        if tag=='Title' and kind=='DocumentSummary': field='title'
-        if field and text and ' '.join(text.split()) == ' '.join(str(entity.get(field) or '').split()): mapped_text=True
-        channel=entity.get('channel',[{}])[0]
+        return node, mapped_text, drop
+
+    def _sample_xml(self, tag, kind, attrs, text, entity, acc, mapped_attrs):
+        """Match taxonomy and record status within their biological sample."""
+        channel = entity.get('channel', [{}])[0]
+        mapped_text = False
         if kind=='BioSample' and tag=='Title' and entity.get('title')==text: mapped_text=True
         if kind=='BioSample' and tag=='OrganismName' and any(o.get('value')==text for o in channel.get('organism',[])): mapped_text=True
         if kind=='BioSample' and tag=='Id' and self.reference(text,kind,acc): mapped_text=True;mapped_attrs.update(('db','is_primary'))
@@ -555,7 +542,11 @@ class Projection:
             if tag == 'Status' and any(s.get('database') == 'BioSample' and {'name':'record status','value':attrs.get('status')} in s.get('comment', []) for s in entity.get('status', [])): mapped_attrs.add('status')
             for attr,field in [('publication_date','release_date'),('submission_date','submission_date'),('last_update','last_update_date')]:
                 if attrs.get(attr) and any(s.get(field)==attrs[attr] and s.get('database')=='BioSample' for s in entity.get('status',[])):mapped_attrs.add(attr)
-        if tag=='STUDY_TYPE' and any(t.get('value')==attrs.get('existing_study_type') for t in entity.get('type',[])):mapped_attrs.add('existing_study_type')
+        return mapped_text
+
+    def _library_xml(self, tag, attrs, text, runs, acc):
+        """Match library layout, design and protocol to this experiment."""
+        mapped_text = drop = False
         lib={'LIBRARY_STRATEGY':'library_strategy','LIBRARY_SOURCE':'library_source','LIBRARY_SELECTION':'library_selection','INSTRUMENT_MODEL':'instrument_model'}
         if tag in lib and runs and all(r.get(lib[tag])==text for r in runs):mapped_text=True
         if tag in ('PAIRED','SINGLE') and runs and all(r.get('library_layout')==tag for r in runs):drop=not attrs
@@ -571,6 +562,10 @@ class Projection:
                 if any(p.get('description') in combined and p['name'] == acc + ':library'
                        for p in self.series.get('protocols', [])):
                     mapped_text = True
+        return mapped_text, drop
+
+    def _file_xml(self, tag, attrs, runs, acc, file, mapped_attrs):
+        """Match submitted file attributes and only the sample-owned links."""
         from .insdc_support import _filename_uri
         if tag=='SRAFile':
             file=[f for r in runs for f in r.get('files',[]) if f.get('filename')==attrs.get('filename')]
@@ -593,12 +588,11 @@ class Projection:
                 mapped_attrs.add('filename')
                 if any(str(l.get('type','')).casefold()==str(attrs.get('filetype','')).casefold() for l in matching_links): mapped_attrs.add('filetype')
                 if attrs.get('checksum_method','').upper()=='MD5' and any(l.get('checksum')==attrs.get('checksum') for l in matching_links):mapped_attrs.update(('checksum','checksum_method'))
-        if tag in ('STUDY_REF','SAMPLE_REF','EXPERIMENT_REF','RUN_REF','SAMPLE_DESCRIPTOR'):
-            value=accession(node)
-            if self.reference(value,kind,acc):mapped_attrs.add('accession')
-            if kind in ('ASSEMBLY','ANALYSIS') and tag=='SAMPLE_REF' and any(r.get('target')==acc for r in self.samples.get(value,{}).get('relation',[])):
-                mapped_attrs.add('accession')
-                node=deepcopy(node);node['children']=[c for c in node.get('children',[]) if c['tag']!='IDENTIFIERS']
+        return file
+
+    def _actor_xml(self, tag, attrs, text, actor, mapped_attrs):
+        """Match contact and organization attributes against the identified actor."""
+        mapped_text = False
         if actor is not None:
             if tag=='Organization':
                 for source,target in [('url','web_link'),('role','role'),('type','type')]:
@@ -615,6 +609,56 @@ class Projection:
             if isinstance(address, dict):
                 if text and (text in address.get('line',address.get('lines',[])) or (tag in ('City','Country') and address.get(tag.lower())==text)): mapped_text=True
                 if tag=='Address' and attrs.get('postal_code') and address.get('postal_code')==attrs['postal_code']: mapped_attrs.add('postal_code')
+        return mapped_text
+
+    def xml(self, node, kind, acc, provider, path=(), owner=None, actor=None, file=None, citation=None):
+        tag = node['tag']; attrs=node.get('attributes', {})
+        text=str(node.get('text') or '').strip()
+        entity = self.entity(kind, acc)
+        if owner is None: owner=(kind, attrs.get('uid') or acc)
+        node_acc=accession(node) or (attrs.get('uid') if tag=='DocumentSummary' else None)
+        if tag=='EXPERIMENT_PACKAGE': node_acc=accession(next(iter(children(node,'EXPERIMENT')),{})) or acc
+        if node_acc: owner, path=(tag,node_acc), ()
+        actor_id = f'{provider}:{owner[0]}:{owner[1]}:organization-' + '-'.join(map(str,path))
+        if tag=='Organization' or (tag=='Owner' and owner[0]=='BioSample'): actor=self.actors.get(actor_id, {})
+        if tag=='Contact' and actor is not None:
+            # Contacts are numbered within their organization's Contact list.
+            actor=self.actors.get(actor.get('iid','') + ':contact-' + str(getattr(self,'contact_index',0)), {})
+        runs = self.experiments.get(acc, []) if kind=='EXPERIMENT' else [entity] if kind in ('RUN','read_run') else []
+        if tag=='RUN' and entity.get('scan_name')==attrs.get('alias'): mapped_alias=True
+        else: mapped_alias=False
+        if tag=='PubmedArticle': self.publication=self.publications.get(child_text(node,'MedlineCitation/PMID'),{})
+        if tag=='Statistics' and any(r.get('statistics') == node for r in runs): return None
+        mapped_text=False; mapped_attrs={'alias'} if mapped_alias else set(); drop=False
+        node, citation, mapped_text = self._publication_xml(node, kind, acc, owner, citation, mapped_attrs)
+        if node is None:
+            return None
+        if kind=='TaxaSet' and tag=='Taxon':
+            taxid=child_text(node,'TaxId');name=child_text(node,'ScientificName')
+            if any(o.get('taxid')==taxid and o.get('value')==name for o in self.organisms()):
+                node=deepcopy(node);node['children']=[c for c in node.get('children',[]) if c['tag']!='ScientificName']
+        center = self.actors.get(f'{provider}:{tag}:{node_acc}:center_name', {})
+        if attrs.get('center_name') and center.get('name')==attrs['center_name']:mapped_attrs.add('center_name')
+        node, attribute_text, drop = self._attribute_xml(node, entity, owner, acc, mapped_attrs)
+        mapped_text |= attribute_text
+        if tag in ('PRIMARY_ID','SECONDARY_ID','EXTERNAL_ID') and self.reference(text,kind,acc): mapped_text=True;mapped_attrs.update(('namespace','label'))
+        field={'STUDY_TITLE':'title','STUDY_ABSTRACT':'summary','STUDY_DESCRIPTION':'summary','TITLE':'title','DESCRIPTION':'description'}.get(tag)
+        if kind in ('PROJECT','STUDY','DocumentSummary','study') and tag in ('DESCRIPTION','Description'): field='summary'
+        if tag=='Title' and kind=='DocumentSummary': field='title'
+        if field and text and ' '.join(text.split()) == ' '.join(str(entity.get(field) or '').split()): mapped_text=True
+        mapped_text |= self._sample_xml(tag, kind, attrs, text, entity, acc, mapped_attrs)
+        if tag=='STUDY_TYPE' and any(t.get('value')==attrs.get('existing_study_type') for t in entity.get('type',[])):mapped_attrs.add('existing_study_type')
+        library_text, library_drop = self._library_xml(tag, attrs, text, runs, acc)
+        mapped_text |= library_text
+        drop |= library_drop
+        file = self._file_xml(tag, attrs, runs, acc, file, mapped_attrs)
+        if tag in ('STUDY_REF','SAMPLE_REF','EXPERIMENT_REF','RUN_REF','SAMPLE_DESCRIPTOR'):
+            value=accession(node)
+            if self.reference(value,kind,acc):mapped_attrs.add('accession')
+            if kind in ('ASSEMBLY','ANALYSIS') and tag=='SAMPLE_REF' and any(r.get('target')==acc for r in self.samples.get(value,{}).get('relation',[])):
+                mapped_attrs.add('accession')
+                node=deepcopy(node);node['children']=[c for c in node.get('children',[]) if c['tag']!='IDENTIFIERS']
+        mapped_text |= self._actor_xml(tag, attrs, text, actor, mapped_attrs)
         # Identity is carried by the record envelope, not counted as residual data.
         if not path: mapped_attrs.update(('accession','uid'))
         out={'tag':tag}; left={k:v for k,v in attrs.items() if k not in mapped_attrs}
