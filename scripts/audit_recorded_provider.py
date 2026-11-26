@@ -21,6 +21,7 @@ from datetime import date
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -136,6 +137,16 @@ def recorded_request(saved):
     outputs.update(flat)
     return dict(request, preparation=PreparationPolicy(**policy), runtime=RuntimeOptions(**runtime),
                 input_options=inputs, output_options=outputs)
+
+
+def saved_export_request(path=None):
+    """Use the public large profile when the replay's own saved metadata exceeds standard."""
+    from meta_standards_converter.runtime_contracts import STANDARD_RESOURCE_PROFILE
+
+    options = {"expand_studies": False}
+    if path is not None and path.stat().st_size > STANDARD_RESOURCE_PROFILE.max_xml_bytes:
+        options["resource_profile"] = "large"
+    return recorded_request({"enrichment": "off", "options": options})
 
 
 def build_services(replay, declarations):
@@ -315,7 +326,49 @@ def observe_preparation(replay, observations):
         yield
 
 
-def audit(manifest, *, evidence_root=None, artifacts_dir=None):
+def panel_expectations(manifest, scenario_id, schema_version, *, catalog=None):
+    """Select expectations only for the exact source manifest and payload schema."""
+    if catalog is None:
+        catalog = REPO / "tests/fixtures/recorded_provider/expectations-3.1.json"
+    if schema_version != "3.1":
+        return None
+    contract = json.loads(Path(catalog).read_bytes())
+    if contract["schema_version"] != schema_version:
+        raise HarnessError("panel contract schema mismatch")
+    fingerprint = hashlib.sha256(Path(manifest).read_bytes()).hexdigest()
+    entry = contract["routes"].get(fingerprint)
+    if entry is not None and entry["id"] != scenario_id:
+        raise HarnessError("panel contract scenario mismatch")
+    return entry
+
+
+def panel_digest(payload):
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def resolve_replacement_capture(root, entry):
+    """Resolve an independently captured route only when its source manifest is registered."""
+    parts = entry["id"].split("/")
+    if len(parts) != 2 or not all(re.fullmatch(r"[A-Za-z0-9-]+", part) for part in parts):
+        raise HarnessError("invalid replacement route identity")
+    root = Path(root).resolve()
+    capture = (root / ".".join(parts) / "source.manifest.json").resolve()
+    if not capture.is_relative_to(root):
+        raise HarnessError("replacement route escapes the evidence directory")
+    expected = entry["replacement_capture"]["sha256"]
+    if hashlib.sha256(capture.read_bytes()).hexdigest() != expected:
+        raise HarnessError("replacement capture digest mismatch")
+    return capture
+
+
+def cause_digest(causes):
+    """Compare exact operational diagnostic content and multiplicity without ordering."""
+    ordered = sorted(causes, key=lambda value: json.dumps(value, sort_keys=True))
+    return panel_digest(ordered)
+
+
+def audit(manifest, *, evidence_root=None, artifacts_dir=None, replacement_root=None):
     report = {"classification": "harness-error", "scenarios": [], "errors": []}
     replay = None
     try:
@@ -324,13 +377,23 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
         declaration = json.loads(Path(manifest).read_text())
         if declaration.get("external_evidence") and evidence_root is None:
             raise HarnessError("unmet prerequisite: explicit --evidence-root is required")
+        replacement = None
+        transport_manifest = manifest
         if declaration.get("unmet_prerequisites"):
-            raise HarnessError(f"unmet prerequisites: {declaration['unmet_prerequisites']}")
-        replay = ReplayTransport(manifest, evidence_root=evidence_root)
+            scenario_id = declaration["scenarios"][0]["id"] if declaration.get("scenarios") else None
+            entry = panel_expectations(manifest, scenario_id, "3.1") if replacement_root is not None else None
+            if not entry or not entry.get("replacement_capture"):
+                raise HarnessError(f"unmet prerequisites: {declaration['unmet_prerequisites']}")
+            replacement = entry["replacement_capture"]
+            transport_manifest = resolve_replacement_capture(replacement_root, entry)
+            evidence_root = transport_manifest.parent
+            report["historical_unmet_prerequisites"] = declaration["unmet_prerequisites"]
+            report["replacement_capture_sha256"] = replacement["sha256"]
+        replay = ReplayTransport(transport_manifest, evidence_root=evidence_root)
         doc = replay.manifest
         report.update(cohort=doc["cohort"], evidence_kind=doc["evidence_kind"],
                       source_revision=doc["source_revision"], captured_at=doc["captured_at"])
-        scenarios = doc.get("scenarios", [])
+        scenarios = declaration.get("scenarios", [])
         if not scenarios: raise HarnessError("no declared executable scenarios")
         if artifacts_dir is not None: Path(artifacts_dir).mkdir(parents=True, exist_ok=True)
         with replay.offline():
@@ -353,7 +416,7 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
                     report["scenarios"].append(entry)
                     if scenario["classification"] not in {"complete-captured-coverage", "expected-failure"}:
                         raise HarnessError("scenario is not declared executable")
-                    services = build_services(replay, scenario["services"])
+                    services = {} if replacement else build_services(replay, scenario["services"])
                     spec = scenario["source"]
                     if spec["kind"] == "file":
                         replay.read(spec["file"])
@@ -364,9 +427,15 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
                     else: raise HarnessError("unsupported source kind")
                     golden = json.loads(replay.read(scenario["golden"])) if "golden" in scenario else None
                     packages = None
+                    panel = None
+                    saved_package = None
                     for call_index, fmt in enumerate(scenario["formats"]):
                         replay.call, replay.stage = call_index + 1, fmt
                         start = time.monotonic()
+                        if call_index and packages is None:
+                            entry["calls"].append({"format": fmt, "status": "unavailable",
+                                                   "reason": "primary conversion returned no payload"})
+                            continue
                         input_evidence = primitive(packages) if packages is not None else spec
                         call = {"format": fmt, "http_before": len(replay.events), "preparation_before": input_evidence}
                         call["status"] = "running"
@@ -377,8 +446,13 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
                         call["input_sha256"] = hashlib.sha256(before).hexdigest()
                         wanted = scenario["expected"][fmt]
                         try:
-                            result = Converter(services=services if packages is None else {}).convert(source if packages is None else packages, out_type=fmt,
-                                **recorded_request(scenario["options"] if packages is None else {"enrichment": "off", "options": {"expand_studies": False}}))
+                            request = recorded_request(scenario["options"]) if packages is None else saved_export_request(saved_package)
+                            if saved_package is not None:
+                                call["saved_bytes"] = saved_package.stat().st_size
+                                call["resource_profile"] = request["runtime"].resource_profile
+                            result = Converter(services=services if packages is None else {}).convert(
+                                source if packages is None else (saved_package or packages), out_type=fmt, **request
+                            )
                         except ReplayBudgetExceeded:
                             replay.assert_no_errors()
                             if scenario["classification"] != "expected-failure" or wanted.get("exception") != "budget-exhausted":
@@ -388,45 +462,79 @@ def audit(manifest, *, evidence_root=None, artifacts_dir=None):
                             continue
                         call.update(result=result.to_dict(), preparation=[primitive(item.preparation) for item in result.items])
                         replay.assert_no_errors()  # Mandatory even when MSC caught the sentinel.
-                        expected_count = scenario["expected_item_count"]
-                        if expected_count != 1:
-                            raise HarnessError("this runner requires one explicitly declared logical outcome per scenario")
-                        if len(result.items) != expected_count:
-                            raise HarnessError(f"facade outcome count {len(result.items)} != {expected_count}")
-                        for item in result.items:
-                            for axis in ("execution", "validation", "completeness"):
-                                assert getattr(item, axis) == wanted[axis], f"{fmt}/{axis}: {getattr(item, axis)} != {wanted[axis]}"
-                            causes = [{"code": d.code, "stage": d.stage, "severity": d.severity, "message": d.message}
-                                      for d in item.diagnostics if d.severity in {"warning", "error"} and d.curation is None]
-                            # Frozen cause goldens predate the advisory checklist.
-                            # Full curation diagnostics remain in call['result'];
-                            # scientific payload and operational causes stay exact.
-                            assert_occurrences(wanted["causes"], causes)
-                            if wanted["execution"] == "succeeded":
-                                assert item.payload is not None, f"{fmt}: required in-memory artifact missing"
-                        payload = primitive(result.items[0].payload)
-                        if artifacts_dir is not None:
-                            label = hashlib.sha256(scenario["id"].encode()).hexdigest()[:16] + "." + fmt + ".json"
-                            artifact = Path(artifacts_dir) / label
-                            with artifact.open("x") as handle: json.dump(payload, handle, ensure_ascii=False)
-                            call["audit_artifact"] = str(artifact.resolve())
-                        validate_payload_count(payload, fmt, wanted["payload_count"])
-                        expected_payload = golden[fmt] if golden is not None else {"kind": "exact", "value": json.loads(replay.read(scenario["goldens"][fmt]))}
-                        normalization = scenario.get("runtime_date") if fmt == "magetab" else None
-                        if normalization is not None:
-                            if expected_payload["kind"] != "exact": raise HarnessError("date normalization requires exact MAGE-TAB golden")
-                            compared, expected_payload["value"] = normalize_runtime_date(payload, expected_payload["value"], normalization)
-                        else: compared = payload
-                        compare_golden(compared, expected_payload)
-                        if fmt == "json" and result.items[0].payload is not None:
+                        if fmt == "json" and len(result.items) == 1:
                             packages = result.items[0].payload
-                            for package in packages: MINiMLCodec().decode(package, strict=True)
-                        call.update(seconds=time.monotonic() - start, http_after=len(replay.events),
-                                    preparation=[primitive(item.preparation) for item in result.items],
-                                    result=result.to_dict(), status="passed", output_sha256=hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest())
+                            if packages:
+                                panel = panel_expectations(manifest, scenario["id"], packages[0].miniml_schema_version)
+                                if replacement:
+                                    if panel is None:
+                                        raise HarnessError("replacement returned an unregistered schema")
+                                    panel = replacement
+                                if panel and panel.get("save_before_export"):
+                                    saved_package = Path(gate_dir) / "package.json"
+                                    result.items[0].save_json(saved_package, overwrite=True)
+                        if panel is not None:
+                            current = panel["formats"][fmt]
+                            wanted = {**wanted, **current["axes"]}
+                            if "payload_count" in current:
+                                wanted["payload_count"] = current["payload_count"]
+                        if packages is None and fmt == "json":
+                            call["missing_primary"] = True
+                        try:
+                            expected_count = scenario["expected_item_count"]
+                            if expected_count != 1:
+                                raise HarnessError("this runner requires one explicitly declared logical outcome per scenario")
+                            if len(result.items) != expected_count:
+                                raise HarnessError(f"facade outcome count {len(result.items)} != {expected_count}")
+                            for item in result.items:
+                                for axis in ("execution", "validation", "completeness"):
+                                    assert getattr(item, axis) == wanted[axis], f"{fmt}/{axis}: {getattr(item, axis)} != {wanted[axis]}"
+                                causes = [{"code": d.code, "stage": d.stage, "severity": d.severity, "message": d.message}
+                                          for d in item.diagnostics if d.severity in {"warning", "error"} and d.curation is None]
+                                # Frozen cause goldens predate the advisory checklist.
+                                # Full curation diagnostics remain in call['result'];
+                                # scientific payload and operational causes stay exact.
+                                if panel is not None and "cause_sha256" in current:
+                                    if cause_digest(causes) != current["cause_sha256"]:
+                                        raise HarnessError(f"{fmt} operational diagnostics differ from its 3.1 contract")
+                                else:
+                                    assert_occurrences(wanted["causes"], causes)
+                                if wanted["execution"] == "succeeded":
+                                    assert item.payload is not None, f"{fmt}: required in-memory artifact missing"
+                            payload = primitive(result.items[0].payload)
+                            if artifacts_dir is not None:
+                                label = hashlib.sha256(scenario["id"].encode()).hexdigest()[:16] + "." + fmt + ".json"
+                                artifact = Path(artifacts_dir) / label
+                                with artifact.open("x") as handle: json.dump(payload, handle, ensure_ascii=False)
+                                call["audit_artifact"] = str(artifact.resolve())
+                            validate_payload_count(payload, fmt, wanted["payload_count"])
+                            if panel is None:
+                                expected_payload = golden[fmt] if golden is not None else {"kind": "exact", "value": json.loads(replay.read(scenario["goldens"][fmt]))}
+                                normalization = scenario.get("runtime_date") if fmt == "magetab" else None
+                                if normalization is not None:
+                                    if expected_payload["kind"] != "exact": raise HarnessError("date normalization requires exact MAGE-TAB golden")
+                                    compared, expected_payload["value"] = normalize_runtime_date(payload, expected_payload["value"], normalization)
+                                else: compared = payload
+                                compare_golden(compared, expected_payload)
+                            else:
+                                if panel_digest(payload) != current["payload_sha256"]:
+                                    raise HarnessError(f"{fmt} differs from its versioned 3.1 payload")
+                                call["scientific_disposition"] = current["scientific_disposition"]
+                            call.update(seconds=time.monotonic() - start, http_after=len(replay.events),
+                                        preparation=[primitive(item.preparation) for item in result.items],
+                                        result=result.to_dict(), status="passed", output_sha256=hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest())
+                            if fmt == "json" and packages is not None:
+                                for package in packages:
+                                    MINiMLCodec().decode(package, strict=True)
+                        except (AssertionError, HarnessError, ValueError) as error:
+                            message = f"{type(error).__name__}: {error}"
+                            call.update(status="harness-error", error=message,
+                                        http_after=len(replay.events), seconds=time.monotonic() - start)
+                            report["errors"].append(message)
                     replay.assert_no_errors()
                 replay.assert_complete()
-        report["classification"] = "expected-failure" if any(s["classification"] == "expected-failure" for s in scenarios) else "complete-captured-coverage"
+        if not report["errors"]:
+            report["classification"] = "expected-failure" if any(s["classification"] == "expected-failure" for s in scenarios) else "complete-captured-coverage"
     except Exception as exc:
         report["errors"].append(f"{type(exc).__name__}: {exc}")
         if report["scenarios"] and report["scenarios"][-1]["calls"]:
@@ -497,7 +605,7 @@ def validate_panel_route(study, route, manifest, scenario):
 
 
 
-def audit_panel(index, *, evidence_root=None, artifacts_dir=None):
+def audit_panel(index, *, evidence_root=None, artifacts_dir=None, replacement_root=None):
     """Execute the approved 18-study roster; missing routes never disappear.
 
     Manifests are relative to the index, external evidence to the explicitly
@@ -520,7 +628,12 @@ def audit_panel(index, *, evidence_root=None, artifacts_dir=None):
         report["index_sha256"] = hashlib.sha256(original_index).hexdigest()
         report["runner_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
         report["final_freeze"] = doc.get("final_freeze")
-        if doc.get("unmet_prerequisites"):
+        if doc.get("unmet_prerequisites") and replacement_root is not None:
+            report["historical_unmet_prerequisites"] = doc["unmet_prerequisites"]
+            if any(not isinstance(item, dict) or (item.get("study"), item.get("route")) not in _PANEL_ROUTES
+                   for item in doc["unmet_prerequisites"]):
+                report["errors"].append("unregistered panel prerequisite")
+        elif doc.get("unmet_prerequisites"):
             report["errors"].append(f"panel unmet prerequisites: {doc['unmet_prerequisites']}")
         rows = doc.get("routes")
         if not isinstance(rows, list): raise HarnessError("panel routes must be an explicit list")
@@ -572,7 +685,8 @@ def audit_panel(index, *, evidence_root=None, artifacts_dir=None):
                 validate_panel_route(study, route, declared, scenario)
                 entry["manifest_sha256"] = digest
                 result = audit(manifest, evidence_root=Path(evidence_root).resolve(),
-                               artifacts_dir=artifact_root / study / route if artifact_root else None)
+                               artifacts_dir=artifact_root / study / route if artifact_root else None,
+                               **({"replacement_root": replacement_root} if replacement_root is not None else {}))
                 entry["audit"] = result
                 calls = [call for scenario in result.get("scenarios", []) for call in scenario.get("calls", [])]
                 report["attempted_facade_calls"] += len(calls)
@@ -602,10 +716,11 @@ def main(argv=None):
     parser.add_argument("manifest", type=Path, help="Route manifest, or approved panel index with --panel")
     parser.add_argument("--panel", action="store_true", help="Require the approved 18-study, 74-route, 222-call roster")
     parser.add_argument("--evidence-root", type=Path)
+    parser.add_argument("--replacement-root", type=Path, help="Directory containing hash-registered replacement captures for unavailable 3.0 routes")
     parser.add_argument("--report", type=Path)
     parser.add_argument("--artifacts-dir", type=Path, help="Optional fresh audit payload files; existing files are never overwritten")
     args = parser.parse_args(argv)
-    report = (audit_panel if args.panel else audit)(args.manifest, evidence_root=args.evidence_root, artifacts_dir=args.artifacts_dir)
+    report = (audit_panel if args.panel else audit)(args.manifest, evidence_root=args.evidence_root, artifacts_dir=args.artifacts_dir, replacement_root=args.replacement_root)
     rendered = json.dumps(report, indent=2)
     if args.report: args.report.write_text(rendered + "\n")
     print(rendered)

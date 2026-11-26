@@ -406,6 +406,7 @@ def test_failed_golden_call_remains_accounted_with_optional_payload_artifact(tmp
     assert "mismatch at /<length>" in call["error"]
     assert Path(call["audit_artifact"]).is_file()
     assert call["http_after"] == 0
+    assert [entry["format"] for entry in report["scenarios"][0]["calls"]] == manifest["scenarios"][0]["formats"]
 
 
 def test_preparation_contributions_count_real_fastq_relationships_and_duplicates():
@@ -442,3 +443,46 @@ def test_retained_403_and_declared_budget_have_expected_failure_goldens(name, at
         call = report["scenarios"][0]["calls"][0]
         assert call["result"]["items"][0]["execution"] == "failed"
         assert [e["status"] for e in report["transport"]["events"]][-4:] == [403] * 4
+
+
+def test_panel_expectations_require_the_frozen_route_and_schema(tmp_path):
+    from scripts.audit_recorded_provider import panel_expectations
+    import hashlib
+    original = tmp_path / "test.manifest.json"
+    original.write_text('{"cohort":"frozen"}')
+    digest = hashlib.sha256(original.read_bytes()).hexdigest()
+    by_version = {"schema_version": "3.1", "routes": {digest: {"id": "one", "formats": {}}}}
+    catalog = tmp_path / "expectations.json"
+    catalog.write_text(json.dumps(by_version))
+    assert panel_expectations(original, "one", "3.1", catalog=catalog) == by_version["routes"][digest]
+    assert panel_expectations(original, "one", "3.0", catalog=catalog) is None
+    original.write_text('{"cohort":"changed"}')
+    assert panel_expectations(original, "one", "3.1", catalog=catalog) is None
+
+
+def test_recovered_route_requires_its_registered_capture(tmp_path):
+    from scripts.audit_recorded_provider import resolve_replacement_capture
+    directory = tmp_path / "study.standard"
+    directory.mkdir()
+    capture = directory / "source.manifest.json"
+    capture.write_text('{"cohort":"public-source"}')
+    digest = hashlib.sha256(capture.read_bytes()).hexdigest()
+    entry = {"id": "study/standard", "replacement_capture": {"sha256": digest}}
+    assert resolve_replacement_capture(tmp_path, entry) == capture
+    capture.write_text('{"cohort":"changed"}')
+    with pytest.raises(HarnessError, match="digest"):
+        resolve_replacement_capture(tmp_path, entry)
+    with pytest.raises(HarnessError, match="route"):
+        resolve_replacement_capture(tmp_path, {**entry, "id": "../bad/route"})
+
+
+def test_saved_panel_replay_uses_the_bounded_profile_needed_for_its_own_file(tmp_path):
+    from scripts.audit_recorded_provider import saved_export_request
+    from meta_standards_converter.runtime_contracts import STANDARD_RESOURCE_PROFILE
+
+    p = tmp_path / "package.json"
+    p.write_text("[]")
+    assert saved_export_request(p)["runtime"].resource_profile == "standard"
+    with p.open("r+b") as stream:
+        stream.truncate(STANDARD_RESOURCE_PROFILE.max_xml_bytes + 1)
+    assert saved_export_request(p)["runtime"].resource_profile == "large"

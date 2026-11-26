@@ -1165,6 +1165,11 @@ The native atlas reader retains each dataset's stage history. The base sample ta
 
 The implementation uses `meta_standards_converter.sources.receipts.atlas_history` for native input, `meta_standards_converter.sources.receipts.conversion_records` for prepared packages and `meta_standards_converter.sources.receipts.status_axes` for the table. `meta_standards_converter.sources.receipts.receipt_path`, `meta_standards_converter.sources.receipts.publish_with_receipt` and `meta_standards_converter.sources.receipts.read_records` implement file readback. `meta_standards_converter.metadata.projection.assay.assay_path_owners` resolves biological ownership for protocol and parameter projection. Shared paths retain their owners in the parameter inventory. Each sample-owned parameter retains its protocol, value and unit in the occurrences column.
 
+A newly parsed archive deposit starts its own conversion history. A bare saved package without a receipt retains unknown prior publication status. The direct and reopened sample tables preserve that distinction.
+
+The recorded-provider audit uses separate MINiML 3.1 expectations keyed by the historical source-manifest digest. It compares exact payloads and source operational diagnostics in each format. A failure in the first comparison still permits both saved exports when the primary returned metadata. Physical saved exports use the standard 128 MiB metadata limit and select the bounded large profile for a larger file written by the auditor. The optional `--replacement-root` accepts complete hash-registered public captures for previously unavailable routes. A diagnostic, missing capture or mismatch remains in the report. The versioned expectations include the extent of independent scientific verification for each format. [Replay runner](../scripts/audit_recorded_provider.py) · [MSC 3.1 expectations](../tests/fixtures/recorded_provider/expectations-3.1.json)
+
+
 Diagnostics optionally include `provider_issue`: a stable `reason`, `operation`,
 existing safe `error` envelope and optional `retry_at`. Remote invalid JSON/XML,
 exhausted transport failures and HTTP failures use `provider_response_invalid`,

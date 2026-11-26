@@ -1,0 +1,2913 @@
+{
+  "schema_version": "3.1",
+  "digest": "SHA-256 of compact sorted UTF-8 JSON with deposited dates and their absence preserved literally.",
+  "routes": {
+    "311c89297f9bf58cb19f15a40090de3c8ff7e4fa8ad2797da874178d9bbce50a": {
+      "id": "E-GEOD-48034/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "6deb3ab2a4eedd1b01bb738589dca25bbb68e6cd0d538d6ce63e271ff04ab35e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "89b4191de2bc88f7ea38632ca9309334cda3f5527a9978d065b1ba31d6936c91",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d9f9e0f8985f315fd217b5cd94572e508945f7f3b40bff8229dd27d2b416ea29",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "25f0e2b1db5e441d70c9aac0a973a3600f3e08c84e6644bcb0edd76e9aa6e06a": {
+      "id": "E-GEOD-48034/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "243e4f5544edd49c8df345bfb760055bbb1781a6d5f74d6f6d227114d20cd08f",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d439d5f8391e9cb8c331d757fe83c84e019c307c3b696bfd7c261fe5d3a332b3",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "862c92a1bba5a302fa4d48cf1d383783842088e680d5d91ada02b49e61ceb085",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "dbf08e6f998a8ecea571ed3df3bbfa15a297c1cf1cfe4d1c2b37ffe5854eb98b": {
+      "id": "E-GEOD-48034/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "45801c079897841008004077c18c7c4ffd3a218f07d2197e750f6c4aebde0b7a",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "39e25590557d44d410b085ba78d8c830a148e22278f4d3bae2b3a218bdc9987a",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "bffc918d674d28bc177a4d3f15e960cd26dc1580f8f6f46b015225a3d89ea582",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "093a9bb1377a80bc3c9e545f5f36fe28d8063860b4f7ff3f0b56b31924647089": {
+      "id": "E-GEOD-48034/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c42b43fc3eab6b740298c3ee3ceafbed13cf8d649d6c4609c0c24a1a3c64831a",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "718457e47ba7f0c48a43d77d701fa493d8e36cc65da8436bd4ca4c371b01452c",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "1202de520b5950d893837d96a21102056a586e2793b34d990bbd646011ee7843",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "0ff9749db6de79541d59eed83ec75f9b1c95399ed0fe5ef700cfe3ee0789ffc4": {
+      "id": "E-GEOD-48034/ena",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "e2da333e1b69975791b643e6dc64026882e04896bab4ce810c04dd6816b7746b",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9c08e17f03873c08de3774e2aa6291f8f792ab673504ffcb54f72eeae38eb18a",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "0d51039b3eb92eba600ef34e73b6468eacc77f1b2b60440fd0a52967a8a1d8fd",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        }
+      }
+    },
+    "9f869967442904d24d1c605870576da039b75db67b8f50ee91b5ce681fad12a0": {
+      "id": "E-GEOD-48035/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "ed374368072304e4e732a061b12d51f492389850de80453545cd1515a2850aea",
+          "payload_count": 1,
+          "cause_sha256": "b68d613626cfad44b178664177973368ce68514060af9c34a85a531deb078181",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "960fec88a6a236815cbcb187a4231dcccdf53f7333481a8ac3fd235c9940ed42",
+          "payload_count": 1,
+          "cause_sha256": "b68d613626cfad44b178664177973368ce68514060af9c34a85a531deb078181",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "d7e7fddd0149d80627445f0efd561c48a1bdbba7d1249d7363fe26f69c64a96b",
+          "payload_count": 1,
+          "cause_sha256": "b68d613626cfad44b178664177973368ce68514060af9c34a85a531deb078181",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "7ad08bb34736086ab0052bdeb6d9415c7318a826e07e1ad997922b01ea1c2695": {
+      "id": "E-GEOD-48035/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "58a2be281b8f04a94ffd852548efc567e19d011c10fb4433d09d3f85d047bf4e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "cacf88b75d216792e29c3cf5f51ee04f49e76fc2d997e5c17801359f6e525a14",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "0e069e0f1fb8d1bf012c5e0af4f66e952ffea2e85450cb913f2f1c18ceaa711e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "99012d8297f46de4223e138fb19efa1a98841241fdfc90994b799e2acb38e924": {
+      "id": "E-GEOD-48035/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "2fa9130b8801efe5f15d0b11be573f3e5ecd813d703f3272762ebf03567076f7",
+          "payload_count": 1,
+          "cause_sha256": "e5b35356e23898c228af28e5d45b2089eb65347246a70c267f63d38ac231ce6a",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "e9e3c6e90a6534769c4fa8a9c7fd45f3e08eb09b768e710b12ee9a451f9cf255",
+          "payload_count": 1,
+          "cause_sha256": "e5b35356e23898c228af28e5d45b2089eb65347246a70c267f63d38ac231ce6a",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "d6e24ffd4724456ab9b8df03ec2d4aa82099409878082cfe372a4d33588703bb",
+          "payload_count": 1,
+          "cause_sha256": "e5b35356e23898c228af28e5d45b2089eb65347246a70c267f63d38ac231ce6a",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "c1f627cfb77f14fd98ee37112b8fe1274412e422c4ebbc1fe54c9f843ebee45f": {
+      "id": "E-GEOD-48035/standard",
+      "save_before_export": true,
+      "formats": {},
+      "capture_status": "original_capture_unavailable",
+      "replacement_capture": {
+        "sha256": "ea5e5d7680ff63aaa7ed345a81fd7d14f41adfbb4909ee01be7b29621568bcf3",
+        "captured_at": "2026-11-26T02:03:54.659318+00:00",
+        "save_before_export": true,
+        "formats": {
+          "json": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "04260e5b427c41ac43ed61300249191fd83db243c8b52a039edce9598ce67a65",
+            "payload_sha256": "c3aa3e61503b8658e34a3d8773421eb3729a4e22120d0784d491408740014995",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          },
+          "magetab": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "e5b35356e23898c228af28e5d45b2089eb65347246a70c267f63d38ac231ce6a",
+            "payload_sha256": "6bea6fb255fe4f660809c7914b6b5725945f8baf5ebe3284f42ed5336ae87da7",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          },
+          "tsv": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "e5b35356e23898c228af28e5d45b2089eb65347246a70c267f63d38ac231ce6a",
+            "payload_sha256": "a27f402d295f8df58bfb3e2a310ed8cd6583bc87e7cbd45ac532697ce81c0ba3",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          }
+        }
+      }
+    },
+    "e969b7df296b236b6e165f84f223ea46473ad88d51e6ddb98309fa8c5a4d1599": {
+      "id": "E-GEOD-52564/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "5503c9f141ba93f28e1d6107b675c6b27a013fb4e56d5eeb90eb5f13136baeb7",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "693c8451f3b62de179325b320339662b336d2ef87a442771d1acee7f45ac7929",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "dfd3450f1284418d0ef2edb43bf539364aba94a404d17d2bb15273c1cf062f1d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "23acb64632c779794ad65c8b985a89b0025da13278b58de6fe95a1a61fc08f0a": {
+      "id": "E-GEOD-52564/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "f18873f75573627e5c43be375318ff24fc2fded228698402b697b7bb6c6d0d8c",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "bc9a60e0ad943c553dbe34acaf606ebdc9f19a228c9b59e8a9cecf9216473b05",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "dd15b0215347fd1ad8ea8c7df77763a31ef2bb64b28af4812bbe45ae2703d111",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "60571bc1019f483f4c72427a72024699d9714b19caa7fca732a2b46634ce800b": {
+      "id": "E-GEOD-52564/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "a83d503b302172aa3190c6486fec832d93800834e04fec19ba818e8e8116d75d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c269d18929a3b1c13696d0d3df7bcf4967996551aea383b4a05bc1604c70b03f",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "4801f08b22028575d35a5cb38d1b990b8778891d8f5ba3bb65c9ead552038204",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "499b9cbf5f324e649c2161b17e4410c6fcca305cc0ae00f477cce3bc2b0d3dc0": {
+      "id": "E-GEOD-52564/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "a8956707293c8a7aafc2cb0d67ebf64976b3ce472c6720f72f1d7aaf1619c938",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "78675e84f2656cff7e69d95cc270fccbad547ef6ee3192d9b1819cfa92ff559d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "a82d1d47f04c283c494a83d4d965e60f61ab648af4fbdb4bbdabb7eeb5897001",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "530249a3d96507644005220141fd4c6b7dbdae2a711384c779fbcc042d9ac88e": {
+      "id": "E-GEOD-60450/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "f2c694e8240e8c2aa4eaf718dc9811b27a68d97963b5ab0bc78d33385a114b0e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "19c013ae2aae6e2ce7850a58404280ff3c4e5c2ec4033636ba01d0de468a3a99",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "73507683cfb830f16a7eb145ab0e639267432d80ed436aa88dc9d6a59ee78282",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "b1c264ebcb8e7ef113faf110a27557c52734b972b0b7a9cd0b09cf560845f06f": {
+      "id": "E-GEOD-60450/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "1ff06122e7a6f5b316916c934b3310dd1c7ca4cfa59a93f492c90f01f78d8fa9",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9d18865776973e190d6bba229d8f778e2725474a299a817138b3ade20b048725",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "19768ae2df0272169b99189b0af32d82d36cd383ba8783d2a9a4ad71c4e27960",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "663f1340f8a209caadebbd8cba867ad37ee0dbcc5e47b2a43caad36ac4548470": {
+      "id": "E-GEOD-60450/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c3e0d8e11c576d21326c20698ce7132178178e66081fc5a7100e81f3ec7d9af2",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d7ae5ea614a7140a4804b2b62941df5ddadc14caad9772f13503dfb6a3be5e48",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9df71c657a1bf2df9ee84976a30c1e71ee88cd87a60b4b47466be5e7aa3e7f40",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "34f5e3fe0c68f9a5df53750e41b1868271b800745ff35c34237f23d450e12f08": {
+      "id": "E-GEOD-60450/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "5856c7872ccaeec3c80e39c95e10b96fb5d1c7dc845d2cd078e023cbe5019953",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "58d0533db6fc69dc944840ebc0c3bc69f13fec0729669ab790a9076fc013b150",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c3f9dd69429b255f8763afc851043437431be37442e9d6ebb07b810d1f06e016",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "bae4d63ba43127510f2748716b1adcc59bc02181dabac3a6529df4a54c52e0b8": {
+      "id": "E-GEOD-60450/ena",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "f740ad6448c407d5d4a4e90750c7956e65ada91fc0d036f9dd3ac9e6f42ddbfb",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "dfe1a2e91b61e1f8ced36ea0d6af1d2e1bcc7a16c3e76721872006cfa04d4f49",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "7dc8502b4f8abaa794b26c32ab21563ac4d2b82cd15912e93ff30fc7a5a0846e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        }
+      }
+    },
+    "0736619af52600a6aaaff7038f05b509bd41106fc7441ef3e06364acf39b0012": {
+      "id": "E-MTAB-13131/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "4f120324abd46bc7fc8f3f462547ab54c2abc0e48047db8e47ca9d75549ccd09",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "2bee2926fd84038bed4df0f053ec3f03759d6b31323328168e0d37f62fad13dd",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d082e0dc9683acbd8ab14f6ca4538e0a983ab6c1d08727d2fb9dc71af03275c1",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "dd7a507ca4879cadd530c9c66bb4f2e9de45a5956bdcdae464c2cd251b9df11d": {
+      "id": "E-MTAB-13131/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "7d7610ccbda215be45003f6881aea68205d588eabec70527a116a849b0e696f4",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c5bb283aa8d7b375502703d0de9a08ce13b99ead661ffe64fb2650d206eebde2",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "404e25597c4611888d6dc3459db89881913a24bac8c83a868d5faad4b7036abf",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "247a56c41c64c9c267d2cc4fa23d3b103985b1dc17c775245807a994b021cc14": {
+      "id": "E-MTAB-13131/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "6e562d2f66ad449ef63748279e5d93c2313db12a9e5d7f8798c9a88450b4dd83",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d18d62730aedeaa597e684c5482eccdbbc38f9f998799af87ad36c253367bf62",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "5c857268ac33b89acf30d62c9d204d26ed4f64599579022ea76381441946a448",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "ec694cd74482ab5c8a61d2591c6bdd3bdc0971aef1c62362da002654e47e95a3": {
+      "id": "E-MTAB-13131/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "078feef96d5d29eb17b9602e83ab6cd4f7d7f0453c620ad583674cfcb0195be1",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "74d482bcc43105ce0fc160a52366e42f11cd4f03bb933290d34d5ee0a7b6c381",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "6cc6a45248670975fdd76db52fc63fe16bc8e8e5fc8bdb97d5ecae1850246739",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "5978ae7f7ac9c7ef8278f9d15b564737a65539662960b0af3fc7e684a841b275": {
+      "id": "E-MTAB-13662/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9a47bcda9586e3f9d4531eaf1c39c1d1da3f51bd1c8c00d556c86672d2ec0504",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "015c963c9163605c985464688827e5d5f24d2ba6b90b85456fb5e69792245f9b",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "3ff18a7f6ac6e5ef36f04ac4338d13487bc94fdc849a42399b424beafc4f6a4f",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "9a51500ee42f3cf567dd19dfa76c6d5c4a0be0dcca98a5e11cb56989bf0edeba": {
+      "id": "E-MTAB-13662/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "94ee6284e01eb38a1844b3fe2970bc61dc5fb906990a8877d1741445928a1208",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9afc8b5ac0e3e42c9a87b8f0a13462f4f121739882d6662d7f2ab3491029f000",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c0344a61c41599f02494c4b1586f38ddab66459b7f6d48d409cfa85cac3ace62",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "b615cae26abf8d41c1c5ab0c21925696e9c5815ec72430dcd7c494f1ae561bcb": {
+      "id": "E-MTAB-13662/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "59404ad62fb31e866a4b4c54a44011f1d07978d8b1548ecba7f1776c23d5384d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "5a8cfe671484ddbc1464977155cbe29fc823bbcd703b04118e16430192de7443",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "a900328b818d6438a5c42ca1a28309714cb06ff93a7364cfaa75c20aeac6c8f4",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "949177c7c9639e3ce14001e75a5c1991a279c7d187eb28d607fd4f3e38173739": {
+      "id": "E-MTAB-13662/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "693ec3f65e335ccb28f5c440bc6fd442501d48824106ce5ddb550ae62a821f9e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d2d7e08964a5bf7f3b575dcb4499afe589d17c6a7d93c76e5a8b47f10a2a4339",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "14f79666dad6f40c66caa8a99d8d289aaccc0d399ffad50b61f51c1ea26413aa",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "d9732d22b72367c7efc0e0f28171656c19e89a827ea6e58b048bcc03d1c596fc": {
+      "id": "E-MTAB-14416/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "f8394600f3f7c6e34bb3365bec86365ee55a671a747ae96baf74ac7b3da1d299",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "11979c72807d060f162126d11db828276814ecf22cadc584897641990e7a3bf0",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "45b04c82424d15dff3a7b3581e4e9ac99bdd67a7f4b9c31a2a0d1a1d37da35b1",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "86bf604fc223e27b90101d28d62d68f5b0e443ef79e42f1bbef1593b7133c6b7": {
+      "id": "E-MTAB-14416/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "73070531b7aebe75e303e8478447c7e473de34ace8baa8228dc12c810761766d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "ff6c457ba2ecde4f96c1a4223572cd4dab4844b2fa9c5e186ab9c36fe79faaa4",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "038f17a16350f68bf6b34b937bf731af143c4998d8e1ba2bfc70847fcebc75b0",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "a3aaeb88828ae1174e50f95ddcf2c618884bd7d13e1bbc660c7ac53b066683cb": {
+      "id": "E-MTAB-14416/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "aebd4a4711baca9ed2245a4b0eb9cdf3ca587211245308e197dad9ccf425a816",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "7345f6b2b91cc703b09c7ac86a1e8607a5195e319d9a0f2b8eab0e40a88806b8",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "268cd65a0787ef5aeaa26433414b7e59787c677a64745bd2e816f88f49637e23",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "196d8f11b993da20bcbf6b78c0731dff788926c2206d09bbab7bd2107648ba3d": {
+      "id": "E-MTAB-14416/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "5ce208125f743f68b6e2b04a536591d7b9adb8b0fe18d5269a9a573635c187f6",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "733ca7532bf87e257c24c22244f61ac9df75f23072bd6d078b81590e5a632aba",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "e434d6a0467d2124068c44a4cc75e5b4758991da6e557d0a0cfdab50efdfc9d8",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "19aee1f429861a799fb6b9791678a2da42376d323fd0440072aceeab37ba1de6": {
+      "id": "E-MTAB-14560/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "050270a9160730d268d90173f84c5d6f85383f1eab45a3c26d82c621c989ad85",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "0b9e02c338801303a872c054e7f6aa28d6d94c643b01dedf901e91bafbaf6263",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9f7287f0c36acbedc236eef66e0e2458704b8604d7ae54f1bc20732ae182d6ee",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "1c3b477ccd9221d6a154bc95459ed21be295a1bc7041e1102bd2f9023c4c39a1": {
+      "id": "E-MTAB-14560/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "2a75a7db01ad39918f64cc176137b92f257b001f843934884236845a85255ffc",
+          "payload_count": 1,
+          "cause_sha256": "a1d09a132c68694402637272cddcd8c0161474b2b89e7180267655d1c78c2ff6",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "4a5a157da34774a783ed32d152a029a508e9af7b51e8f5e6ce8130f32f2c9ea5",
+          "payload_count": 1,
+          "cause_sha256": "a1d09a132c68694402637272cddcd8c0161474b2b89e7180267655d1c78c2ff6",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "1c2c11ec4e084411c8acf3065449bd19aa6fe469309c73d49e883b8321c1bad0",
+          "payload_count": 1,
+          "cause_sha256": "a1d09a132c68694402637272cddcd8c0161474b2b89e7180267655d1c78c2ff6",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "3784ab9376f704320f0794c4b34973514bfcc4b093e549aff4f08748a7b21296": {
+      "id": "E-MTAB-14560/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "b6ee9da27f7b19e44fe238f06df33f3bc44303f5efaeba9b32f05eed1141da93",
+          "payload_count": 1,
+          "cause_sha256": "0b30cc44e7f67e2a98bad0fd1d12f8b58e8fa2d0faf0233b80b029f6cbe85619",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "05ab461f34aab7d812faeeef6075b457fbc153bbbd5325127e567b578550baae",
+          "payload_count": 1,
+          "cause_sha256": "27e32446ef2e41a96e408875da40e6dff6b38654ce5ffa18ba0c14bb745c2d76",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "03c00bf43e20993fb33547ced53bb7a6eb1fc2595b7192bc438288652ad7e388",
+          "payload_count": 1,
+          "cause_sha256": "27e32446ef2e41a96e408875da40e6dff6b38654ce5ffa18ba0c14bb745c2d76",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "6ea88d66e554bbe3f4d8358caefc9f4fb3bc092605b016ea7c952f1bc8f637e2": {
+      "id": "E-MTAB-14560/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "683adbe7f84c378bc4261d54ba08980601349a877a356338f8b63b08cd49ceae",
+          "payload_count": 1,
+          "cause_sha256": "3999fd9a27742fe6dabed1392b1f065cd0da14819eb098a3102cad0aef9299dc",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "4db9e8d68f30b37a49af21185f469873747f79af75a8e3fa023dc1ddc35b39c2",
+          "payload_count": 1,
+          "cause_sha256": "0439664c0b85ccd2d38727cb7695d73982761e055b0deb2107bc0860dfc002d2",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "3df36bf107294b8fe8e1aa46f6f5beaaa22b52c83b7e2921be50c79183477705",
+          "payload_count": 1,
+          "cause_sha256": "0439664c0b85ccd2d38727cb7695d73982761e055b0deb2107bc0860dfc002d2",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "e705de5a3d25a027b0490a5e251131e5c177ed2299710801132d11fb198c3388": {
+      "id": "E-MTAB-14560/ena",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "235d9941bb9b0c6e7c4c568141de0e73c0b25190458c3074220e554938e77060",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "dec86ba208e0e92db10148e86494a8353dc34093424cdd72353398e4f8c18710",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "cbaffc99ff154810f83e6c96238fd3c1396b29ed5db4308a0c5e0949cf48931a",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        }
+      }
+    },
+    "8be86847c86cd67809d5b1308ad055a58b1e9e23c0d1830d579bf391ffaa0af7": {
+      "id": "E-MTAB-14566/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "6bdf62e9e7d4934df96db1a1e9f9eaa23e7c528e869f6b2af07a871d4d230293",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "77ca3f44f73b893583e4c07806515600f1ceb1f2956281a85a3dc27159dedd82",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "03e9cbca18a83a06f154aee867b171830396c02dad41cf36fe53bd07032a3244",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "3c17eb0556b06bef48d27115190ffe7a2309fb6ceb73360242bee413834ec94f": {
+      "id": "E-MTAB-14566/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "3ea604ac2158541ea95c4077f2bd62b06d43307b0992c0c04055949d4de91fd9",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "ad386ed17fda447fddcd08668ba5dc9bff272547316bea77d0337dc3870f980b",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c2495445bea5451e125b30a0e662dd6dc4b53e0d5f065985455c7fe4dbe19577",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "2a12224f2e54754b36cfd4d62326c0afc51d746bf377e97c7269fc9ecc133649": {
+      "id": "E-MTAB-14566/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "f3744777f1ffc302ce4fcebfc2255434c213185a87beb8fb9a8b9351127c56b4",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "2f963ab50ec015ea0dc16c4291937565b901828904704e6354c7f2df872ff5d2",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "1a2dd9b291b949a1304790e57cde8fa5e93b4244ef012baa46b883898e0d4190",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "34d0eff330821ab09e8f75526e289605a524ba18952218e43542b0b6d9214623": {
+      "id": "E-MTAB-14566/standard",
+      "save_before_export": true,
+      "formats": {},
+      "capture_status": "original_capture_unavailable",
+      "replacement_capture": {
+        "sha256": "8c716b6f28648eb984b2aa1171d9f0dd30504606590f83e0df4711f31ad96fb5",
+        "captured_at": "2026-11-26T01:39:03.088522+00:00",
+        "save_before_export": true,
+        "formats": {
+          "json": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "21c732953ee4b17e9100dad84e920b76bb07839eb873877882858588da2046b3",
+            "payload_sha256": "df2e8758eee72538ca63560ab6988c7a4674d1613fbe3df76dca5e5d478b28f9",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          },
+          "magetab": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "payload_sha256": "809cd91c14075f30f57f456b55bf169f95aef7b8f44038a67553d09cfc2c96c5",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          },
+          "tsv": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "payload_sha256": "608e1d567da4952b7ac6638232bec4deef77e37af784977ab5fa2d3f2d906581",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          }
+        }
+      }
+    },
+    "cff520c108b87c8c58e400f7150369b8b871094ae817da05d4231020daa6d845": {
+      "id": "E-MTAB-14566/ena",
+      "save_before_export": true,
+      "formats": {},
+      "capture_status": "original_capture_unavailable",
+      "replacement_capture": {
+        "sha256": "a383c17e51601183fb7ca0dbe76b721d2de4ff262be70366c5bbb25afb1657fa",
+        "captured_at": "2026-11-26T01:30:14.071278+00:00",
+        "save_before_export": true,
+        "formats": {
+          "json": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "de7bec7b023d38088a932688935830b60b36ae6aa00d3325046827e910deef9b",
+            "payload_sha256": "c2b6baab22cd816866d2cab51847e0b2369a12b9e61c9b66deaf826d94fd0082",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          },
+          "magetab": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "payload_sha256": "e61576d0e0cbcadf17fbe1ba083b4d4fdc8761ae675ea9fd25b74ea3afdf99f5",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          },
+          "tsv": {
+            "axes": {
+              "execution": "succeeded",
+              "completeness": "partial",
+              "validation": "valid"
+            },
+            "payload_count": 1,
+            "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "payload_sha256": "0e9faa72fd727af97f73933edb1214ccea401a8ed5ef370e947b014e3a018c78",
+            "scientific_disposition": "source_identifiers_and_archive_ownership_compared"
+          }
+        }
+      }
+    },
+    "ed2b5d5b872bd45f53f866f3ff82ab283882a01868127505193c95ad88c477b7": {
+      "id": "E-MTAB-14960/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d1bdf2988d450e5b2cec2d2d2a5a81233d6a71548e971fca3d3c89ac14b0c8e8",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c9681d6cd0f7c503745737d6259b5bb54bf57a512a2303a4c40679a9cd23e2e2",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "149c209c71fa67bce94bc92794b6910c5f58031598b921335309e867f67e0461",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "31beaf13cce50485a7f082c5f105f3b3bbf55fa3837a8143e6547bf2930c7d6c": {
+      "id": "E-MTAB-14960/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "b63d13c2287664ec5470375e8b2c26804027bfa31bd243e027173854f53d7943",
+          "payload_count": 1,
+          "cause_sha256": "530902222bc7dd6b7865a26ffd251cbc68828dbd6b240e80725cea342a5a93d0",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "26c28f9dc724f2f0ef59761c3e2f5ba8ece47d2cbfb7f6a51b583d07bf6602ca",
+          "payload_count": 1,
+          "cause_sha256": "530902222bc7dd6b7865a26ffd251cbc68828dbd6b240e80725cea342a5a93d0",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "9902a4199918251a41c874d420256a40203857877f0e01a0c5b0084d48535a46",
+          "payload_count": 1,
+          "cause_sha256": "530902222bc7dd6b7865a26ffd251cbc68828dbd6b240e80725cea342a5a93d0",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "fbf396fec0198e3d7baa05a322caccc1410ed09ce4b1ae3838f6c6692f95e692": {
+      "id": "E-MTAB-14960/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "78a691cef554780f3327d405d24760be2141a46cfce2b886658b828bcaa3e3bd",
+          "payload_count": 1,
+          "cause_sha256": "55b4515d5da9f5b1277d0e04bedaf96315912076eb804d85c7652af6292e8a35",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "287a054afee26c4e422b068c25f46b99cbc803846a27096f070f0f45a24f2808",
+          "payload_count": 1,
+          "cause_sha256": "5afa4a88d172712e54cc8acd15cae84ca39bf25ab5325bf94d3b866ddffb251a",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "1e0b99d63a92e6e325093c93387a6b29808061f25f8b281ad22fb0ab8809c747",
+          "payload_count": 1,
+          "cause_sha256": "5afa4a88d172712e54cc8acd15cae84ca39bf25ab5325bf94d3b866ddffb251a",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "0b5d28729dbc3b1a4762b1cd3f3185a9ce971013ddb100e5803a7443ea43c8e8": {
+      "id": "E-MTAB-14960/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "a60a039d6c652f2545163fb2a4454e0aeed0915f618aa15af877c2e6c103d375",
+          "payload_count": 1,
+          "cause_sha256": "55b4515d5da9f5b1277d0e04bedaf96315912076eb804d85c7652af6292e8a35",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "2364d36c668ff6998b04882c162c16ae0e66cf96d78e68de34611551a2cf833f",
+          "payload_count": 1,
+          "cause_sha256": "5afa4a88d172712e54cc8acd15cae84ca39bf25ab5325bf94d3b866ddffb251a",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "9e046b84baeb902d867f767861eb535efd5ecb1ce599ee865ab461dbbfe1ace2",
+          "payload_count": 1,
+          "cause_sha256": "5afa4a88d172712e54cc8acd15cae84ca39bf25ab5325bf94d3b866ddffb251a",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "83f3a4eb303b95a500a17c4b24fd0237a5b30e9f93a68f6a079a0ec2ddee010a": {
+      "id": "E-MTAB-16192/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "6e937ee706e13d3ac10b0d572d9a68dfc295da30e3147ea78f573b662d768d69",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "925a11566601c52b409a554cb8be1b327918f580eeba66cd9f3a6e6322edb519",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "5f503f40b781595fa48ba4ce89cbec38d699db86d849ed75f7800f1a579b829d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "8ca7f6a3cab98f110ad8ad598054b6c6d2fcf4319a8ddb47e37c76b3fcbcb1f4": {
+      "id": "E-MTAB-16192/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "480ba426e74a0526d67b28f6ae7fecc1dedd058618eda77d2cdec7cc7615bfb1",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c041288c91c0f5a6136175b20c1c53182b0e657a48187a749e3eaa4b13b6fd58",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d543ec7342e129c28a94b790d84c24237769e33abffc780aa83d440650bde4f6",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "52deebf2387309cfb281946eeffe0ef2615310308f5f5814d1d3b03fb79a68ff": {
+      "id": "E-MTAB-16192/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "26624c49a3ef8ca958b978e5e33f885aa20c20b693ca95b8adfc29461f3bf787",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "7732447b686ed92dd09a8d010e0aa61572ec0b2d963ba6b803fe78e7468e048b",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "00a8500a6527f7f318f6c2d7ea78112f2cf8485d6465e162f2a63ee80489768f",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "237c5dfaff9c87e0494f99920d182c7fffba498c337b738bf4095b6c9b684740": {
+      "id": "E-MTAB-16192/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "4bdb6d6ac49f759ab10a68fb5e7c5274c0949d5bcdc8690707e8471264f46ebe",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c1037930d44c8cb2d738858681d5adfa2ee26eaa1531142e8fe3255d6392cbdf",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "8f2f85d7b11908d5864d6796dd97babf1e458543db6fa2ff0dcefb2a937fc8f1",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "ea54dc2827d73238880ecea5a95b6578a9fafcfdeaef78a00aef618139b9b500": {
+      "id": "E-MTAB-16253/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "3ab62a1f6fa7b5d9a1190bdc75c150ea717381d4335a9909cd3ae8140e7b3af0",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "b6551c592c9d9cc9355db9c42dd8c76c54efb328713e1d443985c68ac2c5cf2a",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "206500b365dca6e4eca9b037b85fbb25ee00d119c2e2005820768c63439b7284",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "8f729f731c5a7e5ef91fe290c8738cabfa34a125f9472b76c4c1ee81f7ccb160": {
+      "id": "E-MTAB-16253/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "cf5b0a5bcf509ff78a23e7beec34c4b4ca927d4d56a194db32f7361c71015f20",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "ba653404c38736337d817eba0fd3ae2400e05a4ad34ddf9e90f7ade09bd4c472",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "e19169f84d14258a986c57ece07555bcfa1a072405cc788454d5ed92c71b62c9",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "55468789ae404b6ae9d7d15d8c4d620c8d759ad98f6328a64fbff0687376b96d": {
+      "id": "E-MTAB-16253/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "4783d1ae32284d1def43bf143f4258006f1321b3787c4e5820d813439b0a10f9",
+          "payload_count": 1,
+          "cause_sha256": "9dc79f281b56ee6bc4ded7115bc2c9107df123fb4b90a17cdc0be4dc7d2e7b92",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "9818a0340c95e7a761db3df7ba3a1e34ad56e9f257926b3e03da1223617e50ae",
+          "payload_count": 1,
+          "cause_sha256": "b474f65f23308e8bb05b8ac116ea4336039171ba4e0a882b4d2453a3a1f14dca",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "5f55a03944fea4a63546ae29518967ccd682f569db248a4f658384117bdaf05d",
+          "payload_count": 1,
+          "cause_sha256": "b474f65f23308e8bb05b8ac116ea4336039171ba4e0a882b4d2453a3a1f14dca",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "7f3ee38e177cfbd0992004e7bf28705a778b8df346924b1f8eb720784902781b": {
+      "id": "E-MTAB-16253/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "d59e78cb6cab7e5878c7661ae013ca9512216a9982fe13e1b68490265d3d4bc0",
+          "payload_count": 1,
+          "cause_sha256": "706850b888747f719875e8795ea3475c065cc774bf769e37424229842aa30ee0",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "20e0ed177db440d89fb45cd8d59abde0faaf5b0cdac7270b1f41656ac8831321",
+          "payload_count": 1,
+          "cause_sha256": "39a429e0ade0d28aeb082440d1185202d64e61a335fec099a89961b36571cb02",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "330b4268a58774e1f66de30367b95e7f4177409250cc79d2c79801d27cd62272",
+          "payload_count": 1,
+          "cause_sha256": "39a429e0ade0d28aeb082440d1185202d64e61a335fec099a89961b36571cb02",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "678bafb2ec95289c7805301e774ba0088a3902ab54b68b272e700818dbe2a9c5": {
+      "id": "E-MTAB-16253/ena",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "01403b54d247d275d704301a79a365b8fd80b0b1cbd2df9dc0caac9f08b56c99",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "fd48991595de111acfec3f02c705471c36d6314b88de2c727cc3faf17aacff73",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d7b4b7fd6f69cfc135b9f4df23ec868a6a3a2e81dc768ecb0753c27d219f82f4",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        }
+      }
+    },
+    "0167214bc883f9c61e8fb568ac9c86b171464d29b909c41479037a8e470651c6": {
+      "id": "E-MTAB-16847/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "61fa3b33ae1193d3927960cfa45a7c10074c6551e9a892136c582d30df3baf09",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "86033a850909dd22195b404d6278d25ed1a55a7695f5c5d6cd05951ce0b4ba72",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "3335abf7f0a5344123cbfbd27cf6b9cdecfd753c12189ec30ba708e6177257ea",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "06e3394834970bd743c255e1fa472e6bc7b2f3ded8f3f443752827696dea143f": {
+      "id": "E-MTAB-16847/direct",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "61fa3b33ae1193d3927960cfa45a7c10074c6551e9a892136c582d30df3baf09",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "86033a850909dd22195b404d6278d25ed1a55a7695f5c5d6cd05951ce0b4ba72",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "3335abf7f0a5344123cbfbd27cf6b9cdecfd753c12189ec30ba708e6177257ea",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        }
+      }
+    },
+    "4acd9846999f564a50b7f635420990170a7b39e877b59512b8c0e3e00f2e627d": {
+      "id": "E-MTAB-16856/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "380f85329710be802fe769fd419c52c473d9f7738595c3ba1dfe28e01371fb43",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9bce1fd3f9685739195af2e89efe1c5ea798ceadbefa15eac81f18375107d4a5",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "8c34a2580226ab714e9dd15d364150814225410dc5c63fe0ad841614f1a336be",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "d35a819714a03eb7cacdec35327a338abd062f9bdd1a99756099d3a4703f29eb": {
+      "id": "E-MTAB-16856/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "8658cb044dbe46f5283efaaae4c292888cc11feb3301fc784c958129d9ff370d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "1c52d4108543730b15b011715ee06ffc58c9defc2eced0ff4fc2f991a8641130",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "b212992b87fb35b441fbc9d12fe6e89c315321dcb5605e5bd68c22ea0d84fa81",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "7c73f0b1446569cc5ab1dce5686ab6f69be517bad83ee654a5726d9d1569c2e5": {
+      "id": "E-MTAB-16856/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "124068232683c015fea11f9c3867a6d3c5277e51b33a9a6712facd6982f210ed",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9a51f412f45bb2f37d5ca56afa7869d46251d60a7cdb4a269a5cac8c8a00aa25",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c1d67b8014ba2f30b621265230bc6187bbc2ea8c98ea67988494b51aaa0c7bcd",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "74061397821bcdd2e9331cbe149ffbf94b49075819a3cb1fb875eda855857d14": {
+      "id": "E-MTAB-16856/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "ed7ae25d8ca4b60c93fdcfba912244518e17d24ef21bdb8ee416deb88f129e7e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "676c2b5979a3e015795e93d56b6d91437804b4b6b359d38f5c2ea6faf660a522",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "1246c8eeb110d22e99115e7bf758a59f3586c6cb47031db81c744ebab62b4334",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "9bccf55c8f055a79b3758f6c208ee24f84b501be8d259ed89a425d621860b78b": {
+      "id": "E-MTAB-308/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "43431d46e6b56cd704d5b9aa67354c6cd71684321a2ad15e5f61c07c4511a381",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "b506c0391f5997a8db19a9fc0bb262d3557f16ebb912e795cd5ac016a72ad9cb",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "0d5398ac31615e020eafca5f8c67d7bb8c97a89e7ae7931a3a572e9ac3725319",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "21d73898da865af91f524eec071f4e35f64f5145f2efc7c0b4664a8f2d664c66": {
+      "id": "E-MTAB-308/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "e11d2a82bad7bee27109cdff28882d33f1410487ea7543803da564da044de975",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "6fbb383c3ca3b2ac1e45fde3c67f7df866fd4f7676745337b24946b42279a93e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "953795885ec107e22ec32cb6fef0435fcd660f8c21f50e3752e3318266597ca0",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "bf3f6a50af4cb1508372217038df51f69beac9fbc96883affbe108b82c5ce8f6": {
+      "id": "E-MTAB-308/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "ab150d511da7b26b04b975d2a031a38bf0a31f5613626c89cd3c847507499dc5",
+          "payload_count": 1,
+          "cause_sha256": "caa466f1a0d2189109329ed1fa0940f7a76ae62e98451913f140e4ab4cae51e9",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "8c17e3fef118a7a132babb779854961b415c662f92576cd56371b70d46a2a419",
+          "payload_count": 1,
+          "cause_sha256": "8fc49956c7df9bc18975980b6cdc467b7a5d6faec00ab39278181912db7302fb",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "aa371063b6b1939b30021410db74a10ea195623b4b402f42de48b3346b09bfe1",
+          "payload_count": 1,
+          "cause_sha256": "8fc49956c7df9bc18975980b6cdc467b7a5d6faec00ab39278181912db7302fb",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "c039d076bfc86e16295304d485e7bcf910f8b9e2b2498274c861315cf7a76bf2": {
+      "id": "E-MTAB-308/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "1c10b2a7bb087c4d67214edd9b870f428fffb8e383878b8d06809c7cc353760d",
+          "payload_count": 1,
+          "cause_sha256": "caa466f1a0d2189109329ed1fa0940f7a76ae62e98451913f140e4ab4cae51e9",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "0c11ce633d2b28512049c700b421d059aad67b84ded4dfbb8057be19f2dd490b",
+          "payload_count": 1,
+          "cause_sha256": "8fc49956c7df9bc18975980b6cdc467b7a5d6faec00ab39278181912db7302fb",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "5f92fae1103ba50de4065ac0f711b70e4a1dd81ae02d84816a7456080c654680",
+          "payload_count": 1,
+          "cause_sha256": "8fc49956c7df9bc18975980b6cdc467b7a5d6faec00ab39278181912db7302fb",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "ddb7526c7c9a0e7d3ef63cf3f574741714266f32f40ff346aad1b92c2a5bb890": {
+      "id": "E-MTAB-308/ena",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "641dc124b3438dda598bafbe4ac8e2487b97a7aa1afef3810c1c38e79b5f1fe2",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "3bf41f8613b8f525b090886764efed9bce4e4c56f4c4d9e0ebef3265d93f6405",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "4635bc1037d40d34dd11a969f34a5f9dc1b93bfa14644d8bea312f55fd8e09c8",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        }
+      }
+    },
+    "6ca0ec073a348fc63784d3b7cc92bb1ea11e7f79bb9c56a0a72cdb17d76805c3": {
+      "id": "E-MTAB-5481/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "6dffb38ffe47f2ecace1eac7fef7004b8557511b7293697acd769202ee8aeddc",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "5054c9caaeb1642db89a605e6d293b1cd53bfb7f84836196a7a7bf138096faef",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c580da3c03ebd24efcaccf4e49fbd3e2d6b34fa8b4844e56c801a0634a121356",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "058d60e9771b365d67630e78773cba2802d0d7380dd8c8e31a2e890dd86a18ef": {
+      "id": "E-MTAB-5481/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "f904890375f22e907bc6a30493cde471413fa297fdd88909d8f47676dd4e1c25",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "c6ab2319b3f71d1a4e01090c3fe42b94a1192187829876eec68296ae3a82d6e1",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "77a763b31d49c9fed206d57d55e3f31ba9ab7c3b64618e2934a0375682241e8c",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "4b2286690fab5ed3e9dd3459a0061813ce84b272ce98948b602878b1a9446178": {
+      "id": "E-MTAB-5481/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "0d0dff0f9dd7037e5736f14106396e03b86cd1cfc4fbd05b44413d763381d02b",
+          "payload_count": 1,
+          "cause_sha256": "8a089bf713159accac177ac66d1397696ae5f9d1ea2c6f184e09b5d5fd3ca78e",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "8431a63da41c59f7c3a05dbb683e38f95aa55a52744fbaa9967779cc96e0db98",
+          "payload_count": 1,
+          "cause_sha256": "5283bee21a1e27b68de154b3e670f847f75e382c4dfb7aa738b8a43b8d2b6ddf",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "030337100c96de1be8efef6b401425d519bb30cf4e55cfd710b8c2069502741e",
+          "payload_count": 1,
+          "cause_sha256": "5283bee21a1e27b68de154b3e670f847f75e382c4dfb7aa738b8a43b8d2b6ddf",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "99b88c6dbec2e82d8e72502b57f3a23bd2884ac84c214a1a7a236f9d9743274e": {
+      "id": "E-MTAB-5481/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "33bc83907fd380e7901db6ccca43cb3f8f5eae8ce9194508b83fb9e20cd17c3c",
+          "payload_count": 1,
+          "cause_sha256": "85605e65045f0e8c2b65d5e5f1b6e5bbf14392edd4b390b1bd135bf717b4035c",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "4b78f530b1919a22edb38009d4cd73ec610b00faa5245b074a06289ed4df8458",
+          "payload_count": 1,
+          "cause_sha256": "96871f736bfcc2c1ad11447d9657d755f60e54fd517e6ef8e74b537d59ae891e",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "8b3d251639300b43ed58306a0284a400126ad8ac73a74cb0a9672d97a62c0053",
+          "payload_count": 1,
+          "cause_sha256": "96871f736bfcc2c1ad11447d9657d755f60e54fd517e6ef8e74b537d59ae891e",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "d26e3dbcb150964e866d165b38fe2afdd3631969eddd6ff2e7b7796b4a06748a": {
+      "id": "E-MTAB-5485/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "d3589caf6568d59cad3e47275fdf58b4d517f91746536ef8558f0e6aa0b969eb",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "1845fa325f9e9813534bf48a57374f4878bfed4d37f296eebd22e968de75cd6e",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "abe84b50d456d3ccc426d339767c6af4f74193d9d6c74a538b93561dee778e05",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "348ace27f1984fde76780d7e759df3fb457d3b0774b96c49990b41c18609331e": {
+      "id": "E-MTAB-5485/native",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "09b3680e9deb529899c98bb2d96017fbc2b9d4b4ad84d503c2fdd0528918a5fe",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "23717079f240baf34b5d15f7f451f8a8d092806be7297de35a650d73d0f26ac5",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "7c950361a61844a340ddedd0c31cd7ee40dd49ea17a49a16a90e41b3c1290ee9",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "af4e5289dfd5714105e80656ff865eadb9a9d7e6d3333f295868a69f71257ca3": {
+      "id": "E-MTAB-5485/linked",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "8f0049a45cd5f464166f69b98a79bfbab3c7ac199eff8659fbc47dfe5eab399e",
+          "payload_count": 1,
+          "cause_sha256": "84324cfe00fa9664d34e3b7e89f0ce5f59de8b55eb5fb4f58582b55006900081",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "1cc4600c5acbc8dbfc7a95edb4416096f5d7a924f01b4c37de03eed2fe5afc2c",
+          "payload_count": 1,
+          "cause_sha256": "ed33adb332a9ad4c83b51cbabd860222c0ead1891f393f7c08985e9cfeb308b5",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "a56062cc7a6a29c46d2ac75ce661fc30d077b6eaf5cb3395713ea47b065de14b",
+          "payload_count": 1,
+          "cause_sha256": "ed33adb332a9ad4c83b51cbabd860222c0ead1891f393f7c08985e9cfeb308b5",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "8f7e36d1e7460124f002e5fdeac37cad9e6633b61ae41e1fd5e91f3953771469": {
+      "id": "E-MTAB-5485/standard",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "5c75b553dc29231b10cc805c4f9f13064dd87cf4399d43432751b8dbf47865cd",
+          "payload_count": 1,
+          "cause_sha256": "4079acfdd87701e65548b399a8d33f837ce7e69c0630dc6610d080821873c7e1",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "4d44697b55deecb6b85133ad6f9ca67845eb1c7c9f4cb1009928e4a3a9cc0c74",
+          "payload_count": 1,
+          "cause_sha256": "8a0c2d4f5e8b51b5241560bb08b8f051569781ecffd52aeae93deafee4ab0fe2",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "partial",
+            "validation": "valid"
+          },
+          "payload_sha256": "2fff08953b9926df73c210ba68d3ce59a33a89dc01fccbd574ab0acec173ad61",
+          "payload_count": 1,
+          "cause_sha256": "8a0c2d4f5e8b51b5241560bb08b8f051569781ecffd52aeae93deafee4ab0fe2",
+          "scientific_disposition": "archive_ownership_verified_other_fields_limited"
+        }
+      }
+    },
+    "0bfb3690252a1a730ce789a1f6b9b9ba71243404cab68adc3db2b98225cb7a20": {
+      "id": "GSE100/reference",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "b8c442ea4bd123c7e31842ce224b7be833d7d586556945ef4afcb8bd7f718bf8",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sample_identities_verified"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "848c9f8498e7c2d4bf8eb75293d0690bcbb904cfd9b862b43f8b6651b566086f",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_sdrf_verified"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "e422e6d432e901d96025361718dd4e9bcbea3162d7881b12545b85258499c37d",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "reference_fields_compared"
+        }
+      }
+    },
+    "a14b934142e5eeb6a84c3d577b106425b459a2915adcb2b591e61d6059f7ff26": {
+      "id": "GSE100/direct",
+      "save_before_export": true,
+      "formats": {
+        "json": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "80c6a6e7c8a0b45e9d7cf687c166c073a7eeb056efcb514c2a522d524a538994",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "magetab": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "9d36c1370bc8ae723d03a83fc37b9dfd0882b661d114e995c94e5f938e2a54fe",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "limited_source_verification"
+        },
+        "tsv": {
+          "axes": {
+            "execution": "succeeded",
+            "completeness": "complete",
+            "validation": "valid"
+          },
+          "payload_sha256": "86206b29ba791d8087f29d450394fe3c098751fec26b71bdc3b657689ba5d72b",
+          "payload_count": 1,
+          "cause_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "scientific_disposition": "deposited_protocol_origins_verified"
+        }
+      }
+    }
+  }
+}
